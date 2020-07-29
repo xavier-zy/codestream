@@ -24,6 +24,8 @@ import {
 	FetchThirdPartyCardWorkflowResponse,
 	FetchThirdPartyChannelsRequest,
 	FetchThirdPartyChannelsResponse,
+	FetchThirdPartyPullRequestRequest,
+	FetchThirdPartyPullRequestResponse,
 	MoveThirdPartyCardRequest,
 	MoveThirdPartyCardResponse,
 	RemoveEnterpriseProviderRequest,
@@ -88,6 +90,10 @@ export interface ThirdPartyProviderSupportsPullRequests {
 	getRepoInfo(request: ProviderGetRepoInfoRequest): Promise<ProviderGetRepoInfoResponse>;
 	getIsMatchingRemotePredicate(): any;
 	getRemotePaths(repo: any, _projectsByRemotePath: any): any;
+
+	getPullRequest(
+		request: FetchThirdPartyPullRequestRequest
+	): Promise<FetchThirdPartyPullRequestResponse>;
 }
 
 export namespace ThirdPartyIssueProvider {
@@ -725,3 +731,13 @@ export interface ProviderCreatePullRequestResponse {
 	title?: string;
 	error?: { message?: string; type: string };
 }
+
+// export interface ProviderGetPullRequestRequest {
+// 	pullRequestId: string;
+// 	providerId: string;
+// }
+
+// export interface ProviderGetPullRequestResponse {
+// 	pullRequestId: string;
+// 	providerId: string;
+// }

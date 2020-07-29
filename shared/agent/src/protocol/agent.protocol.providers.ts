@@ -330,3 +330,34 @@ export interface EnterpriseConfigurationData {
 	baseUrl: string;
 	token: string;
 }
+
+export interface FetchThirdPartyPullRequestRequest {
+	providerId: string;
+	providerTeamId?: string;
+	pullRequestId: string;
+}
+
+export interface FetchThirdPartyPullRequestResponse {}
+
+export const FetchThirdPartyPullRequestRequestType = new RequestType<
+	FetchThirdPartyPullRequestRequest,
+	FetchThirdPartyPullRequestResponse,
+	void,
+	void
+>("codestream/provider/pullrequest");
+
+export interface ExecuteThirdPartyRequest {
+	method: string;
+	providerId: string;
+	params: any;
+}
+export interface ExecuteThirdPartyResponse {
+	data: any;
+}
+
+export const ExecuteThirdPartyRequestType = new RequestType<
+	ExecuteThirdPartyRequest,
+	ExecuteThirdPartyResponse,
+	void,
+	void
+>("codestream/provider/generic");

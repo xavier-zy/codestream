@@ -22,7 +22,9 @@ import {
 	FetchThirdPartyCardWorkflowResponse,
 	MoveThirdPartyCardRequest,
 	MoveThirdPartyCardResponse,
-	ThirdPartyProviderCard
+	ThirdPartyProviderCard,
+	FetchThirdPartyPullRequestRequest,
+	FetchThirdPartyPullRequestResponse
 } from "../protocol/agent.protocol";
 import {
 	CodemarkType,
@@ -322,6 +324,13 @@ export class BitbucketProvider extends ThirdPartyIssueProviderBase<CSBitbucketPr
 			Logger.error(ex);
 			return { users: [] };
 		}
+	}
+
+	@log()
+	getPullRequest(
+		request: FetchThirdPartyPullRequestRequest
+	): Promise<FetchThirdPartyPullRequestResponse> {
+		throw new Error("Method not implemented.");
 	}
 
 	@log()

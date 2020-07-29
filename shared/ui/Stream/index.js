@@ -25,6 +25,7 @@ import { ReviewForm } from "./ReviewForm";
 import FilterSearchPanel from "./FilterSearchPanel";
 import InlineCodemarks from "./InlineCodemarks";
 import { CreateTeamPage } from "./CreateTeamPage";
+import { Tester } from "./Tester";
 import Icon from "./Icon";
 import CancelButton from "./CancelButton";
 import Tooltip, { TipTitle, placeArrowTopRight } from "./Tooltip";
@@ -344,6 +345,7 @@ export class SimpleStream extends Component {
 							scrollDiv={this._contentScrollDiv}
 						/>
 					)}
+					{activePanel === WebviewPanels.Tester && <Tester />}
 					{activePanel === WebviewPanels.FilterSearch && <FilterSearchPanel />}
 					{activePanel === WebviewPanels.Activity && <ActivityPanel />}
 					{activePanel === WebviewPanels.PRInfo && <PRInfoModal onClose={this.props.closePanel} />}

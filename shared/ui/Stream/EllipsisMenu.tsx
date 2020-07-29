@@ -39,6 +39,7 @@ export function EllipsisMenu(props: EllipsisMenuProps) {
 			team,
 			currentUserId: state.session.userId,
 			currentUserStatus: user.status || EMPTY_STATUS,
+			currentUserEmail: user.email,
 			pluginVersion: state.pluginVersion,
 			xraySetting: team.settings ? team.settings.xray : "",
 			multipleReviewersApprove: isFeatureEnabled(state, "multipleReviewersApprove")
@@ -378,6 +379,17 @@ export function EllipsisMenu(props: EllipsisMenuProps) {
 		},
 		{ label: "-" }
 	);
+
+	if (
+		derivedState.currentUserEmail &&
+		derivedState.currentUserEmail.indexOf("@codestream.com") > -1
+	) {
+		menuItems[menuItems.length - 2].submenu.push({
+			label: "Tester",
+			key: "tester",
+			action: () => dispatch(openPanel(WebviewPanels.Tester))
+		});
+	}
 
 	// menuItems.push({ label: "Sign Out", action: "signout" });
 

@@ -19,6 +19,8 @@ import {
 	FetchThirdPartyCardsResponse,
 	FetchThirdPartyCardWorkflowRequest,
 	FetchThirdPartyCardWorkflowResponse,
+	FetchThirdPartyPullRequestRequest,
+	FetchThirdPartyPullRequestResponse,
 	GitHubBoard,
 	GitHubCreateCardRequest,
 	GitHubCreateCardResponse,
@@ -198,6 +200,38 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 			Logger.log("Error from GitHub: ", JSON.stringify(e, null, 4));
 			return { cards: [] };
 		}
+	}
+	@log()
+	async getPullRequest(
+		request: FetchThirdPartyPullRequestRequest
+	): Promise<FetchThirdPartyPullRequestResponse> {
+		let foo = {};
+		const timelineItems: any = [];
+		try {
+			let owner = "TeamCodeStream";
+			let repo = "vs-codestream";
+			let pullRequestId = "72";
+			let response;
+			do {
+				response = await this.pullRequestTimelineQuery(
+					owner,
+					repo,
+					pullRequestId,
+					response &&
+						response.repository.pullRequest &&
+						response.repository.pullRequest.timelineItems.pageInfo.timelineItems &&
+						response.repository.pullRequest.timelineItems.pageInfo.endCursor
+				);
+				if (response === undefined) break;
+				foo = response.repository.pullRequest;
+
+				timelineItems.push(response.repository.pullRequest.timelineItems.nodes);
+			} while (response.repository.pullRequest.pageInfo.hasNextPage);
+		} catch (ex) {
+			Logger.error(ex);
+		}
+		foo = { ...foo, timelineItems: timelineItems };
+		return foo as any;
 	}
 
 	@log()
@@ -732,6 +766,698 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 				resetAt: Date;
 		  }
 		| undefined;
+
+	private _prTimelineQueryRateLimit:
+		| {
+				limit: number;
+				cost: number;
+				remaining: number;
+				resetAt: Date;
+		  }
+		| undefined;
+
+	// async getLabels(owner: string, repo: string) {
+	// 	const query = await this.client.request<any>(
+	// 		`query FindReviewers($owner:String!,$name:String!) {
+	// 			repository($owner:String!,$name:String!) {
+	// 			  id
+	// 			  labels(first: 50) {
+	// 				nodes {
+	// 				  color
+	// 				  name
+	// 				  id
+	// 				  description
+	// 				}
+	// 			  }
+	// 			}
+	// 		  }`,
+	// 		{
+	// 			owner: owner,
+	// 			name: repo
+	// 		}
+	// 	);
+	// 	return query.repository.labels.nodes;
+	// }
+
+	async getLabels(request: { owner: string; repo: string }) {
+		const query = await this.client.request<any>(
+			`query getLabels($owner:String!, $name:String!) {
+				repository(owner:$owner, name:$name) {
+				  id
+				  labels(first: 50) {
+					nodes {
+					  color
+					  name
+					  id
+					  description
+					}
+				  }
+				}
+			  }`,
+			{
+				owner: request.owner,
+				name: request.repo
+			}
+		);
+		return query.repository.labels.nodes;
+	}
+
+	async getReviewers(request: { owner: string; repo: string }) {
+		const query = await this.client.request<any>(
+			`query FindReviewers($owner:String!, $name:String!)  {
+				repository(owner:$owner, name:$name) {
+				  id
+				  collaborators(first: 50) {
+					nodes {
+					  avatarUrl
+					  id
+					  name
+					}
+				  }
+				}
+			  }`,
+			{
+				owner: request.owner,
+				name: request.repo
+			}
+		);
+
+		return query.repository.collaborators.nodes;
+	}
+
+	async addLabelToPullRequest(request: {
+		owner: string;
+		repo: string;
+		pullRequestId: string;
+		labelId: string;
+	}) {
+		const pullRequestInfo = await this.client.request<any>(
+			`query FindPullRequest($owner:String!,$name:String!,$pullRequestId:Int!) {
+					repository(owner:$owner name:$name) {
+					  pullRequest(number: $pullRequestId) {
+						id
+					  }
+					}
+				  }`,
+			{
+				owner: request.owner,
+				name: request.repo,
+				pullRequestId: parseInt(request.pullRequestId, 10)
+			}
+		);
+
+		const prId = pullRequestInfo.repository.pullRequest.id;
+		const query = `mutation AddLabelsToLabelable($labelableId: String!,$labelIds:String!) {
+			addLabelsToLabelable(input: {labelableId: $labelableId, labelIds:$labelIds}) {
+				  clientMutationId
+				}
+			  }`;
+
+		const rsp = await this.client.request<any>(query, {
+			labelableId: prId,
+			labelIds: request.labelId
+		});
+		return true;
+	}
+
+	async closePullRequest(request: { owner: string; repo: string; pullRequestId: string }) {
+		const pullRequestInfo = await this.client.request<any>(
+			`query FindPullRequest($owner:String!,$name:String!,$pullRequestId:Int!) {
+					repository(owner:$owner name:$name) {
+					  pullRequest(number: $pullRequestId) {
+						id
+					  }
+					}
+				  }`,
+			{
+				owner: request.owner,
+				name: request.repo,
+				pullRequestId: parseInt(request.pullRequestId, 10)
+			}
+		);
+
+		const prId = pullRequestInfo.repository.pullRequest.id;
+		const query = `mutation ClosePullRequest($pullRequestId: String!) {
+			closePullRequest(input: {pullRequestId: $pullRequestId}) {
+				  clientMutationId
+				}
+			  }`;
+
+		const rsp = await this.client.request<any>(query, {
+			pullRequestId: prId
+		});
+		return true;
+	}
+
+	async getMyPullRequests(request: { owner: string; repo: string; userName: string }) {
+		let results: any = [];
+		const searchByAuthorResult = await this.client.request<any>(
+			`query GetMyPullRequests {
+				search(query: "repo:${request.owner}/${request.repo} is:pr is:open author:${request.userName}", type: ISSUE, last: 100) {
+				edges {
+				  node {
+					... on PullRequest {
+						url
+						title
+						createdAt
+						author {
+						  login
+						  avatarUrl(size: 16)
+						  url
+						}
+						bodyText
+						number
+						state
+						updatedAt
+						lastEditedAt
+						id
+					}
+				  }
+				}
+			  }
+			}`
+		);
+		if (searchByAuthorResult && searchByAuthorResult.search && searchByAuthorResult.search.edges) {
+			results = results.concat(searchByAuthorResult.search.edges.map((_: any) => _.node));
+		}
+		const searchByAssigneeResult = await this.client.request<any>(
+			`query GetPullRequestsAssignedToMe {
+				search(query: "repo:${request.owner}/${request.repo} is:pr is:open assignee:${request.userName}", type: ISSUE, last: 100) {
+					edges {
+					  node {
+						... on PullRequest {
+							url
+							title
+							createdAt
+							author {
+							  login
+							  avatarUrl(size: 16)
+							  url
+							}
+							bodyText
+							number
+							state
+							updatedAt
+							lastEditedAt
+							id
+						}
+					  }
+					}
+				  }
+				}`
+		);
+		if (
+			searchByAssigneeResult &&
+			searchByAssigneeResult.search &&
+			searchByAssigneeResult.search.edges
+		) {
+			results = results.concat(searchByAssigneeResult.search.edges.map((_: any) => _.node));
+		}
+		return results;
+	}
+
+	async updatePullRequest(request: {
+		owner: string;
+		repo: string;
+		pullRequestId: string;
+		pullRequest: {
+			title: string;
+		};
+	}) {
+		const pullRequestInfo = await this.client.request<any>(
+			`query FindPullRequest($owner:String!,$name:String!,$pullRequestId:Int!) {
+					repository(owner:$owner name:$name) {
+					  pullRequest(number: $pullRequestId) {
+						id
+					  }
+					}
+				  }`,
+			{
+				owner: request.owner,
+				name: request.repo,
+				pullRequestId: parseInt(request.pullRequestId, 10)
+			}
+		);
+
+		const prId = pullRequestInfo.repository.pullRequest.id;
+		const query = `mutation UpdatePullRequest($pullRequestId: String!, $title: String) {
+			updatePullRequest(input: {pullRequestId: $pullRequestId, title: $title}) {
+				  clientMutationId
+				}
+			  }`;
+
+		const rsp = await this.client.request<any>(query, {
+			pullRequestId: prId,
+			title: request.pullRequest.title
+		});
+		return true;
+	}
+
+	async mergePullRequest(request: {
+		owner: string;
+		repo: string;
+		pullRequestId: string;
+		mergeMethod: string;
+	}) {
+		const pullRequestInfo = await this.client.request<any>(
+			`query FindPullRequest($owner:String!,$name:String!,$pullRequestId:Int!) {
+					repository(owner:$owner name:$name) {
+					  pullRequest(number: $pullRequestId) {
+						id
+					  }
+					}
+				  }`,
+			{
+				owner: request.owner,
+				name: request.repo,
+				pullRequestId: parseInt(request.pullRequestId, 10)
+			}
+		);
+		if (!request.mergeMethod) throw new Error("InvalidMergeMethod");
+		const mergeMethods = new Set(["MERGE", "REBASE", "SQUASH"]);
+		if (!mergeMethods.has(request.mergeMethod)) throw new Error("InvalidMergeMethod");
+
+		const prId = pullRequestInfo.repository.pullRequest.id;
+		const query = `mutation MergePullRequest($pullRequestId: String!) {
+			mergePullRequest(input: {pullRequestId: $pullRequestId, mergeMethod: ${request.mergeMethod}}) {
+				  clientMutationId
+				}
+			  }`;
+
+		const rsp = await this.client.request<any>(query, {
+			pullRequestId: prId
+		});
+		return true;
+	}
+
+	async createPullRequestComment(request: {
+		owner: string;
+		repo: string;
+		pullRequestId: string;
+		text: string;
+	}) {
+		const pullRequestInfo = await this.client.request<any>(
+			`query FindPullRequest($owner:String!,$name:String!,$pullRequestId:Int!) {
+					repository(owner:$owner name:$name) {
+					  pullRequest(number: $pullRequestId) {
+						id
+					  }
+					}
+				  }`,
+			{
+				owner: request.owner,
+				name: request.repo,
+				pullRequestId: parseInt(request.pullRequestId, 10)
+			}
+		);
+
+		const prId = pullRequestInfo.repository.pullRequest.id;
+
+		const query = `mutation AddCommentToPullRequest($subjectId: String!, $body: String!) {
+				addComment(input: {subjectId: $subjectId, body:$body}) {
+				  clientMutationId
+				}
+			  }`;
+
+		const rsp = await this.client.request<any>(query, {
+			subjectId: prId,
+			body: request.text
+		});
+		return true;
+	}
+
+	async pullRequestTimelineQuery(
+		owner: string,
+		repo: string,
+		pullRequestId: string,
+		cursor?: string
+	): Promise<any> {
+		const cc = Logger.getCorrelationContext();
+
+		// If we are or will be over the rate limit, wait until it gets reset
+		if (
+			this._prTimelineQueryRateLimit !== undefined &&
+			this._prTimelineQueryRateLimit.remaining - this._prTimelineQueryRateLimit.cost < 0
+		) {
+			// TODO: Probably should send a notification to the webview here
+
+			// If we are currently paging, just give up and return what we have
+			if (cursor === undefined) return undefined;
+
+			await Functions.wait(this._prTimelineQueryRateLimit.resetAt.getTime() - new Date().getTime());
+		}
+
+		// TODO: Need to page if there are more than 100 review threads
+		try {
+			const query = `query pr($owner: String!, $name: String!, $pullRequestId: Int!) {
+				rateLimit {
+				  limit
+				  cost
+				  remaining
+				  resetAt
+				}
+				repository(name: $name, owner: $owner) {
+				  id
+				  pullRequest(number: $pullRequestId) {
+					id
+					body
+					baseRefName
+					author {
+					  login
+					  avatarUrl
+					}
+					createdAt
+					files {
+					  totalCount
+					}
+					headRefName
+					labels(first: 10) {
+					  nodes {
+						color
+						description
+						name
+					  }
+					}
+					number
+					state
+					timelineItems(first: 50) {
+					  totalCount
+					  pageInfo {
+						startCursor
+						endCursor
+						hasNextPage
+					  }
+					  __typename
+					  nodes {
+						... on UserBlockedEvent {
+						  __typename
+						}
+						... on AddedToProjectEvent {
+						  __typename
+						}
+						... on AssignedEvent {
+						  __typename
+						  actor {
+							login
+							avatarUrl
+						  }
+						  createdAt
+						}
+						... on AutomaticBaseChangeFailedEvent {
+						  __typename
+						}
+						... on AutomaticBaseChangeSucceededEvent {
+						  __typename
+						}
+						... on BaseRefChangedEvent {
+						  __typename
+						}
+						... on BaseRefForcePushedEvent {
+						  __typename
+						}
+						... on ClosedEvent {
+						  __typename
+						}
+						... on IssueComment {
+						  __typename
+						  author {
+							login
+							avatarUrl
+						  }
+						  bodyText
+						  createdAt
+						}
+						... on HeadRefRestoredEvent {
+						  __typename
+						}
+						... on HeadRefForcePushedEvent {
+						  __typename
+						  actor {
+							login
+							avatarUrl
+						  }
+						}
+						... on HeadRefDeletedEvent {
+						  __typename
+						  actor {
+							login
+							avatarUrl
+						  }
+						}
+						... on DisconnectedEvent {
+						  __typename
+						  id
+						}
+						... on DeploymentEnvironmentChangedEvent {
+						  __typename
+						  id
+						}
+						... on DeployedEvent {
+						  __typename
+						  id
+						}
+						... on DemilestonedEvent {
+						  __typename
+						  id
+						}
+						... on CrossReferencedEvent {
+						  __typename
+						  id
+						  actor {
+							login
+							avatarUrl
+						  }
+						}
+						... on ConvertedNoteToIssueEvent {
+						  __typename
+						  id
+						}
+						... on ConvertToDraftEvent {
+						  __typename
+						  actor {
+							login
+							avatarUrl
+						  }
+						}
+						... on ConnectedEvent {
+						  __typename
+						}
+						... on CommentDeletedEvent {
+						  __typename
+						  actor {
+							login
+							avatarUrl
+						  }
+						}
+						... on LabeledEvent {
+						  __typename
+						  label {
+							name
+							description
+							color
+						  }
+						  actor {
+							login
+							avatarUrl
+						  }
+						  createdAt
+						}
+						... on LockedEvent {
+						  __typename
+						}
+						... on MarkedAsDuplicateEvent {
+						  __typename
+						}
+						... on UnsubscribedEvent {
+						  __typename
+						}
+						... on UnpinnedEvent {
+						  __typename
+						}
+						... on UnmarkedAsDuplicateEvent {
+						  __typename
+						}
+						... on UnlockedEvent {
+						  __typename
+						}
+						... on UnlabeledEvent {
+						  __typename
+						  label {
+							color
+							name
+							description
+						  }
+						}
+						... on UnassignedEvent {
+						  __typename
+						}
+						... on TransferredEvent {
+						  __typename
+						}
+						... on SubscribedEvent {
+						  __typename
+						}
+						... on ReviewRequestedEvent {
+						  __typename
+						  actor {
+							login
+							avatarUrl
+						  }
+						}
+						... on ReviewRequestRemovedEvent {
+						  __typename
+						}
+						... on ReviewDismissedEvent {
+						  __typename
+						}
+						... on ReopenedEvent {
+						  __typename
+						}
+						... on RenamedTitleEvent {
+						  __typename
+						  actor {
+							login
+							avatarUrl
+						  }
+						  currentTitle
+						  previousTitle
+						  createdAt
+						}
+						... on RemovedFromProjectEvent {
+						  __typename
+						}
+						... on ReferencedEvent {
+						  __typename
+						}
+						... on ReadyForReviewEvent {
+						  __typename
+						}
+						... on PullRequestRevisionMarker {
+						  __typename
+						}
+						... on PullRequestReviewThread {
+						  __typename
+						}
+						... on PullRequestReview {
+						  __typename
+						  author {
+							login
+							avatarUrl
+						  }
+						  bodyText
+						  createdAt
+						  lastEditedAt
+						  body
+						  comments(first: 10) {
+							nodes {
+							  author {
+								login
+								avatarUrl
+							  }
+							  bodyText
+							  diffHunk
+							  body
+							  lastEditedAt
+							  createdAt
+							}
+						  }
+						}
+						... on PullRequestCommitCommentThread {
+						  __typename
+						}
+						... on PullRequestCommit {
+						  __typename
+						  commit {
+							changedFiles
+							id
+							message
+							messageBody
+							messageHeadline
+						  }
+						}
+						... on PinnedEvent {
+						  __typename
+						}
+						... on MovedColumnsInProjectEvent {
+						  __typename
+						}
+						... on MilestonedEvent {
+						  __typename
+						  actor {
+							login
+							avatarUrl
+						  }
+						}
+						... on MergedEvent {
+						  __typename
+						  actor {
+							login
+							avatarUrl
+						  }
+						  mergeRefName
+						}
+						... on MentionedEvent {
+						  __typename
+						  actor {
+							login
+							avatarUrl
+						  }
+						  createdAt
+						}
+					  }
+					}
+					milestone {
+					  title
+					  state
+					  number
+					  id
+					  description
+					}
+					participants(first: 10) {
+					  nodes {
+						avatarUrl(size: 16)
+					  }
+					}
+					assignees(first: 10) {
+					  nodes {
+						bio
+						avatarUrl(size: 16)
+					  }
+					}
+					mergeable
+					merged
+					mergedAt
+				  }
+				  rebaseMergeAllowed
+				  squashMergeAllowed
+				  mergeCommitAllowed
+				}
+			  }
+			  `;
+			const rsp = await this.client.request<any>(query, {
+				owner: owner,
+				name: repo,
+				pullRequestId: parseInt(pullRequestId, 10),
+				cursor: cursor
+			});
+
+			this._prTimelineQueryRateLimit = {
+				cost: rsp.rateLimit.cost,
+				limit: rsp.rateLimit.limit,
+				remaining: rsp.rateLimit.remaining,
+				resetAt: new Date(rsp.rateLimit.resetAt)
+			};
+
+			return rsp;
+		} catch (ex) {
+			Logger.error(ex, cc);
+
+			// If we are currently paging, just give up and return what we have
+			if (cursor !== undefined) return undefined;
+
+			throw ex;
+		}
+	}
 
 	async prQuery(
 		owner: string,

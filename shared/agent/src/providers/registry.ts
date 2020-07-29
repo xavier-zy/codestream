@@ -33,6 +33,8 @@ import {
 	FetchThirdPartyChannelsRequest,
 	FetchThirdPartyChannelsRequestType,
 	FetchThirdPartyChannelsResponse,
+	FetchThirdPartyPullRequestRequest,
+	FetchThirdPartyPullRequestRequestType,
 	MoveThirdPartyCardRequest,
 	MoveThirdPartyCardRequestType,
 	MoveThirdPartyCardResponse,
@@ -40,7 +42,9 @@ import {
 	RemoveEnterpriseProviderRequestType,
 	UpdateThirdPartyStatusRequest,
 	UpdateThirdPartyStatusRequestType,
-	UpdateThirdPartyStatusResponse
+	UpdateThirdPartyStatusResponse,
+	ExecuteThirdPartyRequestType,
+	ExecuteThirdPartyRequest
 } from "../protocol/agent.protocol";
 import { CodeStreamSession } from "../session";
 import { getProvider, getRegisteredProviders, log, lsp, lspHandler } from "../system";
@@ -50,7 +54,8 @@ import {
 	ProviderGetRepoInfoRequest,
 	ThirdPartyIssueProvider,
 	ThirdPartyPostProvider,
-	ThirdPartyProvider
+	ThirdPartyProvider,
+	ThirdPartyProviderSupportsPullRequests
 } from "./provider";
 
 // NOTE: You must include all new providers here, otherwise the webpack build will exclude them
@@ -358,6 +363,47 @@ export class ThirdPartyProviderRegistry {
 
 		const response = await pullRequestProvider.getRepoInfo(request);
 		return response;
+	}
+
+	@log()
+	@lspHandler(FetchThirdPartyPullRequestRequestType)
+	async getPullRequest(request: FetchThirdPartyPullRequestRequest) {
+		const provider = getProvider(request.providerId);
+		if (provider === undefined) {
+			throw new Error(`No registered provider for '${request.providerId}'`);
+		}
+
+		const pullRequestProvider = this.getPullRequestProvider(provider);
+		const response = await pullRequestProvider.getPullRequest(request);
+		return response;
+	}
+
+	@log()
+	@lspHandler(ExecuteThirdPartyRequestType)
+	async executeMethod(request: ExecuteThirdPartyRequest) {
+		const provider = getProvider(request.providerId);
+		if (provider === undefined) {
+			throw new Error(`No registered provider for '${request.providerId}'`);
+		}
+
+		const pullRequestProvider = this.getPullRequestProvider(provider);
+		const response = (pullRequestProvider as any)[request.method](request.params);
+		const result = await response;
+		return result;
+	}
+
+	private getPullRequestProvider(
+		provider: ThirdPartyProvider
+	): ThirdPartyIssueProvider & ThirdPartyProviderSupportsPullRequests {
+		const pullRequestProvider = provider as ThirdPartyIssueProvider;
+		if (
+			pullRequestProvider == null ||
+			typeof pullRequestProvider.supportsPullRequests !== "function" ||
+			!pullRequestProvider.supportsPullRequests()
+		) {
+			throw new Error(`Provider(${provider.name}) doesn't support pull requests`);
+		}
+		return pullRequestProvider;
 	}
 
 	getProviders(): ThirdPartyProvider[];

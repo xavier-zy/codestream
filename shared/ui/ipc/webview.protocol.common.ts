@@ -49,7 +49,8 @@ export enum WebviewPanels {
 	Integrations = "integrations",
 	GettingStarted = "gtting-started", // this is a typo but now baked into user data, so let's just leave it
 	NewPullRequest = "new-pull-request",
-	Flow = "flow"
+	Flow = "flow",
+	Tester = "tester"
 }
 
 // this is for mixpanel and maps the values from WebviewPanels to their

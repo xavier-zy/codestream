@@ -168,7 +168,7 @@ const PRAction = styled.span`
 
 const PRBadge = styled.span`
 	display: inline-block;
-	background: rgba(127, 127, 127, 0.4);
+	background: rgba(127, 127, 127, 0.25);
 	border-radius: 9px;
 	padding: 0 5px;
 	min-width: 18px;

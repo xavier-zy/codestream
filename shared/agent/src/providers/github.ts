@@ -208,15 +208,13 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 		let foo = {};
 		const timelineItems: any = [];
 		try {
-			let owner = "TeamCodeStream";
-			let repo = "vs-codestream";
-			let pullRequestId = "72";
 			let response;
+			const pullRequestNumber = await this.getPullRequestNumber(request.pullRequestId);
 			do {
 				response = await this.pullRequestTimelineQuery(
-					owner,
-					repo,
-					pullRequestId,
+					request.owner,
+					request.repo,
+					pullRequestNumber,
 					response &&
 						response.repository.pullRequest &&
 						response.repository.pullRequest.timelineItems.pageInfo.timelineItems &&
@@ -1087,10 +1085,24 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 		return true;
 	}
 
+	async getPullRequestNumber(id: string) {
+		const query = `query getNode($id: ID!){
+			node(id: $id) {
+			 ... on PullRequest {
+				number
+			  }
+			}
+		  }`;
+		const rsp = await this.client.request<any>(query, {
+			id: id
+		});
+		return rsp.node.number;
+	}
+
 	async pullRequestTimelineQuery(
 		owner: string,
 		repo: string,
-		pullRequestId: string,
+		pullRequestNumber: number,
 		cursor?: string
 	): Promise<any> {
 		const cc = Logger.getCorrelationContext();
@@ -1110,7 +1122,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 
 		// TODO: Need to page if there are more than 100 review threads
 		try {
-			const query = `query pr($owner: String!, $name: String!, $pullRequestId: Int!) {
+			const query = `query pr($owner: String!, $name: String!, $pullRequestNumber: Int!) {
 				rateLimit {
 				  limit
 				  cost
@@ -1119,7 +1131,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 				}
 				repository(name: $name, owner: $owner) {
 				  id
-				  pullRequest(number: $pullRequestId) {
+				  pullRequest(number: $pullRequestNumber) {
 					id
 					body
 					baseRefName
@@ -1423,6 +1435,9 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 					  nodes {
 						bio
 						avatarUrl(size: 16)
+						id
+						name
+						login
 					  }
 					}
 					mergeable
@@ -1431,16 +1446,20 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 					title
 					url
 					updatedAt
+					commits {
+					  totalCount
+					}
 				  }
 				  rebaseMergeAllowed
 				  squashMergeAllowed
 				  mergeCommitAllowed
 				}
-			  }`;
+			  }
+			  `;
 			const rsp = await this.client.request<any>(query, {
 				owner: owner,
 				name: repo,
-				pullRequestId: parseInt(pullRequestId, 10),
+				pullRequestNumber: pullRequestNumber,
 				cursor: cursor
 			});
 

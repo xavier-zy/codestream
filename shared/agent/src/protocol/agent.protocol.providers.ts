@@ -335,6 +335,8 @@ export interface FetchThirdPartyPullRequestRequest {
 	providerId: string;
 	providerTeamId?: string;
 	pullRequestId: string;
+	owner: string;
+	repo: string;
 }
 
 export interface FetchThirdPartyPullRequestResponse {}

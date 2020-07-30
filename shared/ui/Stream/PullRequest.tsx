@@ -21,67 +21,72 @@ import { HeadshotName } from "../src/components/HeadshotName";
 import Tag from "./Tag";
 import { setCurrentReview, setCurrentPullRequest } from "../store/context/actions";
 import CancelButton from "./CancelButton";
+import { useDidMount } from "../utilities/hooks";
+import { HostApi } from "../webview-api";
+import { RequestType } from "../vscode-jsonrpc.shim";
+import { FetchThirdPartyPullRequestRequestType } from "@codestream/protocols/agent";
+import { markdownify } from "./Markdowner";
 
-const pr = {
-	title: "Improve Jira Integration",
-	url: "https://github.com/TeamCodeStream/codestream/pull/225",
-	number: 23,
-	status: "merged",
-	createdAt: 1595990978000,
-	author: "pez",
-	numConversations: 3,
-	numCommits: 7,
-	numChecks: 12,
-	numFilesChanged: 3,
-	numActionCommits: 7,
-	sourceBranch: "feature/LR3KD2Lj",
-	destinationBranch: "develop",
-	linesAdded: 12,
-	linesDeleted: 13,
-	conversation: [
-		{
-			type: "description",
-			author: "pez",
-			createdAt: 1595990878000,
-			body: "to fix this jira integration we will have to work hard"
-		},
-		{
-			type: "activity",
-			author: "pez",
-			createdAt: 1595990878000,
-			body: "to fix this jira integration we will have to work hard"
-		},
-		{
-			type: "commit",
-			sha: "0205864ade43a6b6c734301a01906cebb8469f3b",
-			createdAt: 1595990878000,
-			author: "pez",
-			shortMessage:
-				"https://trello.com/c/xHJqoAz0/4251-need-to-strip-illegal-characters-out-of-branch-name"
-		},
-		{
-			type: "commit",
-			sha: "f0666774fe742e9d0499a7621c990024d75c289f",
-			createdAt: 1595990868000,
-			author: "pez",
-			shortMessage: "show 0 results if your test query has no results"
-		},
-		{
-			type: "comment",
-			author: "pez",
-			createdAt: 1595990978000,
-			body: "this is a test comment"
-		},
-		{
-			type: "foot"
-		},
-		{
-			type: "system",
-			body:
-				"Add more commits by pushing to the `feature/ZX3nEHk5-improve-jira-issue-inte` branch on `TeamCodeStream/codestream`."
-		}
-	]
-};
+// const pr = {
+// 	title: "Improve Jira Integration",
+// 	url: "https://github.com/TeamCodeStream/codestream/pull/225",
+// 	number: 23,
+// 	status: "merged",
+// 	createdAt: 1595990978000,
+// 	author: "pez",
+// 	numConversations: 3,
+// 	numCommits: 7,
+// 	numChecks: 12,
+// 	numFilesChanged: 3,
+// 	numActionCommits: 7,
+// 	sourceBranch: "feature/LR3KD2Lj",
+// 	destinationBranch: "develop",
+// 	linesAdded: 12,
+// 	linesDeleted: 13,
+// 	conversation: [
+// 		{
+// 			type: "description",
+// 			author: "pez",
+// 			createdAt: 1595990878000,
+// 			body: "to fix this jira integration we will have to work hard"
+// 		},
+// 		{
+// 			type: "activity",
+// 			author: "pez",
+// 			createdAt: 1595990878000,
+// 			body: "to fix this jira integration we will have to work hard"
+// 		},
+// 		{
+// 			type: "commit",
+// 			sha: "0205864ade43a6b6c734301a01906cebb8469f3b",
+// 			createdAt: 1595990878000,
+// 			author: "pez",
+// 			shortMessage:
+// 				"https://trello.com/c/xHJqoAz0/4251-need-to-strip-illegal-characters-out-of-branch-name"
+// 		},
+// 		{
+// 			type: "commit",
+// 			sha: "f0666774fe742e9d0499a7621c990024d75c289f",
+// 			createdAt: 1595990868000,
+// 			author: "pez",
+// 			shortMessage: "show 0 results if your test query has no results"
+// 		},
+// 		{
+// 			type: "comment",
+// 			author: "pez",
+// 			createdAt: 1595990978000,
+// 			body: "this is a test comment"
+// 		},
+// 		{
+// 			type: "foot"
+// 		},
+// 		{
+// 			type: "system",
+// 			body:
+// 				"Add more commits by pushing to the `feature/ZX3nEHk5-improve-jira-issue-inte` branch on `TeamCodeStream/codestream`."
+// 		}
+// 	]
+// };
 
 const Root = styled.div`
 	${Tab} {
@@ -381,12 +386,23 @@ export const PullRequest = () => {
 		const blameMap = team.settings ? team.settings.blameMap : {};
 		const skipGitEmailCheck = state.preferences.skipGitEmailCheck;
 		const addBlameMapEnabled = isFeatureEnabled(state, "addBlameMap");
-		return { currentUser, blameMap, team, skipGitEmailCheck, addBlameMapEnabled };
+
+		return {
+			currentUser,
+			currentPullRequestId: state.context.currentPullRequestId,
+			blameMap,
+			team,
+			skipGitEmailCheck,
+			addBlameMapEnabled
+		};
 	});
 
 	const [text, setText] = useState("");
 	const [activeTab, setActiveTab] = useState(1);
 	const [scmEmail, setScmEmail] = useState("");
+	const [pr, setPr] = useState<any>({
+		author: {}
+	});
 
 	const submit = () => {};
 
@@ -403,26 +419,59 @@ export const PullRequest = () => {
 		await dispatch(setCurrentPullRequest());
 	};
 
+	const onCommentClick = async e => {
+		// TODO crappy stuff ahead
+		const r = (await HostApi.instance.send(
+			new RequestType<any, any, any, any>("codestream/provider/generic"),
+			{
+				method: "createPullRequestComment",
+				providerId: "github*com",
+				params: {
+					// TODO get rid
+					owner: "TeamCodeStream",
+					repo: "vs-codestream",
+					pullRequestId: pr.number,
+					text: text
+				}
+			}
+		)) as any;
+		setText("");
+		fetch();
+	};
+
+	const fetch = async () => {
+		const r = (await HostApi.instance.send(FetchThirdPartyPullRequestRequestType, {
+			providerId: "github*com",
+			pullRequestId: derivedState.currentPullRequestId!,
+			// TODO get rid
+			owner: "TeamCodeStream",
+			repo: "vs-codestream"
+		})) as any;
+		setPr(r.repository.pullRequest);
+	};
+
+	useDidMount(() => {
+		fetch();
+	});
+
 	return (
 		<Root className="panel full-height">
 			<CreateCodemarkIcons narrow />
 			<PRHeader>
 				<PRTitle>
-					{pr.title}{" "}
-					<Link href="https://github.com/TeamCodeStream/codestream/pull/225">#{pr.number}</Link>
+					{pr.title} <Link href={pr.url}>#{pr.number}</Link>
 					<CancelButton onClick={exit} />
 				</PRTitle>
 				<PRStatus>
 					<PRStatusButton>
 						<Icon name={statusIcon} />
-						{pr.status}
+						{pr.state}
 					</PRStatusButton>
 					<PRStatusMessage>
-						<PRAuthor>{pr.author}</PRAuthor>
+						<PRAuthor>{pr.author.login}</PRAuthor>
 						<PRAction>
-							{action} {pr.numActionCommits} commits into{" "}
-							<PRBranch>{pr.destinationBranch}</PRBranch> from{" "}
-							<PRBranch>{pr.sourceBranch}</PRBranch>
+							{action} {pr.commits && pr.commits.totalCount} commits into{" "}
+							<PRBranch>{pr.baseRefName}</PRBranch> from <PRBranch>{pr.headRefName}</PRBranch>
 							<Icon
 								title="Copy"
 								placement="bottom"
@@ -466,50 +515,82 @@ export const PullRequest = () => {
 					<PRContent>
 						<div className="main-content">
 							<PRConversation>
-								{pr.conversation.map(item => {
-									switch (item.type) {
-										case "description":
-										case "comment":
-											return (
-												<PRComment>
-													<Headshot size={40} person={currentUser}></Headshot>
-													<PRCommentCard>
-														<PRCommentHeader>
-															<PRAuthor>{item.author}</PRAuthor> commented{" "}
-															<Timestamp time={item.createdAt!} relative />
-															<PRActionIcons>
-																<div className="member">Member</div>
-																<Icon name="smiley" />
-																<Icon name="kebab-horizontal" />
-															</PRActionIcons>
-														</PRCommentHeader>
-														<PRCommentBody>{item.body}</PRCommentBody>
-													</PRCommentCard>
-												</PRComment>
-											);
-										case "commit":
-											return (
-												<PRCommit>
-													<Icon name="git-commit" />
-													<Headshot size={20} person={currentUser}></Headshot>
-													<div className="monospace ellipsis">
-														<MarkdownText text={item.shortMessage || ""} />
-													</div>
-													<div className="monospace sha">{item.sha!.substr(0, 8)}</div>
-												</PRCommit>
-											);
-										case "foot":
-											return <PRFoot />;
-										case "system":
-											return (
-												<PRSystem>
-													<MarkdownText text={item.body || ""} />
-												</PRSystem>
-											);
-										default:
-											return null;
-									}
-								})}
+								<PRComment>
+									<Headshot size={40} person={currentUser}></Headshot>
+									<PRCommentCard>
+										<PRCommentHeader>
+											<PRAuthor>{pr.author.login}</PRAuthor> commented{" "}
+											<Timestamp time={pr.createdAt!} relative />
+											<PRActionIcons>
+												<div className="member">Member</div>
+												<Icon name="smiley" />
+												<Icon name="kebab-horizontal" />
+											</PRActionIcons>
+										</PRCommentHeader>
+										<PRCommentBody
+											dangerouslySetInnerHTML={{
+												__html: markdownify(pr.body)
+											}}
+										></PRCommentBody>
+									</PRCommentCard>
+								</PRComment>
+								{pr.timelineItems &&
+									pr.timelineItems.nodes.map(item => {
+										switch (item.__typename) {
+											// case "description":
+											case "IssueComment":
+												return (
+													<PRComment>
+														<Headshot size={40} person={currentUser}></Headshot>
+														<PRCommentCard>
+															<PRCommentHeader>
+																<PRAuthor>{item.author.login}</PRAuthor> commented{" "}
+																<Timestamp time={item.createdAt!} relative />
+																<PRActionIcons>
+																	<div className="member">Member</div>
+																	<Icon name="smiley" />
+																	<Icon name="kebab-horizontal" />
+																</PRActionIcons>
+															</PRCommentHeader>
+															<PRCommentBody>{item.bodyText}</PRCommentBody>
+														</PRCommentCard>
+													</PRComment>
+												);
+											case "PullRequestCommit":
+												return (
+													<PRCommit>
+														<Icon name="git-commit" />
+														<Headshot size={20} person={currentUser}></Headshot>
+														<div className="monospace ellipsis">
+															<MarkdownText text={item.commit.message || ""} />
+														</div>
+														<div className="monospace sha">
+															{item.sha && item.sha!.substr(0, 8)}
+														</div>
+													</PRCommit>
+												);
+											case "LabeledEvent":
+												return null;
+											case "UnlabeledEvent":
+												return null;
+											case "ReviewRequestedEvent":
+												return null;
+											case "RenamedTitleEvent":
+												return null;
+											case "MergedEvent":
+												return null;
+											// case "foot":
+											// 	return <PRFoot />;
+											// case "system":
+											// 	return (
+											// 		<PRSystem>
+											// 			<MarkdownText text={item.body || ""} />
+											// 		</PRSystem>
+											// 	);
+											default:
+												return null;
+										}
+									})}
 							</PRConversation>
 							<PRComment>
 								<Headshot size={40} person={currentUser}></Headshot>
@@ -540,7 +621,7 @@ export const PullRequest = () => {
 												placement="bottomRight"
 												delay={1}
 											>
-												<Button>Comment</Button>
+												<Button onClick={onCommentClick}>Comment</Button>
 											</Tooltip>
 										</div>
 									</ButtonRow>
@@ -564,8 +645,9 @@ export const PullRequest = () => {
 								<Icon name="gear" className="settings clickable" onClick={() => {}} />
 								Labels
 								<br />
-								<Tag tag={{ label: "bug", color: "red" }} />
-								<Tag tag={{ label: "dependencies", color: "blue" }} />
+								{pr &&
+									pr.labels &&
+									pr.labels.nodes.map(_ => <Tag tag={{ label: _.name, color: _.color }} />)}
 							</PRSection>
 							<PRSection>
 								Projects

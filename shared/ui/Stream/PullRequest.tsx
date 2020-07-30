@@ -24,7 +24,12 @@ import CancelButton from "./CancelButton";
 import { useDidMount } from "../utilities/hooks";
 import { HostApi } from "../webview-api";
 import { RequestType } from "../vscode-jsonrpc.shim";
-import { FetchThirdPartyPullRequestRequestType } from "@codestream/protocols/agent";
+import {
+	FetchThirdPartyPullRequestRequestType,
+	ExecuteThirdPartyTypedRequest,
+	MergeMethod,
+	MergePullRequestRequest
+} from "@codestream/protocols/agent";
 import { markdownify } from "./Markdowner";
 
 // const pr = {
@@ -457,21 +462,21 @@ export const PullRequest = () => {
 		fetch();
 	});
 
-	const mergePullRequest = async options => {
+	const mergePullRequest = async (options: { mergeMethod: MergeMethod }) => {
 		await HostApi.instance.send(
-			new RequestType<any, any, any, any>("codestream/provider/generic"),
+			new RequestType<ExecuteThirdPartyTypedRequest<MergePullRequestRequest>, boolean, any, any>(
+				"codestream/provider/generic"
+			),
 			{
 				method: "mergePullRequest",
 				providerId: "github*com",
 				params: {
-					// TODO get rid
-					owner: "TeamCodeStream",
-					repo: "vs-codestream",
-					pullRequestId: pr.number,
+					pullRequestId: derivedState.currentPullRequestId!,
 					mergeMethod: options.mergeMethod
 				}
 			}
 		);
+		fetch();
 	};
 
 	return (

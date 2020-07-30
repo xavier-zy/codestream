@@ -353,6 +353,7 @@ export interface ExecuteThirdPartyRequest {
 	providerId: string;
 	params: any;
 }
+
 export interface ExecuteThirdPartyResponse {
 	data: any;
 }
@@ -363,3 +364,37 @@ export const ExecuteThirdPartyRequestType = new RequestType<
 	void,
 	void
 >("codestream/provider/generic");
+
+export interface GetMyPullRequestsRequest {
+	owner?: string;
+	name?: string;
+}
+
+export interface GetMyPullRequestsResponse {
+	id: string;
+	url: string;
+	title: string;
+	createdAt: number;
+	author: {
+		login: string;
+		avatarUrl: string;
+	};
+	bodyText: string;
+	number: number;
+	state: string;
+	updatedAt: string;
+	lastEditedAt: string;
+}
+
+export type MergeMethod = "MERGE" | "SQUASH" | "REBASE";
+
+export interface MergePullRequestRequest {
+	pullRequestId: string;
+	mergeMethod: MergeMethod;
+}
+
+export interface ExecuteThirdPartyTypedRequest<T> {
+	method: string;
+	providerId: string;
+	params?: T;
+}

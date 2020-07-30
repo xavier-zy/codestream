@@ -27,7 +27,9 @@ import {
 	GitHubUser,
 	MoveThirdPartyCardRequest,
 	MoveThirdPartyCardResponse,
-	ThirdPartyProviderCard
+	ThirdPartyProviderCard,
+	GetMyPullRequestsResponse,
+	MergeMethod
 } from "../protocol/agent.protocol";
 import { CodemarkType, CSGitHubProviderInfo, CSReferenceLocation } from "../protocol/api.protocol";
 import { Arrays, Functions, log, lspProvider, Strings } from "../system";
@@ -907,9 +909,13 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 		return true;
 	}
 
-	async getMyPullRequests(request: { owner: string; repo: string }) {
+	async getMyPullRequests(request: {
+		owner: string;
+		repo: string;
+	}): Promise<GetMyPullRequestsResponse[]> {
 		let results: any = [];
-		const repoQuery = request.owner && request.repo ? `repo:${request.owner}/${request.repo} ` : "";
+		const repoQuery =
+			request && request.owner && request.repo ? `repo:${request.owner}/${request.repo} ` : "";
 		const searchByAuthorResult = await this.client.request<any>(
 			`query GetMyPullRequests {
 				search(query: "${repoQuery}is:pr is:open author:@me", type: ISSUE, last: 100) {
@@ -941,7 +947,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 		}
 		const searchByAssigneeResult = await this.client.request<any>(
 			`query GetPullRequestsAssignedToMe {
-				search(query: "repo:${request.owner}/${request.repo} is:pr is:open assignee:@me", type: ISSUE, last: 100) {
+				search(query: "${repoQuery}is:pr is:open assignee:@me", type: ISSUE, last: 100) {
 					edges {
 					  node {
 						... on PullRequest {
@@ -972,7 +978,9 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 		) {
 			results = results.concat(searchByAssigneeResult.search.edges.map((_: any) => _.node));
 		}
-		return results;
+		return results
+			.map((pr: { createdAt: string }) => ({ ...pr, createdAt: new Date(pr.createdAt).getTime() }))
+			.sort((a: { createdAt: number }, b: { createdAt: number }) => b.createdAt - a.createdAt);
 	}
 
 	async updatePullRequest(request: {
@@ -1012,31 +1020,37 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 		return true;
 	}
 
-	async mergePullRequest(request: {
-		owner: string;
-		repo: string;
-		pullRequestId: string;
-		mergeMethod: string;
-	}) {
-		const pullRequestInfo = await this.client.request<any>(
-			`query FindPullRequest($owner:String!,$name:String!,$pullRequestId:Int!) {
-					repository(owner:$owner name:$name) {
-					  pullRequest(number: $pullRequestId) {
-						id
-					  }
-					}
-				  }`,
-			{
-				owner: request.owner,
-				name: request.repo,
-				pullRequestId: parseInt(request.pullRequestId, 10)
-			}
-		);
+	async mergePullRequest(request: { pullRequestId: string; mergeMethod: MergeMethod }) {
+		// let owner;
+		// let name;
+		// if (request.owner == null && request.repo == null) {
+		// 	const data = await this.getRepoIdFromPullRequestId(request.pullRequestId);
+		// 	owner = data.owner;
+		// 	name = data.name;
+		// } else {
+		// 	owner = request.owner;
+		// 	name = request.repo;
+		// }
+		// const pullRequestNumber = await this.getPullRequestNumber(request.pullRequestId);
+		// const pullRequestInfo = await this.client.request<any>(
+		// 	`query FindPullRequest($owner:String!,$name:String!,$pullRequestNumber:Int!) {
+		// 			repository(owner:$owner name:$name) {
+		// 			  pullRequest(number: $pullRequestNumber) {
+		// 				id
+		// 			  }
+		// 			}
+		// 		  }`,
+		// 	{
+		// 		owner: owner,
+		// 		name: name,
+		// 		pullRequestNumber: pullRequestNumber
+		// 	}
+		// );
 		if (!request.mergeMethod) throw new Error("InvalidMergeMethod");
 		const mergeMethods = new Set(["MERGE", "REBASE", "SQUASH"]);
 		if (!mergeMethods.has(request.mergeMethod)) throw new Error("InvalidMergeMethod");
 
-		const prId = pullRequestInfo.repository.pullRequest.id;
+		// const prId = pullRequestInfo.repository.pullRequest.id;
 		const query = `mutation MergePullRequest($pullRequestId: String!) {
 			mergePullRequest(input: {pullRequestId: $pullRequestId, mergeMethod: ${request.mergeMethod}}) {
 				  clientMutationId
@@ -1044,7 +1058,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 			  }`;
 
 		const rsp = await this.client.request<any>(query, {
-			pullRequestId: prId
+			pullRequestId: request.pullRequestId
 		});
 		return true;
 	}
@@ -1085,8 +1099,42 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 		return true;
 	}
 
+	async getRepoIdFromPullRequestId(id: string) {
+		const query = `query GetRepoIdFromPullRequestId($id: [ID!]!) {
+			rateLimit {
+				limit
+				cost
+				remaining
+				resetAt
+			}
+			nodes(ids: $id) {
+			  ... on PullRequest {
+				repository {
+				  name
+				  owner {
+					login
+				  }
+				}
+			  }
+			}
+		  }`;
+		const rsp = await this.client.request<any>(query, {
+			id: id
+		});
+		return {
+			name: rsp.nodes[0].repository.name,
+			owner: rsp.nodes[0].repository.owner.login
+		};
+	}
+
 	async getPullRequestNumber(id: string) {
-		const query = `query getNode($id: ID!){
+		const query = `query getNode($id: ID!) {
+			rateLimit {
+				limit
+				cost
+				remaining
+				resetAt
+			}
 			node(id: $id) {
 			 ... on PullRequest {
 				number

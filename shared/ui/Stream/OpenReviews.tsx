@@ -15,6 +15,11 @@ import Timestamp from "./Timestamp";
 import { isConnected } from "../store/providers/reducer";
 import { RequestType } from "vscode-languageserver-protocol";
 import { HostApi } from "../webview-api";
+import {
+	ExecuteThirdPartyTypedRequest,
+	GetMyPullRequestsResponse,
+	GetMyPullRequestsRequest
+} from "@codestream/protocols/agent";
 
 export function OpenReviews() {
 	const dispatch = useDispatch();
@@ -44,18 +49,18 @@ export function OpenReviews() {
 		}
 
 		const fetchPrs = async () => {
-			const request = new RequestType<any, any, any, any>("codestream/provider/generic");
+			const request = new RequestType<
+				ExecuteThirdPartyTypedRequest<GetMyPullRequestsRequest>,
+				GetMyPullRequestsResponse[],
+				any,
+				any
+			>("codestream/provider/generic");
 			const response = await HostApi.instance.send(request, {
 				method: "getMyPullRequests",
-				providerId: "github*com",
-				params: {}
+				providerId: "github*com"
 			});
 			console.warn("GOT PRS: ", response);
-			setPrs(
-				response
-					.map(pr => ({ ...pr, createdAt: new Date(pr.createdAt).getTime() }))
-					.sort((a, b) => b.createdAt - a.createdAt)
-			);
+			setPrs(response);
 		};
 
 		if (derivedState.isGitHubConnected) {

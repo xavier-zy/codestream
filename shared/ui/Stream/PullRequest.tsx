@@ -369,11 +369,11 @@ const PRConversation = styled.div`
 	}
 `;
 
-// const PRFoot = styled.div`
-// 	border-top: 2px solid var(--base-border-color);
-// 	background: var(--app-background-color);
-// 	margin-top: 30px;
-// `;
+const PRFoot = styled.div`
+	border-top: 2px solid var(--base-border-color);
+	background: var(--app-background-color);
+	margin-top: 30px;
+`;
 
 const PRActionIcons = styled.div`
 	margin-left: auto;

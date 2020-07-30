@@ -4,7 +4,7 @@ import CancelButton from "./CancelButton";
 import Tooltip from "./Tooltip";
 import { Button } from "../src/components/Button";
 import { useDispatch, useSelector, shallowEqual } from "react-redux";
-import { setCurrentReview, setCurrentPullRequest } from "@codestream/webview/store/context/actions";
+import { setCurrentReview, setCreatePullRequest } from "@codestream/webview/store/context/actions";
 import { useDidMount } from "@codestream/webview/utilities/hooks";
 import { HostApi } from "..";
 import { fetchReview } from "@codestream/webview/store/reviews/actions";
@@ -340,7 +340,7 @@ export function ReviewNav(props: Props) {
 	};
 
 	const pr = async () => {
-		await dispatch(setCurrentPullRequest(props.reviewId));
+		await dispatch(setCreatePullRequest(props.reviewId));
 		await dispatch(setCurrentReview(""));
 		dispatch(openPanel(WebviewPanels.NewPullRequest));
 	};
@@ -595,7 +595,6 @@ export function ReviewNav(props: Props) {
 		return <ReviewForm isEditing editingReview={review} onClose={() => setIsEditing(false)} />;
 	}
 
-	if (1 == 0 + 1) return <PullRequest />;
 	return (
 		<Root className={derivedState.hideReviewInstructions ? "" : "tour-on"}>
 			{!derivedState.hideReviewInstructions && <ClearModal />}

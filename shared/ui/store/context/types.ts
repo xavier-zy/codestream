@@ -31,6 +31,7 @@ export enum ContextActionsType {
 	SetSpatialViewPRCommentsToggle = "@context/SetSpatialViewPRCommentsToggle",
 	RepositionCodemark = "@context/RepositionCodemark",
 	SetCurrentReview = "@context/SetCurrentReview",
+	SetCreatePullRequest = "@context/SetCreatePullRequest",
 	SetCurrentPullRequest = "@context/SetCurrentPullRequest"
 }
 

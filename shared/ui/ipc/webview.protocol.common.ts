@@ -91,7 +91,8 @@ export interface WebviewContext {
 	threadId?: string;
 	currentCodemarkId?: string;
 	currentReviewId?: string;
-	currentPullRequestReviewId?: string;
+	createPullRequestReviewId?: string;
+	currentPullRequestId?: string;
 	profileUserId?: string;
 	currentMarkerId?: string;
 	isRepositioning?: boolean;

@@ -52,7 +52,7 @@ import {
 	setCurrentReview,
 	setCurrentCodemark,
 	openPanel,
-	setCurrentPullRequest
+	setCreatePullRequest
 } from "@codestream/webview/store/context/actions";
 import { DelayedRender } from "@codestream/webview/Container/DelayedRender";
 import { getReview } from "@codestream/webview/store/reviews/reducer";
@@ -469,7 +469,7 @@ export const BaseReviewMenu = (props: BaseReviewMenuProps) => {
 				key: "pr",
 				action: () => {
 					const _action = async () => {
-						await dispatch(setCurrentPullRequest(review.id));
+						await dispatch(setCreatePullRequest(review.id));
 						await dispatch(setCurrentReview(""));
 						await dispatch(openPanel(WebviewPanels.NewPullRequest));
 					};

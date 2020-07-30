@@ -70,7 +70,7 @@ export const CreatePullRequestPanel = props => {
 		return {
 			providers: providers,
 			codeHostProviders: codeHostProviders,
-			reviewId: state.context.currentPullRequestReviewId,
+			reviewId: state.context.createPullRequestReviewId,
 			isConnectedToGitHub: isConnected(state, { name: "github" }),
 			isConnectedToGitLab: isConnected(state, { name: "gitlab" }),
 			isConnectedToGitHubEnterprise: isConnected(state, { name: "github_enterprise" }),

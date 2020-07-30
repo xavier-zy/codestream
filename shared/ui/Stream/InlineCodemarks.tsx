@@ -83,6 +83,7 @@ import { isFeatureEnabled } from "../store/apiVersioning/reducer";
 import { supportsIntegrations } from "../store/configs/reducer";
 import { Keybindings } from "./Keybindings";
 import { setNewPostEntry } from "../store/context/actions";
+import { PullRequest } from "./PullRequest";
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
@@ -119,6 +120,7 @@ interface Props {
 	isInVscode: boolean;
 	webviewFocused: boolean;
 	currentReviewId?: string;
+	currentPullRequestId?: string;
 	lightningCodeReviewsEnabled: boolean;
 	activePanel: WebviewPanels;
 	supportsIntegrations: boolean;
@@ -511,9 +513,14 @@ export class SimpleInlineCodemarks extends Component<Props, State> {
 	};
 
 	renderNoCodemarks = () => {
-		const { textEditorUri, currentReviewId, composeCodemarkActive } = this.props;
+		const {
+			textEditorUri,
+			currentReviewId,
+			currentPullRequestId,
+			composeCodemarkActive
+		} = this.props;
 
-		if (composeCodemarkActive || currentReviewId) return null;
+		if (composeCodemarkActive || currentReviewId || currentPullRequestId) return null;
 
 		if (textEditorUri === undefined) {
 			return (
@@ -623,11 +630,12 @@ export class SimpleInlineCodemarks extends Component<Props, State> {
 			lastVisibleLine,
 			documentMarkers,
 			metrics,
-			currentReviewId
+			currentReviewId,
+			currentPullRequestId
 		} = this.props;
 		const { numLinesVisible } = this.state;
 
-		if (currentReviewId) return null;
+		if (currentReviewId || currentPullRequestId) return null;
 
 		const numVisibleRanges = textEditorVisibleRanges.length;
 
@@ -1121,13 +1129,15 @@ export class SimpleInlineCodemarks extends Component<Props, State> {
 	}
 
 	render() {
-		const { currentReviewId, activePanel, composeCodemarkActive } = this.props;
+		const { currentReviewId, currentPullRequestId, composeCodemarkActive } = this.props;
 
 		const composeOpen = composeCodemarkActive ? true : false;
 		return (
 			<div ref={this.root} className={cx("panel inline-panel full-height")}>
 				{currentReviewId ? (
 					<ReviewNav reviewId={currentReviewId} composeOpen={composeOpen} />
+				) : currentPullRequestId ? (
+					<PullRequest />
 				) : (
 					this.renderHeader()
 				)}
@@ -1137,7 +1147,7 @@ export class SimpleInlineCodemarks extends Component<Props, State> {
 					<PRInfoModal onClose={() => this.setState({ showPRInfoModal: false })} />
 				)}
 				{this.state.isLoading ? null : this.renderCodemarks()}
-				{!currentReviewId && this.renderViewSelectors()}
+				{!currentReviewId && !currentPullRequestId && this.renderViewSelectors()}
 			</div>
 		);
 	}
@@ -1306,6 +1316,7 @@ const mapStateToProps = (state: CodeStreamState) => {
 		hasPRProvider,
 		currentStreamId: context.currentStreamId,
 		currentReviewId: context.currentReviewId,
+		currentPullRequestId: context.currentPullRequestId,
 		team: teams[context.currentTeamId],
 		viewInline: context.codemarksFileViewStyle === "inline",
 		viewHeadshots: configs.showHeadshots,

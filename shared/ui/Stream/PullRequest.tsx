@@ -19,7 +19,7 @@ import { MarkdownText } from "./MarkdownText";
 import { Link } from "./Link";
 import { HeadshotName } from "../src/components/HeadshotName";
 import Tag from "./Tag";
-import { setCurrentReview } from "../store/context/actions";
+import { setCurrentReview, setCurrentPullRequest } from "../store/context/actions";
 import CancelButton from "./CancelButton";
 
 const pr = {
@@ -400,7 +400,7 @@ export const PullRequest = () => {
 
 	const exit = async () => {
 		// FIXME
-		await dispatch(setCurrentReview());
+		await dispatch(setCurrentPullRequest());
 	};
 
 	return (

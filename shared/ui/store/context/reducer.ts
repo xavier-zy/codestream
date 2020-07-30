@@ -17,7 +17,8 @@ const initialState: ContextState = {
 	currentTeamId: "",
 	currentStreamId: "",
 	currentCodemarkId: undefined,
-	currentPullRequestReviewId: undefined,
+	createPullRequestReviewId: undefined,
+	currentPullRequestId: undefined,
 	isRepositioning: false,
 	issueProvider: undefined,
 	threadId: undefined,
@@ -110,28 +111,22 @@ export function reduceContext(
 			return { ...state, codemarksShowArchived: action.payload };
 		case ContextActionsType.SetCodemarksShowResolved:
 			return { ...state, codemarksShowResolved: action.payload };
-
 		case ContextActionsType.SetCurrentReview:
 			return { ...state, currentReviewId: action.payload.reviewId };
-
+		case ContextActionsType.SetCreatePullRequest:
+			return { ...state, createPullRequestReviewId: action.payload.reviewId };
 		case ContextActionsType.SetCurrentPullRequest:
-			return { ...state, currentPullRequestReviewId: action.payload.reviewId };
-
+			return { ...state, currentPullRequestId: action.payload.prId };
 		case ContextActionsType.SetProfileUser:
 			return { ...state, profileUserId: action.payload };
-
 		case ContextActionsType.SetSpatialViewPRCommentsToggle:
 			return { ...state, spatialViewShowPRComments: action.payload };
-
 		case ContextActionsType.SetShowFeedbackSmiley:
 			return { ...state, showFeedbackSmiley: action.payload };
-
 		case ContextActionsType.SetIssueProvider:
 			return { ...state, issueProvider: action.payload };
-
 		case ContextActionsType.SetNewPostEntryPoint:
 			return { ...state, newPostEntryPoint: action.payload };
-
 		case PreferencesActionsType.Set:
 		case PreferencesActionsType.Update: {
 			if (action.payload.showChannels) {

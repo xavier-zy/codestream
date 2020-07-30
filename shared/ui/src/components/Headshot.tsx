@@ -181,3 +181,26 @@ export function CodeStreamHeadshot(props: Omit<HeadshotProps, "person">) {
 		</Root>
 	);
 }
+
+export interface PRHeadshotProps {
+	person: {
+		avatarUrl: string;
+		login: string;
+	};
+	size?: number;
+	hardRightBorder?: boolean;
+	display?: string;
+	onClick?: React.MouseEventHandler;
+	className?: string;
+	addThumbsUp?: boolean;
+}
+
+export function PRHeadshot(props: PRHeadshotProps) {
+	const size = props.size || 16;
+
+	return (
+		<Root size={size} className={props.className} onClick={props.onClick}>
+			<Image size={size} src={props.person.avatarUrl} />
+		</Root>
+	);
+}

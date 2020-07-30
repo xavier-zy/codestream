@@ -106,8 +106,11 @@ export const setCurrentStream = (streamId?: string, threadId?: string) => (dispa
 export const setCurrentReview = (reviewId?: string) =>
 	action(ContextActionsType.SetCurrentReview, { reviewId });
 
-export const setCurrentPullRequest = (reviewId?: string) =>
-	action(ContextActionsType.SetCurrentPullRequest, { reviewId });
+export const setCreatePullRequest = (reviewId?: string) =>
+	action(ContextActionsType.SetCreatePullRequest, { reviewId });
+
+export const setCurrentPullRequest = (prId?: string) =>
+	action(ContextActionsType.SetCurrentPullRequest, { prId });
 
 export const setProfileUser = (userId?: string) =>
 	action(ContextActionsType.SetProfileUser, userId);

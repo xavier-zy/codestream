@@ -258,7 +258,6 @@ const PRSidebar = styled.div`
 	}
 	width: 225px;
 	padding-left: 20px;
-	padding-top: 20px;
 `;
 
 const PRComment = styled.div`
@@ -516,7 +515,7 @@ export const PullRequest = () => {
 				<PRStatus>
 					<PRStatusButton>
 						<Icon name={statusIcon} />
-						{pr.state}
+						{pr.state && pr.state.toLowerCase()}
 					</PRStatusButton>
 					<PRStatusMessage>
 						<PRAuthor>{pr.author.login}</PRAuthor>
@@ -577,7 +576,7 @@ export const PullRequest = () => {
 						<div className="main-content">
 							<PRConversation>
 								{/* in the GH data model, the top box is part of the pr, rather than the timeline */}
-								<PRComment>
+								<PRComment style={{ marginTop: "10px" }}>
 									<PRHeadshot person={pr.author} size={40} />
 									<PRCommentCard>
 										<PRCommentHeader>
@@ -683,6 +682,7 @@ export const PullRequest = () => {
 												return null;
 										}
 									})}
+								<PRFoot />
 							</PRConversation>
 							<PRComment>
 								{/* 

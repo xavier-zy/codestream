@@ -195,7 +195,7 @@ export interface PRHeadshotProps {
 	addThumbsUp?: boolean;
 }
 
-export function PRHeadshot(props: PRHeadshotProps) {
+export const PRHeadshot = styled((props: PRHeadshotProps) => {
 	const size = props.size || 16;
 	if (!props.person) return null;
 
@@ -204,4 +204,4 @@ export function PRHeadshot(props: PRHeadshotProps) {
 			<Image size={size} src={props.person.avatarUrl} />
 		</Root>
 	);
-}
+})``;

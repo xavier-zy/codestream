@@ -205,6 +205,10 @@ const PRPlusMinus = styled.div`
 const PRContent = styled.div`
 	margin: 0 20px 20px 20px;
 	display: flex;
+	// width: 100%;
+	.main-content {
+		flex-grow: 10;
+	}
 	@media only screen and (max-width: 630px) {
 		flex-direction: column;
 		.main-content {
@@ -255,7 +259,7 @@ const PRSidebar = styled.div`
 const PRComment = styled.div`
 	margin: 30px 0;
 	position: relative;
-	${Headshot} {
+	${PRHeadshot}, ${Headshot} {
 		position: absolute;
 		left: 0;
 		top: 0;
@@ -310,7 +314,7 @@ const PRCommit = styled.div`
 	display: flex;
 	margin: 10px 0;
 	padding-left: 65px;
-	${Headshot} {
+	${PRHeadshot} {
 		flex-shrink: 0;
 		margin: 0 10px;
 		// div,

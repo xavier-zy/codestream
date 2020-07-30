@@ -223,7 +223,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 						response.repository.pullRequest.timelineItems.pageInfo.endCursor
 				);
 				if (response === undefined) break;
-				foo = response.repository.pullRequest;
+				foo = response;
 
 				timelineItems.push(response.repository.pullRequest.timelineItems.nodes);
 			} while (response.repository.pullRequest.pageInfo.hasNextPage);
@@ -909,11 +909,11 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 		return true;
 	}
 
-	async getMyPullRequests(request: { owner: string; repo: string; userName: string }) {
+	async getMyPullRequests(request: { owner: string; repo: string }) {
 		let results: any = [];
 		const searchByAuthorResult = await this.client.request<any>(
 			`query GetMyPullRequests {
-				search(query: "repo:${request.owner}/${request.repo} is:pr is:open author:${request.userName}", type: ISSUE, last: 100) {
+				search(query: "repo:${request.owner}/${request.repo} is:pr is:open author:@me", type: ISSUE, last: 100) {
 				edges {
 				  node {
 					... on PullRequest {
@@ -942,7 +942,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 		}
 		const searchByAssigneeResult = await this.client.request<any>(
 			`query GetPullRequestsAssignedToMe {
-				search(query: "repo:${request.owner}/${request.repo} is:pr is:open assignee:${request.userName}", type: ISSUE, last: 100) {
+				search(query: "repo:${request.owner}/${request.repo} is:pr is:open assignee:@me", type: ISSUE, last: 100) {
 					edges {
 					  node {
 						... on PullRequest {
@@ -1427,13 +1427,15 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 					mergeable
 					merged
 					mergedAt
+					title
+					url
+					updatedAt
 				  }
 				  rebaseMergeAllowed
 				  squashMergeAllowed
 				  mergeCommitAllowed
 				}
-			  }
-			  `;
+			  }`;
 			const rsp = await this.client.request<any>(query, {
 				owner: owner,
 				name: repo,

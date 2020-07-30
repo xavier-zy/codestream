@@ -94,6 +94,7 @@ export const CreateCodemarkIcons = (props: Props) => {
 			lastVisibleLine,
 			textEditorVisibleRanges,
 			currentReviewId: context.currentReviewId,
+			currentPullRequestId: context.currentPullRequestId,
 			textEditorSelection: getCurrentSelection(editorContext),
 			metrics: editorContext.metrics || {},
 			openIconsOnLine,
@@ -218,6 +219,8 @@ export const CreateCodemarkIcons = (props: Props) => {
 		// we only add the title properties (which add tooltips)
 		// when you mouse over them for performance reasons. adding
 		// tool tips on each one slowed things down a lot. -Pez
+		const { currentReviewId, currentPullRequestId } = derivedState;
+		const showNonComments = !currentReviewId && !currentPullRequestId;
 		return (
 			<div
 				onMouseEnter={() => onMouseEnterHoverIcon(lineNum0)}
@@ -237,7 +240,7 @@ export const CreateCodemarkIcons = (props: Props) => {
 							align={{ offset: [-3, 10] }}
 							delay={1}
 						/>
-						{!derivedState.currentReviewId && (
+						{showNonComments && (
 							<Icon
 								onClick={e => handleClickPlus(e, CodemarkType.Issue, lineNum0)}
 								name="issue"
@@ -259,7 +262,7 @@ export const CreateCodemarkIcons = (props: Props) => {
 								delay={1}
 							/>
 						)}
-						{!derivedState.currentReviewId && (
+						{showNonComments && (
 							<Icon
 								onClick={e => handleClickPlus(e, CodemarkType.Link, lineNum0)}
 								name="link"

@@ -14,7 +14,7 @@ import copy from "copy-to-clipboard";
 import MessageInput from "./MessageInput";
 import Tooltip from "./Tooltip";
 import { Card } from "../src/components/Card";
-import { Headshot } from "../src/components/Headshot";
+import { Headshot, PRHeadshot } from "../src/components/Headshot";
 import { MarkdownText } from "./MarkdownText";
 import { Link } from "./Link";
 import { HeadshotName } from "../src/components/HeadshotName";
@@ -400,6 +400,8 @@ export const PullRequest = () => {
 	const [text, setText] = useState("");
 	const [activeTab, setActiveTab] = useState(1);
 	const [scmEmail, setScmEmail] = useState("");
+	const [ghRepo, setGhRepo] = useState<any>({});
+
 	const [pr, setPr] = useState<any>({
 		author: {}
 	});
@@ -447,12 +449,30 @@ export const PullRequest = () => {
 			owner: "TeamCodeStream",
 			repo: "vs-codestream"
 		})) as any;
+		setGhRepo(r.repository);
 		setPr(r.repository.pullRequest);
 	};
 
 	useDidMount(() => {
 		fetch();
 	});
+
+	const mergePullRequest = async options => {
+		await HostApi.instance.send(
+			new RequestType<any, any, any, any>("codestream/provider/generic"),
+			{
+				method: "mergePullRequest",
+				providerId: "github*com",
+				params: {
+					// TODO get rid
+					owner: "TeamCodeStream",
+					repo: "vs-codestream",
+					pullRequestId: pr.number,
+					mergeMethod: options.mergeMethod
+				}
+			}
+		);
+	};
 
 	return (
 		<Root className="panel full-height">
@@ -515,8 +535,9 @@ export const PullRequest = () => {
 					<PRContent>
 						<div className="main-content">
 							<PRConversation>
+								{/* in the GH data model, the top box is part of the pr, rather than the timeline */}
 								<PRComment>
-									<Headshot size={40} person={currentUser}></Headshot>
+									<PRHeadshot person={pr.author} size={40} />
 									<PRCommentCard>
 										<PRCommentHeader>
 											<PRAuthor>{pr.author.login}</PRAuthor> commented{" "}
@@ -541,7 +562,7 @@ export const PullRequest = () => {
 											case "IssueComment":
 												return (
 													<PRComment>
-														<Headshot size={40} person={currentUser}></Headshot>
+														<PRHeadshot person={item.author} size={40} />
 														<PRCommentCard>
 															<PRCommentHeader>
 																<PRAuthor>{item.author.login}</PRAuthor> commented{" "}
@@ -560,13 +581,11 @@ export const PullRequest = () => {
 												return (
 													<PRCommit>
 														<Icon name="git-commit" />
-														<Headshot size={20} person={currentUser}></Headshot>
+														<PRHeadshot size={40} person={item.author} />
 														<div className="monospace ellipsis">
 															<MarkdownText text={item.commit.message || ""} />
 														</div>
-														<div className="monospace sha">
-															{item.sha && item.sha!.substr(0, 8)}
-														</div>
+														<div className="monospace sha">{item.commit.abbreviatedOid}</div>
 													</PRCommit>
 												);
 											case "LabeledEvent":
@@ -592,6 +611,57 @@ export const PullRequest = () => {
 										}
 									})}
 							</PRConversation>
+							<PRComment>
+								{!pr.merged && pr.mergeable === "MERGEABLE" && (
+									<div>
+										<p>This branch has no conflicts with the base branch when rebasing</p>
+										<p>Rebase and merge can be performed automatically.</p>
+										<ButtonRow>
+											<div style={{ textAlign: "left", flexGrow: 1 }}>
+												<Tooltip
+													title={
+														<span>
+															All commits from this branch will be added to the base branch via a
+															merge commit.
+															{!ghRepo.mergeCommitAllowed && (
+																<small>Not enabled for this repository</small>
+															)}
+														</span>
+													}
+													placement="bottomRight"
+													delay={1}
+												>
+													<Button
+														disabled={!ghRepo.mergeCommitAllowed}
+														onClick={e => mergePullRequest({ mergeMethod: "MERGE" })}
+													>
+														Create a merge commit
+													</Button>
+												</Tooltip>
+												<Button
+													disabled={!ghRepo.squashMergeAllowed}
+													onClick={e => mergePullRequest({ mergeMethod: "SQUASH" })}
+												>
+													Squash and merge
+												</Button>
+												<Button
+													disabled={!ghRepo.rebaseMergeAllowed}
+													onClick={e => mergePullRequest({ mergeMethod: "REBASE" })}
+												>
+													Rebase and merge
+												</Button>
+											</div>
+										</ButtonRow>
+									</div>
+								)}
+								{!pr.merged && pr.mergeable === "CONFLICTING" && (
+									<div>This branch has conflicts that must be resolved</div>
+								)}
+								{!pr.merged && pr.mergeable === "UNKNOWN" && pr.state === "CLOSED" && (
+									<div>This pull request is closed</div>
+								)}
+								{pr.merged && <div>Pull request successfully merged and closed</div>}
+							</PRComment>
 							<PRComment>
 								<Headshot size={40} person={currentUser}></Headshot>
 								<PRCommentCard>
@@ -639,7 +709,9 @@ export const PullRequest = () => {
 								<Icon name="gear" className="settings clickable" onClick={() => {}} />
 								Assignees
 								<br />
-								<HeadshotName person={currentUser} />
+								{pr &&
+									pr.assignees &&
+									pr.assignees.nodes.map((_: any) => <PRHeadshot person={_} size={16} />)}
 							</PRSection>
 							<PRSection>
 								<Icon name="gear" className="settings clickable" onClick={() => {}} />
@@ -656,6 +728,7 @@ export const PullRequest = () => {
 							<PRSection>
 								Milestone
 								<Icon name="gear" className="settings clickable" onClick={() => {}} />
+								{pr && pr.milestone && <div>{pr.milestone.title}</div>}
 							</PRSection>
 							<PRSection>
 								Linked Issues
@@ -668,6 +741,10 @@ export const PullRequest = () => {
 							<PRSection>
 								Participants
 								<Icon name="gear" className="settings clickable" onClick={() => {}} />
+								<br />
+								{pr &&
+									pr.participants &&
+									pr.participants.nodes.map((_: any) => <PRHeadshot person={_} size={16} />)}
 							</PRSection>
 							<PRSection>
 								Lock Convo

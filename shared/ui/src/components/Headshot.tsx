@@ -197,6 +197,7 @@ export interface PRHeadshotProps {
 
 export function PRHeadshot(props: PRHeadshotProps) {
 	const size = props.size || 16;
+	if (!props.person) return null;
 
 	return (
 		<Root size={size} className={props.className} onClick={props.onClick}>

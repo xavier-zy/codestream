@@ -1386,6 +1386,9 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 							message
 							messageBody
 							messageHeadline
+							messageHeadlineHTML
+							messageBodyHTML
+							abbreviatedOid
 						  }
 						}
 						... on PinnedEvent {
@@ -1454,8 +1457,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 				  squashMergeAllowed
 				  mergeCommitAllowed
 				}
-			  }
-			  `;
+			  }`;
 			const rsp = await this.client.request<any>(query, {
 				owner: owner,
 				name: repo,

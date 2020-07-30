@@ -9,7 +9,7 @@ interface TabProps {
 	children: React.ReactNode;
 	disabled?: boolean;
 	onClick?: any;
-	id: string;
+	id?: string;
 	className?: string;
 }
 
@@ -41,7 +41,7 @@ export const Tab = styled((props: PropsWithChildren<TabProps>) => {
 	padding: 0 10px 10px 10px;
 	border-bottom: ${props => (props.active ? "1px solid var(--text-color)" : "none")};
 	color: ${props => (props.active ? "var(--text-color-highlight)" : "var(--text-color-subtle)")};
-	font-weight: ${props => (props.active ? "bold" : "normal")};
+	font-weight: ${props => (props.active ? "500" : "normal")};
 	margin-bottom: -1px;
 	&.cancel {
 		text-align: right;

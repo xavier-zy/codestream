@@ -27,6 +27,7 @@ import { ReviewForm } from "./ReviewForm";
 import { openPanel } from "../store/context/actions";
 import { WebviewPanels } from "@codestream/protocols/webview";
 import { isFeatureEnabled } from "../store/apiVersioning/reducer";
+import { PullRequest } from "./PullRequest";
 
 const NavHeader = styled.div`
 	// flex-grow: 0;
@@ -594,6 +595,7 @@ export function ReviewNav(props: Props) {
 		return <ReviewForm isEditing editingReview={review} onClose={() => setIsEditing(false)} />;
 	}
 
+	if (1 == 0 + 1) return <PullRequest />;
 	return (
 		<Root className={derivedState.hideReviewInstructions ? "" : "tour-on"}>
 			{!derivedState.hideReviewInstructions && <ClearModal />}

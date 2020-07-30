@@ -207,31 +207,41 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 	async getPullRequest(
 		request: FetchThirdPartyPullRequestRequest
 	): Promise<FetchThirdPartyPullRequestResponse> {
-		let foo = {};
+		let response = {};
 		const timelineItems: any = [];
 		try {
-			let response;
+			let timelineQueryResponse;
 			const pullRequestNumber = await this.getPullRequestNumber(request.pullRequestId);
+			let repoOwner;
+			let repoName;
+			if (request.owner == null && request.repo == null) {
+				const data = await this.getRepoOwnerFromPullRequestId(request.pullRequestId);
+				repoOwner = data.owner;
+				repoName = data.name;
+			} else {
+				repoOwner = request.owner;
+				repoName = request.repo;
+			}
 			do {
-				response = await this.pullRequestTimelineQuery(
-					request.owner,
-					request.repo,
+				timelineQueryResponse = await this.pullRequestTimelineQuery(
+					repoOwner,
+					repoName,
 					pullRequestNumber,
-					response &&
-						response.repository.pullRequest &&
-						response.repository.pullRequest.timelineItems.pageInfo.timelineItems &&
-						response.repository.pullRequest.timelineItems.pageInfo.endCursor
+					timelineQueryResponse &&
+						timelineQueryResponse.repository.pullRequest &&
+						timelineQueryResponse.repository.pullRequest.timelineItems.pageInfo &&
+						timelineQueryResponse.repository.pullRequest.timelineItems.pageInfo.endCursor
 				);
-				if (response === undefined) break;
-				foo = response;
+				if (timelineQueryResponse === undefined) break;
+				response = timelineQueryResponse;
 
-				timelineItems.push(response.repository.pullRequest.timelineItems.nodes);
-			} while (response.repository.pullRequest.pageInfo.hasNextPage);
+				timelineItems.push(timelineQueryResponse.repository.pullRequest.timelineItems.nodes);
+			} while (timelineQueryResponse.repository.pullRequest.timelineItems.pageInfo.hasNextPage);
 		} catch (ex) {
 			Logger.error(ex);
 		}
-		foo = { ...foo, timelineItems: timelineItems };
-		return foo as any;
+		response = { ...response, timelineItems: timelineItems };
+		return response as any;
 	}
 
 	@log()
@@ -880,34 +890,18 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 		return true;
 	}
 
-	async closePullRequest(request: { owner: string; repo: string; pullRequestId: string }) {
-		const pullRequestInfo = await this.client.request<any>(
-			`query FindPullRequest($owner:String!,$name:String!,$pullRequestId:Int!) {
-					repository(owner:$owner name:$name) {
-					  pullRequest(number: $pullRequestId) {
-						id
-					  }
-					}
-				  }`,
-			{
-				owner: request.owner,
-				name: request.repo,
-				pullRequestId: parseInt(request.pullRequestId, 10)
-			}
-		);
+	// async closePullRequest(request: { pullRequestId: string }) {
+	// 	const query = `mutation ClosePullRequest($pullRequestId: String!) {
+	// 		closePullRequest(input: {pullRequestId: $pullRequestId}) {
+	// 			  clientMutationId
+	// 			}
+	// 		  }`;
 
-		const prId = pullRequestInfo.repository.pullRequest.id;
-		const query = `mutation ClosePullRequest($pullRequestId: String!) {
-			closePullRequest(input: {pullRequestId: $pullRequestId}) {
-				  clientMutationId
-				}
-			  }`;
-
-		const rsp = await this.client.request<any>(query, {
-			pullRequestId: prId
-		});
-		return true;
-	}
+	// 	const rsp = await this.client.request<any>(query, {
+	// 		pullRequestId: request.pullRequestId
+	// 	});
+	// 	return true;
+	// }
 
 	async getMyPullRequests(request: {
 		owner: string;
@@ -1063,29 +1057,34 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 		return true;
 	}
 
-	async createPullRequestComment(request: {
-		owner: string;
-		repo: string;
-		pullRequestId: string;
-		text: string;
-	}) {
-		const pullRequestInfo = await this.client.request<any>(
-			`query FindPullRequest($owner:String!,$name:String!,$pullRequestId:Int!) {
-					repository(owner:$owner name:$name) {
-					  pullRequest(number: $pullRequestId) {
-						id
-					  }
-					}
-				  }`,
+	async createPullRequestCommentAndClose(request: { pullRequestId: string; text: string }) {
+		await this.client.request<any>(
+			`mutation AddCommentToPullRequest($pullRequestId: String!, $body:String!) {
+				addComment(input: {subjectId: $pullRequestId, body:$body}) {
+				  clientMutationId
+				}
+			  }`,
 			{
-				owner: request.owner,
-				name: request.repo,
-				pullRequestId: parseInt(request.pullRequestId, 10)
+				pullRequestId: request.pullRequestId,
+				body: request.text
 			}
 		);
 
-		const prId = pullRequestInfo.repository.pullRequest.id;
+		await this.client.request<any>(
+			`mutation ClosePullRequest($pullRequestId: String!) {
+			closePullRequest(input: {pullRequestId: $pullRequestId}) {
+				  clientMutationId
+				}
+			}`,
+			{
+				pullRequestId: request.pullRequestId
+			}
+		);
 
+		return true;
+	}
+
+	async createPullRequestComment(request: { pullRequestId: string; text: string }) {
 		const query = `mutation AddCommentToPullRequest($subjectId: String!, $body: String!) {
 				addComment(input: {subjectId: $subjectId, body:$body}) {
 				  clientMutationId
@@ -1093,13 +1092,13 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 			  }`;
 
 		const rsp = await this.client.request<any>(query, {
-			subjectId: prId,
+			subjectId: request.pullRequestId,
 			body: request.text
 		});
 		return true;
 	}
 
-	async getRepoIdFromPullRequestId(id: string) {
+	async getRepoOwnerFromPullRequestId(id: string) {
 		const query = `query GetRepoIdFromPullRequestId($id: [ID!]!) {
 			rateLimit {
 				limit
@@ -1152,7 +1151,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 		repo: string,
 		pullRequestNumber: number,
 		cursor?: string
-	): Promise<any> {
+	): Promise<FetchThirdPartyPullRequestResponse | undefined> {
 		const cc = Logger.getCorrelationContext();
 
 		// If we are or will be over the rate limit, wait until it gets reset

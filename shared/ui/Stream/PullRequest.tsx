@@ -25,8 +25,13 @@ import { useDidMount } from "../utilities/hooks";
 import { HostApi } from "../webview-api";
 import { RequestType } from "../vscode-jsonrpc.shim";
 import {
-	FetchThirdPartyPullRequestRequestType,
+	CloseAndCreatePullRequestCommentRequest as CreatePullRequestCommentAndCloseRequest,
+	CreatePullRequestCommentRequest,
 	ExecuteThirdPartyTypedRequest,
+	FetchThirdPartyPullRequestPullRequest,
+	ExecuteThirdPartyTypedType,
+	FetchThirdPartyPullRequestRequestType,
+	FetchThirdPartyPullRequestResponse,
 	MergeMethod,
 	MergePullRequestRequest
 } from "@codestream/protocols/agent";
@@ -302,11 +307,18 @@ const PRCommentBody = styled.div`
 	padding: 15px 0 5px 0;
 `;
 
-const PRCard = styled.div`
-	border: 1px solid var(--base-border-color);
-	background: var(--base-background-color);
-	margin-left: 60px;
-	padding: 15px 10px;
+// const PRCard = styled.div`
+// 	border: 1px solid var(--base-border-color);
+// 	background: var(--base-background-color);
+// 	margin-left: 60px;
+// 	padding: 15px 10px;
+// `;
+
+const PRStatusIcon = styled.div`
+	.icon {
+		flex-shrink: 0;
+		margin: 0 10px;
+	}
 `;
 
 const PRCommit = styled.div`
@@ -322,6 +334,7 @@ const PRCommit = styled.div`
 		// 	border-radius: 50%;
 		// }
 	}
+
 	.sha {
 		margin-left: auto;
 	}
@@ -357,11 +370,11 @@ const PRConversation = styled.div`
 	}
 `;
 
-const PRFoot = styled.div`
-	border-top: 2px solid var(--base-border-color);
-	background: var(--app-background-color);
-	margin-top: 30px;
-`;
+// const PRFoot = styled.div`
+// 	border-top: 2px solid var(--base-border-color);
+// 	background: var(--app-background-color);
+// 	margin-top: 30px;
+// `;
 
 const PRActionIcons = styled.div`
 	margin-left: auto;
@@ -379,13 +392,13 @@ const PRActionIcons = styled.div`
 	}
 `;
 
-const PRSystem = styled.div`
-	position: relative;
-	padding: 20px 0 0 0;
-	margin-left: 60px;
-	background: var(--app-background-color);
-	z-index: 3;
-`;
+// const PRSystem = styled.div`
+// 	position: relative;
+// 	padding: 20px 0 0 0;
+// 	margin-left: 60px;
+// 	background: var(--app-background-color);
+// 	z-index: 3;
+// `;
 
 export const PullRequest = () => {
 	const dispatch = useDispatch();
@@ -411,9 +424,11 @@ export const PullRequest = () => {
 	const [scmEmail, setScmEmail] = useState("");
 	const [ghRepo, setGhRepo] = useState<any>({});
 
-	const [pr, setPr] = useState<any>({
-		author: {}
-	});
+	const [pr, setPr] = useState<FetchThirdPartyPullRequestPullRequest>({
+		author: {},
+		files: {},
+		commits: {}
+	} as any);
 
 	const submit = () => {};
 
@@ -423,7 +438,7 @@ export const PullRequest = () => {
 
 	const statusIcon = "git-merge";
 
-	const action = pr.status == "merged" ? "merged " : "wants to merge ";
+	const action = pr.merged ? "merged " : "wants to merge ";
 
 	const exit = async () => {
 		// FIXME
@@ -431,21 +446,33 @@ export const PullRequest = () => {
 	};
 
 	const onCommentClick = async e => {
-		// TODO crappy stuff ahead
-		const r = (await HostApi.instance.send(
-			new RequestType<any, any, any, any>("codestream/provider/generic"),
+		await HostApi.instance.send(
+			new ExecuteThirdPartyTypedType<CreatePullRequestCommentRequest, any>(),
 			{
 				method: "createPullRequestComment",
 				providerId: "github*com",
 				params: {
-					// TODO get rid
-					owner: "TeamCodeStream",
-					repo: "vs-codestream",
-					pullRequestId: pr.number,
+					pullRequestId: derivedState.currentPullRequestId!,
 					text: text
 				}
 			}
-		)) as any;
+		);
+		setText("");
+		fetch();
+	};
+
+	const onCommentAndCloseClick = async e => {
+		await HostApi.instance.send(
+			new ExecuteThirdPartyTypedType<CreatePullRequestCommentAndCloseRequest, any>(),
+			{
+				method: "createPullRequestCommentAndClose",
+				providerId: "github*com",
+				params: {
+					pullRequestId: derivedState.currentPullRequestId!,
+					text: text
+				}
+			}
+		);
 		setText("");
 		fetch();
 	};
@@ -453,11 +480,8 @@ export const PullRequest = () => {
 	const fetch = async () => {
 		const r = (await HostApi.instance.send(FetchThirdPartyPullRequestRequestType, {
 			providerId: "github*com",
-			pullRequestId: derivedState.currentPullRequestId!,
-			// TODO get rid
-			owner: "TeamCodeStream",
-			repo: "vs-codestream"
-		})) as any;
+			pullRequestId: derivedState.currentPullRequestId!
+		})) as FetchThirdPartyPullRequestResponse;
 		setGhRepo(r.repository);
 		setPr(r.repository.pullRequest);
 	};
@@ -468,9 +492,7 @@ export const PullRequest = () => {
 
 	const mergePullRequest = async (options: { mergeMethod: MergeMethod }) => {
 		await HostApi.instance.send(
-			new RequestType<ExecuteThirdPartyTypedRequest<MergePullRequestRequest>, boolean, any, any>(
-				"codestream/provider/generic"
-			),
+			new ExecuteThirdPartyTypedType<MergePullRequestRequest, boolean>(),
 			{
 				method: "mergePullRequest",
 				providerId: "github*com",
@@ -506,7 +528,7 @@ export const PullRequest = () => {
 								placement="bottom"
 								name="copy"
 								className="clickable"
-								onClick={e => copy(pr.sourceBranch)}
+								onClick={e => copy(pr.baseRefName)}
 							/>
 						</PRAction>
 						<Timestamp time={pr.createdAt} relative />
@@ -516,27 +538,37 @@ export const PullRequest = () => {
 					<Tab onClick={e => setActiveTab(1)} active={activeTab == 1}>
 						<Icon name="comment" />
 						<span className="wide-text">Conversation</span>
-						<PRBadge>{pr.numConversations}</PRBadge>
+						<PRBadge>
+							{pr.timelineItems && pr.timelineItems.nodes
+								? pr.timelineItems.nodes.filter(
+										_ => _.__typename && _.__typename.indexOf("Comment") > -1
+								  ).length
+								: 0}
+						</PRBadge>
 					</Tab>
 					<Tab onClick={e => setActiveTab(2)} active={activeTab == 2}>
 						<Icon name="git-commit" />
 						<span className="wide-text">Commits</span>
-						<PRBadge>{pr.numCommits}</PRBadge>
+						<PRBadge>{pr.commits.totalCount}</PRBadge>
 					</Tab>
+					{/*
 					<Tab onClick={e => setActiveTab(3)} active={activeTab == 3}>
 						<Icon name="check" />
 						<span className="wide-text">Checks</span>
 						<PRBadge>{pr.numChecks}</PRBadge>
 					</Tab>
+					 */}
 					<Tab onClick={e => setActiveTab(4)} active={activeTab == 4}>
 						<Icon name="plus-minus" />
 						<span className="wide-text">Files Changed</span>
-						<PRBadge>{pr.numFilesChanged}</PRBadge>
+						<PRBadge>{pr.files.totalCount}</PRBadge>
 					</Tab>
+					{/* 
 					<PRPlusMinus>
 						<span className="added">+{pr.linesAdded}</span>{" "}
 						<span className="deleted">-{pr.linesDeleted}</span>
 					</PRPlusMinus>
+					*/}
 				</Tabs>
 			</PRHeader>
 			<ScrollBox>
@@ -565,13 +597,13 @@ export const PullRequest = () => {
 									</PRCommentCard>
 								</PRComment>
 								{pr.timelineItems &&
-									pr.timelineItems.nodes.map(item => {
+									pr.timelineItems.nodes.map((item, index) => {
 										switch (item.__typename) {
 											// case "description":
 											case "IssueComment":
 												return (
-													<PRComment>
-														<PRHeadshot person={item.author} size={40} />
+													<PRComment key={index}>
+														<PRHeadshot key={index} size={40} person={item.author} />
 														<PRCommentCard>
 															<PRCommentHeader>
 																<PRAuthor>{item.author.login}</PRAuthor> commented{" "}
@@ -586,11 +618,43 @@ export const PullRequest = () => {
 														</PRCommentCard>
 													</PRComment>
 												);
+											case "PullRequestReview": {
+												return (
+													<PRComment key={index}>
+														<PRHeadshot key={index} size={40} person={item.author} />
+														<PRCommentCard>
+															<PRCommentHeader>
+																<PRAuthor>{item.author.login}</PRAuthor> commented{" "}
+																<Timestamp time={item.createdAt!} relative />
+																<PRActionIcons>
+																	<div className="member">Member</div>
+																	<Icon name="smiley" />
+																	<Icon name="kebab-horizontal" />
+																</PRActionIcons>
+															</PRCommentHeader>
+															<PRCommentBody>
+																{item.bodyText}
+																{item.comments &&
+																	item.comments.nodes &&
+																	item.comments.nodes.map((_, index2) => {
+																		return (
+																			<>
+																				{_.diffHunk}
+																				<br />
+																				{_.bodyText}
+																			</>
+																		);
+																	})}
+															</PRCommentBody>
+														</PRCommentCard>
+													</PRComment>
+												);
+											}
 											case "PullRequestCommit":
 												return (
-													<PRCommit>
+													<PRCommit key={index}>
 														<Icon name="git-commit" />
-														<PRHeadshot size={16} person={item.commit.author} />
+														<PRHeadshot key={index} size={16} person={item.commit.author} />
 														<div className="monospace ellipsis">
 															<MarkdownText text={item.commit.message || ""} />
 														</div>
@@ -621,55 +685,63 @@ export const PullRequest = () => {
 									})}
 							</PRConversation>
 							<PRComment>
-								{!pr.merged && pr.mergeable === "MERGEABLE" && (
-									<div>
-										<p>This branch has no conflicts with the base branch when rebasing</p>
-										<p>Rebase and merge can be performed automatically.</p>
-										<ButtonRow>
-											<div style={{ textAlign: "left", flexGrow: 1 }}>
-												<Tooltip
-													title={
-														<span>
-															All commits from this branch will be added to the base branch via a
-															merge commit.
-															{!ghRepo.mergeCommitAllowed && (
-																<small>Not enabled for this repository</small>
-															)}
-														</span>
-													}
-													placement="bottomRight"
-													delay={1}
-												>
-													<Button
-														disabled={!ghRepo.mergeCommitAllowed}
-														onClick={e => mergePullRequest({ mergeMethod: "MERGE" })}
+								{/* 
+							<PRStatusIcon>
+									<Icon name={statusIcon}  />
+								</PRStatusIcon>
+								*/}
+								<PRCommentCard>
+									{!pr.merged && pr.mergeable === "MERGEABLE" && pr.state !== "CLOSED" && (
+										<div>
+											<p>This branch has no conflicts with the base branch when rebasing</p>
+											<p>Rebase and merge can be performed automatically.</p>
+											<ButtonRow>
+												<div style={{ textAlign: "left", flexGrow: 1 }}>
+													<Tooltip
+														title={
+															<span>
+																All commits from this branch will be added to the base branch via a
+																merge commit.
+																{!ghRepo.mergeCommitAllowed && (
+																	<small>Not enabled for this repository</small>
+																)}
+															</span>
+														}
+														placement="bottomRight"
+														delay={1}
 													>
-														Create a merge commit
+														<Button
+															disabled={!ghRepo.mergeCommitAllowed}
+															onClick={e => mergePullRequest({ mergeMethod: "MERGE" })}
+														>
+															Create a merge commit
+														</Button>
+													</Tooltip>
+													<Button
+														disabled={!ghRepo.squashMergeAllowed}
+														onClick={e => mergePullRequest({ mergeMethod: "SQUASH" })}
+													>
+														Squash and merge
 													</Button>
-												</Tooltip>
-												<Button
-													disabled={!ghRepo.squashMergeAllowed}
-													onClick={e => mergePullRequest({ mergeMethod: "SQUASH" })}
-												>
-													Squash and merge
-												</Button>
-												<Button
-													disabled={!ghRepo.rebaseMergeAllowed}
-													onClick={e => mergePullRequest({ mergeMethod: "REBASE" })}
-												>
-													Rebase and merge
-												</Button>
-											</div>
-										</ButtonRow>
-									</div>
-								)}
-								{!pr.merged && pr.mergeable === "CONFLICTING" && (
-									<div>This branch has conflicts that must be resolved</div>
-								)}
-								{!pr.merged && pr.mergeable === "UNKNOWN" && pr.state === "CLOSED" && (
-									<div>This pull request is closed</div>
-								)}
-								{pr.merged && <div>Pull request successfully merged and closed</div>}
+													<Button
+														disabled={!ghRepo.rebaseMergeAllowed}
+														onClick={e => mergePullRequest({ mergeMethod: "REBASE" })}
+													>
+														Rebase and merge
+													</Button>
+												</div>
+											</ButtonRow>
+										</div>
+									)}
+									{!pr.merged && pr.mergeable === "CONFLICTING" && (
+										<div>This branch has conflicts that must be resolved</div>
+									)}
+									{!pr.merged && pr.mergeable === "UNKNOWN" && pr.state === "CLOSED" && (
+										<div>This pull request is closed</div>
+									)}
+									{!pr.merged && pr.state === "CLOSED" && <div>Pull request is closed</div>}
+									{pr.merged && <div>Pull request successfully merged and closed</div>}
+								</PRCommentCard>
 							</PRComment>
 							<PRComment>
 								<Headshot size={40} person={currentUser}></Headshot>
@@ -687,7 +759,7 @@ export const PullRequest = () => {
 									</div>
 									<ButtonRow>
 										<div style={{ textAlign: "right", flexGrow: 1 }}>
-											<Button>Close and comment</Button>
+											<Button onClick={onCommentAndCloseClick}>Close and comment</Button>
 											<Tooltip
 												title={
 													<span>

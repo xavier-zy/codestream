@@ -43,7 +43,7 @@ import {
 	UpdateThirdPartyStatusRequest,
 	UpdateThirdPartyStatusRequestType,
 	UpdateThirdPartyStatusResponse,
-	ExecuteThirdPartyRequestType,
+	ExecuteThirdPartyRequestUntypedType,
 	ExecuteThirdPartyRequest
 } from "../protocol/agent.protocol";
 import { CodeStreamSession } from "../session";
@@ -379,7 +379,7 @@ export class ThirdPartyProviderRegistry {
 	}
 
 	@log()
-	@lspHandler(ExecuteThirdPartyRequestType)
+	@lspHandler(ExecuteThirdPartyRequestUntypedType)
 	async executeMethod(request: ExecuteThirdPartyRequest) {
 		const provider = getProvider(request.providerId);
 		if (provider === undefined) {

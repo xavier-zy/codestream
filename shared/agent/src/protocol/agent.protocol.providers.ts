@@ -335,11 +335,97 @@ export interface FetchThirdPartyPullRequestRequest {
 	providerId: string;
 	providerTeamId?: string;
 	pullRequestId: string;
-	owner: string;
-	repo: string;
+
+	/**
+	 * in the GitHub world, this is `TeamCodeStream` in https://github.com/TeamCodeStream/codestream
+	 */
+	owner?: string;
+	/**
+	 * in the GitHub world, this is `codestream` in https://github.com/TeamCodeStream/codestream
+	 */
+	repo?: string;
 }
 
-export interface FetchThirdPartyPullRequestResponse {}
+export interface FetchThirdPartyPullRequestPullRequest {
+	id: string;
+	body: string;
+	baseRefName: string;
+	author: {
+		login: string;
+		avatarUrl: string;
+	};
+	createdAt: string;
+	files: {
+		totalCount: number;
+	};
+	headRefName: string;
+	labels: {
+		nodes: {
+			color: string;
+			description: string;
+			name: string;
+		}[];
+	};
+	number: number;
+	state: string;
+	timelineItems: {
+		__typename: string;
+		totalCount: number;
+		pageInfo: {
+			startCursor: string;
+			endCursor: string;
+			hasNextPage: boolean;
+		};
+		nodes: any[];
+	};
+	milestone: {
+		title: string;
+		state: string;
+		number: number;
+		id: string;
+		description: string;
+	};
+	participants: {
+		nodes: {
+			avatarUrl: string;
+		}[];
+	};
+	assignees: {
+		nodes: {
+			avatarUrl: string;
+			id: string;
+			name: string;
+			login: string;
+		}[];
+	};
+	mergeable: string;
+	merged: boolean;
+	mergedAt: string;
+	title: string;
+	url: string;
+	updatedAt: string;
+	commits: {
+		totalCount: number;
+	};
+}
+export interface FetchThirdPartyPullRequestRepository {
+	id: string;
+	rebaseMergeAllowed: boolean;
+	squashMergeAllowed: boolean;
+	mergeCommitAllowed: boolean;
+
+	pullRequest: FetchThirdPartyPullRequestPullRequest;
+}
+
+export interface FetchThirdPartyPullRequestResponse {
+	rateLimit: {
+		limit: any;
+		cost: any;
+		remaining: any;
+		resetAt: any;
+	};
+	repository: FetchThirdPartyPullRequestRepository;
+}
 
 export const FetchThirdPartyPullRequestRequestType = new RequestType<
 	FetchThirdPartyPullRequestRequest,
@@ -358,12 +444,23 @@ export interface ExecuteThirdPartyResponse {
 	data: any;
 }
 
-export const ExecuteThirdPartyRequestType = new RequestType<
+export const ExecuteThirdPartyRequestUntypedType = new RequestType<
 	ExecuteThirdPartyRequest,
 	ExecuteThirdPartyResponse,
 	void,
 	void
 >("codestream/provider/generic");
+
+export class ExecuteThirdPartyTypedType<Req, Res> extends RequestType<
+	ExecuteThirdPartyTypedRequest<Req>,
+	Res,
+	any,
+	any
+> {
+	constructor() {
+		super("codestream/provider/generic");
+	}
+}
 
 export interface GetMyPullRequestsRequest {
 	owner?: string;
@@ -391,6 +488,16 @@ export type MergeMethod = "MERGE" | "SQUASH" | "REBASE";
 export interface MergePullRequestRequest {
 	pullRequestId: string;
 	mergeMethod: MergeMethod;
+}
+
+export interface CreatePullRequestCommentRequest {
+	pullRequestId: string;
+	text: string;
+}
+
+export interface CloseAndCreatePullRequestCommentRequest {
+	pullRequestId: string;
+	text: string;
 }
 
 export interface ExecuteThirdPartyTypedRequest<T> {

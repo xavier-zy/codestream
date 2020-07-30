@@ -19,6 +19,8 @@ import { MarkdownText } from "./MarkdownText";
 import { Link } from "./Link";
 import { HeadshotName } from "../src/components/HeadshotName";
 import Tag from "./Tag";
+import { setCurrentReview } from "../store/context/actions";
+import CancelButton from "./CancelButton";
 
 const pr = {
 	title: "Improve Jira Integration",
@@ -114,6 +116,12 @@ const PRTitle = styled.div`
 			color: var(--text-color-info);
 			opacity: 1;
 		}
+	}
+	.cancel-button {
+		position: absolute;
+		top: 20px;
+		right: 20px;
+		opacity: 1;
 	}
 `;
 
@@ -390,6 +398,11 @@ export const PullRequest = () => {
 
 	const action = pr.status == "merged" ? "merged " : "wants to merge ";
 
+	const exit = async () => {
+		// FIXME
+		await dispatch(setCurrentReview());
+	};
+
 	return (
 		<Root className="panel full-height">
 			<CreateCodemarkIcons narrow />
@@ -397,6 +410,7 @@ export const PullRequest = () => {
 				<PRTitle>
 					{pr.title}{" "}
 					<Link href="https://github.com/TeamCodeStream/codestream/pull/225">#{pr.number}</Link>
+					<CancelButton onClick={exit} />
 				</PRTitle>
 				<PRStatus>
 					<PRStatusButton>

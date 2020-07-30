@@ -581,7 +581,7 @@ export const PullRequest = () => {
 												return (
 													<PRCommit>
 														<Icon name="git-commit" />
-														<PRHeadshot size={40} person={item.author} />
+														<PRHeadshot size={16} person={item.commit.author} />
 														<div className="monospace ellipsis">
 															<MarkdownText text={item.commit.message || ""} />
 														</div>

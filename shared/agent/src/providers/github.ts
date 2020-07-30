@@ -1382,6 +1382,9 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 						  __typename
 						  commit {
 							changedFiles
+							author{
+							  avatarUrl
+							}
 							id
 							message
 							messageBody

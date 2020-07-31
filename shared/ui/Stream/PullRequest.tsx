@@ -100,6 +100,7 @@ export const PullRequest = () => {
 	const [text, setText] = useState("");
 	const [activeTab, setActiveTab] = useState(1);
 	const [ghRepo, setGhRepo] = useState<any>({});
+	const [isLoadingPR, setIsLoadingPR] = useState(false);
 	const [isLoadingComment, setIsLoadingComment] = useState(false);
 	const [isLoadingCommentAndClose, setIsLoadingCommentAndClose] = useState(false);
 
@@ -145,12 +146,14 @@ export const PullRequest = () => {
 	};
 
 	const fetch = async () => {
+		setIsLoadingPR(true);
 		const r = (await HostApi.instance.send(FetchThirdPartyPullRequestRequestType, {
 			providerId: "github*com",
 			pullRequestId: derivedState.currentPullRequestId!
 		})) as FetchThirdPartyPullRequestResponse;
 		setGhRepo(r.repository);
 		setPr(r.repository.pullRequest);
+		setIsLoadingPR(false);
 		setIsLoadingComment(false);
 	};
 
@@ -191,7 +194,12 @@ export const PullRequest = () => {
 				<PRHeader>
 					<PRTitle>
 						{pr.title} <Link href={pr.url}>#{pr.number}</Link>
-						<CancelButton onClick={exit} />
+						<Icon
+							onClick={fetch}
+							className={`reload-button clickable ${isLoadingPR ? "spin" : "spinnable"}`}
+							name="sync"
+						/>
+						<CancelButton className="clickable" onClick={exit} />
 					</PRTitle>
 					<PRStatus>
 						<PRStatusButton>
@@ -202,7 +210,7 @@ export const PullRequest = () => {
 							<PRAuthor>{pr.author.login}</PRAuthor>
 							<PRAction>
 								{action} {pr.commits && pr.commits.totalCount} commits into{" "}
-								<PRBranch>{pr.baseRefName}</PRBranch> from <PRBranch>{pr.headRefName}</PRBranch>
+								<PRBranch>{pr.baseRefName}</PRBranch> from <PRBranch>{pr.headRefName}</PRBranch>{" "}
 								<Icon
 									title="Copy"
 									placement="bottom"

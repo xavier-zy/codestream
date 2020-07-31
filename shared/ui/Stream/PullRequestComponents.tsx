@@ -41,9 +41,7 @@ export const PRHeader = styled.div`
 
 export const PRTitle = styled.div`
 	font-size: 20px;
-	span {
-		opacity: 0.5;
-	}
+	padding-right: 50px;
 	a {
 		color: var(--text-color);
 		opacity: 0.5;
@@ -57,7 +55,17 @@ export const PRTitle = styled.div`
 		position: absolute;
 		top: 20px;
 		right: 20px;
-		opacity: 1;
+		opacity: 0.7 !important;
+		font-size: 11px !important; // to match the spinnable icon
+		line-height: 10px !important;
+		vertical-align: 3px;
+	}
+	.reload-button {
+		display: inline-block;
+		position: absolute !important;
+		top: 20px;
+		right: 45px;
+		opacity: 0.7;
 	}
 `;
 
@@ -184,7 +192,7 @@ export const PRSidebar = styled.div`
 			width: 1fr;
 			min-width: 150px;
 			margin: 0 10px 10px 0;
-			border: 1px solid var(--base-border-color);
+			border: 1px solid var(--base-border-color) !important;
 			padding: 5px;
 		}
 	}

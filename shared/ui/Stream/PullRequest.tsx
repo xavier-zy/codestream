@@ -58,67 +58,9 @@ import {
 } from "./PullRequestComponents";
 import { ButtonRow } from "./StatusPanel";
 import { PullRequestTimelineItems } from "./PullRequestTimelineItems";
-
-// const pr = {
-// 	title: "Improve Jira Integration",
-// 	url: "https://github.com/TeamCodeStream/codestream/pull/225",
-// 	number: 23,
-// 	status: "merged",
-// 	createdAt: 1595990978000,
-// 	author: "pez",
-// 	numConversations: 3,
-// 	numCommits: 7,
-// 	numChecks: 12,
-// 	numFilesChanged: 3,
-// 	numActionCommits: 7,
-// 	sourceBranch: "feature/LR3KD2Lj",
-// 	destinationBranch: "develop",
-// 	linesAdded: 12,
-// 	linesDeleted: 13,
-// 	conversation: [
-// 		{
-// 			type: "description",
-// 			author: "pez",
-// 			createdAt: 1595990878000,
-// 			body: "to fix this jira integration we will have to work hard"
-// 		},
-// 		{
-// 			type: "activity",
-// 			author: "pez",
-// 			createdAt: 1595990878000,
-// 			body: "to fix this jira integration we will have to work hard"
-// 		},
-// 		{
-// 			type: "commit",
-// 			sha: "0205864ade43a6b6c734301a01906cebb8469f3b",
-// 			createdAt: 1595990878000,
-// 			author: "pez",
-// 			shortMessage:
-// 				"https://trello.com/c/xHJqoAz0/4251-need-to-strip-illegal-characters-out-of-branch-name"
-// 		},
-// 		{
-// 			type: "commit",
-// 			sha: "f0666774fe742e9d0499a7621c990024d75c289f",
-// 			createdAt: 1595990868000,
-// 			author: "pez",
-// 			shortMessage: "show 0 results if your test query has no results"
-// 		},
-// 		{
-// 			type: "comment",
-// 			author: "pez",
-// 			createdAt: 1595990978000,
-// 			body: "this is a test comment"
-// 		},
-// 		{
-// 			type: "foot"
-// 		},
-// 		{
-// 			type: "system",
-// 			body:
-// 				"Add more commits by pushing to the `feature/ZX3nEHk5-improve-jira-issue-inte` branch on `TeamCodeStream/codestream`."
-// 		}
-// 	]
-// };
+import { LoadingIndicator } from "react-select/src/components/indicators";
+import { LoadingMessage } from "../src/components/LoadingMessage";
+import { Modal } from "./Modal";
 
 const Root = styled.div`
 	${Tab} {
@@ -158,22 +100,18 @@ export const PullRequest = () => {
 	const [text, setText] = useState("");
 	const [activeTab, setActiveTab] = useState(1);
 	const [ghRepo, setGhRepo] = useState<any>({});
+	const [isLoadingComment, setIsLoadingComment] = useState(false);
+	const [isLoadingCommentAndClose, setIsLoadingCommentAndClose] = useState(false);
 
-	const [pr, setPr] = useState<FetchThirdPartyPullRequestPullRequest>({
-		author: {},
-		files: {},
-		commits: {}
-	} as any);
+	const [pr, setPr] = useState<FetchThirdPartyPullRequestPullRequest | undefined>();
 	const { team, currentUser } = derivedState;
-	const statusIcon = "git-merge";
-	const action = pr.merged ? "merged " : "wants to merge ";
 
 	const exit = async () => {
-		// FIXME
 		await dispatch(setCurrentPullRequest());
 	};
 
 	const onCommentClick = async e => {
+		setIsLoadingComment(true);
 		await HostApi.instance.send(
 			new ExecuteThirdPartyTypedType<CreatePullRequestCommentRequest, any>(),
 			{
@@ -190,6 +128,7 @@ export const PullRequest = () => {
 	};
 
 	const onCommentAndCloseClick = async e => {
+		setIsLoadingCommentAndClose(true);
 		await HostApi.instance.send(
 			new ExecuteThirdPartyTypedType<CreatePullRequestCommentAndCloseRequest, any>(),
 			{
@@ -212,6 +151,7 @@ export const PullRequest = () => {
 		})) as FetchThirdPartyPullRequestResponse;
 		setGhRepo(r.repository);
 		setPr(r.repository.pullRequest);
+		setIsLoadingComment(false);
 	};
 
 	useDidMount(() => {
@@ -233,251 +173,268 @@ export const PullRequest = () => {
 		fetch();
 	};
 
-	return (
-		<Root className="panel full-height">
-			<CreateCodemarkIcons narrow />
-			<PRHeader>
-				<PRTitle>
-					{pr.title} <Link href={pr.url}>#{pr.number}</Link>
-					<CancelButton onClick={exit} />
-				</PRTitle>
-				<PRStatus>
-					<PRStatusButton>
-						<Icon name={statusIcon} />
-						{pr.state && pr.state.toLowerCase()}
-					</PRStatusButton>
-					<PRStatusMessage>
-						<PRAuthor>{pr.author.login}</PRAuthor>
-						<PRAction>
-							{action} {pr.commits && pr.commits.totalCount} commits into{" "}
-							<PRBranch>{pr.baseRefName}</PRBranch> from <PRBranch>{pr.headRefName}</PRBranch>
-							<Icon
-								title="Copy"
-								placement="bottom"
-								name="copy"
-								className="clickable"
-								onClick={e => copy(pr.baseRefName)}
-							/>
-						</PRAction>
-						<Timestamp time={pr.createdAt} relative />
-					</PRStatusMessage>
-				</PRStatus>
-				<Tabs style={{ marginTop: 0 }}>
-					<Tab onClick={e => setActiveTab(1)} active={activeTab == 1}>
-						<Icon name="comment" />
-						<span className="wide-text">Conversation</span>
-						<PRBadge>
-							{pr.timelineItems && pr.timelineItems.nodes
-								? pr.timelineItems.nodes.filter(
-										_ => _.__typename && _.__typename.indexOf("Comment") > -1
-								  ).length
-								: 0}
-						</PRBadge>
-					</Tab>
-					<Tab onClick={e => setActiveTab(2)} active={activeTab == 2}>
-						<Icon name="git-commit" />
-						<span className="wide-text">Commits</span>
-						<PRBadge>{pr.commits.totalCount}</PRBadge>
-					</Tab>
-					{/*
+	if (!pr) {
+		return (
+			<Modal verticallyCenter>
+				<LoadingMessage>Loading...</LoadingMessage>
+			</Modal>
+		);
+	} else {
+		const statusIcon = "git-merge";
+		const action = pr.merged ? "merged " : "wants to merge ";
+		return (
+			<Root className="panel full-height">
+				<CreateCodemarkIcons narrow />
+				<PRHeader>
+					<PRTitle>
+						{pr.title} <Link href={pr.url}>#{pr.number}</Link>
+						<CancelButton onClick={exit} />
+					</PRTitle>
+					<PRStatus>
+						<PRStatusButton>
+							<Icon name={statusIcon} />
+							{pr.state && pr.state.toLowerCase()}
+						</PRStatusButton>
+						<PRStatusMessage>
+							<PRAuthor>{pr.author.login}</PRAuthor>
+							<PRAction>
+								{action} {pr.commits && pr.commits.totalCount} commits into{" "}
+								<PRBranch>{pr.baseRefName}</PRBranch> from <PRBranch>{pr.headRefName}</PRBranch>
+								<Icon
+									title="Copy"
+									placement="bottom"
+									name="copy"
+									className="clickable"
+									onClick={e => copy(pr.baseRefName)}
+								/>
+							</PRAction>
+							<Timestamp time={pr.createdAt} relative />
+						</PRStatusMessage>
+					</PRStatus>
+					<Tabs style={{ marginTop: 0 }}>
+						<Tab onClick={e => setActiveTab(1)} active={activeTab == 1}>
+							<Icon name="comment" />
+							<span className="wide-text">Conversation</span>
+							<PRBadge>
+								{pr.timelineItems && pr.timelineItems.nodes
+									? pr.timelineItems.nodes.filter(
+											_ => _.__typename && _.__typename.indexOf("Comment") > -1
+									  ).length
+									: 0}
+							</PRBadge>
+						</Tab>
+						<Tab onClick={e => setActiveTab(2)} active={activeTab == 2}>
+							<Icon name="git-commit" />
+							<span className="wide-text">Commits</span>
+							<PRBadge>{pr.commits.totalCount}</PRBadge>
+						</Tab>
+						{/*
 					<Tab onClick={e => setActiveTab(3)} active={activeTab == 3}>
 						<Icon name="check" />
 						<span className="wide-text">Checks</span>
 						<PRBadge>{pr.numChecks}</PRBadge>
 					</Tab>
 					 */}
-					<Tab onClick={e => setActiveTab(4)} active={activeTab == 4}>
-						<Icon name="plus-minus" />
-						<span className="wide-text">Files Changed</span>
-						<PRBadge>{pr.files.totalCount}</PRBadge>
-					</Tab>
-					{/* 
+						<Tab onClick={e => setActiveTab(4)} active={activeTab == 4}>
+							<Icon name="plus-minus" />
+							<span className="wide-text">Files Changed</span>
+							<PRBadge>{pr.files.totalCount}</PRBadge>
+						</Tab>
+						{/* 
 					<PRPlusMinus>
 						<span className="added">+{pr.linesAdded}</span>{" "}
 						<span className="deleted">-{pr.linesDeleted}</span>
 					</PRPlusMinus>
 					*/}
-				</Tabs>
-			</PRHeader>
-			<ScrollBox>
-				<div className="channel-list vscroll">
-					<PRContent>
-						<div className="main-content">
-							<PRConversation>
-								{/* in the GH data model, the top box is part of the pr, rather than the timeline */}
-								<PRComment style={{ marginTop: "10px" }}>
-									<PRHeadshot person={pr.author} size={40} />
-									<PRCommentCard>
-										<PRCommentHeader>
-											<PRAuthor>{pr.author.login}</PRAuthor> commented{" "}
-											<Timestamp time={pr.createdAt!} relative />
-											<PRActionIcons>
-												<div className="member">Member</div>
-												<Icon name="smiley" />
-												<Icon name="kebab-horizontal" />
-											</PRActionIcons>
-										</PRCommentHeader>
-										<PRCommentBody
-											dangerouslySetInnerHTML={{
-												__html: markdownify(pr.body)
-											}}
-										></PRCommentBody>
-									</PRCommentCard>
-								</PRComment>
-								<PullRequestTimelineItems pr={pr} />
-								<PRFoot />
-								<PRFoot />
-							</PRConversation>
-							<PRComment>
-								{/* 
+					</Tabs>
+				</PRHeader>
+				<ScrollBox>
+					<div className="channel-list vscroll">
+						<PRContent>
+							<div className="main-content">
+								<PRConversation>
+									{/* in the GH data model, the top box is part of the pr, rather than the timeline */}
+									<PRComment style={{ marginTop: "10px" }}>
+										<PRHeadshot person={pr.author} size={40} />
+										<PRCommentCard>
+											<PRCommentHeader>
+												<PRAuthor>{pr.author.login}</PRAuthor> commented{" "}
+												<Timestamp time={pr.createdAt!} relative />
+												<PRActionIcons>
+													<div className="member">Member</div>
+													<Icon name="smiley" />
+													<Icon name="kebab-horizontal" />
+												</PRActionIcons>
+											</PRCommentHeader>
+											<PRCommentBody
+												dangerouslySetInnerHTML={{
+													__html: markdownify(pr.body)
+												}}
+											></PRCommentBody>
+										</PRCommentCard>
+									</PRComment>
+									<PullRequestTimelineItems pr={pr} />
+									<PRFoot />
+									<PRFoot />
+								</PRConversation>
+								<PRComment>
+									{/* 
 							<PRStatusIcon>
 									<Icon name={statusIcon}  />
 								</PRStatusIcon>
 								*/}
-								<PRCommentCard>
-									{!pr.merged && pr.mergeable === "MERGEABLE" && pr.state !== "CLOSED" && (
-										<div>
-											<p>This branch has no conflicts with the base branch when rebasing</p>
-											<p>Rebase and merge can be performed automatically.</p>
-											<ButtonRow>
-												<div style={{ textAlign: "left", flexGrow: 1 }}>
-													<Tooltip
-														title={
-															<span>
-																All commits from this branch will be added to the base branch via a
-																merge commit.
-																{!ghRepo.mergeCommitAllowed && (
-																	<small>Not enabled for this repository</small>
-																)}
-															</span>
-														}
-														placement="bottomRight"
-														delay={1}
-													>
-														<Button
-															disabled={!ghRepo.mergeCommitAllowed}
-															onClick={e => mergePullRequest({ mergeMethod: "MERGE" })}
+									<PRCommentCard>
+										{!pr.merged && pr.mergeable === "MERGEABLE" && pr.state !== "CLOSED" && (
+											<div>
+												<p>This branch has no conflicts with the base branch when rebasing</p>
+												<p>Rebase and merge can be performed automatically.</p>
+												<ButtonRow>
+													<div style={{ textAlign: "left", flexGrow: 1 }}>
+														<Tooltip
+															title={
+																<span>
+																	All commits from this branch will be added to the base branch via
+																	a merge commit.
+																	{!ghRepo.mergeCommitAllowed && (
+																		<small>Not enabled for this repository</small>
+																	)}
+																</span>
+															}
+															placement="bottomRight"
+															delay={1}
 														>
-															Create a merge commit
+															<Button
+																disabled={!ghRepo.mergeCommitAllowed}
+																onClick={e => mergePullRequest({ mergeMethod: "MERGE" })}
+															>
+																Create a merge commit
+															</Button>
+														</Tooltip>
+														<Button
+															disabled={!ghRepo.squashMergeAllowed}
+															onClick={e => mergePullRequest({ mergeMethod: "SQUASH" })}
+														>
+															Squash and merge
 														</Button>
-													</Tooltip>
-													<Button
-														disabled={!ghRepo.squashMergeAllowed}
-														onClick={e => mergePullRequest({ mergeMethod: "SQUASH" })}
-													>
-														Squash and merge
-													</Button>
-													<Button
-														disabled={!ghRepo.rebaseMergeAllowed}
-														onClick={e => mergePullRequest({ mergeMethod: "REBASE" })}
-													>
-														Rebase and merge
-													</Button>
-												</div>
-											</ButtonRow>
+														<Button
+															disabled={!ghRepo.rebaseMergeAllowed}
+															onClick={e => mergePullRequest({ mergeMethod: "REBASE" })}
+														>
+															Rebase and merge
+														</Button>
+													</div>
+												</ButtonRow>
+											</div>
+										)}
+										{!pr.merged && pr.mergeable === "CONFLICTING" && (
+											<div>This branch has conflicts that must be resolved</div>
+										)}
+										{!pr.merged && pr.mergeable === "UNKNOWN" && pr.state === "CLOSED" && (
+											<div>This pull request is closed</div>
+										)}
+										{!pr.merged && pr.state === "CLOSED" && <div>Pull request is closed</div>}
+										{pr.merged && <div>Pull request successfully merged and closed</div>}
+									</PRCommentCard>
+								</PRComment>
+								<PRComment>
+									<Headshot size={40} person={currentUser}></Headshot>
+									<PRCommentCard>
+										<div
+											style={{ margin: "5px 0 0 0", border: "1px solid var(--base-border-color)" }}
+										>
+											<MessageInput
+												multiCompose
+												text={text}
+												placeholder="Add Comment..."
+												onChange={setText}
+											/>
 										</div>
-									)}
-									{!pr.merged && pr.mergeable === "CONFLICTING" && (
-										<div>This branch has conflicts that must be resolved</div>
-									)}
-									{!pr.merged && pr.mergeable === "UNKNOWN" && pr.state === "CLOSED" && (
-										<div>This pull request is closed</div>
-									)}
-									{!pr.merged && pr.state === "CLOSED" && <div>Pull request is closed</div>}
-									{pr.merged && <div>Pull request successfully merged and closed</div>}
-								</PRCommentCard>
-							</PRComment>
-							<PRComment>
-								<Headshot size={40} person={currentUser}></Headshot>
-								<PRCommentCard>
-									<div
-										style={{ margin: "5px 0 0 0", border: "1px solid var(--base-border-color)" }}
-									>
-										<MessageInput
-											multiCompose
-											text={text}
-											placeholder="Add Comment..."
-											onChange={setText}
-										/>
-									</div>
-									<ButtonRow>
-										<div style={{ textAlign: "right", flexGrow: 1 }}>
-											<Button onClick={onCommentAndCloseClick}>Close and comment</Button>
-											<Tooltip
-												title={
-													<span>
-														Submit Comment
-														<span className="keybinding extra-pad">
-															{navigator.appVersion.includes("Macintosh") ? "⌘" : "Alt"} ENTER
+										<ButtonRow>
+											<div style={{ textAlign: "right", flexGrow: 1 }}>
+												<Button
+													isLoading={isLoadingCommentAndClose}
+													onClick={onCommentAndCloseClick}
+												>
+													Close and comment
+												</Button>
+												<Tooltip
+													title={
+														<span>
+															Submit Comment
+															<span className="keybinding extra-pad">
+																{navigator.appVersion.includes("Macintosh") ? "⌘" : "Alt"} ENTER
+															</span>
 														</span>
-													</span>
-												}
-												placement="bottomRight"
-												delay={1}
-											>
-												<Button onClick={onCommentClick}>Comment</Button>
-											</Tooltip>
-										</div>
-									</ButtonRow>
-								</PRCommentCard>
-							</PRComment>
-						</div>
-						<PRSidebar>
-							<PRSection>
-								<Icon name="gear" className="settings clickable" onClick={() => {}} />
-								Reviewers
-								<br />
-								<HeadshotName person={currentUser} />
-							</PRSection>
-							<PRSection>
-								<Icon name="gear" className="settings clickable" onClick={() => {}} />
-								Assignees
-								<br />
-								{pr &&
-									pr.assignees &&
-									pr.assignees.nodes.map((_: any) => <PRHeadshot person={_} size={16} />)}
-							</PRSection>
-							<PRSection>
-								<Icon name="gear" className="settings clickable" onClick={() => {}} />
-								Labels
-								<br />
-								{pr &&
-									pr.labels &&
-									pr.labels.nodes.map(_ => <Tag tag={{ label: _.name, color: _.color }} />)}
-							</PRSection>
-							<PRSection>
-								Projects
-								<Icon name="gear" className="settings clickable" onClick={() => {}} />
-							</PRSection>
-							<PRSection>
-								Milestone
-								<Icon name="gear" className="settings clickable" onClick={() => {}} />
-								{pr && pr.milestone && <div>{pr.milestone.title}</div>}
-							</PRSection>
-							<PRSection>
-								Linked Issues
-								<Icon name="gear" className="settings clickable" onClick={() => {}} />
-							</PRSection>
-							<PRSection>
-								Notifications
-								<Icon name="gear" className="settings clickable" onClick={() => {}} />
-							</PRSection>
-							<PRSection>
-								Participants
-								<Icon name="gear" className="settings clickable" onClick={() => {}} />
-								<br />
-								{pr &&
-									pr.participants &&
-									pr.participants.nodes.map((_: any) => <PRHeadshot person={_} size={16} />)}
-							</PRSection>
-							<PRSection>
-								Lock Convo
-								<Icon name="lock" className="settings clickable" onClick={() => {}} />
-							</PRSection>
-						</PRSidebar>
-					</PRContent>
-				</div>
-			</ScrollBox>
-		</Root>
-	);
+													}
+													placement="bottomRight"
+													delay={1}
+												>
+													<Button isLoading={isLoadingComment} onClick={onCommentClick}>
+														Comment
+													</Button>
+												</Tooltip>
+											</div>
+										</ButtonRow>
+									</PRCommentCard>
+								</PRComment>
+							</div>
+							<PRSidebar>
+								<PRSection>
+									<Icon name="gear" className="settings clickable" onClick={() => {}} />
+									Reviewers
+									<br />
+									<HeadshotName person={currentUser} />
+								</PRSection>
+								<PRSection>
+									<Icon name="gear" className="settings clickable" onClick={() => {}} />
+									Assignees
+									<br />
+									{pr &&
+										pr.assignees &&
+										pr.assignees.nodes.map((_: any) => <PRHeadshot person={_} size={16} />)}
+								</PRSection>
+								<PRSection>
+									<Icon name="gear" className="settings clickable" onClick={() => {}} />
+									Labels
+									<br />
+									{pr &&
+										pr.labels &&
+										pr.labels.nodes.map(_ => <Tag tag={{ label: _.name, color: _.color }} />)}
+								</PRSection>
+								<PRSection>
+									Projects
+									<Icon name="gear" className="settings clickable" onClick={() => {}} />
+								</PRSection>
+								<PRSection>
+									Milestone
+									<Icon name="gear" className="settings clickable" onClick={() => {}} />
+									{pr && pr.milestone && <div>{pr.milestone.title}</div>}
+								</PRSection>
+								<PRSection>
+									Linked Issues
+									<Icon name="gear" className="settings clickable" onClick={() => {}} />
+								</PRSection>
+								<PRSection>
+									Notifications
+									<Icon name="gear" className="settings clickable" onClick={() => {}} />
+								</PRSection>
+								<PRSection>
+									Participants
+									<Icon name="gear" className="settings clickable" onClick={() => {}} />
+									<br />
+									{pr &&
+										pr.participants &&
+										pr.participants.nodes.map((_: any) => <PRHeadshot person={_} size={16} />)}
+								</PRSection>
+								<PRSection>
+									Lock Convo
+									<Icon name="lock" className="settings clickable" onClick={() => {}} />
+								</PRSection>
+							</PRSidebar>
+						</PRContent>
+					</div>
+				</ScrollBox>
+			</Root>
+		);
+	}
 };

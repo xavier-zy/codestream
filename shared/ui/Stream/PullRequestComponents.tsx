@@ -234,7 +234,7 @@ export const PRTimelineItem = styled.div`
 	}
 
 	&.tall {
-		margin: 20px 0;
+		margin: 30px 0;
 	}
 	.sha {
 		margin-left: auto;
@@ -244,24 +244,31 @@ export const PRTimelineItem = styled.div`
 		margin-right: 0;
 	}
 	.icon {
+		flex-grow: 0;
+		flex-shrink: 0;
 		background: var(--app-background-color);
-		height: 20px;
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		width: 30px;
+		height: 18px;
+		margin: 0 0 0 -8px;
 		svg {
 			opacity: 0.7;
 		}
 		&.circled {
-			margin: -5px 0 0 -5px;
-			display: flex;
-			justify-content: center;
-			align-items: center;
+			margin-top: -7px;
+			height: 30px;
 			background: rgba(127, 127, 127, 1);
-			width: 26px;
-			height: 26px;
-			border-radius: 13px;
+			border-radius: 15px;
 			svg {
 				opacity: 1;
 			}
+			border: 3px solid var(--app-background-color);
 		}
+	}
+	.monospace {
+		color: var(--text-color-subtle);
 	}
 `;
 

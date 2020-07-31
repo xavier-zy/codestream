@@ -3,7 +3,6 @@ import { useDispatch, useSelector } from "react-redux";
 import { CodeStreamState } from "../store";
 import styled from "styled-components";
 import { CSMe } from "@codestream/protocols/api";
-import { isFeatureEnabled } from "../store/apiVersioning/reducer";
 import { CreateCodemarkIcons } from "./CreateCodemarkIcons";
 import ScrollBox from "./ScrollBox";
 import Icon from "./Icon";
@@ -11,7 +10,6 @@ import { Tabs, Tab } from "../src/components/Tabs";
 import Timestamp from "./Timestamp";
 import copy from "copy-to-clipboard";
 import { Link } from "./Link";
-import Tag from "./Tag";
 import { setCurrentPullRequest, setCurrentReview } from "../store/context/actions";
 import CancelButton from "./CancelButton";
 import { useDidMount } from "../utilities/hooks";
@@ -35,7 +33,6 @@ import {
 } from "./PullRequestComponents";
 import { LoadingMessage } from "../src/components/LoadingMessage";
 import { Modal } from "./Modal";
-import { DropdownButton } from "./Review/DropdownButton";
 import { bootstrapReviews } from "../store/reviews/actions";
 import { PullRequestConversationTab } from "./PullRequestConversationTab";
 import { PullRequestCommitsTab } from "./PullRequestCommitsTab";
@@ -221,13 +218,21 @@ export const PullRequest = () => {
 									+
 									{!pr.files
 										? 0
-										: pr.files.nodes.map(_ => _.additions).reduce((acc, val) => acc + val)}
+										: pr.files.nodes
+												.map(_ => _.additions)
+												.reduce((acc, val) => acc + val)
+												.toString()
+												.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
 								</span>{" "}
 								<span className="deleted">
 									-
 									{!pr.files
 										? 0
-										: pr.files.nodes.map(_ => _.deletions).reduce((acc, val) => acc + val)}
+										: pr.files.nodes
+												.map(_ => _.deletions)
+												.reduce((acc, val) => acc + val)
+												.toString()
+												.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
 								</span>
 							</PRPlusMinus>
 						</Tabs>

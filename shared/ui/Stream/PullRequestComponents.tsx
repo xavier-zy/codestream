@@ -1,39 +1,7 @@
-import React, { useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { CodeStreamState } from "../store";
 import { Button } from "../src/components/Button";
 import styled from "styled-components";
-import { CSMe } from "@codestream/protocols/api";
-import { isFeatureEnabled } from "../store/apiVersioning/reducer";
-import { CreateCodemarkIcons } from "./CreateCodemarkIcons";
-import ScrollBox from "./ScrollBox";
-import Icon from "./Icon";
-import { Tabs, Tab } from "../src/components/Tabs";
-import Timestamp from "./Timestamp";
-import copy from "copy-to-clipboard";
-import MessageInput from "./MessageInput";
-import Tooltip from "./Tooltip";
-import { Card } from "../src/components/Card";
+
 import { Headshot, PRHeadshot } from "../src/components/Headshot";
-import { MarkdownText } from "./MarkdownText";
-import { Link } from "./Link";
-import { HeadshotName } from "../src/components/HeadshotName";
-import Tag from "./Tag";
-import { setCurrentReview, setCurrentPullRequest } from "../store/context/actions";
-import CancelButton from "./CancelButton";
-import { useDidMount } from "../utilities/hooks";
-import { HostApi } from "../webview-api";
-import { RequestType } from "../vscode-jsonrpc.shim";
-import {
-	CreatePullRequestCommentRequest,
-	ExecuteThirdPartyTypedRequest,
-	FetchThirdPartyPullRequestPullRequest,
-	ExecuteThirdPartyTypedType,
-	FetchThirdPartyPullRequestRequestType,
-	FetchThirdPartyPullRequestResponse,
-	MergeMethod
-} from "@codestream/protocols/agent";
-import { markdownify } from "./Markdowner";
 
 export const PRHeader = styled.div`
 	margin: 20px 20px 0 20px;
@@ -222,7 +190,7 @@ export const PRConversation = styled.div`
 export const PRTimelineItem = styled.div`
 	position: relative;
 	display: flex;
-	margin: 10px 0;
+	margin: 15px 0;
 	padding-left: 65px;
 	${PRHeadshot} {
 		flex-shrink: 0;

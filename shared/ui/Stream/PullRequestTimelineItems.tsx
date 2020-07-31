@@ -5,7 +5,7 @@ import {
 	PRAuthor,
 	PRActionIcons,
 	PRCommentBody,
-	PRCommit
+	PRTimelineItem
 } from "./PullRequestComponents";
 import React, { PropsWithChildren } from "react";
 import { PRHeadshot } from "../src/components/Headshot";
@@ -13,6 +13,7 @@ import Timestamp from "./Timestamp";
 import Icon from "./Icon";
 import { MarkdownText } from "./MarkdownText";
 import { FetchThirdPartyPullRequestPullRequest } from "@codestream/protocols/agent";
+import Tag from "./Tag";
 
 interface Props {
 	pr: FetchThirdPartyPullRequestPullRequest;
@@ -81,27 +82,27 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 					}
 					case "ReviewRequestedEvent": {
 						return (
-							<PRCommit key={index}>
+							<PRTimelineItem key={index}>
 								<Icon name="review" />
 								<PRHeadshot key={index} size={16} person={item.actor} />
 								<div className="monospace ellipsis">{item.actor.login} requested a review</div>
-							</PRCommit>
+							</PRTimelineItem>
 						);
 					}
 					case "PullRequestCommit":
 						return (
-							<PRCommit key={index}>
+							<PRTimelineItem key={index}>
 								<Icon name="git-commit" />
 								<PRHeadshot key={index} size={16} person={item.commit.author} />
 								<div className="monospace ellipsis">
 									<MarkdownText text={item.commit.message || ""} />
 								</div>
 								<div className="monospace sha">{item.commit.abbreviatedOid}</div>
-							</PRCommit>
+							</PRTimelineItem>
 						);
 					case "AssignedEvent": {
 						return (
-							<PRCommit key={index}>
+							<PRTimelineItem key={index}>
 								<Icon name="review" />
 								<PRHeadshot key={index} size={16} person={item.actor} />
 								<div className="monospace ellipsis">
@@ -110,12 +111,12 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 										<Timestamp time={item.createdAt!} relative />
 									</span>
 								</div>
-							</PRCommit>
+							</PRTimelineItem>
 						);
 					}
 					case "MergedEvent": {
 						return (
-							<PRCommit key={index}>
+							<PRTimelineItem key={index}>
 								<Icon name="git-merge" />
 								<PRHeadshot key={index} size={16} person={item.actor} />
 								<div className="monospace ellipsis">
@@ -125,10 +126,22 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 										<Timestamp time={item.createdAt!} relative />
 									</span>
 								</div>
-							</PRCommit>
+							</PRTimelineItem>
 						);
 					}
-					// case "LabeledEvent":
+					case "LabeledEvent": {
+						return (
+							<PRTimelineItem key={index} className="tall">
+								<Icon name="tag" className="circled" />
+								<PRHeadshot key={index} size={16} person={item.actor} />
+								<span>
+									{item.actor.login} added
+									<Tag tag={{ label: item.label.name, color: `#${item.label.color}` }} />
+									<Timestamp time={item.createdAt!} relative />
+								</span>
+							</PRTimelineItem>
+						);
+					}
 					// 	return null;
 					// case "UnlabeledEvent":
 					// 	return null;
@@ -139,7 +152,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 					// case "MergedEvent":
 					// 	return null;
 					default: {
-						console.warn(`timelineItem not found: ${item.__typename}`);
+						console.warn(`timelineItem not found: ${item.__typename} item is: `, item);
 						return null;
 					}
 				}

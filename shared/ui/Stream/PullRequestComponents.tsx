@@ -219,7 +219,7 @@ export const PRConversation = styled.div`
 	}
 `;
 
-export const PRCommit = styled.div`
+export const PRTimelineItem = styled.div`
 	position: relative;
 	display: flex;
 	margin: 10px 0;
@@ -233,14 +233,34 @@ export const PRCommit = styled.div`
 		// }
 	}
 
+	&.tall {
+		margin: 20px 0;
+	}
 	.sha {
 		margin-left: auto;
 	}
+	.cs-tag {
+		margin-left: 5px;
+		margin-right: 0;
+	}
 	.icon {
 		background: var(--app-background-color);
-		height: 19px;
+		height: 20px;
 		svg {
 			opacity: 0.7;
+		}
+		&.circled {
+			margin: -5px 0 0 -5px;
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			background: rgba(127, 127, 127, 1);
+			width: 26px;
+			height: 26px;
+			border-radius: 13px;
+			svg {
+				opacity: 1;
+			}
 		}
 	}
 `;
@@ -268,7 +288,7 @@ export const PRContent = styled.div`
 			${PRConversation}:before {
 				left: 11px;
 			}
-			${PRCommit} {
+			${PRTimelineItem} {
 				padding-left: 5px;
 			}
 		}

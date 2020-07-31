@@ -376,6 +376,13 @@ export interface FetchThirdPartyPullRequestPullRequest {
 			};
 		}[];
 	};
+	projectCards: {
+		nodes: {
+			project: {
+				name: string;
+			};
+		}[];
+	};
 	reviews: {
 		nodes: {
 			author: {

@@ -82,7 +82,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 					case "ReviewRequestedEvent": {
 						return (
 							<PRCommit key={index}>
-								<Icon name="git-commit" />
+								<Icon name="review" />
 								<PRHeadshot key={index} size={16} person={item.actor} />
 								<div className="monospace ellipsis">{item.actor.login} requested a review</div>
 							</PRCommit>

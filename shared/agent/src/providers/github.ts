@@ -1500,6 +1500,19 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 							  draftedAt
 							  minimizedReason
 							  publishedAt
+							  replyTo {
+								diffHunk
+								id
+								bodyText
+								body
+							  }
+							  userContentEdits {
+								edges {
+								  node {
+									id
+								  }
+								}
+							  }
 							  commit {
 								message
 								messageBody
@@ -1522,6 +1535,8 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 							  }
 							}
 						  }
+						  authorAssociation
+						  bodyHTML
 						}
 						... on PullRequestCommitCommentThread {
 						  __typename
@@ -1599,6 +1614,16 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 						id
 						name
 						login
+					  }
+					}
+					projectCards(first: 10) {
+					  nodes {
+						id
+						note
+						state
+						project {
+						  name
+						}
 					  }
 					}
 					mergeable

@@ -447,7 +447,9 @@ export const PullRequest = () => {
 										<Icon name="gear" className="settings clickable" onClick={() => {}} />
 										Projects
 									</h1>
-									None yet
+									{pr.projectCards && pr.projectCards.nodes.length > 0
+										? pr.projectCards.nodes.map((_: any) => <span>{_.project.name}</span>)
+										: "None yet"}
 								</PRSection>
 								<PRSection>
 									<h1>

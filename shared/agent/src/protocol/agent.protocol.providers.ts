@@ -376,10 +376,12 @@ export interface FetchThirdPartyPullRequestPullRequest {
 			};
 		}[];
 	};
-	review: {
+	reviews: {
 		nodes: {
-			login: string;
-			avatarUrl: string;
+			author: {
+				login: string;
+				avatarUrl: string;
+			};
 		}[];
 	};
 	timelineItems: {

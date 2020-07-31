@@ -113,26 +113,35 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 							</PRCommit>
 						);
 					}
-					case "LabeledEvent":
+					case "MergedEvent": {
+						return (
+							<PRCommit key={index}>
+								<Icon name="git-merge" />
+								<PRHeadshot key={index} size={16} person={item.actor} />
+								<div className="monospace ellipsis">
+									<span>
+										{item.actor.login} merged commit {item.commit.abbreviatedOid} into{" "}
+										{item.mergeRefName}
+										<Timestamp time={item.createdAt!} relative />
+									</span>
+								</div>
+							</PRCommit>
+						);
+					}
+					// case "LabeledEvent":
+					// 	return null;
+					// case "UnlabeledEvent":
+					// 	return null;
+					// case "ReviewRequestedEvent":
+					// 	return null;
+					// case "RenamedTitleEvent":
+					// 	return null;
+					// case "MergedEvent":
+					// 	return null;
+					default: {
+						console.warn(`timelineItem not found: ${item.__typename}`);
 						return null;
-					case "UnlabeledEvent":
-						return null;
-					case "ReviewRequestedEvent":
-						return null;
-					case "RenamedTitleEvent":
-						return null;
-					case "MergedEvent":
-						return null;
-					// case "foot":
-					// 	return <PRFoot />;
-					// case "system":
-					// 	return (
-					// 		<PRSystem>
-					// 			<MarkdownText text={item.body || ""} />
-					// 		</PRSystem>
-					// 	);
-					default:
-						return null;
+					}
 				}
 			})}
 		</div>

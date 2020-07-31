@@ -194,18 +194,22 @@ export const PullRequest = () => {
 
 		var reviewersHash: any = {};
 		// the list of reviewers isn't in a single spot...
-		pr.reviewRequests.nodes.reduce((map, obj) => {
-			map[obj.requestedReviewer.login] = obj.requestedReviewer.avatarUrl;
-			return map;
-		}, reviewersHash);
-		(pr as any).reviews.nodes.reduce((map, obj) => {
-			map[obj.author.login] = obj.author.avatarUrl;
-			return map;
-		}, reviewersHash);
+		pr.reviewRequests &&
+			pr.reviewRequests.nodes.reduce((map, obj) => {
+				map[obj.requestedReviewer.login] = obj.requestedReviewer.avatarUrl;
+				return map;
+			}, reviewersHash);
+		pr.reviews &&
+			pr.reviews.nodes.reduce((map, obj) => {
+				map[obj.author.login] = obj.author.avatarUrl;
+				return map;
+			}, reviewersHash);
 
 		const reviewers = Object.keys(reviewersHash).map(key => {
 			return { login: key, avatarUrl: reviewersHash[key] };
 		}) as { login: string; avatarUrl: string }[];
+
+		let prBody = pr.body;
 		return (
 			<Root className="panel full-height">
 				<CreateCodemarkIcons narrow />
@@ -297,7 +301,7 @@ export const PullRequest = () => {
 											</PRCommentHeader>
 											<PRCommentBody
 												dangerouslySetInnerHTML={{
-													__html: markdownify(pr.body)
+													__html: markdownify(prBody)
 												}}
 											></PRCommentBody>
 										</PRCommentCard>
@@ -383,11 +387,13 @@ export const PullRequest = () => {
 										<ButtonRow>
 											<div style={{ textAlign: "right", flexGrow: 1 }}>
 												<Button
+													disabled={pr.merged}
 													isLoading={isLoadingCommentAndClose}
 													onClick={onCommentAndCloseClick}
 												>
 													Close and comment
 												</Button>
+
 												<Tooltip
 													title={
 														<span>

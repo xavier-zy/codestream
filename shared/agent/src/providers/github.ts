@@ -1204,27 +1204,6 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 				repository(name: $name, owner: $owner) {
 				  id
 				  pullRequest(number: $pullRequestNumber) {
-					... on PullRequest {
-						reviewRequests(first: 100) {
-						  nodes {
-							requestedReviewer {
-							  ... on User {
-								login
-								avatarUrl
-							  }
-							}
-						  }
-						}
-						reviews(first: 50) {
-						  nodes {
-							author {
-							  login
-							  avatarUrl
-							}
-							state
-						  }
-						}
-					  }
 					id
 					body
 					baseRefName
@@ -1246,6 +1225,27 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 					}
 					number
 					state
+					... on PullRequest {
+					  reviewRequests(first: 10) {
+						nodes {
+						  requestedReviewer {
+							... on User {
+							  login
+							  avatarUrl
+							}
+						  }
+						}
+					  }
+					  reviews(first: 50) {
+						nodes {
+						  author {
+							login
+							avatarUrl
+						  }
+						  state
+						}
+					  }
+					}
 					timelineItems(first: 50) {
 					  totalCount
 					  pageInfo {
@@ -1441,6 +1441,18 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 						}
 						... on ReferencedEvent {
 						  __typename
+						  actor {
+							login
+							avatarUrl
+						  }
+						  commit {
+							messageBody
+							messageHeadline
+							status {
+							  state
+							}
+							oid
+						  }
 						}
 						... on ReadyForReviewEvent {
 						  __typename
@@ -1471,7 +1483,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 						  createdAt
 						  lastEditedAt
 						  body
-						  comments(first: 10) {
+						  comments(first: 15) {
 							nodes {
 							  author {
 								login
@@ -1484,6 +1496,30 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 							  createdAt
 							  id
 							  state
+							  authorAssociation
+							  draftedAt
+							  minimizedReason
+							  publishedAt
+							  commit {
+								message
+								messageBody
+								messageHeadline
+								oid
+							  }
+							  editor {
+								login
+								avatarUrl
+							  }
+							  outdated
+							  path
+							  position
+							  pullRequest {
+								bodyText
+							  }
+							  pullRequestReview {
+								body
+								bodyText
+							  }
 							}
 						  }
 						}
@@ -1528,6 +1564,10 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 							avatarUrl
 						  }
 						  mergeRefName
+						  createdAt
+						  commit {
+							abbreviatedOid
+						  }
 						}
 						... on MentionedEvent {
 						  __typename
@@ -1575,8 +1615,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 				  squashMergeAllowed
 				  mergeCommitAllowed
 				}
-			  }
-			  `;
+			  }`;
 			const rsp = await this.client.request<any>(query, {
 				owner: owner,
 				name: repo,

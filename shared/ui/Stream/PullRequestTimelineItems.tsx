@@ -106,7 +106,8 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 								<PRHeadshot key={index} size={16} person={item.actor} />
 								<div className="monospace ellipsis">
 									<span>
-										{item.actor.login} assigned this to {item.assignee.login}
+										{item.actor.login} assigned {item.assignee.login}
+										<Timestamp time={item.createdAt!} relative />
 									</span>
 								</div>
 							</PRCommit>

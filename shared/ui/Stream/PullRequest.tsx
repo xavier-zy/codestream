@@ -188,6 +188,21 @@ export const PullRequest = () => {
 		const action = pr.merged ? "merged " : "wants to merge ";
 		const numParticpants = ((pr.participants && pr.participants.nodes) || []).length;
 		const participantsLabel = `${numParticpants} Participant${numParticpants == 1 ? "" : "s"}`;
+
+		var reviewersHash: any = {};
+		// the list of reviewers isn't in a single spot...
+		pr.reviewRequests.nodes.reduce((map, obj) => {
+			map[obj.requestedReviewer.login] = obj.requestedReviewer.avatarUrl;
+			return map;
+		}, reviewersHash);
+		(pr as any).reviews.nodes.reduce((map, obj) => {
+			map[obj.author.login] = obj.author.avatarUrl;
+			return map;
+		}, reviewersHash);
+
+		const reviewers = Object.keys(reviewersHash).map(key => {
+			return { login: key, avatarUrl: reviewersHash[key] };
+		}) as { login: string; avatarUrl: string }[];
 		return (
 			<Root className="panel full-height">
 				<CreateCodemarkIcons narrow />
@@ -397,7 +412,9 @@ export const PullRequest = () => {
 										<Icon name="gear" className="settings clickable" onClick={() => {}} />
 										Reviewers
 									</h1>
-									<HeadshotName person={currentUser} />
+									{reviewers.map(_ => {
+										return <PRHeadshotName person={_} size={20} />;
+									})}
 								</PRSection>
 								<PRSection>
 									<h1>

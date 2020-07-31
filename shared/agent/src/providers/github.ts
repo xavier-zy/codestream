@@ -1204,6 +1204,27 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 				repository(name: $name, owner: $owner) {
 				  id
 				  pullRequest(number: $pullRequestNumber) {
+					... on PullRequest {
+						reviewRequests(first: 100) {
+						  nodes {
+							requestedReviewer {
+							  ... on User {
+								login
+								avatarUrl
+							  }
+							}
+						  }
+						}
+						reviews(first: 50) {
+						  nodes {
+							author {
+							  login
+							  avatarUrl
+							}
+							state
+						  }
+						}
+					  }
 					id
 					body
 					baseRefName

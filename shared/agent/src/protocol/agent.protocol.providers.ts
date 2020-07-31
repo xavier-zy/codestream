@@ -368,6 +368,20 @@ export interface FetchThirdPartyPullRequestPullRequest {
 	};
 	number: number;
 	state: string;
+	reviewRequests: {
+		nodes: {
+			requestedReviewer: {
+				login: string;
+				avatarUrl: string;
+			};
+		}[];
+	};
+	review: {
+		nodes: {
+			login: string;
+			avatarUrl: string;
+		}[];
+	};
 	timelineItems: {
 		__typename: string;
 		totalCount: number;

@@ -1260,6 +1260,9 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 							author {
 							  avatarUrl(size: 20)
 							  name
+							  user {
+								login
+							  }
 							}
 							message
 							authoredDate

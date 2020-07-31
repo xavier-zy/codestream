@@ -361,8 +361,11 @@ export interface FetchThirdPartyPullRequestPullRequest {
 			commit: {
 				abbreviatedOid: string;
 				author: {
-					login: string;
+					name: string;
 					avatarUrl: string;
+					user: {
+						login: string;
+					};
 				};
 				message: string;
 				authoredDate: string;

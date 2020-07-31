@@ -9,6 +9,7 @@ import { PRContent } from "./PullRequestComponents";
 import styled from "styled-components";
 import copy from "copy-to-clipboard";
 import { groupBy } from "lodash-es";
+import { Link } from "./Link";
 
 const PRCommitContent = styled.div`
 	margin: 0 20px 20px 20px;
@@ -80,9 +81,15 @@ const PRCommitButtons = styled.div`
 		display: inline-block;
 		margin-left: 10px;
 	}
-	> .icon,
-	> span {
+	.icon,
+	a {
 		opacity: 0.7;
+		color: var(--text-color);
+		text-decoration: none;
+		&:hover {
+			opacity: 1;
+			color: var(--text-color-info);
+		}
 	}
 `;
 
@@ -115,7 +122,16 @@ export const PullRequestCommitsTab = props => {
 										<span className="subtle">committed</span>
 										<Timestamp time={_.commit.authoredDate} relative />
 										<PRCommitButtons>
-											<span className="monospace">{_.commit.abbreviatedOid}</span>
+											<Tooltip title="View commit on GitHub" placement="bottom">
+												<span>
+													<Link
+														href={`${pr.url}/commits/${_.commit.abbreviatedOid}`}
+														className="monospace"
+													>
+														{_.commit.abbreviatedOid}
+													</Link>
+												</span>
+											</Tooltip>
 											<Icon
 												title="Copy Sha"
 												placement="bottom"
@@ -123,7 +139,16 @@ export const PullRequestCommitsTab = props => {
 												className="clickable"
 												onClick={() => copy(_.commit.abbreviatedOid)}
 											/>
-											<Icon className="clickable" name="code" />
+											<Link
+												href={pr.url.replace(/\/pull\/\d+$/, `/tree/${_.commit.abbreviatedOid}`)}
+											>
+												<Icon
+													title="Browse the repository at this point in the history on GitHub"
+													className="clickable"
+													placement="bottomRight"
+													name="code"
+												/>
+											</Link>
 										</PRCommitButtons>
 									</PRCommitCard>
 								);

@@ -355,8 +355,27 @@ export interface FetchThirdPartyPullRequestPullRequest {
 		avatarUrl: string;
 	};
 	createdAt: string;
+	commits: {
+		totalCount: number;
+		nodes: {
+			commit: {
+				abbreviatedOid: string;
+				author: {
+					login: string;
+					avatarUrl: string;
+				};
+				message: string;
+				authoredDate: string;
+			};
+		}[];
+	};
 	files: {
 		totalCount: number;
+		nodes: {
+			path: string;
+			additions: number;
+			deletions: number;
+		}[];
 	};
 	headRefName: string;
 	labels: {
@@ -427,9 +446,6 @@ export interface FetchThirdPartyPullRequestPullRequest {
 	title: string;
 	url: string;
 	updatedAt: string;
-	commits: {
-		totalCount: number;
-	};
 }
 export interface FetchThirdPartyPullRequestRepository {
 	id: string;

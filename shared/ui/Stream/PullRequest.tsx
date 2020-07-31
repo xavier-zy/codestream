@@ -53,6 +53,7 @@ import {
 	PRCommentBody,
 	PRCommit,
 	PRFoot,
+	PRPlusMinus,
 	PRSidebar,
 	PRSection
 } from "./PullRequestComponents";
@@ -210,6 +211,8 @@ export const PullRequest = () => {
 		}) as { login: string; avatarUrl: string }[];
 
 		let prBody = pr.body;
+		// console.log(pr.files);
+		// console.log(pr.commits);
 		return (
 			<Root className="panel full-height">
 				<CreateCodemarkIcons narrow />
@@ -276,12 +279,21 @@ export const PullRequest = () => {
 								<span className="wide-text">Files Changed</span>
 								<PRBadge>{pr.files.totalCount}</PRBadge>
 							</Tab>
-							{/* 
-					<PRPlusMinus>
-						<span className="added">+{pr.linesAdded}</span>{" "}
-						<span className="deleted">-{pr.linesDeleted}</span>
-					</PRPlusMinus>
-					*/}
+
+							<PRPlusMinus>
+								<span className="added">
+									+
+									{!pr.files
+										? 0
+										: pr.files.nodes.map(_ => _.additions).reduce((acc, val) => acc + val)}
+								</span>{" "}
+								<span className="deleted">
+									-
+									{!pr.files
+										? 0
+										: pr.files.nodes.map(_ => _.deletions).reduce((acc, val) => acc + val)}
+								</span>
+							</PRPlusMinus>
 						</Tabs>
 						<PRContent>
 							<div className="main-content">

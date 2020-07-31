@@ -1212,9 +1212,28 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 					  avatarUrl
 					}
 					createdAt
-					files {
-					  totalCount
-					}
+					files(first: 100) {
+						totalCount
+						nodes {
+						  path
+						  deletions
+						  additions
+						}
+					  }
+					commits(first: 100) {
+						totalCount
+						nodes {
+						  commit {
+							abbreviatedOid
+							author {
+							  avatarUrl(size: 20)
+							  name
+							}
+							message
+							authoredDate
+						  }
+						}
+					  }
 					headRefName
 					labels(first: 10) {
 					  nodes {
@@ -1632,9 +1651,6 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 					title
 					url
 					updatedAt
-					commits {
-					  totalCount
-					}
 				  }
 				  rebaseMergeAllowed
 				  squashMergeAllowed

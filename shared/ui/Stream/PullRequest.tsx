@@ -18,7 +18,7 @@ import { HeadshotName, PRHeadshotName } from "../src/components/HeadshotName";
 import { MarkdownText } from "./MarkdownText";
 import { Link } from "./Link";
 import Tag from "./Tag";
-import { setCurrentPullRequest } from "../store/context/actions";
+import { setCurrentPullRequest, setCurrentReview } from "../store/context/actions";
 import CancelButton from "./CancelButton";
 import { useDidMount } from "../utilities/hooks";
 import { HostApi } from "../webview-api";
@@ -65,6 +65,7 @@ import { LoadingIndicator } from "react-select/src/components/indicators";
 import { LoadingMessage } from "../src/components/LoadingMessage";
 import { Modal } from "./Modal";
 import { DropdownButton } from "./Review/DropdownButton";
+import { bootstrapReviews } from "../store/reviews/actions";
 
 const Root = styled.div`
 	${Tabs} {
@@ -90,20 +91,15 @@ export const PullRequest = () => {
 	const derivedState = useSelector((state: CodeStreamState) => {
 		const currentUser = state.users[state.session.userId!] as CSMe;
 		const team = state.teams[state.context.currentTeamId];
-		const blameMap = team.settings ? team.settings.blameMap : {};
-		const skipGitEmailCheck = state.preferences.skipGitEmailCheck;
-		const addBlameMapEnabled = isFeatureEnabled(state, "addBlameMap");
 
 		return {
+			reviewsState: state.reviews,
+			reviews: state.reviews.reviews,
 			currentUser,
 			currentPullRequestId: state.context.currentPullRequestId,
-			blameMap,
-			team,
-			skipGitEmailCheck,
-			addBlameMapEnabled
+			team
 		};
 	});
-
 	const [text, setText] = useState("");
 	const [activeTab, setActiveTab] = useState(1);
 	const [ghRepo, setGhRepo] = useState<any>({});
@@ -164,8 +160,32 @@ export const PullRequest = () => {
 		setIsLoadingComment(false);
 	};
 
+	const linkHijacker = (e: any) => {
+		if (e && e.target.tagName === "A" && e.target.text === "Changes reviewed on CodeStream") {
+			// TOOD this doesn't seem to always work???
+			const review = Object.values(derivedState.reviews).find(
+				_ => _.permalink === e.target.href.replace("?src=GitHub", "")
+			);
+			if (review) {
+				e.preventDefault();
+				e.stopPropagation();
+				dispatch(setCurrentPullRequest(""));
+				dispatch(setCurrentReview(review.id));
+			}
+		}
+	};
+
 	useDidMount(() => {
+		if (!derivedState.reviewsState.bootstrapped) {
+			// TOOD this doesn't seem to always work???
+			dispatch(bootstrapReviews());
+		}
 		fetch();
+
+		document.addEventListener("click", linkHijacker);
+		return () => {
+			document.removeEventListener("click", linkHijacker);
+		};
 	});
 
 	const mergePullRequest = async (options: { mergeMethod: MergeMethod }) => {

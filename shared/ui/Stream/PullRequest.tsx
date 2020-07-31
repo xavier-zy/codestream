@@ -298,7 +298,10 @@ export const PullRequest = () => {
 																	All commits from this branch will be added to the base branch via
 																	a merge commit.
 																	{!ghRepo.mergeCommitAllowed && (
-																		<small>Not enabled for this repository</small>
+																		<>
+																			<br />
+																			<small>Not enabled for this repository</small>
+																		</>
 																	)}
 																</span>
 															}

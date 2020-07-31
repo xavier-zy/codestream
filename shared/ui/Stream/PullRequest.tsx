@@ -14,11 +14,11 @@ import copy from "copy-to-clipboard";
 import MessageInput from "./MessageInput";
 import Tooltip from "./Tooltip";
 import { Headshot, PRHeadshot } from "../src/components/Headshot";
+import { HeadshotName, PRHeadshotName } from "../src/components/HeadshotName";
 import { MarkdownText } from "./MarkdownText";
 import { Link } from "./Link";
-import { HeadshotName } from "../src/components/HeadshotName";
 import Tag from "./Tag";
-import { setCurrentReview, setCurrentPullRequest } from "../store/context/actions";
+import { setCurrentPullRequest } from "../store/context/actions";
 import CancelButton from "./CancelButton";
 import { useDidMount } from "../utilities/hooks";
 import { HostApi } from "../webview-api";
@@ -173,15 +173,18 @@ export const PullRequest = () => {
 		fetch();
 	};
 
+	console.warn(pr);
 	if (!pr) {
 		return (
 			<Modal verticallyCenter>
-				<LoadingMessage>Loading...</LoadingMessage>
+				<LoadingMessage>Loading Pull Request...</LoadingMessage>
 			</Modal>
 		);
 	} else {
 		const statusIcon = "git-merge";
 		const action = pr.merged ? "merged " : "wants to merge ";
+		const numParticpants = ((pr.participants && pr.participants.nodes) || []).length;
+		const participantsLabel = `${numParticpants} Participant${numParticpants == 1 ? "" : "s"}`;
 		return (
 			<Root className="panel full-height">
 				<CreateCodemarkIcons narrow />
@@ -274,7 +277,6 @@ export const PullRequest = () => {
 										</PRCommentCard>
 									</PRComment>
 									<PullRequestTimelineItems pr={pr} />
-									<PRFoot />
 									<PRFoot />
 								</PRConversation>
 								<PRComment>
@@ -380,55 +382,70 @@ export const PullRequest = () => {
 							</div>
 							<PRSidebar>
 								<PRSection>
-									<Icon name="gear" className="settings clickable" onClick={() => {}} />
-									Reviewers
-									<br />
+									<h1>
+										<Icon name="gear" className="settings clickable" onClick={() => {}} />
+										Reviewers
+									</h1>
 									<HeadshotName person={currentUser} />
 								</PRSection>
 								<PRSection>
-									<Icon name="gear" className="settings clickable" onClick={() => {}} />
-									Assignees
-									<br />
-									{pr &&
-										pr.assignees &&
-										pr.assignees.nodes.map((_: any) => <PRHeadshot person={_} size={16} />)}
+									<h1>
+										<Icon name="gear" className="settings clickable" onClick={() => {}} />
+										Assignees
+									</h1>
+									{pr.assignees && pr.assignees.nodes.length > 0
+										? pr.assignees.nodes.map((_: any) => <PRHeadshotName person={_} size={20} />)
+										: "None yet"}
 								</PRSection>
 								<PRSection>
-									<Icon name="gear" className="settings clickable" onClick={() => {}} />
-									Labels
-									<br />
-									{pr &&
-										pr.labels &&
-										pr.labels.nodes.map(_ => <Tag tag={{ label: _.name, color: _.color }} />)}
+									<h1>
+										<Icon name="gear" className="settings clickable" onClick={() => {}} />
+										Labels
+									</h1>
+									{pr.labels &&
+										pr.labels.nodes.map(_ => <Tag tag={{ label: _.name, color: `#${_.color}` }} />)}
 								</PRSection>
 								<PRSection>
-									Projects
-									<Icon name="gear" className="settings clickable" onClick={() => {}} />
+									<h1>
+										<Icon name="gear" className="settings clickable" onClick={() => {}} />
+										Projects
+									</h1>
+									None yet
 								</PRSection>
 								<PRSection>
-									Milestone
-									<Icon name="gear" className="settings clickable" onClick={() => {}} />
-									{pr && pr.milestone && <div>{pr.milestone.title}</div>}
+									<h1>
+										<Icon name="gear" className="settings clickable" onClick={() => {}} />
+										Milestone
+									</h1>
+									{pr.milestone ? <div>{pr.milestone.title}</div> : "No milestone"}
 								</PRSection>
 								<PRSection>
-									Linked Issues
-									<Icon name="gear" className="settings clickable" onClick={() => {}} />
+									<h1>
+										<Icon name="gear" className="settings clickable" onClick={() => {}} />
+										Linked Issues
+									</h1>
+									None yet
 								</PRSection>
 								<PRSection>
-									Notifications
-									<Icon name="gear" className="settings clickable" onClick={() => {}} />
+									<h1>
+										<Icon name="gear" className="settings clickable" onClick={() => {}} />
+										Notifications
+									</h1>
+									<Button variant="secondary">
+										<Icon name="mute" /> Unsubscribe
+									</Button>
 								</PRSection>
 								<PRSection>
-									Participants
-									<Icon name="gear" className="settings clickable" onClick={() => {}} />
-									<br />
-									{pr &&
-										pr.participants &&
-										pr.participants.nodes.map((_: any) => <PRHeadshot person={_} size={16} />)}
+									<h1>{participantsLabel}</h1>
+									{pr.participants &&
+										pr.participants.nodes.map((_: any) => (
+											<PRHeadshot display="inline-block" person={_} size={20} />
+										))}
 								</PRSection>
-								<PRSection>
-									Lock Convo
-									<Icon name="lock" className="settings clickable" onClick={() => {}} />
+								<PRSection style={{ borderBottom: "none" }}>
+									<h1>
+										<Icon name="lock" className="clickable" onClick={() => {}} /> Lock Conversation
+									</h1>
 								</PRSection>
 							</PRSidebar>
 						</PRContent>

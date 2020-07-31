@@ -200,7 +200,7 @@ export const PRHeadshot = styled((props: PRHeadshotProps) => {
 	if (!props.person) return null;
 
 	return (
-		<Root size={size} className={props.className} onClick={props.onClick}>
+		<Root display={props.display} size={size} className={props.className} onClick={props.onClick}>
 			<Image size={size} src={props.person.avatarUrl} />
 		</Root>
 	);

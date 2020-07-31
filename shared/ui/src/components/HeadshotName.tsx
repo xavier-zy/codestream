@@ -1,12 +1,9 @@
 import React from "react";
 import styled from "styled-components";
-import { Headshot } from "./Headshot";
+import { Headshot, PRHeadshot } from "./Headshot";
 import { useSelector } from "react-redux";
 import { CodeStreamState } from "@codestream/webview/store";
 import cx from "classnames";
-import Icon from "@codestream/webview/Stream/Icon";
-
-// this displays a headshot and the username after it
 
 export interface HeadshotNameProps {
 	person?: {
@@ -76,3 +73,42 @@ export function HeadshotName(props: HeadshotNameProps) {
 		</Root>
 	);
 }
+
+export interface PRHeadshotNameProps {
+	person: {
+		avatarUrl: string;
+		login: string;
+	};
+	size?: number;
+	hardRightBorder?: boolean;
+	display?: string;
+	onClick?: React.MouseEventHandler;
+	className?: string;
+	addThumbsUp?: boolean;
+	noName?: boolean;
+}
+
+export const PRHeadshotName = styled((props: PRHeadshotNameProps) => {
+	const size = props.size || 16;
+	if (!props.person) return null;
+
+	// leave this for future when we can determine it's you
+	const me = false;
+
+	return (
+		<Root className={props.className} onClick={props.onClick}>
+			<HeadshotWrapper className={props.noName ? "no-padding" : ""}>
+				<PRHeadshot
+					person={props.person}
+					size={props.size || 20}
+					className={props.className}
+					hardRightBorder={me}
+					addThumbsUp={props.addThumbsUp}
+				/>
+			</HeadshotWrapper>
+			{!props.noName && (
+				<span className={cx("headshot-name", { "at-mention me": me })}>{props.person.login}</span>
+			)}
+		</Root>
+	);
+})``;

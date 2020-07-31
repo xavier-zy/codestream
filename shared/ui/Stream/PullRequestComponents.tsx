@@ -146,12 +146,19 @@ export const PRContent = styled.div`
 export const PRSection = styled.div`
 	padding: 10px 0;
 	position: relative;
+	font-size: 12px;
+	opacity: 0.7;
 	border-bottom: 1px solid var(--base-border-color);
-	.icon {
-		float: right;
-		display: inline-block;
-		transform: scale(0.7);
-		opacity: 0.7;
+	h1 {
+		font-weight: 600;
+		font-size: 12px;
+		margin: 0 0 8px 0;
+		padding: 0;
+		.icon.settings {
+			float: right;
+			display: inline-block;
+			transform: scale(0.7);
+		}
 	}
 `;
 

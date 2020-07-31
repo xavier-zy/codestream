@@ -921,7 +921,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 						createdAt
 						author {
 						  login
-						  avatarUrl(size: 16)
+						  avatarUrl(size: 20)
 						  url
 						}
 						bodyText
@@ -950,7 +950,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 							createdAt
 							author {
 							  login
-							  avatarUrl(size: 16)
+							  avatarUrl(size: 20)
 							  url
 							}
 							bodyText
@@ -1502,13 +1502,14 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 					}
 					participants(first: 10) {
 					  nodes {
-						avatarUrl(size: 16)
+						login
+						avatarUrl(size: 20)
 					  }
 					}
 					assignees(first: 10) {
 					  nodes {
 						bio
-						avatarUrl(size: 16)
+						avatarUrl(size: 20)
 						id
 						name
 						login

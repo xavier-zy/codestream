@@ -14,6 +14,7 @@ import Icon from "./Icon";
 import { MarkdownText } from "./MarkdownText";
 import { FetchThirdPartyPullRequestPullRequest } from "@codestream/protocols/agent";
 import Tag from "./Tag";
+import { Link } from "./Link";
 
 interface Props {
 	pr: FetchThirdPartyPullRequestPullRequest;
@@ -94,10 +95,23 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 							<PRTimelineItem key={index}>
 								<Icon name="git-commit" />
 								<PRHeadshot key={index} size={16} person={item.commit.author} />
+
 								<div className="monospace ellipsis">
-									<MarkdownText text={item.commit.message || ""} />
+									<Link
+										href={`${pr.url}/commits/${item.commit.abbreviatedOid}`}
+										className="monospace"
+									>
+										<MarkdownText text={item.commit.message || ""} />
+									</Link>
 								</div>
-								<div className="monospace sha">{item.commit.abbreviatedOid}</div>
+								<div className="monospace sha">
+									<Link
+										href={`${pr.url}/commits/${item.commit.abbreviatedOid}`}
+										className="monospace"
+									>
+										{item.commit.abbreviatedOid}
+									</Link>
+								</div>
 							</PRTimelineItem>
 						);
 					case "AssignedEvent": {

@@ -79,6 +79,9 @@ export interface PRHeadshotNameProps {
 		avatarUrl: string;
 		login: string;
 		name?: string;
+		user?: {
+			login: string;
+		};
 	};
 	size?: number;
 	hardRightBorder?: boolean;
@@ -90,7 +93,6 @@ export interface PRHeadshotNameProps {
 }
 
 export const PRHeadshotName = styled((props: PRHeadshotNameProps) => {
-	const size = props.size || 16;
 	if (!props.person) return null;
 
 	// leave this for future when we can determine it's you
@@ -109,7 +111,7 @@ export const PRHeadshotName = styled((props: PRHeadshotNameProps) => {
 			</HeadshotWrapper>
 			{!props.noName && (
 				<span className={cx("headshot-name", { "at-mention me": me })}>
-					{props.person.login || props.person.name}
+					{props.person.login || (props.person.user ? props.person.user.login : props.person.name)}
 				</span>
 			)}
 		</Root>

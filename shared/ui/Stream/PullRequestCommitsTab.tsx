@@ -111,7 +111,8 @@ export const PullRequestCommitsTab = props => {
 								return (
 									<PRCommitCard>
 										<h1>{_.commit.message}</h1>
-										<PRHeadshotName person={_.commit.author} /> committed
+										<PRHeadshotName person={_.commit.author} />
+										<span className="subtle">committed</span>
 										<Timestamp time={_.commit.authoredDate} relative />
 										<PRCommitButtons>
 											<span className="monospace">{_.commit.abbreviatedOid}</span>

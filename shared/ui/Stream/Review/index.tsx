@@ -229,14 +229,18 @@ const MetaIcons = styled.span`
 `;
 
 const MetaPullRequest = styled.div`
-	padding: 6px 6px 6px 1px;
+	// padding: 6px 6px 6px 0;
 	a {
-		padding-left: 6px;
+		// padding-left: 6px;
 		text-decoration: none;
 		color: var(--text-color-subtle) !important;
+		&:hover {
+			color: var(--text-color-info) !important;
+		}
 	}
 	.icon {
-		vertical-align: middle;
+		vertical-align: 0px;
+		margin-right: 5px;
 	}
 `;
 
@@ -638,7 +642,7 @@ const BaseReview = (props: BaseReviewProps) => {
 			if (provider) {
 				const providerInfo = PROVIDER_MAPPINGS[provider.name];
 				if (providerInfo && providerInfo.icon) {
-					icon = <Icon name={providerInfo.icon!} title={providerInfo.displayName}></Icon>;
+					icon = <Icon name={providerInfo.icon!}></Icon>;
 				}
 			}
 		}
@@ -652,42 +656,45 @@ const BaseReview = (props: BaseReviewProps) => {
 				<MetaDescription>
 					<MetaDescriptionForAssignees>
 						<MetaPullRequest>
-							{icon}
-							<a
-								href="#"
-								title="View this Pull Request"
-								onClick={e => {
-									e.preventDefault();
-									e.stopPropagation();
+							<Tooltip title="View this Pull Request" placement="bottom" delay={1}>
+								<a
+									href="#"
+									onClick={e => {
+										e.preventDefault();
+										e.stopPropagation();
 
-									if (review.pullRequestProviderId === "github*com") {
-										HostApi.instance
-											.send(ExecuteThirdPartyRequestUntypedType, {
-												method: "getPullRequestIdFromUrl",
-												providerId: "github*com",
-												params: {
-													url: review.pullRequestUrl
-												}
-											})
-											.then((id: any) => {
-												if (id) {
-													dispatch(setCurrentReview(""));
-													dispatch(setCurrentPullRequest(id));
-												} else {
+										if (review.pullRequestProviderId === "github*com") {
+											HostApi.instance
+												.send(ExecuteThirdPartyRequestUntypedType, {
+													method: "getPullRequestIdFromUrl",
+													providerId: "github*com",
+													params: {
+														url: review.pullRequestUrl
+													}
+												})
+												.then((id: any) => {
+													if (id) {
+														dispatch(setCurrentReview(""));
+														dispatch(setCurrentPullRequest(id));
+													} else {
+														HostApi.instance.send(OpenUrlRequestType, {
+															url: review.pullRequestUrl!
+														});
+													}
+												})
+												.catch(e => {
 													HostApi.instance.send(OpenUrlRequestType, {
 														url: review.pullRequestUrl!
 													});
-												}
-											})
-											.catch(e => {
-												HostApi.instance.send(OpenUrlRequestType, { url: review.pullRequestUrl! });
-											});
-									} else {
-									}
-								}}
-							>
-								{text}
-							</a>
+												});
+										} else {
+										}
+									}}
+								>
+									{icon}
+									{text}
+								</a>
+							</Tooltip>
 						</MetaPullRequest>
 					</MetaDescriptionForAssignees>
 				</MetaDescription>

@@ -440,9 +440,7 @@ export interface ExecuteThirdPartyRequest {
 	params: any;
 }
 
-export interface ExecuteThirdPartyResponse {
-	data: any;
-}
+export interface ExecuteThirdPartyResponse {}
 
 export const ExecuteThirdPartyRequestUntypedType = new RequestType<
 	ExecuteThirdPartyRequest,

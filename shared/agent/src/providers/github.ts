@@ -977,6 +977,31 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 			.sort((a: { createdAt: number }, b: { createdAt: number }) => b.createdAt - a.createdAt);
 	}
 
+	async getPullRequestIdFromUrl(request: { url: string }) {
+		// since we only the url for the PR -- parse it out for the
+		// data we need.
+		const uri = URI.parse(request.url);
+		const path = uri.path.split("/");
+		const owner = path[1];
+		const repo = path[2];
+		const pullRequestNumber = parseInt(path[4], 10);
+		const pullRequestInfo = await this.client.request<any>(
+			`query FindPullRequest($owner:String!,$name:String!,$pullRequestNumber:Int!) {
+					repository(owner:$owner name:$name) {
+					  pullRequest(number: $pullRequestNumber) {
+						id
+					  }
+					}
+				  }`,
+			{
+				owner: owner,
+				name: repo,
+				pullRequestNumber: pullRequestNumber
+			}
+		);
+		return pullRequestInfo.repository.pullRequest.id;
+	}
+
 	async updatePullRequest(request: {
 		owner: string;
 		repo: string;

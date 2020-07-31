@@ -13,7 +13,8 @@ import {
 	CodemarkPlus,
 	FollowReviewRequestType,
 	DidChangeDataNotification,
-	DidChangeDataNotificationType
+	DidChangeDataNotificationType,
+	ExecuteThirdPartyRequestUntypedType
 } from "@codestream/protocols/agent";
 import {
 	MinimumWidthCard,
@@ -51,6 +52,7 @@ import { deleteReview, fetchReview } from "@codestream/webview/store/reviews/act
 import {
 	setCurrentReview,
 	setCurrentCodemark,
+	setCurrentPullRequest,
 	openPanel,
 	setCreatePullRequest
 } from "@codestream/webview/store/context/actions";
@@ -656,7 +658,32 @@ const BaseReview = (props: BaseReviewProps) => {
 								title="View this Pull Request"
 								onClick={e => {
 									e.preventDefault();
-									HostApi.instance.send(OpenUrlRequestType, { url: review.pullRequestUrl! });
+									e.stopPropagation();
+
+									if (review.pullRequestProviderId === "github*com") {
+										HostApi.instance
+											.send(ExecuteThirdPartyRequestUntypedType, {
+												method: "getPullRequestIdFromUrl",
+												providerId: "github*com",
+												params: {
+													url: review.pullRequestUrl
+												}
+											})
+											.then((id: any) => {
+												if (id) {
+													dispatch(setCurrentReview(""));
+													dispatch(setCurrentPullRequest(id));
+												} else {
+													HostApi.instance.send(OpenUrlRequestType, {
+														url: review.pullRequestUrl!
+													});
+												}
+											})
+											.catch(e => {
+												HostApi.instance.send(OpenUrlRequestType, { url: review.pullRequestUrl! });
+											});
+									} else {
+									}
 								}}
 							>
 								{text}

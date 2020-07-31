@@ -363,7 +363,7 @@ export const PullRequestConversationTab = props => {
 						Reviewers
 					</h1>
 					{reviewers.map(_ => {
-						return <PRHeadshotName person={_} size={20} />;
+						return <PRHeadshotName key={_.avatarUrl} person={_} size={20} />;
 					})}
 				</PRSection>
 				<PRSection>
@@ -372,7 +372,9 @@ export const PullRequestConversationTab = props => {
 						Assignees
 					</h1>
 					{pr.assignees && pr.assignees.nodes.length > 0
-						? pr.assignees.nodes.map((_: any) => <PRHeadshotName person={_} size={20} />)
+						? pr.assignees.nodes.map((_: any) => (
+								<PRHeadshotName key={_.avatarUrl} person={_} size={20} />
+						  ))
 						: "None yet"}
 				</PRSection>
 				<PRSection>
@@ -389,7 +391,9 @@ export const PullRequestConversationTab = props => {
 						Projects
 					</h1>
 					{pr.projectCards && pr.projectCards.nodes.length > 0
-						? pr.projectCards.nodes.map((_: any) => <span>{_.project.name}</span>)
+						? pr.projectCards.nodes.map((_: any) => (
+								<span key={_.project.name}>{_.project.name}</span>
+						  ))
 						: "None yet"}
 				</PRSection>
 				<PRSection>
@@ -419,7 +423,7 @@ export const PullRequestConversationTab = props => {
 					<h1>{participantsLabel}</h1>
 					{pr.participants &&
 						pr.participants.nodes.map((_: any) => (
-							<PRHeadshot display="inline-block" person={_} size={20} />
+							<PRHeadshot display="inline-block" key={_.avatarUrl} person={_} size={20} />
 						))}
 				</PRSection>
 				<PRSection style={{ borderBottom: "none" }}>

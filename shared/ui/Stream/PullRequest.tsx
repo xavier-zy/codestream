@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { CodeStreamState } from "../store";
 import styled from "styled-components";
@@ -39,6 +39,7 @@ import { DropdownButton } from "./Review/DropdownButton";
 import { bootstrapReviews } from "../store/reviews/actions";
 import { PullRequestConversationTab } from "./PullRequestConversationTab";
 import { PullRequestCommitsTab } from "./PullRequestCommitsTab";
+import * as reviewSelectors from "../store/reviews/reducer";
 
 const Root = styled.div`
 	${Tabs} {
@@ -67,7 +68,7 @@ export const PullRequest = () => {
 
 		return {
 			reviewsState: state.reviews,
-			reviews: state.reviews.reviews,
+			reviews: reviewSelectors.getAllReviews(state),
 			currentUser,
 			currentPullRequestId: state.context.currentPullRequestId,
 			team
@@ -96,7 +97,6 @@ export const PullRequest = () => {
 
 	const linkHijacker = (e: any) => {
 		if (e && e.target.tagName === "A" && e.target.text === "Changes reviewed on CodeStream") {
-			// TOOD this doesn't seem to always work???
 			const review = Object.values(derivedState.reviews).find(
 				_ => _.permalink === e.target.href.replace("?src=GitHub", "")
 			);
@@ -109,17 +109,18 @@ export const PullRequest = () => {
 		}
 	};
 
-	useDidMount(() => {
-		if (!derivedState.reviewsState.bootstrapped) {
-			// TOOD this doesn't seem to always work???
-			dispatch(bootstrapReviews());
-		}
-		fetch();
-
+	useEffect(() => {
 		document.addEventListener("click", linkHijacker);
 		return () => {
 			document.removeEventListener("click", linkHijacker);
 		};
+	}, [derivedState.reviews]);
+
+	useDidMount(() => {
+		if (!derivedState.reviewsState.bootstrapped) {
+			dispatch(bootstrapReviews());
+		}
+		fetch();
 	});
 
 	console.warn(pr);

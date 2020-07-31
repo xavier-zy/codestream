@@ -169,7 +169,7 @@ export const PRCommentCard = styled.div`
 	border: 1px solid;
 	border-color: var(--base-border-color);
 	background: var(--app-background-color);
-	.vscode-dark&,
+	.vscode-dark &,
 	&.add-comment {
 		background: var(--base-background-color);
 	}
@@ -237,8 +237,10 @@ export const PRCommit = styled.div`
 	}
 	.icon {
 		background: var(--app-background-color);
-		opacity: 0.7;
-		height: 16px;
+		height: 19px;
+		svg {
+			opacity: 0.7;
+		}
 	}
 `;
 
@@ -366,7 +368,7 @@ export const ButtonRow = styled.div`
 // `;
 
 export const PRFoot = styled.div`
-	border-top: 2px solid var(--base-border-color);
+	border-top: 4px solid var(--base-border-color);
 	background: var(--app-background-color);
 	margin-top: 30px;
 `;

@@ -66,7 +66,8 @@ export const distanceOfTimeInWords = (
 	if (!relativeToNow) {
 		return when;
 	} else if (isAgo) {
-		return `${when} ago`;
+		if (when === "1 day") return "yesterday";
+		else return `${when} ago`;
 	} else {
 		return `in ${when}`;
 	}

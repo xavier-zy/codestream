@@ -11,12 +11,8 @@ import { Tabs, Tab } from "../src/components/Tabs";
 import Timestamp from "./Timestamp";
 import copy from "copy-to-clipboard";
 import { Link } from "./Link";
-<<<<<<< HEAD
 import Tag from "./Tag";
 import { setCurrentPullRequest, setCurrentReview } from "../store/context/actions";
-=======
-import { setCurrentPullRequest } from "../store/context/actions";
->>>>>>> commits tab
 import CancelButton from "./CancelButton";
 import { useDidMount } from "../utilities/hooks";
 import { HostApi } from "../webview-api";

@@ -61,6 +61,7 @@ export const PRTitle = styled.div`
 		vertical-align: 3px;
 	}
 	.reload-button {
+		font-size: 11px !important; // to match the spinnable icon
 		display: inline-block;
 		position: absolute !important;
 		top: 20px;

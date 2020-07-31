@@ -142,11 +142,17 @@ export const PullRequest = () => {
 				<PRHeader>
 					<PRTitle>
 						{pr.title} <Link href={pr.url}>#{pr.number}</Link>
-						<Icon
-							onClick={fetch}
-							className={`reload-button clickable ${isLoadingPR ? "spin" : "spinnable"}`}
-							name="sync"
-						/>
+						<div className="reload-button">
+							<Icon
+								title="Reload"
+								trigger={["hover"]}
+								delay={1}
+								onClick={fetch}
+								placement="bottom"
+								className={`clickable ${isLoadingPR ? "spin" : "spinnable"}`}
+								name="sync"
+							/>
+						</div>
 						<CancelButton className="clickable" onClick={exit} />
 					</PRTitle>
 					<PRStatus>

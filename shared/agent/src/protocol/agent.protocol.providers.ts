@@ -346,6 +346,16 @@ export interface FetchThirdPartyPullRequestRequest {
 	repo?: string;
 }
 
+export interface FetchThirdPartyPullRequestFilesResponse {
+	sha: string;
+	filename: string;
+	status: string;
+	additions: number;
+	changes: number;
+	deletions: number;
+	patch?: string;
+}
+
 export interface FetchThirdPartyPullRequestPullRequest {
 	id: string;
 	body: string;
@@ -450,6 +460,7 @@ export interface FetchThirdPartyPullRequestPullRequest {
 	url: string;
 	updatedAt: string;
 }
+
 export interface FetchThirdPartyPullRequestRepository {
 	id: string;
 	rebaseMergeAllowed: boolean;

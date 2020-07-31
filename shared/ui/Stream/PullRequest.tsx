@@ -40,6 +40,7 @@ import { bootstrapReviews } from "../store/reviews/actions";
 import { PullRequestConversationTab } from "./PullRequestConversationTab";
 import { PullRequestCommitsTab } from "./PullRequestCommitsTab";
 import * as reviewSelectors from "../store/reviews/reducer";
+import { PullRequestFilesChangedTab } from "./PullRequestFilesChangedTab";
 
 const Root = styled.div`
 	${Tabs} {
@@ -65,7 +66,6 @@ export const PullRequest = () => {
 	const derivedState = useSelector((state: CodeStreamState) => {
 		const currentUser = state.users[state.session.userId!] as CSMe;
 		const team = state.teams[state.context.currentTeamId];
-
 		return {
 			reviewsState: state.reviews,
 			reviews: reviewSelectors.getAllReviews(state),
@@ -228,6 +228,14 @@ export const PullRequest = () => {
 							<PullRequestConversationTab pr={pr} ghRepo={ghRepo} fetch={fetch} />
 						)}
 						{activeTab === 2 && <PullRequestCommitsTab pr={pr} ghRepo={ghRepo} fetch={fetch} />}
+						{activeTab === 4 && (
+							<PullRequestFilesChangedTab
+								key="files-changed"
+								pr={pr}
+								ghRepo={ghRepo}
+								fetch={fetch}
+							/>
+						)}
 					</div>
 				</ScrollBox>
 			</Root>

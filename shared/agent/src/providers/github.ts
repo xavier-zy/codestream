@@ -29,7 +29,8 @@ import {
 	MoveThirdPartyCardResponse,
 	ThirdPartyProviderCard,
 	GetMyPullRequestsResponse,
-	MergeMethod
+	MergeMethod,
+	FetchThirdPartyPullRequestFilesResponse
 } from "../protocol/agent.protocol";
 import { CodemarkType, CSGitHubProviderInfo, CSReferenceLocation } from "../protocol/api.protocol";
 import { Arrays, Functions, log, lspProvider, Strings } from "../system";
@@ -1165,6 +1166,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 			}
 			nodes(ids: $id) {
 			  ... on PullRequest {
+				number
 				repository {
 				  name
 				  owner {
@@ -1178,6 +1180,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 			id: id
 		});
 		return {
+			pullRequestNumber: rsp.nodes[0].number,
 			name: rsp.nodes[0].repository.name,
 			owner: rsp.nodes[0].repository.owner.login
 		};
@@ -1201,6 +1204,16 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 			id: id
 		});
 		return rsp.node.number;
+	}
+
+	async getPullRequestFilesChanged(request: {
+		pullRequestId: string;
+	}): Promise<FetchThirdPartyPullRequestFilesResponse[]> {
+		const ownerData = await this.getRepoOwnerFromPullRequestId(request.pullRequestId);
+		const data = await this.get<any>(
+			`/repos/${ownerData.owner}/${ownerData.name}/pulls/${ownerData.pullRequestNumber}/files`
+		);
+		return data.body;
 	}
 
 	async pullRequestTimelineQuery(

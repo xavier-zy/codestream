@@ -17,6 +17,8 @@ export interface DropdownButtonProps extends ButtonProps {
 		noHover?: boolean;
 		disabled?: boolean;
 		submenu?: any[];
+		subtext?: any;
+		icon?: any;
 	}[];
 }
 

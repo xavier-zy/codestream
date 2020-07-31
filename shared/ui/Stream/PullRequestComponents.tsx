@@ -135,6 +135,21 @@ export const PRPlusMinus = styled.div`
 		color: #cc3366;
 	}
 `;
+export const PRStatusHeadshot = styled.div`
+	width: 40px;
+	height: 40px;
+	position: absolute;
+	left: 0;
+	top: 0;
+	border-radius: 5px;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	.icon {
+		transform: scale(2);
+		color: white;
+	}
+`;
 
 export const PRComment = styled.div`
 	margin: 30px 0;
@@ -151,11 +166,25 @@ export const PRComment = styled.div`
 `;
 
 export const PRCommentCard = styled.div`
-	border: 1px solid var(--base-border-color);
-	background: var(--base-background-color);
-	padding: 10px;
+	border: 1px solid;
+	border-color: var(--base-border-color);
+	background: var(--app-background-color);
+	.vscode-dark&,
+	&.add-comment {
+		background: var(--base-background-color);
+	}
+	border-radius: 5px;
+	padding: 10px 15px;
 	margin-left: 60px;
 	z-index: 2;
+	h1 {
+		font-size: 15px;
+		margin: 0 0 2px 0;
+	}
+	p {
+		margin: 0;
+		color: var(--text-color-subtle);
+	}
 	&:before {
 		z-index: 5;
 		content: "";
@@ -168,6 +197,9 @@ export const PRCommentCard = styled.div`
 		border-left: 1px solid var(--base-border-color);
 		border-bottom: 1px solid var(--base-border-color);
 		background: var(--base-background-color);
+	}
+	&.green-border:before {
+		border-color: #7aba5d;
 	}
 `;
 
@@ -290,9 +322,10 @@ export const PRSidebar = styled.div`
 `;
 
 export const PRCommentHeader = styled.div`
-	padding: 0 10px 10px 10px;
-	margin: 0 -10px;
+	padding: 10px 15px 10px 15px;
+	margin: -10px -15px 0 -15px;
 	border-bottom: 1px solid var(--base-border-color);
+	background: var(--base-background-color);
 	display: flex;
 `;
 
@@ -351,5 +384,28 @@ export const PRActionIcons = styled.div`
 	.icon {
 		opacity: 0.5;
 		margin-left: 10px;
+	}
+`;
+
+export const PRIconButton = styled.div`
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	width: 30px;
+	height: 30px;
+	border-radius: 15px;
+	.icon {
+		color: white;
+	}
+`;
+
+export const PRButtonRow = styled.div`
+	margin: 15px -15px -15px -15px;
+	border-top: 1px solid var(--base-border-color);
+	border-radius: 0 0 5px 5px;
+	padding: 15px;
+	background: var(--base-background-color);
+	.vscode-dark& {
+		background: rgba(0, 0, 0, 0.1);
 	}
 `;

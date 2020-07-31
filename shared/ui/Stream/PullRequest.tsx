@@ -51,10 +51,12 @@ import {
 	PRCommentHeader,
 	PRActionIcons,
 	PRCommentBody,
-	PRCommit,
+	PRStatusHeadshot,
+	PRIconButton,
 	PRFoot,
 	PRPlusMinus,
 	PRSidebar,
+	PRButtonRow,
 	PRSection
 } from "./PullRequestComponents";
 import { ButtonRow } from "./StatusPanel";
@@ -62,6 +64,7 @@ import { PullRequestTimelineItems } from "./PullRequestTimelineItems";
 import { LoadingIndicator } from "react-select/src/components/indicators";
 import { LoadingMessage } from "../src/components/LoadingMessage";
 import { Modal } from "./Modal";
+import { DropdownButton } from "./Review/DropdownButton";
 
 const Root = styled.div`
 	${Tabs} {
@@ -188,7 +191,7 @@ export const PullRequest = () => {
 			</Modal>
 		);
 	} else {
-		const statusIcon = "git-merge";
+		const statusIcon = pr.state == "OPEN" ? "pull-request" : "git-merge";
 		const action = pr.merged ? "merged " : "wants to merge ";
 		const numParticpants = ((pr.participants && pr.participants.nodes) || []).length;
 		const participantsLabel = `${numParticpants} Participant${numParticpants == 1 ? "" : "s"}`;
@@ -227,7 +230,7 @@ export const PullRequest = () => {
 						<CancelButton className="clickable" onClick={exit} />
 					</PRTitle>
 					<PRStatus>
-						<PRStatusButton>
+						<PRStatusButton variant={pr.state == "OPEN" ? "success" : "primary"}>
 							<Icon name={statusIcon} />
 							{pr.state && pr.state.toLowerCase()}
 						</PRStatusButton>
@@ -327,13 +330,23 @@ export const PullRequest = () => {
 									<Icon name={statusIcon}  />
 								</PRStatusIcon>
 								*/}
-									<PRCommentCard>
-										{!pr.merged && pr.mergeable === "MERGEABLE" && pr.state !== "CLOSED" && (
-											<div>
-												<p>This branch has no conflicts with the base branch when rebasing</p>
-												<p>Rebase and merge can be performed automatically.</p>
-												<ButtonRow>
-													<div style={{ textAlign: "left", flexGrow: 1 }}>
+									{!pr.merged && pr.mergeable === "MERGEABLE" && pr.state !== "CLOSED" && (
+										<PRCommentCard className="green-border">
+											<PRStatusHeadshot className="green-background">
+												<Icon name="git-merge" />
+											</PRStatusHeadshot>
+											<div style={{ padding: "5px 0" }}>
+												<div style={{ display: "flex" }}>
+													<PRIconButton className="green-background">
+														<Icon name="check" />
+													</PRIconButton>
+													<div style={{ marginLeft: "10px" }}>
+														<h1>This branch has no conflicts with the base branch when rebasing</h1>
+														<p>Rebase and merge can be performed automatically.</p>
+													</div>
+												</div>
+												<PRButtonRow>
+													{/*
 														<Tooltip
 															title={
 																<span>
@@ -369,23 +382,68 @@ export const PullRequest = () => {
 														>
 															Rebase and merge
 														</Button>
-													</div>
-												</ButtonRow>
+														*/}
+													<DropdownButton
+														items={[
+															{
+																icon: <Icon name="git-merge" />,
+																label: "Create a merge commit",
+																subtext: (
+																	<span>
+																		All commits from this branch will be added to the base branch
+																		via a merge commit.
+																		{!ghRepo.mergeCommitAllowed && (
+																			<>
+																				<br />
+																				<small>Not enabled for this repository</small>
+																			</>
+																		)}
+																	</span>
+																),
+																disabled: !ghRepo.mergeCommitAllowed,
+																action: () => mergePullRequest({ mergeMethod: "MERGE" })
+															},
+															{
+																icon: <Icon name="git-merge" />,
+																label: "Squash and merge",
+																subtext:
+																	"The commits from this branch will be combined into one commit in the base branch.",
+																disabled: !ghRepo.squashMergeAllowed,
+																action: () => mergePullRequest({ mergeMethod: "SQUASH" })
+															},
+															{
+																icon: <Icon name="git-merge" />,
+																label: "Rebase and merge",
+																subtext:
+																	"The commits from this branch will be rebased and added to the base branch.",
+																disabled: !ghRepo.rebaseMergeAllowed,
+																action: () => mergePullRequest({ mergeMethod: "REBASE" })
+															}
+														]}
+														variant="success"
+													>
+														Rebase and merge
+													</DropdownButton>
+												</PRButtonRow>{" "}
 											</div>
-										)}
-										{!pr.merged && pr.mergeable === "CONFLICTING" && (
+										</PRCommentCard>
+									)}
+									{!pr.merged && pr.mergeable === "CONFLICTING" && (
+										<PRCommentCard className="red">
 											<div>This branch has conflicts that must be resolved</div>
-										)}
-										{!pr.merged && pr.mergeable === "UNKNOWN" && pr.state === "CLOSED" && (
+										</PRCommentCard>
+									)}
+									{!pr.merged && pr.mergeable === "UNKNOWN" && pr.state === "CLOSED" && (
+										<PRCommentCard className="red">
 											<div>This pull request is closed</div>
-										)}
-										{!pr.merged && pr.state === "CLOSED" && <div>Pull request is closed</div>}
-										{pr.merged && <div>Pull request successfully merged and closed</div>}
-									</PRCommentCard>
+										</PRCommentCard>
+									)}
+									{!pr.merged && pr.state === "CLOSED" && <div>Pull request is closed</div>}
+									{pr.merged && <div>Pull request successfully merged and closed</div>}
 								</PRComment>
 								<PRComment>
 									<Headshot size={40} person={currentUser}></Headshot>
-									<PRCommentCard>
+									<PRCommentCard className="add-comment">
 										<div
 											style={{ margin: "5px 0 0 0", border: "1px solid var(--base-border-color)" }}
 										>

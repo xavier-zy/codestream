@@ -63,6 +63,9 @@ import { LoadingMessage } from "../src/components/LoadingMessage";
 import { Modal } from "./Modal";
 
 const Root = styled.div`
+	${Tabs} {
+		margin: 10px 20px 10px 20px;
+	}
 	${Tab} {
 		font-size: 13px;
 		.icon {
@@ -237,45 +240,45 @@ export const PullRequest = () => {
 							<Timestamp time={pr.createdAt} relative />
 						</PRStatusMessage>
 					</PRStatus>
-					<Tabs style={{ marginTop: 0 }}>
-						<Tab onClick={e => setActiveTab(1)} active={activeTab == 1}>
-							<Icon name="comment" />
-							<span className="wide-text">Conversation</span>
-							<PRBadge>
-								{pr.timelineItems && pr.timelineItems.nodes
-									? pr.timelineItems.nodes.filter(
-											_ => _.__typename && _.__typename.indexOf("Comment") > -1
-									  ).length
-									: 0}
-							</PRBadge>
-						</Tab>
-						<Tab onClick={e => setActiveTab(2)} active={activeTab == 2}>
-							<Icon name="git-commit" />
-							<span className="wide-text">Commits</span>
-							<PRBadge>{pr.commits.totalCount}</PRBadge>
-						</Tab>
-						{/*
+				</PRHeader>
+				<ScrollBox>
+					<div className="channel-list vscroll">
+						<Tabs style={{ marginTop: 0 }}>
+							<Tab onClick={e => setActiveTab(1)} active={activeTab == 1}>
+								<Icon name="comment" />
+								<span className="wide-text">Conversation</span>
+								<PRBadge>
+									{pr.timelineItems && pr.timelineItems.nodes
+										? pr.timelineItems.nodes.filter(
+												_ => _.__typename && _.__typename.indexOf("Comment") > -1
+										  ).length
+										: 0}
+								</PRBadge>
+							</Tab>
+							<Tab onClick={e => setActiveTab(2)} active={activeTab == 2}>
+								<Icon name="git-commit" />
+								<span className="wide-text">Commits</span>
+								<PRBadge>{pr.commits.totalCount}</PRBadge>
+							</Tab>
+							{/*
 					<Tab onClick={e => setActiveTab(3)} active={activeTab == 3}>
 						<Icon name="check" />
 						<span className="wide-text">Checks</span>
 						<PRBadge>{pr.numChecks}</PRBadge>
 					</Tab>
 					 */}
-						<Tab onClick={e => setActiveTab(4)} active={activeTab == 4}>
-							<Icon name="plus-minus" />
-							<span className="wide-text">Files Changed</span>
-							<PRBadge>{pr.files.totalCount}</PRBadge>
-						</Tab>
-						{/* 
+							<Tab onClick={e => setActiveTab(4)} active={activeTab == 4}>
+								<Icon name="plus-minus" />
+								<span className="wide-text">Files Changed</span>
+								<PRBadge>{pr.files.totalCount}</PRBadge>
+							</Tab>
+							{/* 
 					<PRPlusMinus>
 						<span className="added">+{pr.linesAdded}</span>{" "}
 						<span className="deleted">-{pr.linesDeleted}</span>
 					</PRPlusMinus>
 					*/}
-					</Tabs>
-				</PRHeader>
-				<ScrollBox>
-					<div className="channel-list vscroll">
+						</Tabs>
 						<PRContent>
 							<div className="main-content">
 								<PRConversation>

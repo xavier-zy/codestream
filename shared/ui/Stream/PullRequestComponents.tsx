@@ -171,6 +171,45 @@ export const PRCommentCard = styled.div`
 	}
 `;
 
+export const PRConversation = styled.div`
+	position: relative;
+
+	&:before {
+		content: "";
+		position: absolute;
+		left: 71px;
+		z-index: 0;
+		top: 0;
+		height: 100%;
+		width: 2px;
+		background: var(--base-border-color);
+	}
+`;
+
+export const PRCommit = styled.div`
+	position: relative;
+	display: flex;
+	margin: 10px 0;
+	padding-left: 65px;
+	${PRHeadshot} {
+		flex-shrink: 0;
+		margin: 0 10px;
+		// div,
+		// img {
+		// 	border-radius: 50%;
+		// }
+	}
+
+	.sha {
+		margin-left: auto;
+	}
+	.icon {
+		background: var(--app-background-color);
+		opacity: 0.7;
+		height: 16px;
+	}
+`;
+
 export const PRContent = styled.div`
 	margin: 0 20px 20px 20px;
 	display: flex;
@@ -190,6 +229,12 @@ export const PRContent = styled.div`
 				&:before {
 					display: none;
 				}
+			}
+			${PRConversation}:before {
+				left: 11px;
+			}
+			${PRCommit} {
+				padding-left: 5px;
 			}
 		}
 	}
@@ -269,30 +314,6 @@ export const PRStatusIcon = styled.div`
 	}
 `;
 
-export const PRCommit = styled.div`
-	position: relative;
-	display: flex;
-	margin: 10px 0;
-	padding-left: 65px;
-	${PRHeadshot} {
-		flex-shrink: 0;
-		margin: 0 10px;
-		// div,
-		// img {
-		// 	border-radius: 50%;
-		// }
-	}
-
-	.sha {
-		margin-left: auto;
-	}
-	.icon {
-		background: var(--app-background-color);
-		opacity: 0.7;
-		height: 16px;
-	}
-`;
-
 export const ButtonRow = styled.div`
 	display: flex;
 	button + button {
@@ -300,21 +321,6 @@ export const ButtonRow = styled.div`
 	}
 	button {
 		margin-top: 10px;
-	}
-`;
-
-export const PRConversation = styled.div`
-	position: relative;
-
-	&:before {
-		content: "";
-		position: absolute;
-		left: 71px;
-		z-index: 0;
-		top: 0;
-		height: 100%;
-		width: 2px;
-		background: var(--base-border-color);
 	}
 `;
 

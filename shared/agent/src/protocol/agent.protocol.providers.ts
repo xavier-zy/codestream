@@ -495,7 +495,7 @@ export interface CreatePullRequestCommentRequest {
 	text: string;
 }
 
-export interface CloseAndCreatePullRequestCommentRequest {
+export interface CreatePullRequestCommentAndCloseRequest {
 	pullRequestId: string;
 	text: string;
 }

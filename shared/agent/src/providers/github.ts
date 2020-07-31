@@ -1222,6 +1222,13 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 							avatarUrl
 						  }
 						  createdAt
+						  assignee {
+							... on User {
+							  id
+							  email
+							  login
+							}
+						  }
 						}
 						... on AutomaticBaseChangeFailedEvent {
 						  __typename
@@ -1394,6 +1401,16 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 						}
 						... on PullRequestRevisionMarker {
 						  __typename
+						  createdAt
+						  pullRequest {
+							state
+						  }
+						  lastSeenCommit {
+							abbreviatedOid
+							status {
+							  state
+							}
+						  }
 						}
 						... on PullRequestReviewThread {
 						  __typename
@@ -1419,6 +1436,8 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 							  body
 							  lastEditedAt
 							  createdAt
+							  id
+							  state
 							}
 						  }
 						}
@@ -1429,7 +1448,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 						  __typename
 						  commit {
 							changedFiles
-							author{
+							author {
 							  avatarUrl
 							}
 							id
@@ -1452,6 +1471,8 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 						  actor {
 							login
 							avatarUrl
+							resourcePath
+							url
 						  }
 						}
 						... on MergedEvent {
@@ -1507,7 +1528,8 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 				  squashMergeAllowed
 				  mergeCommitAllowed
 				}
-			  }`;
+			  }
+			  `;
 			const rsp = await this.client.request<any>(query, {
 				owner: owner,
 				name: repo,

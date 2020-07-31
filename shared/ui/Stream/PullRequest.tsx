@@ -13,7 +13,6 @@ import Timestamp from "./Timestamp";
 import copy from "copy-to-clipboard";
 import MessageInput from "./MessageInput";
 import Tooltip from "./Tooltip";
-import { Card } from "../src/components/Card";
 import { Headshot, PRHeadshot } from "../src/components/Headshot";
 import { MarkdownText } from "./MarkdownText";
 import { Link } from "./Link";
@@ -23,9 +22,8 @@ import { setCurrentReview, setCurrentPullRequest } from "../store/context/action
 import CancelButton from "./CancelButton";
 import { useDidMount } from "../utilities/hooks";
 import { HostApi } from "../webview-api";
-import { RequestType } from "../vscode-jsonrpc.shim";
 import {
-	CloseAndCreatePullRequestCommentRequest as CreatePullRequestCommentAndCloseRequest,
+	CreatePullRequestCommentAndCloseRequest,
 	CreatePullRequestCommentRequest,
 	ExecuteThirdPartyTypedRequest,
 	FetchThirdPartyPullRequestPullRequest,
@@ -36,6 +34,30 @@ import {
 	MergePullRequestRequest
 } from "@codestream/protocols/agent";
 import { markdownify } from "./Markdowner";
+import {
+	PRHeader,
+	PRTitle,
+	PRStatus,
+	PRStatusButton,
+	PRStatusMessage,
+	PRAuthor,
+	PRAction,
+	PRBranch,
+	PRBadge,
+	PRContent,
+	PRConversation,
+	PRComment,
+	PRCommentCard,
+	PRCommentHeader,
+	PRActionIcons,
+	PRCommentBody,
+	PRCommit,
+	PRFoot,
+	PRSidebar,
+	PRSection
+} from "./PullRequestComponents";
+import { ButtonRow } from "./StatusPanel";
+import { PullRequestTimelineItems } from "./PullRequestTimelineItems";
 
 // const pr = {
 // 	title: "Improve Jira Integration",
@@ -114,291 +136,6 @@ const Root = styled.div`
 	}
 `;
 
-const PRHeader = styled.div`
-	margin: 20px 20px 0 20px;
-`;
-
-const PRTitle = styled.div`
-	font-size: 20px;
-	span {
-		opacity: 0.5;
-	}
-	a {
-		color: var(--text-color);
-		opacity: 0.5;
-		text-decoration: none;
-		&:hover {
-			color: var(--text-color-info);
-			opacity: 1;
-		}
-	}
-	.cancel-button {
-		position: absolute;
-		top: 20px;
-		right: 20px;
-		opacity: 1;
-	}
-`;
-
-const PRStatus = styled.div`
-	display: flex;
-	width: 100%;
-	justify-content: center;
-	align-items: center;
-	margin: 10px 0 20px 0;
-`;
-
-const PRStatusButton = styled(Button)`
-	flex-grow: 0;
-	border-radius: 15px;
-	margin-right: 10px;
-	padding-left: 12px;
-	padding-right: 12px;
-	.icon {
-		margin-right: 5px;
-	}
-	text-transform: capitalize;
-	white-space: nowrap;
-`;
-
-const PRStatusMessage = styled.div`
-	flex-grow: 10;
-`;
-
-const PRAuthor = styled.span`
-	font-weight: bold;
-	padding-right: 5px;
-	color: var(--text-color-highlight);
-`;
-
-const PRBranch = styled.span`
-	display: inline-block;
-	font-family: Menlo, Consolas, "DejaVu Sans Mono", monospace;
-	color: var(--text-color-highlight);
-`;
-
-const PRAction = styled.span`
-	color: var(--text-color-subtle);
-`;
-
-const PRBadge = styled.span`
-	display: inline-block;
-	background: rgba(127, 127, 127, 0.25);
-	border-radius: 9px;
-	padding: 0 5px;
-	min-width: 18px;
-	text-align: center;
-	margin: 0 5px;
-`;
-
-const PRPlusMinus = styled.div`
-	float: right;
-	margin-left: auto;
-	font-size: smaller;
-	.added {
-		white-space: nowrap;
-		padding-left: 5px;
-		color: #66aa66;
-	}
-	.deleted {
-		white-space: nowrap;
-		padding-left: 5px;
-		color: #cc3366;
-	}
-`;
-
-const PRContent = styled.div`
-	margin: 0 20px 20px 20px;
-	display: flex;
-	// width: 100%;
-	.main-content {
-		flex-grow: 10;
-	}
-	@media only screen and (max-width: 630px) {
-		flex-direction: column;
-		.main-content {
-			order: 2;
-		}
-	}
-`;
-
-const PRSection = styled.div`
-	padding: 10px 0;
-	position: relative;
-	border-bottom: 1px solid var(--base-border-color);
-	.icon {
-		float: right;
-		display: inline-block;
-		transform: scale(0.7);
-		opacity: 0.7;
-	}
-`;
-
-const PRSidebar = styled.div`
-	flex-grow: 0;
-	display: flex;
-	flex-direction: column;
-	@media only screen and (max-width: 630px) {
-		flex-direction: row;
-		flex-wrap: wrap;
-		width: auto;
-		order: 1;
-		margin-left: 0;
-		margin-right: -10px;
-		padding-left: 0;
-		padding-top: 0;
-		${PRSection} {
-			flex: 1 0 0;
-			width: 1fr;
-			min-width: 150px;
-			margin: 0 10px 10px 0;
-			border: 1px solid var(--base-border-color);
-			padding: 5px;
-		}
-	}
-	width: 225px;
-	padding-left: 20px;
-`;
-
-const PRComment = styled.div`
-	margin: 30px 0;
-	position: relative;
-	${PRHeadshot}, ${Headshot} {
-		position: absolute;
-		left: 0;
-		top: 0;
-		// div,
-		// img {
-		// 	border-radius: 50%;
-		// }
-	}
-`;
-
-const PRCommentCard = styled.div`
-	border: 1px solid var(--base-border-color);
-	background: var(--base-background-color);
-	padding: 10px;
-	margin-left: 60px;
-	z-index: 2;
-	&:before {
-		z-index: 5;
-		content: "";
-		position: absolute;
-		left: 55px;
-		top: 15px;
-		width: 10px;
-		height: 10px;
-		transform: rotate(45deg);
-		border-left: 1px solid var(--base-border-color);
-		border-bottom: 1px solid var(--base-border-color);
-		background: var(--base-background-color);
-	}
-`;
-
-const PRCommentHeader = styled.div`
-	padding: 0 10px 10px 10px;
-	margin: 0 -10px;
-	border-bottom: 1px solid var(--base-border-color);
-	display: flex;
-`;
-
-const PRCommentBody = styled.div`
-	padding: 15px 0 5px 0;
-`;
-
-// const PRCard = styled.div`
-// 	border: 1px solid var(--base-border-color);
-// 	background: var(--base-background-color);
-// 	margin-left: 60px;
-// 	padding: 15px 10px;
-// `;
-
-const PRStatusIcon = styled.div`
-	.icon {
-		flex-shrink: 0;
-		margin: 0 10px;
-	}
-`;
-
-const PRCommit = styled.div`
-	position: relative;
-	display: flex;
-	margin: 10px 0;
-	padding-left: 65px;
-	${PRHeadshot} {
-		flex-shrink: 0;
-		margin: 0 10px;
-		// div,
-		// img {
-		// 	border-radius: 50%;
-		// }
-	}
-
-	.sha {
-		margin-left: auto;
-	}
-	.icon {
-		background: var(--app-background-color);
-		opacity: 0.7;
-		height: 16px;
-	}
-`;
-
-const ButtonRow = styled.div`
-	display: flex;
-	button + button {
-		margin-left: 10px;
-	}
-	button {
-		margin-top: 10px;
-	}
-`;
-
-const PRConversation = styled.div`
-	position: relative;
-
-	&:before {
-		content: "";
-		position: absolute;
-		left: 71px;
-		z-index: 0;
-		top: 0;
-		height: 100%;
-		width: 2px;
-		background: var(--base-border-color);
-	}
-`;
-
-const PRFoot = styled.div`
-	border-top: 2px solid var(--base-border-color);
-	background: var(--app-background-color);
-	margin-top: 30px;
-`;
-
-const PRActionIcons = styled.div`
-	margin-left: auto;
-	display: flex;
-	.member {
-		border: 1px solid var(--base-border-color);
-		border-radius: 10px;
-		padding: 1px 7px;
-		font-size: smaller;
-		color: var(--text-color-subtle);
-	}
-	.icon {
-		opacity: 0.5;
-		margin-left: 10px;
-	}
-`;
-
-// const PRSystem = styled.div`
-// 	position: relative;
-// 	padding: 20px 0 0 0;
-// 	margin-left: 60px;
-// 	background: var(--app-background-color);
-// 	z-index: 3;
-// `;
-
 export const PullRequest = () => {
 	const dispatch = useDispatch();
 	const derivedState = useSelector((state: CodeStreamState) => {
@@ -420,7 +157,6 @@ export const PullRequest = () => {
 
 	const [text, setText] = useState("");
 	const [activeTab, setActiveTab] = useState(1);
-	const [scmEmail, setScmEmail] = useState("");
 	const [ghRepo, setGhRepo] = useState<any>({});
 
 	const [pr, setPr] = useState<FetchThirdPartyPullRequestPullRequest>({
@@ -428,15 +164,8 @@ export const PullRequest = () => {
 		files: {},
 		commits: {}
 	} as any);
-
-	const submit = () => {};
-
-	const { team, currentUser, skipGitEmailCheck, addBlameMapEnabled, blameMap = {} } = derivedState;
-
-	const mappedMe = blameMap[scmEmail.replace(/\./g, "*")];
-
+	const { team, currentUser } = derivedState;
 	const statusIcon = "git-merge";
-
 	const action = pr.merged ? "merged " : "wants to merge ";
 
 	const exit = async () => {
@@ -595,93 +324,8 @@ export const PullRequest = () => {
 										></PRCommentBody>
 									</PRCommentCard>
 								</PRComment>
-								{pr.timelineItems &&
-									pr.timelineItems.nodes.map((item, index) => {
-										switch (item.__typename) {
-											// case "description":
-											case "IssueComment":
-												return (
-													<PRComment key={index}>
-														<PRHeadshot key={index} size={40} person={item.author} />
-														<PRCommentCard>
-															<PRCommentHeader>
-																<PRAuthor>{item.author.login}</PRAuthor> commented{" "}
-																<Timestamp time={item.createdAt!} relative />
-																<PRActionIcons>
-																	<div className="member">Member</div>
-																	<Icon name="smiley" />
-																	<Icon name="kebab-horizontal" />
-																</PRActionIcons>
-															</PRCommentHeader>
-															<PRCommentBody>{item.bodyText}</PRCommentBody>
-														</PRCommentCard>
-													</PRComment>
-												);
-											case "PullRequestReview": {
-												return (
-													<PRComment key={index}>
-														<PRHeadshot key={index} size={40} person={item.author} />
-														<PRCommentCard>
-															<PRCommentHeader>
-																<PRAuthor>{item.author.login}</PRAuthor> commented{" "}
-																<Timestamp time={item.createdAt!} relative />
-																<PRActionIcons>
-																	<div className="member">Member</div>
-																	<Icon name="smiley" />
-																	<Icon name="kebab-horizontal" />
-																</PRActionIcons>
-															</PRCommentHeader>
-															<PRCommentBody>
-																{item.bodyText}
-																{item.comments &&
-																	item.comments.nodes &&
-																	item.comments.nodes.map((_, index2) => {
-																		return (
-																			<>
-																				{_.diffHunk}
-																				<br />
-																				{_.bodyText}
-																			</>
-																		);
-																	})}
-															</PRCommentBody>
-														</PRCommentCard>
-													</PRComment>
-												);
-											}
-											case "PullRequestCommit":
-												return (
-													<PRCommit key={index}>
-														<Icon name="git-commit" />
-														<PRHeadshot key={index} size={16} person={item.commit.author} />
-														<div className="monospace ellipsis">
-															<MarkdownText text={item.commit.message || ""} />
-														</div>
-														<div className="monospace sha">{item.commit.abbreviatedOid}</div>
-													</PRCommit>
-												);
-											case "LabeledEvent":
-												return null;
-											case "UnlabeledEvent":
-												return null;
-											case "ReviewRequestedEvent":
-												return null;
-											case "RenamedTitleEvent":
-												return null;
-											case "MergedEvent":
-												return null;
-											// case "foot":
-											// 	return <PRFoot />;
-											// case "system":
-											// 	return (
-											// 		<PRSystem>
-											// 			<MarkdownText text={item.body || ""} />
-											// 		</PRSystem>
-											// 	);
-											default:
-												return null;
-										}
-									})}
+								<PullRequestTimelineItems pr={pr} />
+								<PRFoot />
 								<PRFoot />
 							</PRConversation>
 							<PRComment>
@@ -754,7 +398,6 @@ export const PullRequest = () => {
 											text={text}
 											placeholder="Add Comment..."
 											onChange={setText}
-											onSubmit={submit}
 										/>
 									</div>
 									<ButtonRow>

@@ -8,6 +8,7 @@ import { markdownify } from "./Markdowner";
 import { PRContent } from "./PullRequestComponents";
 import styled from "styled-components";
 import copy from "copy-to-clipboard";
+import { groupBy } from "lodash-es";
 
 const PRCommitContent = styled.div`
 	margin: 0 20px 20px 20px;
@@ -88,57 +89,38 @@ const PRCommitButtons = styled.div`
 export const PullRequestCommitsTab = props => {
 	const { pr, ghRepo } = props;
 
-	const byDay = [] as any;
-	let accumulator = [] as any;
-	let lastFormattedDate = "";
-
-	pr.commits.nodes.forEach(({ commit }) => {
-		const { authoredDate } = commit;
-		const time = new Date(commit.authoredDate).getTime();
-		const formattedDate = new Intl.DateTimeFormat("en", {
+	const byDay = groupBy(pr.commits.nodes, _ => {
+		return new Intl.DateTimeFormat("en", {
 			day: "numeric",
 			month: "short",
 			year: "numeric"
-		}).format(time);
-
-		if (formattedDate == lastFormattedDate) {
-			accumulator.push(commit);
-		} else {
-			if (accumulator.length > 0) {
-				byDay.push({
-					day: lastFormattedDate,
-					commits: [...accumulator]
-				});
-			}
-			accumulator = [commit];
-			lastFormattedDate = formattedDate;
-		}
+		}).format(new Date(_.commit.authoredDate).getTime());
 	});
 
 	return (
 		<PRCommitContent>
-			{byDay.map(record => {
+			{Object.keys(byDay).map(day => {
 				return (
 					<>
 						<PRCommitDay>
 							<Icon name="git-commit" />
-							Commits on {record.day}
+							Commits on {day}
 						</PRCommitDay>
 						<div>
-							{record.commits.map(commit => {
+							{byDay[day].map(_ => {
 								return (
 									<PRCommitCard>
-										<h1>{commit.message}</h1>
-										<PRHeadshotName person={commit.author} /> committed
-										<Timestamp time={commit.authoredDate} relative />
+										<h1>{_.commit.message}</h1>
+										<PRHeadshotName person={_.commit.author} /> committed
+										<Timestamp time={_.commit.authoredDate} relative />
 										<PRCommitButtons>
-											<span className="monospace">{commit.abbreviatedOid}</span>
+											<span className="monospace">{_.commit.abbreviatedOid}</span>
 											<Icon
 												title="Copy Sha"
 												placement="bottom"
 												name="copy"
 												className="clickable"
-												onClick={() => copy(commit.abbreviatedOid)}
+												onClick={() => copy(_.commit.abbreviatedOid)}
 											/>
 											<Icon className="clickable" name="code" />
 										</PRCommitButtons>

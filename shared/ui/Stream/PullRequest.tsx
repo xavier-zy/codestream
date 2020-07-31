@@ -443,7 +443,7 @@ export const PullRequest = () => {
 										Notifications
 									</h1>
 									<Button variant="secondary">
-										<Icon name="mute" /> Unsubscribe
+										<Icon name="mute" /> <span className="wide-text">Unsubscribe</span>
 									</Button>
 								</PRSection>
 								<PRSection>

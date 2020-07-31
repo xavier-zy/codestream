@@ -295,6 +295,13 @@ export const PRSection = styled.div`
 	button {
 		width: 100%;
 	}
+	a {
+		color: var(--text-color-subtle);
+		text-decoration: none;
+		&:hover {
+			color: var(--text-color-info);
+		}
+	}
 `;
 
 export const PRSidebar = styled.div`
@@ -320,7 +327,7 @@ export const PRSidebar = styled.div`
 		}
 	}
 	width: 225px;
-	padding-left: 20px;
+	padding-left: 30px;
 `;
 
 export const PRCommentHeader = styled.div`

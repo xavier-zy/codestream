@@ -371,19 +371,24 @@ export const PullRequestConversationTab = props => {
 						<Icon name="gear" className="settings clickable" onClick={() => {}} />
 						Assignees
 					</h1>
-					{pr.assignees && pr.assignees.nodes.length > 0
-						? pr.assignees.nodes.map((_: any) => (
-								<PRHeadshotName key={_.avatarUrl} person={_} size={20} />
-						  ))
-						: "None yet"}
+					{pr.assignees && pr.assignees.nodes.length > 0 ? (
+						pr.assignees.nodes.map((_: any) => (
+							<PRHeadshotName key={_.avatarUrl} person={_} size={20} />
+						))
+					) : (
+						<>
+							None yet&mdash;<a onClick={() => {}}>assign yourself</a>
+						</>
+					)}
 				</PRSection>
 				<PRSection>
 					<h1>
 						<Icon name="gear" className="settings clickable" onClick={() => {}} />
 						Labels
 					</h1>
-					{pr.labels &&
-						pr.labels.nodes.map(_ => <Tag tag={{ label: _.name, color: `#${_.color}` }} />)}
+					{pr.labels && pr.labels.nodes.length > 0
+						? pr.labels.nodes.map(_ => <Tag tag={{ label: _.name, color: `#${_.color}` }} />)
+						: "None yet"}
 				</PRSection>
 				<PRSection>
 					<h1>

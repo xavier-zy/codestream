@@ -1082,6 +1082,38 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 		return true;
 	}
 
+	async lockPullRequest(request: { pullRequestId: string; lockReason: string }) {
+		// OFF_TOPIC, TOO_HEATED, SPAM
+		await this.client.request<any>(
+			`mutation LockPullRequest($pullRequestId: String!, $lockReason:String!) {
+				lockLockable(input: {lockableId: $pullRequestId, lockReason:$lockReason}) {
+				  clientMutationId
+				}
+			  }`,
+			{
+				pullRequestId: request.pullRequestId,
+				lockReason: request.lockReason
+			}
+		);
+
+		return true;
+	}
+
+	async unlockPullRequest(request: { pullRequestId: string }) {
+		await this.client.request<any>(
+			`mutation UnlockPullRequest($pullRequestId: String!) {
+				unlockLockable(input: {lockableId: $pullRequestId}) {
+				  clientMutationId
+				}
+			  }`,
+			{
+				pullRequestId: request.pullRequestId
+			}
+		);
+
+		return true;
+	}
+
 	async createPullRequestCommentAndClose(request: { pullRequestId: string; text: string }) {
 		await this.client.request<any>(
 			`mutation AddCommentToPullRequest($pullRequestId: String!, $body:String!) {
@@ -1524,13 +1556,6 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 								id
 								bodyText
 								body
-							  }
-							  userContentEdits {
-								edges {
-								  node {
-									id
-								  }
-								}
 							  }
 							  commit {
 								message

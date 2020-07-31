@@ -147,8 +147,8 @@ export const PRSection = styled.div`
 	padding: 10px 0;
 	position: relative;
 	font-size: 12px;
-	opacity: 0.7;
 	border-bottom: 1px solid var(--base-border-color);
+	color: var(--text-color-subtle);
 	h1 {
 		font-weight: 600;
 		font-size: 12px;
@@ -158,7 +158,11 @@ export const PRSection = styled.div`
 			float: right;
 			display: inline-block;
 			transform: scale(0.7);
+			opacity: 0.7;
 		}
+	}
+	button {
+		width: 100%;
 	}
 `;
 

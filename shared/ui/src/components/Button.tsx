@@ -56,10 +56,10 @@ const getColors = (variant = "primary") => {
 		}
 		case "secondary": {
 			return `
-				background-color: rgba(255, 255, 255, 0.07);
+				background-color: rgba(127, 127, 127, 0.1);
 				color: var(--text-color);
 				:hover {
-					background-color: rgba(255, 255, 255, 0.09);
+					background-color: rgba(127, 127, 127, 0.13);
 					color: var(--text-color-highlight);
 				}
 			`;

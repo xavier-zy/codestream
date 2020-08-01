@@ -84,7 +84,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 					case "ReviewRequestedEvent": {
 						return (
 							<PRTimelineItem key={index}>
-								<Icon name="review" />
+								<Icon name="review" className="circled" />
 								<PRHeadshot key={index} size={16} person={item.actor} />
 								<div className="monospace ellipsis">{item.actor.login} requested a review</div>
 							</PRTimelineItem>
@@ -117,7 +117,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 					case "AssignedEvent": {
 						return (
 							<PRTimelineItem key={index}>
-								<Icon name="review" />
+								<Icon name="review" className="circled" />
 								<PRHeadshot key={index} size={16} person={item.actor} />
 								<div className="monospace ellipsis">
 									<span>
@@ -131,7 +131,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 					case "MergedEvent": {
 						return (
 							<PRTimelineItem key={index}>
-								<Icon name="git-merge" />
+								<Icon name="git-merge" className="circled" />
 								<PRHeadshot key={index} size={16} person={item.actor} />
 								<div className="monospace ellipsis">
 									<span>
@@ -169,14 +169,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 							</PRTimelineItem>
 						);
 					}
-					// 	return null;
-					// case "UnlabeledEvent":
-					// 	return null;
-					// case "ReviewRequestedEvent":
-					// 	return null;
 					// case "RenamedTitleEvent":
-					// 	return null;
-					// case "MergedEvent":
 					// 	return null;
 					default: {
 						console.warn(`timelineItem not found: ${item.__typename} item is: `, item);

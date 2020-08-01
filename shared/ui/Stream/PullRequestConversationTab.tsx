@@ -74,62 +74,11 @@ export const PullRequestConversationTab = props => {
 	});
 
 	const [text, setText] = useState("");
-	const [labels, setLabels] = useState([]);
+	const [availableLabels, setAvailableLabels] = useState([]);
 	const [availableReviewers, setAvailableReviewers] = useState([]);
+	const [availableAssignees, setAvailableAssignees] = useState([]);
 	const [isLoadingComment, setIsLoadingComment] = useState(false);
 	const [isLoadingCommentAndClose, setIsLoadingCommentAndClose] = useState(false);
-
-	// const [labelMenuItems, setLabelMenuItems] = useState<any[]>([
-	// { label: <LoadingMessage>Loading Labels...</LoadingMessage>, noHover: true }
-	// ]);
-	const fetchLabels = async (e?) => {
-		const labels = await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
-			method: "getLabels",
-			providerId: "github*com",
-			params: {
-				owner: ghRepo.repoOwner,
-				repo: ghRepo.repoName
-			}
-		});
-		setLabels(labels);
-	};
-
-	const labelMenuItems = React.useMemo(() => {
-		if (labels && labels.length) {
-			const existingLabelIds = pr.labels ? pr.labels.nodes.map(_ => _.id) : [];
-			const menuItems = (labels || []).map((_: any) => ({
-				checked: existingLabelIds.includes(_.id),
-				label: (
-					<>
-						<Circle style={{ backgroundColor: `#${_.color}` }} />
-						{_.name}
-					</>
-				),
-				searchLabel: _.name,
-				key: _.id,
-				subtext: <div style={{ maxWidth: "250px", whiteSpace: "normal" }}>{_.description}</div>,
-				action: () => toggleLabel(_.id)
-			})) as any;
-			menuItems.unshift({ type: "search", placeholder: "Filter labels" });
-			return menuItems;
-		} else {
-			return [{ label: <LoadingMessage>Loading Labels...</LoadingMessage>, noHover: true }];
-		}
-	}, [labels, pr]);
-
-	const toggleLabel = async id => {
-		await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
-			method: "addLabelToPullRequest",
-			providerId: "github*com",
-			params: {
-				owner: ghRepo.repoOwner,
-				repo: ghRepo.repoName,
-				pullRequestId: pr.number,
-				labelId: id
-			}
-		});
-		props.fetch();
-	};
 
 	const onCommentClick = async e => {
 		setIsLoadingComment(true);
@@ -209,7 +158,6 @@ export const PullRequestConversationTab = props => {
 				repo: ghRepo.repoName
 			}
 		});
-		console.warn("REV: ", reviewers);
 		setAvailableReviewers(reviewers);
 	};
 
@@ -239,6 +187,98 @@ export const PullRequestConversationTab = props => {
 				repo: ghRepo.repoName,
 				pullRequestId: pr.number,
 				reviewerId: id
+			}
+		});
+		props.fetch();
+	};
+
+	const fetchAvailableAssignees = async (e?) => {
+		const assignees = await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
+			method: "getAssignees",
+			providerId: "github*com",
+			params: {
+				owner: ghRepo.repoOwner,
+				repo: ghRepo.repoName
+			}
+		});
+		setAvailableAssignees(assignees);
+	};
+
+	const assigneeMenuItems = React.useMemo(() => {
+		const assigneeIds = pr.assignees.nodes.map(_ => _.login);
+		if (availableAssignees && availableAssignees.length) {
+			const menuItems = (availableAssignees || []).map((_: any) => ({
+				checked: assigneeIds.includes(_.login),
+				label: <PRHeadshotName person={_} />,
+				searchLabel: _.login || "",
+				key: _.id,
+				action: () => toggleAssignee(_.id)
+			})) as any;
+			menuItems.unshift({ type: "search", placeholder: "Type or choose a name" });
+			return menuItems;
+		} else {
+			return [{ label: <LoadingMessage>Loading Assignees...</LoadingMessage>, noHover: true }];
+		}
+	}, [availableAssignees, pr]);
+
+	const toggleAssignee = async id => {
+		await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
+			method: "addAssigneeToPullRequest",
+			providerId: "github*com",
+			params: {
+				owner: ghRepo.repoOwner,
+				repo: ghRepo.repoName,
+				pullRequestId: pr.number,
+				assigneeId: id
+			}
+		});
+		props.fetch();
+	};
+
+	const fetchAvailableLabels = async (e?) => {
+		const labels = await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
+			method: "getLabels",
+			providerId: "github*com",
+			params: {
+				owner: ghRepo.repoOwner,
+				repo: ghRepo.repoName
+			}
+		});
+		setAvailableLabels(labels);
+	};
+
+	const labelMenuItems = React.useMemo(() => {
+		if (availableLabels && availableLabels.length) {
+			const existingLabelIds = pr.labels ? pr.labels.nodes.map(_ => _.id) : [];
+			const menuItems = availableLabels.map((_: any) => ({
+				checked: existingLabelIds.includes(_.id),
+				label: (
+					<>
+						<Circle style={{ backgroundColor: `#${_.color}` }} />
+						{_.name}
+					</>
+				),
+				searchLabel: _.name,
+				key: _.id,
+				subtext: <div style={{ maxWidth: "250px", whiteSpace: "normal" }}>{_.description}</div>,
+				action: () => toggleLabel(_.id)
+			})) as any;
+			menuItems.unshift({ type: "search", placeholder: "Filter labels" });
+			return menuItems;
+		} else {
+			return [{ label: <LoadingMessage>Loading Labels...</LoadingMessage>, noHover: true }];
+		}
+	}, [availableLabels, pr]);
+
+	const toggleLabel = async id => {
+		await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
+			method: "addLabelToPullRequest",
+			providerId: "github*com",
+			params: {
+				owner: ghRepo.repoOwner,
+				repo: ghRepo.repoName,
+				pullRequestId: pr.number,
+				labelId: id
 			}
 		});
 		props.fetch();
@@ -485,8 +525,16 @@ export const PullRequestConversationTab = props => {
 				</PRSection>
 				<PRSection>
 					<h1>
-						<Icon name="gear" className="settings clickable" onClick={() => {}} />
-						Assignees
+						<InlineMenu
+							className="subtle"
+							items={assigneeMenuItems}
+							onOpen={fetchAvailableAssignees}
+							title="Assign up to 10 people to this pull request"
+							noChevronDown
+						>
+							<Icon name="gear" className="settings clickable" onClick={() => {}} />
+							Assignees
+						</InlineMenu>
 					</h1>
 					{pr.assignees && pr.assignees.nodes.length > 0 ? (
 						pr.assignees.nodes.map((_: any) => (
@@ -503,7 +551,7 @@ export const PullRequestConversationTab = props => {
 						<InlineMenu
 							className="subtle"
 							items={labelMenuItems}
-							onOpen={fetchLabels}
+							onOpen={fetchAvailableLabels}
 							title="Apply labels to this pull request"
 							noChevronDown
 						>

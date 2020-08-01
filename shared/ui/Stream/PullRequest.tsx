@@ -56,13 +56,6 @@ const Root = styled.div`
 			display: none;
 		}
 	}
-	a {
-		color: var(--text-color-subtle);
-		text-decoration: none;
-		&:hover {
-			color: var(--text-color-info);
-		}
-	}
 `;
 
 export const PullRequest = () => {

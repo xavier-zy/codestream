@@ -81,7 +81,11 @@ export const PRAction = styled.span`
 
 export const PRBadge = styled.span`
 	display: inline-block;
-	background: rgba(127, 127, 127, 0.25);
+	// background: rgba(127, 127, 127, 0.25);
+	background: #ddd;
+	.vscode-dark & {
+		background: #333;
+	}
 	border-radius: 9px;
 	padding: 0 5px;
 	min-width: 18px;
@@ -227,7 +231,10 @@ export const PRTimelineItem = styled.div`
 		&.circled {
 			margin-top: -7px;
 			height: 30px;
-			background: rgba(127, 127, 127, 1);
+			background: #ddd;
+			.vscode-dark & {
+				background: #333;
+			}
 			border-radius: 15px;
 			svg {
 				opacity: 1;
@@ -324,6 +331,13 @@ export const PRSidebar = styled.div`
 	}
 	width: 225px;
 	padding-left: 30px;
+	a {
+		color: var(--text-color-subtle);
+		text-decoration: none;
+		&:hover {
+			color: var(--text-color-info);
+		}
+	}
 `;
 
 export const PRCommentHeader = styled.div`

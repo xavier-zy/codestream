@@ -156,6 +156,19 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 							</PRTimelineItem>
 						);
 					}
+					case "UnlabeledEvent": {
+						return (
+							<PRTimelineItem key={index} className="tall">
+								<Icon name="tag" className="circled" />
+								<PRHeadshot key={index} size={16} person={item.actor} />
+								<span>
+									{item.actor.login} removed
+									<Tag tag={{ label: item.label.name, color: `#${item.label.color}` }} />
+									<Timestamp time={item.createdAt!} relative />
+								</span>
+							</PRTimelineItem>
+						);
+					}
 					// 	return null;
 					// case "UnlabeledEvent":
 					// 	return null;

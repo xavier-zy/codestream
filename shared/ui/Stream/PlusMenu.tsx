@@ -60,7 +60,8 @@ export function PlusMenu(props: PlusMenuProps) {
 				label: "Start Work",
 				action: handleStartWorkRequest,
 				shortcut: ComposeKeybindings.work,
-				subtext: "Grab a ticket & create a branch",
+				subtextWide: "Grab a ticket & create a branch",
+
 				key: "work"
 			},
 			{ label: "-" }
@@ -73,7 +74,7 @@ export function PlusMenu(props: PlusMenuProps) {
 				icon: <Icon name="comment" />,
 				label: "Add Comment",
 				action: () => dispatch(openPanel(WebviewPanels.NewComment)),
-				subtext: "Comment on code & share to slack",
+				subtextWide: "Comment on code & share to slack",
 				shortcut: ComposeKeybindings.comment,
 				key: "comment"
 			},
@@ -81,7 +82,7 @@ export function PlusMenu(props: PlusMenuProps) {
 			{
 				icon: <Icon name="issue" />,
 				label: "Create Issue",
-				subtext: "Perform ad-hoc code review",
+				subtextWide: "Perform ad-hoc code review",
 				action: () => dispatch(openPanel(WebviewPanels.NewIssue)),
 				shortcut: ComposeKeybindings.issue,
 				key: "issue"
@@ -94,7 +95,7 @@ export function PlusMenu(props: PlusMenuProps) {
 		menuItems.push({
 			icon: <Icon name="review" />,
 			label: "Request a Code Review",
-			subtext: "Get feedback on your WIP",
+			subtextWide: "Get feedback on your WIP",
 			action: () => dispatch(openPanel(WebviewPanels.NewReview)),
 			shortcut: ComposeKeybindings.review,
 			key: "review"

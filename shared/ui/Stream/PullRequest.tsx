@@ -127,7 +127,8 @@ export const PullRequest = () => {
 		fetch();
 	});
 
-	console.warn(pr);
+	console.warn("PR: ", pr);
+	console.warn("REPO: ", ghRepo);
 	if (!pr) {
 		return (
 			<Modal verticallyCenter>

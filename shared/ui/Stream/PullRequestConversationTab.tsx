@@ -40,6 +40,18 @@ import {
 import { ButtonRow } from "./StatusPanel";
 import { PullRequestTimelineItems } from "./PullRequestTimelineItems";
 import { DropdownButton } from "./Review/DropdownButton";
+import { InlineMenu } from "../src/components/controls/InlineMenu";
+import { LoadingMessage } from "../src/components/LoadingMessage";
+import styled from "styled-components";
+
+const Circle = styled.div`
+	width: 12px;
+	height: 12px;
+	border-radius: 6px;
+	display: inline-block;
+	margin-right: 5px;
+	vertical-align: -1px;
+`;
 
 export const PullRequestConversationTab = props => {
 	const { pr, ghRepo } = props;
@@ -64,7 +76,51 @@ export const PullRequestConversationTab = props => {
 	const [text, setText] = useState("");
 	const [isLoadingComment, setIsLoadingComment] = useState(false);
 	const [isLoadingCommentAndClose, setIsLoadingCommentAndClose] = useState(false);
-	const { team, currentUser } = derivedState;
+
+	const [labelMenuItems, setLabelMenuItems] = useState<any[]>([
+		{ label: <LoadingMessage>Loading Labels...</LoadingMessage>, noHover: true }
+	]);
+	const fetchLabels = async (e?) => {
+		const labels = await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
+			method: "getLabels",
+			providerId: "github*com",
+			params: {
+				owner: ghRepo.repoOwner,
+				repo: ghRepo.repoName
+			}
+		});
+		const existingLabelIds = pr.labels ? pr.labels.nodes.map(_ => _.id) : [];
+		const menuItems = (labels || []).map(_ => ({
+			checked: existingLabelIds.includes(_.id),
+			label: (
+				<>
+					<Circle style={{ backgroundColor: `#${_.color}` }} />
+					{_.name}
+				</>
+			),
+			key: _.id,
+			subtext: <div style={{ maxWidth: "250px", whiteSpace: "normal" }}>{_.description}</div>,
+			action: () => toggleLabel(_.id)
+		}));
+		menuItems.unshift({
+			type: "search"
+		});
+		setLabelMenuItems(menuItems);
+	};
+
+	const toggleLabel = async id => {
+		await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
+			method: "addLabelToPullRequest",
+			providerId: "github*com",
+			params: {
+				owner: ghRepo.repoOwner,
+				repo: ghRepo.repoName,
+				pullRequestId: pr.number,
+				labelId: id
+			}
+		});
+		fetchLabels();
+	};
 
 	const onCommentClick = async e => {
 		setIsLoadingComment(true);
@@ -383,8 +439,15 @@ export const PullRequestConversationTab = props => {
 				</PRSection>
 				<PRSection>
 					<h1>
-						<Icon name="gear" className="settings clickable" onClick={() => {}} />
-						Labels
+						<InlineMenu
+							items={labelMenuItems}
+							onOpen={fetchLabels}
+							title="Apply labels to this pull request"
+							noChevronDown
+						>
+							<Icon name="gear" className="settings clickable" />
+							Labels
+						</InlineMenu>
 					</h1>
 					{pr.labels && pr.labels.nodes.length > 0
 						? pr.labels.nodes.map(_ => <Tag tag={{ label: _.name, color: `#${_.color}` }} />)

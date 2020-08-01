@@ -305,6 +305,10 @@ export default class Menu extends Component {
 			selected = false;
 		}
 
+		if (item.type === "title") {
+			return <h3>{item.title}</h3>;
+		}
+
 		return (
 			<li
 				className={createClassString({
@@ -328,6 +332,7 @@ export default class Menu extends Component {
 				{item.label && <span className="label">{item.label}</span>}
 				{item.subtle && <span className="subtle">{item.subtle}</span>}
 				{item.shortcut && <span className="shortcut">{item.shortcut}</span>}
+				{item.subtextWide && <div className="subtext-wide">{item.subtextWide}</div>}
 				{item.subtext && <div className="subtext">{item.subtext}</div>}
 				{item.disabled && <span className="disabled">{item.disabled}</span>}
 				{item.submenu && (

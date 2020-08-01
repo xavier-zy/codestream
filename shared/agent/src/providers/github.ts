@@ -208,13 +208,13 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 	async getPullRequest(
 		request: FetchThirdPartyPullRequestRequest
 	): Promise<FetchThirdPartyPullRequestResponse> {
-		let response = {};
+		let response = {} as any;
+		let repoOwner;
+		let repoName;
 		const timelineItems: any = [];
 		try {
 			let timelineQueryResponse;
 			const pullRequestNumber = await this.getPullRequestNumber(request.pullRequestId);
-			let repoOwner;
-			let repoName;
 			if (request.owner == null && request.repo == null) {
 				const data = await this.getRepoOwnerFromPullRequestId(request.pullRequestId);
 				repoOwner = data.owner;
@@ -242,6 +242,8 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 			Logger.error(ex);
 		}
 		response = { ...response, timelineItems: timelineItems };
+		response.repository.repoOwner = repoOwner;
+		response.repository.repoName = repoName;
 		return response as any;
 	}
 
@@ -1288,6 +1290,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 						color
 						description
 						name
+						id
 					  }
 					}
 					number
@@ -1467,6 +1470,11 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 							name
 							description
 						  }
+						  actor {
+							login
+							avatarUrl
+						  }
+						  createdAt
 						}
 						... on UnassignedEvent {
 						  __typename

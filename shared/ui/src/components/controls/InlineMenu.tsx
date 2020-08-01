@@ -24,6 +24,9 @@ export interface InlineMenuProps {
 
 const TextButton = styled.span`
 	color: ${props => props.theme.colors.textHighlight};
+	&.subtle {
+		color: var(--text-color-subtle);
+	}
 	cursor: pointer;
 	white-space: nowrap;
 	.octicon-chevron-down {

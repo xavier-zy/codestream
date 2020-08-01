@@ -74,12 +74,13 @@ export const PullRequestConversationTab = props => {
 	});
 
 	const [text, setText] = useState("");
+	const [labels, setLabels] = useState([]);
 	const [isLoadingComment, setIsLoadingComment] = useState(false);
 	const [isLoadingCommentAndClose, setIsLoadingCommentAndClose] = useState(false);
 
-	const [labelMenuItems, setLabelMenuItems] = useState<any[]>([
-		{ label: <LoadingMessage>Loading Labels...</LoadingMessage>, noHover: true }
-	]);
+	// const [labelMenuItems, setLabelMenuItems] = useState<any[]>([
+	// { label: <LoadingMessage>Loading Labels...</LoadingMessage>, noHover: true }
+	// ]);
 	const fetchLabels = async (e?) => {
 		const labels = await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
 			method: "getLabels",
@@ -89,24 +90,32 @@ export const PullRequestConversationTab = props => {
 				repo: ghRepo.repoName
 			}
 		});
-		const existingLabelIds = pr.labels ? pr.labels.nodes.map(_ => _.id) : [];
-		const menuItems = (labels || []).map(_ => ({
-			checked: existingLabelIds.includes(_.id),
-			label: (
-				<>
-					<Circle style={{ backgroundColor: `#${_.color}` }} />
-					{_.name}
-				</>
-			),
-			key: _.id,
-			subtext: <div style={{ maxWidth: "250px", whiteSpace: "normal" }}>{_.description}</div>,
-			action: () => toggleLabel(_.id)
-		}));
-		menuItems.unshift({
-			type: "search"
-		});
-		setLabelMenuItems(menuItems);
+		setLabels(labels);
 	};
+
+	const labelMenuItems = React.useMemo(() => {
+		if (labels && labels.length) {
+			const existingLabelIds = pr.labels ? pr.labels.nodes.map(_ => _.id) : [];
+			const menuItems = (labels || []).map((_: any) => ({
+				checked: existingLabelIds.includes(_.id),
+				label: (
+					<>
+						<Circle style={{ backgroundColor: `#${_.color}` }} />
+						{_.name}
+					</>
+				),
+				key: _.id,
+				subtext: <div style={{ maxWidth: "250px", whiteSpace: "normal" }}>{_.description}</div>,
+				action: () => toggleLabel(_.id)
+			})) as any;
+			menuItems.unshift({
+				type: "search"
+			});
+			return menuItems;
+		} else {
+			return [{ label: <LoadingMessage>Loading Labels...</LoadingMessage>, noHover: true }];
+		}
+	}, [labels, pr]);
 
 	const toggleLabel = async id => {
 		await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
@@ -119,7 +128,7 @@ export const PullRequestConversationTab = props => {
 				labelId: id
 			}
 		});
-		fetchLabels();
+		props.fetch();
 	};
 
 	const onCommentClick = async e => {
@@ -440,6 +449,7 @@ export const PullRequestConversationTab = props => {
 				<PRSection>
 					<h1>
 						<InlineMenu
+							className="subtle"
 							items={labelMenuItems}
 							onOpen={fetchLabels}
 							title="Apply labels to this pull request"

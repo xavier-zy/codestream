@@ -845,6 +845,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 					  avatarUrl
 					  id
 					  name
+					  login
 					}
 				  }
 				}

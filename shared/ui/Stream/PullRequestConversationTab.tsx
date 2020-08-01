@@ -75,6 +75,7 @@ export const PullRequestConversationTab = props => {
 
 	const [text, setText] = useState("");
 	const [labels, setLabels] = useState([]);
+	const [availableReviewers, setAvailableReviewers] = useState([]);
 	const [isLoadingComment, setIsLoadingComment] = useState(false);
 	const [isLoadingCommentAndClose, setIsLoadingCommentAndClose] = useState(false);
 
@@ -104,13 +105,12 @@ export const PullRequestConversationTab = props => {
 						{_.name}
 					</>
 				),
+				searchLabel: _.name,
 				key: _.id,
 				subtext: <div style={{ maxWidth: "250px", whiteSpace: "normal" }}>{_.description}</div>,
 				action: () => toggleLabel(_.id)
 			})) as any;
-			menuItems.unshift({
-				type: "search"
-			});
+			menuItems.unshift({ type: "search", placeholder: "Filter labels" });
 			return menuItems;
 		} else {
 			return [{ label: <LoadingMessage>Loading Labels...</LoadingMessage>, noHover: true }];
@@ -199,6 +199,50 @@ export const PullRequestConversationTab = props => {
 	const reviewers = Object.keys(reviewersHash).map(key => {
 		return { login: key, avatarUrl: reviewersHash[key] };
 	}) as { login: string; avatarUrl: string }[];
+
+	const fetchAvailableReviewers = async (e?) => {
+		const reviewers = await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
+			method: "getReviewers",
+			providerId: "github*com",
+			params: {
+				owner: ghRepo.repoOwner,
+				repo: ghRepo.repoName
+			}
+		});
+		console.warn("REV: ", reviewers);
+		setAvailableReviewers(reviewers);
+	};
+
+	const reviewerMenuItems = React.useMemo(() => {
+		const reviewerIds = reviewers.map(_ => _.login);
+		if (availableReviewers && availableReviewers.length) {
+			const menuItems = (availableReviewers || []).map((_: any) => ({
+				checked: reviewerIds.includes(_.login),
+				label: <PRHeadshotName person={_} />,
+				searchLabel: _.login || "",
+				key: _.id,
+				action: () => toggleReviewer(_.id)
+			})) as any;
+			menuItems.unshift({ type: "search", placeholder: "Type or choose a name" });
+			return menuItems;
+		} else {
+			return [{ label: <LoadingMessage>Loading Reviewers...</LoadingMessage>, noHover: true }];
+		}
+	}, [availableReviewers, pr]);
+
+	const toggleReviewer = async id => {
+		await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
+			method: "addReviewerToPullRequest",
+			providerId: "github*com",
+			params: {
+				owner: ghRepo.repoOwner,
+				repo: ghRepo.repoName,
+				pullRequestId: pr.number,
+				reviewerId: id
+			}
+		});
+		props.fetch();
+	};
 
 	let prBody = pr.body;
 	return (
@@ -424,8 +468,16 @@ export const PullRequestConversationTab = props => {
 			<PRSidebar>
 				<PRSection>
 					<h1>
-						<Icon name="gear" className="settings clickable" onClick={() => {}} />
-						Reviewers
+						<InlineMenu
+							className="subtle"
+							items={reviewerMenuItems}
+							onOpen={fetchAvailableReviewers}
+							title="Request up to 15 reviewers"
+							noChevronDown
+						>
+							<Icon name="gear" className="settings clickable" onClick={() => {}} />
+							Reviewers
+						</InlineMenu>
 					</h1>
 					{reviewers.map(_ => {
 						return <PRHeadshotName key={_.avatarUrl} person={_} size={20} />;

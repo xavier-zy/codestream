@@ -167,7 +167,8 @@ export const PullRequestConversationTab = props => {
 			const menuItems = (availableReviewers || []).map((_: any) => ({
 				checked: reviewerIds.includes(_.login),
 				label: <PRHeadshotName person={_} />,
-				searchLabel: _.login || "",
+				subtle: _.name,
+				searchLabel: `${_.login}:${_.name}`,
 				key: _.id,
 				action: () => toggleReviewer(_.id)
 			})) as any;

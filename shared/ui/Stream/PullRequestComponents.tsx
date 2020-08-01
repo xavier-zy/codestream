@@ -317,7 +317,7 @@ export const PRSidebar = styled.div`
 		width: auto;
 		order: 1;
 		margin-left: 0;
-		margin-right: -10px;
+		margin-right: 0;
 		padding-left: 0;
 		padding-top: 0;
 		${PRSection} {
@@ -325,6 +325,7 @@ export const PRSidebar = styled.div`
 			width: 1fr;
 			min-width: 150px;
 			margin: 0 10px 10px 0;
+			margin: 0 -1px -1px 0;
 			border: 1px solid var(--base-border-color) !important;
 			padding: 5px;
 		}

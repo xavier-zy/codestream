@@ -15,6 +15,7 @@ import { MarkdownText } from "./MarkdownText";
 import { FetchThirdPartyPullRequestPullRequest } from "@codestream/protocols/agent";
 import Tag from "./Tag";
 import { Link } from "./Link";
+import { PRHeadshotName } from "../src/components/HeadshotName";
 
 interface Props {
 	pr: FetchThirdPartyPullRequestPullRequest;
@@ -47,7 +48,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 						);
 					case "PullRequestReview": {
 						return (
-							<PRComment key={index}>
+							<PRComment key={index} className="tall">
 								<PRHeadshot key={index} size={40} person={item.author} />
 								<PRCommentCard>
 									<PRCommentHeader>
@@ -83,10 +84,10 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 					}
 					case "ReviewRequestedEvent": {
 						return (
-							<PRTimelineItem key={index}>
+							<PRTimelineItem key={index} className="tall">
 								<Icon name="review" className="circled" />
-								<PRHeadshot key={index} size={16} person={item.actor} />
-								<div className="monospace ellipsis">{item.actor.login} requested a review</div>
+								<PRHeadshotName key={index} size={16} person={item.actor} />
+								requested a review
 							</PRTimelineItem>
 						);
 					}
@@ -116,7 +117,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 						);
 					case "AssignedEvent": {
 						return (
-							<PRTimelineItem key={index}>
+							<PRTimelineItem key={index} className="tall">
 								<Icon name="review" className="circled" />
 								<PRHeadshot key={index} size={16} person={item.actor} />
 								<div className="monospace ellipsis">
@@ -130,7 +131,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 					}
 					case "MergedEvent": {
 						return (
-							<PRTimelineItem key={index}>
+							<PRTimelineItem key={index} className="tall">
 								<Icon name="git-merge" className="circled" />
 								<PRHeadshot key={index} size={16} person={item.actor} />
 								<div className="monospace ellipsis">

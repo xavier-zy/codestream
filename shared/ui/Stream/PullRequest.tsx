@@ -56,6 +56,12 @@ const Root = styled.div`
 			display: none;
 		}
 	}
+	a {
+		text-decoration: none;
+		&:hover {
+			color: var(--text-color-info);
+		}
+	}
 `;
 
 export const PullRequest = () => {
@@ -68,6 +74,7 @@ export const PullRequest = () => {
 			reviews: reviewSelectors.getAllReviews(state),
 			currentUser,
 			currentPullRequestId: state.context.currentPullRequestId,
+			composeCodemarkActive: state.context.composeCodemarkActive,
 			team
 		};
 	});
@@ -175,75 +182,77 @@ export const PullRequest = () => {
 						</PRStatusMessage>
 					</PRStatus>
 				</PRHeader>
-				<ScrollBox>
-					<div className="channel-list vscroll">
-						<Tabs style={{ marginTop: 0 }}>
-							<Tab onClick={e => setActiveTab(1)} active={activeTab == 1}>
-								<Icon name="comment" />
-								<span className="wide-text">Conversation</span>
-								<PRBadge>
-									{pr.timelineItems && pr.timelineItems.nodes
-										? pr.timelineItems.nodes.filter(
-												_ => _.__typename && _.__typename.indexOf("Comment") > -1
-										  ).length
-										: 0}
-								</PRBadge>
-							</Tab>
-							<Tab onClick={e => setActiveTab(2)} active={activeTab == 2}>
-								<Icon name="git-commit" />
-								<span className="wide-text">Commits</span>
-								<PRBadge>{pr.commits.totalCount}</PRBadge>
-							</Tab>
-							{/*
+				{!derivedState.composeCodemarkActive && (
+					<ScrollBox>
+						<div className="channel-list vscroll">
+							<Tabs style={{ marginTop: 0 }}>
+								<Tab onClick={e => setActiveTab(1)} active={activeTab == 1}>
+									<Icon name="comment" />
+									<span className="wide-text">Conversation</span>
+									<PRBadge>
+										{pr.timelineItems && pr.timelineItems.nodes
+											? pr.timelineItems.nodes.filter(
+													_ => _.__typename && _.__typename.indexOf("Comment") > -1
+											  ).length
+											: 0}
+									</PRBadge>
+								</Tab>
+								<Tab onClick={e => setActiveTab(2)} active={activeTab == 2}>
+									<Icon name="git-commit" />
+									<span className="wide-text">Commits</span>
+									<PRBadge>{pr.commits.totalCount}</PRBadge>
+								</Tab>
+								{/*
 					<Tab onClick={e => setActiveTab(3)} active={activeTab == 3}>
 						<Icon name="check" />
 						<span className="wide-text">Checks</span>
 						<PRBadge>{pr.numChecks}</PRBadge>
 					</Tab>
 					 */}
-							<Tab onClick={e => setActiveTab(4)} active={activeTab == 4}>
-								<Icon name="plus-minus" />
-								<span className="wide-text">Files Changed</span>
-								<PRBadge>{pr.files.totalCount}</PRBadge>
-							</Tab>
+								<Tab onClick={e => setActiveTab(4)} active={activeTab == 4}>
+									<Icon name="plus-minus" />
+									<span className="wide-text">Files Changed</span>
+									<PRBadge>{pr.files.totalCount}</PRBadge>
+								</Tab>
 
-							<PRPlusMinus>
-								<span className="added">
-									+
-									{!pr.files
-										? 0
-										: pr.files.nodes
-												.map(_ => _.additions)
-												.reduce((acc, val) => acc + val)
-												.toString()
-												.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
-								</span>{" "}
-								<span className="deleted">
-									-
-									{!pr.files
-										? 0
-										: pr.files.nodes
-												.map(_ => _.deletions)
-												.reduce((acc, val) => acc + val)
-												.toString()
-												.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
-								</span>
-							</PRPlusMinus>
-						</Tabs>
-						{activeTab === 1 && (
-							<PullRequestConversationTab pr={pr} ghRepo={ghRepo} fetch={fetch} />
-						)}
-						{activeTab === 2 && <PullRequestCommitsTab pr={pr} ghRepo={ghRepo} fetch={fetch} />}
-						{activeTab === 4 && (
-							<PullRequestFilesChangedTab
-								key="files-changed"
-								pr={pr}
-								ghRepo={ghRepo}
-								fetch={fetch}
-							/>
-						)}
-					</div>
-				</ScrollBox>
+								<PRPlusMinus>
+									<span className="added">
+										+
+										{!pr.files
+											? 0
+											: pr.files.nodes
+													.map(_ => _.additions)
+													.reduce((acc, val) => acc + val)
+													.toString()
+													.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
+									</span>{" "}
+									<span className="deleted">
+										-
+										{!pr.files
+											? 0
+											: pr.files.nodes
+													.map(_ => _.deletions)
+													.reduce((acc, val) => acc + val)
+													.toString()
+													.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
+									</span>
+								</PRPlusMinus>
+							</Tabs>
+							{activeTab === 1 && (
+								<PullRequestConversationTab pr={pr} ghRepo={ghRepo} fetch={fetch} />
+							)}
+							{activeTab === 2 && <PullRequestCommitsTab pr={pr} ghRepo={ghRepo} fetch={fetch} />}
+							{activeTab === 4 && (
+								<PullRequestFilesChangedTab
+									key="files-changed"
+									pr={pr}
+									ghRepo={ghRepo}
+									fetch={fetch}
+								/>
+							)}
+						</div>
+					</ScrollBox>
+				)}
 			</Root>
 		);
 	}

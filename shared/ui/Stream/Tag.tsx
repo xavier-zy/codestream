@@ -3,6 +3,7 @@ import Tooltip, { Placement } from "./Tooltip";
 import { useDispatch } from "react-redux";
 import { setCurrentCodemark, setCurrentReview } from "../store/context/actions";
 import { SearchContext } from "./SearchContextProvider";
+import { lightOrDark } from "../utils";
 
 interface Props {
 	title?: string | JSX.Element | undefined;
@@ -31,22 +32,23 @@ const Tag = React.forwardRef<any, Props>((props, ref) => {
 	};
 
 	let tagDiv;
-	if (tag.color.startsWith("#"))
+	if (tag.color.startsWith("#")) {
+		const brightness = lightOrDark(tag.color);
 		tagDiv = (
 			<div
 				key={tag.id}
-				className="cs-tag"
+				className={`cs-tag ${brightness}`}
 				style={{ background: tag.color }}
 				onClick={() => goSearch(`tag:${label}`)}
 			>
 				<div>&nbsp;{tag.label}&nbsp;</div>
 			</div>
 		);
-	else
+	} else
 		tagDiv = (
 			<div
 				key={tag.id}
-				className={`cs-tag ${tag.color}-background`}
+				className={`cs-tag ${tag.color}-background${tag.color === "yellow" ? " light" : ""}`}
 				onClick={() => goSearch(`tag:${label}`)}
 			>
 				<div>&nbsp;{tag.label}&nbsp;</div>

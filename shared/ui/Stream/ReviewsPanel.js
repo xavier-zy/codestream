@@ -16,6 +16,7 @@ import { includes as _includes, sortBy as _sortBy, filter } from "lodash-es";
 import { PanelHeader } from "../src/components/PanelHeader";
 import styled from "styled-components";
 import FiltersButton from "../src/components/FiltersButton";
+import { lightOrDark } from "../utils";
 
 const SearchBar = styled.div`
 	display: flex;
@@ -288,6 +289,8 @@ export class SimpleReviewsPanel extends Component {
 			const color = tag.color.startsWith("#") ? "" : tag.color;
 			let className = "tag-menu-block wide";
 			if (!tag.color.startsWith("#")) className += " " + tag.color + "-background";
+			else if (lightOrDark(tag.color) === "light") className += " light";
+			if (tag.color === "yellow") className += " light";
 			let label = tag.label || color;
 			if (label.match(/\s/)) label = `"${label}"`;
 			return {

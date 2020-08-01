@@ -18,7 +18,7 @@ import { isCSReview } from "../protocols/agent/api.protocol.models";
 import { Disposable } from "vscode-languageserver-protocol";
 import { CodeStreamState } from "../store";
 import { ReposState } from "../store/repos/types";
-import { AnyObject } from "../utils";
+import { AnyObject, lightOrDark } from "../utils";
 import { setUserPreference } from "./actions";
 import { withSearchableItems, WithSearchableItemsProps } from "./withSearchableItems";
 import { FilterQuery } from "../store/preferences/types";
@@ -689,6 +689,8 @@ export class SimpleFilterSearchPanel extends Component<Props, State> {
 			const color = tag.color.startsWith("#") ? "" : tag.color;
 			let className = "tag-menu-block wide";
 			if (!tag.color.startsWith("#")) className += " " + tag.color + "-background";
+			else if (lightOrDark(tag.color) === "light") className += " light";
+			if (tag.color === "yellow") className += " light";
 			let label = tag.label || color;
 			if (label.match(/\s/)) label = `"${label}"`;
 			return {
@@ -800,7 +802,8 @@ export class SimpleFilterSearchPanel extends Component<Props, State> {
 				key: "view",
 				action: () =>
 					HostApi.instance.send(OpenUrlRequestType, {
-						url: "https://docs.codestream.com/userguide/features/filter-and-search/#advanced-search-syntax"
+						url:
+							"https://docs.codestream.com/userguide/features/filter-and-search/#advanced-search-syntax"
 					})
 			}
 		].filter(item => this.props.lightningCodeReviewsEnabled || !item.lightningOnly);

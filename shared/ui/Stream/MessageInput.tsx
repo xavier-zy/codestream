@@ -13,7 +13,8 @@ import {
 	debounceAndCollectToAnimationFrame,
 	emptyArray,
 	replaceHtml,
-	asPastedText
+	asPastedText,
+	lightOrDark
 } from "../utils";
 import { AtMentionsPopup } from "./AtMentionsPopup";
 import EmojiPicker from "./EmojiPicker";
@@ -969,6 +970,8 @@ export class MessageInput extends React.Component<Props, State> {
 			teamTags.map(tag => {
 				let className = "tag-menu-block";
 				if (!tag.color.startsWith("#")) className += " " + tag.color + "-background";
+				else if (lightOrDark(tag.color) === "light") className += " light";
+				if (tag.color === "yellow") className += " light";
 				return {
 					label: (
 						<span className="tag-menu-selector">

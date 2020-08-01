@@ -164,9 +164,9 @@ export const PullRequestConversationTab = props => {
 	const reviewerMenuItems = React.useMemo(() => {
 		const reviewerIds = reviewers.map(_ => _.login);
 		if (availableReviewers && availableReviewers.length) {
-			const menuItems = (availableReviewers || []).map((_: any) => ({
+			const menuItems = availableReviewers.map((_: any) => ({
 				checked: reviewerIds.includes(_.login),
-				label: <PRHeadshotName person={_} />,
+				label: <PRHeadshotName person={_} className="no-padding" />,
 				subtle: _.name,
 				searchLabel: `${_.login}:${_.name}`,
 				key: _.id,
@@ -210,8 +210,9 @@ export const PullRequestConversationTab = props => {
 		if (availableAssignees && availableAssignees.length) {
 			const menuItems = (availableAssignees || []).map((_: any) => ({
 				checked: assigneeIds.includes(_.login),
-				label: <PRHeadshotName person={_} />,
-				searchLabel: _.login || "",
+				label: <PRHeadshotName person={_} className="no-padding" />,
+				subtle: _.name,
+				searchLabel: `${_.login}:${_.name}`,
 				key: _.id,
 				action: () => toggleAssignee(_.id)
 			})) as any;

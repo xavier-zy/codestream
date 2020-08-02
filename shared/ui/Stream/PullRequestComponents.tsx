@@ -286,6 +286,9 @@ export const PRTimelineItem = styled.div`
 				color: white;
 				background: #d73a4a;
 			}
+			&.gray {
+				background: rgb(127, 127, 127);
+			}
 		}
 	}
 	.monospace {

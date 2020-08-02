@@ -206,10 +206,22 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 						};
 						return (
 							<PRTimelineItem key={index} className="tall">
-								<Icon name="lock" className="circled red" />
+								<Icon name="lock" className="circled gray" />
 								<PRTimelineItemBody>
 									<PRHeadshotName key={index} size={16} person={item.actor} />
 									locked as <b>{map[item.lockReason]}</b> and limited conversation to collaborators
+									<Timestamp time={item.createdAt!} relative />
+								</PRTimelineItemBody>
+							</PRTimelineItem>
+						);
+					}
+					case "UnlockedEvent": {
+						return (
+							<PRTimelineItem key={index} className="tall">
+								<Icon name="key" className="circled gray" />
+								<PRTimelineItemBody>
+									<PRHeadshotName key={index} size={16} person={item.actor} />
+									unlocked this conversation
 									<Timestamp time={item.createdAt!} relative />
 								</PRTimelineItemBody>
 							</PRTimelineItem>

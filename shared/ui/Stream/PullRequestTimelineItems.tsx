@@ -30,6 +30,7 @@ import { escapeHtml } from "../utils";
 import * as Path from "path-browserify";
 import MessageInput from "./MessageInput";
 import { Button } from "../src/components/Button";
+import { PullRequestReactButton } from "./PullRequestReactButton";
 
 const ReviewIcons = {
 	APPROVED: <Icon name="thumbs" className="circled green" />,
@@ -52,6 +53,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 	return (
 		<div>
 			{pr.timelineItems.nodes.map((item, index) => {
+				console.warn("TIMELINE ITEM: ", item);
 				const myItem = item.author && item.author.login === me;
 				switch (item.__typename) {
 					case "IssueComment":
@@ -67,11 +69,13 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 										<PRActionIcons>
 											{myItem && Author}
 											{myPR ? <IAmMember /> : <UserIsMember />}
-											<Icon name="smiley" className="clickable" />
+											<PullRequestReactButton target={pr.id} />
 											<Icon name="kebab-horizontal" className="clickable" />
 										</PRActionIcons>
 									</PRCommentHeader>
-									<PRCommentBody>{item.bodyText}</PRCommentBody>
+									<PRCommentBody>
+										<MarkdownText text={item.body} excludeParagraphWrap />
+									</PRCommentBody>
 								</PRCommentCard>
 							</PRComment>
 						);
@@ -93,7 +97,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 										<Timestamp time={item.createdAt!} relative />
 									</PRTimelineItemBody>
 								</PRTimelineItem>
-								{item.bodyText && (
+								{item.body && (
 									<PRActionCommentCard>
 										<PRCommentHeader>
 											<div>
@@ -103,12 +107,14 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 											<PRActionIcons>
 												{myItem && Author}
 												{myPR ? <IAmMember /> : <UserIsMember />}
-												<Icon name="smiley" className="clickable" />
+												<PullRequestReactButton target={pr.id} />
 												<Icon name="kebab-horizontal" className="clickable" />
 											</PRActionIcons>
 										</PRCommentHeader>
 
-										<PRCommentBody>{item.bodyText}</PRCommentBody>
+										<PRCommentBody>
+											<MarkdownText text={item.body} excludeParagraphWrap />
+										</PRCommentBody>
 									</PRActionCommentCard>
 								)}
 								{item.comments && item.comments.nodes && (
@@ -143,11 +149,11 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 																<PRActionIcons>
 																	{myItem && Author}
 																	{myPR ? <IAmMember /> : <UserIsMember />}
-																	<Icon name="smiley" className="clickable" />
+																	<PullRequestReactButton target={pr.id} />
 																	<Icon name="kebab-horizontal" className="clickable" />
 																</PRActionIcons>
 															</PRThreadedCommentHeader>
-															{_.bodyText}
+															<MarkdownText text={_.body} excludeParagraphWrap />
 														</PRCodeCommentBody>
 													</PRCodeComment>
 													<PRCodeCommentReply>

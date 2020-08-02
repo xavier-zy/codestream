@@ -46,6 +46,7 @@ import styled from "styled-components";
 import { Modal } from "./Modal";
 import { Dialog } from "../src/components/Dialog";
 import { Link } from "./Link";
+import { PullRequestReactButton } from "./PullRequestReactButton";
 
 const Circle = styled.div`
 	width: 12px;
@@ -648,7 +649,7 @@ export const PullRequestConversationTab = props => {
 								<PRActionIcons>
 									{pr.author.login === me && Author}
 									{pr.author.login === me ? <IAmMember /> : <UserIsMember />}
-									<Icon name="smiley" />
+									<PullRequestReactButton target={pr.id} />
 									<Icon name="kebab-horizontal" />
 								</PRActionIcons>
 							</PRCommentHeader>

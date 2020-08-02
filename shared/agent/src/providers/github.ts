@@ -1460,6 +1460,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 							login
 							avatarUrl
 						  }
+						  body
 						  bodyText
 						  createdAt
 						}
@@ -1673,6 +1674,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 								login
 								avatarUrl
 							  }
+							  body
 							  bodyText
 							  diffHunk
 							  body
@@ -1688,8 +1690,8 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 							  replyTo {
 								diffHunk
 								id
-								bodyText
 								body
+								bodyText
 							  }
 							  commit {
 								message
@@ -1705,6 +1707,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 							  path
 							  position
 							  pullRequest {
+								body
 								bodyText
 							  }
 							  pullRequestReview {
@@ -1898,6 +1901,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 											author {
 												login
 											}
+											body
 											bodyText
 											createdAt
 											url

@@ -61,6 +61,7 @@ const UL = styled.ul`
 	li {
 		margin: 5px 0;
 	}
+	margin: 20px 0;
 `;
 
 export const Author = (
@@ -926,10 +927,17 @@ export const PullRequestConversationTab = props => {
 				</PRSection>
 				<PRSection style={{ borderBottom: "none" }}>
 					<h1 style={{ margin: 0, display: "flex" }}>
-						<a onClick={() => setIsLocking(true)}>
-							<Icon name="lock" className="clickable" style={{ marginRight: "5px" }} />
-							Lock Conversation
-						</a>
+						{pr.locked ? (
+							<a onClick={() => setIsLocking(true)}>
+								<Icon name="key" className="clickable" style={{ marginRight: "5px" }} />
+								Unlock Conversation
+							</a>
+						) : (
+							<a onClick={() => setIsLocking(true)}>
+								<Icon name="lock" className="clickable" style={{ marginRight: "5px" }} />
+								Lock Conversation
+							</a>
+						)}
 					</h1>
 				</PRSection>
 			</PRSidebar>

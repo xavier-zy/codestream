@@ -190,6 +190,36 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 							</PRTimelineItem>
 						);
 					}
+					case "LockedEvent": {
+						const map = {
+							OFF_TOPIC: "off-topic",
+							SPAM: "spam",
+							TOO_HEATED: "too heated",
+							RESOLVED: "resolved"
+						};
+						return (
+							<PRTimelineItem key={index} className="tall">
+								<Icon name="lock" className="circled red" />
+								<PRTimelineItemBody>
+									<PRHeadshotName key={index} size={16} person={item.actor} />
+									locked as <b>{map[item.lockReason]}</b> and limited conversation to collaborators
+									<Timestamp time={item.createdAt!} relative />
+								</PRTimelineItemBody>
+							</PRTimelineItem>
+						);
+					}
+					case "MilestonedEvent": {
+						return (
+							<PRTimelineItem key={index} className="tall">
+								<Icon name="milestone" className="circled" />
+								<PRTimelineItemBody>
+									<PRHeadshotName key={index} size={16} person={item.actor} />
+									added this to the <b>{item.milestoneTitle}</b> milestone
+									<Timestamp time={item.createdAt!} relative />
+								</PRTimelineItemBody>
+							</PRTimelineItem>
+						);
+					}
 					// case "RenamedTitleEvent":
 					// 	return null;
 					default: {

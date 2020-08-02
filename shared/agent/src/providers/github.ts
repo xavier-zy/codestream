@@ -1349,6 +1349,8 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 					  avatarUrl
 					}
 					createdAt
+					activeLockReason
+					locked
 					files(first: 100) {
 						totalCount
 						nodes {
@@ -1537,6 +1539,12 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 						}
 						... on LockedEvent {
 						  __typename
+						  actor {
+							login
+							avatarUrl
+						  }
+						  lockReason
+						  createdAt
 						}
 						... on MarkedAsDuplicateEvent {
 						  __typename
@@ -1552,6 +1560,11 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 						}
 						... on UnlockedEvent {
 						  __typename
+						  actor {
+							login
+							avatarUrl
+						  }
+						  createdAt
 						}
 						... on UnlabeledEvent {
 						  __typename
@@ -1729,6 +1742,8 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 							resourcePath
 							url
 						  }
+						  createdAt
+						  milestoneTitle
 						}
 						... on MergedEvent {
 						  __typename

@@ -178,13 +178,52 @@ export const PRCommentCard = styled.div`
 	}
 `;
 
+export const PRActionCommentCard = styled.div`
+	position: relative;
+	border: 1px solid;
+	border-color: var(--base-border-color);
+	background: var(--app-background-color);
+	.vscode-dark &,
+	&.add-comment {
+		background: var(--base-background-color);
+	}
+	border-radius: 5px;
+	padding: 10px 15px;
+	margin-left: 60px;
+	z-index: 2;
+	h1 {
+		font-size: 15px;
+		margin: 0 0 2px 0;
+	}
+	p {
+		margin: 0;
+		color: var(--text-color-subtle);
+	}
+	&:before {
+		z-index: 5;
+		content: "";
+		position: absolute;
+		left: 10px;
+		top: -5px;
+		width: 10px;
+		height: 10px;
+		transform: rotate(45deg);
+		border-left: 1px solid var(--base-border-color);
+		border-top: 1px solid var(--base-border-color);
+		background: var(--base-background-color);
+	}
+	&.green-border:before {
+		border-color: #7aba5d;
+	}
+`;
+
 export const PRConversation = styled.div`
 	position: relative;
 
 	&:before {
 		content: "";
 		position: absolute;
-		left: 71px;
+		left: 76px;
 		z-index: 0;
 		top: 0;
 		height: 100%;
@@ -197,7 +236,7 @@ export const PRTimelineItem = styled.div`
 	position: relative;
 	display: flex;
 	margin: 15px 0;
-	padding-left: 57px;
+	padding-left: 62px;
 	${PRHeadshot} {
 		flex-shrink: 0;
 		// margin: 0 10px;
@@ -243,6 +282,10 @@ export const PRTimelineItem = styled.div`
 				opacity: 1;
 			}
 			border: 3px solid var(--app-background-color);
+			&.red {
+				color: white;
+				background: #d73a4a;
+			}
 		}
 	}
 	.monospace {
@@ -286,8 +329,7 @@ export const PRContent = styled.div`
 				left: 11px;
 			}
 			${PRTimelineItem} {
-				padding-left: 0;
-				margin-left: -2px;
+				padding-left: 3px;
 			}
 		}
 	}

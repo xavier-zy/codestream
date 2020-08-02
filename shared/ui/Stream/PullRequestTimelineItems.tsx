@@ -7,7 +7,8 @@ import {
 	PRCommentBody,
 	PRTimelineItem,
 	PRTimelineItemBody,
-	PRBranch
+	PRBranch,
+	PRActionCommentCard
 } from "./PullRequestComponents";
 import React, { PropsWithChildren } from "react";
 import { PRHeadshot } from "../src/components/Headshot";
@@ -26,6 +27,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 	const pr = props.pr;
 	if (!pr || !pr.timelineItems) return null;
 
+	const isMine = true; // pr.author == me
 	return (
 		<div>
 			{pr.timelineItems.nodes.map((item, index) => {
@@ -41,9 +43,10 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 											<Timestamp time={item.createdAt!} relative />
 										</div>
 										<PRActionIcons>
+											{isMine && <div className="member">Author</div>}
 											<div className="member">Member</div>
-											<Icon name="smiley" />
-											<Icon name="kebab-horizontal" />
+											<Icon name="smiley" className="clickable" />
+											<Icon name="kebab-horizontal" className="clickable" />
 										</PRActionIcons>
 									</PRCommentHeader>
 									<PRCommentBody>{item.bodyText}</PRCommentBody>
@@ -52,9 +55,16 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 						);
 					case "PullRequestReview": {
 						return (
-							<PRComment key={index} className="tall">
-								<PRHeadshot key={index} size={40} person={item.author} />
-								<PRCommentCard>
+							<PRComment key={index}>
+								<PRTimelineItem key={index}>
+									<PRHeadshot key={index} size={40} person={item.author} />
+									<Icon name="plus-minus" className="circled red" />
+									<PRTimelineItemBody>
+										<span className="highlight">{item.author.login}</span> requested changes
+										<Timestamp time={item.createdAt!} relative />
+									</PRTimelineItemBody>
+								</PRTimelineItem>
+								<PRActionCommentCard>
 									<PRCommentHeader>
 										<div>
 											<PRAuthor>{item.author.login}</PRAuthor> commented{" "}
@@ -62,8 +72,8 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 										</div>
 										<PRActionIcons>
 											<div className="member">Member</div>
-											<Icon name="smiley" />
-											<Icon name="kebab-horizontal" />
+											<Icon name="smiley" className="clickable" />
+											<Icon name="kebab-horizontal" className="clickable" />
 										</PRActionIcons>
 									</PRCommentHeader>
 									<PRCommentBody>
@@ -84,7 +94,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 												);
 											})}
 									</PRCommentBody>
-								</PRCommentCard>
+								</PRActionCommentCard>
 							</PRComment>
 						);
 					}

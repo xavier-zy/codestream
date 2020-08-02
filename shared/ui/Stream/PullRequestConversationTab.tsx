@@ -77,6 +77,9 @@ export const PullRequestConversationTab = props => {
 	const [availableLabels, setAvailableLabels] = useState([]);
 	const [availableReviewers, setAvailableReviewers] = useState([]);
 	const [availableAssignees, setAvailableAssignees] = useState([]);
+	const [availableProjects, setAvailableProjects] = useState([]);
+	const [availableMilestones, setAvailableMilestones] = useState([]);
+	const [availableIssues, setAvailableIssues] = useState([]);
 	const [isLoadingComment, setIsLoadingComment] = useState(false);
 	const [isLoadingCommentAndClose, setIsLoadingCommentAndClose] = useState(false);
 
@@ -287,6 +290,168 @@ export const PullRequestConversationTab = props => {
 				repo: ghRepo.repoName,
 				pullRequestId: pr.number,
 				labelId: id,
+				onOff
+			}
+		});
+		fetch();
+	};
+
+	const fetchAvailableProjects = async (e?) => {
+		const projects = await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
+			method: "getProjects",
+			providerId: "github*com",
+			params: {
+				owner: ghRepo.repoOwner,
+				repo: ghRepo.repoName
+			}
+		});
+		setAvailableProjects(projects);
+	};
+
+	const projectMenuItems = React.useMemo(() => {
+		if (availableProjects && availableProjects.length) {
+			const existingProjectIds = pr.projects ? pr.projects.nodes.map(_ => _.id) : [];
+			const menuItems = availableProjects.map((_: any) => {
+				const checked = existingProjectIds.includes(_.id);
+				return {
+					checked,
+					label: (
+						<>
+							<Circle style={{ backgroundColor: `#${_.color}` }} />
+							{_.name}
+						</>
+					),
+					searchLabel: _.name,
+					key: _.id,
+					subtext: <div style={{ maxWidth: "250px", whiteSpace: "normal" }}>{_.description}</div>,
+					action: () => setProject(_.id, !checked)
+				};
+			}) as any;
+			menuItems.unshift({ type: "search", placeholder: "Filter Projects" });
+			return menuItems;
+		} else {
+			return [{ label: <LoadingMessage>Loading Projects...</LoadingMessage>, noHover: true }];
+		}
+	}, [availableProjects, pr]);
+
+	const setProject = async (id: string, onOff: boolean) => {
+		setIsLoadingMessage(onOff ? "Adding to Project..." : "Removing from Project...");
+		await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
+			method: "setProjectOnPullRequest",
+			providerId: "github*com",
+			params: {
+				owner: ghRepo.repoOwner,
+				repo: ghRepo.repoName,
+				pullRequestId: pr.number,
+				projectId: id,
+				onOff
+			}
+		});
+		fetch();
+	};
+
+	const fetchAvailableMilestones = async (e?) => {
+		const milestones = await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
+			method: "getMilestones",
+			providerId: "github*com",
+			params: {
+				owner: ghRepo.repoOwner,
+				repo: ghRepo.repoName
+			}
+		});
+		setAvailableMilestones(milestones);
+	};
+
+	const milestoneMenuItems = React.useMemo(() => {
+		if (availableMilestones && availableMilestones.length) {
+			const existingMilestoneIds = pr.milestones ? pr.milestones.nodes.map(_ => _.id) : [];
+			const menuItems = availableMilestones.map((_: any) => {
+				const checked = existingMilestoneIds.includes(_.id);
+				return {
+					checked,
+					label: (
+						<>
+							<Circle style={{ backgroundColor: `#${_.color}` }} />
+							{_.name}
+						</>
+					),
+					searchLabel: _.name,
+					key: _.id,
+					subtext: <div style={{ maxWidth: "250px", whiteSpace: "normal" }}>{_.description}</div>,
+					action: () => setMilestone(_.id, !checked)
+				};
+			}) as any;
+			menuItems.unshift({ type: "search", placeholder: "Filter Milestones" });
+			return menuItems;
+		} else {
+			return [{ label: <LoadingMessage>Loading Milestones...</LoadingMessage>, noHover: true }];
+		}
+	}, [availableMilestones, pr]);
+
+	const setMilestone = async (id: string, onOff: boolean) => {
+		setIsLoadingMessage(onOff ? "Adding Milestone..." : "Clearing Milestone...");
+		await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
+			method: "setMilestoneOnPullRequest",
+			providerId: "github*com",
+			params: {
+				owner: ghRepo.repoOwner,
+				repo: ghRepo.repoName,
+				pullRequestId: pr.number,
+				milestoneId: id,
+				onOff
+			}
+		});
+		fetch();
+	};
+
+	const fetchAvailableIssues = async (e?) => {
+		const issues = await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
+			method: "getIssues",
+			providerId: "github*com",
+			params: {
+				owner: ghRepo.repoOwner,
+				repo: ghRepo.repoName
+			}
+		});
+		setAvailableIssues(issues);
+	};
+
+	const issueMenuItems = React.useMemo(() => {
+		if (availableIssues && availableIssues.length) {
+			const existingIssueIds = pr.issues ? pr.issues.nodes.map(_ => _.id) : [];
+			const menuItems = availableIssues.map((_: any) => {
+				const checked = existingIssueIds.includes(_.id);
+				return {
+					checked,
+					label: (
+						<>
+							<Circle style={{ backgroundColor: `#${_.color}` }} />
+							{_.name}
+						</>
+					),
+					searchLabel: _.name,
+					key: _.id,
+					subtext: <div style={{ maxWidth: "250px", whiteSpace: "normal" }}>{_.description}</div>,
+					action: () => setIssue(_.id, !checked)
+				};
+			}) as any;
+			menuItems.unshift({ type: "search", placeholder: "Filter" });
+			return menuItems;
+		} else {
+			return [{ label: <LoadingMessage>Loading Issues...</LoadingMessage>, noHover: true }];
+		}
+	}, [availableMilestones, pr]);
+
+	const setIssue = async (id: string, onOff: boolean) => {
+		setIsLoadingMessage(onOff ? "Adding Issue..." : "Removing Issue...");
+		await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
+			method: "setIssueOnPullRequest",
+			providerId: "github*com",
+			params: {
+				owner: ghRepo.repoOwner,
+				repo: ghRepo.repoName,
+				pullRequestId: pr.number,
+				issueId: id,
 				onOff
 			}
 		});
@@ -576,8 +741,16 @@ export const PullRequestConversationTab = props => {
 				</PRSection>
 				<PRSection>
 					<h1>
-						<Icon name="gear" className="settings clickable" onClick={() => {}} />
-						Projects
+						<InlineMenu
+							className="subtle"
+							items={projectMenuItems}
+							onOpen={fetchAvailableProjects}
+							title="Projects"
+							noChevronDown
+						>
+							<Icon name="gear" className="settings clickable" onClick={() => {}} />
+							Projects
+						</InlineMenu>
 					</h1>
 					{pr.projectCards && pr.projectCards.nodes.length > 0
 						? pr.projectCards.nodes.map((_: any) => (
@@ -587,15 +760,31 @@ export const PullRequestConversationTab = props => {
 				</PRSection>
 				<PRSection>
 					<h1>
-						<Icon name="gear" className="settings clickable" onClick={() => {}} />
-						Milestone
+						<InlineMenu
+							className="subtle"
+							items={milestoneMenuItems}
+							onOpen={fetchAvailableMilestones}
+							title="Set milestone"
+							noChevronDown
+						>
+							<Icon name="gear" className="settings clickable" onClick={() => {}} />
+							Milestone
+						</InlineMenu>
 					</h1>
 					{pr.milestone ? <div>{pr.milestone.title}</div> : "No milestone"}
 				</PRSection>
 				<PRSection>
 					<h1>
-						<Icon name="gear" className="settings clickable" onClick={() => {}} />
-						Linked Issues
+						<InlineMenu
+							className="subtle"
+							items={issueMenuItems}
+							onOpen={fetchAvailableIssues}
+							title="Link an issue from this repository"
+							noChevronDown
+						>
+							<Icon name="gear" className="settings clickable" onClick={() => {}} />
+							Linked Issues
+						</InlineMenu>
 					</h1>
 					None yet
 				</PRSection>

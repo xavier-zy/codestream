@@ -454,7 +454,8 @@ export const PRActionIcons = styled.div`
 	margin-left: auto;
 	align-items: top;
 	text-align: right;
-	.member {
+	.member,
+	.author {
 		display: inline-block;
 		flex-grow: 0;
 		height: auto;
@@ -463,6 +464,9 @@ export const PRActionIcons = styled.div`
 		padding: 1px 7px;
 		font-size: smaller;
 		color: var(--text-color-subtle);
+	}
+	.author {
+		margin-right: 5px;
 	}
 	.icon {
 		opacity: 0.5;

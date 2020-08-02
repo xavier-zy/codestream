@@ -348,6 +348,7 @@ export default class Menu extends Component {
 						ref={ref => (this._searchInput = ref)}
 						placeholder={item.placeholder}
 						onChange={this.changeSearch}
+						autoFocus
 					/>
 				)}
 			</li>

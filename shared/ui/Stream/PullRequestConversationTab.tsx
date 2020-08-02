@@ -53,6 +53,26 @@ const Circle = styled.div`
 	vertical-align: -1px;
 `;
 
+export const Author = (
+	<Tooltip title="You are the author of this pull request" placement="bottom">
+		<div className="author">Author</div>
+	</Tooltip>
+);
+
+export const IAmMember = () => (
+	<Tooltip title="You are a member of this organization" placement="bottom">
+		<div className="member">Member</div>
+	</Tooltip>
+);
+
+export const UserIsMember = login => {
+	return (
+		<Tooltip title={`${login} is a member of this organization`} placement="bottom">
+			<div className="member">Member</div>
+		</Tooltip>
+	);
+};
+
 export const PullRequestConversationTab = props => {
 	const { pr, ghRepo, fetch, setIsLoadingMessage } = props;
 	const dispatch = useDispatch();
@@ -310,17 +330,14 @@ export const PullRequestConversationTab = props => {
 
 	const projectMenuItems = React.useMemo(() => {
 		if (availableProjects && availableProjects.length) {
-			const existingProjectIds = pr.projects ? pr.projects.nodes.map(_ => _.id) : [];
+			const existingProjectIds = pr.projectCards
+				? pr.projectCards.nodes.map(_ => _.project.id)
+				: [];
 			const menuItems = availableProjects.map((_: any) => {
 				const checked = existingProjectIds.includes(_.id);
 				return {
 					checked,
-					label: (
-						<>
-							<Circle style={{ backgroundColor: `#${_.color}` }} />
-							{_.name}
-						</>
-					),
+					label: _.name,
 					searchLabel: _.name,
 					key: _.id,
 					subtext: <div style={{ maxWidth: "250px", whiteSpace: "normal" }}>{_.description}</div>,
@@ -364,20 +381,20 @@ export const PullRequestConversationTab = props => {
 
 	const milestoneMenuItems = React.useMemo(() => {
 		if (availableMilestones && availableMilestones.length) {
-			const existingMilestoneIds = pr.milestones ? pr.milestones.nodes.map(_ => _.id) : [];
+			const existingMilestoneId = pr.milestone ? pr.milestone.id : "";
 			const menuItems = availableMilestones.map((_: any) => {
-				const checked = existingMilestoneIds.includes(_.id);
+				const checked = existingMilestoneId === _.id;
 				return {
 					checked,
-					label: (
+					label: _.title,
+					searchLabel: _.title,
+					key: _.id,
+					subtext: _.dueOn && (
 						<>
-							<Circle style={{ backgroundColor: `#${_.color}` }} />
-							{_.name}
+							Due by
+							<Timestamp time={_.dueOn} dateOnly />
 						</>
 					),
-					searchLabel: _.name,
-					key: _.id,
-					subtext: <div style={{ maxWidth: "250px", whiteSpace: "normal" }}>{_.description}</div>,
 					action: () => setMilestone(_.id, !checked)
 				};
 			}) as any;
@@ -423,12 +440,7 @@ export const PullRequestConversationTab = props => {
 				const checked = existingIssueIds.includes(_.id);
 				return {
 					checked,
-					label: (
-						<>
-							<Circle style={{ backgroundColor: `#${_.color}` }} />
-							{_.name}
-						</>
-					),
+					label: <>{_.name}</>,
 					searchLabel: _.name,
 					key: _.id,
 					subtext: <div style={{ maxWidth: "250px", whiteSpace: "normal" }}>{_.description}</div>,
@@ -440,7 +452,7 @@ export const PullRequestConversationTab = props => {
 		} else {
 			return [{ label: <LoadingMessage>Loading Issues...</LoadingMessage>, noHover: true }];
 		}
-	}, [availableMilestones, pr]);
+	}, [availableIssues, pr]);
 
 	const setIssue = async (id: string, onOff: boolean) => {
 		setIsLoadingMessage(onOff ? "Adding Issue..." : "Removing Issue...");
@@ -458,6 +470,7 @@ export const PullRequestConversationTab = props => {
 		fetch();
 	};
 
+	const me = "ppezaris"; // FIXME
 	let prBody = pr.body;
 	return (
 		<PRContent>
@@ -473,7 +486,8 @@ export const PullRequestConversationTab = props => {
 									<Timestamp time={pr.createdAt!} relative />
 								</div>
 								<PRActionIcons>
-									<div className="member">Member</div>
+									{pr.author.login === me && Author}
+									{pr.author.login === me ? <IAmMember /> : <UserIsMember />}
 									<Icon name="smiley" />
 									<Icon name="kebab-horizontal" />
 								</PRActionIcons>

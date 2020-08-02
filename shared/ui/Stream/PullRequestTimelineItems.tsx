@@ -19,6 +19,7 @@ import { FetchThirdPartyPullRequestPullRequest } from "@codestream/protocols/age
 import Tag from "./Tag";
 import { Link } from "./Link";
 import { PRHeadshotName } from "../src/components/HeadshotName";
+import { Author, IAmMember, UserIsMember } from "./PullRequestConversationTab";
 
 interface Props {
 	pr: FetchThirdPartyPullRequestPullRequest;
@@ -27,10 +28,12 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 	const pr = props.pr;
 	if (!pr || !pr.timelineItems) return null;
 
-	const isMine = true; // pr.author == me
+	const me = "ppezaris"; // FIXME
+	const myPR = pr.author.login === me;
 	return (
 		<div>
 			{pr.timelineItems.nodes.map((item, index) => {
+				const myItem = item.author && item.author.login === me;
 				switch (item.__typename) {
 					case "IssueComment":
 						return (
@@ -43,8 +46,8 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 											<Timestamp time={item.createdAt!} relative />
 										</div>
 										<PRActionIcons>
-											{isMine && <div className="member">Author</div>}
-											<div className="member">Member</div>
+											{myItem && Author}
+											{myPR ? <IAmMember /> : <UserIsMember />}
 											<Icon name="smiley" className="clickable" />
 											<Icon name="kebab-horizontal" className="clickable" />
 										</PRActionIcons>
@@ -71,7 +74,8 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 											<Timestamp time={item.createdAt!} relative />
 										</div>
 										<PRActionIcons>
-											<div className="member">Member</div>
+											{myItem && Author}
+											{myPR ? <IAmMember /> : <UserIsMember />}
 											<Icon name="smiley" className="clickable" />
 											<Icon name="kebab-horizontal" className="clickable" />
 										</PRActionIcons>

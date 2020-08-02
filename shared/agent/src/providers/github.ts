@@ -835,6 +835,54 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 		return query.repository.labels.nodes;
 	}
 
+	async getProjects(request: { owner: string; repo: string }) {
+		const query = await this.client.request<any>(
+			`query getProjects($owner:String!, $name:String!) {
+				repository(owner:$owner, name:$name) {
+				  id
+				  projects(first: 50) {
+					edges {
+					  node {
+						id
+						name
+					  }
+					}
+				  }
+			    }
+			  }`,
+			{
+				owner: request.owner,
+				name: request.repo
+			}
+		);
+		return query.repository.projects.edges.map((_: any) => _.node);
+	}
+
+	async getMilestones(request: { owner: string; repo: string }) {
+		const query = await this.client.request<any>(
+			`query getProjects($owner:String!, $name:String!) {
+				repository(owner:$owner, name:$name) {
+				  id
+				  milestones(first: 50) {
+					edges {
+					  node {
+						id
+						title
+						description
+						dueOn
+					  }
+					}
+				  }
+			    }
+			  }`,
+			{
+				owner: request.owner,
+				name: request.repo
+			}
+		);
+		return query.repository.milestones.edges.map((_: any) => _.node);
+	}
+
 	async getReviewers(request: { owner: string; repo: string }) {
 		const query = await this.client.request<any>(
 			`query FindReviewers($owner:String!, $name:String!)  {
@@ -894,6 +942,44 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 			labelableId: prId,
 			labelIds: request.labelId
 		});
+		return true;
+	}
+
+	async setProjectOnPullRequest(request: {
+		owner: string;
+		repo: string;
+		pullRequestId: string;
+		projectId: string;
+		onOff: boolean;
+	}) {
+		const pullRequestInfo = await this.client.request<any>(
+			`query FindPullRequest($owner:String!,$name:String!,$pullRequestId:Int!) {
+					repository(owner:$owner name:$name) {
+					  pullRequest(number: $pullRequestId) {
+						id
+					  }
+					}
+				  }`,
+			{
+				owner: request.owner,
+				name: request.repo,
+				pullRequestId: parseInt(request.pullRequestId, 10)
+			}
+		);
+
+		// const prId = pullRequestInfo.repository.pullRequest.id;
+		// const method = request.onOff ? "addLabelsToLabelable" : "removeLabelsFromLabelable";
+		// const Method = request.onOff ? "AddLabelsToLabelable" : "RemoveLabelsFromLabelable";
+		// const query = `mutation ${Method}($labelableId: String!,$labelIds:String!) {
+		// 	${method}(input: {labelableId: $labelableId, labelIds:$labelIds}) {
+		// 		  clientMutationId
+		// 		}
+		// 	  }`;
+
+		// const rsp = await this.client.request<any>(query, {
+		// 	labelableId: prId,
+		// 	labelIds: request.labelId
+		// });
 		return true;
 	}
 
@@ -1695,6 +1781,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 						state
 						project {
 						  name
+						  id
 						}
 					  }
 					}

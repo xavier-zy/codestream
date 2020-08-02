@@ -142,10 +142,17 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 					case "AssignedEvent": {
 						return (
 							<PRTimelineItem key={index} className="tall">
-								<Icon name="review" className="circled" />
+								<Icon name="person" className="circled" />
 								<PRTimelineItemBody>
 									<PRHeadshotName key={index} size={16} person={item.actor} />
-									assigned {item.assignee.login}
+									{item.actor.login === item.assignee.login ? (
+										"self-assigned this"
+									) : (
+										<>
+											assigned <b>{item.assignee.login}</b>
+										</>
+									)}
+
 									<Timestamp time={item.createdAt!} relative />
 								</PRTimelineItemBody>
 							</PRTimelineItem>

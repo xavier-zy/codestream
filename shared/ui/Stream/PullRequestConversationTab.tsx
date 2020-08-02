@@ -200,6 +200,21 @@ export const PullRequestConversationTab = props => {
 		});
 	};
 
+	const unlockPullRequest = async () => {
+		setIsLoadingLocking(true);
+		await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
+			method: "unlockPullRequest",
+			providerId: "github*com",
+			params: {
+				pullRequestId: derivedState.currentPullRequestId!
+			}
+		});
+		fetch().then(() => {
+			setIsLocking(false);
+			setIsLoadingLocking(false);
+		});
+	};
+
 	const numParticpants = ((pr.participants && pr.participants.nodes) || []).length;
 	const participantsLabel = `${numParticpants} Participant${numParticpants == 1 ? "" : "s"}`;
 
@@ -266,7 +281,7 @@ export const PullRequestConversationTab = props => {
 
 	const fetchAvailableAssignees = async (e?) => {
 		const assignees = await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
-			method: "getAssignees",
+			method: "getReviewers",
 			providerId: "github*com",
 			params: {
 				owner: ghRepo.repoOwner,
@@ -285,7 +300,7 @@ export const PullRequestConversationTab = props => {
 				subtle: _.name,
 				searchLabel: `${_.login}:${_.name}`,
 				key: _.id,
-				action: () => toggleAssignee(_.id)
+				action: () => toggleAssignee(_.id, !assigneeIds.includes(_.login))
 			})) as any;
 			menuItems.unshift({ type: "search", placeholder: "Type or choose a name" });
 			return menuItems;
@@ -294,15 +309,17 @@ export const PullRequestConversationTab = props => {
 		}
 	}, [availableAssignees, pr]);
 
-	const toggleAssignee = async id => {
+	const toggleAssignee = async (id: string, onOff: boolean) => {
+		setIsLoadingMessage(onOff ? "Adding Assignee..." : "Removing Assignee...");
 		await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
-			method: "addAssigneeToPullRequest",
+			method: "setAssigneeOnPullRequest",
 			providerId: "github*com",
 			params: {
 				owner: ghRepo.repoOwner,
 				repo: ghRepo.repoName,
 				pullRequestId: pr.number,
-				assigneeId: id
+				assigneeId: id,
+				onOff
 			}
 		});
 		props.fetch();
@@ -522,63 +539,81 @@ export const PullRequestConversationTab = props => {
 		<PRContent>
 			{isLocking && (
 				<Modal translucent verticallyCenter>
-					<Dialog
-						title="Lock conversation on this pull request"
-						onClose={() => setIsLocking(false)}
-						narrow
-					>
-						<UL>
-							<li>
-								Other users <b>can’t add new comments</b> to this pull request.
-							</li>
-							<li>
-								You and other members of teams with write access to this repository{" "}
-								<b>can still leave comments</b> that others can see.
-							</li>
-							<li>You can always unlock this pull request again in the future.</li>
-						</UL>
-						<b>Reason for locking</b>
-						<div style={{ margin: "5px 0" }}>
-							<InlineMenu
-								items={[
-									{
-										label: "Choose a reason",
-										key: "choose",
-										action: () => setIsLockingReason("Choose a reason")
-									},
-									{
-										label: "Off-topic",
-										key: "topic",
-										action: () => setIsLockingReason("Off-topic")
-									},
-									{
-										label: "Too heated",
-										key: "heated",
-										action: () => setIsLockingReason("Too heated")
-									},
-									{
-										label: "Resolved",
-										key: "resolved",
-										action: () => setIsLockingReason("Resolved")
-									},
-									{ label: "Spam", key: "spam", action: () => setIsLockingReason("Spam") }
-								]}
-							>
-								{isLockingReason || "Choose a reason"}
-							</InlineMenu>
-						</div>
-						<div className="subtle" style={{ fontSize: "smaller", margin: "10px 0 20px 0" }}>
-							Optionally, choose a reason for locking that others can see. Learn more about when
-							it’s appropriate to{" "}
-							<Link href="https://docs.github.com/en/github/building-a-strong-community/locking-conversations">
-								lock conversations
-							</Link>
-							.
-						</div>
-						<Button fillParent onClick={() => lockPullRequest()} isLoading={isLoadingLocking}>
-							Lock conversation on this pull request
-						</Button>
-					</Dialog>
+					{pr.locked ? (
+						<Dialog
+							title="Unlock conversation on this pull request"
+							onClose={() => setIsLocking(false)}
+							narrow
+						>
+							<UL>
+								<li>
+									<b>Everyone</b> will be able to comment on this pull request once more.
+								</li>
+								<li>You can always lock this pull request again in the future.</li>
+							</UL>
+							<Button fillParent onClick={() => unlockPullRequest()} isLoading={isLoadingLocking}>
+								Unlock conversation on this pull request
+							</Button>
+						</Dialog>
+					) : (
+						<Dialog
+							title="Lock conversation on this pull request"
+							onClose={() => setIsLocking(false)}
+							narrow
+						>
+							<UL>
+								<li>
+									Other users <b>can’t add new comments</b> to this pull request.
+								</li>
+								<li>
+									You and other members of teams with write access to this repository{" "}
+									<b>can still leave comments</b> that others can see.
+								</li>
+								<li>You can always unlock this pull request again in the future.</li>
+							</UL>
+							<b>Reason for locking</b>
+							<div style={{ margin: "5px 0" }}>
+								<InlineMenu
+									items={[
+										{
+											label: "Choose a reason",
+											key: "choose",
+											action: () => setIsLockingReason("Choose a reason")
+										},
+										{
+											label: "Off-topic",
+											key: "topic",
+											action: () => setIsLockingReason("Off-topic")
+										},
+										{
+											label: "Too heated",
+											key: "heated",
+											action: () => setIsLockingReason("Too heated")
+										},
+										{
+											label: "Resolved",
+											key: "resolved",
+											action: () => setIsLockingReason("Resolved")
+										},
+										{ label: "Spam", key: "spam", action: () => setIsLockingReason("Spam") }
+									]}
+								>
+									{isLockingReason || "Choose a reason"}
+								</InlineMenu>
+							</div>
+							<div className="subtle" style={{ fontSize: "smaller", margin: "10px 0 20px 0" }}>
+								Optionally, choose a reason for locking that others can see. Learn more about when
+								it’s appropriate to{" "}
+								<Link href="https://docs.github.com/en/github/building-a-strong-community/locking-conversations">
+									lock conversations
+								</Link>
+								.
+							</div>
+							<Button fillParent onClick={() => lockPullRequest()} isLoading={isLoadingLocking}>
+								Lock conversation on this pull request
+							</Button>
+						</Dialog>
+					)}
 				</Modal>
 			)}
 			<div className="main-content">

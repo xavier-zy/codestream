@@ -43,6 +43,9 @@ import { DropdownButton } from "./Review/DropdownButton";
 import { InlineMenu } from "../src/components/controls/InlineMenu";
 import { LoadingMessage } from "../src/components/LoadingMessage";
 import styled from "styled-components";
+import { Modal } from "./Modal";
+import { Dialog } from "../src/components/Dialog";
+import { Link } from "./Link";
 
 const Circle = styled.div`
 	width: 12px;
@@ -51,6 +54,13 @@ const Circle = styled.div`
 	display: inline-block;
 	margin-right: 5px;
 	vertical-align: -1px;
+`;
+
+const UL = styled.ul`
+	padding-left: 20px;
+	li {
+		margin: 5px 0;
+	}
 `;
 
 export const Author = (
@@ -102,6 +112,9 @@ export const PullRequestConversationTab = props => {
 	const [availableIssues, setAvailableIssues] = useState([]);
 	const [isLoadingComment, setIsLoadingComment] = useState(false);
 	const [isLoadingCommentAndClose, setIsLoadingCommentAndClose] = useState(false);
+	const [isLocking, setIsLocking] = useState(false);
+	const [isLockingReason, setIsLockingReason] = useState("");
+	const [isLoadingLocking, setIsLoadingLocking] = useState(false);
 
 	const onCommentClick = async e => {
 		setIsLoadingComment(true);
@@ -152,6 +165,38 @@ export const PullRequestConversationTab = props => {
 			}
 		);
 		fetch();
+	};
+
+	const lockPullRequest = async () => {
+		setIsLoadingLocking(true);
+		let reason = "";
+		switch (isLockingReason) {
+			case "Off-topic":
+				reason = "OFF_TOPIC";
+				break;
+			case "Too heated":
+				reason = "TOO_HEATED";
+				break;
+			case "Spam":
+				reason = "SPAM";
+				break;
+			case "RESOLVED":
+				reason = "RESOLVED";
+				break;
+		}
+
+		await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
+			method: "lockPullRequest",
+			providerId: "github*com",
+			params: {
+				pullRequestId: derivedState.currentPullRequestId!,
+				lockReason: reason
+			}
+		});
+		fetch().then(() => {
+			setIsLocking(false);
+			setIsLoadingLocking(false);
+		});
 	};
 
 	const numParticpants = ((pr.participants && pr.participants.nodes) || []).length;
@@ -474,6 +519,67 @@ export const PullRequestConversationTab = props => {
 	let prBody = pr.body;
 	return (
 		<PRContent>
+			{isLocking && (
+				<Modal translucent verticallyCenter>
+					<Dialog
+						title="Lock conversation on this pull request"
+						onClose={() => setIsLocking(false)}
+						narrow
+					>
+						<UL>
+							<li>
+								Other users <b>can’t add new comments</b> to this pull request.
+							</li>
+							<li>
+								You and other members of teams with write access to this repository{" "}
+								<b>can still leave comments</b> that others can see.
+							</li>
+							<li>You can always unlock this pull request again in the future.</li>
+						</UL>
+						<b>Reason for locking</b>
+						<div style={{ margin: "5px 0" }}>
+							<InlineMenu
+								items={[
+									{
+										label: "Choose a reason",
+										key: "choose",
+										action: () => setIsLockingReason("Choose a reason")
+									},
+									{
+										label: "Off-topic",
+										key: "topic",
+										action: () => setIsLockingReason("Off-topic")
+									},
+									{
+										label: "Too heated",
+										key: "heated",
+										action: () => setIsLockingReason("Too heated")
+									},
+									{
+										label: "Resolved",
+										key: "resolved",
+										action: () => setIsLockingReason("Resolved")
+									},
+									{ label: "Spam", key: "spam", action: () => setIsLockingReason("Spam") }
+								]}
+							>
+								{isLockingReason || "Choose a reason"}
+							</InlineMenu>
+						</div>
+						<div className="subtle" style={{ fontSize: "smaller", margin: "10px 0 20px 0" }}>
+							Optionally, choose a reason for locking that others can see. Learn more about when
+							it’s appropriate to{" "}
+							<Link href="https://docs.github.com/en/github/building-a-strong-community/locking-conversations">
+								lock conversations
+							</Link>
+							.
+						</div>
+						<Button fillParent onClick={() => lockPullRequest()} isLoading={isLoadingLocking}>
+							Lock conversation on this pull request
+						</Button>
+					</Dialog>
+				</Modal>
+			)}
 			<div className="main-content">
 				<PRConversation>
 					{/* in the GH data model, the top box is part of the pr, rather than the timeline */}
@@ -820,13 +926,10 @@ export const PullRequestConversationTab = props => {
 				</PRSection>
 				<PRSection style={{ borderBottom: "none" }}>
 					<h1 style={{ margin: 0, display: "flex" }}>
-						<Icon
-							name="lock"
-							className="clickable"
-							style={{ marginRight: "5px" }}
-							onClick={() => {}}
-						/>
-						Lock Conversation
+						<a onClick={() => setIsLocking(true)}>
+							<Icon name="lock" className="clickable" style={{ marginRight: "5px" }} />
+							Lock Conversation
+						</a>
 					</h1>
 				</PRSection>
 			</PRSidebar>

@@ -29,6 +29,7 @@ import { prettyPrintOne } from "code-prettify";
 import { escapeHtml } from "../utils";
 import * as Path from "path-browserify";
 import MessageInput from "./MessageInput";
+import { Button } from "../src/components/Button";
 
 const ReviewIcons = {
 	APPROVED: <Icon name="thumbs" className="circled green" />,
@@ -110,65 +111,69 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 										<PRCommentBody>{item.bodyText}</PRCommentBody>
 									</PRActionCommentCard>
 								)}
-								{item.comments &&
-									item.comments.nodes &&
-									item.comments.nodes.map(_ => {
-										let extension = Path.extname(_.path).toLowerCase();
-										if (extension.startsWith(".")) {
-											extension = extension.substring(1);
-										}
+								{item.comments && item.comments.nodes && (
+									<>
+										{item.comments.nodes.map(_ => {
+											let extension = Path.extname(_.path).toLowerCase();
+											if (extension.startsWith(".")) {
+												extension = extension.substring(1);
+											}
 
-										// FIXME
-										const startLine = 5;
+											// FIXME
+											const startLine = 5;
 
-										const codeHTML = prettyPrintOne(escapeHtml(_.diffHunk), extension, startLine);
+											const codeHTML = prettyPrintOne(escapeHtml(_.diffHunk), extension, startLine);
 
-										return (
-											<PRThreadedCommentCard>
-												<PRCodeComment>
-													<Icon name="file" />
-													<span className="monospace">&nbsp;{_.path}</span>
-													<pre
-														style={{ margin: "5px 0 10px 0" }}
-														className="code prettyprint"
-														data-scrollable="true"
-														dangerouslySetInnerHTML={{ __html: codeHTML }}
-													/>
-													<PRCodeCommentBody>
-														<PRHeadshot key={index} size={30} person={item.author} />
-														<PRThreadedCommentHeader>
-															{item.author.login}
-															<Timestamp time={item.createdAt} />
-															<PRActionIcons>
-																{myItem && Author}
-																{myPR ? <IAmMember /> : <UserIsMember />}
-																<Icon name="smiley" className="clickable" />
-																<Icon name="kebab-horizontal" className="clickable" />
-															</PRActionIcons>
-														</PRThreadedCommentHeader>
-														{_.bodyText}
-													</PRCodeCommentBody>
-												</PRCodeComment>
-												<PRCodeCommentReply>
-													<PRHeadshot key={index} size={30} person={item.author} />
-
-													<div
-														style={{
-															margin: "0 0 0 40px",
-															border: "1px solid var(--base-border-color)"
-														}}
-													>
-														<MessageInput
-															multiCompose
-															text={""}
-															placeholder="Reply..."
-															onChange={() => {}}
+											return (
+												<PRThreadedCommentCard>
+													<PRCodeComment>
+														<Icon name="file" />
+														<span className="monospace">&nbsp;{_.path}</span>
+														<pre
+															style={{ margin: "5px 0 10px 0" }}
+															className="code prettyprint"
+															data-scrollable="true"
+															dangerouslySetInnerHTML={{ __html: codeHTML }}
 														/>
-													</div>
-												</PRCodeCommentReply>
-											</PRThreadedCommentCard>
-										);
-									})}
+														<PRCodeCommentBody>
+															<PRHeadshot key={index} size={30} person={item.author} />
+															<PRThreadedCommentHeader>
+																{item.author.login}
+																<Timestamp time={item.createdAt} />
+																<PRActionIcons>
+																	{myItem && Author}
+																	{myPR ? <IAmMember /> : <UserIsMember />}
+																	<Icon name="smiley" className="clickable" />
+																	<Icon name="kebab-horizontal" className="clickable" />
+																</PRActionIcons>
+															</PRThreadedCommentHeader>
+															{_.bodyText}
+														</PRCodeCommentBody>
+													</PRCodeComment>
+													<PRCodeCommentReply>
+														<PRHeadshot key={index} size={30} person={item.author} />
+
+														<div
+															style={{
+																margin: "0 0 0 40px",
+																border: "1px solid var(--base-border-color)"
+															}}
+														>
+															<MessageInput
+																multiCompose
+																text={""}
+																placeholder="Reply..."
+																onChange={() => {}}
+															/>
+														</div>
+													</PRCodeCommentReply>
+													<div style={{ height: "15px" }}></div>
+													<Button variant="secondary">Resolve conversation</Button>
+												</PRThreadedCommentCard>
+											);
+										})}
+									</>
+								)}
 							</PRComment>
 						);
 					}

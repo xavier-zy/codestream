@@ -5,7 +5,9 @@ import {
 	PRAuthor,
 	PRActionIcons,
 	PRCommentBody,
-	PRTimelineItem
+	PRTimelineItem,
+	PRTimelineItemBody,
+	PRBranch
 } from "./PullRequestComponents";
 import React, { PropsWithChildren } from "react";
 import { PRHeadshot } from "../src/components/Headshot";
@@ -34,8 +36,10 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 								<PRHeadshot key={index} size={40} person={item.author} />
 								<PRCommentCard>
 									<PRCommentHeader>
-										<PRAuthor>{item.author.login}</PRAuthor> commented{" "}
-										<Timestamp time={item.createdAt!} relative />
+										<div>
+											<PRAuthor>{item.author.login}</PRAuthor> commented{" "}
+											<Timestamp time={item.createdAt!} relative />
+										</div>
 										<PRActionIcons>
 											<div className="member">Member</div>
 											<Icon name="smiley" />
@@ -52,8 +56,10 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 								<PRHeadshot key={index} size={40} person={item.author} />
 								<PRCommentCard>
 									<PRCommentHeader>
-										<PRAuthor>{item.author.login}</PRAuthor> commented{" "}
-										<Timestamp time={item.createdAt!} relative />
+										<div>
+											<PRAuthor>{item.author.login}</PRAuthor> commented{" "}
+											<Timestamp time={item.createdAt!} relative />
+										</div>
 										<PRActionIcons>
 											<div className="member">Member</div>
 											<Icon name="smiley" />
@@ -86,8 +92,10 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 						return (
 							<PRTimelineItem key={index} className="tall">
 								<Icon name="review" className="circled" />
-								<PRHeadshotName key={index} size={16} person={item.actor} />
-								requested a review
+								<PRTimelineItemBody>
+									<PRHeadshotName key={index} size={16} person={item.actor} />
+									requested a review
+								</PRTimelineItemBody>
 							</PRTimelineItem>
 						);
 					}
@@ -97,14 +105,16 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 								<Icon name="git-commit" />
 								<PRHeadshot key={index} size={16} person={item.commit.author} />
 
-								<div className="monospace ellipsis">
-									<Link
-										href={`${pr.url}/commits/${item.commit.abbreviatedOid}`}
-										className="monospace"
-									>
-										<MarkdownText text={item.commit.message || ""} />
-									</Link>
-								</div>
+								<PRTimelineItemBody>
+									<div className="monospace left-pad">
+										<Link
+											href={`${pr.url}/commits/${item.commit.abbreviatedOid}`}
+											className="monospace"
+										>
+											<MarkdownText excludeParagraphWrap text={item.commit.message || ""} />
+										</Link>
+									</div>
+								</PRTimelineItemBody>
 								<div className="monospace sha">
 									<Link
 										href={`${pr.url}/commits/${item.commit.abbreviatedOid}`}
@@ -119,13 +129,11 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 						return (
 							<PRTimelineItem key={index} className="tall">
 								<Icon name="review" className="circled" />
-								<PRHeadshot key={index} size={16} person={item.actor} />
-								<div className="monospace ellipsis">
-									<span>
-										{item.actor.login} assigned {item.assignee.login}
-										<Timestamp time={item.createdAt!} relative />
-									</span>
-								</div>
+								<PRTimelineItemBody>
+									<PRHeadshotName key={index} size={16} person={item.actor} />
+									assigned {item.assignee.login}
+									<Timestamp time={item.createdAt!} relative />
+								</PRTimelineItemBody>
 							</PRTimelineItem>
 						);
 					}
@@ -133,14 +141,12 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 						return (
 							<PRTimelineItem key={index} className="tall">
 								<Icon name="git-merge" className="circled" />
-								<PRHeadshot key={index} size={16} person={item.actor} />
-								<div className="monospace ellipsis">
-									<span>
-										{item.actor.login} merged commit {item.commit.abbreviatedOid} into{" "}
-										{item.mergeRefName}
-										<Timestamp time={item.createdAt!} relative />
-									</span>
-								</div>
+								<PRTimelineItemBody>
+									<PRHeadshotName key={index} size={16} person={item.actor} />
+									merged commit <PRBranch>{item.commit.abbreviatedOid}</PRBranch> into{" "}
+									<PRBranch>{item.mergeRefName}</PRBranch>
+									<Timestamp time={item.createdAt!} relative />
+								</PRTimelineItemBody>
 							</PRTimelineItem>
 						);
 					}
@@ -148,12 +154,12 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 						return (
 							<PRTimelineItem key={index} className="tall">
 								<Icon name="tag" className="circled" />
-								<PRHeadshot key={index} size={16} person={item.actor} />
-								<span>
-									{item.actor.login} added
+								<PRTimelineItemBody>
+									<PRHeadshotName key={index} size={16} person={item.actor} />
+									added
 									<Tag tag={{ label: item.label.name, color: `#${item.label.color}` }} />
 									<Timestamp time={item.createdAt!} relative />
-								</span>
+								</PRTimelineItemBody>
 							</PRTimelineItem>
 						);
 					}
@@ -161,12 +167,12 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 						return (
 							<PRTimelineItem key={index} className="tall">
 								<Icon name="tag" className="circled" />
-								<PRHeadshot key={index} size={16} person={item.actor} />
-								<span>
-									{item.actor.login} removed
+								<PRTimelineItemBody>
+									<PRHeadshotName key={index} size={16} person={item.actor} />
+									removed
 									<Tag tag={{ label: item.label.name, color: `#${item.label.color}` }} />
 									<Timestamp time={item.createdAt!} relative />
-								</span>
+								</PRTimelineItemBody>
 							</PRTimelineItem>
 						);
 					}

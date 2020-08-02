@@ -296,8 +296,10 @@ export const PullRequestConversationTab = props => {
 						<PRHeadshot person={pr.author} size={40} />
 						<PRCommentCard>
 							<PRCommentHeader>
-								<PRAuthor>{pr.author.login}</PRAuthor> commented{" "}
-								<Timestamp time={pr.createdAt!} relative />
+								<div>
+									<PRAuthor>{pr.author.login}</PRAuthor> commented{" "}
+									<Timestamp time={pr.createdAt!} relative />
+								</div>
 								<PRActionIcons>
 									<div className="member">Member</div>
 									<Icon name="smiley" />
@@ -607,8 +609,14 @@ export const PullRequestConversationTab = props => {
 						))}
 				</PRSection>
 				<PRSection style={{ borderBottom: "none" }}>
-					<h1>
-						<Icon name="lock" className="clickable" onClick={() => {}} /> Lock Conversation
+					<h1 style={{ margin: 0, display: "flex" }}>
+						<Icon
+							name="lock"
+							className="clickable"
+							style={{ marginRight: "5px" }}
+							onClick={() => {}}
+						/>
+						Lock Conversation
 					</h1>
 				</PRSection>
 			</PRSidebar>

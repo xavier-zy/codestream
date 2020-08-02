@@ -2,6 +2,7 @@ import { Button } from "../src/components/Button";
 import styled from "styled-components";
 
 import { Headshot, PRHeadshot } from "../src/components/Headshot";
+import { PRHeadshotName } from "../src/components/HeadshotName";
 
 export const PRHeader = styled.div`
 	margin: 20px 20px 0 20px;
@@ -118,6 +119,7 @@ export const PRStatusHeadshot = styled.div`
 	display: flex;
 	justify-content: center;
 	align-items: center;
+	flex-shrink: 0;
 	.icon {
 		transform: scale(2);
 		color: white;
@@ -195,10 +197,10 @@ export const PRTimelineItem = styled.div`
 	position: relative;
 	display: flex;
 	margin: 15px 0;
-	padding-left: 65px;
+	padding-left: 57px;
 	${PRHeadshot} {
 		flex-shrink: 0;
-		margin: 0 10px;
+		// margin: 0 10px;
 		// div,
 		// img {
 		// 	border-radius: 50%;
@@ -210,6 +212,7 @@ export const PRTimelineItem = styled.div`
 	}
 	.sha {
 		margin-left: auto;
+		padding-left: 10px;
 	}
 	.cs-tag {
 		margin-left: 5px;
@@ -218,18 +221,18 @@ export const PRTimelineItem = styled.div`
 	.icon {
 		flex-grow: 0;
 		flex-shrink: 0;
+		margin-right: 10px;
 		background: var(--app-background-color);
 		display: flex;
 		justify-content: center;
 		align-items: center;
 		width: 30px;
 		height: 18px;
-		margin: 0 0 0 -8px;
 		svg {
 			opacity: 0.7;
 		}
 		&.circled {
-			margin-top: -7px;
+			margin-top: -4px;
 			height: 30px;
 			background: #ddd;
 			.vscode-dark & {
@@ -247,6 +250,16 @@ export const PRTimelineItem = styled.div`
 	}
 `;
 
+export const PRTimelineItemBody = styled.div`
+	.left-pad {
+		padding-left: 5px;
+	}
+	${PRHeadshotName} {
+		color: var(--text-color-highlight);
+		padding-right: 5px;
+	}
+`;
+
 export const PRContent = styled.div`
 	margin: 0 20px 20px 20px;
 	display: flex;
@@ -258,7 +271,9 @@ export const PRContent = styled.div`
 		flex-direction: column;
 		.main-content {
 			order: 2;
-			${PRComment} ${PRHeadshot} {
+			${PRComment} ${PRHeadshot}, 
+			${PRComment} ${Headshot}, 
+			${PRStatusHeadshot} {
 				display: none;
 			}
 			${PRCommentCard} {
@@ -271,7 +286,8 @@ export const PRContent = styled.div`
 				left: 11px;
 			}
 			${PRTimelineItem} {
-				padding-left: 5px;
+				padding-left: 0;
+				margin-left: -2px;
 			}
 		}
 	}
@@ -347,6 +363,7 @@ export const PRCommentHeader = styled.div`
 	border-bottom: 1px solid var(--base-border-color);
 	background: var(--base-background-color);
 	display: flex;
+	align-items: top;
 `;
 
 export const PRCommentBody = styled.div`
@@ -393,8 +410,12 @@ export const PRFoot = styled.div`
 
 export const PRActionIcons = styled.div`
 	margin-left: auto;
-	display: flex;
+	align-items: top;
+	text-align: right;
 	.member {
+		display: inline-block;
+		flex-grow: 0;
+		height: auto;
 		border: 1px solid var(--base-border-color);
 		border-radius: 10px;
 		padding: 1px 7px;
@@ -409,6 +430,7 @@ export const PRActionIcons = styled.div`
 
 export const PRIconButton = styled.div`
 	display: flex;
+	flex-shrink: 0;
 	justify-content: center;
 	align-items: center;
 	width: 30px;

@@ -1657,10 +1657,15 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 							login
 							avatarUrl
 						  }
+						  body
 						  bodyText
 						  createdAt
 						  lastEditedAt
-						  body
+						  state
+						  viewerDidAuthor
+						  viewerCanUpdate
+						  viewerCanReact
+						  viewerCanDelete
 						  comments(first: 15) {
 							nodes {
 							  author {
@@ -1676,6 +1681,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 							  state
 							  authorAssociation
 							  draftedAt
+							  isMinimized
 							  minimizedReason
 							  publishedAt
 							  replyTo {

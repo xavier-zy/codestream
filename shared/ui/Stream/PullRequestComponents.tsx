@@ -217,6 +217,32 @@ export const PRActionCommentCard = styled.div`
 	}
 `;
 
+export const PRThreadedCommentCard = styled.div`
+	position: relative;
+	border: 1px solid;
+	border-color: var(--base-border-color);
+	background: var(--app-background-color);
+	.vscode-dark &,
+	&.add-comment {
+		background: var(--base-background-color);
+	}
+	border-radius: 5px;
+	padding: 10px 15px;
+	margin: 15px 0 15px 90px;
+	z-index: 2;
+	h1 {
+		font-size: 15px;
+		margin: 0 0 2px 0;
+	}
+	p {
+		margin: 0;
+		color: var(--text-color-subtle);
+	}
+	&.green-border:before {
+		border-color: #7aba5d;
+	}
+`;
+
 export const PRConversation = styled.div`
 	position: relative;
 
@@ -307,16 +333,18 @@ export const PRTimelineItemBody = styled.div`
 `;
 
 export const PRContent = styled.div`
-	margin: 0 20px 20px 20px;
+	padding: 0 20px 20px 20px;
 	display: flex;
 	// width: 100%;
 	.main-content {
 		flex-grow: 10;
+		max-width: 75vw;
 	}
 	@media only screen and (max-width: 630px) {
 		flex-direction: column;
 		.main-content {
 			order: 2;
+			max-width: 100vw;
 			${PRComment} ${PRHeadshot}, 
 			${PRComment} ${Headshot}, 
 			${PRStatusHeadshot} {
@@ -329,7 +357,7 @@ export const PRContent = styled.div`
 				}
 			}
 			${PRConversation}:before {
-				left: 11px;
+				left: 16px;
 			}
 			${PRTimelineItem} {
 				padding-left: 3px;
@@ -413,6 +441,18 @@ export const PRCommentHeader = styled.div`
 
 export const PRCommentBody = styled.div`
 	padding: 15px 0 5px 0;
+`;
+
+export const PRThreadedCommentHeader = styled.div`
+	display: flex;
+	align-items: top;
+	margin-bottom: 8px;
+	// padding: 10px 15px 10px 15px;
+	// margin: -10px -15px 0 -15px;
+	// border-bottom: 1px solid var(--base-border-color);
+	// background: var(--base-background-color);
+	// display: flex;
+	// align-items: top;
 `;
 
 // const PRCard = styled.div`
@@ -499,4 +539,32 @@ export const PRButtonRow = styled.div`
 	.vscode-dark& {
 		background: rgba(0, 0, 0, 0.1);
 	}
+`;
+
+export const PRCodeCommentBody = styled.div`
+	min-height: 30px;
+	margin: 0 0 20px 0;
+	position: relative;
+	padding-left: 40px;
+`;
+
+export const PRCodeComment = styled.div`
+	pre.code {
+		margin: 10px -16px !important;
+	}
+	& + & {
+		margin-top: 15px;
+	}
+`;
+
+export const PRCodeCommentReply = styled.div`
+	position: relative;
+	#input-div {
+		height: 1px !important;
+		min-height: none !important;
+		padding: 5px !important;
+	}
+`;
+export const PRCodeCommentReplyPlaceholder = styled.div`
+	border: 1px solid var(--base-border-color);
 `;

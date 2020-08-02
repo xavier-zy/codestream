@@ -8,7 +8,12 @@ import {
 	PRTimelineItem,
 	PRTimelineItemBody,
 	PRBranch,
-	PRActionCommentCard
+	PRActionCommentCard,
+	PRCodeCommentBody,
+	PRCodeComment,
+	PRThreadedCommentCard,
+	PRCodeCommentReply,
+	PRThreadedCommentHeader
 } from "./PullRequestComponents";
 import React, { PropsWithChildren } from "react";
 import { PRHeadshot } from "../src/components/Headshot";
@@ -23,6 +28,16 @@ import { Author, IAmMember, UserIsMember } from "./PullRequestConversationTab";
 import { prettyPrintOne } from "code-prettify";
 import { escapeHtml } from "../utils";
 import * as Path from "path-browserify";
+import MessageInput from "./MessageInput";
+
+const ReviewIcons = {
+	APPROVED: <Icon name="thumbs" className="circled green" />,
+	CHANGES_REQUESTED: <Icon name="plus-minus" className="circled red" />,
+	COMMENTED: <Icon name="eye" className="circled" />,
+	// FIXME
+	DISMISSED: <Icon name="blank" className="circled" />,
+	PENDING: <Icon name="blank" className="circled" />
+};
 
 interface Props {
 	pr: FetchThirdPartyPullRequestPullRequest;
@@ -61,64 +76,99 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 						);
 					case "PullRequestReview": {
 						console.warn("REVIEW: ", item);
+						const reviewIcon = ReviewIcons[item.state];
 						return (
 							<PRComment key={index}>
 								<PRTimelineItem key={index}>
 									<PRHeadshot key={index} size={40} person={item.author} />
-									<Icon name="plus-minus" className="circled red" />
+									{reviewIcon}
 									<PRTimelineItemBody>
-										<span className="highlight">{item.author.login}</span> requested changes
+										<span className="highlight">{item.author.login}</span>{" "}
+										{item.state === "APPROVED" && "approved this review"}
+										{item.state === "CHANGES_REQUESTED" && "requested changes"}
+										{item.state === "COMMENTED" && "reviewed"}
+										{item.state === "DISMISSED" && "dismissed this review"}
+										{item.state === "PENDING" && "left a pending review" /* FIXME */}
 										<Timestamp time={item.createdAt!} relative />
 									</PRTimelineItemBody>
 								</PRTimelineItem>
-								<PRActionCommentCard>
-									<PRCommentHeader>
-										<div>
-											<PRAuthor>{item.author.login}</PRAuthor> commented{" "}
-											<Timestamp time={item.createdAt!} relative />
-										</div>
-										<PRActionIcons>
-											{myItem && Author}
-											{myPR ? <IAmMember /> : <UserIsMember />}
-											<Icon name="smiley" className="clickable" />
-											<Icon name="kebab-horizontal" className="clickable" />
-										</PRActionIcons>
-									</PRCommentHeader>
-									<PRCommentBody>
-										{item.bodyText}
-										{item.comments &&
-											item.comments.nodes &&
-											item.comments.nodes.map(_ => {
-												let extension = Path.extname(_.path).toLowerCase();
-												if (extension.startsWith(".")) {
-													extension = extension.substring(1);
-												}
+								{item.bodyText && (
+									<PRActionCommentCard>
+										<PRCommentHeader>
+											<div>
+												<PRAuthor>{item.author.login}</PRAuthor> commented{" "}
+												<Timestamp time={item.createdAt!} relative />
+											</div>
+											<PRActionIcons>
+												{myItem && Author}
+												{myPR ? <IAmMember /> : <UserIsMember />}
+												<Icon name="smiley" className="clickable" />
+												<Icon name="kebab-horizontal" className="clickable" />
+											</PRActionIcons>
+										</PRCommentHeader>
 
-												// FIXME
-												const startLine = 5;
+										<PRCommentBody>{item.bodyText}</PRCommentBody>
+									</PRActionCommentCard>
+								)}
+								{item.comments &&
+									item.comments.nodes &&
+									item.comments.nodes.map(_ => {
+										let extension = Path.extname(_.path).toLowerCase();
+										if (extension.startsWith(".")) {
+											extension = extension.substring(1);
+										}
 
-												const codeHTML = prettyPrintOne(
-													escapeHtml(_.diffHunk),
-													extension,
-													startLine
-												);
+										// FIXME
+										const startLine = 5;
 
-												return (
-													<>
-														<Icon name="file" />
-														<span className="monospace">&nbsp;{_.path}</span>
-														<pre
-															style={{ margin: "5px 0 10px 0" }}
-															className="code prettyprint"
-															data-scrollable="true"
-															dangerouslySetInnerHTML={{ __html: codeHTML }}
-														/>
+										const codeHTML = prettyPrintOne(escapeHtml(_.diffHunk), extension, startLine);
+
+										return (
+											<PRThreadedCommentCard>
+												<PRCodeComment>
+													<Icon name="file" />
+													<span className="monospace">&nbsp;{_.path}</span>
+													<pre
+														style={{ margin: "5px 0 10px 0" }}
+														className="code prettyprint"
+														data-scrollable="true"
+														dangerouslySetInnerHTML={{ __html: codeHTML }}
+													/>
+													<PRCodeCommentBody>
+														<PRHeadshot key={index} size={30} person={item.author} />
+														<PRThreadedCommentHeader>
+															{item.author.login}
+															<Timestamp time={item.createdAt} />
+															<PRActionIcons>
+																{myItem && Author}
+																{myPR ? <IAmMember /> : <UserIsMember />}
+																<Icon name="smiley" className="clickable" />
+																<Icon name="kebab-horizontal" className="clickable" />
+															</PRActionIcons>
+														</PRThreadedCommentHeader>
 														{_.bodyText}
-													</>
-												);
-											})}
-									</PRCommentBody>
-								</PRActionCommentCard>
+													</PRCodeCommentBody>
+												</PRCodeComment>
+												<PRCodeCommentReply>
+													<PRHeadshot key={index} size={30} person={item.author} />
+
+													<div
+														style={{
+															margin: "0 0 0 40px",
+															border: "1px solid var(--base-border-color)"
+														}}
+													>
+														<MessageInput
+															multiCompose
+															text={""}
+															placeholder="Reply..."
+															onChange={() => {}}
+														/>
+													</div>
+												</PRCodeCommentReply>
+											</PRThreadedCommentCard>
+										);
+									})}
 							</PRComment>
 						);
 					}

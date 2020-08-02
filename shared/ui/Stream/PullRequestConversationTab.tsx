@@ -54,7 +54,7 @@ const Circle = styled.div`
 `;
 
 export const PullRequestConversationTab = props => {
-	const { pr, ghRepo } = props;
+	const { pr, ghRepo, fetch, setIsLoadingMessage } = props;
 	const dispatch = useDispatch();
 	const derivedState = useSelector((state: CodeStreamState) => {
 		const currentUser = state.users[state.session.userId!] as CSMe;
@@ -98,6 +98,7 @@ export const PullRequestConversationTab = props => {
 	};
 
 	const onCommentAndCloseClick = async e => {
+		setIsLoadingMessage("Closing...");
 		setIsLoadingCommentAndClose(true);
 		await HostApi.instance.send(
 			new ExecuteThirdPartyTypedType<CreatePullRequestCommentAndCloseRequest, any>(),
@@ -111,10 +112,11 @@ export const PullRequestConversationTab = props => {
 			}
 		);
 		setText("");
-		props.fetch();
+		fetch();
 	};
 
 	const mergePullRequest = async (options: { mergeMethod: MergeMethod }) => {
+		setIsLoadingMessage("Merging...");
 		await HostApi.instance.send(
 			new ExecuteThirdPartyTypedType<MergePullRequestRequest, boolean>(),
 			{
@@ -126,7 +128,7 @@ export const PullRequestConversationTab = props => {
 				}
 			}
 		);
-		props.fetch();
+		fetch();
 	};
 
 	const numParticpants = ((pr.participants && pr.participants.nodes) || []).length;
@@ -252,19 +254,22 @@ export const PullRequestConversationTab = props => {
 	const labelMenuItems = React.useMemo(() => {
 		if (availableLabels && availableLabels.length) {
 			const existingLabelIds = pr.labels ? pr.labels.nodes.map(_ => _.id) : [];
-			const menuItems = availableLabels.map((_: any) => ({
-				checked: existingLabelIds.includes(_.id),
-				label: (
-					<>
-						<Circle style={{ backgroundColor: `#${_.color}` }} />
-						{_.name}
-					</>
-				),
-				searchLabel: _.name,
-				key: _.id,
-				subtext: <div style={{ maxWidth: "250px", whiteSpace: "normal" }}>{_.description}</div>,
-				action: () => toggleLabel(_.id)
-			})) as any;
+			const menuItems = availableLabels.map((_: any) => {
+				const checked = existingLabelIds.includes(_.id);
+				return {
+					checked,
+					label: (
+						<>
+							<Circle style={{ backgroundColor: `#${_.color}` }} />
+							{_.name}
+						</>
+					),
+					searchLabel: _.name,
+					key: _.id,
+					subtext: <div style={{ maxWidth: "250px", whiteSpace: "normal" }}>{_.description}</div>,
+					action: () => setLabel(_.id, !checked)
+				};
+			}) as any;
 			menuItems.unshift({ type: "search", placeholder: "Filter labels" });
 			return menuItems;
 		} else {
@@ -272,18 +277,20 @@ export const PullRequestConversationTab = props => {
 		}
 	}, [availableLabels, pr]);
 
-	const toggleLabel = async id => {
+	const setLabel = async (id: string, onOff: boolean) => {
+		setIsLoadingMessage(onOff ? "Adding Label..." : "Removing Label...");
 		await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
-			method: "addLabelToPullRequest",
+			method: "setLabelOnPullRequest",
 			providerId: "github*com",
 			params: {
 				owner: ghRepo.repoOwner,
 				repo: ghRepo.repoName,
 				pullRequestId: pr.number,
-				labelId: id
+				labelId: id,
+				onOff
 			}
 		});
-		props.fetch();
+		fetch();
 	};
 
 	let prBody = pr.body;

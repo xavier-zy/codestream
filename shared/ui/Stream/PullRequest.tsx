@@ -38,6 +38,7 @@ import { PullRequestConversationTab } from "./PullRequestConversationTab";
 import { PullRequestCommitsTab } from "./PullRequestCommitsTab";
 import * as reviewSelectors from "../store/reviews/reducer";
 import { PullRequestFilesChangedTab } from "./PullRequestFilesChangedTab";
+import { FloatingLoadingMessage } from "../src/components/FloatingLoadingMessage";
 
 const Root = styled.div`
 	${Tabs} {
@@ -82,13 +83,15 @@ export const PullRequest = () => {
 	const [activeTab, setActiveTab] = useState(1);
 	const [ghRepo, setGhRepo] = useState<any>({});
 	const [isLoadingPR, setIsLoadingPR] = useState(false);
+	const [isLoadingMessage, setIsLoadingMessage] = useState("");
 	const [pr, setPr] = useState<FetchThirdPartyPullRequestPullRequest | undefined>();
 
 	const exit = async () => {
 		await dispatch(setCurrentPullRequest());
 	};
 
-	const fetch = async () => {
+	const fetch = async (message?: string) => {
+		if (message) setIsLoadingMessage(message);
 		setIsLoadingPR(true);
 		const r = (await HostApi.instance.send(FetchThirdPartyPullRequestRequestType, {
 			providerId: "github*com",
@@ -97,6 +100,7 @@ export const PullRequest = () => {
 		setGhRepo(r.repository);
 		setPr(r.repository.pullRequest);
 		setIsLoadingPR(false);
+		setIsLoadingMessage("");
 	};
 
 	const linkHijacker = (e: any) => {
@@ -144,6 +148,7 @@ export const PullRequest = () => {
 		return (
 			<Root className="panel full-height">
 				<CreateCodemarkIcons narrow />
+				{isLoadingMessage && <FloatingLoadingMessage>{isLoadingMessage}</FloatingLoadingMessage>}
 				<PRHeader>
 					<PRTitle>
 						{pr.title} <Link href={pr.url}>#{pr.number}</Link>
@@ -152,7 +157,7 @@ export const PullRequest = () => {
 								title="Reload"
 								trigger={["hover"]}
 								delay={1}
-								onClick={fetch}
+								onClick={() => fetch("Reloading...")}
 								placement="bottom"
 								className={`clickable ${isLoadingPR ? "spin" : "spinnable"}`}
 								name="sync"
@@ -239,7 +244,12 @@ export const PullRequest = () => {
 								</PRPlusMinus>
 							</Tabs>
 							{activeTab === 1 && (
-								<PullRequestConversationTab pr={pr} ghRepo={ghRepo} fetch={fetch} />
+								<PullRequestConversationTab
+									pr={pr}
+									ghRepo={ghRepo}
+									fetch={fetch}
+									setIsLoadingMessage={setIsLoadingMessage}
+								/>
 							)}
 							{activeTab === 2 && <PullRequestCommitsTab pr={pr} ghRepo={ghRepo} fetch={fetch} />}
 							{activeTab === 4 && (

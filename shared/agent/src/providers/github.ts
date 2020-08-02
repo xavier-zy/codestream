@@ -859,11 +859,12 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 		return query.repository.collaborators.nodes;
 	}
 
-	async addLabelToPullRequest(request: {
+	async setLabelOnPullRequest(request: {
 		owner: string;
 		repo: string;
 		pullRequestId: string;
 		labelId: string;
+		onOff: boolean;
 	}) {
 		const pullRequestInfo = await this.client.request<any>(
 			`query FindPullRequest($owner:String!,$name:String!,$pullRequestId:Int!) {
@@ -881,8 +882,10 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 		);
 
 		const prId = pullRequestInfo.repository.pullRequest.id;
-		const query = `mutation AddLabelsToLabelable($labelableId: String!,$labelIds:String!) {
-			addLabelsToLabelable(input: {labelableId: $labelableId, labelIds:$labelIds}) {
+		const method = request.onOff ? "addLabelsToLabelable" : "removeLabelsFromLabelable";
+		const Method = request.onOff ? "AddLabelsToLabelable" : "RemoveLabelsFromLabelable";
+		const query = `mutation ${Method}($labelableId: String!,$labelIds:String!) {
+			${method}(input: {labelableId: $labelableId, labelIds:$labelIds}) {
 				  clientMutationId
 				}
 			  }`;

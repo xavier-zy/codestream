@@ -31,10 +31,16 @@ export const PullRequestReactButton = (props: Props) => {
 	const [open, setOpen] = React.useState<EventTarget | undefined>();
 	const [menuTitle, setMenuTitle] = React.useState("");
 
+	const saveReaction = (name: string, title: string) => {};
+
 	const makeIcon = (name: string, title: string) => {
 		const emoji = emojify(":" + name + ":");
 		return (
-			<PRReact onMouseEnter={() => setMenuTitle(title)} onMouseLeave={() => setMenuTitle("")}>
+			<PRReact
+				onMouseEnter={() => setMenuTitle(title)}
+				onMouseLeave={() => setMenuTitle("")}
+				onClick={() => saveReaction(name, title)}
+			>
 				<span dangerouslySetInnerHTML={{ __html: emoji }} />
 			</PRReact>
 		);

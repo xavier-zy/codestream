@@ -1453,6 +1453,11 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 						}
 						... on ClosedEvent {
 						  __typename
+						  actor {
+							login
+							avatarUrl
+						  }
+						  createdAt
 						}
 						... on IssueComment {
 						  __typename

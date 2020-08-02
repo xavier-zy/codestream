@@ -140,7 +140,7 @@ export const PullRequest = () => {
 			</Modal>
 		);
 	} else {
-		const statusIcon = pr.state == "OPEN" ? "pull-request" : "git-merge";
+		const statusIcon = pr.state === "OPEN" || pr.state === "CLOSED" ? "pull-request" : "git-merge";
 		const action = pr.merged ? "merged " : "wants to merge ";
 
 		// console.log(pr.files);
@@ -166,7 +166,17 @@ export const PullRequest = () => {
 						<CancelButton className="clickable" onClick={exit} />
 					</PRTitle>
 					<PRStatus>
-						<PRStatusButton variant={pr.state == "OPEN" ? "success" : "primary"}>
+						<PRStatusButton
+							variant={
+								pr.state === "OPEN"
+									? "success"
+									: pr.state === "MERGED"
+									? "merged"
+									: pr.state === "CLOSED"
+									? "destructive"
+									: "primary"
+							}
+						>
 							<Icon name={statusIcon} />
 							{pr.state && pr.state.toLowerCase()}
 						</PRStatusButton>

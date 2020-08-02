@@ -92,6 +92,15 @@ const getColors = (variant = "primary") => {
 				}
 			`;
 		}
+		case "merged": {
+			return `
+				background-color: #6f42c1;
+				color: white;
+				:hover {
+					opacity: 0.85;
+				}
+			`;
+		}
 		case "primary":
 		default: {
 			return `
@@ -145,7 +154,14 @@ const ButtonAppend = styled.div`
 	margin-left: 10px;
 `;
 
-type ButtonVariant = "primary" | "secondary" | "destructive" | "success" | "warning" | "text";
+type ButtonVariant =
+	| "primary"
+	| "secondary"
+	| "destructive"
+	| "success"
+	| "warning"
+	| "text"
+	| "merged";
 
 export interface ButtonProps extends PropsWithChildren<{}> {
 	variant?: ButtonVariant;

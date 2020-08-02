@@ -948,9 +948,10 @@
 			white-space: pre;
 			font-family: Menlo, Consolas, "DejaVu Sans Mono", monospace;
 			font-size: 12px;
-			// background: #f6f6f6;
-			// background: @base-background-color;
-			background: rgba(0, 0, 0, 0.1);
+			background: @base-background-color;
+			.vscode-dark& {
+				background: rgba(0, 0, 0, 0.1);
+			}
 			border-radius: 0 0 4px 4px;
 			padding: 10px;
 			border: 1px solid @base-border-color;

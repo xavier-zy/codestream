@@ -152,6 +152,24 @@ export const PullRequestConversationTab = props => {
 		fetch();
 	};
 
+	const onCommentAndReopenClick = async e => {
+		setIsLoadingMessage("Closing...");
+		setIsLoadingCommentAndClose(true);
+		await HostApi.instance.send(
+			new ExecuteThirdPartyTypedType<CreatePullRequestCommentAndCloseRequest, any>(),
+			{
+				method: "createPullRequestCommentAndReopen",
+				providerId: "github*com",
+				params: {
+					pullRequestId: derivedState.currentPullRequestId!,
+					text: text
+				}
+			}
+		);
+		setText("");
+		fetch();
+	};
+
 	const mergePullRequest = async (options: { mergeMethod: MergeMethod }) => {
 		setIsLoadingMessage("Merging...");
 		await HostApi.instance.send(
@@ -807,32 +825,62 @@ export const PullRequestConversationTab = props => {
 							/>
 						</div>
 						<ButtonRow>
-							<div style={{ textAlign: "right", flexGrow: 1 }}>
-								<Button
-									disabled={pr.merged}
-									isLoading={isLoadingCommentAndClose}
-									onClick={onCommentAndCloseClick}
-								>
-									Close and comment
-								</Button>
-
-								<Tooltip
-									title={
-										<span>
-											Submit Comment
-											<span className="keybinding extra-pad">
-												{navigator.appVersion.includes("Macintosh") ? "⌘" : "Alt"} ENTER
-											</span>
-										</span>
-									}
-									placement="bottomRight"
-									delay={1}
-								>
-									<Button isLoading={isLoadingComment} onClick={onCommentClick}>
-										Comment
+							{pr.state === "CLOSED" ? (
+								<div style={{ textAlign: "right", flexGrow: 1 }}>
+									<Button
+										disabled={pr.merged}
+										isLoading={isLoadingCommentAndClose}
+										onClick={onCommentAndReopenClick}
+										variant="secondary"
+									>
+										{text ? "Reopen and comment" : "Reopen pull request"}
 									</Button>
-								</Tooltip>
-							</div>
+
+									<Tooltip
+										title={
+											<span>
+												Submit Comment
+												<span className="keybinding extra-pad">
+													{navigator.appVersion.includes("Macintosh") ? "⌘" : "Alt"} ENTER
+												</span>
+											</span>
+										}
+										placement="bottomRight"
+										delay={1}
+									>
+										<Button isLoading={isLoadingComment} onClick={onCommentClick} disabled={!text}>
+											Comment
+										</Button>
+									</Tooltip>
+								</div>
+							) : (
+								<div style={{ textAlign: "right", flexGrow: 1 }}>
+									<Button
+										disabled={pr.merged}
+										isLoading={isLoadingCommentAndClose}
+										onClick={onCommentAndCloseClick}
+									>
+										{text ? "Close pull request" : "Close and comment"}
+									</Button>
+
+									<Tooltip
+										title={
+											<span>
+												Submit Comment
+												<span className="keybinding extra-pad">
+													{navigator.appVersion.includes("Macintosh") ? "⌘" : "Alt"} ENTER
+												</span>
+											</span>
+										}
+										placement="bottomRight"
+										delay={1}
+									>
+										<Button isLoading={isLoadingComment} onClick={onCommentClick} disabled={!text}>
+											Comment
+										</Button>
+									</Tooltip>
+								</div>
+							)}
 						</ButtonRow>
 					</PRCommentCard>
 				</PRComment>

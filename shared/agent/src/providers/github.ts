@@ -1003,9 +1003,10 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 		let results: any = [];
 		const repoQuery =
 			request && request.owner && request.repo ? `repo:${request.owner}/${request.repo} ` : "";
+		// search(query: "${repoQuery}is:pr is:open author:@me", type: ISSUE, last: 100) {
 		const searchByAuthorResult = await this.client.request<any>(
 			`query GetMyPullRequests {
-				search(query: "${repoQuery}is:pr is:open author:@me", type: ISSUE, last: 100) {
+				search(query: "${repoQuery}is:pr author:@me", type: ISSUE, last: 100) {
 				edges {
 				  node {
 					... on PullRequest {

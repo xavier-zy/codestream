@@ -20,6 +20,9 @@ import Tag from "./Tag";
 import { Link } from "./Link";
 import { PRHeadshotName } from "../src/components/HeadshotName";
 import { Author, IAmMember, UserIsMember } from "./PullRequestConversationTab";
+import { prettyPrintOne } from "code-prettify";
+import { escapeHtml } from "../utils";
+import * as Path from "path-browserify";
 
 interface Props {
 	pr: FetchThirdPartyPullRequestPullRequest;
@@ -57,6 +60,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 							</PRComment>
 						);
 					case "PullRequestReview": {
+						console.warn("REVIEW: ", item);
 						return (
 							<PRComment key={index}>
 								<PRTimelineItem key={index}>
@@ -85,14 +89,30 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 										{item.comments &&
 											item.comments.nodes &&
 											item.comments.nodes.map(_ => {
+												let extension = Path.extname(_.path).toLowerCase();
+												if (extension.startsWith(".")) {
+													extension = extension.substring(1);
+												}
+
+												// FIXME
+												const startLine = 5;
+
+												const codeHTML = prettyPrintOne(
+													escapeHtml(_.diffHunk),
+													extension,
+													startLine
+												);
+
 												return (
 													<>
-														<div>
-															{_.diffHunk.split("\n").map(h => (
-																<div className="monospace">{h}</div>
-															))}
-														</div>
-														<br />
+														<Icon name="file" />
+														<span className="monospace">&nbsp;{_.path}</span>
+														<pre
+															style={{ margin: "5px 0 10px 0" }}
+															className="code prettyprint"
+															data-scrollable="true"
+															dangerouslySetInnerHTML={{ __html: codeHTML }}
+														/>
 														{_.bodyText}
 													</>
 												);

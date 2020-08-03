@@ -50,14 +50,10 @@ export const PullRequestReactButton = styled((props: Props) => {
 	};
 
 	const isMine = (key: string) => {
-		console.log("ISMINE: ", key);
 		const me = "ppezaris"; // FIXME
 		if (!props.reactionGroups) return false;
-		console.log("ISMINE2: ", key);
 		const reaction = props.reactionGroups.find(_ => _.content === key);
-		console.log("ISMINE3: ", key);
 		if (!reaction) return false;
-		console.log("ISMINE4: ", reaction);
 		return reaction.users.nodes.find(_ => _.login === me);
 	};
 

@@ -789,29 +789,6 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 		  }
 		| undefined;
 
-	// async getLabels(owner: string, repo: string) {
-	// 	const query = await this.client.request<any>(
-	// 		`query FindReviewers($owner:String!,$name:String!) {
-	// 			repository($owner:String!,$name:String!) {
-	// 			  id
-	// 			  labels(first: 50) {
-	// 				nodes {
-	// 				  color
-	// 				  name
-	// 				  id
-	// 				  description
-	// 				}
-	// 			  }
-	// 			}
-	// 		  }`,
-	// 		{
-	// 			owner: owner,
-	// 			name: repo
-	// 		}
-	// 	);
-	// 	return query.repository.labels.nodes;
-	// }
-
 	async getLabels(request: { owner: string; repo: string }) {
 		const query = await this.client.request<any>(
 			`query getLabels($owner:String!, $name:String!) {
@@ -837,7 +814,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 
 	async getProjects(request: { owner: string; repo: string }) {
 		const query = await this.client.request<any>(
-			`query getProjects($owner:String!, $name:String!) {
+			`query GetProjects($owner:String!, $name:String!) {
 				repository(owner:$owner, name:$name) {
 				  id
 				  projects(first: 50) {
@@ -860,7 +837,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 
 	async getMilestones(request: { owner: string; repo: string }) {
 		const query = await this.client.request<any>(
-			`query getProjects($owner:String!, $name:String!) {
+			`query GetMilestones($owner:String!, $name:String!) {
 				repository(owner:$owner, name:$name) {
 				  id
 				  milestones(first: 50) {
@@ -907,29 +884,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 		return query.repository.collaborators.nodes;
 	}
 
-	async setLabelOnPullRequest(request: {
-		owner: string;
-		repo: string;
-		pullRequestId: string;
-		labelId: string;
-		onOff: boolean;
-	}) {
-		const pullRequestInfo = await this.client.request<any>(
-			`query FindPullRequest($owner:String!,$name:String!,$pullRequestId:Int!) {
-					repository(owner:$owner name:$name) {
-					  pullRequest(number: $pullRequestId) {
-						id
-					  }
-					}
-				  }`,
-			{
-				owner: request.owner,
-				name: request.repo,
-				pullRequestId: parseInt(request.pullRequestId, 10)
-			}
-		);
-
-		const prId = pullRequestInfo.repository.pullRequest.id;
+	async setLabelOnPullRequest(request: { pullRequestId: string; labelId: string; onOff: boolean }) {
 		const method = request.onOff ? "addLabelsToLabelable" : "removeLabelsFromLabelable";
 		const Method = request.onOff ? "AddLabelsToLabelable" : "RemoveLabelsFromLabelable";
 		const query = `mutation ${Method}($labelableId: String!,$labelIds:String!) {
@@ -939,7 +894,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 			  }`;
 
 		const rsp = await this.client.request<any>(query, {
-			labelableId: prId,
+			labelableId: request.pullRequestId,
 			labelIds: request.labelId
 		});
 		return true;
@@ -1003,7 +958,6 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 		let results: any = [];
 		const repoQuery =
 			request && request.owner && request.repo ? `repo:${request.owner}/${request.repo} ` : "";
-		// search(query: "${repoQuery}is:pr is:open author:@me", type: ISSUE, last: 100) {
 		const searchByAuthorResult = await this.client.request<any>(
 			`query GetMyPullRequests {
 				search(query: "${repoQuery}is:pr author:@me", type: ISSUE, last: 100) {
@@ -1096,74 +1050,49 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 		return pullRequestInfo.repository.pullRequest.id;
 	}
 
-	async updatePullRequest(request: {
-		owner: string;
-		repo: string;
-		pullRequestId: string;
-		pullRequest: {
-			title: string;
-		};
-	}) {
-		const pullRequestInfo = await this.client.request<any>(
-			`query FindPullRequest($owner:String!,$name:String!,$pullRequestId:Int!) {
-					repository(owner:$owner name:$name) {
-					  pullRequest(number: $pullRequestId) {
-						id
-					  }
-					}
-				  }`,
-			{
-				owner: request.owner,
-				name: request.repo,
-				pullRequestId: parseInt(request.pullRequestId, 10)
-			}
-		);
+	// TODO fix this (needed for updating PR metadata like title, etc.)
+	// async updatePullRequest(request: {
+	// 	owner: string;
+	// 	repo: string;
+	// 	pullRequestId: string;
+	// 	pullRequest: {
+	// 		title: string;
+	// 	};
+	// }) {
+	// 	const pullRequestInfo = await this.client.request<any>(
+	// 		`query FindPullRequest($owner:String!,$name:String!,$pullRequestId:Int!) {
+	// 				repository(owner:$owner name:$name) {
+	// 				  pullRequest(number: $pullRequestId) {
+	// 					id
+	// 				  }
+	// 				}
+	// 			  }`,
+	// 		{
+	// 			owner: request.owner,
+	// 			name: request.repo,
+	// 			pullRequestId: parseInt(request.pullRequestId, 10)
+	// 		}
+	// 	);
 
-		const prId = pullRequestInfo.repository.pullRequest.id;
-		const query = `mutation UpdatePullRequest($pullRequestId: String!, $title: String) {
-			updatePullRequest(input: {pullRequestId: $pullRequestId, title: $title}) {
-				  clientMutationId
-				}
-			  }`;
+	// 	const prId = pullRequestInfo.repository.pullRequest.id;
+	// 	const query = `mutation UpdatePullRequest($pullRequestId: String!, $title: String) {
+	// 		updatePullRequest(input: {pullRequestId: $pullRequestId, title: $title}) {
+	// 			  clientMutationId
+	// 			}
+	// 		  }`;
 
-		const rsp = await this.client.request<any>(query, {
-			pullRequestId: prId,
-			title: request.pullRequest.title
-		});
-		return true;
-	}
+	// 	const rsp = await this.client.request<any>(query, {
+	// 		pullRequestId: prId,
+	// 		title: request.pullRequest.title
+	// 	});
+	// 	return true;
+	// }
 
 	async mergePullRequest(request: { pullRequestId: string; mergeMethod: MergeMethod }) {
-		// let owner;
-		// let name;
-		// if (request.owner == null && request.repo == null) {
-		// 	const data = await this.getRepoIdFromPullRequestId(request.pullRequestId);
-		// 	owner = data.owner;
-		// 	name = data.name;
-		// } else {
-		// 	owner = request.owner;
-		// 	name = request.repo;
-		// }
-		// const pullRequestNumber = await this.getPullRequestNumber(request.pullRequestId);
-		// const pullRequestInfo = await this.client.request<any>(
-		// 	`query FindPullRequest($owner:String!,$name:String!,$pullRequestNumber:Int!) {
-		// 			repository(owner:$owner name:$name) {
-		// 			  pullRequest(number: $pullRequestNumber) {
-		// 				id
-		// 			  }
-		// 			}
-		// 		  }`,
-		// 	{
-		// 		owner: owner,
-		// 		name: name,
-		// 		pullRequestNumber: pullRequestNumber
-		// 	}
-		// );
 		if (!request.mergeMethod) throw new Error("InvalidMergeMethod");
 		const mergeMethods = new Set(["MERGE", "REBASE", "SQUASH"]);
 		if (!mergeMethods.has(request.mergeMethod)) throw new Error("InvalidMergeMethod");
 
-		// const prId = pullRequestInfo.repository.pullRequest.id;
 		const query = `mutation MergePullRequest($pullRequestId: String!) {
 			mergePullRequest(input: {pullRequestId: $pullRequestId, mergeMethod: ${request.mergeMethod}}) {
 				  clientMutationId

@@ -389,9 +389,7 @@ export const PullRequestConversationTab = props => {
 			method: "setLabelOnPullRequest",
 			providerId: "github*com",
 			params: {
-				owner: ghRepo.repoOwner,
-				repo: ghRepo.repoName,
-				pullRequestId: pr.number,
+				pullRequestId: derivedState.currentPullRequestId,
 				labelId: id,
 				onOff
 			}

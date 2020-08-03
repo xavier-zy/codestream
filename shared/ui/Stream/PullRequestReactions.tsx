@@ -8,6 +8,8 @@ import styled from "styled-components";
 import { PRReactions, PRReaction } from "./PullRequestComponents";
 import Tooltip from "./Tooltip";
 import { SmartFormattedList } from "./SmartFormattedList";
+import { HostApi } from "../webview-api";
+import { ExecuteThirdPartyTypedType } from "@codestream/protocols/agent";
 
 interface Props {
 	targetId: string;
@@ -43,9 +45,19 @@ export const PullRequestReactButton = styled((props: Props) => {
 	const [open, setOpen] = React.useState<EventTarget | undefined>();
 	const [menuTitle, setMenuTitle] = React.useState("");
 
-	const saveReaction = (name: string, title: string) => {
+	const saveReaction = async (name: string, title: string, key: string) => {
 		props.setIsLoadingMessage("Saving Reaction...");
 		setOpen(undefined);
+
+		await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
+			method: "toggleReaction",
+			providerId: "github*com",
+			params: {
+				subjectId: props.targetId,
+				content: key,
+				onOff: true
+			}
+		});
 		props.fetch();
 	};
 
@@ -63,7 +75,7 @@ export const PullRequestReactButton = styled((props: Props) => {
 			<PRReact
 				onMouseEnter={() => setMenuTitle(title)}
 				onMouseLeave={() => setMenuTitle("")}
-				onClick={() => saveReaction(name, title)}
+				onClick={() => saveReaction(name, title, key)}
 				className={isMine(key) ? "mine" : ""}
 			>
 				<span dangerouslySetInnerHTML={{ __html: emoji }} />

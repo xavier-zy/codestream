@@ -932,7 +932,23 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 			assignableId: request.pullRequestId,
 			assigneeIds: request.assigneeId
 		});
-		return true;
+		return rsp;
+	}
+
+	async toggleReaction(request: { subjectId: string; content: string; onOff: boolean }) {
+		const method = request.onOff ? "addReaction" : "removeReaction";
+		const Method = request.onOff ? "AddReaction" : "RemoveReaction";
+		const query = `mutation ${Method}($subjectId: String!,$content:String!) {
+			${method}(input: {subjectId: $subjectId, content:$content}) {
+				  clientMutationId
+				}
+			  }`;
+
+		const rsp = await this.client.request<any>(query, {
+			subjectId: request.subjectId,
+			content: request.content
+		});
+		return rsp;
 	}
 
 	async setProjectOnPullRequest(request: {
@@ -1435,6 +1451,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 						}
 						... on IssueComment {
 						  __typename
+						  id
 						  author {
 							login
 							avatarUrl
@@ -1703,6 +1720,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 						}
 						... on PullRequestCommit {
 						  __typename
+						  id
 						  commit {
 							changedFiles
 							author {

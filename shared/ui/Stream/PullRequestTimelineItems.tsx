@@ -72,7 +72,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 											{myItem && Author}
 											{myPR ? <IAmMember /> : <UserIsMember />}
 											<PullRequestReactButton
-												targetId={pr.id}
+												targetId={item.id}
 												setIsLoadingMessage={setIsLoadingMessage}
 												fetch={fetch}
 											/>
@@ -114,7 +114,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 												{myItem && Author}
 												{myPR ? <IAmMember /> : <UserIsMember />}
 												<PullRequestReactButton
-													targetId={pr.id}
+													targetId={item.id}
 													setIsLoadingMessage={setIsLoadingMessage}
 													fetch={fetch}
 												/>
@@ -160,7 +160,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 																	{myItem && Author}
 																	{myPR ? <IAmMember /> : <UserIsMember />}
 																	<PullRequestReactButton
-																		targetId={pr.id}
+																		targetId={item.id}
 																		setIsLoadingMessage={setIsLoadingMessage}
 																		fetch={fetch}
 																	/>

@@ -335,9 +335,7 @@ export const PullRequestConversationTab = props => {
 			method: "setAssigneeOnPullRequest",
 			providerId: "github*com",
 			params: {
-				owner: ghRepo.repoOwner,
-				repo: ghRepo.repoName,
-				pullRequestId: pr.number,
+				pullRequestId: derivedState.currentPullRequestId,
 				assigneeId: id,
 				onOff
 			}

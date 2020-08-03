@@ -466,7 +466,8 @@ export interface FetchThirdPartyPullRequestRepository {
 	rebaseMergeAllowed: boolean;
 	squashMergeAllowed: boolean;
 	mergeCommitAllowed: boolean;
-
+	repoOwner: string;
+	repoName: string;
 	pullRequest: FetchThirdPartyPullRequestPullRequest;
 }
 
@@ -478,6 +479,7 @@ export interface FetchThirdPartyPullRequestResponse {
 		resetAt: any;
 	};
 	repository: FetchThirdPartyPullRequestRepository;
+	timelineItems: { __typename: string }[];
 }
 
 export const FetchThirdPartyPullRequestRequestType = new RequestType<

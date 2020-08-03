@@ -4,6 +4,7 @@ import { GraphQLClient } from "graphql-request";
 import { Response } from "node-fetch";
 import * as paths from "path";
 import * as qs from "querystring";
+import { CodeStreamSession } from "session";
 import { URI } from "vscode-uri";
 import { MarkerLocation } from "../api/extensions";
 import { SessionContainer } from "../container";
@@ -19,18 +20,19 @@ import {
 	FetchThirdPartyCardsResponse,
 	FetchThirdPartyCardWorkflowRequest,
 	FetchThirdPartyCardWorkflowResponse,
+	FetchThirdPartyPullRequestFilesResponse,
 	FetchThirdPartyPullRequestRequest,
 	FetchThirdPartyPullRequestResponse,
+	GetMyPullRequestsResponse,
 	GitHubBoard,
 	GitHubCreateCardRequest,
 	GitHubCreateCardResponse,
 	GitHubUser,
+	MergeMethod,
 	MoveThirdPartyCardRequest,
 	MoveThirdPartyCardResponse,
 	ThirdPartyProviderCard,
-	GetMyPullRequestsResponse,
-	MergeMethod,
-	FetchThirdPartyPullRequestFilesResponse
+	ThirdPartyProviderConfig
 } from "../protocol/agent.protocol";
 import { CodemarkType, CSGitHubProviderInfo, CSReferenceLocation } from "../protocol/api.protocol";
 import { Arrays, Functions, log, lspProvider, Strings } from "../system";
@@ -59,6 +61,14 @@ const diffHunkRegex = /^@@ -([\d]+)(?:,([\d]+))? \+([\d]+)(?:,([\d]+))? @@/;
 @lspProvider("github")
 export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProviderInfo>
 	implements ThirdPartyProviderSupportsIssues, ThirdPartyProviderSupportsPullRequests {
+	constructor(
+		public readonly session: CodeStreamSession,
+		protected readonly providerConfig: ThirdPartyProviderConfig
+	) {
+		super(session, providerConfig);
+		//this.Api = new GitHubApi();
+	}
+	//Api: GitHubApi;
 	async getRemotePaths(repo: any, _projectsByRemotePath: any) {
 		await this.ensureConnected();
 		const remotePaths = await getRemotePaths(
@@ -208,10 +218,10 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 	async getPullRequest(
 		request: FetchThirdPartyPullRequestRequest
 	): Promise<FetchThirdPartyPullRequestResponse> {
-		let response = {} as any;
+		let response = {} as FetchThirdPartyPullRequestResponse;
 		let repoOwner;
 		let repoName;
-		const timelineItems: any = [];
+		let timelineItems: any = [];
 		try {
 			let timelineQueryResponse;
 			const pullRequestNumber = await this.getPullRequestNumber(request.pullRequestId);
@@ -236,7 +246,9 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 				if (timelineQueryResponse === undefined) break;
 				response = timelineQueryResponse;
 
-				timelineItems.push(timelineQueryResponse.repository.pullRequest.timelineItems.nodes);
+				timelineItems = timelineItems.concat(
+					timelineQueryResponse.repository.pullRequest.timelineItems.nodes
+				);
 			} while (timelineQueryResponse.repository.pullRequest.timelineItems.pageInfo.hasNextPage);
 		} catch (ex) {
 			Logger.error(ex);
@@ -244,7 +256,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 		response = { ...response, timelineItems: timelineItems };
 		response.repository.repoOwner = repoOwner;
 		response.repository.repoName = repoName;
-		return response as any;
+		return response;
 	}
 
 	@log()
@@ -900,6 +912,26 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 		return true;
 	}
 
+	async setAssigneeOnPullRequest(request: {
+		pullRequestId: string;
+		assigneeId: string;
+		onOff: boolean;
+	}) {
+		const method = request.onOff ? "addAssigneesToAssignable" : "removeAssigneesFromAssignable";
+		const Method = request.onOff ? "AddAssigneesFromAssignable" : "RemoveAssigneesFromAssignable";
+		const query = `mutation ${Method}($assignableId: String!,$assigneeIds:String!) {
+			${method}(input: {assignableId: $assignableId, assigneeIds:$assigneeIds}) {
+				  clientMutationId
+				}
+			  }`;
+
+		const rsp = await this.client.request<any>(query, {
+			assignableId: request.pullRequestId,
+			assigneeIds: request.assigneeId
+		});
+		return true;
+	}
+
 	async setProjectOnPullRequest(request: {
 		owner: string;
 		repo: string;
@@ -1261,16 +1293,18 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 
 		// TODO: Need to page if there are more than 100 review threads
 		try {
-			const query = `query pr($owner: String!, $name: String!, $pullRequestNumber: Int!) {
+			const query = `query pr($owner:String!, $name:String!, $pullRequestNumber:Int!${
+				cursor ? ", $cursor:String" : ""
+			}) {
 				rateLimit {
 				  limit
 				  cost
 				  remaining
 				  resetAt
 				}
-				repository(name: $name, owner: $owner) {
+				repository(name:$name, owner:$owner) {
 				  id
-				  pullRequest(number: $pullRequestNumber) {
+				  pullRequest(number:$pullRequestNumber) {
 					id
 					body
 					baseRefName
@@ -1346,7 +1380,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 						}
 					  }
 					}
-					timelineItems(first: 50) {
+					timelineItems(first:50, ${cursor ? `after:$cursor` : ""}) {
 					  totalCount
 					  pageInfo {
 						startCursor

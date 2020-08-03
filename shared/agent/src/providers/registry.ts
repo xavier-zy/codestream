@@ -1,5 +1,6 @@
 "use strict";
 import { CSMe } from "protocol/api.protocol";
+import { Logger } from "../logger";
 import {
 	AddEnterpriseProviderRequest,
 	AddEnterpriseProviderRequestType,
@@ -19,6 +20,8 @@ import {
 	DisconnectThirdPartyProviderRequest,
 	DisconnectThirdPartyProviderRequestType,
 	DisconnectThirdPartyProviderResponse,
+	ExecuteThirdPartyRequest,
+	ExecuteThirdPartyRequestUntypedType,
 	FetchAssignableUsersRequest,
 	FetchAssignableUsersRequestType,
 	FetchThirdPartyBoardsRequest,
@@ -42,9 +45,7 @@ import {
 	RemoveEnterpriseProviderRequestType,
 	UpdateThirdPartyStatusRequest,
 	UpdateThirdPartyStatusRequestType,
-	UpdateThirdPartyStatusResponse,
-	ExecuteThirdPartyRequestUntypedType,
-	ExecuteThirdPartyRequest
+	UpdateThirdPartyStatusResponse
 } from "../protocol/agent.protocol";
 import { CodeStreamSession } from "../session";
 import { getProvider, getRegisteredProviders, log, lsp, lspHandler } from "../system";
@@ -386,10 +387,18 @@ export class ThirdPartyProviderRegistry {
 			throw new Error(`No registered provider for '${request.providerId}'`);
 		}
 
-		const pullRequestProvider = this.getPullRequestProvider(provider);
-		const response = (pullRequestProvider as any)[request.method](request.params);
-		const result = await response;
-		return result;
+		try {
+			const pullRequestProvider = this.getPullRequestProvider(provider);
+			const response = (pullRequestProvider as any)[request.method](request.params);
+			const result = await response;
+			return result;
+		} catch (ex) {
+			Logger.error(ex, "executeMethod failed", {
+				method: request.method
+			});
+			throw new Error(`Failed to ${request.method}`);
+		}
+		return undefined;
 	}
 
 	private getPullRequestProvider(

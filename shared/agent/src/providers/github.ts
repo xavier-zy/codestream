@@ -1388,6 +1388,14 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 					}
 					number
 					state
+					reactionGroups {
+					  content
+					  users(first: 10) {
+						nodes {
+						  login
+						}
+					  }
+					}
 					... on PullRequest {
 					  reviewRequests(first: 10) {
 						nodes {

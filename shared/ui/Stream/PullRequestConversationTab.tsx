@@ -35,7 +35,8 @@ import {
 	PRSidebar,
 	PRButtonRow,
 	PRSection,
-	PRBranch
+	PRBranch,
+	PRReactions
 } from "./PullRequestComponents";
 import { ButtonRow } from "./StatusPanel";
 import { PullRequestTimelineItems } from "./PullRequestTimelineItems";
@@ -46,7 +47,7 @@ import styled from "styled-components";
 import { Modal } from "./Modal";
 import { Dialog } from "../src/components/Dialog";
 import { Link } from "./Link";
-import { PullRequestReactButton } from "./PullRequestReactButton";
+import { PullRequestReactButton, PullRequestReactions } from "./PullRequestReactions";
 
 const Circle = styled.div`
 	width: 12px;
@@ -118,7 +119,7 @@ export const PullRequestConversationTab = props => {
 	const [isLockingReason, setIsLockingReason] = useState("");
 	const [isLoadingLocking, setIsLoadingLocking] = useState(false);
 
-	const onCommentClick = async e => {
+	const onCommentClick = async (event?: React.SyntheticEvent) => {
 		setIsLoadingComment(true);
 		await HostApi.instance.send(
 			new ExecuteThirdPartyTypedType<CreatePullRequestCommentRequest, any>(),
@@ -649,7 +650,12 @@ export const PullRequestConversationTab = props => {
 								<PRActionIcons>
 									{pr.author.login === me && Author}
 									{pr.author.login === me ? <IAmMember /> : <UserIsMember />}
-									<PullRequestReactButton target={pr.id} />
+									<PullRequestReactButton
+										targetId={pr.id}
+										setIsLoadingMessage={setIsLoadingMessage}
+										fetch={fetch}
+										reactionGroups={pr.reactionGroups}
+									/>
 									<Icon name="kebab-horizontal" />
 								</PRActionIcons>
 							</PRCommentHeader>
@@ -658,9 +664,19 @@ export const PullRequestConversationTab = props => {
 									__html: markdownify(prBody)
 								}}
 							></PRCommentBody>
+							<PullRequestReactions
+								targetId={pr.id}
+								setIsLoadingMessage={setIsLoadingMessage}
+								fetch={fetch}
+								reactionGroups={pr.reactionGroups}
+							/>
 						</PRCommentCard>
 					</PRComment>
-					<PullRequestTimelineItems pr={pr} />
+					<PullRequestTimelineItems
+						pr={pr}
+						setIsLoadingMessage={setIsLoadingMessage}
+						fetch={fetch}
+					/>
 					<PRFoot />
 				</PRConversation>
 				<PRComment>
@@ -823,6 +839,7 @@ export const PullRequestConversationTab = props => {
 								text={text}
 								placeholder="Add Comment..."
 								onChange={setText}
+								onSubmit={onCommentClick}
 							/>
 						</div>
 						<ButtonRow>

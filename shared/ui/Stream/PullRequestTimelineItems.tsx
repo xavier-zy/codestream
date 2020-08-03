@@ -30,7 +30,7 @@ import { escapeHtml } from "../utils";
 import * as Path from "path-browserify";
 import MessageInput from "./MessageInput";
 import { Button } from "../src/components/Button";
-import { PullRequestReactButton } from "./PullRequestReactButton";
+import { PullRequestReactButton } from "./PullRequestReactions";
 
 const ReviewIcons = {
 	APPROVED: <Icon name="thumbs" className="circled green" />,
@@ -43,9 +43,11 @@ const ReviewIcons = {
 
 interface Props {
 	pr: FetchThirdPartyPullRequestPullRequest;
+	setIsLoadingMessage: Function;
+	fetch: Function;
 }
 export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
-	const pr = props.pr;
+	const { pr, setIsLoadingMessage, fetch } = props;
 	if (!pr || !pr.timelineItems) return null;
 
 	const me = "ppezaris"; // FIXME
@@ -69,7 +71,11 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 										<PRActionIcons>
 											{myItem && Author}
 											{myPR ? <IAmMember /> : <UserIsMember />}
-											<PullRequestReactButton target={pr.id} />
+											<PullRequestReactButton
+												targetId={pr.id}
+												setIsLoadingMessage={setIsLoadingMessage}
+												fetch={fetch}
+											/>
 											<Icon name="kebab-horizontal" className="clickable" />
 										</PRActionIcons>
 									</PRCommentHeader>
@@ -107,7 +113,11 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 											<PRActionIcons>
 												{myItem && Author}
 												{myPR ? <IAmMember /> : <UserIsMember />}
-												<PullRequestReactButton target={pr.id} />
+												<PullRequestReactButton
+													targetId={pr.id}
+													setIsLoadingMessage={setIsLoadingMessage}
+													fetch={fetch}
+												/>
 												<Icon name="kebab-horizontal" className="clickable" />
 											</PRActionIcons>
 										</PRCommentHeader>
@@ -149,7 +159,11 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 																<PRActionIcons>
 																	{myItem && Author}
 																	{myPR ? <IAmMember /> : <UserIsMember />}
-																	<PullRequestReactButton target={pr.id} />
+																	<PullRequestReactButton
+																		targetId={pr.id}
+																		setIsLoadingMessage={setIsLoadingMessage}
+																		fetch={fetch}
+																	/>
 																	<Icon name="kebab-horizontal" className="clickable" />
 																</PRActionIcons>
 															</PRThreadedCommentHeader>

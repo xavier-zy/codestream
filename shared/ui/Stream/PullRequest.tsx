@@ -63,6 +63,9 @@ const Root = styled.div`
 			color: var(--text-color-info);
 		}
 	}
+	.mine {
+		background: rgba(90, 127, 255, 0.08);
+	}
 `;
 
 export const PullRequest = () => {

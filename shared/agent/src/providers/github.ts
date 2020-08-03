@@ -221,7 +221,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 		let response = {} as FetchThirdPartyPullRequestResponse;
 		let repoOwner;
 		let repoName;
-		let timelineItems: any = [];
+		let allTimelineItems: any = [];
 		try {
 			let timelineQueryResponse;
 			const pullRequestNumber = await this.getPullRequestNumber(request.pullRequestId);
@@ -246,14 +246,17 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 				if (timelineQueryResponse === undefined) break;
 				response = timelineQueryResponse;
 
-				timelineItems = timelineItems.concat(
+				allTimelineItems = allTimelineItems.concat(
 					timelineQueryResponse.repository.pullRequest.timelineItems.nodes
 				);
 			} while (timelineQueryResponse.repository.pullRequest.timelineItems.pageInfo.hasNextPage);
 		} catch (ex) {
 			Logger.error(ex);
 		}
-		response = { ...response, timelineItems: timelineItems };
+		if (response?.repository?.pullRequest?.timelineItems != null) {
+			response.repository.pullRequest.timelineItems.nodes = allTimelineItems;
+		}
+
 		response.repository.repoOwner = repoOwner;
 		response.repository.repoName = repoName;
 		return response;

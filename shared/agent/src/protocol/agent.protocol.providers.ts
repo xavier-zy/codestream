@@ -479,7 +479,6 @@ export interface FetchThirdPartyPullRequestResponse {
 		resetAt: any;
 	};
 	repository: FetchThirdPartyPullRequestRepository;
-	timelineItems: { __typename: string }[];
 }
 
 export const FetchThirdPartyPullRequestRequestType = new RequestType<

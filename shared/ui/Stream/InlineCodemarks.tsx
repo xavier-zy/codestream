@@ -1141,7 +1141,7 @@ export class SimpleInlineCodemarks extends Component<Props, State> {
 				) : (
 					this.renderHeader()
 				)}
-				<CreateCodemarkIcons />
+				{!currentPullRequestId && <CreateCodemarkIcons />}
 				{this.renderCodemarkForm()}
 				{this.state.showPRInfoModal && (
 					<PRInfoModal onClose={() => this.setState({ showPRInfoModal: false })} />

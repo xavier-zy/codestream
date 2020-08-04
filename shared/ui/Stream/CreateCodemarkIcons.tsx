@@ -32,6 +32,7 @@ import { canCreateCodemark } from "../store/codemarks/actions";
 
 interface Props {
 	narrow?: boolean;
+	onebutton?: boolean;
 }
 
 export const CreateCodemarkIcons = (props: Props) => {
@@ -225,7 +226,12 @@ export const CreateCodemarkIcons = (props: Props) => {
 			<div
 				onMouseEnter={() => onMouseEnterHoverIcon(lineNum0)}
 				onMouseLeave={() => onMouseLeaveHoverIcon(lineNum0)}
-				className={cx("hover-plus", { hover, open, narrow: props.narrow })}
+				className={cx("hover-plus", {
+					hover,
+					open,
+					narrow: props.narrow,
+					onebutton: props.onebutton
+				})}
 				key={lineNum0}
 				style={{ top }}
 			>

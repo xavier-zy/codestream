@@ -150,7 +150,7 @@ export const PullRequest = () => {
 		// console.log(pr.commits);
 		return (
 			<Root className="panel full-height">
-				<CreateCodemarkIcons narrow />
+				<CreateCodemarkIcons narrow onebutton />
 				{isLoadingMessage && <FloatingLoadingMessage>{isLoadingMessage}</FloatingLoadingMessage>}
 				<PRHeader>
 					<PRTitle>

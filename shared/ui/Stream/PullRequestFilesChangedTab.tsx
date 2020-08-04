@@ -12,44 +12,18 @@ import { useDidMount } from "../utilities/hooks";
 import { HostApi } from "../webview-api";
 import { useSelector } from "react-redux";
 import { CodeStreamState } from "../store";
+import { PullRequestFilesChanged } from "./PullRequestFilesChanged";
+import { FileStatus } from "@codestream/protocols/api";
+import { LoadingMessage } from "../src/components/LoadingMessage";
 
 const PRCommitContent = styled.div`
-	margin: 0 20px 20px 20px;
+	margin: 0 20px 20px 40px;
 	position: relative;
 `;
 
-export const PRCommitCard = styled.div`
-	position: relative;
-	border: 1px solid;
-	border-bottom: none;
-	border-color: var(--base-border-color);
-	background: var(--app-background-color);
-	.vscode-dark &,
-	&.add-comment {
-		background: var(--base-background-color);
-	}
-	padding: 10px 15px 10px 15px;
-	margin-left: 30px;
-	z-index: 2;
-	width: auto;
-	h1 {
-		font-size: 15px;
-		font-weight: normal;
-		margin: 0 0 8px 0;
-		padding-right: 120px;
-	}
-	p {
-		margin: 0;
-		color: var(--text-color-subtle);
-	}
-	&:first-child {
-		border-radius: 5px 5px 0 0;
-	}
-	&:last-child {
-		border-radius: 0 0 5px 5px;
-		border: 1px solid var(--base-border-color);
-	}
-`;
+const STATUS_MAP = {
+	modified: FileStatus.modified
+};
 
 export const PullRequestFilesChangedTab = props => {
 	const { pr, ghRepo } = props;
@@ -59,9 +33,11 @@ export const PullRequestFilesChangedTab = props => {
 		};
 	});
 
+	const [isLoading, setIsLoading] = useState(true);
 	const [filesChanged, setFilesChanged] = useState<any[]>([]);
 
 	useDidMount(() => {
+		setIsLoading(true);
 		(async () => {
 			const data = await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
 				method: "getPullRequestFilesChanged",
@@ -70,9 +46,26 @@ export const PullRequestFilesChangedTab = props => {
 					pullRequestId: derivedState.currentPullRequestId
 				}
 			});
-			setFilesChanged(data);
+			const filesChanged = data.map(_ => {
+				return {
+					linesAdded: _.additions,
+					linesRemoved: _.deletions,
+					file: _.filename,
+					sha: _.sha,
+					status: STATUS_MAP[_.status]
+				};
+			});
+			setFilesChanged(filesChanged);
+			setIsLoading(false);
 		})();
 	});
+
+	if (isLoading)
+		return (
+			<div style={{ marginTop: "100px" }}>
+				<LoadingMessage>Loading Changed Files...</LoadingMessage>
+			</div>
+		);
 
 	if (!filesChanged || !filesChanged.length) return null;
 
@@ -134,18 +127,25 @@ export const PullRequestFilesChangedTab = props => {
 			}
 		});
 	};
+
 	return (
 		<PRCommitContent>
-			<div>
-				{filesChanged.map(_ => {
-					return (
-						<PRCommitCard>
-							<h1>{_.filename}</h1>
-							{/*<div>{renderPatch(_.patch)}</div>*/}
-						</PRCommitCard>
-					);
-				})}
-			</div>
+			<PullRequestFilesChanged pr={pr} filesChanged={filesChanged} />
 		</PRCommitContent>
 	);
+
+	// return (
+	// 	<PRCommitContent>
+	// 		<div>
+	// 			{filesChanged.map(_ => {
+	// 				return (
+	// 					<PRCommitCard>
+	// 						<h1>{_.filename}</h1>
+	// 						{/*<div>{renderPatch(_.patch)}</div>*/}
+	// 					</PRCommitCard>
+	// 				);
+	// 			})}
+	// 		</div>
+	// 	</PRCommitContent>
+	// );
 };

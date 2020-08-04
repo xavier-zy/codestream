@@ -751,6 +751,7 @@ export const PullRequestConversationTab = props => {
 									<DropdownButton
 										items={[
 											{
+												key: "merge-commit",
 												icon: <Icon name="git-merge" />,
 												label: "Create a merge commit",
 												subtext: (
@@ -770,6 +771,7 @@ export const PullRequestConversationTab = props => {
 												action: () => mergePullRequest({ mergeMethod: "MERGE" })
 											},
 											{
+												key: "squash-merge",
 												icon: <Icon name="git-merge" />,
 												label: "Squash and merge",
 												subtext: (
@@ -783,6 +785,7 @@ export const PullRequestConversationTab = props => {
 												action: () => mergePullRequest({ mergeMethod: "SQUASH" })
 											},
 											{
+												key: "rebase-merge",
 												icon: <Icon name="git-merge" />,
 												label: "Rebase and merge",
 												subtext: (
@@ -796,11 +799,11 @@ export const PullRequestConversationTab = props => {
 												action: () => mergePullRequest({ mergeMethod: "REBASE" })
 											}
 										]}
+										selectedKey="squash-merge"
 										variant="success"
-									>
-										Rebase and merge
-									</DropdownButton>
-								</PRButtonRow>{" "}
+										splitDropdown
+									/>
+								</PRButtonRow>
 							</div>
 						</PRCommentCard>
 					)}

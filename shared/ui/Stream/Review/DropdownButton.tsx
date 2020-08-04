@@ -20,44 +20,84 @@ export interface DropdownButtonProps extends ButtonProps {
 		subtext?: any;
 		icon?: any;
 	}[];
+	splitDropdown?: boolean;
+	selectedKey?: string;
 }
 
+// operates in two modes. if splitDropdown is false (the default), it's a dropdown menu
+// if splitDropdown is true, then the chevron just changes the selection, but you have
+// to click the button to perform the action
 export function DropdownButton(props: React.PropsWithChildren<DropdownButtonProps>) {
 	const buttonRef = React.useRef<HTMLElement>(null);
 	const [menuIsOpen, toggleMenu] = React.useReducer((open: boolean) => !open, false);
-	const [selectedItem, setSelectedItem] = React.useState(props.items[0]);
-
-	// TODO: this is not the best way to check for uniqueness
-	const items = mapFilter(props.items, i =>
-		i.label === selectedItem.label
-			? null
-			: { key: i, label: i.label, action: () => setSelectedItem(i) }
-	);
+	const [selectedKey, setSelectedKey] = React.useState(props.selectedKey);
 
 	const maybeToggleMenu = action => {
 		if (action !== "noop") toggleMenu(action);
 	};
 
+	let align = props.splitDropdown ? "dropdownLeft" : "dropdownRight";
+	let items = [...props.items];
+	let selectedItem;
+	let selectedAction;
+	if (props.splitDropdown) {
+		selectedItem = items.find(_ => _.key === selectedKey) || items[0];
+		selectedAction = selectedItem.action;
+		items.forEach(item => {
+			item.action = () => setSelectedKey(item.key);
+		});
+	}
+
+	const clickSelected = e => {
+		if (selectedAction) selectedAction(e);
+	};
+
 	return (
-		<Root className={props.className}>
-			<Button
-				{...getButtonProps(props)}
-				onClick={e => {
-					e.preventDefault();
-					e.stopPropagation();
-					toggleMenu(true);
-				}}
-				ref={buttonRef}
-			>
-				{props.children}
-				<Icon name="chevron-down" className="chevron-down" />
-			</Button>
+		<Root className={props.className} splitDropdown={props.splitDropdown}>
+			{props.splitDropdown ? (
+				<>
+					<Button
+						{...getButtonProps(props)}
+						onClick={e => {
+							e.preventDefault();
+							e.stopPropagation();
+							clickSelected(e);
+						}}
+						ref={buttonRef}
+					>
+						{selectedItem.label}
+					</Button>
+					<Button
+						{...getButtonProps(props)}
+						onClick={e => {
+							e.preventDefault();
+							e.stopPropagation();
+							toggleMenu(true);
+						}}
+					>
+						<Icon name="chevron-down" className="chevron-down" />
+					</Button>
+				</>
+			) : (
+				<Button
+					{...getButtonProps(props)}
+					onClick={e => {
+						e.preventDefault();
+						e.stopPropagation();
+						toggleMenu(true);
+					}}
+					ref={buttonRef}
+				>
+					{props.children}
+					<Icon name="chevron-down" className="chevron-down" />
+				</Button>
+			)}
 			{menuIsOpen && buttonRef.current && (
 				<Menu
-					align="dropdownRight"
+					align={align}
 					action={maybeToggleMenu}
 					target={buttonRef.current}
-					items={props.items}
+					items={items}
 					focusOnSelect={buttonRef.current}
 				/>
 			)}
@@ -65,22 +105,14 @@ export function DropdownButton(props: React.PropsWithChildren<DropdownButtonProp
 	);
 }
 
-const Root = styled.div`
-	display: inline;
+const Root = styled.div<{ splitDropdown?: boolean }>`
+	display: inline-block;
+	position: relative;
 	.octicon-chevron-down {
-		margin-left: 5px;
+		margin-left: ${props => (props.splitDropdown ? "0" : "5px")};
 		transform: scale(0.8);
 	}
-`;
-
-const StyledButton = styled(Button)`
-	border: 1px solid ${props => props.theme.colors.baseBorder} !important;
-	background: transparent !important;
-	color: var(--text-color) !important;
-	&:hover {
-		color: var(--button-foreground-color) !important;
-		background: var(--button-background-color) !important;
-		border: 1px solid var(--button-background-color) !important;
-		display: inline-block;
+	button + button {
+		border-left: 1px solid var(--base-border-color) !important;
 	}
 `;

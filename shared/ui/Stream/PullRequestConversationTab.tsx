@@ -488,12 +488,10 @@ export const PullRequestConversationTab = props => {
 	const setMilestone = async (id: string, onOff: boolean) => {
 		setIsLoadingMessage(onOff ? "Adding Milestone..." : "Clearing Milestone...");
 		await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
-			method: "setMilestoneOnPullRequest",
+			method: "toggleMilestoneOnPullRequest",
 			providerId: "github*com",
 			params: {
-				owner: ghRepo.repoOwner,
-				repo: ghRepo.repoName,
-				pullRequestId: pr.number,
+				pullRequestId: derivedState.currentPullRequestId,
 				milestoneId: id,
 				onOff
 			}

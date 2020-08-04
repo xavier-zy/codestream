@@ -951,44 +951,6 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 		return rsp;
 	}
 
-	async setProjectOnPullRequest(request: {
-		owner: string;
-		repo: string;
-		pullRequestId: string;
-		projectId: string;
-		onOff: boolean;
-	}) {
-		const pullRequestInfo = await this.client.request<any>(
-			`query FindPullRequest($owner:String!,$name:String!,$pullRequestId:Int!) {
-					repository(owner:$owner name:$name) {
-					  pullRequest(number: $pullRequestId) {
-						id
-					  }
-					}
-				  }`,
-			{
-				owner: request.owner,
-				name: request.repo,
-				pullRequestId: parseInt(request.pullRequestId, 10)
-			}
-		);
-
-		// const prId = pullRequestInfo.repository.pullRequest.id;
-		// const method = request.onOff ? "addLabelsToLabelable" : "removeLabelsFromLabelable";
-		// const Method = request.onOff ? "AddLabelsToLabelable" : "RemoveLabelsFromLabelable";
-		// const query = `mutation ${Method}($labelableId: String!,$labelIds:String!) {
-		// 	${method}(input: {labelableId: $labelableId, labelIds:$labelIds}) {
-		// 		  clientMutationId
-		// 		}
-		// 	  }`;
-
-		// const rsp = await this.client.request<any>(query, {
-		// 	labelableId: prId,
-		// 	labelIds: request.labelId
-		// });
-		return true;
-	}
-
 	// async closePullRequest(request: { pullRequestId: string }) {
 	// 	const query = `mutation ClosePullRequest($pullRequestId: String!) {
 	// 		closePullRequest(input: {pullRequestId: $pullRequestId}) {
@@ -1101,43 +1063,52 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 		return pullRequestInfo.repository.pullRequest.id;
 	}
 
-	// TODO fix this (needed for updating PR metadata like title, etc.)
-	// async updatePullRequest(request: {
-	// 	owner: string;
-	// 	repo: string;
-	// 	pullRequestId: string;
-	// 	pullRequest: {
-	// 		title: string;
-	// 	};
-	// }) {
-	// 	const pullRequestInfo = await this.client.request<any>(
-	// 		`query FindPullRequest($owner:String!,$name:String!,$pullRequestId:Int!) {
-	// 				repository(owner:$owner name:$name) {
-	// 				  pullRequest(number: $pullRequestId) {
-	// 					id
-	// 				  }
-	// 				}
-	// 			  }`,
-	// 		{
-	// 			owner: request.owner,
-	// 			name: request.repo,
-	// 			pullRequestId: parseInt(request.pullRequestId, 10)
-	// 		}
-	// 	);
+	async toggleMilestoneOnPullRequest(request: {
+		pullRequestId: string;
+		milestoneId: string;
+		onOff: boolean;
+	}) {
+		const query = `mutation UpdatePullRequest($pullRequestId: String!, $milestoneId: String) {
+			updatePullRequest(input: {pullRequestId: $pullRequestId, milestoneId: $milestoneId}) {
+				  clientMutationId
+				}
+			  }`;
 
-	// 	const prId = pullRequestInfo.repository.pullRequest.id;
-	// 	const query = `mutation UpdatePullRequest($pullRequestId: String!, $title: String) {
-	// 		updatePullRequest(input: {pullRequestId: $pullRequestId, title: $title}) {
-	// 			  clientMutationId
-	// 			}
-	// 		  }`;
+		// remove it by setting it to null
+		const rsp = await this.client.request<any>(query, {
+			pullRequestId: request.pullRequestId,
+			milestoneId: request.onOff ? request.milestoneId : null
+		});
+		return rsp;
+	}
 
-	// 	const rsp = await this.client.request<any>(query, {
-	// 		pullRequestId: prId,
-	// 		title: request.pullRequest.title
-	// 	});
-	// 	return true;
-	// }
+	async setProjectOnPullRequest(request: { pullRequestId: string; projectId: string }) {
+		const query = `mutation UpdatePullRequest($pullRequestId: String!, $projectIds: String) {
+			updatePullRequest(input: {pullRequestId: $pullRequestId, projectIds: $projectIds}) {
+				  clientMutationId
+				}
+			  }`;
+
+		const rsp = await this.client.request<any>(query, {
+			pullRequestId: request.pullRequestId,
+			projectIds: request.projectId
+		});
+		return rsp;
+	}
+
+	async updatePullRequestTitle(request: { pullRequestId: string; title: string }) {
+		const query = `mutation UpdatePullRequest($pullRequestId: String!, $title: String) {
+			updatePullRequest(input: {pullRequestId: $pullRequestId, title: $title}) {
+				  clientMutationId
+				}
+			  }`;
+
+		const rsp = await this.client.request<any>(query, {
+			pullRequestId: request.pullRequestId,
+			title: request.title
+		});
+		return rsp;
+	}
 
 	async mergePullRequest(request: { pullRequestId: string; mergeMethod: MergeMethod }) {
 		if (!request.mergeMethod) throw new Error("InvalidMergeMethod");
@@ -1260,6 +1231,26 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 	}
 
 	async getPullRequestNumber(id: string) {
+		const query = `query getNode($id: ID!) {
+			rateLimit {
+				limit
+				cost
+				remaining
+				resetAt
+			}
+			node(id: $id) {
+			 ... on PullRequest {
+				number
+			  }
+			}
+		  }`;
+		const rsp = await this.client.request<any>(query, {
+			id: id
+		});
+		return rsp.node.number;
+	}
+
+	async getPullRequestMetadata(id: string) {
 		const query = `query getNode($id: ID!) {
 			rateLimit {
 				limit

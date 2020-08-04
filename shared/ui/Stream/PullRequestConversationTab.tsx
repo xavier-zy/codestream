@@ -752,7 +752,6 @@ export const PullRequestConversationTab = props => {
 										items={[
 											{
 												key: "merge-commit",
-												icon: <Icon name="git-merge" />,
 												label: "Create a merge commit",
 												subtext: (
 													<span>
@@ -772,7 +771,6 @@ export const PullRequestConversationTab = props => {
 											},
 											{
 												key: "squash-merge",
-												icon: <Icon name="git-merge" />,
 												label: "Squash and merge",
 												subtext: (
 													<span>
@@ -786,7 +784,6 @@ export const PullRequestConversationTab = props => {
 											},
 											{
 												key: "rebase-merge",
-												icon: <Icon name="git-merge" />,
 												label: "Rebase and merge",
 												subtext: (
 													<span>
@@ -837,7 +834,7 @@ export const PullRequestConversationTab = props => {
 							</PRStatusHeadshot>
 							<div style={{ padding: "5px 0" }}>
 								<h1>Pull request successfully merged and closed</h1>
-								You're all set&emdash;the <PRBranch>{pr.headRefName}</PRBranch> branch can be safely
+								You're all set&mdash;the <PRBranch>{pr.headRefName}</PRBranch> branch can be safely
 								deleted.
 							</div>
 						</PRCommentCard>
@@ -989,7 +986,9 @@ export const PullRequestConversationTab = props => {
 					</h1>
 					{pr.projectCards && pr.projectCards.nodes.length > 0
 						? pr.projectCards.nodes.map((_: any) => (
-								<span key={_.project.name}>{_.project.name}</span>
+								<div key={_.project.name}>
+									<Icon name="project" /> {_.project.name}
+								</div>
 						  ))
 						: "None yet"}
 				</PRSection>
@@ -1008,6 +1007,7 @@ export const PullRequestConversationTab = props => {
 					</h1>
 					{pr.milestone ? <div>{pr.milestone.title}</div> : "No milestone"}
 				</PRSection>
+				{/* https://github.community/t/get-all-issues-linked-to-a-pull-request/14653 
 				<PRSection>
 					<h1>
 						<InlineMenu
@@ -1025,6 +1025,7 @@ export const PullRequestConversationTab = props => {
 					<div style={{ height: "10px" }}></div>
 					None yet
 				</PRSection>
+				*/}
 				<PRSection>
 					<h1>
 						<Icon name="gear" className="settings clickable" onClick={() => {}} />

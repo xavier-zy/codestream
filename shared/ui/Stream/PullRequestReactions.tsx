@@ -27,6 +27,7 @@ const PRReact = styled.div`
 		transform: scale(1.2);
 	}
 	p {
+		color: var(--text-color-highlight);
 		margin: 0 7px;
 	}
 	// have to repeat this here because it appears in menus

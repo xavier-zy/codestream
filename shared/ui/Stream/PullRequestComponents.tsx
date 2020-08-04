@@ -157,7 +157,7 @@ export const PRCommentCard = styled.div`
 		font-size: 15px;
 		margin: 0 0 2px 0;
 	}
-	p {
+	> p {
 		margin: 0;
 		color: var(--text-color-subtle);
 	}

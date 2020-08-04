@@ -19,6 +19,7 @@ export interface DropdownButtonProps extends ButtonProps {
 		submenu?: any[];
 		subtext?: any;
 		icon?: any;
+		checked?: boolean;
 	}[];
 	splitDropdown?: boolean;
 	selectedKey?: string;
@@ -44,6 +45,7 @@ export function DropdownButton(props: React.PropsWithChildren<DropdownButtonProp
 		selectedItem = items.find(_ => _.key === selectedKey) || items[0];
 		selectedAction = selectedItem.action;
 		items.forEach(item => {
+			item.checked = item.key === selectedKey;
 			item.action = () => setSelectedKey(item.key);
 		});
 	}

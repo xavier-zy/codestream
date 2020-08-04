@@ -162,8 +162,8 @@ export const PullRequest = () => {
 								delay={1}
 								onClick={() => fetch("Reloading...")}
 								placement="bottom"
-								className={`clickable ${isLoadingPR ? "spin" : "spinnable"}`}
-								name="sync"
+								className={`clickable spinnable ${isLoadingPR ? "spin" : ""}`}
+								name="refresh"
 							/>
 						</div>
 						<CancelButton className="clickable" onClick={exit} />

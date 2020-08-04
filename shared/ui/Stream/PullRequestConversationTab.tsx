@@ -676,7 +676,7 @@ export const PullRequestConversationTab = props => {
 				{!pr.merged && pr.mergeable === "MERGEABLE" && pr.state !== "CLOSED" && (
 					<PRTimelineItem>
 						<PRAction>
-							Add more commits by pushing to the <PRBranch>{pr.baseRefName}</PRBranch> branch on{" "}
+							Add more commits by pushing to the <PRBranch>{pr.headRefName}</PRBranch> branch on{" "}
 							<PRBranch>
 								{ghRepo.repoOwner}/{ghRepo.repoName}
 							</PRBranch>

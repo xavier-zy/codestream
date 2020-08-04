@@ -891,7 +891,7 @@ export const PullRequestConversationTab = props => {
 										isLoading={isLoadingCommentAndClose}
 										onClick={onCommentAndCloseClick}
 									>
-										{text ? "Close pull request" : "Close and comment"}
+										{text ? "Close and comment" : "Close pull request"}
 									</Button>
 
 									<Tooltip

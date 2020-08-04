@@ -1171,21 +1171,52 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 	}
 
 	async createPullRequestCommentAndClose(request: { pullRequestId: string; text: string }) {
-		await this.client.request<any>(
-			`mutation AddCommentToPullRequest($pullRequestId: String!, $body:String!) {
+		if (request.text) {
+			await this.client.request<any>(
+				`mutation AddCommentToPullRequest($pullRequestId: String!, $body:String!) {
 				addComment(input: {subjectId: $pullRequestId, body:$body}) {
 				  clientMutationId
 				}
 			  }`,
-			{
-				pullRequestId: request.pullRequestId,
-				body: request.text
-			}
-		);
+				{
+					pullRequestId: request.pullRequestId,
+					body: request.text
+				}
+			);
+		}
 
 		await this.client.request<any>(
 			`mutation ClosePullRequest($pullRequestId: String!) {
 			closePullRequest(input: {pullRequestId: $pullRequestId}) {
+				  clientMutationId
+				}
+			}`,
+			{
+				pullRequestId: request.pullRequestId
+			}
+		);
+
+		return true;
+	}
+
+	async createPullRequestCommentAndReopen(request: { pullRequestId: string; text: string }) {
+		if (request.text) {
+			await this.client.request<any>(
+				`mutation AddCommentToPullRequest($pullRequestId: String!, $body:String!) {
+				addComment(input: {subjectId: $pullRequestId, body:$body}) {
+				  clientMutationId
+				}
+			  }`,
+				{
+					pullRequestId: request.pullRequestId,
+					body: request.text
+				}
+			);
+		}
+
+		await this.client.request<any>(
+			`mutation ReopenPullRequest($pullRequestId: String!) {
+			reopenPullRequest(input: {pullRequestId: $pullRequestId}) {
 				  clientMutationId
 				}
 			}`,
@@ -1641,6 +1672,11 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 						}
 						... on ReopenedEvent {
 						  __typename
+						  actor {
+							login
+							avatarUrl
+						  }
+						  createdAt
 						}
 						... on RenamedTitleEvent {
 						  __typename

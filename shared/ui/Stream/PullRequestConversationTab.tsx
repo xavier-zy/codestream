@@ -152,11 +152,11 @@ export const PullRequestConversationTab = props => {
 			}
 		);
 		setText("");
-		fetch();
+		fetch().then(() => setIsLoadingCommentAndClose(false));
 	};
 
 	const onCommentAndReopenClick = async e => {
-		setIsLoadingMessage("Closing...");
+		setIsLoadingMessage("Reopening...");
 		setIsLoadingCommentAndClose(true);
 		await HostApi.instance.send(
 			new ExecuteThirdPartyTypedType<CreatePullRequestCommentAndCloseRequest, any>(),
@@ -170,7 +170,7 @@ export const PullRequestConversationTab = props => {
 			}
 		);
 		setText("");
-		fetch();
+		fetch().then(() => setIsLoadingCommentAndClose(false));
 	};
 
 	const mergePullRequest = async (options: { mergeMethod: MergeMethod }) => {
@@ -818,8 +818,15 @@ export const PullRequestConversationTab = props => {
 						</PRCommentCard>
 					)}
 					{!pr.merged && pr.mergeable === "UNKNOWN" && pr.state === "CLOSED" && (
-						<PRCommentCard className="red">
-							<div>This pull request is closed unknown mergeable</div>
+						<PRCommentCard>
+							<PRStatusHeadshot className="gray-background">
+								<Icon name="git-merge" />
+							</PRStatusHeadshot>
+							<div style={{ padding: "5px 0" }}>
+								<h1>Closed with unmerged commits</h1>
+								This pull request is closed, but the <PRBranch>{pr.headRefName}</PRBranch> branch
+								has unmerged commits.
+							</div>
 						</PRCommentCard>
 					)}
 					{!pr.merged && pr.state === "CLOSED" && <div>Pull request is closed</div>}

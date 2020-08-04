@@ -313,6 +313,10 @@ export const PRTimelineItem = styled.div`
 				color: white;
 				background: #d73a4a;
 			}
+			&.green {
+				color: white;
+				background: #7aba5d;
+			}
 			&.gray {
 				color: white;
 				background: rgba(0, 0, 0, 0.75);

@@ -349,6 +349,18 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 							</PRTimelineItem>
 						);
 					}
+					case "ReopenedEvent": {
+						return (
+							<PRTimelineItem key={index} className="tall">
+								<Icon name="circle" className="circled green" />
+								<PRTimelineItemBody>
+									<PRHeadshotName key={index} size={16} person={item.actor} />
+									reopened this
+									<Timestamp time={item.createdAt!} relative />
+								</PRTimelineItemBody>
+							</PRTimelineItem>
+						);
+					}
 					case "MilestonedEvent": {
 						return (
 							<PRTimelineItem key={index} className="tall">

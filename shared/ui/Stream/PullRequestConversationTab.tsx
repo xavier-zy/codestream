@@ -1004,6 +1004,8 @@ export const PullRequestConversationTab = props => {
 							Linked Issues
 						</InlineMenu>
 					</h1>
+					Successfully merging this pull request may close these issues.
+					<div style={{ height: "10px" }}></div>
 					None yet
 				</PRSection>
 				<PRSection>

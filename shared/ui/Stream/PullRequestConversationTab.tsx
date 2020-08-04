@@ -36,7 +36,8 @@ import {
 	PRButtonRow,
 	PRSection,
 	PRBranch,
-	PRReactions
+	PRTimelineItem,
+	PRAction
 } from "./PullRequestComponents";
 import { ButtonRow } from "./StatusPanel";
 import { PullRequestTimelineItems } from "./PullRequestTimelineItems";
@@ -675,6 +676,19 @@ export const PullRequestConversationTab = props => {
 					/>
 					<PRFoot />
 				</PRConversation>
+
+				{!pr.merged && pr.mergeable === "MERGEABLE" && pr.state !== "CLOSED" && (
+					<PRTimelineItem>
+						<PRAction>
+							Add more commits by pushing to the <PRBranch>{pr.baseRefName}</PRBranch> branch on{" "}
+							<PRBranch>
+								{ghRepo.repoOwner}/{ghRepo.repoName}
+							</PRBranch>
+							.
+						</PRAction>
+					</PRTimelineItem>
+				)}
+
 				<PRComment>
 					{/* 
 <PRStatusIcon>

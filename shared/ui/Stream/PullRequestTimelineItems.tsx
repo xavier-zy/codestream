@@ -30,7 +30,7 @@ import { escapeHtml } from "../utils";
 import * as Path from "path-browserify";
 import MessageInput from "./MessageInput";
 import { Button } from "../src/components/Button";
-import { PullRequestReactButton } from "./PullRequestReactions";
+import { PullRequestReactButton, PullRequestReactions } from "./PullRequestReactions";
 
 const ReviewIcons = {
 	APPROVED: <Icon name="thumbs" className="circled green" />,
@@ -75,6 +75,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 												targetId={item.id}
 												setIsLoadingMessage={setIsLoadingMessage}
 												fetch={fetch}
+												reactionGroups={item.reactionGroups}
 											/>
 											<Icon name="kebab-horizontal" className="clickable" />
 										</PRActionIcons>
@@ -82,6 +83,12 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 									<PRCommentBody>
 										<MarkdownText text={item.body} excludeParagraphWrap />
 									</PRCommentBody>
+									<PullRequestReactions
+										targetId={item.id}
+										setIsLoadingMessage={setIsLoadingMessage}
+										fetch={fetch}
+										reactionGroups={item.reactionGroups}
+									/>
 								</PRCommentCard>
 							</PRComment>
 						);

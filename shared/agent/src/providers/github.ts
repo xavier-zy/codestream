@@ -1459,6 +1459,14 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 						  body
 						  bodyText
 						  createdAt
+						  reactionGroups {
+							content
+							users(first: 10) {
+							  nodes {
+								login
+							  }
+							}
+						  }
 						}
 						... on HeadRefRestoredEvent {
 						  __typename

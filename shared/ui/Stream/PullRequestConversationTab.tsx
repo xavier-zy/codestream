@@ -946,7 +946,10 @@ export const PullRequestConversationTab = props => {
 					</h1>
 					{pr.assignees && pr.assignees.nodes.length > 0 ? (
 						pr.assignees.nodes.map((_: any) => (
-							<PRHeadshotName key={_.avatarUrl} person={_} size={20} />
+							<>
+								<PRHeadshotName key={_.avatarUrl} person={_} size={20} />
+								<br />
+							</>
 						))
 					) : (
 						<>
@@ -986,7 +989,7 @@ export const PullRequestConversationTab = props => {
 					</h1>
 					{pr.projectCards && pr.projectCards.nodes.length > 0
 						? pr.projectCards.nodes.map((_: any) => (
-								<div key={_.project.name}>
+								<div key={_.project.name} style={{ marginBottom: "5px" }}>
 									<Icon name="project" /> {_.project.name}
 								</div>
 						  ))

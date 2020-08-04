@@ -45,7 +45,7 @@ export const PullRequestReactButton = styled((props: Props) => {
 	const [open, setOpen] = React.useState<EventTarget | undefined>();
 	const [menuTitle, setMenuTitle] = React.useState("");
 
-	const saveReaction = async (name: string, title: string, key: string) => {
+	const saveReaction = async (key: string, onOff: boolean) => {
 		props.setIsLoadingMessage("Saving Reaction...");
 		setOpen(undefined);
 
@@ -55,7 +55,7 @@ export const PullRequestReactButton = styled((props: Props) => {
 			params: {
 				subjectId: props.targetId,
 				content: key,
-				onOff: true
+				onOff
 			}
 		});
 		props.fetch();
@@ -71,12 +71,13 @@ export const PullRequestReactButton = styled((props: Props) => {
 
 	const makeIcon = (name: string, title: string, key: string) => {
 		const emoji = emojify(":" + name + ":");
+		const iReacted = isMine(key);
 		return (
 			<PRReact
 				onMouseEnter={() => setMenuTitle(title)}
 				onMouseLeave={() => setMenuTitle("")}
-				onClick={() => saveReaction(name, title, key)}
-				className={isMine(key) ? "mine" : ""}
+				onClick={() => saveReaction(key, !iReacted)}
+				className={iReacted ? "mine" : ""}
 			>
 				<span dangerouslySetInnerHTML={{ __html: emoji }} />
 			</PRReact>
@@ -157,6 +158,21 @@ export const PullRequestReactions = (props: ReactionProps) => {
 	const { reactionGroups } = props;
 	if (!reactionGroups) return null;
 
+	const saveReaction = async (key: string, onOff: boolean) => {
+		props.setIsLoadingMessage("Saving Reaction...");
+
+		await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
+			method: "toggleReaction",
+			providerId: "github*com",
+			params: {
+				subjectId: props.targetId,
+				content: key,
+				onOff
+			}
+		});
+		props.fetch();
+	};
+
 	const me = "ppezaris"; // FIXME
 	const reactions = reactionGroups
 		.map(reaction => {
@@ -170,9 +186,13 @@ export const PullRequestReactions = (props: ReactionProps) => {
 					{logins} reacted with {REACTION_NAME_MAP[reaction.content]} emoji
 				</>
 			);
+			const iReacted = loginList.includes(me);
 			return (
 				<Tooltip placement="bottomLeft" delay={1} title={title}>
-					<PRReaction className={loginList.includes(me) ? "mine" : ""}>
+					<PRReaction
+						className={iReacted ? "mine" : ""}
+						onClick={() => saveReaction(reaction.content, !iReacted)}
+					>
 						<span dangerouslySetInnerHTML={{ __html: emoji }} /> {num}
 					</PRReaction>
 				</Tooltip>

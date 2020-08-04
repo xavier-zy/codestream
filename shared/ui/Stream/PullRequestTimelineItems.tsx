@@ -13,7 +13,8 @@ import {
 	PRCodeComment,
 	PRThreadedCommentCard,
 	PRCodeCommentReply,
-	PRThreadedCommentHeader
+	PRThreadedCommentHeader,
+	PRFoot
 } from "./PullRequestComponents";
 import React, { PropsWithChildren } from "react";
 import { PRHeadshot } from "../src/components/Headshot";
@@ -339,14 +340,17 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 					}
 					case "ClosedEvent": {
 						return (
-							<PRTimelineItem key={index} className="tall">
-								<Icon name="circle-slash" className="circled red" />
-								<PRTimelineItemBody>
-									<PRHeadshotName key={index} size={16} person={item.actor} />
-									closed this
-									<Timestamp time={item.createdAt!} relative />
-								</PRTimelineItemBody>
-							</PRTimelineItem>
+							<>
+								<PRTimelineItem key={index} className="tall">
+									<Icon name="circle-slash" className="circled red" />
+									<PRTimelineItemBody>
+										<PRHeadshotName key={index} size={16} person={item.actor} />
+										closed this
+										<Timestamp time={item.createdAt!} relative />
+									</PRTimelineItemBody>
+								</PRTimelineItem>
+								{/* <PRFoot /> */}
+							</>
 						);
 					}
 					case "ReopenedEvent": {

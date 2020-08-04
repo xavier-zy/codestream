@@ -1082,16 +1082,27 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 		return rsp;
 	}
 
-	async setProjectOnPullRequest(request: { pullRequestId: string; projectId: string }) {
-		const query = `mutation UpdatePullRequest($pullRequestId: String!, $projectIds: String) {
+	async toggleProjectOnPullRequest(request: {
+		pullRequestId: string;
+		projectId: string;
+		onOff: boolean;
+	}) {
+		const metadata = await this.getPullRequestMetadata(request.pullRequestId);
+		const projectIds = new Set(metadata.projectCards.map(_ => _.project.id));
+		const query = `mutation UpdatePullRequest($pullRequestId: String!, $projectIds: [String]) {
 			updatePullRequest(input: {pullRequestId: $pullRequestId, projectIds: $projectIds}) {
 				  clientMutationId
 				}
 			  }`;
+		if (request.onOff) {
+			projectIds.add(request.projectId);
+		} else {
+			projectIds.delete(request.projectId);
+		}
 
 		const rsp = await this.client.request<any>(query, {
 			pullRequestId: request.pullRequestId,
-			projectIds: request.projectId
+			projectIds: [...projectIds]
 		});
 		return rsp;
 	}
@@ -1250,24 +1261,54 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 		return rsp.node.number;
 	}
 
-	async getPullRequestMetadata(id: string) {
-		const query = `query getNode($id: ID!) {
+	async getPullRequestMetadata(
+		id: string
+	): Promise<{
+		number: number;
+		milestone: { id: string };
+		projectCards: {
+			id: string;
+			project: {
+				id: string;
+				name: string;
+			};
+		}[];
+	}> {
+		const query = `query($id:ID!){
 			rateLimit {
-				limit
-				cost
-				remaining
-				resetAt
+			  limit
+			  cost
+			  remaining
+			  resetAt
 			}
 			node(id: $id) {
-			 ... on PullRequest {
+			  ... on PullRequest {
 				number
+				projectCards(first: 25) {
+				  nodes {
+					id
+					project {
+					  id
+					  name
+					}
+				  }
+				}
+				milestone {
+				  id
+				}
 			  }
 			}
-		  }`;
+		  }
+		  `;
 		const rsp = await this.client.request<any>(query, {
 			id: id
 		});
-		return rsp.node.number;
+		return {
+			number: rsp.node.number,
+			milestone: rsp.node.milestone,
+			projectCards:
+				rsp.node.projectCards && rsp.node.projectCards.nodes ? rsp.node.projectCards.nodes : []
+		};
 	}
 
 	async getPullRequestFilesChanged(request: {

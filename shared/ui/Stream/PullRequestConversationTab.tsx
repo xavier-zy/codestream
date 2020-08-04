@@ -434,12 +434,10 @@ export const PullRequestConversationTab = props => {
 	const setProject = async (id: string, onOff: boolean) => {
 		setIsLoadingMessage(onOff ? "Adding to Project..." : "Removing from Project...");
 		await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
-			method: "setProjectOnPullRequest",
+			method: "toggleProjectOnPullRequest",
 			providerId: "github*com",
 			params: {
-				owner: ghRepo.repoOwner,
-				repo: ghRepo.repoName,
-				pullRequestId: pr.number,
+				pullRequestId: derivedState.currentPullRequestId,
 				projectId: id,
 				onOff
 			}

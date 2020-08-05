@@ -254,7 +254,8 @@ export const RoundedSearchLink = styled(RoundedLink)`
 		height: 16px;
 		line-height: 16px;
 		margin: 0;
-		#search-input {
+		#search-input,
+		#pr-search-input {
 			width: 90px;
 			background: transparent !important;
 			font-size: 13px !important;

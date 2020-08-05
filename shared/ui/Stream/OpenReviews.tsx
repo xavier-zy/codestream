@@ -6,7 +6,7 @@ import { CodeStreamState } from "../store";
 import { Row } from "./CrossPostIssueControls/IssueDropdown";
 import Icon from "./Icon";
 import { Headshot, PRHeadshot } from "../src/components/Headshot";
-import { H4, WideStatusSection, RoundedLink } from "./StatusPanel";
+import { H4, WideStatusSection, RoundedLink, RoundedSearchLink } from "./StatusPanel";
 import { setCurrentReview, setCurrentPullRequest } from "../store/context/actions";
 import { useDidMount } from "../utilities/hooks";
 import { bootstrapReviews } from "../store/reviews/actions";
@@ -41,6 +41,8 @@ export function OpenReviews() {
 
 	const [prs, setPRs] = React.useState<any[]>([]);
 	const [isLoadingPRs, setIsLoadingPRs] = React.useState(false);
+	const [query, setQuery] = React.useState("");
+	const [queryOpen, setQueryOpen] = React.useState(false);
 
 	const reviewsState = useSelector((state: CodeStreamState) => state.reviews);
 
@@ -125,6 +127,38 @@ export function OpenReviews() {
 									&nbsp;&nbsp;Refresh
 								</RoundedLink>
 							</Tooltip>
+							<RoundedSearchLink className={queryOpen ? "" : "collapsed"}>
+								<Icon
+									name="hash"
+									onClick={() => {
+										setQueryOpen(true);
+										document.getElementById("pr-search-input")!.focus();
+									}}
+								/>
+								<span className="accordion">
+									<Icon
+										name="x"
+										onClick={() => {
+											setQuery("");
+											setQueryOpen(false);
+										}}
+									/>
+									<input
+										autoFocus
+										id="pr-search-input"
+										placeholder="Enter PR #"
+										type="text"
+										value={query}
+										onChange={e => setQuery(e.target.value)}
+										onKeyDown={e => {
+											if (e.key == "Escape") {
+												setQuery("");
+												setQueryOpen(false);
+											}
+										}}
+									/>
+								</span>
+							</RoundedSearchLink>
 							<H4>Pull Requests</H4>
 						</div>
 						{prs.map(pr => {
@@ -161,5 +195,5 @@ export function OpenReviews() {
 				)}
 			</>
 		);
-	}, [reviews, prs, teamMembers, isLoadingPRs]);
+	}, [reviews, prs, teamMembers, isLoadingPRs, query, queryOpen]);
 }

@@ -166,7 +166,7 @@ export const PullRequest = () => {
 								name="refresh"
 							/>
 						</div>
-						<CancelButton className="clickable" onClick={exit} />
+						<CancelButton title="Close" className="clickable" onClick={exit} />
 					</PRTitle>
 					<PRStatus>
 						<PRStatusButton

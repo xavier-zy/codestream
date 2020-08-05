@@ -118,13 +118,15 @@ export function OpenReviews() {
 				)}
 				{prs.length > 0 && (
 					<WideStatusSection>
-						<Tooltip title="Reload" placement="bottom" delay={1}>
-							<RoundedLink onClick={() => fetchPRs()}>
-								<Icon name="refresh" className={`spinnable ${isLoadingPRs ? "spin" : ""}`} />
-								&nbsp;&nbsp;Refresh
-							</RoundedLink>
-						</Tooltip>
-						<H4 style={{ paddingLeft: "20px" }}>Pull Requests</H4>
+						<div style={{ padding: "0 20px 0 20px" }}>
+							<Tooltip title="Reload" placement="bottom" delay={1}>
+								<RoundedLink onClick={() => fetchPRs()}>
+									<Icon name="refresh" className={`spinnable ${isLoadingPRs ? "spin" : ""}`} />
+									&nbsp;&nbsp;Refresh
+								</RoundedLink>
+							</Tooltip>
+							<H4>Pull Requests</H4>
+						</div>
 						{prs.map(pr => {
 							return (
 								<Row key={"pr-" + pr.id} onClick={() => dispatch(setCurrentPullRequest(pr.id))}>

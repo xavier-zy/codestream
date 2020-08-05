@@ -1023,6 +1023,15 @@ export const StatusPanel = () => {
 				<div className="channel-list vscroll">
 					<OpenReviews />
 					<StatusSection>
+						<RoundedLink
+							onClick={() => {
+								dispatch(setNewPostEntry("Status"));
+								dispatch(openPanel(WebviewPanels.NewReview));
+							}}
+						>
+							<Icon className="padded-icon" name="pull-request" />
+							<span className="wide-text">New </span>Pull Request
+						</RoundedLink>
 						<Tooltip
 							title={
 								<>
@@ -1052,7 +1061,7 @@ export const StatusPanel = () => {
 								<Icon className="padded-icon" name="review" />
 								<span className="wide-text">Request </span>Review
 							</RoundedLink>
-						</Tooltip>
+						</Tooltip>{" "}
 						<H4>Work In Progress</H4>
 						{status && status.label && (
 							<Row style={{ marginBottom: "5px" }} className="no-hover wide">

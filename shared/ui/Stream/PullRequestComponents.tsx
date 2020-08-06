@@ -541,11 +541,11 @@ export const PRIconButton = styled.div`
 `;
 
 export const PRButtonRow = styled.div`
-	margin: 15px -15px -15px -15px;
+	margin: 15px -14px -14px -14px;
 	border-top: 1px solid var(--base-border-color);
 	border-radius: 0 0 5px 5px;
 	padding: 15px;
-	background: var(--base-background-color);
+	// background: var(--base-background-color);
 	.vscode-dark& {
 		background: rgba(0, 0, 0, 0.1);
 	}

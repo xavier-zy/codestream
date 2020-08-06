@@ -442,7 +442,7 @@ export const PRSidebar = styled.div`
 
 export const PRCommentHeader = styled.div`
 	padding: 10px 15px 10px 15px;
-	margin: -10px -15px 0 -15px;
+	margin: -10px -14px 0 -14px;
 	border-bottom: 1px solid var(--base-border-color);
 	background: var(--base-background-color);
 	display: flex;

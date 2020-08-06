@@ -17,7 +17,7 @@ import {
 	PRFoot
 } from "./PullRequestComponents";
 import React, { PropsWithChildren } from "react";
-import { PRHeadshot } from "../src/components/Headshot";
+import { PRHeadshot, Headshot } from "../src/components/Headshot";
 import Timestamp from "./Timestamp";
 import Icon from "./Icon";
 import { MarkdownText } from "./MarkdownText";
@@ -32,13 +32,16 @@ import * as Path from "path-browserify";
 import MessageInput from "./MessageInput";
 import { Button } from "../src/components/Button";
 import { PullRequestReactButton, PullRequestReactions } from "./PullRequestReactions";
+import { useSelector } from "react-redux";
+import { CodeStreamState } from "../store";
+import { CSMe } from "@codestream/protocols/api";
 
 const ReviewIcons = {
-	APPROVED: <Icon name="thumbs" className="circled green" />,
+	APPROVED: <Icon name="check" className="circled green" />,
 	CHANGES_REQUESTED: <Icon name="plus-minus" className="circled red" />,
 	COMMENTED: <Icon name="eye" className="circled" />,
 	// FIXME
-	DISMISSED: <Icon name="blank" className="circled" />,
+	DISMISSED: <Icon name="x" className="circled" />,
 	PENDING: <Icon name="blank" className="circled" />
 };
 
@@ -50,6 +53,11 @@ interface Props {
 export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 	const { pr, setIsLoadingMessage, fetch } = props;
 	if (!pr || !pr.timelineItems) return null;
+
+	const derivedState = useSelector((state: CodeStreamState) => {
+		const currentUser = state.users[state.session.userId!] as CSMe;
+		return { currentUser };
+	});
 
 	const me = "ppezaris"; // FIXME
 	const myPR = pr.author.login === me;
@@ -179,7 +187,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 														</PRCodeCommentBody>
 													</PRCodeComment>
 													<PRCodeCommentReply>
-														<PRHeadshot key={index} size={30} person={item.author} />
+														<Headshot key={index} size={30} person={derivedState.currentUser} />
 
 														<div
 															style={{

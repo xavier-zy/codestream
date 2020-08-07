@@ -104,6 +104,7 @@ export const PullRequestCommitsTab = props => {
 		}).format(new Date(_.commit.authoredDate).getTime());
 	});
 
+	console.warn("DOMMITRS: ", byDay);
 	return (
 		<PRCommitContent>
 			{Object.keys(byDay).map(day => {
@@ -118,8 +119,14 @@ export const PullRequestCommitsTab = props => {
 								return (
 									<PRCommitCard>
 										<h1>{_.commit.message}</h1>
-										<PRHeadshotName person={_.commit.author} />
-										<span className="subtle">committed</span>
+										{_.commit.author.user.login !== _.commit.committer.user.login && (
+											<>
+												<PRHeadshotName className="no-padding" person={_.commit.author} />
+												<span className="subtle"> authored and </span>
+											</>
+										)}
+										<PRHeadshotName className="no-padding" person={_.commit.committer} />
+										<span className="subtle"> committed</span>
 										<Timestamp time={_.commit.authoredDate} relative />
 										<PRCommitButtons>
 											<Tooltip title="View commit on GitHub" placement="bottom">

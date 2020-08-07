@@ -1414,7 +1414,14 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 							  avatarUrl(size: 20)
 							  name
 							  user {
-								login
+							    login
+							  }
+							}
+							committer {
+							  avatarUrl(size: 20)
+							  name
+							  user {
+							    login
 							  }
 							}
 							message

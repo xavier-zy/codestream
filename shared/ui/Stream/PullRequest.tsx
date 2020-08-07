@@ -17,7 +17,10 @@ import { HostApi } from "../webview-api";
 import {
 	FetchThirdPartyPullRequestPullRequest,
 	FetchThirdPartyPullRequestRequestType,
-	FetchThirdPartyPullRequestResponse
+	FetchThirdPartyPullRequestResponse,
+	GetReposScmRequestType,
+	ReposScm,
+	ExecuteThirdPartyTypedType
 } from "@codestream/protocols/agent";
 import {
 	PRHeader,
@@ -29,7 +32,8 @@ import {
 	PRAction,
 	PRBranch,
 	PRBadge,
-	PRPlusMinus
+	PRPlusMinus,
+	PREditTitle
 } from "./PullRequestComponents";
 import { LoadingMessage } from "../src/components/LoadingMessage";
 import { Modal } from "./Modal";
@@ -39,6 +43,7 @@ import { PullRequestCommitsTab } from "./PullRequestCommitsTab";
 import * as reviewSelectors from "../store/reviews/reducer";
 import { PullRequestFilesChangedTab } from "./PullRequestFilesChangedTab";
 import { FloatingLoadingMessage } from "../src/components/FloatingLoadingMessage";
+import { Button } from "../src/components/Button";
 
 const Root = styled.div`
 	${Tabs} {
@@ -88,6 +93,10 @@ export const PullRequest = () => {
 	const [isLoadingPR, setIsLoadingPR] = useState(false);
 	const [isLoadingMessage, setIsLoadingMessage] = useState("");
 	const [pr, setPr] = useState<FetchThirdPartyPullRequestPullRequest | undefined>();
+	const [openRepos, setOpenRepos] = useState<ReposScm[]>([]);
+	const [editingTitle, setEditingTitle] = useState(false);
+	const [savingTitle, setSavingTitle] = useState(false);
+	const [title, setTitle] = useState("");
 
 	const exit = async () => {
 		await dispatch(setCurrentPullRequest());
@@ -102,8 +111,35 @@ export const PullRequest = () => {
 		})) as FetchThirdPartyPullRequestResponse;
 		setGhRepo(r.repository);
 		setPr(r.repository.pullRequest);
+		setTitle(r.repository.pullRequest.title);
+		setEditingTitle(false);
+		setSavingTitle(false);
 		setIsLoadingPR(false);
 		setIsLoadingMessage("");
+	};
+
+	const saveTitle = async () => {
+		setIsLoadingMessage("Saving Title...");
+		setSavingTitle(true);
+
+		await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
+			method: "updatePullRequestTitle",
+			providerId: "github*com",
+			params: {
+				pullRequestId: derivedState.currentPullRequestId!,
+				title
+			}
+		});
+		fetch();
+	};
+
+	const getROpenRepos = async () => {
+		const response = await HostApi.instance.send(GetReposScmRequestType, {
+			inEditorOnly: true
+		});
+		if (response && response.repositories) {
+			setOpenRepos(response.repositories);
+		}
 	};
 
 	const linkHijacker = (e: any) => {
@@ -153,20 +189,79 @@ export const PullRequest = () => {
 				<CreateCodemarkIcons narrow onebutton />
 				{isLoadingMessage && <FloatingLoadingMessage>{isLoadingMessage}</FloatingLoadingMessage>}
 				<PRHeader>
-					<PRTitle>
-						{pr.title} <Link href={pr.url}>#{pr.number}</Link>
-						<div className="reload-button">
-							<Icon
-								title="Reload"
-								trigger={["hover"]}
-								delay={1}
-								onClick={() => fetch("Reloading...")}
-								placement="bottom"
-								className={`clickable spinnable ${isLoadingPR ? "spin" : ""}`}
-								name="refresh"
-							/>
-						</div>
-						<CancelButton title="Close" className="clickable" onClick={exit} />
+					<PRTitle className={editingTitle ? "editing" : ""}>
+						{editingTitle ? (
+							<PREditTitle>
+								<input
+									id="title-input"
+									name="title"
+									value={title}
+									className="input-text control"
+									autoFocus
+									type="text"
+									onChange={e => setTitle(e.target.value)}
+									placeholder=""
+								/>
+								<Button onClick={saveTitle} isLoading={savingTitle}>
+									Save
+								</Button>
+								<Button
+									variant="secondary"
+									onClick={() => {
+										setTitle("");
+										setSavingTitle(false);
+										setEditingTitle(false);
+									}}
+								>
+									Cancel
+								</Button>
+							</PREditTitle>
+						) : (
+							<>
+								{title || pr.title} <Link href={pr.url}>#{pr.number}</Link>
+								<div className="action-buttons">
+									<span>
+										<Icon
+											title="Edit Title"
+											trigger={["hover"]}
+											delay={1}
+											onClick={() => {
+												setTitle(pr.title);
+												setEditingTitle(true);
+											}}
+											placement="bottom"
+											className="clickable"
+											name="pencil"
+										/>
+									</span>
+									<span>
+										<Icon
+											title="Checkout"
+											trigger={["hover"]}
+											delay={1}
+											onClick={() => fetch("Checkout...")}
+											placement="bottom"
+											className="clickable"
+											name="repo"
+										/>
+									</span>
+									<span>
+										<Icon
+											title="Reload"
+											trigger={["hover"]}
+											delay={1}
+											onClick={() => fetch("Reloading...")}
+											placement="bottom"
+											className={`clickable spinnable ${isLoadingPR ? "spin" : ""}`}
+											name="refresh"
+										/>
+									</span>
+									<span>
+										<CancelButton title="Close" className="clickable" onClick={exit} />
+									</span>
+								</div>{" "}
+							</>
+						)}
 					</PRTitle>
 					<PRStatus>
 						<PRStatusButton

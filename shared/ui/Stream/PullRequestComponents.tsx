@@ -11,7 +11,9 @@ export const PRHeader = styled.div`
 
 export const PRTitle = styled.div`
 	font-size: 20px;
-	padding-right: 50px;
+	&:not(.editing) {
+		padding-right: 50px;
+	}
 	a {
 		color: var(--text-color);
 		opacity: 0.5;
@@ -22,21 +24,38 @@ export const PRTitle = styled.div`
 		}
 	}
 	.cancel-button {
+		opacity: 0.7 !important;
+		// vertical-align: 3px;
+	}
+	.action-buttons {
 		position: absolute;
 		top: 20px;
 		right: 20px;
-		opacity: 0.7 !important;
-		font-size: 11px !important; // to match the spinnable icon
-		line-height: 10px !important;
-		vertical-align: 3px;
-	}
-	.reload-button {
-		font-size: 11px !important; // to match the spinnable icon
-		display: inline-block;
-		position: absolute !important;
-		top: 20px;
-		right: 45px;
 		opacity: 0.7;
+		white-space: nowrap;
+		display: flex;
+		> span {
+			padding-left: 10px;
+		}
+		.icon {
+			vertical-align: 3px;
+			display: inline-block;
+			font-size: 11px !important; // to match the spinnable icon
+			line-height: 10px !important;
+		}
+	}
+`;
+
+export const PREditTitle = styled.div`
+	width: 100%;
+	display: flex;
+	#title-input {
+		margin: -3px 0 0 -6px !important;
+		font-size: 20px !important;
+		flex-grow: 10;
+	}
+	> button {
+		margin-left: 10px;
 	}
 `;
 

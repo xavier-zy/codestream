@@ -458,6 +458,7 @@ export interface FetchThirdPartyPullRequestPullRequest {
 	mergedAt: string;
 	title: string;
 	url: string;
+	repoUrl: string;
 	updatedAt: string;
 }
 

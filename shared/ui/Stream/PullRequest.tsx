@@ -286,11 +286,11 @@ export const PullRequest = () => {
 							<PRAuthor>{pr.author.login}</PRAuthor>
 							<PRAction>
 								{action} {pr.commits && pr.commits.totalCount} commits into{" "}
-								<Link href={pr.url.replace(/\/pull\/\d+$/, `/tree/${pr.baseRefName}`)}>
+								<Link href={`${pr.repoUrl}/tree/${pr.baseRefName}`}>
 									<PRBranch>{pr.baseRefName}</PRBranch>
 								</Link>
 								{" from "}
-								<Link href={pr.url.replace(/\/pull\/\d+$/, `/tree/${pr.headRefName}`)}>
+								<Link href={`${pr.repoUrl}/tree/${pr.headRefName}`}>
 									<PRBranch>{pr.headRefName}</PRBranch>
 								</Link>{" "}
 								<Icon

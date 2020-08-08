@@ -256,6 +256,10 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 		if (response?.repository?.pullRequest?.timelineItems != null) {
 			response.repository.pullRequest.timelineItems.nodes = allTimelineItems;
 		}
+		response.repository.pullRequest.repoUrl = response.repository.pullRequest.url.replace(
+			/\/pull\/\d+$/,
+			""
+		);
 
 		response.repository.repoOwner = repoOwner;
 		response.repository.repoName = repoName;

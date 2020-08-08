@@ -161,7 +161,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 											return (
 												<PRThreadedCommentCard>
 													<PRCodeComment>
-														<div className="row-with-icon-actions monospace ellipsis-left-container">
+														<div className="row-with-icon-actions monospace ellipsis-left-container no-hover">
 															<Icon name="file" />
 															<span className="file-info ellipsis-left">
 																<bdi dir="ltr">{_.path}</bdi>

@@ -19,7 +19,7 @@ interface Props {
 	reactionGroups?: any;
 }
 
-const PRReact = styled.div`
+export const PRReact = styled.div`
 	display: inline-block;
 	transition: transform 0.1s;
 	cursor: pointer;

@@ -1827,6 +1827,14 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 								body
 								bodyText
 							  }
+							  reactionGroups {
+								content
+								users(first: 10) {
+								  nodes {
+									login
+								  }
+								}
+							  }
 							}
 						  }
 						  authorAssociation

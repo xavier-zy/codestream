@@ -238,6 +238,33 @@ export const PRActionCommentCard = styled.div`
 	}
 `;
 
+export const PRReaction = styled.div`
+	display: inline-block;
+	padding: 5px 15px;
+	border-right: 1px solid var(--base-border-color);
+	cursor: pointer;
+	p {
+		display: inline-block;
+		margin: 0 2px 0 0;
+		padding: 0;
+		vertical-align: -1px;
+	}
+`;
+
+export const PRReactions = styled.div`
+	border-top: 1px solid var(--base-border-color);
+	margin: 10px -15px -10px -15px;
+	${PullRequestReactButton} {
+		display: none;
+	}
+	&:hover {
+		${PullRequestReactButton} {
+			padding-left: 15px;
+			display: inline-block;
+		}
+	}
+`;
+
 export const PRThreadedCommentCard = styled.div`
 	position: relative;
 	border: 1px solid;
@@ -261,6 +288,16 @@ export const PRThreadedCommentCard = styled.div`
 	}
 	&.green-border:before {
 		border-color: #7aba5d;
+	}
+	${PRReactions} {
+		border: none;
+		margin: -5px 0 15px 35px;
+	}
+	${PRReaction} {
+		padding: 1px 8px;
+		margin: 0 5px 5px;
+		border: 1px solid var(--base-border-color);
+		border-radius: 5px;
 	}
 `;
 
@@ -606,30 +643,4 @@ export const PRCodeCommentReply = styled.div`
 
 export const PRCodeCommentReplyPlaceholder = styled.div`
 	border: 1px solid var(--base-border-color);
-`;
-
-export const PRReactions = styled.div`
-	border-top: 1px solid var(--base-border-color);
-	margin: 10px -15px -10px -15px;
-	${PullRequestReactButton} {
-		display: none;
-	}
-	&:hover {
-		${PullRequestReactButton} {
-			padding-left: 15px;
-			display: inline-block;
-		}
-	}
-`;
-
-export const PRReaction = styled.div`
-	display: inline-block;
-	padding: 5px 15px;
-	border-right: 1px solid var(--base-border-color);
-	cursor: pointer;
-	p {
-		display: inline-block;
-		margin: 0 2px 0 0;
-		padding: 0;
-	}
 `;

@@ -135,6 +135,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 													targetId={item.id}
 													setIsLoadingMessage={setIsLoadingMessage}
 													fetch={fetch}
+													reactionGroups={item.reactionGroups}
 												/>
 												<Icon name="kebab-horizontal" className="clickable" />
 											</PRActionIcons>
@@ -143,20 +144,31 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 										<PRCommentBody>
 											<MarkdownText text={item.body} excludeParagraphWrap />
 										</PRCommentBody>
+										<PullRequestReactions
+											targetId={item.id}
+											setIsLoadingMessage={setIsLoadingMessage}
+											fetch={fetch}
+											reactionGroups={item.reactionGroups}
+										/>
 									</PRActionCommentCard>
 								)}
 								{item.comments && item.comments.nodes && (
 									<>
-										{item.comments.nodes.map(_ => {
-											let extension = Path.extname(_.path).toLowerCase();
+										{item.comments.nodes.map((comment, commentIndex) => {
+											let extension = Path.extname(comment.path).toLowerCase();
 											if (extension.startsWith(".")) {
 												extension = extension.substring(1);
 											}
 
 											// FIXME
+											const myComment = comment.author && comment.author.login === me;
 											const startLine = 5;
 
-											const codeHTML = prettyPrintOne(escapeHtml(_.diffHunk), extension, startLine);
+											const codeHTML = prettyPrintOne(
+												escapeHtml(comment.diffHunk),
+												extension,
+												startLine
+											);
 
 											return (
 												<PRThreadedCommentCard>
@@ -164,7 +176,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 														<div className="row-with-icon-actions monospace ellipsis-left-container no-hover">
 															<Icon name="file" />
 															<span className="file-info ellipsis-left">
-																<bdi dir="ltr">{_.path}</bdi>
+																<bdi dir="ltr">{comment.path}</bdi>
 															</span>
 														</div>
 														<pre
@@ -174,23 +186,30 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 															dangerouslySetInnerHTML={{ __html: codeHTML }}
 														/>
 														<PRCodeCommentBody>
-															<PRHeadshot key={index} size={30} person={item.author} />
+															<PRHeadshot key={commentIndex} size={30} person={comment.author} />
 															<PRThreadedCommentHeader>
 																{item.author.login}
-																<Timestamp time={item.createdAt} />
+																<Timestamp time={comment.createdAt} />
 																<PRActionIcons>
-																	{myItem && Author}
+																	{myComment && Author}
 																	{myPR ? <IAmMember /> : <UserIsMember />}
 																	<PullRequestReactButton
-																		targetId={item.id}
+																		targetId={comment.id}
 																		setIsLoadingMessage={setIsLoadingMessage}
 																		fetch={fetch}
+																		reactionGroups={comment.reactionGroups}
 																	/>
 																	<Icon name="kebab-horizontal" className="clickable" />
 																</PRActionIcons>
 															</PRThreadedCommentHeader>
-															<MarkdownText text={_.body} excludeParagraphWrap />
+															<MarkdownText text={comment.body} excludeParagraphWrap />
 														</PRCodeCommentBody>
+														<PullRequestReactions
+															targetId={comment.id}
+															setIsLoadingMessage={setIsLoadingMessage}
+															fetch={fetch}
+															reactionGroups={comment.reactionGroups}
+														/>
 													</PRCodeComment>
 													<PRCodeCommentReply>
 														<Headshot key={index} size={30} person={derivedState.currentUser} />
@@ -469,6 +488,9 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 								</PRTimelineItemBody>
 							</PRTimelineItem>
 						);
+					}
+					case "ReviewDismissedEvent": {
+						return null; // FIXME
 					}
 					default: {
 						console.warn(`timelineItem not found: ${item.__typename} item is: `, item);

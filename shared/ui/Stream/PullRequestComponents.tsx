@@ -296,6 +296,9 @@ export const PRTimelineItem = styled.div`
 	&.tall {
 		margin: 30px 0;
 	}
+	&.tall-top {
+		margin-top: 30px;
+	}
 	.sha {
 		margin-left: auto;
 		padding-left: 10px;

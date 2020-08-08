@@ -35,6 +35,7 @@ import { PullRequestReactButton, PullRequestReactions } from "./PullRequestReact
 import { useSelector } from "react-redux";
 import { CodeStreamState } from "../store";
 import { CSMe } from "@codestream/protocols/api";
+import { SmartFormattedList } from "./SmartFormattedList";
 
 const ReviewIcons = {
 	APPROVED: <Icon name="check" className="circled green" />,
@@ -61,9 +62,10 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 
 	const me = "ppezaris"; // FIXME
 	const myPR = pr.author.login === me;
+	const timelineNodes = pr.timelineItems.nodes;
 	return (
 		<div>
-			{pr.timelineItems.nodes.map((item, index) => {
+			{timelineNodes.map((item, index) => {
 				console.warn("TIMELINE ITEM: ", item);
 				const myItem = item.author && item.author.login === me;
 				switch (item.__typename) {
@@ -224,32 +226,61 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 							</PRTimelineItem>
 						);
 					}
-					case "PullRequestCommit":
+					case "PullRequestCommit": {
+						// look ahead to see how many commits there are in a row
+						let futureCommitCount = 0;
+						let i = index + 1;
+						let authors: string[] = [];
+						if (index == 0 || timelineNodes[index - 1].__typename !== "PullRequestCommit") {
+							authors.push(item.commit.author.name);
+							while (
+								timelineNodes[i] &&
+								timelineNodes[i] &&
+								timelineNodes[i].__typename === "PullRequestCommit"
+							) {
+								authors.push(timelineNodes[i].commit.author.name);
+								futureCommitCount++;
+								i++;
+							}
+						}
 						return (
-							<PRTimelineItem key={index}>
-								<Icon name="git-commit" />
-								<PRHeadshot key={index} size={16} person={item.commit.author} />
+							<>
+								{futureCommitCount > 0 && (
+									<PRTimelineItem key={`commits-{index}`} className="tall-top">
+										<Icon name="repo-push" className="circled" />
+										<PRTimelineItemBody>
+											<SmartFormattedList value={[...new Set(authors)]} /> added{" "}
+											{futureCommitCount + 1} commits
+											<Timestamp time={item.commit.authoredDate!} relative />
+										</PRTimelineItemBody>
+									</PRTimelineItem>
+								)}
+								<PRTimelineItem key={index}>
+									<Icon name="git-commit" />
+									<PRHeadshot key={index} size={16} person={item.commit.author} />
 
-								<PRTimelineItemBody>
-									<div className="monospace left-pad">
+									<PRTimelineItemBody>
+										<div className="monospace left-pad">
+											<Link
+												href={`${pr.url}/commits/${item.commit.abbreviatedOid}`}
+												className="monospace"
+											>
+												<MarkdownText excludeParagraphWrap text={item.commit.message || ""} />
+											</Link>
+										</div>
+									</PRTimelineItemBody>
+									<div className="monospace sha">
 										<Link
 											href={`${pr.url}/commits/${item.commit.abbreviatedOid}`}
 											className="monospace"
 										>
-											<MarkdownText excludeParagraphWrap text={item.commit.message || ""} />
+											{item.commit.abbreviatedOid}
 										</Link>
 									</div>
-								</PRTimelineItemBody>
-								<div className="monospace sha">
-									<Link
-										href={`${pr.url}/commits/${item.commit.abbreviatedOid}`}
-										className="monospace"
-									>
-										{item.commit.abbreviatedOid}
-									</Link>
-								</div>
-							</PRTimelineItem>
+								</PRTimelineItem>
+							</>
 						);
+					}
 					case "AssignedEvent": {
 						return (
 							<PRTimelineItem key={index} className="tall">

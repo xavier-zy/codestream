@@ -1808,6 +1808,10 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 							changedFiles
 							author {
 							  avatarUrl
+							  name
+							  user {
+								login
+							  }
 							}
 							id
 							message
@@ -1816,6 +1820,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 							messageHeadlineHTML
 							messageBodyHTML
 							abbreviatedOid
+							authoredDate
 						  }
 						}
 						... on PinnedEvent {

@@ -13,7 +13,7 @@ export const PRHeader = styled.div`
 export const PRTitle = styled.div`
 	font-size: 20px;
 	&:not(.editing) {
-		padding-right: 50px;
+		// padding-right: 50px;
 	}
 	a {
 		color: var(--text-color);
@@ -29,11 +29,12 @@ export const PRTitle = styled.div`
 		// vertical-align: 3px;
 	}
 	.action-buttons {
-		position: absolute;
-		top: 20px;
-		right: 20px;
+		float: right;
+		// top: 20px;
+		// right: 20px;
 		white-space: nowrap;
 		display: flex;
+		margin-left: 10px;
 		> span {
 			padding-left: 10px;
 		}

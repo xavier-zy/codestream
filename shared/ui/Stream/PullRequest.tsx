@@ -57,7 +57,7 @@ const Root = styled.div`
 			margin: 0 5px;
 		}
 	}
-	@media only screen and (max-width: 700px) {
+	@media only screen and (max-width: 630px) {
 		.wide-text {
 			display: none;
 		}
@@ -222,7 +222,6 @@ export const PullRequest = () => {
 							</PREditTitle>
 						) : (
 							<>
-								{title || pr.title} <Link href={pr.url}>#{pr.number}</Link>
 								<div className="action-buttons">
 									<span>
 										<Icon
@@ -263,7 +262,8 @@ export const PullRequest = () => {
 									<span>
 										<CancelButton title="Close" className="clickable" onClick={exit} />
 									</span>
-								</div>{" "}
+								</div>
+								{title || pr.title} <Link href={pr.url}>#{pr.number}</Link>
 							</>
 						)}
 					</PRTitle>

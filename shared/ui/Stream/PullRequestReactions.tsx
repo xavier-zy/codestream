@@ -189,7 +189,7 @@ export const PullRequestReactions = (props: ReactionProps) => {
 			);
 			const iReacted = loginList.includes(me);
 			return (
-				<Tooltip placement="bottomLeft" delay={1} title={title}>
+				<Tooltip placement="bottomLeft" delay={1} title={title} trigger={["hover"]}>
 					<PRReaction
 						className={iReacted ? "mine" : ""}
 						onClick={() => saveReaction(reaction.content, !iReacted)}

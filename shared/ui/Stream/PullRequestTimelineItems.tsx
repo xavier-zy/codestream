@@ -308,6 +308,18 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 							</PRTimelineItem>
 						);
 					}
+					case "RenamedTitleEvent": {
+						return (
+							<PRTimelineItem key={index} className="tall">
+								<Icon name="pencil" className="circled" />
+								<PRTimelineItemBody>
+									<PRHeadshotName key={index} size={16} person={item.actor} />
+									changed the title <s>{item.previousTitle}</s> {item.currentTitle}
+									<Timestamp time={item.createdAt!} relative />
+								</PRTimelineItemBody>
+							</PRTimelineItem>
+						);
+					}
 					case "LockedEvent": {
 						const map = {
 							OFF_TOPIC: "off-topic",

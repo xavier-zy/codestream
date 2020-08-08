@@ -161,8 +161,12 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 											return (
 												<PRThreadedCommentCard>
 													<PRCodeComment>
-														<Icon name="file" />
-														<span className="monospace">&nbsp;{_.path}</span>
+														<div className="row-with-icon-actions monospace ellipsis-left-container">
+															<Icon name="file" />
+															<span className="file-info ellipsis-left">
+																<bdi dir="ltr">{_.path}</bdi>
+															</span>
+														</div>
 														<pre
 															style={{ margin: "5px 0 10px 0" }}
 															className="code prettyprint"

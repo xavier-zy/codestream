@@ -389,6 +389,9 @@ export const PRContent = styled.div`
 					display: none;
 				}
 			}
+			${PRThreadedCommentCard} {
+				margin-left: 30px;
+			}
 			${PRConversation}:before {
 				left: 16px;
 			}
@@ -584,6 +587,11 @@ export const PRCodeComment = styled.div`
 	}
 	& + & {
 		margin-top: 15px;
+	}
+	.octicon-file {
+		display: inline-block;
+		vertical-align: 2px;
+		margin-right: 5px;
 	}
 `;
 

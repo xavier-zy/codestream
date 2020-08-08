@@ -116,16 +116,18 @@ export const PullRequestCommitsTab = props => {
 						</PRCommitDay>
 						<div>
 							{byDay[day].map(_ => {
+								const { author, committer } = _.commit;
 								return (
 									<PRCommitCard>
 										<h1>{_.commit.message}</h1>
-										{_.commit.author.user.login !== _.commit.committer.user.login && (
+										{author.name !== committer.name && (
 											<>
-												<PRHeadshotName className="no-padding" person={_.commit.author} />
+												<PRHeadshotName className="no-padding" person={author} />
+
 												<span className="subtle"> authored and </span>
 											</>
 										)}
-										<PRHeadshotName className="no-padding" person={_.commit.committer} />
+										<PRHeadshotName className="no-padding" person={committer} />
 										<span className="subtle"> committed</span>
 										<Timestamp time={_.commit.authoredDate} relative />
 										<PRCommitButtons>

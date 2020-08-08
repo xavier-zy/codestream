@@ -428,8 +428,32 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 							</PRTimelineItem>
 						);
 					}
-					// case "RenamedTitleEvent":
-					// 	return null;
+					case "DemilestonedEvent": {
+						return (
+							<PRTimelineItem key={index} className="tall">
+								<Icon name="milestone" className="circled" />
+								<PRTimelineItemBody>
+									<PRHeadshotName key={index} size={16} person={item.actor} />
+									removed milestone <b>{item.milestoneTitle}</b>
+									<Timestamp time={item.createdAt!} relative />
+								</PRTimelineItemBody>
+							</PRTimelineItem>
+						);
+					}
+					case "HeadRefForcePushedEvent": {
+						return (
+							<PRTimelineItem key={index} className="tall">
+								<Icon name="milestone" className="circled" />
+								<PRTimelineItemBody>
+									<PRHeadshotName key={index} size={16} person={item.actor} />
+									force-pushed the <PRBranch>{item.ref.name}</PRBranch> branch from{" "}
+									<PRBranch>{item.beforeCommit.abbreviatedOid}</PRBranch> to{" "}
+									<PRBranch>{item.afterCommit.abbreviatedOid}</PRBranch>
+									<Timestamp time={item.createdAt!} relative />
+								</PRTimelineItemBody>
+							</PRTimelineItem>
+						);
+					}
 					default: {
 						console.warn(`timelineItem not found: ${item.__typename} item is: `, item);
 						return null;

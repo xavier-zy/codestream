@@ -1547,6 +1547,16 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 							login
 							avatarUrl
 						  }
+						  beforeCommit {
+							abbreviatedOid
+						  }
+						  afterCommit {
+							abbreviatedOid
+						  }
+						  createdAt
+						  ref {
+							name
+						  }
 						}
 						... on HeadRefDeletedEvent {
 						  __typename
@@ -1569,7 +1579,15 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 						}
 						... on DemilestonedEvent {
 						  __typename
+						  actor {
+							login
+							avatarUrl
+							resourcePath
+							url
+						  }
 						  id
+						  milestoneTitle
+						  createdAt
 						}
 						... on CrossReferencedEvent {
 						  __typename

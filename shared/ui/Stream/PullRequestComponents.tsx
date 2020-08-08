@@ -4,6 +4,7 @@ import styled from "styled-components";
 import { Headshot, PRHeadshot } from "../src/components/Headshot";
 import { PRHeadshotName } from "../src/components/HeadshotName";
 import { PullRequestReactButton } from "./PullRequestReactions";
+import { TextButton } from "../src/components/controls/InlineMenu";
 
 export const PRHeader = styled.div`
 	margin: 20px 20px 0 20px;
@@ -422,6 +423,9 @@ export const PRSection = styled.div`
 		&:hover {
 			color: var(--text-color-info);
 		}
+	}
+	${TextButton}:hover {
+		color: var(--text-color-info);
 	}
 `;
 

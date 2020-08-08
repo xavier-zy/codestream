@@ -22,7 +22,7 @@ export interface InlineMenuProps {
 	noChevronDown?: boolean;
 }
 
-const TextButton = styled.span`
+export const TextButton = styled.span`
 	color: ${props => props.theme.colors.textHighlight};
 	&.subtle {
 		color: var(--text-color-subtle);

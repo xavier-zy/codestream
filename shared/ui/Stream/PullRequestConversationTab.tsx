@@ -932,9 +932,14 @@ export const PullRequestConversationTab = props => {
 							Reviewers
 						</InlineMenu>
 					</h1>
-					{reviewers.map(_ => {
-						return <PRHeadshotName key={_.avatarUrl} person={_} size={20} />;
-					})}
+					{reviewers.length > 0
+						? reviewers.map(_ => (
+								<>
+									<PRHeadshotName key={_.avatarUrl} person={_} size={20} />
+									<br />
+								</>
+						  ))
+						: "No reviews"}
 				</PRSection>
 				<PRSection>
 					<h1>
@@ -958,7 +963,7 @@ export const PullRequestConversationTab = props => {
 						))
 					) : (
 						<>
-							None yet&mdash;<a onClick={() => {}}>assign yourself</a>
+							None yet&mdash;<a onClick={() => toggleAssignee(me, true)}>assign yourself</a>
 						</>
 					)}
 				</PRSection>

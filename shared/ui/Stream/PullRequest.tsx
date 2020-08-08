@@ -118,6 +118,10 @@ export const PullRequest = () => {
 		setIsLoadingMessage("");
 	};
 
+	const checkout = async () => {
+		//
+	};
+
 	const saveTitle = async () => {
 		setIsLoadingMessage("Saving Title...");
 		setSavingTitle(true);
@@ -236,10 +240,10 @@ export const PullRequest = () => {
 									</span>
 									<span>
 										<Icon
-											title="Checkout"
+											title="Checkout Branch"
 											trigger={["hover"]}
 											delay={1}
-											onClick={() => fetch("Checkout...")}
+											onClick={checkout}
 											placement="bottom"
 											className="clickable"
 											name="repo"
@@ -282,7 +286,13 @@ export const PullRequest = () => {
 							<PRAuthor>{pr.author.login}</PRAuthor>
 							<PRAction>
 								{action} {pr.commits && pr.commits.totalCount} commits into{" "}
-								<PRBranch>{pr.baseRefName}</PRBranch> from <PRBranch>{pr.headRefName}</PRBranch>{" "}
+								<Link href={pr.url.replace(/\/pull\/\d+$/, `/tree/${pr.baseRefName}`)}>
+									<PRBranch>{pr.baseRefName}</PRBranch>
+								</Link>
+								{" from "}
+								<Link href={pr.url.replace(/\/pull\/\d+$/, `/tree/${pr.headRefName}`)}>
+									<PRBranch>{pr.headRefName}</PRBranch>
+								</Link>{" "}
 								<Icon
 									title="Copy"
 									placement="bottom"

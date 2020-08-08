@@ -1679,6 +1679,18 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 						}
 						... on UnassignedEvent {
 						  __typename
+						  actor {
+							login
+							avatarUrl
+						  }
+						  createdAt
+						  assignee {
+							... on User {
+							  id
+							  email
+							  login
+							}
+						  }
 						}
 						... on TransferredEvent {
 						  __typename

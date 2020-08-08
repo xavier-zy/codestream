@@ -300,6 +300,18 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 							</PRTimelineItem>
 						);
 					}
+					case "UnassignedEvent": {
+						return (
+							<PRTimelineItem key={index} className="tall">
+								<Icon name="person" className="circled" />
+								<PRTimelineItemBody>
+									<PRHeadshotName key={index} size={16} person={item.actor} />
+									unassigned <b>{item.assignee.login}</b>
+									<Timestamp time={item.createdAt!} relative />
+								</PRTimelineItemBody>
+							</PRTimelineItem>
+						);
+					}
 					case "MergedEvent": {
 						return (
 							<PRTimelineItem key={index} className="tall">

@@ -696,8 +696,8 @@ export const PullRequestConversationTab = props => {
 							<PRStatusHeadshot className="green-background">
 								<Icon name="git-merge" />
 							</PRStatusHeadshot>
-							<div style={{ padding: "5px 0" }}>
-								<div style={{ display: "flex" }}>
+							<PRCommentHeader>
+								<div style={{ display: "flex", marginTop: "10px" }}>
 									<PRIconButton className="green-background">
 										<Icon name="check" />
 									</PRIconButton>
@@ -706,6 +706,8 @@ export const PullRequestConversationTab = props => {
 										<p>Rebase and merge can be performed automatically.</p>
 									</div>
 								</div>
+							</PRCommentHeader>
+							<div style={{ padding: "5px 0" }}>
 								<PRButtonRow>
 									{/*
 						<Tooltip

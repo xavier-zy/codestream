@@ -24,14 +24,13 @@ export const PRTitle = styled.div`
 		}
 	}
 	.cancel-button {
-		opacity: 0.7 !important;
+		opacity: 1 !important;
 		// vertical-align: 3px;
 	}
 	.action-buttons {
 		position: absolute;
 		top: 20px;
 		right: 20px;
-		opacity: 0.7;
 		white-space: nowrap;
 		display: flex;
 		> span {
@@ -42,6 +41,7 @@ export const PRTitle = styled.div`
 			display: inline-block;
 			font-size: 11px !important; // to match the spinnable icon
 			line-height: 10px !important;
+			opacity: 0.7;
 		}
 	}
 `;
@@ -466,6 +466,7 @@ export const PRCommentHeader = styled.div`
 	background: var(--base-background-color);
 	display: flex;
 	align-items: top;
+	border-radius: 4px 4px 0 0;
 `;
 
 export const PRCommentBody = styled.div`
@@ -560,14 +561,7 @@ export const PRIconButton = styled.div`
 `;
 
 export const PRButtonRow = styled.div`
-	margin: 15px -14px -14px -14px;
-	border-top: 1px solid var(--base-border-color);
-	border-radius: 0 0 5px 5px;
-	padding: 15px;
-	// background: var(--base-background-color);
-	.vscode-dark& {
-		background: rgba(0, 0, 0, 0.1);
-	}
+	padding-top: 10px;
 `;
 
 export const PRCodeCommentBody = styled.div`

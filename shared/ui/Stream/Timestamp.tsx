@@ -46,12 +46,12 @@ export const distanceOfTimeInWords = (
 		// 1 day
 		distance = Math.round(seconds / (60 * 60));
 		when = `${distance} ${plural(abbreviated ? "hr" : "hour", distance)}`;
-	} else if (seconds < WEEK) {
-		// 1 week
+	} else if (seconds < WEEK * 2) {
+		// 2 weeks
 		distance = Math.round(seconds / (60 * 60 * 24));
 		when = `${distance} ${plural("day", distance)}`;
-	} else if (seconds < MONTH) {
-		// 1 month
+	} else if (seconds < MONTH * 1.5) {
+		// 1.5 months
 		distance = Math.round(seconds / (60 * 60 * 24 * 7));
 		when = `${distance} ${plural(abbreviated ? "wk" : "week", distance)}`;
 	} else if (seconds < YEAR) {

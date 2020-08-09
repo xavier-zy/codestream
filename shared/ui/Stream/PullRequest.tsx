@@ -45,6 +45,8 @@ import { PullRequestFilesChangedTab } from "./PullRequestFilesChangedTab";
 import { FloatingLoadingMessage } from "../src/components/FloatingLoadingMessage";
 import { Button } from "../src/components/Button";
 
+export const WidthBreakopint = "630px";
+
 const Root = styled.div`
 	${Tabs} {
 		margin: 10px 20px 10px 20px;
@@ -57,7 +59,7 @@ const Root = styled.div`
 			margin: 0 5px;
 		}
 	}
-	@media only screen and (max-width: 630px) {
+	@media only screen and (max-width: ${WidthBreakopint}) {
 		.wide-text {
 			display: none;
 		}

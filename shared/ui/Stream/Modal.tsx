@@ -46,6 +46,9 @@ const ModalWrapper = styled.div`
 			backdrop-filter: contrast(0.5) blur(1px);
 		}
 	}
+	&.show-global-nav {
+		top: 50px;
+	}
 	div.children {
 		height: 100%;
 		padding: 50px 20px;
@@ -77,6 +80,7 @@ export interface ModalProps {
 	onClose?: (e: any) => void;
 	verticallyCenter?: boolean;
 	translucent?: boolean;
+	showGlobalNav?: boolean;
 }
 
 export function Modal(props: PropsWithChildren<ModalProps>) {
@@ -113,7 +117,11 @@ export function Modal(props: PropsWithChildren<ModalProps>) {
 
 	return createPortal(
 		<ModalContext.Provider value={context}>
-			<ModalWrapper className={props.translucent ? "translucent" : ""}>
+			<ModalWrapper
+				className={`${props.translucent ? "translucent " : ""}${
+					props.showGlobalNav ? "show-global-nav " : ""
+				}`}
+			>
 				{props.onClose && <CancelButton onClick={props.onClose} />}
 				<ScrollBox>
 					<div className="vscroll">

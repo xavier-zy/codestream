@@ -33,7 +33,8 @@ import {
 	PRBranch,
 	PRBadge,
 	PRPlusMinus,
-	PREditTitle
+	PREditTitle,
+	PRActionButtons
 } from "./PullRequestComponents";
 import { LoadingMessage } from "../src/components/LoadingMessage";
 import { Modal } from "./Modal";
@@ -180,7 +181,7 @@ export const PullRequest = () => {
 	console.warn("REPO: ", ghRepo);
 	if (!pr) {
 		return (
-			<Modal verticallyCenter>
+			<Modal verticallyCenter showGlobalNav>
 				<LoadingMessage>Loading Pull Request...</LoadingMessage>
 			</Modal>
 		);
@@ -224,47 +225,6 @@ export const PullRequest = () => {
 							</PREditTitle>
 						) : (
 							<>
-								<div className="action-buttons">
-									<span>
-										<Icon
-											title="Edit Title"
-											trigger={["hover"]}
-											delay={1}
-											onClick={() => {
-												setTitle(pr.title);
-												setEditingTitle(true);
-											}}
-											placement="bottom"
-											className="clickable"
-											name="pencil"
-										/>
-									</span>
-									<span>
-										<Icon
-											title="Checkout Branch"
-											trigger={["hover"]}
-											delay={1}
-											onClick={checkout}
-											placement="bottom"
-											className="clickable"
-											name="repo"
-										/>
-									</span>
-									<span>
-										<Icon
-											title="Reload"
-											trigger={["hover"]}
-											delay={1}
-											onClick={() => fetch("Reloading...")}
-											placement="bottom"
-											className={`clickable spinnable ${isLoadingPR ? "spin" : ""}`}
-											name="refresh"
-										/>
-									</span>
-									<span>
-										<CancelButton title="Close" className="clickable" onClick={exit} />
-									</span>
-								</div>
 								{title || pr.title} <Link href={pr.url}>#{pr.number}</Link>
 							</>
 						)}
@@ -305,6 +265,45 @@ export const PullRequest = () => {
 							</PRAction>
 							<Timestamp time={pr.createdAt} relative />
 						</PRStatusMessage>
+						<PRActionButtons>
+							<span>
+								<Icon
+									title="Edit Title"
+									trigger={["hover"]}
+									delay={1}
+									onClick={() => {
+										setTitle(pr.title);
+										setEditingTitle(true);
+									}}
+									placement="bottom"
+									name="pencil"
+								/>
+							</span>
+							<span>
+								<Icon
+									title="Checkout Branch"
+									trigger={["hover"]}
+									delay={1}
+									onClick={checkout}
+									placement="bottom"
+									name="repo"
+								/>
+							</span>
+							<span>
+								<Icon
+									title="Reload"
+									trigger={["hover"]}
+									delay={1}
+									onClick={() => fetch("Reloading...")}
+									placement="bottom"
+									className={`${isLoadingPR ? "spin" : ""}`}
+									name="refresh"
+								/>
+							</span>
+							<span>
+								<CancelButton className="button" title="Close" onClick={exit} />
+							</span>
+						</PRActionButtons>
 					</PRStatus>
 				</PRHeader>
 				{!derivedState.composeCodemarkActive && (

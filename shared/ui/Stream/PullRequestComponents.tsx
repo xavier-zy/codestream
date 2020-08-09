@@ -8,7 +8,7 @@ import { TextButton } from "../src/components/controls/InlineMenu";
 import { WidthBreakopint } from "./PullRequest";
 
 export const PRHeader = styled.div`
-	margin: 20px 20px 0 20px;
+	margin: 45px 15px 0 20px;
 `;
 
 export const PRTitle = styled.div`
@@ -29,22 +29,41 @@ export const PRTitle = styled.div`
 		opacity: 1 !important;
 		// vertical-align: 3px;
 	}
-	.action-buttons {
-		float: right;
-		// top: 20px;
-		// right: 20px;
-		white-space: nowrap;
-		display: flex;
-		margin-left: 10px;
-		> span {
-			padding-left: 10px;
-		}
-		.icon {
-			vertical-align: 3px;
-			display: inline-block;
-			font-size: 11px !important; // to match the spinnable icon
-			line-height: 10px !important;
-			opacity: 0.7;
+`;
+
+export const PRActionButtons = styled.div`
+	// top: 20px;
+	// right: 20px;
+	border: 1px solid var(--base-border-color);
+	border-radius: 5px;
+	background: var(--base-background-color);
+	white-space: nowrap;
+	display: flex;
+	margin-left: 10px;
+	overflow: hidden;
+	flex-shrink: 0;
+	> span {
+		// padding-left: 10px;
+		display: inline-block;
+		padding: 0;
+	}
+	> span + span {
+		border-left: 1px solid var(--base-border-color);
+	}
+	.icon {
+		cursor: pointer;
+		vertical-align: 3px;
+		display: inline-block;
+		font-size: 11px !important; // to match the spinnable icon
+		line-height: 16px !important;
+		opacity: 0.7;
+		padding: 8px !important;
+		width: auto !important;
+		height: auto !important;
+		&:hover {
+			opacity: 1;
+			background: var(--button-background-color) !important;
+			color: var(--button-foreground-color) !important;
 		}
 	}
 `;
@@ -52,13 +71,22 @@ export const PRTitle = styled.div`
 export const PREditTitle = styled.div`
 	width: 100%;
 	display: flex;
+	// margin-top: -1px;
+	line-height: 28px;
 	#title-input {
-		margin: -3px 0 0 -6px !important;
+		margin: 0 0 0 -6px !important;
 		font-size: 20px !important;
 		flex-grow: 10;
+		padding: 2px 6px !important;
+		height: 28px;
+		line-height: 28px;
 	}
 	> button {
-		margin-left: 10px;
+		padding-top: 0;
+		padding-bottom: 0;
+		margin: 0 0 0 10px;
+		height: 28px;
+		line-height: 13px;
 	}
 `;
 

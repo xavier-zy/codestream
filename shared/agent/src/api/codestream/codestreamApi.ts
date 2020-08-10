@@ -15,13 +15,13 @@ import { Container, SessionContainer } from "../../container";
 import { Logger } from "../../logger";
 import { isDirective, resolve, safeDecode, safeEncode  } from "../../managers/operations";
 import {
+	AddBlameMapRequest,
+	AddBlameMapRequestType,
 	AgentOpenUrlRequestType,
 	ChangeDataType,
 	DidChangeDataNotificationType,
 	ReportingMessageType,
-	UpdateInvisibleRequest,
-	AddBlameMapRequestType,
-	AddBlameMapRequest
+	UpdateInvisibleRequest
 } from "../../protocol/agent.protocol";
 import {
 	AccessToken,

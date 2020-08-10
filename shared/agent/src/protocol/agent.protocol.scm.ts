@@ -166,9 +166,13 @@ export interface ReposScm {
 export interface GetReposScmRequest {
 	/**
 	 * Set this flag to only return repos that a user has open in their workspace
-	 * (rather than including any repos that might have been later dynamically added)
+	 * (rather than including any repos that might have been later dynamically added [and removed])
 	 */
 	inEditorOnly?: boolean;
+	provider?: {
+		id: string;
+		path: string;
+	};
 }
 
 export interface GetReposScmResponse {
@@ -284,3 +288,48 @@ export const GetLatestCommittersRequestType = new RequestType<
 	void,
 	void
 >("codestream/scm/latestCommitters");
+
+export interface FetchAllRemotesRequest {
+	/**
+	 * CodeStream repositoryId
+	 * */
+	repoId: string;
+}
+
+export interface FetchAllRemotesResponse {}
+
+export const FetchAllRemotesRequestType = new RequestType<
+	FetchAllRemotesRequest,
+	FetchAllRemotesResponse,
+	void,
+	void
+>("codestream/scm/remotes");
+
+export interface GetFileContentsAtRevisionRequest {
+	/**
+	 * CodeStream repositoryId
+	 * */
+	repoId: string;
+	/**
+	 * relative file path
+	 * */
+	path: string;
+	/**
+	 * git commit sha
+	 * */
+	sha: string;
+
+	fetchAllRemotes?: boolean;
+}
+
+export interface GetFileContentsAtRevisionResponse {
+	content: string;
+	error?: string;
+}
+
+export const GetFileContentsAtRevisionRequestType = new RequestType<
+	GetFileContentsAtRevisionRequest,
+	GetFileContentsAtRevisionResponse,
+	void,
+	void
+>("codestream/scm/file/diff");

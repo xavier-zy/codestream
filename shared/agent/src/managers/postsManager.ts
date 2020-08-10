@@ -883,13 +883,45 @@ export class PostsManager extends EntityManagerBase<CSPost> {
 	@lspHandler(CreateShareableCodemarkRequestType)
 	async createSharingCodemarkPost(
 		request: CreateShareableCodemarkRequest
-	): Promise<CreateShareableCodemarkResponse> {
+	): Promise<CreateShareableCodemarkResponse | undefined> {
 		const codemarkRequest: CreateCodemarkRequest = {
 			...request.attributes,
 			status:
 				request.attributes.type === CodemarkType.Issue ? request.attributes.status : undefined,
 			markers: []
 		};
+
+		// if (request.textDocuments && request.textDocuments.filter(_ => _.uri.indexOf("-0-") > -1)) {
+		// 	const { providerRegistry } = SessionContainer.instance();
+
+		// 	const uri = URI.parse(request.textDocuments[0].uri);
+		// 	const bar = Buffer.from(
+		// 		uri.fsPath.substring(0, uri.fsPath.indexOf("-0-")),
+		// 		"base64"
+		// 	).toString("utf8") as any;
+		// 	const foo = JSON.parse(bar);
+
+		// 	const response = await providerRegistry.executeMethod({
+		// 		method: "addPullRequestReview",
+		// 		providerId: "github*com",
+		// 		params: {
+		// 			pullRequestId: foo.metadata.pullRequest.id
+		// 		}
+		// 	});
+		// 	const foo1 = await providerRegistry.executeMethod({
+		// 		method: "createPullRequestReviewComment",
+		// 		providerId: "github*com",
+		// 		params: {
+		// 			pullRequestId: foo.metadata.pullRequest.id,
+		// 			pullRequestReviewId: response.addPullRequestReview.pullRequestReview.id,
+		// 			text: request.attributes.text || "",
+		// 			filePath: "src/CodeStream.VisualStudio.Core/ContentTypes.cs",
+		// 			position: 10
+		// 		}
+		// 	});
+
+		// 	return undefined;
+		// }
 
 		const markerCreationDescriptors: MarkerCreationDescriptor[] = [];
 		let codemark: CodemarkPlus | undefined;
@@ -1228,11 +1260,12 @@ export class PostsManager extends EntityManagerBase<CSPost> {
 		// otherwise, use the start commit if specified by the user.
 		// otherwise, use the parent of the first commit of this branch (the fork point)
 		// if that doesn't exist, use HEAD
-		const baseSha = (pushedCommit && !amendingReviewId)
-			? pushedCommit.sha
-			: scm.commits && scm.commits.length > 0
-			? (await git.getParentCommitShas(scm.repoPath, scm.commits[scm.commits.length - 1].sha))[0]
-			: latestCommitSha;
+		const baseSha =
+			pushedCommit && !amendingReviewId
+				? pushedCommit.sha
+				: scm.commits && scm.commits.length > 0
+				? (await git.getParentCommitShas(scm.repoPath, scm.commits[scm.commits.length - 1].sha))[0]
+				: latestCommitSha;
 
 		if (!baseSha) {
 			throw new Error("Could not determine newest pushed commit for review creation");
@@ -1717,7 +1750,7 @@ export class PostsManager extends EntityManagerBase<CSPost> {
 					anchorFormat: "[${text}](${url})"
 				};
 		}
-	}
+	};
 
 	createProviderCard = async (
 		providerCardRequest: {
@@ -1941,7 +1974,7 @@ export class PostsManager extends EntityManagerBase<CSPost> {
 			Logger.error(error, `failed to create a ${attributes.issueProvider.name} card:`);
 			return undefined;
 		}
-	}
+	};
 }
 
 async function resolveCreatePostResponse(response: CreatePostResponse) {

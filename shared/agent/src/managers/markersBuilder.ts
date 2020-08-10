@@ -7,10 +7,12 @@ import { Marker, MarkerLocation, Ranges } from "../api/extensions";
 import { Container, SessionContainer } from "../container";
 import { Logger } from "../logger";
 import { calculateLocation } from "../markerLocation/calculator";
+import { CodeStreamDiffUriData } from "../protocol/agent.protocol";
 import { CreateMarkerRequest } from "../protocol/agent.protocol.codemarks";
 import { CodeBlockSource } from "../protocol/agent.protocol.posts";
 import { CSReviewCheckpoint } from "../protocol/api.protocol";
 import { CSMarkerLocation, CSReferenceLocation } from "../protocol/api.protocol.models";
+import * as csUri from "../system/uri";
 import { xfs } from "../xfs";
 import { ReviewsManager } from "./reviewsManager";
 import { ScmManager } from "./scmManager";
@@ -18,6 +20,9 @@ import { ScmManager } from "./scmManager";
 export abstract class MarkersBuilder {
 	static newBuilder(documentId: TextDocumentIdentifier) {
 		if (documentId.uri.startsWith("codestream-diff://")) {
+			if (csUri.Uris.isCodeStreamDiffUri(csUri.Uris.CodeStreamDiffPrefix)) {
+				return new CodeStreamDiffMarkersBuilder(documentId);
+			}
 			return new ReviewDiffMarkersBuilder(documentId);
 		} else {
 			return new DefaultMarkersBuilder(documentId);
@@ -317,6 +322,183 @@ class DefaultMarkersBuilder extends MarkersBuilder {
 		}
 
 		return fileContents;
+	}
+}
+
+class CodeStreamDiffMarkersBuilder extends MarkersBuilder {
+	private readonly codeStreamDiffUri: CodeStreamDiffUriData;
+
+	constructor(documentId: TextDocumentIdentifier) {
+		super(documentId);
+		const uri = URI.parse(documentId.uri);
+		this.codeStreamDiffUri = csUri.Uris.fromCodeStreamDiffUri<CodeStreamDiffUriData>(
+			documentId.uri
+		)!;
+	}
+
+	protected async getLocationInfo(
+		source: CodeBlockSource | undefined,
+		location: CSMarkerLocation
+	): Promise<{
+		referenceLocations: CSReferenceLocation[];
+		backtrackedLocation?: UncommittedBacktrackedLocation;
+		fileCurrentCommitSha?: string;
+	}> {
+		if (source == null) return this.getLocationInfoWithoutSource();
+		if (source.revision == null) {
+			return this.getLocationInfoWithoutRevision(source.repoPath, location);
+		}
+		return this.getLocationInfoCore(source.repoPath, source.revision, location);
+	}
+
+	private getLocationInfoWithoutSource() {
+		return {
+			referenceLocations: []
+		};
+	}
+
+	private async getLocationInfoWithoutRevision(repoPath: string, location: CSMarkerLocation) {
+		Logger.log(`prepareMarkerCreationDescriptor: no source revision - file has no commits`);
+		const { git } = SessionContainer.instance();
+
+		const repoHead = await git.getRepoHeadRevision(repoPath);
+		if (repoHead == null) throw new Error(`Cannot determine HEAD revision for ${repoPath}`);
+
+		const filePath = path.join(repoPath, this.codeStreamDiffUri.path);
+
+		return {
+			referenceLocations: [
+				{
+					commitHash: repoHead,
+					location: MarkerLocation.toArray(MarkerLocation.empty()),
+					flags: {
+						unversionedFile: true
+					}
+				}
+			],
+			backtrackedLocation: {
+				atDocument: location,
+				fileContents: await this.getFileContents(),
+				filePath: filePath
+			},
+			fileCurrentCommitSha: repoHead
+		};
+	}
+
+	private async getLocationInfoCore(
+		repoPath: string,
+		fileCurrentCommitSha: string,
+		location: CSMarkerLocation
+	): Promise<{
+		referenceLocations: CSReferenceLocation[];
+		backtrackedLocation?: UncommittedBacktrackedLocation;
+		fileCurrentCommitSha?: string;
+	}> {
+		Logger.log(`prepareMarkerCreationDescriptor: source revision ${fileCurrentCommitSha}`);
+
+		const { git } = SessionContainer.instance();
+
+		const fileContents = await this.getFileContents();
+		const locationAtCurrentCommit = await SessionContainer.instance().markerLocations.backtrackLocation(
+			this._documentId,
+			fileContents,
+			location,
+			fileCurrentCommitSha
+		);
+		Logger.log(
+			`prepareMarkerCreationDescriptor: location at current commit ${MarkerLocation.toArray(
+				locationAtCurrentCommit
+			)}`
+		);
+
+		const filePath = path.join(repoPath, this.codeStreamDiffUri.path);
+
+		const blameRevisionsPromises = git.getBlameRevisions(filePath, {
+			ref: fileCurrentCommitSha,
+			// it expects 0-based ranges
+			startLine: locationAtCurrentCommit.lineStart - 1,
+			endLine: locationAtCurrentCommit.lineEnd - 1,
+			retryWithTrimmedEndOnFailure: true
+		});
+		const remoteDefaultBranchRevisionsPromises = git.getRemoteDefaultBranchHeadRevisions(repoPath, [
+			"upstream",
+			"origin"
+		]);
+		const backtrackShas = [
+			...(await blameRevisionsPromises).map(revision => revision.sha),
+			...(await remoteDefaultBranchRevisionsPromises)
+		].filter(function(sha, index, self) {
+			return sha !== fileCurrentCommitSha && index === self.indexOf(sha);
+		});
+		Logger.log(
+			`prepareMarkerCreationDescriptor: backtracking location to ${backtrackShas.length} revisions`
+		);
+
+		const promises = backtrackShas.map(async (sha, index) => {
+			const diff = await git.getDiffBetweenCommits(fileCurrentCommitSha!, sha, filePath);
+			const location = await calculateLocation(locationAtCurrentCommit!, diff!);
+			const locationArray = MarkerLocation.toArray(location);
+			Logger.log(`prepareMarkerCreationDescriptor: backtracked at ${sha} to ${locationArray}`);
+			return {
+				commitHash: sha,
+				location: locationArray,
+				flags: {
+					backtracked: true
+				}
+			};
+		});
+
+		const meta = locationAtCurrentCommit.meta || {};
+		const canonical = !meta.startWasDeleted && !meta.endWasDeleted;
+		const referenceLocation = {
+			commitHash: fileCurrentCommitSha,
+			location: MarkerLocation.toArray(locationAtCurrentCommit),
+			flags: {
+				canonical,
+				backtracked: !canonical
+			}
+		};
+		const backtrackedLocations = await Promise.all(promises);
+		const referenceLocations = [referenceLocation, ...backtrackedLocations];
+		Logger.log(
+			`prepareMarkerCreationDescriptor: ${referenceLocations.length} reference locations calculated`
+		);
+
+		let backtrackedLocation: UncommittedBacktrackedLocation | undefined;
+		if (!canonical) {
+			backtrackedLocation = {
+				atCurrentCommit: locationAtCurrentCommit,
+				atDocument: location,
+				fileContents,
+				filePath
+			};
+		}
+
+		return {
+			referenceLocations,
+			backtrackedLocation,
+			fileCurrentCommitSha
+		};
+	}
+
+	private async getFileContents() {
+		const { git } = SessionContainer.instance();
+
+		const repo = await git.getRepositoryById(this.codeStreamDiffUri.repoId);
+		if (!repo) {
+			throw new Error(`Could not load repo with ID ${this.codeStreamDiffUri.repoId}`);
+		}
+
+		const fullPath = path.join(repo.path, this.codeStreamDiffUri.path);
+
+		const contents = await git.getFileContentForRevision(
+			URI.parse(fullPath),
+			this.codeStreamDiffUri.side === "left"
+				? this.codeStreamDiffUri.leftSha
+				: this.codeStreamDiffUri.rightSha
+		);
+
+		return contents || "";
 	}
 }
 

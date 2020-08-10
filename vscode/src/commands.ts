@@ -9,6 +9,7 @@ import { BuiltInCommands } from "./constants";
 import { Container } from "./container";
 import { Logger } from "./logger";
 import { Command, createCommandDecorator, Strings } from "./system";
+import * as csUri from "./system/uri";
 
 const commandRegistry: Command[] = [];
 const command = createCommandDecorator(commandRegistry);
@@ -231,6 +232,58 @@ export class Commands implements Disposable {
 			Uri.parse(`codestream-diff://local/undefined/${args.repoId}/left/${args.path}`),
 			Uri.parse(`codestream-diff://local/undefined/${args.repoId}/right/${args.path}`),
 			`${paths.basename(args.path)} review changes`,
+			{ preserveFocus: false, preview: true, viewColumn: viewColumn }
+		);
+
+		return true;
+	}
+
+	async showLocalDiff(args: {
+		repoId: string;
+		filePath: string;
+		baseSha: string;
+		baseBranch: string;
+		headSha: string;
+		headBranch: string;
+		context?: {
+			pullRequest: {
+				providerId: string;
+				id: string;
+			};
+		};
+	}): Promise<boolean> {
+		const leftData = {
+			path: args.filePath,
+			repoId: args.repoId,
+			baseBranch: args.baseBranch,
+			headBranch: args.headBranch,
+			leftSha: args.baseSha,
+			rightSha: args.headSha,
+			side: "left",
+			context: args.context
+		};
+
+		const rightData = {
+			path: args.filePath,
+			repoId: args.repoId,
+			baseBranch: args.baseBranch,
+			headBranch: args.headBranch,
+			leftSha: args.baseSha,
+			rightSha: args.headSha,
+			side: "right",
+			context: args.context
+		};
+
+		const viewColumn = await this.getViewColumn();
+		await commands.executeCommand(
+			BuiltInCommands.Diff,
+			csUri.Uris.toCodeStreamDiffUri(leftData, args.filePath),
+			csUri.Uris.toCodeStreamDiffUri(rightData, args.filePath),
+			`${Strings.truncate(paths.basename(args.filePath), 20)} (${Strings.truncate(
+				args.baseSha,
+				8,
+				""
+			)}) ⇔ (${Strings.truncate(args.headSha, 8, "")})`,
 			{ preserveFocus: false, preview: true, viewColumn: viewColumn }
 		);
 

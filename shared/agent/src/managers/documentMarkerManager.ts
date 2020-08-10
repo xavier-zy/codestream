@@ -38,6 +38,7 @@ import {
 	CSUser
 } from "../protocol/api.protocol";
 import { Functions, log, lsp, lspHandler, Strings } from "../system";
+import * as csUri from "../system/uri";
 import { ReviewsManager } from "./reviewsManager";
 
 const emojiMap: { [key: string]: string } = require("../../emoji/emojis.json");
@@ -221,6 +222,9 @@ export class DocumentMarkerManager {
 	@lspHandler(FetchDocumentMarkersRequestType)
 	async get(request: FetchDocumentMarkersRequest): Promise<FetchDocumentMarkersResponse> {
 		if (request.textDocument.uri.startsWith("codestream-diff://")) {
+			if (csUri.Uris.isCodeStreamDiffUri(request.textDocument.uri)) {
+				return emptyResponse;
+			}
 			return this.getDocumentMarkersForDiff(request);
 		} else {
 			return this.getDocumentMarkersForRegularFile(request);

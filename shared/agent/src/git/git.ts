@@ -138,7 +138,9 @@ async function setOrFindGitPath(gitPath?: string): Promise<GitLocation> {
 	const gitInfo = await findGitPath(gitPath);
 
 	if (gitInfo.isWsl) {
-		Logger.log(`Git found: ${gitInfo.path} git \u2022 ${Strings.getDurationMilliseconds(start)} ms`)
+		Logger.log(
+			`Git found: ${gitInfo.path} git \u2022 ${Strings.getDurationMilliseconds(start)} ms`
+		);
 	} else {
 		Logger.log(
 			`Git found: ${gitInfo.version} @ ${

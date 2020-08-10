@@ -16,12 +16,16 @@ import {
 	PRThreadedCommentHeader,
 	PRFoot
 } from "./PullRequestComponents";
-import React, { PropsWithChildren } from "react";
+import React, { PropsWithChildren, useState } from "react";
 import { PRHeadshot, Headshot } from "../src/components/Headshot";
 import Timestamp from "./Timestamp";
 import Icon from "./Icon";
 import { MarkdownText } from "./MarkdownText";
-import { FetchThirdPartyPullRequestPullRequest } from "@codestream/protocols/agent";
+import {
+	FetchThirdPartyPullRequestPullRequest,
+	ExecuteThirdPartyTypedType,
+	CreatePullRequestCommentRequest
+} from "@codestream/protocols/agent";
 import Tag from "./Tag";
 import { Link } from "./Link";
 import { PRHeadshotName } from "../src/components/HeadshotName";
@@ -32,6 +36,8 @@ import * as Path from "path-browserify";
 import MessageInput from "./MessageInput";
 import { Button } from "../src/components/Button";
 import { PullRequestReactButton, PullRequestReactions } from "./PullRequestReactions";
+import { HostApi } from "../webview-api";
+import { RadioGroup, Radio } from "../src/components/RadioGroup";
 import { useSelector } from "react-redux";
 import { CodeStreamState } from "../store";
 import { CSMe } from "@codestream/protocols/api";
@@ -54,6 +60,39 @@ interface Props {
 export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 	const { pr, setIsLoadingMessage, fetch } = props;
 	if (!pr || !pr.timelineItems) return null;
+
+	const [reviewOption, setReviewOption] = useState("COMMENT");
+	const [reviewOptionText, setReviewOptionText] = useState("");
+	const submitReview = async (event?: React.SyntheticEvent) => {
+		// await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
+		// 	method: "submitReview",
+		// 	providerId: "github*com",
+		// 	params: {
+		// 		pullRequestId: pr.id!,
+		// 		text: reviewOptionText,
+		// 		eventType: reviewOption
+		// 	}
+		// });
+		// props.fetch();
+	};
+
+	const cancelReview = async (event?: React.SyntheticEvent) => {
+		await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
+			method: "submitReview",
+			providerId: "github*com",
+			params: {
+				pullRequestId: pr.id!,
+				text: reviewOptionText,
+				eventType: "DISMISS"
+			}
+		});
+
+		props.fetch();
+	};
+
+	const handleOnChangeReviewOptions = (value: string) => {
+		setReviewOption(value);
+	};
 
 	const derivedState = useSelector((state: CodeStreamState) => {
 		const currentUser = state.users[state.session.userId!] as CSMe;

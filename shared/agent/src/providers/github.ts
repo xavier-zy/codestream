@@ -218,6 +218,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 	async getPullRequest(
 		request: FetchThirdPartyPullRequestRequest
 	): Promise<FetchThirdPartyPullRequestResponse> {
+		await this.ensureConnected();
 		let response = {} as FetchThirdPartyPullRequestResponse;
 		let repoOwner;
 		let repoName;
@@ -969,6 +970,66 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 		return rsp;
 	}
 
+	async addPullRequestReview(request: { pullRequestId: string }) {
+		const query = `
+		mutation AddPullRequestReview($pullRequestId:String!) {
+		addPullRequestReview(input: {pullRequestId: $pullRequestId}) {
+			clientMutationId
+			pullRequestReview {
+			  id
+			}
+		  }
+		}`;
+		const rsp = await this.client.request<any>(query, {
+			pullRequestId: request.pullRequestId
+		});
+		return rsp;
+	}
+
+	async createPullRequestReviewComment(request: {
+		pullRequestId: string;
+		pullRequestReviewId: string;
+		text: string;
+		filePath?: string;
+		position?: number;
+	}) {
+		const query = `
+		mutation AddPullRequestReviewComment($text:String!, $pullRequestId:String!, $pullRequestReviewId:String!, $filePath:String, $position:Int) {
+			addPullRequestReviewComment(input: {body:$text, pullRequestId:$pullRequestId, pullRequestReviewId:$pullRequestReviewId, path:$filePath, position:$position}) {
+			  clientMutationId
+			}
+		  }
+		  `;
+		const rsp = await this.client.request<any>(query, request);
+		return rsp;
+	}
+
+	async submitReview(request: { pullRequestId: string; text: string; eventType: string }) {
+		if (!request.eventType) {
+			request.eventType = "COMMENT";
+		}
+		if (
+			request.eventType !== "COMMENT" &&
+			request.eventType !== "APPROVE" &&
+			request.eventType !== "DISMISS" &&
+			request.eventType !== "REQUEST_CHANGES"
+		) {
+			throw new Error("Invalid eventType");
+		}
+		if (!request.text) request.text = "CHEEEEEEESE";
+		const query = `mutation SubmitPullRequestReview($pullRequestId:String!, $body:String!) {
+			submitPullRequestReview(input: {event: ${request.eventType}, body: $body, pullRequestId: $pullRequestId}){
+			  clientMutationId
+			}
+		  }
+		  `;
+		const rsp = await this.client.request<any>(query, {
+			pullRequestId: request.pullRequestId,
+			body: request.text
+		});
+		return rsp;
+	}
+
 	// async closePullRequest(request: { pullRequestId: string }) {
 	// 	const query = `mutation ClosePullRequest($pullRequestId: String!) {
 	// 		closePullRequest(input: {pullRequestId: $pullRequestId}) {
@@ -1406,8 +1467,14 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 				  id
 				  pullRequest(number:$pullRequestNumber) {
 					id
+					repository {
+						name
+  						nameWithOwner
+  						url
+					}
 					body
 					baseRefName
+					baseRefOid
 					author {
 					  login
 					  avatarUrl
@@ -1449,6 +1516,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 						}
 					  }
 					headRefName
+					headRefOid
 					labels(first: 10) {
 					  nodes {
 						color

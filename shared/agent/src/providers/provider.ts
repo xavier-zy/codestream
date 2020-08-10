@@ -135,6 +135,7 @@ export interface ThirdPartyProvider {
 	removeEnterpriseHost(request: RemoveEnterpriseProviderRequest): Promise<void>;
 	getConfig(): ThirdPartyProviderConfig;
 	isConnected(me: CSMe): boolean;
+	ensureConnected(request?: { providerTeamId?: string }): Promise<void>;
 }
 
 export interface ThirdPartyIssueProvider extends ThirdPartyProvider {

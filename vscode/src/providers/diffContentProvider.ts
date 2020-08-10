@@ -9,9 +9,11 @@ import {
 } from "vscode";
 import { GetReviewContentsResponse } from "@codestream/protocols/agent";
 import { CSReviewCheckpoint } from "@codestream/protocols/api";
+import { CodeStreamDiffUriData } from "@codestream/protocols/agent";
 import { Strings } from "../system";
 import { Container } from "../container";
 import { Logger } from "../logger";
+import * as csUri from "../system/uri";
 
 interface CacheValue {
 	/**
@@ -56,10 +58,14 @@ export class ReviewDiffContentProvider implements TextDocumentContentProvider, D
 	 * (the cache uses this filePath as part of the cache key)
 	 * @param  {TextDocument} textDocument
 	 */
-	private getFileInfo(textDocument: TextDocument): {
-		relativeFilePath: string;
-		workspaceFolderUriString: string;
-	} | undefined {
+	private getFileInfo(
+		textDocument: TextDocument
+	):
+		| {
+				relativeFilePath: string;
+				workspaceFolderUriString: string;
+		  }
+		| undefined {
 		if (!textDocument || !textDocument.uri || textDocument.uri.scheme === "codestream-diff") return;
 
 		// is this a real file that exists in the current workspace or folder?
@@ -175,7 +181,21 @@ export class ReviewDiffContentProvider implements TextDocumentContentProvider, D
 		this._textDocumentUriToRepoId.delete(textDocument.uri.toString());
 	}
 
-	provideTextDocumentContent(uri: Uri): string {
+	async provideTextDocumentContent(uri: Uri): Promise<string> {
+		if (csUri.Uris.isCodeStreamDiffUri(uri.toString())) {
+			const codeStreamDiff = csUri.Uris.fromCodeStreamDiffUri<CodeStreamDiffUriData>(
+				uri.toString()
+			);
+			if (!codeStreamDiff) {
+				throw new Error("Could not parse codestream-diff uri");
+			}
+			const contents = await Container.agent.scm.getFileContentsAtRevision(
+				codeStreamDiff.repoId,
+				codeStreamDiff.path,
+				codeStreamDiff.side === "left" ? codeStreamDiff.leftSha : codeStreamDiff.rightSha
+			);
+			return contents.content! || "";
+		}
 		const csReviewDiffInfo = Strings.parseCSReviewDiffUrl(uri.toString());
 		if (csReviewDiffInfo == null) return "";
 

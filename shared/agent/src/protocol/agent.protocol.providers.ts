@@ -358,8 +358,14 @@ export interface FetchThirdPartyPullRequestFilesResponse {
 
 export interface FetchThirdPartyPullRequestPullRequest {
 	id: string;
+	repository: {
+		name: string;
+		nameWithOwner: string;
+		url: string;
+	};
 	body: string;
 	baseRefName: string;
+	baseRefOid: string;
 	author: {
 		login: string;
 		avatarUrl: string;
@@ -391,6 +397,7 @@ export interface FetchThirdPartyPullRequestPullRequest {
 		}[];
 	};
 	headRefName: string;
+	headRefOid: string;
 	labels: {
 		nodes: {
 			color: string;

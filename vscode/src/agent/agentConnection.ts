@@ -89,7 +89,9 @@ import {
 	GetReviewContentsLocalRequestType,
 	AgentOpenUrlRequest,
 	AgentOpenUrlRequestType,
-	FetchReviewsRequestType
+	FetchReviewsRequestType,
+	GetFileContentsAtRevisionRequestType,
+	GetFileContentsAtRevisionResponse
 } from "@codestream/protocols/agent";
 import {
 	ChannelServiceType,
@@ -592,6 +594,18 @@ export class CodeStreamAgentConnection implements Disposable {
 		getFileInfo(uri: Uri) {
 			return this._connection.sendRequest(GetFileScmInfoRequestType, {
 				uri: uri.toString()
+			});
+		}
+
+		getFileContentsAtRevision(
+			repoId: string,
+			path: string,
+			sha: string
+		): Promise<GetFileContentsAtRevisionResponse> {
+			return this._connection.sendRequest(GetFileContentsAtRevisionRequestType, {
+				repoId: repoId,
+				path: path,
+				sha: sha
 			});
 		}
 	})(this);

@@ -1,6 +1,11 @@
 import { CSReviewChangeset } from "@codestream/protocols/api";
-import React, { useEffect } from "react";
-import { ReviewPlus } from "@codestream/protocols/agent";
+import React, { useEffect, useState, useCallback } from "react";
+import {
+	ReviewPlus,
+	FetchThirdPartyPullRequestPullRequest,
+	GetReposScmRequestType,
+	FetchAllRemotesRequestType
+} from "@codestream/protocols/agent";
 import { HostApi } from "..";
 import * as path from "path-browserify";
 import { ChangesetFile } from "./Review/ChangesetFile";
@@ -13,24 +18,27 @@ import { safe } from "@codestream/webview/utils";
 import { getById } from "@codestream/webview/store/repos/reducer";
 import {
 	ShowNextChangedFileNotificationType,
-	ShowPreviousChangedFileNotificationType,
-	EditorRevealRangeRequestType
+	ShowPreviousChangedFileNotificationType
 } from "@codestream/protocols/webview";
 import { WriteTextFileRequestType, ReadTextFileRequestType } from "@codestream/protocols/agent";
 import { Range } from "vscode-languageserver-types";
+import { useDidMount } from "../utilities/hooks";
+import { CompareLocalFilesRequestType } from "../ipc/host.protocol";
 
 // const VISITED_REVIEW_FILES = "review:changeset-file-list";
 const NOW = new Date().getTime(); // a rough timestamp so we know when the file was visited
 // const visitedFiles = localStore.get(VISITED_REVIEW_FILES) || {};
 
 export const PullRequestFilesChanged = (props: {
-	pr: any;
+	pr: FetchThirdPartyPullRequestPullRequest;
 	filesChanged: any[];
 	loading?: boolean;
 	withTelemetry?: boolean;
 }) => {
 	const { pr, loading, filesChanged } = props;
-	const dispatch = useDispatch<Dispatch>();
+	// const dispatch = useDispatch<Dispatch>();
+	const [repoId, setRepoId] = useState("");
+	const [pullRequestReviewId, setPullRequestReviewId] = useState("");
 	const derivedState = useSelector((state: CodeStreamState) => {
 		const userId = state.session.userId || "";
 		const matchFile =
@@ -45,6 +53,8 @@ export const PullRequestFilesChanged = (props: {
 			matchFile,
 			userId,
 			repos: state.repos,
+			// TODO more solid filtering
+			currentRepo: Object.values(state.repos).find(_ => _.name === props.pr.repository.name),
 			numFiles: props.filesChanged.length
 		};
 	});
@@ -65,6 +75,12 @@ export const PullRequestFilesChanged = (props: {
 			contents: JSON.stringify(newVisitedFiles, null, 4)
 		});
 	};
+
+	useDidMount(() => {
+		HostApi.instance.send(FetchAllRemotesRequestType, {
+			repoId: derivedState.currentRepo!.id!
+		});
+	});
 
 	useEffect(() => {
 		(async () => {
@@ -89,24 +105,45 @@ export const PullRequestFilesChanged = (props: {
 		return () => disposables.forEach(disposable => disposable.dispose());
 	}, [pr, filesChanged]);
 
-	const goDiff = async index => {
-		if (index < 0) index = derivedState.numFiles - 1;
-		if (index > derivedState.numFiles - 1) index = 0;
-		const f = filesChanged[index];
-		const visitedKey = [f.file].join(":");
-		// const response = HostApi.instance.send(PRShowDiffRequestType, {
-		// 	pr.id,
-		// 	repoId,
-		// 	f.file
-		// });
-		visitFile(visitedKey, index);
+	const goDiff = useCallback(
+		i => {
+			(async index => {
+				if (index < 0) index = derivedState.numFiles - 1;
+				if (index > derivedState.numFiles - 1) index = 0;
+				const f = filesChanged[index];
+				const visitedKey = [f.file].join(":");
+				// const response = HostApi.instance.send(PRShowDiffRequestType, {
+				// 	pr.id,
+				// 	repoId,
+				// 	f.file
+				// });
 
-		if (props.withTelemetry && pr.id) {
-			HostApi.instance.track("Review Diff Viewed", {
-				"PR ID": pr.id
-			});
-		}
-	};
+				const response = HostApi.instance.send(CompareLocalFilesRequestType, {
+					baseBranch: props.pr.baseRefName,
+					baseSha: props.pr.baseRefOid,
+					headBranch: props.pr.headRefName,
+					headSha: props.pr.headRefOid,
+					filePath: f.file,
+					repoId: derivedState.currentRepo!.id!,
+					context: {
+						pullRequest: {
+							providerId: "github*com",
+							id: pr.id
+						}
+					}
+				});
+
+				visitFile(visitedKey, index);
+
+				if (props.withTelemetry && pr.id) {
+					HostApi.instance.track("Review Diff Viewed", {
+						"PR ID": pr.id
+					});
+				}
+			})(i);
+		},
+		[repoId]
+	);
 
 	const nextFile = () => {
 		if (!visitedFiles) goDiff(0);

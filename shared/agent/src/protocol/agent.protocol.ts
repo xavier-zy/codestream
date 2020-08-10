@@ -233,3 +233,15 @@ export interface SetServerUrlRequest {
 export const SetServerUrlRequestType = new RequestType<SetServerUrlRequest, void, void, void>(
 	"codestream/set-server"
 );
+
+export interface CodeStreamDiffUriData {
+	path: string;
+	repoId: string;
+	baseBranch: string;
+	headBranch: string;
+	leftSha: string;
+	rightSha: string;
+	// left or right
+	side: string;
+	context?: any;
+}

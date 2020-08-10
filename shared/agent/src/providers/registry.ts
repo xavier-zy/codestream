@@ -379,26 +379,28 @@ export class ThirdPartyProviderRegistry {
 		return response;
 	}
 
-	@log()
+	@log({
+		prefix: (context, args) => `${context.prefix}:${args.method}`
+	})
 	@lspHandler(ExecuteThirdPartyRequestUntypedType)
 	async executeMethod(request: ExecuteThirdPartyRequest) {
 		const provider = getProvider(request.providerId);
 		if (provider === undefined) {
 			throw new Error(`No registered provider for '${request.providerId}'`);
 		}
-
+		let result = undefined;
 		try {
 			const pullRequestProvider = this.getPullRequestProvider(provider);
+			await pullRequestProvider.ensureConnected();
 			const response = (pullRequestProvider as any)[request.method](request.params);
-			const result = await response;
-			return result;
+			result = await response;
 		} catch (ex) {
 			Logger.error(ex, "executeMethod failed", {
 				method: request.method
 			});
 			throw new Error(`Failed to ${request.method} ${ex.message}`);
 		}
-		return undefined;
+		return result;
 	}
 
 	private getPullRequestProvider(

@@ -5,18 +5,25 @@ import { URI } from "vscode-uri";
 import { Ranges } from "../api/extensions";
 import { GitNumStat } from "../git/models/numstat";
 import { Logger } from "../logger";
+import { CodeStreamDiffUriData } from "../protocol/agent.protocol";
 import {
 	BlameAuthor,
 	CoAuthors,
 	CreateBranchRequest,
 	CreateBranchRequestType,
 	CreateBranchResponse,
+	FetchAllRemotesRequest,
+	FetchAllRemotesRequestType,
+	FetchAllRemotesResponse,
 	GetBranchesRequest,
 	GetBranchesRequestType,
 	GetBranchesResponse,
 	GetCommitScmInfoRequest,
 	GetCommitScmInfoRequestType,
 	GetCommitScmInfoResponse,
+	GetFileContentsAtRevisionRequest,
+	GetFileContentsAtRevisionRequestType,
+	GetFileContentsAtRevisionResponse,
 	GetFileScmInfoRequest,
 	GetFileScmInfoRequestType,
 	GetFileScmInfoResponse,
@@ -44,6 +51,7 @@ import {
 } from "../protocol/agent.protocol";
 import { FileStatus } from "../protocol/api.protocol.models";
 import { FileSystem, Iterables, log, lsp, lspHandler, Strings } from "../system";
+import * as csUri from "../system/uri";
 import { xfs } from "../xfs";
 import { Container, SessionContainer } from "./../container";
 import { IgnoreFilesHelper } from "./ignoreFilesManager";
@@ -119,6 +127,12 @@ export class ScmManager {
 			repositories = Array.from(await git.getRepositories());
 			if (request && request.inEditorOnly && repositories) {
 				repositories = repositories.filter(_ => _.isInWorkspace);
+			}
+			if (request?.provider) {
+				const remotes = (await repositories[0].getRemotes())[0];
+				if (remotes) {
+					remotes.path;
+				}
 			}
 		} catch (ex) {
 			gitError = ex.toString();
@@ -823,10 +837,64 @@ export class ScmManager {
 	@log()
 	getRangeInfo(request: GetRangeScmInfoRequest): Promise<GetRangeScmInfoResponse> {
 		if (request.uri.startsWith("codestream-diff://")) {
+			if (csUri.Uris.isCodeStreamDiffUri(request.uri)) {
+				return this.getCodeStreamDiffRangeInfo(request);
+			}
 			return this.getDiffRangeInfo(request);
 		} else {
 			return this.getFileRangeInfo(request);
 		}
+	}
+
+	private async getCodeStreamDiffRangeInfo({
+		uri: documentUri,
+		range,
+		dirty,
+		contents,
+		skipBlame
+	}: GetRangeScmInfoRequest): Promise<GetRangeScmInfoResponse> {
+		const { git, reviews } = SessionContainer.instance();
+		range = Ranges.ensureStartBeforeEnd(range);
+
+		const uri = URI.parse(documentUri);
+		const codeStreamDiff = csUri.Uris.fromCodeStreamDiffUri<CodeStreamDiffUriData>(documentUri);
+		if (!codeStreamDiff) {
+			throw new Error("Could not parse codestream-diff uri");
+		}
+
+		const repo = await git.getRepositoryById(codeStreamDiff.repoId);
+		if (repo == null) throw new Error(`Could not find repo with ID ${codeStreamDiff.repoId}`);
+
+		if (contents == null) {
+			const versionContents =
+				(await git.getFileContentForRevision(
+					uri,
+					codeStreamDiff.side === "left" ? codeStreamDiff.leftSha : codeStreamDiff.rightSha
+				)) || "";
+
+			const document = TextDocument.create(uri.toString(), "codestream", 0, versionContents);
+			contents = document.getText(range);
+		}
+
+		const gitRemotes = await repo.getRemotes();
+		const remotes = [...Iterables.map(gitRemotes, r => ({ name: r.name, url: r.normalizedUrl }))];
+
+		return {
+			uri: uri.toString(),
+			range: range,
+			contents: contents!,
+			scm: {
+				file: codeStreamDiff.path,
+				repoPath: repo.path,
+				repoId: codeStreamDiff.repoId,
+				revision: codeStreamDiff.side === "left" ? codeStreamDiff.leftSha : codeStreamDiff.rightSha,
+				authors: [],
+				remotes,
+				branch:
+					codeStreamDiff.side === "left" ? codeStreamDiff.baseBranch : codeStreamDiff.headBranch
+			},
+			error: undefined
+		};
 	}
 
 	private async getDiffRangeInfo({
@@ -1048,6 +1116,38 @@ export class ScmManager {
 		return {
 			scm: committers,
 			error: gitError
+		};
+	}
+
+	@log()
+	@lspHandler(FetchAllRemotesRequestType)
+	async fetchAllRemotes(request: FetchAllRemotesRequest): Promise<FetchAllRemotesResponse> {
+		const { git } = SessionContainer.instance();
+
+		const repo = await git.getRepositoryById(request.repoId);
+		if (!repo) throw new Error(`Could not load repo with ID ${request.repoId}`);
+
+		await git.fetchAllRemotes(repo.path);
+		return true;
+	}
+
+	@log()
+	@lspHandler(GetFileContentsAtRevisionRequestType)
+	async getFileContentsAtRevision(
+		request: GetFileContentsAtRevisionRequest
+	): Promise<GetFileContentsAtRevisionResponse> {
+		const { git } = SessionContainer.instance();
+
+		const repo = await git.getRepositoryById(request.repoId);
+		if (!repo) throw new Error(`Could not load repo with ID ${request.repoId}`);
+
+		const filePath = paths.join(repo.path, request.path);
+		if (request.fetchAllRemotes) {
+			await git.fetchAllRemotes(repo.path);
+		}
+		const contents = (await git.getFileContentForRevision(filePath, request.sha)) || "";
+		return {
+			content: contents
 		};
 	}
 }

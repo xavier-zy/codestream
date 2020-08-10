@@ -71,7 +71,8 @@ import {
 	WebviewIpcNotificationMessage,
 	WebviewIpcRequestMessage,
 	WebviewPanels,
-	TraverseDiffsRequestType
+	TraverseDiffsRequestType,
+	CompareLocalFilesRequestType
 } from "@codestream/protocols/webview";
 import { gate } from "system/decorators/gate";
 import {
@@ -894,6 +895,14 @@ export class WebviewController implements Disposable {
 			case ReviewShowDiffRequestType.method: {
 				webview.onIpcRequest(ReviewShowDiffRequestType, e, async (_type, params) => {
 					void (await Container.commands.showReviewDiff(params));
+					return emptyObj;
+				});
+
+				break;
+			}
+			case CompareLocalFilesRequestType.method: {
+				webview.onIpcRequest(CompareLocalFilesRequestType, e, async (_type, params) => {
+					void (await Container.commands.showLocalDiff(params));
 					return emptyObj;
 				});
 

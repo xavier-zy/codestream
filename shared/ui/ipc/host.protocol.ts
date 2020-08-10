@@ -169,3 +169,27 @@ export interface OpenUrlRequest {
 export const OpenUrlRequestType = new RequestType<OpenUrlRequest, void, void, void>(
 	`${IpcRoutes.Host}/url/open`
 );
+
+export interface CompareLocalFilesRequest {
+	repoId: string;
+	filePath: string;
+	headSha: string;
+	headBranch: string;
+	baseSha: string;
+	baseBranch: string;
+	context?: {
+		pullRequest: {
+			providerId: string;
+			id: string;
+		};
+	};
+}
+
+export interface CompareLocalFilesResponse {}
+
+export const CompareLocalFilesRequestType = new RequestType<
+	CompareLocalFilesRequest,
+	CompareLocalFilesResponse,
+	void,
+	void
+>(`${IpcRoutes.Host}/files/compare`);

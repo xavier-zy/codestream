@@ -10,7 +10,7 @@ import { isFeatureEnabled } from "../store/apiVersioning/reducer";
 import { canCreateCodemark } from "../store/codemarks/actions";
 import { HostApi } from "../webview-api";
 import { StartWorkNotificationType } from "@codestream/protocols/webview";
-import { setCurrentReview } from "../store/context/actions";
+import { setCurrentReview, setCurrentPullRequest } from "../store/context/actions";
 import { ComposeKeybindings } from "./ComposeTitles";
 
 interface PlusMenuProps {
@@ -37,7 +37,8 @@ export function PlusMenu(props: PlusMenuProps) {
 	});
 
 	const handleStartWorkRequest = () => {
-		dispatch(setCurrentReview(""));
+		dispatch(setCurrentPullRequest());
+		dispatch(setCurrentReview());
 		if (derivedState.activePanel === WebviewPanels.Status) {
 			const div = document.getElementById("start-work-div");
 			if (div) {
@@ -50,6 +51,12 @@ export function PlusMenu(props: PlusMenuProps) {
 			}
 		}
 		dispatch(openPanel(WebviewPanels.Status));
+	};
+
+	const go = panel => {
+		dispatch(setCurrentPullRequest());
+		dispatch(setCurrentReview());
+		dispatch(openPanel(panel));
 	};
 
 	const menuItems = [] as any;
@@ -73,7 +80,7 @@ export function PlusMenu(props: PlusMenuProps) {
 			{
 				icon: <Icon name="comment" />,
 				label: "Add Comment",
-				action: () => dispatch(openPanel(WebviewPanels.NewComment)),
+				action: () => go(WebviewPanels.NewComment),
 				subtextWide: "Comment on code & share to slack",
 				shortcut: ComposeKeybindings.comment,
 				key: "comment"
@@ -83,7 +90,7 @@ export function PlusMenu(props: PlusMenuProps) {
 				icon: <Icon name="issue" />,
 				label: "Create Issue",
 				subtextWide: "Perform ad-hoc code review",
-				action: () => dispatch(openPanel(WebviewPanels.NewIssue)),
+				action: () => go(WebviewPanels.NewIssue),
 				shortcut: ComposeKeybindings.issue,
 				key: "issue"
 			}
@@ -96,7 +103,7 @@ export function PlusMenu(props: PlusMenuProps) {
 			icon: <Icon name="review" />,
 			label: "Request a Code Review",
 			subtextWide: "Get feedback on your WIP",
-			action: () => dispatch(openPanel(WebviewPanels.NewReview)),
+			action: () => go(WebviewPanels.NewReview),
 			shortcut: ComposeKeybindings.review,
 			key: "review"
 		});

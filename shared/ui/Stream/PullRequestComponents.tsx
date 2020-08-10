@@ -90,14 +90,6 @@ export const PREditTitle = styled.div`
 	}
 `;
 
-export const PRStatus = styled.div`
-	display: flex;
-	width: 100%;
-	justify-content: center;
-	align-items: center;
-	margin: 10px 0 20px 0;
-`;
-
 export const PRStatusButton = styled(Button)`
 	flex-grow: 0;
 	border-radius: 15px;
@@ -113,6 +105,35 @@ export const PRStatusButton = styled(Button)`
 
 export const PRStatusMessage = styled.div`
 	flex-grow: 10;
+`;
+
+export const PRStatus = styled.div`
+	display: flex;
+	width: 100%;
+	justify-content: center;
+	align-items: center;
+	margin: 10px 0 20px 0;
+
+	@media only screen and (max-width: 450px) {
+		flex-wrap: wrap;
+		${PRStatusMessage} {
+			order: 1;
+			width: 100%;
+			margin-bottom: 10px;
+		}
+		${PRStatusButton} {
+			order: 2;
+			// max-width: 40%;
+			flex-grow: 0;
+			margin-right: auto;
+		}
+		${PRActionButtons} {
+			order: 3;
+			// max-width: 40%;
+			flex-grow: 0;
+			margin-left: auto;
+		}
+	}
 `;
 
 export const PRAuthor = styled.span`

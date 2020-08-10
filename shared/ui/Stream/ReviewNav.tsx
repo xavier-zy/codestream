@@ -34,7 +34,7 @@ const NavHeader = styled.div`
 	// flex-shrink: 0;
 	// display: flex;
 	// align-items: flex-start;
-	padding: 10px 10px 10px 15px;
+	padding: 40px 10px 10px 15px;
 	// justify-content: center;
 	width: 100%;
 	${Header} {
@@ -42,27 +42,6 @@ const NavHeader = styled.div`
 	}
 	${BigTitle} {
 		font-size: 16px;
-		@media only screen and (max-width: 430px) {
-			font-size: 14px;
-		}
-		@media only screen and (max-width: 350px) {
-			font-size: 13px;
-		}
-		@media only screen and (max-width: 270px) {
-			font-size: 12px;
-		}
-	}
-	.cancel-button {
-		cursor: pointer;
-		position: absolute;
-		right: 12px;
-		top: 10px;
-		padding: 5px 8px 5px 8px;
-		z-index: 30;
-		:hover {
-			color: var(--text-color-highlight);
-			background-color: var(--base-background-color);
-		}
 	}
 `;
 
@@ -612,7 +591,6 @@ export function ReviewNav(props: Props) {
 						{statusButtons()}
 					</TourTip>
 				</Nav>
-				<CancelButton title="Exit Review" onClick={exit} />
 			</NavHeader>
 			{props.composeOpen ? null : (
 				<div className="scroll-container">

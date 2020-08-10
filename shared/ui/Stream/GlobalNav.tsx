@@ -13,7 +13,7 @@ import { STEPS } from "./GettingStarted";
 import { openPanel } from "./actions";
 import { PlusMenu } from "./PlusMenu";
 import { EllipsisMenu } from "./EllipsisMenu";
-import { setComposeCodemarkActive, setCurrentPullRequest } from "../store/context/actions";
+import { setCurrentReview, setCurrentPullRequest } from "../store/context/actions";
 
 const sum = (total, num) => total + Math.round(num);
 
@@ -32,6 +32,7 @@ export function GlobalNav() {
 			totalMentions: Object.values(umis.mentions).reduce(sum, 0),
 			collisions: getCodeCollisions(state),
 			composeCodemarkActive: state.context.composeCodemarkActive,
+			currentReviewId: state.context.currentReviewId,
 			currentPullRequestId: state.context.currentPullRequestId
 		};
 	});
@@ -44,6 +45,7 @@ export function GlobalNav() {
 		totalUnread,
 		totalMentions,
 		collisions,
+		currentReviewId,
 		currentPullRequestId
 	} = derivedState;
 
@@ -72,10 +74,11 @@ export function GlobalNav() {
 
 	const go = panel => {
 		dispatch(setCurrentPullRequest());
+		dispatch(setCurrentReview());
 		dispatch(openPanel(panel));
 	};
 
-	const selected = panel => activePanel === panel && !currentPullRequestId; // && !plusMenuOpen && !menuOpen;
+	const selected = panel => activePanel === panel && !currentPullRequestId && !currentReviewId; // && !plusMenuOpen && !menuOpen;
 	return React.useMemo(() => {
 		return (
 			<>

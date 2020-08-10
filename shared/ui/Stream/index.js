@@ -272,7 +272,7 @@ export class SimpleStream extends Component {
 				WebviewPanels.Flow,
 				WebviewPanels.NewPullRequest
 			].includes(activePanel) &&
-			!this.props.currentReviewId &&
+			// !this.props.currentReviewId &&
 			// !this.props.currentPullRequestId &&
 			!activePanel.startsWith("configure-provider-") &&
 			!activePanel.startsWith("configure-enterprise-");

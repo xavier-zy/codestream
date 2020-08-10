@@ -287,6 +287,7 @@ export function GlobalNav() {
 		totalMentions,
 		collisions.nav,
 		derivedState.composeCodemarkActive,
+		derivedState.currentReviewId,
 		derivedState.currentPullRequestId,
 		plusMenuOpen,
 		ellipsisMenuOpen

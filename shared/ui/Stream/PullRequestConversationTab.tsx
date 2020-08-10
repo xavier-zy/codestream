@@ -134,7 +134,7 @@ export const PullRequestConversationTab = props => {
 			}
 		);
 		setText("");
-		props.fetch().then(() => setIsLoadingComment(false));
+		fetch().then(() => setIsLoadingComment(false));
 	};
 
 	const onCommentAndCloseClick = async e => {
@@ -297,7 +297,7 @@ export const PullRequestConversationTab = props => {
 				reviewerId: id
 			}
 		});
-		props.fetch();
+		fetch();
 	};
 
 	const fetchAvailableAssignees = async (e?) => {
@@ -341,7 +341,7 @@ export const PullRequestConversationTab = props => {
 				onOff
 			}
 		});
-		props.fetch();
+		fetch();
 	};
 
 	const fetchAvailableLabels = async (e?) => {
@@ -540,6 +540,22 @@ export const PullRequestConversationTab = props => {
 				repo: ghRepo.repoName,
 				pullRequestId: pr.number,
 				issueId: id,
+				onOff
+			}
+		});
+		fetch();
+	};
+
+	const toggleSubscription = async () => {
+		const onOff = pr.viewerSubscription === "SUBSCRIBED" ? false : true;
+		setIsLoadingMessage(onOff ? "Subscribing..." : "Unsubscribing...");
+		await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
+			method: "updatePullRequestSubscription",
+			providerId: "github*com",
+			params: {
+				owner: ghRepo.repoOwner,
+				repo: ghRepo.repoName,
+				pullRequestId: derivedState.currentPullRequestId,
 				onOff
 			}
 		});
@@ -1043,12 +1059,24 @@ export const PullRequestConversationTab = props => {
 				*/}
 				<PRSection>
 					<h1>
-						<Icon name="gear" className="settings clickable" onClick={() => {}} />
+						{/* <Icon name="gear" className="settings clickable" onClick={() => {}} /> */}
 						Notifications
 					</h1>
-					<Button variant="secondary">
-						<Icon name="mute" /> <span className="wide-text">Unsubscribe</span>
-					</Button>
+					{pr.viewerSubscription === "SUBSCRIBED" ? (
+						<>
+							<Button variant="secondary" onClick={toggleSubscription}>
+								<Icon name="mute" /> <span className="wide-text">Unsubscribe</span>
+							</Button>
+							You’re receiving notifications because you’re subscribed to this pull request.
+						</>
+					) : (
+						<>
+							<Button variant="secondary" onClick={toggleSubscription}>
+								<Icon name="unmute" /> <span className="wide-text">Subscribe</span>
+							</Button>
+							You’re not receiving notifications from this pull request.
+						</>
+					)}
 				</PRSection>
 				<PRSection>
 					<h1>{participantsLabel}</h1>

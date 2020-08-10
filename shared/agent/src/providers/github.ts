@@ -955,6 +955,20 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 		return rsp;
 	}
 
+	async updatePullRequestSubscription(request: { pullRequestId: string; onOff: boolean }) {
+		const query = `mutation UpdateSubscription($subscribableId: String!,$state:String!) {
+			updateSubscription(input: {subscribableId: $subscribableId, state:$state}) {
+				  clientMutationId
+				}
+			  }`;
+
+		const rsp = await this.client.request<any>(query, {
+			subscribableId: request.pullRequestId,
+			state: request.onOff ? "SUBSCRIBED" : "UNSUBSCRIBED"
+		});
+		return rsp;
+	}
+
 	// async closePullRequest(request: { pullRequestId: string }) {
 	// 	const query = `mutation ClosePullRequest($pullRequestId: String!) {
 	// 		closePullRequest(input: {pullRequestId: $pullRequestId}) {
@@ -1401,6 +1415,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 					createdAt
 					activeLockReason
 					locked
+					viewerSubscription
 					files(first: 100) {
 						totalCount
 						nodes {

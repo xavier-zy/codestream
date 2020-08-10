@@ -510,6 +510,10 @@ export const PRSection = styled.div`
 	}
 	button {
 		width: 100%;
+		margin-bottom: 5px;
+		.icon {
+			vertical-align: 1px;
+		}
 	}
 	a {
 		color: var(--text-color-subtle);

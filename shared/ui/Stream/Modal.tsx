@@ -64,6 +64,9 @@ const ModalWrapper = styled.div`
 			padding: 0 20px;
 		}
 	}
+	&.show-global-nav div.children.vcenter {
+		margin-top: -50px;
+	}
 `;
 
 const VerticallyCentered = styled.div``;

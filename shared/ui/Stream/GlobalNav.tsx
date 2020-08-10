@@ -250,7 +250,7 @@ export function GlobalNav() {
 						)}
 					</label>
 				</nav>
-				{!derivedState.composeCodemarkActive && (
+				{!derivedState.composeCodemarkActive && !currentReviewId && !currentPullRequestId && (
 					<label
 						onClick={togglePlusMenu}
 						style={{

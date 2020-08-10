@@ -5,7 +5,7 @@ import { Headshot, PRHeadshot } from "../src/components/Headshot";
 import { PRHeadshotName } from "../src/components/HeadshotName";
 import { PullRequestReactButton } from "./PullRequestReactions";
 import { TextButton } from "../src/components/controls/InlineMenu";
-import { WidthBreakopint } from "./PullRequest";
+import { WidthBreakpoint } from "./PullRequest";
 
 export const PRHeader = styled.div`
 	margin: 45px 15px 0 20px;
@@ -440,7 +440,7 @@ export const PRContent = styled.div`
 		flex-grow: 10;
 		max-width: 75vw;
 	}
-	@media only screen and (max-width: ${WidthBreakopint}) {
+	@media only screen and (max-width: 630px) {
 		flex-direction: column;
 		.main-content {
 			order: 2;
@@ -506,7 +506,7 @@ export const PRSidebar = styled.div`
 	flex-grow: 0;
 	display: flex;
 	flex-direction: column;
-	@media only screen and (max-width: ${WidthBreakopint}) {
+	@media only screen and (max-width: 630px) {
 		flex-direction: row;
 		flex-wrap: wrap;
 		width: auto;

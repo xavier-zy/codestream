@@ -128,12 +128,6 @@ export class ScmManager {
 			if (request && request.inEditorOnly && repositories) {
 				repositories = repositories.filter(_ => _.isInWorkspace);
 			}
-			if (request?.provider) {
-				const remotes = (await repositories[0].getRemotes())[0];
-				if (remotes) {
-					remotes.path;
-				}
-			}
 		} catch (ex) {
 			gitError = ex.toString();
 			Logger.error(ex, cc);

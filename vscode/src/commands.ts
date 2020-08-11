@@ -279,7 +279,7 @@ export class Commands implements Disposable {
 			BuiltInCommands.Diff,
 			csUri.Uris.toCodeStreamDiffUri(leftData, args.filePath),
 			csUri.Uris.toCodeStreamDiffUri(rightData, args.filePath),
-			`${Strings.truncate(paths.basename(args.filePath), 20)} (${Strings.truncate(
+			`${Strings.truncate(paths.basename(args.filePath), 40)} (${Strings.truncate(
 				args.baseSha,
 				8,
 				""

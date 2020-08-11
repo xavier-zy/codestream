@@ -169,10 +169,6 @@ export interface GetReposScmRequest {
 	 * (rather than including any repos that might have been later dynamically added [and removed])
 	 */
 	inEditorOnly?: boolean;
-	provider?: {
-		id: string;
-		path: string;
-	};
 }
 
 export interface GetReposScmResponse {

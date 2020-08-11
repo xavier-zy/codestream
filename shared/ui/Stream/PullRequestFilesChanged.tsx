@@ -24,6 +24,7 @@ import { WriteTextFileRequestType, ReadTextFileRequestType } from "@codestream/p
 import { Range } from "vscode-languageserver-types";
 import { useDidMount } from "../utilities/hooks";
 import { CompareLocalFilesRequestType } from "../ipc/host.protocol";
+import { URI } from "vscode-uri";
 
 // const VISITED_REVIEW_FILES = "review:changeset-file-list";
 const NOW = new Date().getTime(); // a rough timestamp so we know when the file was visited
@@ -112,13 +113,8 @@ export const PullRequestFilesChanged = (props: {
 				if (index > derivedState.numFiles - 1) index = 0;
 				const f = filesChanged[index];
 				const visitedKey = [f.file].join(":");
-				// const response = HostApi.instance.send(PRShowDiffRequestType, {
-				// 	pr.id,
-				// 	repoId,
-				// 	f.file
-				// });
 
-				const response = HostApi.instance.send(CompareLocalFilesRequestType, {
+				await HostApi.instance.send(CompareLocalFilesRequestType, {
 					baseBranch: props.pr.baseRefName,
 					baseSha: props.pr.baseRefOid,
 					headBranch: props.pr.headRefName,
@@ -180,17 +176,39 @@ export const PullRequestFilesChanged = (props: {
 
 	const latest = visitedFiles[key] ? visitedFiles[key]._latest : 0;
 
+	const parseCodeStreamDiffUri = (
+		uri: string
+	):
+		| {
+				path: string;
+		  }
+		| undefined => {
+		if (!uri) return undefined;
+
+		const parsed = URI.parse(uri);
+		if (parsed && parsed.path) {
+			const m = parsed.path.match(/\/(.*)\/\-\d\-/);
+			if (m && m.length) {
+				try {
+					return JSON.parse(atob(m[1])) as any;
+				} catch (ex) {
+					console.warn(ex);
+				}
+			}
+		}
+		return undefined;
+	};
+
 	const changedFiles = React.useMemo(() => {
 		const files: any[] = [];
 
-		// FIXME
-		const sha = "sha";
 		let index = 0;
+
 		files.push(
 			...props.filesChanged.map(f => {
 				const visitedKey = [f.file].join(":");
-				const uri = `codestream-diff://pr/${pr.id}/${sha}/right/${f.file}`;
-				const selected = (derivedState.matchFile || "") == uri;
+				const parsed = parseCodeStreamDiffUri(derivedState.matchFile || "");
+				const selected = parsed && parsed.path == f.file;
 				const visited = visitedFiles[visitedKey];
 				if (selected && !visited) {
 					visitFile(visitedKey, index);

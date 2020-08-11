@@ -203,11 +203,11 @@ export const PullRequestFilesChanged = (props: {
 		const files: any[] = [];
 
 		let index = 0;
-
+		const parsed = parseCodeStreamDiffUri(derivedState.matchFile || "");
 		files.push(
 			...props.filesChanged.map(f => {
 				const visitedKey = [f.file].join(":");
-				const parsed = parseCodeStreamDiffUri(derivedState.matchFile || "");
+
 				const selected = parsed && parsed.path == f.file;
 				const visited = visitedFiles[visitedKey];
 				if (selected && !visited) {

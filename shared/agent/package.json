@@ -68,7 +68,7 @@
         "uuid": "3.3.2",
         "vscode-languageserver": "5.2.1",
         "vscode-uri": "2.0.3",
-        "write-file-atomic": "3.0.0"
+        "write-file-atomic": "3.0.3"
     },
     "devDependencies": {
         "@microsoft/microsoft-graph-types": "1.10.0",

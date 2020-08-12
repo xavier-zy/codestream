@@ -784,7 +784,7 @@ class ReviewForm extends React.Component<Props, State> {
 				const editResult = await this.props.editReview(
 					editingReview.id,
 					attributes,
-					this.props.isAmending ? replyText : undefined
+					this.props.isAmending ? replaceHtml(replyText) || undefined : undefined
 				);
 				if (editResult && editResult.review) {
 					keyFilter(this.state.addressesIssues as any).forEach(id => {

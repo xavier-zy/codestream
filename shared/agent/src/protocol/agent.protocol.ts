@@ -243,5 +243,10 @@ export interface CodeStreamDiffUriData {
 	rightSha: string;
 	// left or right
 	side: string;
-	context?: any;
+	context?: {
+		pullRequest?: {
+			providerId: string;
+			id: string;
+		};
+	};
 }

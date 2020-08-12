@@ -825,16 +825,20 @@ export function toSlackPostBlocks(
 
 			const features = SessionContainer.instance().session.api.features;
 			if (features && features.slack && features.slack.interactiveComponentsEnabled) {
-				actionId = toReplyActionId(counter, codemark, slackUserId);
-				actions.elements.push({
-					type: "button",
-					action_id: actionId,
-					style: "primary",
-					text: {
-						type: "plain_text",
-						text: "View Discussion & Reply"
-					}
-				});
+				if (codemark.id) {
+					actionId = toReplyActionId(counter, codemark, slackUserId);
+					actions.elements.push({
+						type: "button",
+						action_id: actionId,
+						style: "primary",
+						text: {
+							type: "plain_text",
+							text: "View Discussion & Reply"
+						}
+					});
+				} else {
+					// might be a passthrough codemark
+				}
 			} else {
 				actionId = toReplyDisabledActionId(counter, codemark, slackUserId);
 				actions.elements.push({
@@ -867,19 +871,20 @@ export function toSlackPostBlocks(
 				});
 			}
 
-			actionId = toActionId(counter, "ide", codemark, marker);
-			actions.elements.push({
-				type: "button",
-				action_id: actionId,
-				text: {
-					type: "plain_text",
-					text: "Open in IDE"
-				},
-				url: `${codemark.permalink}?ide=default&src=${encodeURIComponent(
-					providerDisplayNamesByNameKey.get("slack") || ""
-				)}&marker=${marker.id}`
-			});
-
+			if (codemark.permalink) {
+				actionId = toActionId(counter, "ide", codemark, marker);
+				actions.elements.push({
+					type: "button",
+					action_id: actionId,
+					text: {
+						type: "plain_text",
+						text: "Open in IDE"
+					},
+					url: `${codemark.permalink}?ide=default&src=${encodeURIComponent(
+						providerDisplayNamesByNameKey.get("slack") || ""
+					)}&marker=${marker.id}`
+				});
+			}
 			if (url !== undefined && url.url) {
 				if (url.url.length >= slackBlockTextMax) {
 					// 3000 is the max length that slack will allow
@@ -901,8 +906,9 @@ export function toSlackPostBlocks(
 					});
 				}
 			}
-
-			blocks.push(actions);
+			if (actions && actions.elements.length) {
+				blocks.push(actions);
+			}
 		}
 	} else {
 		counter++;

@@ -8,7 +8,8 @@ import {
 	GetRangeScmInfoResponse,
 	CrossPostIssueValues,
 	CreateShareableCodemarkRequestType,
-	CreateThirdPartyPostRequestType
+	CreateThirdPartyPostRequestType,
+	CreatePassthroughCodemarkResponse
 } from "@codestream/protocols/agent";
 import { logError } from "@codestream/webview/logger";
 import { addStreams } from "../streams/actions";
@@ -97,8 +98,13 @@ export const createCodemark = (attributes: SharingNewCodemarkAttributes) => asyn
 			isPseudoCodemark: attributes.isPseudoCodemark
 		});
 		if (response) {
-			const result = dispatch(addCodemarks([response.codemark]));
-			dispatch(addStreams([response.stream]));
+			let result;
+			if ((response as any).isPassThrough) {
+				// is pass through
+			} else {
+				result = dispatch(addCodemarks([response.codemark]));
+				dispatch(addStreams([response.stream]));
+			}
 
 			if (attributes.sharingAttributes) {
 				try {

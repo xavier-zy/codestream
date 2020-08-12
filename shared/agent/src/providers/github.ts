@@ -220,20 +220,20 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 	): Promise<FetchThirdPartyPullRequestResponse> {
 		await this.ensureConnected();
 		let response = {} as FetchThirdPartyPullRequestResponse;
-		let repoOwner;
-		let repoName;
+		let repoOwner: string;
+		let repoName: string;
 		let allTimelineItems: any = [];
 		try {
 			let timelineQueryResponse;
-			const pullRequestNumber = await this.getPullRequestNumber(request.pullRequestId);
 			if (request.owner == null && request.repo == null) {
 				const data = await this.getRepoOwnerFromPullRequestId(request.pullRequestId);
 				repoOwner = data.owner;
 				repoName = data.name;
 			} else {
-				repoOwner = request.owner;
-				repoName = request.repo;
+				repoOwner = request.owner!;
+				repoName = request.repo!;
 			}
+			const pullRequestNumber = await this.getPullRequestNumber(request.pullRequestId);
 			do {
 				timelineQueryResponse = await this.pullRequestTimelineQuery(
 					repoOwner,
@@ -262,8 +262,8 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 			""
 		);
 
-		response.repository.repoOwner = repoOwner;
-		response.repository.repoName = repoName;
+		response.repository.repoOwner = repoOwner!;
+		response.repository.repoName = repoName!;
 		return response;
 	}
 
@@ -988,18 +988,27 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 
 	async createPullRequestReviewComment(request: {
 		pullRequestId: string;
-		pullRequestReviewId: string;
+		pullRequestReviewId?: string;
 		text: string;
 		filePath?: string;
 		position?: number;
 	}) {
-		const query = `
-		mutation AddPullRequestReviewComment($text:String!, $pullRequestId:String!, $pullRequestReviewId:String!, $filePath:String, $position:Int) {
+		let query;
+		if (request.pullRequestReviewId) {
+			query = `mutation AddPullRequestReviewComment($text:String!, $pullRequestId:String!, $pullRequestReviewId:String!, $filePath:String, $position:Int) {
 			addPullRequestReviewComment(input: {body:$text, pullRequestId:$pullRequestId, pullRequestReviewId:$pullRequestReviewId, path:$filePath, position:$position}) {
 			  clientMutationId
 			}
 		  }
 		  `;
+		} else {
+			query = `mutation AddPullRequestReviewComment($text:String!, $pullRequestId:String!, $filePath:String, $position:Int) {
+				addPullRequestReviewComment(input: {body:$text, pullRequestId:$pullRequestId, path:$filePath, position:$position}) {
+				  clientMutationId
+				}
+			  }
+			  `;
+		}
 		const rsp = await this.client.request<any>(query, request);
 		return rsp;
 	}
@@ -1307,6 +1316,28 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 		return true;
 	}
 
+	async createCommitComment(request: {
+		pullRequestId: string;
+		sha: string;
+		text: string;
+		position: number;
+		path: string;
+	}) {
+		// https://github.community/t/feature-commit-comments-for-a-pull-request/13986/9
+		const ownerData = await this.getRepoOwnerFromPullRequestId(request.pullRequestId);
+		const data = await this.post<any, any>(
+			`/repos/${ownerData.owner}/${ownerData.name}/pulls/${ownerData.pullRequestNumber}/comments`,
+			{
+				body: request.text,
+				commit_id: request.sha,
+				side: "RIGHT",
+				path: request.path,
+				position: request.position
+			}
+		);
+		return data.body;
+	}
+
 	async createPullRequestComment(request: { pullRequestId: string; text: string }) {
 		const query = `mutation AddCommentToPullRequest($subjectId: String!, $body: String!) {
 				addComment(input: {subjectId: $subjectId, body:$body}) {
@@ -1321,7 +1352,33 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 		return true;
 	}
 
-	async getRepoOwnerFromPullRequestId(id: string) {
+	_pullRequestIdCache: Map<
+		string,
+		{
+			pullRequestNumber: number;
+			name: string;
+			owner: string;
+		}
+	> = new Map<
+		string,
+		{
+			pullRequestNumber: number;
+			name: string;
+			owner: string;
+		}
+	>();
+
+	async getRepoOwnerFromPullRequestId(
+		id: string
+	): Promise<{
+		pullRequestNumber: number;
+		name: string;
+		owner: string;
+	}> {
+		if (this._pullRequestIdCache.has(id)) {
+			return this._pullRequestIdCache.get(id)!;
+		}
+
 		const query = `query GetRepoIdFromPullRequestId($id: [ID!]!) {
 			rateLimit {
 				limit
@@ -1344,14 +1401,21 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 		const rsp = await this.client.request<any>(query, {
 			id: id
 		});
-		return {
+
+		const data = {
 			pullRequestNumber: rsp.nodes[0].number,
 			name: rsp.nodes[0].repository.name,
 			owner: rsp.nodes[0].repository.owner.login
 		};
+		this._pullRequestIdCache.set(id, data);
+
+		return data;
 	}
 
 	async getPullRequestNumber(id: string) {
+		if (this._pullRequestIdCache.has(id)) {
+			return this._pullRequestIdCache.get(id)?.pullRequestNumber!;
+		}
 		const query = `query getNode($id: ID!) {
 			rateLimit {
 				limit

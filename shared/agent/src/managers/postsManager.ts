@@ -55,7 +55,9 @@ import {
 	ReactToPostRequestType,
 	ReactToPostResponse,
 	ReportingMessageType,
-	ReviewPlus
+	ReviewPlus,
+	CodeStreamDiffUriData,
+	CreatePassthroughCodemarkResponse
 } from "../protocol/agent.protocol";
 import {
 	CodemarkType,
@@ -71,7 +73,8 @@ import {
 	FileStatus,
 	isCSReview,
 	ProviderType,
-	StreamType
+	StreamType,
+	CodemarkStatus
 } from "../protocol/api.protocol";
 import { providerDisplayNamesByNameKey } from "../providers/provider";
 import { Arrays, debug, log, lsp, lspHandler } from "../system";
@@ -82,6 +85,8 @@ import { EntityCache, EntityCacheCfg } from "./cache/entityCache";
 import { EntityManagerBase, Id } from "./entityManager";
 import { MarkerLocationManager } from "./markerLocationManager";
 import { MarkerCreationDescriptor, MarkersBuilder } from "./markersBuilder";
+import * as csUri from "../system/uri";
+import { fromSlackPostAttachmentToMarker } from "api/slack/slackSharingApi.adapters";
 
 export type FetchPostsFn = (request: FetchPostsRequest) => Promise<FetchPostsResponse>;
 
@@ -883,7 +888,7 @@ export class PostsManager extends EntityManagerBase<CSPost> {
 	@lspHandler(CreateShareableCodemarkRequestType)
 	async createSharingCodemarkPost(
 		request: CreateShareableCodemarkRequest
-	): Promise<CreateShareableCodemarkResponse | undefined> {
+	): Promise<CreateShareableCodemarkResponse | CreatePassthroughCodemarkResponse | undefined> {
 		const codemarkRequest: CreateCodemarkRequest = {
 			...request.attributes,
 			status:
@@ -891,37 +896,143 @@ export class PostsManager extends EntityManagerBase<CSPost> {
 			markers: []
 		};
 
-		// if (request.textDocuments && request.textDocuments.filter(_ => _.uri.indexOf("-0-") > -1)) {
-		// 	const { providerRegistry } = SessionContainer.instance();
+		if (
+			request.textDocuments &&
+			request.textDocuments.length &&
+			csUri.Uris.isCodeStreamDiffUri(request.textDocuments[0].uri)
+		) {
+			const { providerRegistry, git } = SessionContainer.instance();
+			const parsedUri = csUri.Uris.fromCodeStreamDiffUri<CodeStreamDiffUriData>(
+				request.textDocuments[0].uri
+			);
+			if (!parsedUri) throw new Error("Could not parse uri");
+			if (parsedUri.context && parsedUri.context.pullRequest) {
+				if (parsedUri.context.pullRequest.providerId !== "github*com") {
+					throw new Error("UnsupportedProvider");
+				}
+			} else {
+				throw new Error("MissingContext");
+			}
 
-		// 	const uri = URI.parse(request.textDocuments[0].uri);
-		// 	const bar = Buffer.from(
-		// 		uri.fsPath.substring(0, uri.fsPath.indexOf("-0-")),
-		// 		"base64"
-		// 	).toString("utf8") as any;
-		// 	const foo = JSON.parse(bar);
+			if (parsedUri.context.pullRequest.providerId === "github*com") {
+				// lines are 1-based on GH
+				const line = request.attributes.codeBlocks[0].range.start.line + 1;
+				const diff = await git.getDiffBetweenCommits(
+					parsedUri.leftSha,
+					parsedUri.rightSha,
+					parsedUri.path,
+					true
+				);
+				if (diff) {
+					// https://stackoverflow.com/questions/41662127/how-to-comment-on-a-specific-line-number-on-a-pr-on-github
+					let i = 0;
+					let relativeLine = 0;
+					for (const h of diff.hunks) {
+						// can't increment for the first hunk
+						if (i !== 0) relativeLine++;
+						const linesWithMetadata = [];
+						let j = 0;
+						for (const line of h.lines) {
+							relativeLine++;
+							linesWithMetadata.push({ line: line, relativeLine: relativeLine, index: j });
+							j++;
+						}
+						(h as any).linesWithMetadata = linesWithMetadata;
+						i++;
+					}
 
-		// 	const response = await providerRegistry.executeMethod({
-		// 		method: "addPullRequestReview",
-		// 		providerId: "github*com",
-		// 		params: {
-		// 			pullRequestId: foo.metadata.pullRequest.id
-		// 		}
-		// 	});
-		// 	const foo1 = await providerRegistry.executeMethod({
-		// 		method: "createPullRequestReviewComment",
-		// 		providerId: "github*com",
-		// 		params: {
-		// 			pullRequestId: foo.metadata.pullRequest.id,
-		// 			pullRequestReviewId: response.addPullRequestReview.pullRequestReview.id,
-		// 			text: request.attributes.text || "",
-		// 			filePath: "src/CodeStream.VisualStudio.Core/ContentTypes.cs",
-		// 			position: 10
-		// 		}
-		// 	});
+					const hunk = diff.hunks.find(_ => line >= _.newStart && line <= _.newStart + _.newLines);
+					if (hunk) {
+						// the line the user is asking for minus the start of this hunk
+						// that will give us the index of where it is in the hunk
+						// from there, we fetch the relativeLine which is what github needs
+						const offset = line - hunk.newStart;
+						const lineWithMetadata = (hunk as any).linesWithMetadata.find(
+							(b: any) => b.index === offset
+						);
+						if (lineWithMetadata) {
+							const result = await providerRegistry.executeMethod({
+								method: "createCommitComment",
+								providerId: parsedUri.context.pullRequest.providerId,
+								params: {
+									pullRequestId: parsedUri.context.pullRequest.id,
+									sha: parsedUri.rightSha,
+									text: request.attributes.text || "",
+									path: parsedUri.path,
+									position: lineWithMetadata.relativeLine
+								}
+							});
+							// this will create an implicit review
+							// const result = await providerRegistry.executeMethod({
+							// 	method: "createPullRequestReviewComment",
+							// 	providerId: parsedUri.context.pullRequest.providerId,
+							// 	params: {
+							// 		pullRequestId: parsedUri.context.pullRequest.id,
+							// 		text: request.attributes.text || "",
+							// 		filePath: parsedUri.path,
+							// 		position: lineWithMetadata.relativeLine
+							// 	}
+							// });
+							return {
+								isPassThrough: true,
+								codemark: {
+									creatorId: "",
+									createdAt: new Date().getTime(),
+									modifiedAt: new Date().getTime(),
+									id: "",
+									teamId: "",
+									streamId: "",
+									postId: "",
+									fileStreamIds: [],
+									type: CodemarkType.Comment,
+									permalink: "",
+									status: CodemarkStatus.Open,
+									title: "",
+									assignees: [],
+									text: request.attributes.text || "",
+									numReplies: 0,
+									pinned: false,
+									lastActivityAt: new Date().getTime(),
+									lastReplyAt: 0,
+									markers: [
+										{
+											creatorId: "",
+											id: "",
+											teamId: "",
+											repoId: "",
+											file: "",
+											postId: "",
+											fileStreamId: "",
+											postStreamId: "",
+											providerType: undefined,
+											codemarkId: "",
+											commitHashWhenCreated: "",
+											locationWhenCreated: [0, 0, 0, 0, undefined],
+											supersededByMarkerId: "",
+											code: lineWithMetadata.line,
+											referenceLocations: [],
+											createdAt: new Date().getTime(),
+											modifiedAt: new Date().getTime()
+										}
+									]
+								},
+								pullRequest: {
+									id: parsedUri.context.pullRequest.id
+								},
+								success: result != null
+							};
+						}
+					} else {
+						Logger.warn(
+							`Could not find hunk for line=${line} for ${JSON.stringify(parsedUri.context)}`
+						);
+						// do something else??
+					}
+				}
+			}
 
-		// 	return undefined;
-		// }
+			return undefined;
+		}
 
 		const markerCreationDescriptors: MarkerCreationDescriptor[] = [];
 		let codemark: CodemarkPlus | undefined;

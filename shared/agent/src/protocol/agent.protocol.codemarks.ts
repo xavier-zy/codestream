@@ -92,6 +92,15 @@ export interface CreateShareableCodemarkResponse {
 	markerLocations?: CSMarkerLocations[];
 }
 
+export interface CreatePassthroughCodemarkResponse {
+	isPassThrough: boolean;
+	codemark?: CodemarkPlus;
+	pullRequest: {
+		id: string;
+	};
+	success: boolean;
+}
+
 export const CreateShareableCodemarkRequestType = new RequestType<
 	CreateShareableCodemarkRequest,
 	CreateShareableCodemarkResponse,

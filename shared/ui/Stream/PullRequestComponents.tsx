@@ -25,10 +25,6 @@ export const PRTitle = styled.div`
 			opacity: 1;
 		}
 	}
-	.cancel-button {
-		opacity: 1 !important;
-		// vertical-align: 3px;
-	}
 `;
 
 export const PRActionButtons = styled.div`
@@ -52,7 +48,7 @@ export const PRActionButtons = styled.div`
 	}
 	.icon {
 		cursor: pointer;
-		vertical-align: 3px;
+		vertical-align: 2px;
 		display: inline-block;
 		font-size: 11px !important; // to match the spinnable icon
 		line-height: 16px !important;
@@ -64,6 +60,13 @@ export const PRActionButtons = styled.div`
 			opacity: 1;
 			background: var(--button-background-color) !important;
 			color: var(--button-foreground-color) !important;
+		}
+	}
+	.cancel-button {
+		opacity: 1 !important;
+		// vertical-align: 3px;
+		.icon.button {
+			border-radius: 0 5px 5px 0 !important;
 		}
 	}
 `;
@@ -440,13 +443,16 @@ export const PRTimelineItem = styled.div`
 	}
 	.monospace {
 		color: var(--text-color-subtle);
+		.emoji {
+			color: var(--text-color-highlight);
+		}
+	}
+	.left-pad {
+		padding-left: 5px;
 	}
 `;
 
 export const PRTimelineItemBody = styled.div`
-	.left-pad {
-		padding-left: 5px;
-	}
 	${PRHeadshotName} {
 		color: var(--text-color-highlight);
 		padding-right: 5px;

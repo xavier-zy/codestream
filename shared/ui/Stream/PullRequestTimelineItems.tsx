@@ -282,7 +282,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 							<PRTimelineItem key={index} className="tall">
 								<Icon name="review" className="circled" />
 								<PRTimelineItemBody>
-									<PRHeadshotName key={index} size={16} person={item.actor} />
+									<PRHeadshotName key={index} person={item.actor} />
 									requested a review
 								</PRTimelineItemBody>
 							</PRTimelineItem>
@@ -305,6 +305,8 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 								i++;
 							}
 						}
+						const { author, committer } = item.commit;
+
 						return (
 							<>
 								{futureCommitCount > 0 && (
@@ -319,7 +321,10 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 								)}
 								<PRTimelineItem key={index}>
 									<Icon name="git-commit" />
-									<PRHeadshot key={index} size={16} person={item.commit.author} />
+									<PRHeadshot key={index} size={20} person={author} />
+									{committer && author.name !== committer.name && (
+										<PRHeadshot className="left-pad" size={20} person={committer} />
+									)}
 
 									<PRTimelineItemBody>
 										<div className="monospace left-pad">
@@ -327,7 +332,11 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 												href={`${pr.url}/commits/${item.commit.abbreviatedOid}`}
 												className="monospace"
 											>
-												<MarkdownText excludeParagraphWrap text={item.commit.message || ""} />
+												<MarkdownText
+													excludeParagraphWrap
+													excludeOnlyEmoji
+													text={item.commit.message || ""}
+												/>
 											</Link>
 										</div>
 									</PRTimelineItemBody>
@@ -348,7 +357,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 							<PRTimelineItem key={index} className="tall">
 								<Icon name="person" className="circled" />
 								<PRTimelineItemBody>
-									<PRHeadshotName key={index} size={16} person={item.actor} />
+									<PRHeadshotName key={index} size={20} person={item.actor} />
 									{item.actor.login === item.assignee.login ? (
 										"self-assigned this"
 									) : (
@@ -367,7 +376,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 							<PRTimelineItem key={index} className="tall">
 								<Icon name="person" className="circled" />
 								<PRTimelineItemBody>
-									<PRHeadshotName key={index} size={16} person={item.actor} />
+									<PRHeadshotName key={index} person={item.actor} />
 									unassigned <b>{item.assignee.login}</b>
 									<Timestamp time={item.createdAt!} relative />
 								</PRTimelineItemBody>
@@ -379,7 +388,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 							<PRTimelineItem key={index} className="tall">
 								<Icon name="git-merge" className="circled" />
 								<PRTimelineItemBody>
-									<PRHeadshotName key={index} size={16} person={item.actor} />
+									<PRHeadshotName key={index} person={item.actor} />
 									merged commit <PRBranch>{item.commit.abbreviatedOid}</PRBranch> into{" "}
 									<PRBranch>{item.mergeRefName}</PRBranch>
 									<Timestamp time={item.createdAt!} relative />
@@ -392,7 +401,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 							<PRTimelineItem key={index} className="tall">
 								<Icon name="tag" className="circled" />
 								<PRTimelineItemBody>
-									<PRHeadshotName key={index} size={16} person={item.actor} />
+									<PRHeadshotName key={index} person={item.actor} />
 									added
 									<Tag tag={{ label: item.label.name, color: `#${item.label.color}` }} />
 									<Timestamp time={item.createdAt!} relative />
@@ -405,7 +414,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 							<PRTimelineItem key={index} className="tall">
 								<Icon name="tag" className="circled" />
 								<PRTimelineItemBody>
-									<PRHeadshotName key={index} size={16} person={item.actor} />
+									<PRHeadshotName key={index} person={item.actor} />
 									removed
 									<Tag tag={{ label: item.label.name, color: `#${item.label.color}` }} />
 									<Timestamp time={item.createdAt!} relative />
@@ -418,7 +427,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 							<PRTimelineItem key={index} className="tall">
 								<Icon name="pencil" className="circled" />
 								<PRTimelineItemBody>
-									<PRHeadshotName key={index} size={16} person={item.actor} />
+									<PRHeadshotName key={index} person={item.actor} />
 									changed the title <s>{item.previousTitle}</s> {item.currentTitle}
 									<Timestamp time={item.createdAt!} relative />
 								</PRTimelineItemBody>
@@ -436,7 +445,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 							<PRTimelineItem key={index} className="tall">
 								<Icon name="lock" className="circled gray" />
 								<PRTimelineItemBody>
-									<PRHeadshotName key={index} size={16} person={item.actor} />
+									<PRHeadshotName key={index} person={item.actor} />
 									locked{" "}
 									{map[item.lockReason] ? (
 										<>
@@ -456,7 +465,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 							<PRTimelineItem key={index} className="tall">
 								<Icon name="key" className="circled gray" />
 								<PRTimelineItemBody>
-									<PRHeadshotName key={index} size={16} person={item.actor} />
+									<PRHeadshotName key={index} person={item.actor} />
 									unlocked this conversation
 									<Timestamp time={item.createdAt!} relative />
 								</PRTimelineItemBody>
@@ -469,7 +478,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 								<PRTimelineItem key={index} className="tall">
 									<Icon name="circle-slash" className="circled red" />
 									<PRTimelineItemBody>
-										<PRHeadshotName key={index} size={16} person={item.actor} />
+										<PRHeadshotName key={index} person={item.actor} />
 										closed this
 										<Timestamp time={item.createdAt!} relative />
 									</PRTimelineItemBody>
@@ -483,7 +492,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 							<PRTimelineItem key={index} className="tall">
 								<Icon name="circle" className="circled green" />
 								<PRTimelineItemBody>
-									<PRHeadshotName key={index} size={16} person={item.actor} />
+									<PRHeadshotName key={index} person={item.actor} />
 									reopened this
 									<Timestamp time={item.createdAt!} relative />
 								</PRTimelineItemBody>
@@ -495,7 +504,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 							<PRTimelineItem key={index} className="tall">
 								<Icon name="milestone" className="circled" />
 								<PRTimelineItemBody>
-									<PRHeadshotName key={index} size={16} person={item.actor} />
+									<PRHeadshotName key={index} person={item.actor} />
 									added this to the <b>{item.milestoneTitle}</b> milestone
 									<Timestamp time={item.createdAt!} relative />
 								</PRTimelineItemBody>
@@ -507,7 +516,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 							<PRTimelineItem key={index} className="tall">
 								<Icon name="milestone" className="circled" />
 								<PRTimelineItemBody>
-									<PRHeadshotName key={index} size={16} person={item.actor} />
+									<PRHeadshotName key={index} person={item.actor} />
 									removed milestone <b>{item.milestoneTitle}</b>
 									<Timestamp time={item.createdAt!} relative />
 								</PRTimelineItemBody>
@@ -519,8 +528,9 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 							<PRTimelineItem key={index} className="tall">
 								<Icon name="milestone" className="circled" />
 								<PRTimelineItemBody>
-									<PRHeadshotName key={index} size={16} person={item.actor} />
-									force-pushed the <PRBranch>{item.ref.name}</PRBranch> branch from{" "}
+									<PRHeadshotName key={index} person={item.actor} />
+									force-pushed the
+									{item.ref && item.ref.name && <PRBranch>{item.ref.name}</PRBranch>} branch from{" "}
 									<PRBranch>{item.beforeCommit.abbreviatedOid}</PRBranch> to{" "}
 									<PRBranch>{item.afterCommit.abbreviatedOid}</PRBranch>
 									<Timestamp time={item.createdAt!} relative />

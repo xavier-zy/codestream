@@ -1026,7 +1026,7 @@ export const StatusPanel = () => {
 						<RoundedLink
 							onClick={() => {
 								dispatch(setNewPostEntry("Status"));
-								dispatch(openPanel(WebviewPanels.NewReview));
+								dispatch(openPanel(WebviewPanels.NewPullRequest));
 							}}
 						>
 							<Icon className="padded-icon" name="pull-request" />

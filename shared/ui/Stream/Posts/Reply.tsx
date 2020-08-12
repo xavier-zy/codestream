@@ -17,7 +17,6 @@ import { deletePost, editPost } from "../actions";
 import { RepliesToPostContext } from "./RepliesToPost";
 import { getPost } from "@codestream/webview/store/posts/reducer";
 import { MarkdownText } from "../MarkdownText";
-import { useMarkdownifyToHtml } from "../Markdowner";
 import MarkerActions from "../MarkerActions";
 import MessageInput from "../MessageInput";
 import Button from "../Button";

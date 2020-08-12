@@ -10,7 +10,11 @@ import { isFeatureEnabled } from "../store/apiVersioning/reducer";
 import { canCreateCodemark } from "../store/codemarks/actions";
 import { HostApi } from "../webview-api";
 import { StartWorkNotificationType } from "@codestream/protocols/webview";
-import { setCurrentReview, setCurrentPullRequest } from "../store/context/actions";
+import {
+	setCurrentReview,
+	setCurrentPullRequest,
+	setCreatePullRequest
+} from "../store/context/actions";
 import { ComposeKeybindings } from "./ComposeTitles";
 
 interface PlusMenuProps {
@@ -54,6 +58,7 @@ export function PlusMenu(props: PlusMenuProps) {
 	};
 
 	const go = panel => {
+		dispatch(setCreatePullRequest());
 		dispatch(setCurrentPullRequest());
 		dispatch(setCurrentReview());
 		dispatch(openPanel(panel));
@@ -112,8 +117,8 @@ export function PlusMenu(props: PlusMenuProps) {
 	if (menuItems.length > 0) menuItems.push({ label: "-" });
 	menuItems.push({
 		icon: <Icon name="pull-request" />,
-		label: "Open a Pull Request",
-		subtextWide: ".....",
+		label: "New Pull Request",
+		subtextWide: "Open a Pull Request on GitHub",
 		action: () => go(WebviewPanels.NewPullRequest),
 		shortcut: ComposeKeybindings.pr,
 		key: "pr"

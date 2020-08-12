@@ -13,7 +13,11 @@ import { STEPS } from "./GettingStarted";
 import { openPanel } from "./actions";
 import { PlusMenu } from "./PlusMenu";
 import { EllipsisMenu } from "./EllipsisMenu";
-import { setCurrentReview, setCurrentPullRequest } from "../store/context/actions";
+import {
+	setCurrentReview,
+	setCurrentPullRequest,
+	setCreatePullRequest
+} from "../store/context/actions";
 
 const sum = (total, num) => total + Math.round(num);
 
@@ -73,6 +77,7 @@ export function GlobalNav() {
 	};
 
 	const go = panel => {
+		dispatch(setCreatePullRequest());
 		dispatch(setCurrentPullRequest());
 		dispatch(setCurrentReview());
 		dispatch(openPanel(panel));
@@ -250,7 +255,7 @@ export function GlobalNav() {
 						)}
 					</label>
 				</nav>
-				{!derivedState.composeCodemarkActive && !currentReviewId && !currentPullRequestId && (
+				{!derivedState.composeCodemarkActive && (
 					<label
 						onClick={togglePlusMenu}
 						style={{

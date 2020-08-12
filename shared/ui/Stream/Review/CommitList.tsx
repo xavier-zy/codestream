@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { ReviewPlus } from "@codestream/protocols/agent";
 import Icon from "../Icon";
 import { markdownify } from "../Markdowner";
-import { ReviewCheckpoint } from '@codestream/protocols/webview';
+import { ReviewCheckpoint } from "@codestream/protocols/webview";
 
 export const CommitList = (props: { review: ReviewPlus; checkpoint: ReviewCheckpoint }) => {
 	const { review, checkpoint } = props;
@@ -44,7 +44,7 @@ export const CommitList = (props: { review: ReviewPlus; checkpoint: ReviewCheckp
 										style={{ paddingLeft: "4px" }}
 										dangerouslySetInnerHTML={{
 											// @ts-ignore
-											__html: markdownify(commit.info.shortMessage)
+											__html: markdownify(commit.info.shortMessage, { excludeOnlyEmoji: true })
 										}}
 									/>
 								)}

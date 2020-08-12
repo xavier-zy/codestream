@@ -17,7 +17,9 @@ import {
 	CheckPullRequestBranchPreconditionsResponse,
 	CheckPullRequestPreconditionsRequestType,
 	ChangeDataType,
-	DidChangeDataNotificationType
+	DidChangeDataNotificationType,
+	GetReposScmRequestType,
+	GetBranchesRequestType
 } from "@codestream/protocols/agent";
 import { connectProvider } from "./actions";
 import { isConnected } from "../store/providers/reducer";
@@ -126,9 +128,25 @@ export const CreatePullRequestPanel = props => {
 		}
 
 		try {
-			const result = await HostApi.instance.send(CheckPullRequestPreconditionsRequestType, {
-				reviewId: derivedState.reviewId!
-			});
+			const args = { reviewId: derivedState.reviewId, repoId: "", branch: "" };
+			if (!derivedState.reviewId) {
+				// if we're not creating a PR from a review, then get the current
+				// repo and branch from the editor
+				const response = await HostApi.instance.send(GetReposScmRequestType, {
+					inEditorOnly: true
+				});
+
+				if (response && response.repositories) {
+					args.repoId = response.repositories[0].id || "";
+					let branchInfo = await HostApi.instance.send(GetBranchesRequestType, {
+						uri: response.repositories[0].folder.uri
+					});
+					if (branchInfo && branchInfo.scm && branchInfo.scm.current) {
+						args.branch = branchInfo.scm.current;
+					}
+				}
+			}
+			const result = await HostApi.instance.send(CheckPullRequestPreconditionsRequestType, args);
 			if (result && result.success) {
 				setReviewBranch(result.branch!);
 				setBranches(result.branches!);

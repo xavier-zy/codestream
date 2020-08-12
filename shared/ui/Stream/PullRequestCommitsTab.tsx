@@ -4,7 +4,6 @@ import Icon from "./Icon";
 import Timestamp from "./Timestamp";
 import Tooltip from "./Tooltip";
 import { PRHeadshotName } from "../src/components/HeadshotName";
-import { markdownify } from "./Markdowner";
 import { PRContent } from "./PullRequestComponents";
 import styled from "styled-components";
 import copy from "copy-to-clipboard";

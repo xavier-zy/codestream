@@ -620,10 +620,15 @@ export class ReviewsManager extends CachedEntityManagerBase<CSReview> {
 		const { git, providerRegistry, session } = SessionContainer.instance();
 		let warning = undefined;
 		let remotes: GitRemote[] | undefined;
-		let repo;
+		let repo: any;
+		let review: CSReview | undefined = undefined;
 		try {
-			const review = await this.getById(request.reviewId);
-			repo = await git.getRepositoryById(review.reviewChangesets[0].repoId);
+			if (request.reviewId) {
+				review = await this.getById(request.reviewId);
+				repo = await git.getRepositoryById(review.reviewChangesets[0].repoId);
+			} else if (request.repoId) {
+				repo = await git.getRepositoryById(request.repoId);
+			}
 
 			if (!repo) {
 				return {
@@ -632,23 +637,25 @@ export class ReviewsManager extends CachedEntityManagerBase<CSReview> {
 				};
 			}
 
-			const localModifications = await git.getHasModifications(repo.path);
-			if (localModifications) {
-				return {
-					success: false,
-					error: { type: "HAS_LOCAL_MODIFICATIONS" }
-				};
+			if (request.reviewId) {
+				const localModifications = await git.getHasModifications(repo.path);
+				if (localModifications) {
+					return {
+						success: false,
+						error: { type: "HAS_LOCAL_MODIFICATIONS" }
+					};
+				}
+
+				const localCommits = await git.getLocalCommits(repo.path);
+				if (localCommits && localCommits.length > 0) {
+					return {
+						success: false,
+						error: { type: "HAS_LOCAL_COMMITS" }
+					};
+				}
 			}
 
-			const localCommits = await git.getLocalCommits(repo.path);
-			if (localCommits && localCommits.length > 0) {
-				return {
-					success: false,
-					error: { type: "HAS_LOCAL_COMMITS" }
-				};
-			}
-
-			const branch = review.reviewChangesets[0].branch;
+			const branch = request.branch || (review && review.reviewChangesets[0].branch);
 			const branches = await git.getBranches(repo!.path);
 			const user = await this.session.api.getMe();
 			remotes = await repo!.getRemotes();
@@ -674,7 +681,7 @@ export class ReviewsManager extends CachedEntityManagerBase<CSReview> {
 			);
 			let success = false;
 			let foundOne = false;
-			const projectsByRemotePath = new Map(remotes.map(obj => [obj.path, obj]));
+			const projectsByRemotePath = new Map((remotes || []).map(obj => [obj.path, obj]));
 			for (const provider of connectedProviders) {
 				const remotePaths = await provider.getRemotePaths(repo, projectsByRemotePath);
 				if (remotePaths && remotePaths.length) {
@@ -745,7 +752,7 @@ export class ReviewsManager extends CachedEntityManagerBase<CSReview> {
 
 			let originNames;
 			let remoteBranch;
-			const branchRemote = await git.getBranchRemote(repo.path, branch);
+			const branchRemote = await git.getBranchRemote(repo.path, branch!);
 			if (!branchRemote) {
 				warning = {
 					type: "REQUIRES_UPSTREAM"
@@ -767,8 +774,8 @@ export class ReviewsManager extends CachedEntityManagerBase<CSReview> {
 					defaultBranch: defaultBranch
 				},
 				review: {
-					title: review.title,
-					text: review.text
+					title: review ? review.title : "",
+					text: review ? review.text : ""
 				},
 				branch: branch,
 				branches: branches!.branches,

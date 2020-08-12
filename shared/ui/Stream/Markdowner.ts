@@ -47,10 +47,13 @@ export const emojiPlain = text => {
 	return mdPlain.renderInline(text);
 };
 
-export const markdownify = (text: string, options?: { excludeParagraphWrap: boolean }) => {
+export const markdownify = (
+	text: string,
+	options?: { excludeParagraphWrap: boolean; excludeOnlyEmoji: boolean }
+) => {
 	// safeguard against undefined at runtime - akonwi
 	if (text == null) return text;
-
+	const identifyOnlyEmoji = !options || !options.excludeOnlyEmoji;
 	try {
 		const replaced =
 			options && options.excludeParagraphWrap
@@ -66,7 +69,7 @@ export const markdownify = (text: string, options?: { excludeParagraphWrap: bool
 						.replace(/<\/li>\n/g, "</li>")
 						.replace(/<br\/><\/blockquote>/g, "</blockquote>");
 		// console.log('markdownify input/output', text, replaced);
-		if (text.trim().match(/^(:[\w_+]+:|\s)+$/))
+		if (identifyOnlyEmoji && text.trim().match(/^(:[\w_+]+:|\s)+$/))
 			return "<span class='only-emoji'>" + replaced + "</span>";
 		else return replaced;
 	} catch (error) {
@@ -88,7 +91,7 @@ export function useMarkdownifyToHtml() {
 	}, shallowEqual);
 
 	return React.useCallback(
-		(text: string, options?: { excludeParagraphWrap: boolean }) => {
+		(text: string, options?: { excludeParagraphWrap: boolean; excludeOnlyEmoji: boolean }) => {
 			let html: string;
 			if (text == null || text === "") {
 				html = "";

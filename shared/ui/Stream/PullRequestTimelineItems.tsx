@@ -61,8 +61,11 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 	const { pr, setIsLoadingMessage, fetch } = props;
 	if (!pr || !pr.timelineItems) return null;
 
+	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [reviewOption, setReviewOption] = useState("COMMENT");
 	const [reviewOptionText, setReviewOptionText] = useState("");
+	const [pendingComments, setPendingComments] = useState({});
+	// const [pendingComment, setPendingComment] = useState("");
 	const submitReview = async (event?: React.SyntheticEvent) => {
 		// await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
 		// 	method: "submitReview",
@@ -76,18 +79,53 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 		// props.fetch();
 	};
 
-	const cancelReview = async (event?: React.SyntheticEvent) => {
-		await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
-			method: "submitReview",
-			providerId: "github*com",
-			params: {
-				pullRequestId: pr.id!,
-				text: reviewOptionText,
-				eventType: "DISMISS"
-			}
-		});
+	// const cancelReview = async (event?: React.SyntheticEvent) => {
+	// 	await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
+	// 		method: "submitReview",
+	// 		providerId: "github*com",
+	// 		params: {
+	// 			pullRequestId: pr.id!,
+	// 			text: reviewOptionText,
+	// 			eventType: "DISMISS"
+	// 		}
+	// 	});
 
-		props.fetch();
+	// 	props.fetch();
+	// };
+
+	const handleTextInputChanged = async (value: string, databaseCommentId: number) => {
+		setPendingComments({
+			...pendingComments,
+			[databaseCommentId]: value
+		});
+	};
+
+	const handleComment = async (e, databaseCommentId) => {
+		try {
+			const value = pendingComments[databaseCommentId];
+			if (value == null) return;
+			setIsSubmitting(true);
+			await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
+				method: "createCommentReply",
+				providerId: "github*com",
+				params: {
+					pullRequestId: pr.id,
+					commentId: databaseCommentId,
+					text: value
+				}
+			});
+
+			setPendingComments({
+				...pendingComments,
+				[databaseCommentId]: undefined
+			});
+
+			props.fetch();
+		} catch (ex) {
+			console.warn(ex);
+		} finally {
+			setIsSubmitting(false);
+		}
 	};
 
 	const handleOnChangeReviewOptions = (value: string) => {
@@ -249,6 +287,38 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 															fetch={fetch}
 															reactionGroups={comment.reactionGroups}
 														/>
+														{comment.pullRequest.reviewThreads &&
+															comment.pullRequest.reviewThreads.edges &&
+															comment.pullRequest.reviewThreads.edges[0].node &&
+															comment.pullRequest.reviewThreads.edges[0].node.comments &&
+															comment.pullRequest.reviewThreads.edges[0].node.comments.nodes &&
+															comment.pullRequest.reviewThreads.edges[0].node.comments.nodes.map(
+																(c, i) => {
+																	return (
+																		<PRCodeCommentBody>
+																			<PRHeadshot key={c.id + i} size={30} person={c.author} />
+																			<PRThreadedCommentHeader>
+																				{c.author.login}
+																				<Timestamp time={c.createdAt} />
+																				<PRActionIcons>
+																					{myComment && Author}
+																					{myPR ? <IAmMember /> : <UserIsMember />}
+																					{/*
+																					<PullRequestReactButton
+																						targetId={c.id}
+																						setIsLoadingMessage={setIsLoadingMessage}
+																						fetch={fetch}
+																						reactionGroups={comment.reactionGroups}
+																					/>
+																					<Icon name="kebab-horizontal" className="clickable" />
+																					*/}
+																				</PRActionIcons>
+																			</PRThreadedCommentHeader>
+																			<MarkdownText text={c.body} excludeParagraphWrap />
+																		</PRCodeCommentBody>
+																	);
+																}
+															)}
 													</PRCodeComment>
 													<PRCodeCommentReply>
 														<Headshot key={index} size={30} person={derivedState.currentUser} />
@@ -263,12 +333,22 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 																multiCompose
 																text={""}
 																placeholder="Reply..."
-																onChange={() => {}}
+																onChange={e => {
+																	handleTextInputChanged(e, comment.databaseId);
+																}}
 															/>
 														</div>
 													</PRCodeCommentReply>
 													<div style={{ height: "15px" }}></div>
+
 													<Button variant="secondary">Resolve conversation</Button>
+													<Button
+														variant="primary"
+														isLoading={isSubmitting}
+														onClick={e => handleComment(e, comment.databaseId)}
+													>
+														Comment
+													</Button>
 												</PRThreadedCommentCard>
 											);
 										})}

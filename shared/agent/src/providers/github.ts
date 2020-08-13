@@ -1314,6 +1314,35 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 		return true;
 	}
 
+	async resolveReviewThread(request: { threadId: string }) {
+		const response = await this.client.request<any>(
+			`mutation ResolveReviewThread($threadId:String!) {
+				resolveReviewThread(input: {threadId:$threadId}) {
+				  clientMutationId
+				}
+			}`,
+			{
+				threadId: request.threadId
+			}
+		);
+		return response;
+	}
+
+	async addComment(request: { subjectId: string; text: string }) {
+		const response = await this.client.request<any>(
+			`mutation AddComment($subjectId:String!,$body:String!) {
+				addComment(input: {subjectId:$subjectId, body:$body}) {
+				  clientMutationId
+				}
+			}`,
+			{
+				subjectId: request.subjectId,
+				body: request.text
+			}
+		);
+		return response;
+	}
+
 	async createCommitComment(request: {
 		pullRequestId: string;
 		sha: string;
@@ -1331,6 +1360,18 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 				side: "RIGHT",
 				path: request.path,
 				position: request.position
+			}
+		);
+		return data.body;
+	}
+
+	async createCommentReply(request: { pullRequestId: string; commentId: string; text: string }) {
+		// https://developer.github.com/v3/pulls/comments/#create-a-reply-for-a-review-comment
+		const ownerData = await this.getRepoOwnerFromPullRequestId(request.pullRequestId);
+		const data = await this.post<any, any>(
+			`/repos/${ownerData.owner}/${ownerData.name}/pulls/${ownerData.pullRequestNumber}/comments/${request.commentId}/replies`,
+			{
+				body: request.text
 			}
 		);
 		return data.body;
@@ -1912,6 +1953,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 						  __typename
 						}
 						... on PullRequestReview {
+							id
 						  __typename
 						  author {
 							login
@@ -1939,6 +1981,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 							  lastEditedAt
 							  createdAt
 							  id
+							  databaseId
 							  state
 							  authorAssociation
 							  draftedAt
@@ -1967,6 +2010,24 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 							  pullRequest {
 								body
 								bodyText
+								reviewThreads(first: 1) {
+									edges {
+									  node {
+										id
+										comments(first: 50, skip: 1) {
+											totalCount
+										  	nodes {
+												createdAt
+												author {
+													login
+													avatarUrl
+												}
+												body
+										  	}
+										}
+									  }
+									}
+								  }
 							  }
 							  pullRequestReview {
 								body
@@ -2114,7 +2175,9 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 				remaining: rsp.rateLimit.remaining,
 				resetAt: new Date(rsp.rateLimit.resetAt)
 			};
-
+			Logger.debug(
+				`pullRequestTimelineQuery rateLimit=${JSON.stringify(rsp.rateLimit)} cursor=${cursor}`
+			);
 			return rsp;
 		} catch (ex) {
 			Logger.error(ex, cc);

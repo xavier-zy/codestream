@@ -730,6 +730,7 @@ export interface ProviderCreatePullRequestRequest {
 export interface ProviderCreatePullRequestResponse {
 	url?: string;
 	title?: string;
+	id?: string;
 	error?: { message?: string; type: string };
 }
 

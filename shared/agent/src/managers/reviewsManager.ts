@@ -796,22 +796,30 @@ export class ReviewsManager extends CachedEntityManagerBase<CSReview> {
 	async createPullRequest(request: CreatePullRequestRequest): Promise<CreatePullRequestResponse> {
 		const { git, providerRegistry, users } = SessionContainer.instance();
 		try {
-			const review = await this.getById(request.reviewId);
+			let review: CSReview | undefined = undefined;
+			let repoId = request.repoId;
+			let reviewPermalink;
+			let approvedAt;
 			const approvers: { name: string }[] = [];
-			if (review.approvedBy) {
-				for (const userId of Object.keys(review.approvedBy)) {
-					try {
-						const user = await users.getById(userId);
-						if (user) {
-							approvers.push({ name: user.username });
-						}
-					} catch {}
+			if (request.reviewId) {
+				review = await this.getById(request.reviewId);
+				repoId = review.reviewChangesets[0].repoId;
+				reviewPermalink = review.permalink;
+				approvedAt = review.approvedAt;
+				if (review.approvedBy) {
+					for (const userId of Object.keys(review.approvedBy)) {
+						try {
+							const user = await users.getById(userId);
+							if (user) {
+								approvers.push({ name: user.username });
+							}
+						} catch {}
+					}
 				}
 			}
 
 			// if we have this, then we want to create the branch's remote
-			if (request.remoteName) {
-				const repoId = review.reviewChangesets[0].repoId;
+			if (request.remoteName && repoId) {
 				const repo = await git.getRepositoryById(repoId);
 				if (!repo) {
 					Logger.warn(`createPullRequest: repoId=${repoId} not found`);
@@ -847,8 +855,8 @@ export class ReviewsManager extends CachedEntityManagerBase<CSReview> {
 			const data = {
 				...request,
 				metadata: {
-					reviewPermalink: review.permalink,
-					approvedAt: review.approvedAt,
+					reviewPermalink,
+					approvedAt,
 					reviewers: approvers
 				}
 			};
@@ -870,19 +878,22 @@ export class ReviewsManager extends CachedEntityManagerBase<CSReview> {
 				};
 			}
 
-			const updateReviewResult = await this.update({
-				id: review.id,
-				pullRequestProviderId: request.providerId,
-				pullRequestTitle: result.title,
-				pullRequestUrl: result.url
-			});
+			if (review) {
+				const updateReviewResult = await this.update({
+					id: review.id,
+					pullRequestProviderId: request.providerId,
+					pullRequestTitle: result.title,
+					pullRequestUrl: result.url
+				});
 
-			Logger.debug(
-				`createPullRequest: success for reviewId=${request.reviewId} providerId=${request.providerId} headRefName=${request.headRefName} baseRefName=${request.baseRefName}`
-			);
+				Logger.debug(
+					`createPullRequest: success for reviewId=${request.reviewId} providerId=${request.providerId} headRefName=${request.headRefName} baseRefName=${request.baseRefName}`
+				);
+			}
 
 			return {
 				success: true,
+				id: result.id,
 				url: result.url
 			};
 		} catch (ex) {

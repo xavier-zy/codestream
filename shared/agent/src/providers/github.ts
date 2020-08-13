@@ -515,6 +515,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 					createPullRequest(input: {repositoryId: $repositoryId, baseRefName: $baseRefName, headRefName: $headRefName, title: $title, body: $body}) {
 					  pullRequest {
 							number,
+							id,
 							url,
 							title
 						}
@@ -532,6 +533,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 			const title = `#${pullRequest.number} ${pullRequest.title}`;
 			return {
 				url: pullRequest.url,
+				id: pullRequest.id,
 				title: title
 			};
 		} catch (ex) {
@@ -2309,6 +2311,7 @@ interface GitHubCreatePullRequestResponse {
 			number: number;
 			title: string;
 			url: string;
+			id: string;
 		};
 	};
 }

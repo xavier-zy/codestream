@@ -26,7 +26,7 @@ import { isConnected } from "../store/providers/reducer";
 import { CodeStreamState } from "../store";
 import { inMillis } from "../utils";
 import { useInterval, useTimeout } from "../utilities/hooks";
-import { setCurrentReview, openPanel } from "../store/context/actions";
+import { setCurrentReview, openPanel, setCurrentPullRequest } from "../store/context/actions";
 import { PROVIDER_MAPPINGS } from "./CrossPostIssueControls/types";
 import { PrePRProviderInfoModal } from "./PrePRProviderInfoModal";
 import Icon from "./Icon";
@@ -279,7 +279,13 @@ export const CreatePullRequestPanel = props => {
 				success = true;
 				setFormState({ message: "", type: "", url: "" });
 				props.closePanel();
-				dispatch(setCurrentReview(derivedState.reviewId!));
+				if (derivedState.reviewId) {
+					// FIXME -- should we go to the review, or the PR
+					// in this case?
+					dispatch(setCurrentReview(derivedState.reviewId!));
+				} else if (result.id) {
+					dispatch(setCurrentPullRequest(result.id));
+				}
 			}
 		} catch (error) {
 			logError(`Unexpected error during pull request creation: ${error}`, {});

@@ -349,7 +349,9 @@ export const CheckPullRequestPreconditionsRequestType = new RequestType<
 >("codestream/review/pr/checkPreconditions");
 
 export interface CreatePullRequestRequest {
-	reviewId: string;
+	/** if a reviewId isn't provided, you must provide a repoId */
+	reviewId?: string;
+	repoId?: string;
 	providerId: string;
 	title: string;
 	description?: string;
@@ -362,6 +364,7 @@ export interface CreatePullRequestRequest {
 export interface CreatePullRequestResponse {
 	success: boolean;
 	url?: string;
+	id?: string;
 	error?: {
 		type:
 			| "REPO_NOT_FOUND"

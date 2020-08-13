@@ -670,11 +670,19 @@ export const PullRequestConversationTab = props => {
 									<Icon name="kebab-horizontal" />
 								</PRActionIcons>
 							</PRCommentHeader>
-							<PRCommentBody
-								dangerouslySetInnerHTML={{
-									__html: markdownify(prBody)
-								}}
-							></PRCommentBody>
+							{prBody && (
+								<PRCommentBody
+									dangerouslySetInnerHTML={{
+										__html: markdownify(prBody)
+									}}
+								></PRCommentBody>
+							)}
+							{!prBody && (
+								<PRCommentBody>
+									<i>No description provided.</i>
+								</PRCommentBody>
+							)}
+
 							<PullRequestReactions
 								targetId={pr.id}
 								setIsLoadingMessage={setIsLoadingMessage}

@@ -4,6 +4,7 @@ import { GraphQLClient } from "graphql-request";
 import { Response } from "node-fetch";
 import * as paths from "path";
 import * as qs from "querystring";
+import { uniqBy as _uniqBy } from "lodash-es";
 import { CodeStreamSession } from "session";
 import { URI } from "vscode-uri";
 import { MarkerLocation } from "../api/extensions";
@@ -1057,72 +1058,67 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 	async getMyPullRequests(request: {
 		owner: string;
 		repo: string;
+		isOpen?: boolean;
 	}): Promise<GetMyPullRequestsResponse[]> {
 		let results: any = [];
 		const repoQuery =
 			request && request.owner && request.repo ? `repo:${request.owner}/${request.repo} ` : "";
-		const searchByAuthorResult = await this.client.request<any>(
-			`query GetMyPullRequests {
-				search(query: "${repoQuery}is:pr author:@me", type: ISSUE, last: 100) {
-				edges {
-				  node {
-					... on PullRequest {
-						url
-						title
-						createdAt
-						author {
-						  login
-						  avatarUrl(size: 20)
-						  url
-						}
-						bodyText
-						number
-						state
-						updatedAt
-						lastEditedAt
-						id
+		const isOpenQuery = request && request.isOpen === true ? "is:open " : "";
+
+		const query = (q: string) => `query Search {
+			rateLimit {
+				limit
+				cost
+				remaining
+				resetAt
+			}
+			search(query: "${q}", type: ISSUE, last: 100) {
+			edges {
+			  node {
+				... on PullRequest {
+					url
+					title
+					createdAt
+					author {
+					  login
+					  avatarUrl(size: 20)
+					  url
 					}
-				  }
+					bodyText
+					number
+					state
+					updatedAt
+					lastEditedAt
+					id
 				}
 			  }
-			}`
-		);
-		if (searchByAuthorResult && searchByAuthorResult.search && searchByAuthorResult.search.edges) {
-			results = results.concat(searchByAuthorResult.search.edges.map((_: any) => _.node));
+			}
+		  }
+		}`;
+		// NOTE: there is also `reviewed-by` which `review-requested` translates to after the user
+		// has started or completed the review.
+
+		// see: https://docs.github.com/en/github/searching-for-information-on-github/searching-issues-and-pull-requests
+		const promises = Promise.all([
+			this.client.request<any>(query(`${repoQuery}${isOpenQuery}is:pr author:@me`)),
+			this.client.request<any>(query(`${repoQuery}${isOpenQuery}is:pr assignee:@me`)),
+			this.client.request<any>(query(`${repoQuery}${isOpenQuery}is:pr review-requested:@me`)),
+			this.client.request<any>(query(`${repoQuery}${isOpenQuery}is:pr reviewed-by:@me`))
+		]);
+		const items = await promises;
+		let rateLimit;
+		for (const item of items) {
+			if (item && item.search && item.search.edges) {
+				results = results.concat(item.search.edges.map((_: any) => _.node));
+			}
+			if (item.rateLimit) {
+				rateLimit = item.rateLimit;
+			}
 		}
-		const searchByAssigneeResult = await this.client.request<any>(
-			`query GetPullRequestsAssignedToMe {
-				search(query: "${repoQuery}is:pr is:open assignee:@me", type: ISSUE, last: 100) {
-					edges {
-					  node {
-						... on PullRequest {
-							url
-							title
-							createdAt
-							author {
-							  login
-							  avatarUrl(size: 20)
-							  url
-							}
-							bodyText
-							number
-							state
-							updatedAt
-							lastEditedAt
-							id
-						}
-					  }
-					}
-				  }
-				}`
-		);
-		if (
-			searchByAssigneeResult &&
-			searchByAssigneeResult.search &&
-			searchByAssigneeResult.search.edges
-		) {
-			results = results.concat(searchByAssigneeResult.search.edges.map((_: any) => _.node));
-		}
+
+		Logger.debug(`getMyPullRequests rateLimit=${JSON.stringify(rateLimit)}`);
+
+		results = _uniqBy(results, (_: { id: string }) => _.id);
 		return results
 			.map((pr: { createdAt: string }) => ({ ...pr, createdAt: new Date(pr.createdAt).getTime() }))
 			.sort((a: { createdAt: number }, b: { createdAt: number }) => b.createdAt - a.createdAt);

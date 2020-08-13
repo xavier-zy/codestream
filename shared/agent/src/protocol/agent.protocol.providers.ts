@@ -525,6 +525,8 @@ export class ExecuteThirdPartyTypedType<Req, Res> extends RequestType<
 export interface GetMyPullRequestsRequest {
 	owner?: string;
 	name?: string;
+	/** if true, only return PRs that are open */
+	isOpen?: boolean;
 }
 
 export interface GetMyPullRequestsResponse {

@@ -56,7 +56,10 @@ export function OpenReviews() {
 		>("codestream/provider/generic");
 		const response = await HostApi.instance.send(request, {
 			method: "getMyPullRequests",
-			providerId: "github*com"
+			providerId: "github*com",
+			params: {
+				isOpen: true
+			}
 		});
 		// console.warn("GOT PRS: ", response);
 		setIsLoadingPRs(false);

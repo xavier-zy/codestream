@@ -583,8 +583,10 @@ export function IssueList(props: React.PropsWithChildren<IssueListProps>) {
 
 		const providerDisplay = PROVIDER_MAPPINGS[provider.name];
 		if (providerDisplay.hasCustomFilters) {
-			const activeFilters = keyFilter(filterCustom.filters);
+			const activeFilters = keyFilter(filterCustom.filters)
+				.filter(f => typeof filterCustom.filters[f] === 'string');
 			activeFilters.forEach((filter: any) => {
+				if (typeof filterCustom.filters[filter] !== 'string') return; // failsafe
 				const checked = filterCustom.selected === filter;
 				items.push({
 					checked,
@@ -720,7 +722,9 @@ export function IssueList(props: React.PropsWithChildren<IssueListProps>) {
 				// if we have more than one connected provider, we don't want
 				// the label to be misleading in terms of what you're filtering on
 				if (numConnectedProviders > 1) selectedLabel = cardLabel + "s";
-				else selectedLabel = `${filterCustom.filters[filterCustom.selected]}`;
+				else if (filterCustom.filters[filterCustom.selected]) {
+					selectedLabel = `${filterCustom.filters[filterCustom.selected]}`;
+				}
 			} else {
 				selectedLabel = `${cardLabel}s assigned to you`;
 			}

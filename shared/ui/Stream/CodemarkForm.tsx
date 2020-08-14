@@ -1083,6 +1083,9 @@ class CodemarkForm extends React.Component<Props, State> {
 	renderSharingControls = () => {
 		if (this.props.isEditing) return null;
 		if (this.props.currentReviewId) return null;
+		// don't show the sharing controls for these types of diffs
+		if (this.props.textEditorUri && this.props.textEditorUri.match("codestream-diff://-[0-9]+-"))
+			return null;
 
 		const { codeBlocks } = this.state;
 		// we only look at the first code range here because we're using it to default

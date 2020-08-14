@@ -975,58 +975,64 @@ export class PostsManager extends EntityManagerBase<CSPost> {
 							// });
 							return {
 								isPassThrough: true,
-								codemark: {
-									creatorId: "",
-									createdAt: new Date().getTime(),
-									modifiedAt: new Date().getTime(),
-									id: "",
-									teamId: "",
-									streamId: "",
-									postId: "",
-									fileStreamIds: [],
-									type: CodemarkType.Comment,
-									permalink: "",
-									status: CodemarkStatus.Open,
-									title: "",
-									assignees: [],
-									text: request.attributes.text || "",
-									numReplies: 0,
-									pinned: false,
-									lastActivityAt: new Date().getTime(),
-									lastReplyAt: 0,
-									markers: [
-										{
-											creatorId: "",
-											id: "",
-											teamId: "",
-											repoId: "",
-											file: "",
-											postId: "",
-											fileStreamId: "",
-											postStreamId: "",
-											providerType: undefined,
-											codemarkId: "",
-											commitHashWhenCreated: "",
-											locationWhenCreated: [0, 0, 0, 0, undefined],
-											supersededByMarkerId: "",
-											code: lineWithMetadata.line,
-											referenceLocations: [],
-											createdAt: new Date().getTime(),
-											modifiedAt: new Date().getTime()
-										}
-									]
-								},
+								// codemark: {
+								// 	creatorId: "",
+								// 	createdAt: new Date().getTime(),
+								// 	modifiedAt: new Date().getTime(),
+								// 	id: "",
+								// 	teamId: "",
+								// 	streamId: "",
+								// 	postId: "",
+								// 	fileStreamIds: [],
+								// 	type: CodemarkType.Comment,
+								// 	permalink: "",
+								// 	status: CodemarkStatus.Open,
+								// 	title: "",
+								// 	assignees: [],
+								// 	text: request.attributes.text || "",
+								// 	numReplies: 0,
+								// 	pinned: false,
+								// 	lastActivityAt: new Date().getTime(),
+								// 	lastReplyAt: 0,
+								// 	markers: [
+								// 		{
+								// 			creatorId: "",
+								// 			id: "",
+								// 			teamId: "",
+								// 			repoId: "",
+								// 			file: "",
+								// 			postId: "",
+								// 			fileStreamId: "",
+								// 			postStreamId: "",
+								// 			providerType: undefined,
+								// 			codemarkId: "",
+								// 			commitHashWhenCreated: "",
+								// 			locationWhenCreated: [0, 0, 0, 0, undefined],
+								// 			supersededByMarkerId: "",
+								// 			code: lineWithMetadata.line,
+								// 			referenceLocations: [],
+								// 			createdAt: new Date().getTime(),
+								// 			modifiedAt: new Date().getTime()
+								// 		}
+								// 	]
+								// },
 								pullRequest: {
 									id: parsedUri.context.pullRequest.id
 								},
 								success: result != null
 							};
+						} else {
+							Logger.warn(
+								`Could not find lineWithMetadata for offset=${offset} for ${JSON.stringify({
+									line: line,
+									hunk: hunk
+								})}`
+							);
 						}
 					} else {
 						Logger.warn(
 							`Could not find hunk for line=${line} for ${JSON.stringify(parsedUri.context)}`
 						);
-						// do something else??
 					}
 				}
 			}

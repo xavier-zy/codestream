@@ -100,34 +100,35 @@ export const createCodemark = (attributes: SharingNewCodemarkAttributes) => asyn
 		if (response) {
 			let result;
 			if ((response as any).isPassThrough) {
-				// is pass through
+				// is pass through -- aka a fake "codemark" that was sent to a code provider
+				// like Github
 			} else {
 				result = dispatch(addCodemarks([response.codemark]));
 				dispatch(addStreams([response.stream]));
-			}
 
-			if (attributes.sharingAttributes) {
-				try {
-					await HostApi.instance.send(CreateThirdPartyPostRequestType, {
-						providerId: attributes.sharingAttributes.providerId,
-						channelId: attributes.sharingAttributes.channelId,
-						providerTeamId: attributes.sharingAttributes.providerTeamId,
-						text: rest.text,
-						codemark: response.codemark,
-						remotes: attributes.remotes,
-						mentionedUserIds: attributes.mentionedUserIds
-					});
-					HostApi.instance.track("Shared Codemark", {
-						Destination: capitalize(
-							getConnectedProviders(getState()).find(
-								config => config.id === attributes.sharingAttributes!.providerId
-							)!.name
-						),
-						"Codemark Status": "New"
-					});
-				} catch (error) {
-					logError("Error sharing a codemark", { message: error.toString() });
-					throw { reason: "share" } as CreateCodemarkError;
+				if (attributes.sharingAttributes) {
+					try {
+						await HostApi.instance.send(CreateThirdPartyPostRequestType, {
+							providerId: attributes.sharingAttributes.providerId,
+							channelId: attributes.sharingAttributes.channelId,
+							providerTeamId: attributes.sharingAttributes.providerTeamId,
+							text: rest.text,
+							codemark: response.codemark,
+							remotes: attributes.remotes,
+							mentionedUserIds: attributes.mentionedUserIds
+						});
+						HostApi.instance.track("Shared Codemark", {
+							Destination: capitalize(
+								getConnectedProviders(getState()).find(
+									config => config.id === attributes.sharingAttributes!.providerId
+								)!.name
+							),
+							"Codemark Status": "New"
+						});
+					} catch (error) {
+						logError("Error sharing a codemark", { message: error.toString() });
+						throw { reason: "share" } as CreateCodemarkError;
+					}
 				}
 			}
 			return result;

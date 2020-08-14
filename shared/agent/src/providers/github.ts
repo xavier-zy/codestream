@@ -1593,6 +1593,29 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 						  deletions
 						  additions
 						}
+					}
+					reviewThreads(first: 50) {
+						edges {
+						  node {
+							id
+							comments(first: 50) {
+							  totalCount
+							  nodes {
+								author {
+								  login
+								  avatarUrl
+								}
+								body
+								bodyHTML
+								id
+								createdAt
+								replyTo {
+								  id
+								}
+							  }
+							}
+						  }
+						}
 					  }
 					commits(first: 100) {
 						totalCount
@@ -2007,28 +2030,6 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 							  outdated
 							  path
 							  position
-							  pullRequest {
-								body
-								bodyText
-								reviewThreads(first: 1) {
-									edges {
-									  node {
-										id
-										comments(first: 50, skip: 1) {
-											totalCount
-										  	nodes {
-												createdAt
-												author {
-													login
-													avatarUrl
-												}
-												body
-										  	}
-										}
-									  }
-									}
-								  }
-							  }
 							  pullRequestReview {
 								body
 								bodyText
@@ -2175,6 +2176,47 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 				remaining: rsp.rateLimit.remaining,
 				resetAt: new Date(rsp.rateLimit.resetAt)
 			};
+			// this is sheer insanity... there's no way to get replies to parent comments
+			// as a child object of that comment. all replies are treated as `reviewThreads`
+			// and they live on the parent `pullRequest` object. below, we're stiching together
+			// comments and any replies (as a `replies` object) that might exist for those comments.
+			// MORE here: https://github.community/t/bug-v4-graphql-api-trouble-retrieving-pull-request-review-comments/13708/2
+			if (rsp.repository.pullRequest.timelineItems.nodes) {
+				for (const node of rsp.repository.pullRequest.timelineItems.nodes) {
+					if (node.__typename === "PullRequestReview") {
+						let replies: any = [];
+						for (const comment of node.comments.nodes) {
+							// a parent comment has a null replyTo
+							if (
+								comment.replyTo == null &&
+								rsp.repository &&
+								rsp.repository.pullRequest &&
+								rsp.repository.pullRequest.reviewThreads &&
+								rsp.repository.pullRequest.reviewThreads.edges
+							) {
+								for (const edge of rsp.repository.pullRequest.reviewThreads.edges) {
+									if (edge.node.comments.nodes.length > 1) {
+										for (const node1 of edge.node.comments.nodes) {
+											if (node1.id === comment.id) {
+												// find all the comments except the parent
+												replies = replies.concat(
+													edge.node.comments.nodes.filter((_: any) => _.id !== node1.id)
+												);
+												break;
+											}
+										}
+									}
+								}
+							}
+						}
+						if (replies.length) {
+							// this api always returns only 1 node/comment (with no replies)
+							// do just attach it to nodes[0]
+							node.comments.nodes[0].replies = replies;
+						}
+					}
+				}
+			}
 			Logger.debug(
 				`pullRequestTimelineQuery rateLimit=${JSON.stringify(rsp.rateLimit)} cursor=${cursor}`
 			);

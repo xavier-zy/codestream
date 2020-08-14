@@ -287,23 +287,18 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 															fetch={fetch}
 															reactionGroups={comment.reactionGroups}
 														/>
-														{comment.pullRequest.reviewThreads &&
-															comment.pullRequest.reviewThreads.edges &&
-															comment.pullRequest.reviewThreads.edges[0].node &&
-															comment.pullRequest.reviewThreads.edges[0].node.comments &&
-															comment.pullRequest.reviewThreads.edges[0].node.comments.nodes &&
-															comment.pullRequest.reviewThreads.edges[0].node.comments.nodes.map(
-																(c, i) => {
-																	return (
-																		<PRCodeCommentBody>
-																			<PRHeadshot key={c.id + i} size={30} person={c.author} />
-																			<PRThreadedCommentHeader>
-																				{c.author.login}
-																				<Timestamp time={c.createdAt} />
-																				<PRActionIcons>
-																					{myComment && Author}
-																					{myPR ? <IAmMember /> : <UserIsMember />}
-																					{/*
+														{comment.replies &&
+															comment.replies.map((c, i) => {
+																return (
+																	<PRCodeCommentBody>
+																		<PRHeadshot key={c.id + i} size={30} person={c.author} />
+																		<PRThreadedCommentHeader>
+																			{c.author.login}
+																			<Timestamp time={c.createdAt} />
+																			<PRActionIcons>
+																				{myComment && Author}
+																				{myPR ? <IAmMember /> : <UserIsMember />}
+																				{/*
 																					<PullRequestReactButton
 																						targetId={c.id}
 																						setIsLoadingMessage={setIsLoadingMessage}
@@ -312,13 +307,12 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 																					/>
 																					<Icon name="kebab-horizontal" className="clickable" />
 																					*/}
-																				</PRActionIcons>
-																			</PRThreadedCommentHeader>
-																			<MarkdownText text={c.body} excludeParagraphWrap />
-																		</PRCodeCommentBody>
-																	);
-																}
-															)}
+																			</PRActionIcons>
+																		</PRThreadedCommentHeader>
+																		<MarkdownText text={c.body} excludeParagraphWrap />
+																	</PRCodeCommentBody>
+																);
+															})}
 													</PRCodeComment>
 													<PRCodeCommentReply>
 														<Headshot key={index} size={30} person={derivedState.currentUser} />

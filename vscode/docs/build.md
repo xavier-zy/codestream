@@ -1,6 +1,6 @@
 # VSCode Extension Builds
 
-TeamCity Project: [Visual Studio Code](http://tc.codestream.us/project/VisualStudioCode)
+TeamCity Project: [Visual Studio Code](http://redirector.codestream.us/builds/vscode)
 
 
 ## GitFlow and Brief Overview
@@ -14,9 +14,9 @@ Read the [Build Overview](https://teamcodestream.atlassian.net/wiki/x/04BID) pag
 
 | Asset Env | Asset | Location |
 | --- | --- | --- |
-| dev | vsix | [TeamCity CI build artifact](http://tc.codestream.us/buildConfiguration/VisualStudioCode_Ci) |
-| prod | vsix | [TeamCity Prod Integration build artifact](http://tc.codestream.us/buildConfiguration/VisualStudioCode_ProdIntegration) |
+| dev | vsix | [TeamCity CI build](http://redirector.codestream.us/builds/vscode/ci) |
+| prod | vsix | [TeamCity Prod Integration build](http://redirector.codestream.us/builds/vscode/pi) |
 
-## Builds
+## Build Documentation
 
-[see standard builds for descriptions](https://github.com/TeamCodeStream/teamcity_tools/blob/master/README.project-build-types.md#standard-project-builds)
+[TeamCity build documentation](https://github.com/TeamCodeStream/teamcity_tools/tree/master/docs)

@@ -1328,6 +1328,20 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 		return response;
 	}
 
+	async unresolveReviewThread(request: { threadId: string }) {
+		const response = await this.client.request<any>(
+			`mutation UnresolveReviewThread($threadId:String!) {
+				unresolveReviewThread(input: {threadId:$threadId}) {
+				  clientMutationId
+				}
+			}`,
+			{
+				threadId: request.threadId
+			}
+		);
+		return response;
+	}
+
 	async addComment(request: { subjectId: string; text: string }) {
 		const response = await this.client.request<any>(
 			`mutation AddComment($subjectId:String!,$body:String!) {
@@ -1598,6 +1612,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 						edges {
 						  node {
 							id
+							isResolved
 							comments(first: 50) {
 							  totalCount
 							  nodes {
@@ -2185,6 +2200,8 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 				for (const node of rsp.repository.pullRequest.timelineItems.nodes) {
 					if (node.__typename === "PullRequestReview") {
 						let replies: any = [];
+						let threadId;
+						let isResolved;
 						for (const comment of node.comments.nodes) {
 							// a parent comment has a null replyTo
 							if (
@@ -2198,6 +2215,8 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 									if (edge.node.comments.nodes.length > 1) {
 										for (const node1 of edge.node.comments.nodes) {
 											if (node1.id === comment.id) {
+												threadId = edge.node.id;
+												isResolved = edge.node.isResolved;
 												// find all the comments except the parent
 												replies = replies.concat(
 													edge.node.comments.nodes.filter((_: any) => _.id !== node1.id)
@@ -2212,8 +2231,13 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 						if (replies.length) {
 							// this api always returns only 1 node/comment (with no replies)
 							// do just attach it to nodes[0]
+							node.comments.nodes[0].threadId = threadId;
+							node.comments.nodes[0].isResolved = isResolved;
 							node.comments.nodes[0].replies = replies;
 						}
+						replies = null;
+						threadId = null;
+						isResolved = null;
 					}
 				}
 			}

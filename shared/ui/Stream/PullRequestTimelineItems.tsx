@@ -64,23 +64,24 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 	if (!pr || !pr.timelineItems) return null;
 
 	const [isSubmitting, setIsSubmitting] = useState(false);
+	const [isResolving, setIsResolving] = useState(false);
 	const [reviewOption, setReviewOption] = useState("COMMENT");
 	const [reviewOptionText, setReviewOptionText] = useState("");
 	const [openComments, setOpenComments] = useState({});
 	const [pendingComments, setPendingComments] = useState({});
 	// const [pendingComment, setPendingComment] = useState("");
-	const submitReview = async (event?: React.SyntheticEvent) => {
-		// await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
-		// 	method: "submitReview",
-		// 	providerId: "github*com",
-		// 	params: {
-		// 		pullRequestId: pr.id!,
-		// 		text: reviewOptionText,
-		// 		eventType: reviewOption
-		// 	}
-		// });
-		// props.fetch();
-	};
+	//const submitReview = async (event?: React.SyntheticEvent) => {
+	// await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
+	// 	method: "submitReview",
+	// 	providerId: "github*com",
+	// 	params: {
+	// 		pullRequestId: pr.id!,
+	// 		text: reviewOptionText,
+	// 		eventType: reviewOption
+	// 	}
+	// });
+	// props.fetch();
+	//};
 
 	// const cancelReview = async (event?: React.SyntheticEvent) => {
 	// 	await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
@@ -176,6 +177,44 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 					}
 				]
 			});
+		}
+	};
+
+	const handleResolve = async (e, threadId) => {
+		try {
+			setIsResolving(true);
+			await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
+				method: "resolveReviewThread",
+				providerId: "github*com",
+				params: {
+					threadId: threadId
+				}
+			});
+
+			await props.fetch();
+		} catch (ex) {
+			console.warn(ex);
+		} finally {
+			setIsResolving(false);
+		}
+	};
+
+	const handleUnresolve = async (e, threadId) => {
+		try {
+			setIsResolving(true);
+			await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
+				method: "unresolveReviewThread",
+				providerId: "github*com",
+				params: {
+					threadId: threadId
+				}
+			});
+
+			await props.fetch();
+		} catch (ex) {
+			console.warn(ex);
+		} finally {
+			setIsResolving(false);
 		}
 	};
 
@@ -408,7 +447,25 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 													</PRCodeCommentReply>
 													<div style={{ height: "15px" }}></div>
 													<PRButtonRow>
-														<Button variant="secondary">Resolve conversation</Button>
+														{comment.isResolved && (
+															<Button
+																variant="secondary"
+																isLoading={isResolving}
+																onClick={e => handleUnresolve(e, comment.threadId)}
+															>
+																Unresolve conversation
+															</Button>
+														)}
+
+														{!comment.isResolved && (
+															<Button
+																variant="secondary"
+																isLoading={isResolving}
+																onClick={e => handleResolve(e, comment.threadId)}
+															>
+																Resolve conversation
+															</Button>
+														)}
 													</PRButtonRow>
 												</PRThreadedCommentCard>
 											);

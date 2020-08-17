@@ -14,7 +14,8 @@ import {
 	PRThreadedCommentCard,
 	PRCodeCommentReply,
 	PRThreadedCommentHeader,
-	PRFoot
+	PRFoot,
+	PRButtonRow
 } from "./PullRequestComponents";
 import React, { PropsWithChildren, useState } from "react";
 import { PRHeadshot, Headshot } from "../src/components/Headshot";
@@ -42,6 +43,7 @@ import { useSelector } from "react-redux";
 import { CodeStreamState } from "../store";
 import { CSMe } from "@codestream/protocols/api";
 import { SmartFormattedList } from "./SmartFormattedList";
+import { confirmPopup } from "./Confirm";
 
 const ReviewIcons = {
 	APPROVED: <Icon name="check" className="circled green" />,
@@ -64,6 +66,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [reviewOption, setReviewOption] = useState("COMMENT");
 	const [reviewOptionText, setReviewOptionText] = useState("");
+	const [openComments, setOpenComments] = useState({});
 	const [pendingComments, setPendingComments] = useState({});
 	// const [pendingComment, setPendingComment] = useState("");
 	const submitReview = async (event?: React.SyntheticEvent) => {
@@ -100,11 +103,19 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 		});
 	};
 
+	const handleTextInputFocus = async (databaseCommentId: number) => {
+		setOpenComments({
+			...openComments,
+			[databaseCommentId]: true
+		});
+	};
+
 	const handleComment = async (e, databaseCommentId) => {
 		try {
 			const value = pendingComments[databaseCommentId];
 			if (value == null) return;
 			setIsSubmitting(true);
+
 			await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
 				method: "createCommentReply",
 				providerId: "github*com",
@@ -115,16 +126,56 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 				}
 			});
 
-			setPendingComments({
-				...pendingComments,
-				[databaseCommentId]: undefined
+			fetch().then(() => {
+				setPendingComments({
+					...pendingComments,
+					[databaseCommentId]: undefined
+				});
+				setOpenComments({
+					...openComments,
+					[databaseCommentId]: false
+				});
 			});
-
-			props.fetch();
 		} catch (ex) {
 			console.warn(ex);
 		} finally {
 			setIsSubmitting(false);
+		}
+	};
+
+	const handleCancelComment = async (e, databaseCommentId) => {
+		const value = pendingComments[databaseCommentId];
+		if (value == null || value == undefined) {
+			setOpenComments({
+				...openComments,
+				[databaseCommentId]: false
+			});
+			return;
+		}
+		if (value.length > 0) {
+			confirmPopup({
+				title: "Are you sure?",
+				message: "",
+				centered: true,
+				buttons: [
+					{ label: "Go Back", className: "control-button" },
+					{
+						label: "Discard Comment",
+						className: "delete",
+						wait: true,
+						action: () => {
+							setPendingComments({
+								...pendingComments,
+								[databaseCommentId]: undefined
+							});
+							setOpenComments({
+								...openComments,
+								[databaseCommentId]: false
+							});
+						}
+					}
+				]
+			});
 		}
 	};
 
@@ -322,27 +373,43 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 																margin: "0 0 0 40px",
 																border: "1px solid var(--base-border-color)"
 															}}
+															className={openComments[comment.databaseId] ? "open-comment" : ""}
 														>
 															<MessageInput
 																multiCompose
-																text={""}
+																text={pendingComments[comment.databaseId] || ""}
 																placeholder="Reply..."
 																onChange={e => {
 																	handleTextInputChanged(e, comment.databaseId);
 																}}
+																onFocus={e => {
+																	handleTextInputFocus(comment.databaseId);
+																}}
 															/>
 														</div>
+														{openComments[comment.databaseId] && (
+															<PRButtonRow>
+																<Button
+																	variant="secondary"
+																	onClick={e => handleCancelComment(e, comment.databaseId)}
+																>
+																	Cancel
+																</Button>
+
+																<Button
+																	variant="primary"
+																	isLoading={isSubmitting}
+																	onClick={e => handleComment(e, comment.databaseId)}
+																>
+																	Comment
+																</Button>
+															</PRButtonRow>
+														)}
 													</PRCodeCommentReply>
 													<div style={{ height: "15px" }}></div>
-
-													<Button variant="secondary">Resolve conversation</Button>
-													<Button
-														variant="primary"
-														isLoading={isSubmitting}
-														onClick={e => handleComment(e, comment.databaseId)}
-													>
-														Comment
-													</Button>
+													<PRButtonRow>
+														<Button variant="secondary">Resolve conversation</Button>
+													</PRButtonRow>
 												</PRThreadedCommentCard>
 											);
 										})}

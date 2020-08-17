@@ -88,6 +88,7 @@ interface Props extends ConnectedProps {
 	onEmptyUpArrow?(event: React.KeyboardEvent): any;
 	onDismiss?(): any;
 	onSubmit?(): any;
+	onFocus?: any;
 	selectedTags?: any;
 	toggleTag?: Function;
 	relatedCodemarkIds?: any;
@@ -1168,6 +1169,7 @@ export class MessageInput extends React.Component<Props, State> {
 						id="input-div"
 						onChange={this.handleChange}
 						onBlur={this.handleBlur}
+						onFocus={this.props.onFocus}
 						onClick={this.handleClick}
 						html={text}
 						placeholder={placeholder}

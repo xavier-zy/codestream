@@ -319,6 +319,10 @@ export const PRReactions = styled.div`
 	}
 `;
 
+export const PRButtonRow = styled.div`
+	padding-top: 10px;
+`;
+
 export const PRThreadedCommentCard = styled.div`
 	position: relative;
 	border: 1px solid;
@@ -352,6 +356,15 @@ export const PRThreadedCommentCard = styled.div`
 		margin: 0 5px 5px;
 		border: 1px solid var(--base-border-color);
 		border-radius: 5px;
+	}
+	${PRButtonRow} {
+		border-top: 1px solid var(--base-border-color);
+		margin-left: -15px;
+		margin-right: -15px;
+		padding: 10px 15px 0 15px;
+	}
+	button + button {
+		margin-left: 10px;
 	}
 `;
 
@@ -668,10 +681,6 @@ export const PRIconButton = styled.div`
 	}
 `;
 
-export const PRButtonRow = styled.div`
-	padding-top: 10px;
-`;
-
 export const PRCodeCommentBody = styled.div`
 	min-height: 30px;
 	margin: 0 0 20px 0;
@@ -696,9 +705,16 @@ export const PRCodeComment = styled.div`
 export const PRCodeCommentReply = styled.div`
 	position: relative;
 	#input-div {
-		height: 1px !important;
-		min-height: none !important;
+		height: 28px !important; // 2px for the border, 30px matches headshot height
+		min-height: 28px !important;
 		padding: 5px !important;
+	}
+	.open-comment #input-div {
+		min-height: 100px !important;
+	}
+	${PRButtonRow} {
+		text-align: right;
+		border-top: none;
 	}
 `;
 

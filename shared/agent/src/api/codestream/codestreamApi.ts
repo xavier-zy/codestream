@@ -800,6 +800,7 @@ export class CodeStreamApiProvider implements ApiProvider {
 			type: MessageType.Users,
 			data: [update.user]
 		})) as CSMe[];
+
 		if (this._preferences) {
 			this._preferences.update(user.preferences!);
 		}

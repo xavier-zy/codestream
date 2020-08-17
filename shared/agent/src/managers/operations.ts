@@ -13,6 +13,45 @@ export function isCompleteObject(obj: object): boolean {
 	return true;
 }
 
+// take a hash, and replace any `.` or `$` characters in the keys with unicode equivalent,
+// also escaping the `\` character ... this avoid problems with saving to mongo, which forbids
+// these characters
+export function safeEncode(obj: any): void {
+	if (typeof obj !== "object") return;
+	for (const key in obj) {
+		const encodedKey = key.replace("\\", "\\\\").replace("$", "\\u0024").replace(".", "\\u002e");
+		if (encodedKey !== key) {
+			obj[encodedKey] = obj[key];
+			delete obj[key];
+		}
+		if (typeof obj[encodedKey] === 'object') {
+			safeEncode(obj[encodedKey]);
+		}
+	}
+}
+
+// decode single hash key, replacing dedoded key for the original key as needed
+export function safeDecodeKey(data: any, key: string): string {
+	const decodedKey = key.replace("\\u002e", ".").replace("\\u0024", "$").replace("\\\\", "\\");
+	if (decodedKey !== key) {
+		data[decodedKey] = data[key];
+		delete data[key];
+	}
+	return decodedKey;
+}
+
+// reverse the encoding above ... take a hash, look for any unicode equivalents to `.` or `$`,
+// and replace with their regular equivalents, and finally unescape the `\`
+export function safeDecode(obj: any): void {
+	if (typeof obj !== "object") return;
+	for (const key in obj) {
+		const decodedKey = safeDecodeKey(obj, key);
+		if (typeof obj[decodedKey] === "object") {
+			safeDecode(obj[decodedKey]);
+		}
+	}
+}
+
 export function resolve<T>(
 	{ id, ...object }: { id: string; object: any[] },
 	changes: { [key: string]: any }
@@ -54,7 +93,10 @@ export function handle(property: any, object: any, data: any, recurse: any, appl
 const operations = {
 	$set(object: any, data: any) {
 		Object.keys(data).forEach(property => {
-			handle(property, object, data, operations.$set, () => (object[property] = data[property]));
+			handle(property, object, data, operations.$set, () => {
+				object[property] = data[property];
+				safeDecodeKey(object, property);
+			});
 		});
 	},
 	$unset(object: any, data: any) {

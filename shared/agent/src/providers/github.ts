@@ -1361,6 +1361,37 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 		pullRequestId: string;
 		sha: string;
 		text: string;
+		path: string;
+		startLine: number;
+		// use endLine for multi-line comments
+		endLine?: number;
+	}) {
+		// https://github.community/t/feature-commit-comments-for-a-pull-request/13986/9
+		const ownerData = await this.getRepoOwnerFromPullRequestId(request.pullRequestId);
+		const payload = {
+			body: request.text,
+			commit_id: request.sha,
+			side: "RIGHT",
+			path: request.path
+		} as any;
+		if (request.endLine != null && request.endLine !== request.startLine) {
+			payload.start_line = request.startLine;
+			payload.line = request.endLine;
+		} else {
+			payload.line = request.startLine;
+		}
+
+		const data = await this.post<any, any>(
+			`/repos/${ownerData.owner}/${ownerData.name}/pulls/${ownerData.pullRequestNumber}/comments`,
+			payload
+		);
+		return data.body;
+	}
+
+	async createCommitByPositionComment(request: {
+		pullRequestId: string;
+		sha: string;
+		text: string;
 		position: number;
 		path: string;
 	}) {
@@ -2236,10 +2267,12 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 						}
 						// this api always returns only 1 node/comment (with no replies)
 						// do just attach it to nodes[0]
-						node.comments.nodes[0].threadId = threadId;
-						node.comments.nodes[0].isResolved = isResolved;
-						if (replies.length) {
-							node.comments.nodes[0].replies = replies;
+						if (node.comments.nodes.length) {
+							node.comments.nodes[0].threadId = threadId;
+							node.comments.nodes[0].isResolved = isResolved;
+							if (replies.length) {
+								node.comments.nodes[0].replies = replies;
+							}
 						}
 						replies = null;
 						threadId = null;

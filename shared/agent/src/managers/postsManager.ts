@@ -944,92 +944,120 @@ export class PostsManager extends EntityManagerBase<CSPost> {
 						_ => startLine >= _.newStart && startLine <= _.newStart + _.newLines
 					);
 					const endingHunk = diff.hunks.find(_ => endLine <= _.newStart + _.newLines);
-					if (startingHunk) {
-						// the line the user is asking for minus the start of this hunk
-						// that will give us the index of where it is in the hunk
-						// from there, we fetch the relativeLine which is what github needs
-						// const offset = line - hunk.newStart;
-						// const lineWithMetadata = (hunk as any).linesWithMetadata.find(
-						// 	(b: any) => b.index === offset
+					if (!startingHunk || !endingHunk) {
+						Logger.warn(
+							`Could not find hunk for startLine=${startLine} or endLine=${endLine} for ${JSON.stringify(
+								parsedUri.context
+							)}`
+						);
+						const codeBlock = request.attributes.codeBlocks[0];
+						// const builder = MarkersBuilder.newBuilder({ uri: codeBlock.uri });
+						// const descriptor = await builder.build(
+						// 	codeBlock.contents,
+						// 	codeBlock.range,
+						// 	codeBlock.scm
 						// );
 
 						const result = await providerRegistry.executeMethod({
-							method: "createCommitComment",
+							method: "addComment",
 							providerId: parsedUri.context.pullRequest.providerId,
 							params: {
-								pullRequestId: parsedUri.context.pullRequest.id,
-								sha: parsedUri.rightSha,
-								text: request.attributes.text || "",
-								path: parsedUri.path,
-								startLine: startLine, // lineWithMetadata.relativeLine
-								endLine: endingHunk ? endLine : undefined
+								subjectId: parsedUri.context.pullRequest.id,
+								text: `${request.attributes.text || ""}\n${codeBlock.scm?.file} (Line${
+									startLine === endLine ? ` ${startLine}` : `s ${startLine}-${endLine}`
+								})`
+								// \n\`\`\`${descriptor.marker.code}\`\`\``
 							}
 						});
-						// this will create an implicit review
-						// const result = await providerRegistry.executeMethod({
-						// 	method: "createPullRequestReviewComment",
-						// 	providerId: parsedUri.context.pullRequest.providerId,
-						// 	params: {
-						// 		pullRequestId: parsedUri.context.pullRequest.id,
-						// 		text: request.attributes.text || "",
-						// 		filePath: parsedUri.path,
-						// 		position: lineWithMetadata.relativeLine
-						// 	}
-						// });
 						return {
 							isPassThrough: true,
-							// codemark: {
-							// 	creatorId: "",
-							// 	createdAt: new Date().getTime(),
-							// 	modifiedAt: new Date().getTime(),
-							// 	id: "",
-							// 	teamId: "",
-							// 	streamId: "",
-							// 	postId: "",
-							// 	fileStreamIds: [],
-							// 	type: CodemarkType.Comment,
-							// 	permalink: "",
-							// 	status: CodemarkStatus.Open,
-							// 	title: "",
-							// 	assignees: [],
-							// 	text: request.attributes.text || "",
-							// 	numReplies: 0,
-							// 	pinned: false,
-							// 	lastActivityAt: new Date().getTime(),
-							// 	lastReplyAt: 0,
-							// 	markers: [
-							// 		{
-							// 			creatorId: "",
-							// 			id: "",
-							// 			teamId: "",
-							// 			repoId: "",
-							// 			file: "",
-							// 			postId: "",
-							// 			fileStreamId: "",
-							// 			postStreamId: "",
-							// 			providerType: undefined,
-							// 			codemarkId: "",
-							// 			commitHashWhenCreated: "",
-							// 			locationWhenCreated: [0, 0, 0, 0, undefined],
-							// 			supersededByMarkerId: "",
-							// 			code: lineWithMetadata.line,
-							// 			referenceLocations: [],
-							// 			createdAt: new Date().getTime(),
-							// 			modifiedAt: new Date().getTime()
-							// 		}
-							// 	]
-							// },
+
 							pullRequest: {
 								id: parsedUri.context.pullRequest.id
 							},
 							success: result != null
 						};
-					} else {
-						// create a top-level codemark ??
-						Logger.warn(
-							`Could not find hunk for line=${startLine} for ${JSON.stringify(parsedUri.context)}`
-						);
 					}
+
+					// the line the user is asking for minus the start of this hunk
+					// that will give us the index of where it is in the hunk
+					// from there, we fetch the relativeLine which is what github needs
+					// const offset = line - hunk.newStart;
+					// const lineWithMetadata = (hunk as any).linesWithMetadata.find(
+					// 	(b: any) => b.index === offset
+					// );
+
+					const result = await providerRegistry.executeMethod({
+						method: "createCommitComment",
+						providerId: parsedUri.context.pullRequest.providerId,
+						params: {
+							pullRequestId: parsedUri.context.pullRequest.id,
+							sha: parsedUri.rightSha,
+							text: request.attributes.text || "",
+							path: parsedUri.path,
+							startLine: startLine, // lineWithMetadata.relativeLine
+							endLine: endingHunk ? endLine : undefined
+						}
+					});
+					// this will create an implicit review
+					// const result = await providerRegistry.executeMethod({
+					// 	method: "createPullRequestReviewComment",
+					// 	providerId: parsedUri.context.pullRequest.providerId,
+					// 	params: {
+					// 		pullRequestId: parsedUri.context.pullRequest.id,
+					// 		text: request.attributes.text || "",
+					// 		filePath: parsedUri.path,
+					// 		position: lineWithMetadata.relativeLine
+					// 	}
+					// });
+					return {
+						isPassThrough: true,
+						// codemark: {
+						// 	creatorId: "",
+						// 	createdAt: new Date().getTime(),
+						// 	modifiedAt: new Date().getTime(),
+						// 	id: "",
+						// 	teamId: "",
+						// 	streamId: "",
+						// 	postId: "",
+						// 	fileStreamIds: [],
+						// 	type: CodemarkType.Comment,
+						// 	permalink: "",
+						// 	status: CodemarkStatus.Open,
+						// 	title: "",
+						// 	assignees: [],
+						// 	text: request.attributes.text || "",
+						// 	numReplies: 0,
+						// 	pinned: false,
+						// 	lastActivityAt: new Date().getTime(),
+						// 	lastReplyAt: 0,
+						// 	markers: [
+						// 		{
+						// 			creatorId: "",
+						// 			id: "",
+						// 			teamId: "",
+						// 			repoId: "",
+						// 			file: "",
+						// 			postId: "",
+						// 			fileStreamId: "",
+						// 			postStreamId: "",
+						// 			providerType: undefined,
+						// 			codemarkId: "",
+						// 			commitHashWhenCreated: "",
+						// 			locationWhenCreated: [0, 0, 0, 0, undefined],
+						// 			supersededByMarkerId: "",
+						// 			code: lineWithMetadata.line,
+						// 			referenceLocations: [],
+						// 			createdAt: new Date().getTime(),
+						// 			modifiedAt: new Date().getTime()
+						// 		}
+						// 	]
+						// },
+						pullRequest: {
+							id: parsedUri.context.pullRequest.id
+						},
+						success: result != null
+					};
 				}
 			}
 

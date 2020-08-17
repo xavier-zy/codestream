@@ -2224,15 +2224,21 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 												break;
 											}
 										}
+									} else if (edge.node.comments.nodes.length === 1) {
+										const node = edge.node.comments.nodes[0];
+										if (node.id === comment.id) {
+											threadId = edge.node.id;
+											isResolved = edge.node.isResolved;
+										}
 									}
 								}
 							}
 						}
+						// this api always returns only 1 node/comment (with no replies)
+						// do just attach it to nodes[0]
+						node.comments.nodes[0].threadId = threadId;
+						node.comments.nodes[0].isResolved = isResolved;
 						if (replies.length) {
-							// this api always returns only 1 node/comment (with no replies)
-							// do just attach it to nodes[0]
-							node.comments.nodes[0].threadId = threadId;
-							node.comments.nodes[0].isResolved = isResolved;
 							node.comments.nodes[0].replies = replies;
 						}
 						replies = null;

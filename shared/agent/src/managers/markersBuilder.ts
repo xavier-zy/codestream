@@ -20,7 +20,7 @@ import { ScmManager } from "./scmManager";
 export abstract class MarkersBuilder {
 	static newBuilder(documentId: TextDocumentIdentifier) {
 		if (documentId.uri.startsWith("codestream-diff://")) {
-			if (csUri.Uris.isCodeStreamDiffUri(csUri.Uris.CodeStreamDiffPrefix)) {
+			if (csUri.Uris.isCodeStreamDiffUri(documentId.uri)) {
 				return new CodeStreamDiffMarkersBuilder(documentId);
 			}
 			return new ReviewDiffMarkersBuilder(documentId);
@@ -330,7 +330,6 @@ class CodeStreamDiffMarkersBuilder extends MarkersBuilder {
 
 	constructor(documentId: TextDocumentIdentifier) {
 		super(documentId);
-		const uri = URI.parse(documentId.uri);
 		this.codeStreamDiffUri = csUri.Uris.fromCodeStreamDiffUri<CodeStreamDiffUriData>(
 			documentId.uri
 		)!;

@@ -13,7 +13,9 @@ import { Logger } from "../logger";
 import {
 	CodeDelimiterStyles,
 	CodemarkPlus,
+	CodeStreamDiffUriData,
 	CreateCodemarkRequest,
+	CreatePassthroughCodemarkResponse,
 	CreatePostRequest,
 	CreatePostRequestType,
 	CreatePostResponse,
@@ -55,9 +57,7 @@ import {
 	ReactToPostRequestType,
 	ReactToPostResponse,
 	ReportingMessageType,
-	ReviewPlus,
-	CodeStreamDiffUriData,
-	CreatePassthroughCodemarkResponse
+	ReviewPlus
 } from "../protocol/agent.protocol";
 import {
 	CodemarkType,
@@ -73,20 +73,18 @@ import {
 	FileStatus,
 	isCSReview,
 	ProviderType,
-	StreamType,
-	CodemarkStatus
+	StreamType
 } from "../protocol/api.protocol";
 import { providerDisplayNamesByNameKey } from "../providers/provider";
 import { Arrays, debug, log, lsp, lspHandler } from "../system";
 import { Strings } from "../system/string";
+import * as csUri from "../system/uri";
 import { BaseIndex, IndexParams, IndexType } from "./cache";
 import { getValues, KeyValue } from "./cache/baseCache";
 import { EntityCache, EntityCacheCfg } from "./cache/entityCache";
 import { EntityManagerBase, Id } from "./entityManager";
 import { MarkerLocationManager } from "./markerLocationManager";
 import { MarkerCreationDescriptor, MarkersBuilder } from "./markersBuilder";
-import * as csUri from "../system/uri";
-import { fromSlackPostAttachmentToMarker } from "api/slack/slackSharingApi.adapters";
 
 export type FetchPostsFn = (request: FetchPostsRequest) => Promise<FetchPostsResponse>;
 

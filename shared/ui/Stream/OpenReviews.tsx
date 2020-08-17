@@ -46,7 +46,7 @@ export function OpenReviews() {
 
 	const reviewsState = useSelector((state: CodeStreamState) => state.reviews);
 
-	const fetchPRs = async () => {
+	const fetchPRs = async (options?: { force?: boolean }) => {
 		setIsLoadingPRs(true);
 		const request = new RequestType<
 			ExecuteThirdPartyTypedRequest<GetMyPullRequestsRequest>,
@@ -58,6 +58,7 @@ export function OpenReviews() {
 			method: "getMyPullRequests",
 			providerId: "github*com",
 			params: {
+				force: options && options.force,
 				isOpen: true
 			}
 		});
@@ -125,7 +126,7 @@ export function OpenReviews() {
 					<WideStatusSection>
 						<div style={{ padding: "0 20px 0 20px" }}>
 							<Tooltip title="Reload" placement="bottom" delay={1}>
-								<RoundedLink onClick={() => fetchPRs()}>
+								<RoundedLink onClick={() => fetchPRs({ force: true })}>
 									<Icon name="refresh" className={`spinnable ${isLoadingPRs ? "spin" : ""}`} />
 									&nbsp;&nbsp;Refresh
 								</RoundedLink>

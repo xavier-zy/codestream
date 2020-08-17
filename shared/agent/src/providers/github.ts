@@ -1055,11 +1055,26 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 	// 	return true;
 	// }
 
+	_getMyPullRequestsCache = new Map<string, GetMyPullRequestsResponse[]>();
 	async getMyPullRequests(request: {
 		owner: string;
 		repo: string;
 		isOpen?: boolean;
+		force?: boolean;
 	}): Promise<GetMyPullRequestsResponse[]> {
+		const cacheKey = [request.owner, request.repo, request.isOpen].join("-");
+		if (!request.force) {
+			const cached = this._getMyPullRequestsCache.get(cacheKey);
+			if (cached) {
+				Logger.debug(`github getMyPullRequests got from cache, key=${cacheKey}`);
+				return cached!;
+			} else {
+				Logger.debug(`github getMyPullRequests cache miss, key=${cacheKey}`);
+			}
+		} else {
+			Logger.debug(`github getMyPullRequests removed from cache, key=${cacheKey}`);
+			this._getMyPullRequestsCache.delete(cacheKey);
+		}
 		let results: any = [];
 		const repoQuery =
 			request && request.owner && request.repo ? `repo:${request.owner}/${request.repo} ` : "";
@@ -1116,12 +1131,14 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 			}
 		}
 
-		Logger.debug(`getMyPullRequests rateLimit=${JSON.stringify(rateLimit)}`);
+		Logger.debug(`github getMyPullRequests rateLimit=${JSON.stringify(rateLimit)}`);
 
 		results = _uniqBy(results, (_: { id: string }) => _.id);
-		return results
+		const response: GetMyPullRequestsResponse[] = results
 			.map((pr: { createdAt: string }) => ({ ...pr, createdAt: new Date(pr.createdAt).getTime() }))
 			.sort((a: { createdAt: number }, b: { createdAt: number }) => b.createdAt - a.createdAt);
+		this._getMyPullRequestsCache.set(cacheKey, response);
+		return response;
 	}
 
 	async getPullRequestIdFromUrl(request: { url: string }) {

@@ -527,6 +527,10 @@ export interface GetMyPullRequestsRequest {
 	name?: string;
 	/** if true, only return PRs that are open */
 	isOpen?: boolean;
+	/**
+	 * forces a re-fetch from the provider
+	 */
+	force?: boolean;
 }
 
 export interface GetMyPullRequestsResponse {

@@ -329,7 +329,18 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 
 											// FIXME
 											const myComment = comment.author && comment.author.login === me;
-											const startLine = 5;
+
+											let startLine = 1;
+											if (comment.diffHunk) {
+												// this data looks like this => `@@ -234,3 +234,20 @@`
+												const match = comment.diffHunk.match("@@ (.+) (.+) @@");
+												if (match && match.length >= 2) {
+													try {
+														// the @@ line is actually not the first line... so subtract 1
+														startLine = parseInt(match[2].split(",")[0].replace("+", ""), 10) - 1;
+													} catch {}
+												}
+											}
 
 											const codeHTML = prettyPrintOne(
 												escapeHtml(comment.diffHunk),

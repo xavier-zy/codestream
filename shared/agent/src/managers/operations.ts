@@ -19,12 +19,12 @@ export function isCompleteObject(obj: object): boolean {
 export function safeEncode(obj: any): void {
 	if (typeof obj !== "object") return;
 	for (const key in obj) {
-		const encodedKey = key.replace("\\", "\\\\").replace("$", "\\u0024").replace(".", "\\u002e");
+		const encodedKey = key.replace(/\\/g, "\\\\").replace(/\$/g, "\\u0024").replace(/\./g, "\\u002e");
 		if (encodedKey !== key) {
 			obj[encodedKey] = obj[key];
 			delete obj[key];
 		}
-		if (typeof obj[encodedKey] === 'object') {
+		if (typeof obj[encodedKey] === "object") {
 			safeEncode(obj[encodedKey]);
 		}
 	}
@@ -32,7 +32,7 @@ export function safeEncode(obj: any): void {
 
 // decode single hash key, replacing dedoded key for the original key as needed
 export function safeDecodeKey(data: any, key: string): string {
-	const decodedKey = key.replace("\\u002e", ".").replace("\\u0024", "$").replace("\\\\", "\\");
+	const decodedKey = key.replace(/\\u002e/g, ".").replace(/\\u0024/, "$").replace(/\\\\/g, "\\");
 	if (decodedKey !== key) {
 		data[decodedKey] = data[key];
 		delete data[key];

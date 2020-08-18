@@ -95,6 +95,7 @@ const getColors = (variant = "primary") => {
 		case "merged": {
 			return `
 				background-color: #6f42c1;
+				// background-color: #b87cda;
 				color: white;
 				:hover {
 					opacity: 0.85;

@@ -860,7 +860,7 @@ export const PullRequestConversationTab = props => {
 					{/* !pr.merged && pr.state === "CLOSED" && <div>Pull request is closed</div> */}
 					{pr.merged && (
 						<PRCommentCard>
-							<PRStatusHeadshot className="gray-background">
+							<PRStatusHeadshot className="pr-purple-background">
 								<Icon name="git-merge" />
 							</PRStatusHeadshot>
 							<div style={{ padding: "5px 0" }}>
@@ -914,14 +914,11 @@ export const PullRequestConversationTab = props => {
 								</div>
 							) : (
 								<div style={{ textAlign: "right", flexGrow: 1 }}>
-									<Button
-										disabled={pr.merged}
-										isLoading={isLoadingCommentAndClose}
-										onClick={onCommentAndCloseClick}
-									>
-										{text ? "Close and comment" : "Close pull request"}
-									</Button>
-
+									{!pr.merged && (
+										<Button isLoading={isLoadingCommentAndClose} onClick={onCommentAndCloseClick}>
+											{text ? "Close and comment" : "Close pull request"}
+										</Button>
+									)}
 									<Tooltip
 										title={
 											<span>

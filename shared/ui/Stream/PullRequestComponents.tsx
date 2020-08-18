@@ -452,6 +452,10 @@ export const PRTimelineItem = styled.div`
 					color: black;
 				}
 			}
+			&.purple {
+				color: white;
+				background-color: #6f42c1;
+			}
 		}
 	}
 	.monospace {

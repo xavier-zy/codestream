@@ -251,6 +251,7 @@ export const CreatePullRequestPanel = props => {
 							message: result.warning.message || "",
 							url: result.warning.url || ""
 						});
+						// small change
 					}
 				} else {
 					setPreconditionError({ type: "", message: "", url: "" });

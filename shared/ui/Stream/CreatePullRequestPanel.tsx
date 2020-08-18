@@ -101,13 +101,18 @@ const PRError = styled.div`
 const PRCompare = styled.div`
 	margin-top: 5px;
 	button {
-		margin-right: 10px;
+		margin: 0 10px 10px 0;
 	}
 	.octicon-arrow-left,
 	.octicon-repo,
 	.octicon-git-compare {
 		margin-right: 10px;
 	}
+`;
+
+const PRDropdown = styled.div`
+	display: inline-block;
+	white-space: nowrap;
 `;
 
 // select service
@@ -801,19 +806,23 @@ export const CreatePullRequestPanel = props => {
 									<div className="control-group">
 										<PRCompare>
 											{openRepos.length > 0 && !reviewId && (
-												<>
+												<PRDropdown>
 													<Icon name="repo" />
 													{renderReposDropdown()}
-												</>
+												</PRDropdown>
 											)}
-											<Icon name="git-compare" />
-											{renderBaseBranchesDropdown()}
-											<Icon name="arrow-left" />
-											{renderCompareBranchesDropdown()}
+											<PRDropdown>
+												<Icon name="git-compare" />
+												{renderBaseBranchesDropdown()}
+											</PRDropdown>
+											<PRDropdown>
+												<Icon name="arrow-left" />
+												{renderCompareBranchesDropdown()}
+											</PRDropdown>
 										</PRCompare>
 									</div>
 									{!loading && preconditionError.type ? null : (
-										<div style={{ paddingTop: "5px" }}>
+										<div>
 											<div className="control-group">
 												{!titleValidity && (
 													<small className={cx("explainer", { "error-message": !titleValidity })}>

@@ -567,21 +567,29 @@ export abstract class ThirdPartyIssueProviderBase<
 			!request ||
 			request.description == null ||
 			!request.metadata ||
-			!request.metadata.reviewPermalink
+			(!request.metadata.reviewPermalink && !request.metadata.addresses)
 		) {
 			return request.description;
 		}
 
-		request.description += `\n\n\n[Changes reviewed on CodeStream](${
-			request.metadata.reviewPermalink
-		}?src=${encodeURIComponent(this.displayName)})`;
-		if (request.metadata.reviewers) {
-			request.description += ` by ${request.metadata.reviewers?.map(_ => _.name)?.join(", ")}`;
+		if (request.metadata.reviewPermalink) {
+			request.description += `\n\n\n[Changes reviewed on CodeStream](${
+				request.metadata.reviewPermalink
+			}?src=${encodeURIComponent(this.displayName)})`;
+			if (request.metadata.reviewers) {
+				request.description += ` by ${request.metadata.reviewers?.map(_ => _.name)?.join(", ")}`;
+			}
+			if (request.metadata.approvedAt) {
+				request.description += ` on ${new Date(
+					request.metadata.approvedAt
+				).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}`;
+			}
 		}
-		if (request.metadata.approvedAt) {
-			request.description += ` on ${new Date(
-				request.metadata.approvedAt
-			).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}`;
+		if (request.metadata.addresses) {
+			request.description += "\n\n**This PR Addresses:**  \n";
+			request.metadata.addresses.forEach(issue => {
+				request.description += `[${issue.title}](${issue.url})  \n`;
+			});
 		}
 		return request.description;
 	}
@@ -724,6 +732,7 @@ export interface ProviderCreatePullRequestRequest {
 		reviewPermalink?: string;
 		reviewers?: { name: string }[];
 		approvedAt?: number;
+		addresses?: { title: string; url: string }[];
 	};
 }
 

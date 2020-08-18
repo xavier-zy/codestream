@@ -52,6 +52,9 @@ const Root = styled.div<DimensionProps & { display?: string }>`
 		width: ${props => props.size + 7}px;
 		padding-right: 10px;
 	}
+	&.left-pad {
+		width: ${props => props.size + 5}px;
+	}
 `;
 
 const Initials = styled.div<DimensionProps & { color: string }>`

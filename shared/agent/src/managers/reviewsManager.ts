@@ -3,7 +3,7 @@ import { applyPatch } from "diff";
 import * as path from "path";
 import { MessageType } from "../api/apiProvider";
 import { Container, SessionContainer } from "../container";
-import { GitRemote } from "../git/gitService";
+import { GitRemote, GitRepository } from "../git/gitService";
 import { Logger } from "../logger";
 import {
 	CheckPullRequestBranchPreconditionsRequest,
@@ -498,8 +498,21 @@ export class ReviewsManager extends CachedEntityManagerBase<CSReview> {
 	): Promise<CheckPullRequestBranchPreconditionsResponse> {
 		const { git } = SessionContainer.instance();
 		try {
-			const review = await this.getById(request.reviewId);
-			const repo = await git.getRepositoryById(review.reviewChangesets[0].repoId);
+			let repo: GitRepository | undefined = undefined;
+			if (request.reviewId) {
+				const review = await this.getById(request.reviewId);
+				repo = await git.getRepositoryById(review.reviewChangesets[0].repoId);
+			} else if (request.repoId) {
+				repo = await git.getRepositoryById(request.repoId);
+			} else {
+				return {
+					success: false,
+					error: {
+						type: "REPO_NOT_FOUND"
+					}
+				};
+			}
+
 			if (!repo) {
 				return {
 					success: false,
@@ -857,7 +870,8 @@ export class ReviewsManager extends CachedEntityManagerBase<CSReview> {
 				metadata: {
 					reviewPermalink,
 					approvedAt,
-					reviewers: approvers
+					reviewers: approvers,
+					addresses: request.addresses
 				}
 			};
 

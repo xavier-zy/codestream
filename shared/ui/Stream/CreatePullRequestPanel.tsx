@@ -32,17 +32,65 @@ import { PrePRProviderInfoModal } from "./PrePRProviderInfoModal";
 import Icon from "./Icon";
 import { OpenUrlRequestType } from "@codestream/protocols/webview";
 import { Checkbox } from "../src/components/Checkbox";
+import { PanelHeader } from "../src/components/PanelHeader";
+import { CSMe } from "@codestream/protocols/api";
+import Headshot from "./Headshot";
+import { EMPTY_STATUS } from "./StatusPanel";
 
 export const ButtonRow = styled.div`
-	text-align: center;
-	margin-top: 20px;
+	text-align: right;
+	margin-top: 10px;
 	button {
-		width: 18em;
+		// width: 18em;
+	}
+	button + button {
+		margin-left: 10px;
 	}
 `;
 const Root = styled.div`
 	#controls {
-		padding-top: 10px;
+		// padding-top: 10px;
+	}
+	strong {
+		font-weight: normal;
+		color: var(--text-color-highlight);
+	}
+	a {
+		text-decoration: none;
+		color: var(--text-color-highlight);
+		&:hover {
+			color: var(--text-color-info) !important;
+		}
+	}
+`;
+const PRCompare = styled.div`
+	margin-top: 15px;
+	.octicon-arrow-left {
+		display: inline-block;
+		margin: 0 10px;
+	}
+	.octicon-git-compare {
+		margin-right: 10px;
+	}
+`;
+const PRError = styled.div`
+	padding: 15px 15px 10px 15px;
+	display: flex;
+	align-items: center;
+	> .icon {
+		flex-grow: 0;
+		flex-shrink: 0;
+		display: inline-block;
+		margin-right: 15px;
+		transform: scale(1.5);
+	}
+	> div {
+		flex-grow: 10;
+		display: flex;
+		align-items: center;
+		button {
+			margin-left: auto;
+		}
 	}
 `;
 
@@ -69,7 +117,13 @@ export const CreatePullRequestPanel = props => {
 				"bitbucket_server"
 			].includes(providers[id].name)
 		);
+		const currentUser = state.users[state.session.userId!] as CSMe;
+		const status =
+			currentUser.status && "label" in currentUser.status ? currentUser.status : EMPTY_STATUS;
+
 		return {
+			currentUser,
+			userStatus: status,
 			providers: providers,
 			codeHostProviders: codeHostProviders,
 			reviewId: state.context.createPullRequestReviewId,
@@ -105,6 +159,8 @@ export const CreatePullRequestPanel = props => {
 	const [prProviderIconName, setPrProviderIconName] = useState("");
 	const [prUpstreamOn, setPrUpstreamOn] = useState(true);
 	const [prUpstream, setPrUpstream] = useState("");
+
+	const [addressesStatus, setAddressesStatus] = useState(true);
 
 	const [currentStep, setCurrentStep] = useState(0);
 
@@ -161,17 +217,18 @@ export const CreatePullRequestPanel = props => {
 
 				setCurrentStep(3);
 				if (result.warning && result.warning.type) {
-					// if we get a warning, show the error, but continue
-					// to show the form, this is most likely a PR already exists
-					setPreconditionError({
-						type: result.warning.type,
-						message: result.warning.message || "",
-						url: result.warning.url || ""
-					});
 					if (result.warning.type === "REQUIRES_UPSTREAM") {
 						setRequiresUpstream(true);
 						setOrigins(result.origins!);
 						setPrUpstream(result.origins![0]);
+					} else {
+						// if we get a warning, show the error, but continue
+						// to show the form, this is most likely a PR already exists
+						setPreconditionError({
+							type: result.warning.type,
+							message: result.warning.message || "",
+							url: result.warning.url || ""
+						});
 					}
 				} else {
 					setPreconditionError({ type: "", message: "", url: "" });
@@ -264,7 +321,10 @@ export const CreatePullRequestPanel = props => {
 				baseRefName: prBranch,
 				headRefName: reviewBranch,
 				remote: prRemoteUrl,
-				remoteName: prUpstreamOn && prUpstream ? prUpstream : undefined
+				remoteName: prUpstreamOn && prUpstream ? prUpstream : undefined,
+				addresses: addressesStatus
+					? [{ title: userStatus.label, url: userStatus.ticketUrl }]
+					: undefined
 			});
 			if (result.error) {
 				setFormState({
@@ -306,12 +366,28 @@ export const CreatePullRequestPanel = props => {
 			return {
 				label: _,
 				key: _,
-				action: () => {
+				action: async () => {
 					// optimistically
 					setPrBranch(_);
+
+					let repoId: string = "";
+					if (!derivedState.reviewId) {
+						if (!derivedState.reviewId) {
+							// if we're not creating a PR from a review, then get the current
+							// repo and branch from the editor
+							const response = await HostApi.instance.send(GetReposScmRequestType, {
+								inEditorOnly: true
+							});
+
+							if (response && response.repositories) {
+								repoId = response.repositories[0].id || "";
+							}
+						}
+					}
 					HostApi.instance
 						.send(CheckPullRequestBranchPreconditionsRequestType, {
-							reviewId: derivedState.reviewId!,
+							reviewId: derivedState.reviewId,
+							repoId,
 							providerId: prProviderId,
 							baseRefName: _,
 							headRefName: reviewBranch
@@ -335,8 +411,8 @@ export const CreatePullRequestPanel = props => {
 		if (items.length === 0) return undefined;
 		return (
 			<span>
-				<DropdownButton variant="text" items={items}>
-					<strong>{prBranch || reviewBranch}</strong>
+				<DropdownButton variant="secondary" items={items}>
+					<span className="subtle">base:</span> <strong>{prBranch || reviewBranch}</strong>
 				</DropdownButton>
 			</span>
 		);
@@ -432,7 +508,11 @@ export const CreatePullRequestPanel = props => {
 				preconditionError.url
 			);
 			if (preconditionErrorMessageElement) {
-				return <div className="error-message form-error">{preconditionErrorMessageElement}</div>;
+				return (
+					<PRError>
+						<Icon name="alert" /> {preconditionErrorMessageElement}
+					</PRError>
+				);
 			}
 		}
 		return undefined;
@@ -443,7 +523,11 @@ export const CreatePullRequestPanel = props => {
 
 		let formErrorMessageElement = getErrorElement(formState.type, formState.message, formState.url);
 		if (formErrorMessageElement) {
-			return <div className="error-message form-error">{formErrorMessageElement}</div>;
+			return (
+				<PRError>
+					<Icon name="alert" /> {formErrorMessageElement}
+				</PRError>
+			);
 		}
 		return undefined;
 	};
@@ -472,7 +556,7 @@ export const CreatePullRequestPanel = props => {
 			case "HAS_LOCAL_COMMITS": {
 				messageElement = (
 					<span>
-						A PR can’t be created because the code review includes local commits. Push your changes
+						A PR can't be created because the code review includes local commits. Push your changes
 						and then <Link onClick={onClickTryAgain}>try again</Link>
 					</span>
 				);
@@ -481,7 +565,7 @@ export const CreatePullRequestPanel = props => {
 			case "HAS_LOCAL_MODIFICATIONS": {
 				messageElement = (
 					<span>
-						A PR can’t be created because the code review includes uncommitted changes. Commit and
+						A PR can't be created because the code review includes uncommitted changes. Commit and
 						push your changes and then <Link onClick={onClickTryAgain}>try again</Link>.
 					</span>
 				);
@@ -490,11 +574,9 @@ export const CreatePullRequestPanel = props => {
 			case "ALREADY_HAS_PULL_REQUEST": {
 				if (url) {
 					messageElement = (
-						<span>
-							There is already an{" "}
-							<a
-								href="#"
-								title="View this Pull Request"
+						<div>
+							<span>There is already an open pull request for this branch.</span>
+							<Button
 								onClick={e => {
 									e.preventDefault();
 									HostApi.instance.send(OpenUrlRequestType, {
@@ -502,10 +584,9 @@ export const CreatePullRequestPanel = props => {
 									});
 								}}
 							>
-								open PR
-							</a>{" "}
-							for this branch
-						</span>
+								<Icon name="pull-request" /> View pull request
+							</Button>
+						</div>
 					);
 				} else {
 					messageElement = <span>There is already an open PR for this branch</span>;
@@ -582,128 +663,175 @@ export const CreatePullRequestPanel = props => {
 	if (propsForPrePRProviderInfoModal) {
 		return <PrePRProviderInfoModal {...propsForPrePRProviderInfoModal} />;
 	}
-
+	const { userStatus } = derivedState;
 	return (
-		<Root className="full-height-panel">
-			<form className="standard-form vscroll">
-				<div className="panel-header">
-					<CancelButton onClick={props.closePanel} />
-				</div>
-				<fieldset className="form-body" style={{ width: "85%", padding: "20px 0" }}>
-					<div className="outline-box">
-						<h3>Open a Pull Request</h3>
-						<div id="controls">
-							{!loading && preconditionError.type && preconditionErrorMessages()}
-							{!loading && formErrorMessages()}
-							{loading && <LoadingMessage>Loading repo info...</LoadingMessage>}
-							<Step1 step={currentStep}>
-								<div>Open a pull request on {renderProviders()}</div>
-							</Step1>
-							<Step2 step={currentStep}>{providerAuthenticationMessage()}</Step2>
-							<Step3 step={currentStep}>
-								<div className="small-spacer" />
-								{unexpectedError && (
-									<div className="error-message form-error">
-										<FormattedMessage
-											id="error.unexpected"
-											defaultMessage="Something went wrong! Please try again, or "
-										/>
-										<FormattedMessage id="contactSupport" defaultMessage="contact support">
-											{text => <Link href="https://help.codestream.com">{text}</Link>}
-										</FormattedMessage>
-										.
-									</div>
-								)}
-								<div className="control-group">
-									<div>
-										<span>
-											Compare <strong>{reviewBranch}</strong> against{" "}
-										</span>
-										{renderBranchesDropdown()}
-									</div>
-								</div>
-								<div className="control-group">
-									<TextInput
-										name="title"
-										value={prTitle}
-										placeholder="Pull request title"
-										autoFocus
-										onChange={setPrTitle}
-										onValidityChanged={onValidityChanged}
-										validate={isTitleValid}
-									/>
-									{!titleValidity && (
-										<small className={cx("explainer", { "error-message": !titleValidity })}>
-											<FormattedMessage id="pullRequest.title" />
-										</small>
+		<Root className="full-height-codemark-form">
+			<PanelHeader title="Open a Pull Request">
+				{derivedState.reviewId ? "" : "Choose two branches to start a new pull request."}
+			</PanelHeader>
+			<CancelButton onClick={props.closePanel} />
+			<span className="plane-container">
+				<div className="codemark-form-container">
+					<form className="codemark-form standard-form vscroll" id="code-comment-form">
+						<fieldset className="form-body">
+							<div id="controls">
+								{/*
+									<div key="headshot" className="headline">
+									<Headshot person={derivedState.currentUser} />
+									<b>{derivedState.currentUser.username}</b>
+									</div> 
+								*/}
+								{!loading && formErrorMessages()}
+								{loading && <LoadingMessage>Loading repo info...</LoadingMessage>}
+								<Step1 step={currentStep}>
+									<div>Open a pull request on {renderProviders()}</div>
+								</Step1>
+								<Step2 step={currentStep}>{providerAuthenticationMessage()}</Step2>
+								<Step3 step={currentStep}>
+									<div className="small-spacer" />
+									{unexpectedError && (
+										<div className="error-message form-error">
+											<FormattedMessage
+												id="error.unexpected"
+												defaultMessage="Something went wrong! Please try again, or "
+											/>
+											<FormattedMessage id="contactSupport" defaultMessage="contact support">
+												{text => <Link href="https://help.codestream.com">{text}</Link>}
+											</FormattedMessage>
+											.
+										</div>
 									)}
-								</div>
-								<div className="control-group">
-									<textarea
-										className="input-text"
-										name="description"
-										rows={4}
-										value={prText}
-										onChange={e => setPrText(e.target.value)}
-										placeholder="Pull request description (optional)"
-									/>
-								</div>
-								{requiresUpstream && origins && origins.length && (
 									<div className="control-group">
-										<Checkbox
-											name="set-upstream"
-											checked={prUpstreamOn}
-											onChange={e => {
-												const val = e.valueOf();
-												setPrUpstreamOn(val);
-												if (origins && origins.length === 1) {
-													if (val) {
-														setPrUpstream(origins[0]);
-													}
-												}
-											}}
-										>
-											<span>Set upstream to </span>
-											{origins.length > 1 && (
-												<DropdownButton
-													variant="text"
-													items={origins.map((_: any) => {
-														return {
-															label: `${_}/${reviewBranch}`,
-															key: _,
-															action: () => {
-																setPrUpstream(_);
-															}
-														};
-													})}
-												>
-													<strong
-														title={`This will run 'git push -u ${prUpstream} ${reviewBranch}'`}
-													>{`${origins[0]}/${reviewBranch}`}</strong>
-												</DropdownButton>
-											)}
-											{origins.length === 1 && (
-												<strong
-													title={`This will run 'git push -u ${prUpstream} ${reviewBranch}'`}
-												>{`${origins[0]}/${reviewBranch}`}</strong>
-											)}
-										</Checkbox>
+										<PRCompare>
+											<Icon name="git-compare" />
+											{renderBranchesDropdown()}
+											<Icon name="arrow-left" />
+											<DropdownButton variant="secondary" items={[]}>
+												<span className="subtle">compare:</span> <strong>{reviewBranch}</strong>
+											</DropdownButton>
+										</PRCompare>
 									</div>
-								)}
+									{!loading && preconditionError.type ? null : (
+										<div style={{ paddingTop: "5px" }}>
+											<div className="control-group">
+												{!titleValidity && (
+													<small className={cx("explainer", { "error-message": !titleValidity })}>
+														<FormattedMessage id="pullRequest.title" />
+													</small>
+												)}
+												<TextInput
+													name="title"
+													value={prTitle}
+													placeholder="Pull request title"
+													autoFocus
+													onChange={setPrTitle}
+													onValidityChanged={onValidityChanged}
+													validate={isTitleValid}
+												/>
+											</div>
+											<div className="control-group">
+												<textarea
+													className="input-text"
+													name="description"
+													rows={5}
+													value={prText}
+													onChange={e => setPrText(e.target.value)}
+													placeholder="Pull request description (optional)"
+													style={{ resize: "vertical" }}
+												/>
+											</div>
+											{requiresUpstream && origins && origins.length && (
+												<div className="control-group">
+													<Checkbox
+														name="set-upstream"
+														checked={prUpstreamOn}
+														onChange={e => {
+															const val = e.valueOf();
+															setPrUpstreamOn(val);
+															if (origins && origins.length === 1) {
+																if (val) {
+																	setPrUpstream(origins[0]);
+																}
+															}
+														}}
+													>
+														<span className="subtle">Set upstream to </span>
+														{origins.length > 1 && (
+															<DropdownButton
+																variant="text"
+																items={origins.map((_: any) => {
+																	return {
+																		label: `${_}/${reviewBranch}`,
+																		key: _,
+																		action: () => {
+																			setPrUpstream(_);
+																		}
+																	};
+																})}
+															>
+																<strong
+																	title={`This will run 'git push -u ${prUpstream} ${reviewBranch}'`}
+																>{`${origins[0]}/${reviewBranch}`}</strong>
+															</DropdownButton>
+														)}
+														{origins.length === 1 && (
+															<strong
+																title={`This will run 'git push -u ${prUpstream} ${reviewBranch}'`}
+															>{`${origins[0]}/${reviewBranch}`}</strong>
+														)}
+													</Checkbox>
+												</div>
+											)}
+											{userStatus && userStatus.label && (
+												<div className="control-group">
+													<Checkbox
+														name="addresses"
+														checked={addressesStatus}
+														onChange={e => {
+															const val = e.valueOf();
+															setAddressesStatus(val);
+														}}
+													>
+														<span className="subtle">This PR addresses: </span>
+														{userStatus.ticketUrl ? (
+															<Link href={userStatus.ticketUrl}>
+																{userStatus.ticketProvider && (
+																	<Icon name={userStatus.ticketProvider} className="margin-right" />
+																)}
+																{userStatus.label}
+															</Link>
+														) : (
+															<strong>
+																{userStatus.ticketProvider && (
+																	<Icon name={userStatus.ticketProvider} className="margin-right" />
+																)}
+																{userStatus.label}
+															</strong>
+														)}
+													</Checkbox>
+												</div>
+											)}
+											<ButtonRow>
+												<Button onClick={props.closePanel} variant="secondary">
+													Cancel
+												</Button>
 
-								<ButtonRow>
-									<Button onClick={onSubmit} isLoading={submitting}>
-										{prProviderIconName && (
-											<Icon name={prProviderIconName} style={{ marginRight: "3px" }} />
-										)}
-										Create Pull Request
-									</Button>
-								</ButtonRow>
-							</Step3>
-						</div>
-					</div>
-				</fieldset>
-			</form>
+												<Button onClick={onSubmit} isLoading={submitting}>
+													{prProviderIconName && (
+														<Icon name={prProviderIconName} style={{ marginRight: "3px" }} />
+													)}
+													Create Pull Request
+												</Button>
+											</ButtonRow>
+										</div>
+									)}
+								</Step3>
+							</div>
+						</fieldset>
+					</form>
+					{!loading && preconditionError.type && preconditionErrorMessages()}
+				</div>
+			</span>
 		</Root>
 	);
 };

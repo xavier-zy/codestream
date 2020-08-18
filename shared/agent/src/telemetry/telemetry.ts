@@ -18,7 +18,6 @@ export class TelemetryService {
 	private _firstSessionStartedAt?: number;
 	private _firstSessionTimesOutAfter?: number;
 	private _eventQueue: { event: string, data?: { [key: string]: string | number | boolean } }[] = [];
-	private _aliasing: boolean = false;
 
 	private _onReady: () => void = () => {};
 
@@ -89,32 +88,6 @@ export class TelemetryService {
 		}
 	}
 
-	alias(id: string) {
-		if (!this._segmentInstance) {
-			return;
-		}
-
-		// HACK ALERT - there is a race condition situation with mixpanel where the alias can take some time, and
-		// until this happens, events which come in are not properly linked to the correct distinct ID ...
-		// read about it here: https://help.mixpanel.com/hc/en-us/articles/115004497803-Identity-Management-Best-Practices#serverside-aliasing
-		// to get around this BS, we'll queue any tracking events until we can be reasonably sure the alias has gone
-		// through, we'll say 2 seconds ... then we'll flush the queue
-		// the hope here is that we can move to mixpanel's new Identity Merge system, where this kind of thing is no
-		// longer an issue: https://help.mixpanel.com/hc/en-us/articles/360039133851#enable-id-merge
-		this._aliasing = true;
-		setTimeout(() => {
-			this._aliasing = false;
-			while (this._eventQueue.length) {
-				const event = this._eventQueue.shift();
-				this.track(event!.event, event!.data);
-			}
-		}, 2000);
-
-		Logger.debug(`Telemetry alias ${this._anonymousId} with ${id}`);
-		this._segmentInstance.alias({ previousId: this._anonymousId, userId: id });
-		this._segmentInstance.flush();
-	}
-
 	identify(id: string, props?: { [key: string]: any }) {
 		this._distinctId = id;
 		if (this._hasOptedOut || this._segmentInstance == null) {
@@ -149,12 +122,6 @@ export class TelemetryService {
 
 	@debug()
 	track(event: string, data?: { [key: string]: string | number | boolean }) {
-		if (this._aliasing) {
-			// see the comment in the alias() function above, for why this madness is occurring
-			this._eventQueue.push({ event, data });
-			return;
-		}
-
 		const cc = Logger.getCorrelationContext();
 
 		if (this._hasOptedOut || this._segmentInstance == null) {
@@ -178,7 +145,7 @@ export class TelemetryService {
 		try {
 			this._segmentInstance.track({
 				userId: this._distinctId,
-				anonymousId: this._distinctId ? undefined : this._anonymousId,
+				anonymousId: this._anonymousId,
 				event,
 				properties: payload
 			});

@@ -836,10 +836,6 @@ export class CodeStreamSession {
 			});
 		});
 
-		// be sure to alias first if necessary
-		if ((options as OtcLoginRequest).alias || (options as TokenLoginRequest).alias) {
-			Container.instance().telemetry.alias(this._codestreamUserId);
-		}
 		// Initialize tracking
 		this.initializeTelemetry(response.user, currentTeam, response.companies);
 
@@ -880,8 +876,6 @@ export class CodeStreamSession {
 			const response = await (this._api as CodeStreamApiProvider).register(request);
 
 			if (isCSLoginResponse(response)) {
-				Container.instance().telemetry.alias(response.user.id);
-
 				if (response.teams.length === 0) {
 					return { status: LoginResult.NotOnTeam, token: response.accessToken };
 				}
@@ -889,8 +883,6 @@ export class CodeStreamSession {
 				this._teamId = response.teams[0].id;
 				return { status: LoginResult.AlreadyConfirmed, token: response.accessToken };
 			} else {
-				if (response.user) Container.instance().telemetry.alias(response.user.id);
-
 				return { status: LoginResult.Success };
 			}
 		} catch (error) {
@@ -916,9 +908,6 @@ export class CodeStreamSession {
 	async confirmRegistration(request: ConfirmRegistrationRequest) {
 		try {
 			const response = await (this._api as CodeStreamApiProvider).confirmRegistration(request);
-
-			Container.instance().telemetry.alias(response.user.id);
-
 			if (response.teams.length === 0) {
 				return { status: LoginResult.NotOnTeam, token: response.accessToken };
 			}

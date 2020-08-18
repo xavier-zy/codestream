@@ -201,7 +201,6 @@ export const ReportMessageRequestType = new RequestType<ReportMessageRequest, vo
 export interface TelemetryRequest {
 	eventName: string;
 	properties?: { [key: string]: string | number | boolean };
-	options?: { alias?: string };
 }
 
 export const TelemetryRequestType = new RequestType<TelemetryRequest, void, void, void>(

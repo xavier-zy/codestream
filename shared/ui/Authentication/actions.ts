@@ -209,8 +209,7 @@ export const validateSignup = (provider: string, authInfo?: SSOAuthInfo) => asyn
 			case LoginResult.NotOnTeam:
 				HostApi.instance.track(
 					"Account Created",
-					{ email: response.extra.email },
-					{ alias: response.extra.userId }
+					{ email: response.extra.email }
 				);
 				return dispatch(
 					goToTeamCreation({
@@ -233,9 +232,6 @@ export const validateSignup = (provider: string, authInfo?: SSOAuthInfo) => asyn
 			"Account Created",
 			{
 				email: response.loginResponse.user.email
-			},
-			{
-				alias: response.loginResponse.user.id
 			}
 		);
 

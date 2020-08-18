@@ -17,10 +17,6 @@ export class TelemetryManager {
 		this._telemetry.setConsent(hasConsented);
 	}
 
-	alias(id: string): any {
-		this._telemetry.alias(id);
-	}
-
 	identify(id: string, props: { [key: string]: any }) {
 		this._telemetry.identify(id, props);
 	}
@@ -42,9 +38,6 @@ export class TelemetryManager {
 	track(request: TelemetryRequest) {
 		const cc = Logger.getCorrelationContext();
 		try {
-			if (request.options && request.options.alias) {
-				this.alias(request.options.alias);
-			}
 			void this._telemetry.track(request.eventName, request.properties);
 		} catch (ex) {
 			Logger.error(ex, cc);

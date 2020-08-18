@@ -46,7 +46,6 @@ export interface TokenLoginRequest {
 	token: AccessToken;
 	teamId?: string;
 	team?: string;
-	alias?: boolean;
 }
 
 export const TokenLoginRequestType = new RequestType<TokenLoginRequest, LoginResponse, void, void>(
@@ -57,7 +56,6 @@ export interface OtcLoginRequest {
 	code: string;
 	teamId?: string;
 	team?: string;
-	alias?: boolean;
 }
 
 export const OtcLoginRequestType = new RequestType<OtcLoginRequest, LoginResponse, void, void>(

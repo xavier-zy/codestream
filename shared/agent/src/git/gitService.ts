@@ -821,39 +821,53 @@ export class GitService implements IGitService, Disposable {
 		}
 	}
 
+	async isCommitsExclusiveOnBranch(repoPath: string, branch: string): Promise<boolean> {
+		const commits = await this.getCommitsExclusiveToBranch(repoPath, branch);
+
+		return !(commits === undefined || commits.size === 0);
+	}
+
+	async getCommitsExclusiveToBranch(
+		repoPath: string,
+		branch: string
+	): Promise<Map<string, GitCommit> | undefined> {
+		// commits for a specific branch
+		// https://stackoverflow.com/questions/14848274/git-log-to-get-commits-only-for-a-specific-branch
+		// git log [BRANCHNAME] --not $(git for-each-ref --format='%(refname)' refs/heads/ | grep -v "refs/heads/[BRANCHNAME]")
+
+		let data: string | undefined;
+		try {
+			data = await git({ cwd: repoPath }, "branch", "--");
+		} catch {}
+		if (!data) return;
+		const otherBranches = data
+			.trim()
+			.split("\n")
+			.filter(b => !b.startsWith("*"))
+			.map(b => "refs/heads/" + b.trim());
+		// .join(" ");
+
+		const data2 = await git(
+			{ cwd: repoPath },
+			"log",
+			branch,
+			`--format='${GitLogParser.defaultFormat}`,
+			"--not",
+			...otherBranches,
+			"--"
+		);
+
+		return GitLogParser.parse(data2.trim(), repoPath);
+	}
+
 	async getCommitsOnBranch(
 		repoPath: string,
 		branch: string,
 		prevEndCommit?: string
 	): Promise<{ sha: string; info: {}; localOnly: boolean }[] | undefined> {
 		try {
-			// commits for a specific branch
-			// https://stackoverflow.com/questions/14848274/git-log-to-get-commits-only-for-a-specific-branch
-			// git log [BRANCHNAME] --not $(git for-each-ref --format='%(refname)' refs/heads/ | grep -v "refs/heads/[BRANCHNAME]")
+			let commits = await this.getCommitsExclusiveToBranch(repoPath, branch);
 
-			let data: string | undefined;
-			try {
-				data = await git({ cwd: repoPath }, "branch", "--");
-			} catch {}
-			if (!data) return;
-			const otherBranches = data
-				.trim()
-				.split("\n")
-				.filter(b => !b.startsWith("*"))
-				.map(b => "refs/heads/" + b.trim());
-			// .join(" ");
-
-			const data2 = await git(
-				{ cwd: repoPath },
-				"log",
-				branch,
-				`--format='${GitLogParser.defaultFormat}`,
-				"--not",
-				...otherBranches,
-				"--"
-			);
-
-			let commits = GitLogParser.parse(data2.trim(), repoPath);
 			let hasCommitsExclusiveToThisBranch = true;
 			if (commits === undefined || commits.size === 0) {
 				hasCommitsExclusiveToThisBranch = false;

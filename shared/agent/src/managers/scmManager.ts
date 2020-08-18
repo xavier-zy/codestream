@@ -325,8 +325,12 @@ export class ScmManager {
 						file = file.substr(1);
 					}
 
+					let hasCommitsExclusiveToBranch = false;
 					branch = await git.getCurrentBranch(uri.fsPath);
-					if (branch) commits = await git.getCommitsOnBranch(repoPath, branch);
+					if (branch) {
+						commits = await git.getCommitsOnBranch(repoPath, branch);
+						hasCommitsExclusiveToBranch = await git.isCommitsExclusiveOnBranch(repoPath, branch);
+					}
 
 					const repo = await git.getRepositoryByFilePath(repoPath);
 					repoId = repo && repo.id;
@@ -359,7 +363,7 @@ export class ScmManager {
 						startCommit = latestPushed?.sha;
 					}
 
-					if (commits) {
+					if (commits && hasCommitsExclusiveToBranch) {
 						commits.forEach(commit => {
 							// @ts-ignore
 							const email = commit.info.email;

@@ -850,19 +850,19 @@ export class ScmManager {
 		const { git, reviews } = SessionContainer.instance();
 		range = Ranges.ensureStartBeforeEnd(range);
 
-		const uri = URI.parse(documentUri);
 		const codeStreamDiff = csUri.Uris.fromCodeStreamDiffUri<CodeStreamDiffUriData>(documentUri);
-		if (!codeStreamDiff) {
-			throw new Error("Could not parse codestream-diff uri");
-		}
+		if (!codeStreamDiff) throw new Error(`Could not parse codestream-diff uri ${documentUri}`);
 
 		const repo = await git.getRepositoryById(codeStreamDiff.repoId);
 		if (repo == null) throw new Error(`Could not find repo with ID ${codeStreamDiff.repoId}`);
 
+		const filePath = paths.join(repo.path, codeStreamDiff.path);
+		const uri = Strings.pathToFileURL(filePath);
+
 		if (contents == null) {
 			const versionContents =
 				(await git.getFileContentForRevision(
-					uri,
+					filePath,
 					codeStreamDiff.side === "left" ? codeStreamDiff.leftSha : codeStreamDiff.rightSha
 				)) || "";
 
@@ -874,7 +874,8 @@ export class ScmManager {
 		const remotes = [...Iterables.map(gitRemotes, r => ({ name: r.name, url: r.normalizedUrl }))];
 
 		return {
-			uri: uri.toString(),
+			// keep this as the original uri, as it is used in follow up requests
+			uri: documentUri.toString(),
 			range: range,
 			contents: contents!,
 			scm: {

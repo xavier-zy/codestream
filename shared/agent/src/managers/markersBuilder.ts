@@ -13,6 +13,7 @@ import { CodeBlockSource } from "../protocol/agent.protocol.posts";
 import { CSReviewCheckpoint } from "../protocol/api.protocol";
 import { CSMarkerLocation, CSReferenceLocation } from "../protocol/api.protocol.models";
 import * as csUri from "../system/uri";
+import { Strings } from "../system";
 import { xfs } from "../xfs";
 import { ReviewsManager } from "./reviewsManager";
 import { ScmManager } from "./scmManager";
@@ -29,8 +30,8 @@ export abstract class MarkersBuilder {
 		}
 	}
 
-	protected readonly _documentId: TextDocumentIdentifier;
-	protected readonly _documentUri: URI;
+	protected _documentId: TextDocumentIdentifier;
+	protected _documentUri: URI;
 
 	protected constructor(documentId: TextDocumentIdentifier) {
 		this._documentId = documentId;
@@ -330,6 +331,7 @@ class CodeStreamDiffMarkersBuilder extends MarkersBuilder {
 
 	constructor(documentId: TextDocumentIdentifier) {
 		super(documentId);
+
 		this.codeStreamDiffUri = csUri.Uris.fromCodeStreamDiffUri<CodeStreamDiffUriData>(
 			documentId.uri
 		)!;
@@ -398,8 +400,9 @@ class CodeStreamDiffMarkersBuilder extends MarkersBuilder {
 		const { git } = SessionContainer.instance();
 
 		const fileContents = await this.getFileContents();
+		const filePath = path.join(repoPath, this.codeStreamDiffUri.path);
 		const locationAtCurrentCommit = await SessionContainer.instance().markerLocations.backtrackLocation(
-			this._documentId,
+			{ uri: Strings.pathToFileURL(filePath) },
 			fileContents,
 			location,
 			fileCurrentCommitSha
@@ -409,8 +412,6 @@ class CodeStreamDiffMarkersBuilder extends MarkersBuilder {
 				locationAtCurrentCommit
 			)}`
 		);
-
-		const filePath = path.join(repoPath, this.codeStreamDiffUri.path);
 
 		const blameRevisionsPromises = git.getBlameRevisions(filePath, {
 			ref: fileCurrentCommitSha,

@@ -1,10 +1,10 @@
 "use strict";
 import { GitRemote, GitRepository } from "git/gitService";
 import { GraphQLClient } from "graphql-request";
+import { uniqBy as _uniqBy } from "lodash-es";
 import { Response } from "node-fetch";
 import * as paths from "path";
 import * as qs from "querystring";
-import { uniqBy as _uniqBy } from "lodash-es";
 import { CodeStreamSession } from "session";
 import { URI } from "vscode-uri";
 import { MarkerLocation } from "../api/extensions";
@@ -67,9 +67,8 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 		protected readonly providerConfig: ThirdPartyProviderConfig
 	) {
 		super(session, providerConfig);
-		//this.Api = new GitHubApi();
 	}
-	//Api: GitHubApi;
+
 	async getRemotePaths(repo: any, _projectsByRemotePath: any) {
 		await this.ensureConnected();
 		const remotePaths = await getRemotePaths(
@@ -916,11 +915,11 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 				}
 			  }`;
 
-		const rsp = await this.client.request<any>(query, {
+		const response = await this.client.request<any>(query, {
 			labelableId: request.pullRequestId,
 			labelIds: request.labelId
 		});
-		return true;
+		return response;
 	}
 
 	async setAssigneeOnPullRequest(request: {
@@ -936,11 +935,11 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 				}
 			  }`;
 
-		const rsp = await this.client.request<any>(query, {
+		const response = await this.client.request<any>(query, {
 			assignableId: request.pullRequestId,
 			assigneeIds: request.assigneeId
 		});
-		return rsp;
+		return response;
 	}
 
 	async toggleReaction(request: { subjectId: string; content: string; onOff: boolean }) {
@@ -952,11 +951,11 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 				}
 			  }`;
 
-		const rsp = await this.client.request<any>(query, {
+		const response = await this.client.request<any>(query, {
 			subjectId: request.subjectId,
 			content: request.content
 		});
-		return rsp;
+		return response;
 	}
 
 	async updatePullRequestSubscription(request: { pullRequestId: string; onOff: boolean }) {
@@ -966,11 +965,11 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 				}
 			  }`;
 
-		const rsp = await this.client.request<any>(query, {
+		const response = await this.client.request<any>(query, {
 			subscribableId: request.pullRequestId,
 			state: request.onOff ? "SUBSCRIBED" : "UNSUBSCRIBED"
 		});
-		return rsp;
+		return response;
 	}
 
 	async addPullRequestReview(request: { pullRequestId: string }) {
@@ -983,10 +982,10 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 			}
 		  }
 		}`;
-		const rsp = await this.client.request<any>(query, {
+		const response = await this.client.request<any>(query, {
 			pullRequestId: request.pullRequestId
 		});
-		return rsp;
+		return response;
 	}
 
 	async createPullRequestReviewComment(request: {
@@ -1012,8 +1011,8 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 			  }
 			  `;
 		}
-		const rsp = await this.client.request<any>(query, request);
-		return rsp;
+		const response = await this.client.request<any>(query, request);
+		return response;
 	}
 
 	async submitReview(request: { pullRequestId: string; text: string; eventType: string }) {
@@ -1028,18 +1027,18 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 		) {
 			throw new Error("Invalid eventType");
 		}
-		if (!request.text) request.text = "CHEEEEEEESE";
+
 		const query = `mutation SubmitPullRequestReview($pullRequestId:String!, $body:String!) {
 			submitPullRequestReview(input: {event: ${request.eventType}, body: $body, pullRequestId: $pullRequestId}){
 			  clientMutationId
 			}
 		  }
 		  `;
-		const rsp = await this.client.request<any>(query, {
+		const response = await this.client.request<any>(query, {
 			pullRequestId: request.pullRequestId,
 			body: request.text
 		});
-		return rsp;
+		return response;
 	}
 
 	// async closePullRequest(request: { pullRequestId: string }) {
@@ -1049,7 +1048,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 	// 			}
 	// 		  }`;
 
-	// 	const rsp = await this.client.request<any>(query, {
+	// 	const response = await this.client.request<any>(query, {
 	// 		pullRequestId: request.pullRequestId
 	// 	});
 	// 	return true;
@@ -1178,11 +1177,11 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 			  }`;
 
 		// remove it by setting it to null
-		const rsp = await this.client.request<any>(query, {
+		const response = await this.client.request<any>(query, {
 			pullRequestId: request.pullRequestId,
 			milestoneId: request.onOff ? request.milestoneId : null
 		});
-		return rsp;
+		return response;
 	}
 
 	async toggleProjectOnPullRequest(request: {
@@ -1203,11 +1202,11 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 			projectIds.delete(request.projectId);
 		}
 
-		const rsp = await this.client.request<any>(query, {
+		const response = await this.client.request<any>(query, {
 			pullRequestId: request.pullRequestId,
 			projectIds: [...projectIds]
 		});
-		return rsp;
+		return response;
 	}
 
 	async updatePullRequestTitle(request: { pullRequestId: string; title: string }) {
@@ -1217,11 +1216,11 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 				}
 			  }`;
 
-		const rsp = await this.client.request<any>(query, {
+		const response = await this.client.request<any>(query, {
 			pullRequestId: request.pullRequestId,
 			title: request.title
 		});
-		return rsp;
+		return response;
 	}
 
 	async mergePullRequest(request: { pullRequestId: string; mergeMethod: MergeMethod }) {
@@ -1235,7 +1234,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 				}
 			  }`;
 
-		const rsp = await this.client.request<any>(query, {
+		const response = await this.client.request<any>(query, {
 			pullRequestId: request.pullRequestId
 		});
 		return true;
@@ -1446,7 +1445,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 				}
 			  }`;
 
-		const rsp = await this.client.request<any>(query, {
+		const response = await this.client.request<any>(query, {
 			subjectId: request.pullRequestId,
 			body: request.text
 		});
@@ -1499,14 +1498,14 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 			  }
 			}
 		  }`;
-		const rsp = await this.client.request<any>(query, {
+		const response = await this.client.request<any>(query, {
 			id: id
 		});
 
 		const data = {
-			pullRequestNumber: rsp.nodes[0].number,
-			name: rsp.nodes[0].repository.name,
-			owner: rsp.nodes[0].repository.owner.login
+			pullRequestNumber: response.nodes[0].number,
+			name: response.nodes[0].repository.name,
+			owner: response.nodes[0].repository.owner.login
 		};
 		this._pullRequestIdCache.set(id, data);
 
@@ -1530,10 +1529,10 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 			  }
 			}
 		  }`;
-		const rsp = await this.client.request<any>(query, {
+		const response = await this.client.request<any>(query, {
 			id: id
 		});
-		return rsp.node.number;
+		return response.node.number;
 	}
 
 	async getPullRequestMetadata(
@@ -1575,14 +1574,16 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 			}
 		  }
 		  `;
-		const rsp = await this.client.request<any>(query, {
+		const response = await this.client.request<any>(query, {
 			id: id
 		});
 		return {
-			number: rsp.node.number,
-			milestone: rsp.node.milestone,
+			number: response.node.number,
+			milestone: response.node.milestone,
 			projectCards:
-				rsp.node.projectCards && rsp.node.projectCards.nodes ? rsp.node.projectCards.nodes : []
+				response.node.projectCards && response.node.projectCards.nodes
+					? response.node.projectCards.nodes
+					: []
 		};
 	}
 
@@ -2226,7 +2227,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 				  mergeCommitAllowed
 				}
 			  }`;
-			const rsp = await this.client.request<any>(query, {
+			const response = await this.client.request<any>(query, {
 				owner: owner,
 				name: repo,
 				pullRequestNumber: pullRequestNumber,
@@ -2234,18 +2235,18 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 			});
 
 			this._prTimelineQueryRateLimit = {
-				cost: rsp.rateLimit.cost,
-				limit: rsp.rateLimit.limit,
-				remaining: rsp.rateLimit.remaining,
-				resetAt: new Date(rsp.rateLimit.resetAt)
+				cost: response.rateLimit.cost,
+				limit: response.rateLimit.limit,
+				remaining: response.rateLimit.remaining,
+				resetAt: new Date(response.rateLimit.resetAt)
 			};
 			// this is sheer insanity... there's no way to get replies to parent comments
 			// as a child object of that comment. all replies are treated as `reviewThreads`
 			// and they live on the parent `pullRequest` object. below, we're stiching together
 			// comments and any replies (as a `replies` object) that might exist for those comments.
 			// MORE here: https://github.community/t/bug-v4-graphql-api-trouble-retrieving-pull-request-review-comments/13708/2
-			if (rsp.repository.pullRequest.timelineItems.nodes) {
-				for (const node of rsp.repository.pullRequest.timelineItems.nodes) {
+			if (response.repository.pullRequest.timelineItems.nodes) {
+				for (const node of response.repository.pullRequest.timelineItems.nodes) {
 					if (node.__typename === "PullRequestReview") {
 						let replies: any = [];
 						let threadId;
@@ -2254,12 +2255,12 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 							// a parent comment has a null replyTo
 							if (
 								comment.replyTo == null &&
-								rsp.repository &&
-								rsp.repository.pullRequest &&
-								rsp.repository.pullRequest.reviewThreads &&
-								rsp.repository.pullRequest.reviewThreads.edges
+								response.repository &&
+								response.repository.pullRequest &&
+								response.repository.pullRequest.reviewThreads &&
+								response.repository.pullRequest.reviewThreads.edges
 							) {
-								for (const edge of rsp.repository.pullRequest.reviewThreads.edges) {
+								for (const edge of response.repository.pullRequest.reviewThreads.edges) {
 									if (edge.node.comments.nodes.length > 1) {
 										for (const node1 of edge.node.comments.nodes) {
 											if (node1.id === comment.id) {
@@ -2298,9 +2299,9 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 				}
 			}
 			Logger.debug(
-				`pullRequestTimelineQuery rateLimit=${JSON.stringify(rsp.rateLimit)} cursor=${cursor}`
+				`pullRequestTimelineQuery rateLimit=${JSON.stringify(response.rateLimit)} cursor=${cursor}`
 			);
-			return rsp;
+			return response;
 		} catch (ex) {
 			Logger.error(ex, cc);
 
@@ -2396,20 +2397,20 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 				}
 			}`;
 
-			const rsp = await this.client.request<GetPullRequestsResponse>(query, {
+			const response = await this.client.request<GetPullRequestsResponse>(query, {
 				owner: owner,
 				repo: repo,
 				cursor: cursor
 			});
 
 			this._prQueryRateLimit = {
-				cost: rsp.rateLimit.cost,
-				limit: rsp.rateLimit.limit,
-				remaining: rsp.rateLimit.remaining,
-				resetAt: new Date(rsp.rateLimit.resetAt)
+				cost: response.rateLimit.cost,
+				limit: response.rateLimit.limit,
+				remaining: response.rateLimit.remaining,
+				resetAt: new Date(response.rateLimit.resetAt)
 			};
 
-			return rsp.repository.pullRequests;
+			return response.repository.pullRequests;
 		} catch (ex) {
 			Logger.error(ex, cc);
 

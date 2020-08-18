@@ -899,7 +899,7 @@ export class PostsManager extends EntityManagerBase<CSPost> {
 			request.textDocuments.length &&
 			csUri.Uris.isCodeStreamDiffUri(request.textDocuments[0].uri)
 		) {
-			const { providerRegistry, git } = SessionContainer.instance();
+			const { providerRegistry, git, repos } = SessionContainer.instance();
 			const parsedUri = csUri.Uris.fromCodeStreamDiffUri<CodeStreamDiffUriData>(
 				request.textDocuments[0].uri
 			);
@@ -957,21 +957,46 @@ export class PostsManager extends EntityManagerBase<CSPost> {
 						// 	codeBlock.range,
 						// 	codeBlock.scm
 						// );
+						const repo = await repos.getById(parsedUri.repoId);
+						let remoteList: string[] | undefined;
+						if (repo && repo.remotes && repo.remotes.length) {
+							// if we have a list of remotes from the marker / repo (a.k.a. server)... use that
+							remoteList = repo.remotes.map(_ => _.normalizedUrl);
+						}
+						let remoteUrl;
+						if (remoteList) {
+							for (const remote of remoteList) {
+								remoteUrl = Marker.getRemoteCodeUrl(
+									remote,
+									parsedUri.rightSha,
+									codeBlock.scm?.file!,
+									startLine,
+									endLine
+								);
+
+								if (remoteUrl !== undefined) {
+									break;
+								}
+							}
+						}
+						let fileWithUrl;
+						if (remoteUrl) {
+							fileWithUrl = `[${codeBlock.scm?.file}](${remoteUrl.url})`;
+						} else {
+							fileWithUrl = codeBlock.scm?.file;
+						}
 
 						const result = await providerRegistry.executeMethod({
 							method: "addComment",
 							providerId: parsedUri.context.pullRequest.providerId,
 							params: {
 								subjectId: parsedUri.context.pullRequest.id,
-								text: `${request.attributes.text || ""}\n${codeBlock.scm?.file} (Line${
-									startLine === endLine ? ` ${startLine}` : `s ${startLine}-${endLine}`
-								})`
-								// \n\`\`\`${descriptor.marker.code}\`\`\``
+								text: `${request.attributes.text || ""}\n\n\`\`\`\n${codeBlock.contents}\n\`\`\`
+								\n${fileWithUrl} (Line${startLine === endLine ? ` ${startLine}` : `s ${startLine}-${endLine}`})`
 							}
 						});
 						return {
 							isPassThrough: true,
-
 							pullRequest: {
 								id: parsedUri.context.pullRequest.id
 							},

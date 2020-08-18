@@ -150,6 +150,7 @@ interface ConnectedProps {
 	blameMap?: { [email: string]: string };
 	activePanel?: WebviewPanels;
 	inviteUsersOnTheFly: boolean;
+	currentPullRequestId?: string;
 }
 
 interface State {
@@ -195,6 +196,7 @@ interface State {
 	isChangeRequest: boolean;
 	unregisteredAuthors: BlameAuthor[];
 	emailAuthors: { [email: string]: boolean };
+	currentPullRequestId?: string;
 }
 
 function merge(defaults: Partial<State>, codemark: CSCodemark): State {
@@ -1489,6 +1491,7 @@ class CodemarkForm extends React.Component<Props, State> {
 	renderAddLocation() {
 		if (
 			!this.props.multipleMarkersEnabled ||
+			this.props.currentPullRequestId ||
 			this.props.isEditing ||
 			this.props.commentType === "link"
 		)
@@ -2153,7 +2156,10 @@ class CodemarkForm extends React.Component<Props, State> {
 										paddingLeft: "10px",
 										paddingRight: "10px",
 										// fixed width to handle the isLoading case
-										width: this.props.currentReviewId ? "auto" : "80px",
+										width:
+											this.props.currentReviewId || this.props.currentPullRequestId
+												? "auto"
+												: "80px",
 										marginRight: 0
 									}}
 									className="control-button"
@@ -2176,6 +2182,8 @@ class CodemarkForm extends React.Component<Props, State> {
 										? "Add Comment & Request Change"
 										: this.props.currentReviewId
 										? "Add Comment to Review"
+										: this.props.currentPullRequestId
+										? "Add Pull Request Comment"
 										: "Submit"}
 								</Button>
 							</Tooltip>
@@ -2266,6 +2274,7 @@ const mapStateToProps = (state: CodeStreamState): ConnectedProps => {
 		channelStreams: channelStreams,
 		directMessageStreams: directMessageStreams,
 		issueProvider: providers[context.issueProvider!],
+		currentPullRequestId: state.context.currentPullRequestId,
 		providerInfo: (user.providerInfo && user.providerInfo[context.currentTeamId]) || EMPTY_OBJECT,
 		teamProvider: getCurrentTeamProvider(state),
 		currentUser: user,

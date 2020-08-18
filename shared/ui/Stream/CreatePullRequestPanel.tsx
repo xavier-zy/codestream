@@ -19,7 +19,8 @@ import {
 	ChangeDataType,
 	DidChangeDataNotificationType,
 	GetReposScmRequestType,
-	GetBranchesRequestType
+	GetBranchesRequestType,
+	ReposScm
 } from "@codestream/protocols/agent";
 import { connectProvider } from "./actions";
 import { isConnected } from "../store/providers/reducer";
@@ -109,10 +110,11 @@ const PRError = styled.div`
 `;
 const PRCompare = styled.div`
 	margin-top: 5px;
-	.octicon-arrow-left {
-		display: inline-block;
-		margin: 0 10px;
+	button {
+		margin-right: 10px;
 	}
+	.octicon-arrow-left,
+	.octicon-repo,
 	.octicon-git-compare {
 		margin-right: 10px;
 	}
@@ -166,6 +168,7 @@ export const CreatePullRequestPanel = props => {
 			currentUser.status && "label" in currentUser.status ? currentUser.status : EMPTY_STATUS;
 
 		return {
+			repos: state.repos,
 			currentUser,
 			userStatus: status,
 			providers: providers,
@@ -205,6 +208,7 @@ export const CreatePullRequestPanel = props => {
 	const [prUpstream, setPrUpstream] = useState("");
 
 	const [addressesStatus, setAddressesStatus] = useState(true);
+	const [openRepos, setOpenRepos] = useState<ReposScm[]>([]);
 
 	const [currentStep, setCurrentStep] = useState(0);
 
@@ -225,6 +229,13 @@ export const CreatePullRequestPanel = props => {
 		if (currentStep != 2) {
 			setLoading(true);
 			setCurrentStep(0);
+		}
+
+		const response = await HostApi.instance.send(GetReposScmRequestType, {
+			inEditorOnly: true
+		});
+		if (response && response.repositories) {
+			setOpenRepos(response.repositories);
 		}
 
 		try {
@@ -457,6 +468,49 @@ export const CreatePullRequestPanel = props => {
 			<span>
 				<DropdownButton variant="secondary" items={items}>
 					<span className="subtle">base:</span> <strong>{prBranch || reviewBranch}</strong>
+				</DropdownButton>
+			</span>
+		);
+	};
+
+	const renderReposDropdown = () => {
+		const items = openRepos!.map(_ => {
+			const repoName = _.id && derivedState.repos[_.id] ? derivedState.repos[_.id].name : _.path;
+			return {
+				label: repoName,
+				key: _.folder.uri,
+				action: async () => {
+					// optimistically
+					// setPrBranch(_);
+
+					HostApi.instance
+						.send(CheckPullRequestBranchPreconditionsRequestType, {
+							repoId: _.id,
+							providerId: prProviderId,
+							// baseRefName: _,
+							headRefName: reviewBranch
+						})
+						.then((result: CheckPullRequestBranchPreconditionsResponse) => {
+							setPreconditionError({ type: "", message: "", url: "" });
+							setFormState({ type: "", message: "", url: "" });
+							if (result && result.error) {
+								setFormState({
+									type: result.error.type || "UNKNOWN",
+									message: result.error.message || "",
+									url: result.error.url || ""
+								});
+							} else {
+								setFormState({ type: "", message: "", url: "" });
+							}
+						});
+				}
+			};
+		});
+		if (items.length === 0) return undefined;
+		return (
+			<span>
+				<DropdownButton variant="secondary" items={items}>
+					<span className="subtle">repo:</span> <strong>{prBranch || reviewBranch}</strong>
 				</DropdownButton>
 			</span>
 		);
@@ -707,11 +761,11 @@ export const CreatePullRequestPanel = props => {
 	if (propsForPrePRProviderInfoModal) {
 		return <PrePRProviderInfoModal {...propsForPrePRProviderInfoModal} />;
 	}
-	const { userStatus } = derivedState;
+	const { userStatus, reviewId } = derivedState;
 	return (
 		<Root className="full-height-codemark-form">
 			<PanelHeader title="Open a Pull Request">
-				{derivedState.reviewId ? "" : "Choose two branches to start a new pull request."}
+				{reviewId ? "" : "Choose two branches to start a new pull request."}
 			</PanelHeader>
 			<CancelButton onClick={props.closePanel} />
 			<span className="plane-container">
@@ -747,6 +801,12 @@ export const CreatePullRequestPanel = props => {
 									)}
 									<div className="control-group">
 										<PRCompare>
+											{openRepos.length > 0 && !reviewId && (
+												<>
+													<Icon name="repo" />
+													{renderReposDropdown()}
+												</>
+											)}
 											<Icon name="git-compare" />
 											{renderBranchesDropdown()}
 											<Icon name="arrow-left" />

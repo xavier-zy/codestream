@@ -13,14 +13,13 @@ import { DropdownButton } from "./Review/DropdownButton";
 import { LoadingMessage } from "../src/components/LoadingMessage";
 import {
 	CreatePullRequestRequestType,
-	CheckPullRequestBranchPreconditionsRequestType,
-	CheckPullRequestBranchPreconditionsResponse,
 	CheckPullRequestPreconditionsRequestType,
 	ChangeDataType,
 	DidChangeDataNotificationType,
 	GetReposScmRequestType,
 	GetBranchesRequestType,
-	ReposScm
+	ReposScm,
+	CheckPullRequestPreconditionsResponse
 } from "@codestream/protocols/agent";
 import { connectProvider } from "./actions";
 import { isConnected } from "../store/providers/reducer";
@@ -37,6 +36,9 @@ import { PanelHeader } from "../src/components/PanelHeader";
 import { CSMe } from "@codestream/protocols/api";
 import Headshot from "./Headshot";
 import { EMPTY_STATUS } from "./StatusPanel";
+
+// base branch dropdown: show only pushed branches
+// base branch dropdown: try to default to fork point branch
 
 export const ButtonRow = styled.div`
 	text-align: right;
@@ -208,7 +210,7 @@ export const CreatePullRequestPanel = props => {
 		}
 
 		try {
-			const args = { reviewId: derivedState.reviewId, repoId: "", branch: "" };
+			const args = { reviewId: derivedState.reviewId, repoId: "", headRefName: "" };
 			if (!derivedState.reviewId) {
 				// if we're not creating a PR from a review, then get the current
 				// repo and branch from the editor
@@ -225,8 +227,9 @@ export const CreatePullRequestPanel = props => {
 						uri: (selectedRepo || response.repositories[0]).folder.uri
 					});
 					if (branchInfo && branchInfo.scm && branchInfo.scm.current) {
-						args.branch = branchInfo.scm.current;
+						args.headRefName = branchInfo.scm.current;
 					}
+					// FIXME if we kept track of the fork point, pass in the args.baseRefName here
 				}
 			}
 			const result = await HostApi.instance.send(CheckPullRequestPreconditionsRequestType, args);
@@ -249,14 +252,11 @@ export const CreatePullRequestPanel = props => {
 						setOrigins(result.origins!);
 						setPrUpstream(result.origins![0]);
 					} else {
-						// if we get a warning, show the error, but continue
-						// to show the form, this is most likely a PR already exists
 						setPreconditionError({
 							type: result.warning.type,
 							message: result.warning.message || "",
 							url: result.warning.url || ""
 						});
-						// small change
 					}
 				} else {
 					setPreconditionError({ type: "", message: "", url: "" });
@@ -390,7 +390,13 @@ export const CreatePullRequestPanel = props => {
 		}
 	};
 
-	const checkPullRequestBranchPreconditions = async () => {
+	const checkPullRequestBranchPreconditions = async (localPrBranch, localReviewBranch) => {
+		if (localPrBranch === localReviewBranch) {
+			setPreconditionError({ type: "BRANCHES_MUST_NOT_MATCH", message: "", url: "" });
+			setFormState({ type: "", message: "", url: "" });
+			return;
+		}
+
 		let repoId: string = "";
 		if (!derivedState.reviewId) {
 			// if we're not creating a PR from a review, then get the current
@@ -408,45 +414,44 @@ export const CreatePullRequestPanel = props => {
 			}
 		}
 
-		const args = {
-			providerId: prProviderId,
-			reviewId: derivedState.reviewId,
-			repoId,
-			baseRefName: prBranch,
-			headRefName: reviewBranch
-		};
-		console.warn("ARGS ARE: ", args);
 		HostApi.instance
-			.send(CheckPullRequestBranchPreconditionsRequestType, {
+			.send(CheckPullRequestPreconditionsRequestType, {
 				providerId: prProviderId,
 				reviewId: derivedState.reviewId,
 				repoId,
-				baseRefName: prBranch,
-				headRefName: reviewBranch
+				baseRefName: localPrBranch,
+				headRefName: localReviewBranch,
+				skipLocalModificationsCheck: true
 			})
-			.then((result: CheckPullRequestBranchPreconditionsResponse) => {
-				// setPreconditionError({ type: "", message: "", url: "" });
-				// setFormState({ type: "", message: "", url: "" });
+			.then((result: CheckPullRequestPreconditionsResponse) => {
+				setPreconditionError({ type: "", message: "", url: "" });
+				setFormState({ type: "", message: "", url: "" });
 				if (result && result.error) {
-					setFormState({
+					// setFormState({
+					// 	type: result.error.type || "UNKNOWN",
+					// 	message: result.error.message || "",
+					// 	url: result.error.url || ""
+					// });
+					setPreconditionError({
 						type: result.error.type || "UNKNOWN",
 						message: result.error.message || "",
 						url: result.error.url || ""
 					});
-					// setPreconditionError({
-					// type: result.error.type || "UNKNOWN",
-					// message: result.error.message || "",
-					// url: result.error.url || ""
-					// });
+				} else if (result && result.warning) {
+					setPreconditionError({
+						type: result.warning.type || "UNKNOWN",
+						message: result.warning.message || "",
+						url: result.warning.url || ""
+					});
 				} else {
 					setFormState({ type: "", message: "", url: "" });
 				}
 			});
 	};
 
-	useEffect(() => {
-		checkPullRequestBranchPreconditions();
-	}, [prBranch, reviewBranch]);
+	// useEffect(() => {
+	// checkPullRequestBranchPreconditions();
+	// }, [prBranch, reviewBranch]);
 
 	const renderBaseBranchesDropdown = () => {
 		const items = branches!.map(_ => {
@@ -455,6 +460,7 @@ export const CreatePullRequestPanel = props => {
 				key: _,
 				action: async () => {
 					setPrBranch(_);
+					checkPullRequestBranchPreconditions(_, reviewBranch);
 				}
 			};
 		});
@@ -475,6 +481,7 @@ export const CreatePullRequestPanel = props => {
 				key: _,
 				action: async () => {
 					setReviewBranch(_);
+					checkPullRequestBranchPreconditions(prBranch, _);
 				}
 			};
 		});
@@ -636,6 +643,10 @@ export const CreatePullRequestPanel = props => {
 	const getErrorElement = (type, message, url) => {
 		let messageElement = <></>;
 		switch (type) {
+			case "BRANCHES_MUST_NOT_MATCH": {
+				messageElement = <span>Choose different branches above to open a pull request.</span>;
+				break;
+			}
 			// TODO move these into en.js
 			case "REPO_NOT_FOUND": {
 				messageElement = <span>Repo not found</span>;

@@ -313,10 +313,10 @@ export const CheckPullRequestBranchPreconditionsRequestType = new RequestType<
 export interface CheckPullRequestPreconditionsRequest {
 	reviewId?: string;
 	repoId?: string;
-	branch?: string;
 	headRefName?: string;
 	baseRefName?: string;
 	providerId?: string;
+	skipLocalModificationsCheck?: boolean;
 }
 
 export interface CheckPullRequestPreconditionsResponse {

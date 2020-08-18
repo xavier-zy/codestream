@@ -650,7 +650,7 @@ export class ReviewsManager extends CachedEntityManagerBase<CSReview> {
 				};
 			}
 
-			if (request.reviewId) {
+			if (request.reviewId && !request.skipLocalModificationsCheck) {
 				const localModifications = await git.getHasModifications(repo.path);
 				if (localModifications) {
 					return {
@@ -668,13 +668,13 @@ export class ReviewsManager extends CachedEntityManagerBase<CSReview> {
 				}
 			}
 
-			const branch = request.branch || (review && review.reviewChangesets[0].branch);
+			const headRefName = request.headRefName || (review && review.reviewChangesets[0].branch);
 			const branches = await git.getBranches(repo!.path);
 			const user = await this.session.api.getMe();
 			remotes = await repo!.getRemotes();
 			let remoteUrl = "";
 			let providerId = "";
-			let defaultBranch: string | undefined = "";
+			let providerRepoDefaultBranch: string | undefined = "";
 			let isProviderConnected = false;
 
 			const connectedProviders = providerRegistry.getConnectedProviders(
@@ -733,11 +733,12 @@ export class ReviewsManager extends CachedEntityManagerBase<CSReview> {
 							};
 						}
 
-						defaultBranch = providerRepoInfo.defaultBranch;
+						providerRepoDefaultBranch = providerRepoInfo.defaultBranch;
+						const baseRefName = request.baseRefName || providerRepoDefaultBranch;
 						if (providerRepoInfo.pullRequests) {
-							if (defaultBranch && branch) {
+							if (baseRefName && headRefName) {
 								const existingPullRequest = providerRepoInfo.pullRequests.find(
-									(_: any) => _.baseRefName === defaultBranch && _.headRefName === branch
+									(_: any) => _.baseRefName === baseRefName && _.headRefName === headRefName
 								);
 								if (existingPullRequest) {
 									warning = {
@@ -765,7 +766,7 @@ export class ReviewsManager extends CachedEntityManagerBase<CSReview> {
 
 			let originNames;
 			let remoteBranch;
-			const branchRemote = await git.getBranchRemote(repo.path, branch!);
+			const branchRemote = await git.getBranchRemote(repo.path, headRefName!);
 			if (!branchRemote) {
 				warning = {
 					type: "REQUIRES_UPSTREAM"
@@ -784,13 +785,13 @@ export class ReviewsManager extends CachedEntityManagerBase<CSReview> {
 				remoteBranch: remoteBranch,
 				pullRequestProvider: {
 					isConnected: isProviderConnected,
-					defaultBranch: defaultBranch
+					defaultBranch: providerRepoDefaultBranch
 				},
 				review: {
 					title: review ? review.title : "",
 					text: review ? review.text : ""
 				},
-				branch: branch,
+				branch: headRefName,
 				branches: branches!.branches,
 				warning: warning
 			};

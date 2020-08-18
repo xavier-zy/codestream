@@ -49,6 +49,7 @@ import { Modal } from "./Modal";
 import { Dialog } from "../src/components/Dialog";
 import { Link } from "./Link";
 import { PullRequestReactButton, PullRequestReactions } from "./PullRequestReactions";
+import { setUserPreference } from "./actions";
 
 const Circle = styled.div`
 	width: 12px;
@@ -87,6 +88,8 @@ export const UserIsMember = login => {
 	);
 };
 
+const EMPTY_HASH = {};
+
 export const PullRequestConversationTab = props => {
 	const { pr, ghRepo, fetch, setIsLoadingMessage } = props;
 	const dispatch = useDispatch();
@@ -96,8 +99,10 @@ export const PullRequestConversationTab = props => {
 		const blameMap = team.settings ? team.settings.blameMap : {};
 		const skipGitEmailCheck = state.preferences.skipGitEmailCheck;
 		const addBlameMapEnabled = isFeatureEnabled(state, "addBlameMap");
+		const { preferences } = state;
 
 		return {
+			defaultMergeMethod: preferences.lastPRMergeMethod || "SQUASH",
 			currentUser,
 			currentPullRequestId: state.context.currentPullRequestId,
 			blameMap,
@@ -119,6 +124,8 @@ export const PullRequestConversationTab = props => {
 	const [isLocking, setIsLocking] = useState(false);
 	const [isLockingReason, setIsLockingReason] = useState("");
 	const [isLoadingLocking, setIsLoadingLocking] = useState(false);
+	const [mergeMethod, setMergeMethod] = useState(derivedState.defaultMergeMethod);
+	console.warn("MERGE METHOD IS: ", mergeMethod);
 
 	const onCommentClick = async (event?: React.SyntheticEvent) => {
 		setIsLoadingComment(true);
@@ -175,6 +182,7 @@ export const PullRequestConversationTab = props => {
 
 	const mergePullRequest = async (options: { mergeMethod: MergeMethod }) => {
 		setIsLoadingMessage("Merging...");
+		dispatch(setUserPreference(["lastPRMergeMethod"], options.mergeMethod));
 		await HostApi.instance.send(
 			new ExecuteThirdPartyTypedType<MergePullRequestRequest, boolean>(),
 			{
@@ -728,8 +736,17 @@ export const PullRequestConversationTab = props => {
 										<Icon name="check" />
 									</PRIconButton>
 									<div style={{ marginLeft: "10px" }}>
-										<h1>This branch has no conflicts with the base branch when rebasing</h1>
-										<p>Rebase and merge can be performed automatically.</p>
+										{mergeMethod === "REBASE" ? (
+											<>
+												<h1>This branch has no conflicts with the base branch when rebasing</h1>
+												<p>Rebase and merge can be performed automatically.</p>
+											</>
+										) : (
+											<>
+												<h1>This branch has no conflicts with the base branch</h1>
+												<p>Merging can be performed automatically.</p>
+											</>
+										)}
 									</div>
 								</div>
 							</PRCommentHeader>
@@ -775,7 +792,7 @@ export const PullRequestConversationTab = props => {
 									<DropdownButton
 										items={[
 											{
-												key: "merge-commit",
+												key: "MERGE",
 												label: "Create a merge commit",
 												subtext: (
 													<span>
@@ -791,10 +808,11 @@ export const PullRequestConversationTab = props => {
 													</span>
 												),
 												disabled: !ghRepo.mergeCommitAllowed,
+												onSelect: () => setMergeMethod("MERGE"),
 												action: () => mergePullRequest({ mergeMethod: "MERGE" })
 											},
 											{
-												key: "squash-merge",
+												key: "SQUASH",
 												label: "Squash and merge",
 												subtext: (
 													<span>
@@ -804,10 +822,11 @@ export const PullRequestConversationTab = props => {
 													</span>
 												),
 												disabled: !ghRepo.squashMergeAllowed,
+												onSelect: () => setMergeMethod("SQUASH"),
 												action: () => mergePullRequest({ mergeMethod: "SQUASH" })
 											},
 											{
-												key: "rebase-merge",
+												key: "REBASE",
 												label: "Rebase and merge",
 												subtext: (
 													<span>
@@ -817,10 +836,11 @@ export const PullRequestConversationTab = props => {
 													</span>
 												),
 												disabled: !ghRepo.rebaseMergeAllowed,
+												onSelect: () => setMergeMethod("REBASE"),
 												action: () => mergePullRequest({ mergeMethod: "REBASE" })
 											}
 										]}
-										selectedKey="squash-merge"
+										selectedKey={derivedState.defaultMergeMethod}
 										variant="success"
 										splitDropdown
 									/>

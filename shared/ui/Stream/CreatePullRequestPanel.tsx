@@ -50,7 +50,7 @@ export const ButtonRow = styled.div`
 `;
 const Root = styled.div`
 	#controls {
-		// padding-top: 10px;
+		padding-top: 10px;
 	}
 	strong {
 		font-weight: normal;
@@ -62,16 +62,6 @@ const Root = styled.div`
 		&:hover {
 			color: var(--text-color-info) !important;
 		}
-	}
-`;
-const PRCompare = styled.div`
-	margin-top: 15px;
-	.octicon-arrow-left {
-		display: inline-block;
-		margin: 0 10px;
-	}
-	.octicon-git-compare {
-		margin-right: 10px;
 	}
 `;
 const PRError = styled.div`
@@ -117,26 +107,6 @@ const PRCompare = styled.div`
 	.octicon-repo,
 	.octicon-git-compare {
 		margin-right: 10px;
-	}
-`;
-const PRError = styled.div`
-	padding: 15px 15px 10px 15px;
-	display: flex;
-	align-items: center;
-	> .icon {
-		flex-grow: 0;
-		flex-shrink: 0;
-		display: inline-block;
-		margin-right: 15px;
-		transform: scale(1.5);
-	}
-	> div {
-		flex-grow: 10;
-		display: flex;
-		align-items: center;
-		button {
-			margin-left: auto;
-		}
 	}
 `;
 
@@ -209,6 +179,7 @@ export const CreatePullRequestPanel = props => {
 
 	const [addressesStatus, setAddressesStatus] = useState(true);
 	const [openRepos, setOpenRepos] = useState<ReposScm[]>([]);
+	const [selectedRepo, setSelectedRepo] = useState<ReposScm | undefined>(undefined);
 
 	const [currentStep, setCurrentStep] = useState(0);
 
@@ -231,13 +202,6 @@ export const CreatePullRequestPanel = props => {
 			setCurrentStep(0);
 		}
 
-		const response = await HostApi.instance.send(GetReposScmRequestType, {
-			inEditorOnly: true
-		});
-		if (response && response.repositories) {
-			setOpenRepos(response.repositories);
-		}
-
 		try {
 			const args = { reviewId: derivedState.reviewId, repoId: "", branch: "" };
 			if (!derivedState.reviewId) {
@@ -248,9 +212,12 @@ export const CreatePullRequestPanel = props => {
 				});
 
 				if (response && response.repositories) {
-					args.repoId = response.repositories[0].id || "";
+					setOpenRepos(response.repositories);
+					if (!selectedRepo) setSelectedRepo(response.repositories[0]);
+					args.repoId = (selectedRepo || response.repositories[0]).id || "";
+
 					let branchInfo = await HostApi.instance.send(GetBranchesRequestType, {
-						uri: response.repositories[0].folder.uri
+						uri: (selectedRepo || response.repositories[0]).folder.uri
 					});
 					if (branchInfo && branchInfo.scm && branchInfo.scm.current) {
 						args.branch = branchInfo.scm.current;
@@ -312,6 +279,7 @@ export const CreatePullRequestPanel = props => {
 	useEffect(() => {
 		fetchPreconditionData();
 	}, [
+		selectedRepo && selectedRepo.id,
 		derivedState.isConnectedToGitHub,
 		derivedState.isConnectedToGitLab,
 		derivedState.isConnectedToGitHubEnterprise,
@@ -416,50 +384,71 @@ export const CreatePullRequestPanel = props => {
 		}
 	};
 
-	const renderBranchesDropdown = () => {
+	const checkPullRequestBranchPreconditions = async () => {
+		let repoId: string = "";
+		if (!derivedState.reviewId) {
+			// if we're not creating a PR from a review, then get the current
+			// repo and branch from the editor
+			if (selectedRepo && selectedRepo.id) {
+				repoId = selectedRepo.id;
+			} else {
+				const response = await HostApi.instance.send(GetReposScmRequestType, {
+					inEditorOnly: true
+				});
+
+				if (response && response.repositories) {
+					repoId = response.repositories[0].id || "";
+				}
+			}
+		}
+
+		const args = {
+			providerId: prProviderId,
+			reviewId: derivedState.reviewId,
+			repoId,
+			baseRefName: prBranch,
+			headRefName: reviewBranch
+		};
+		console.warn("ARGS ARE: ", args);
+		HostApi.instance
+			.send(CheckPullRequestBranchPreconditionsRequestType, {
+				providerId: prProviderId,
+				reviewId: derivedState.reviewId,
+				repoId,
+				baseRefName: prBranch,
+				headRefName: reviewBranch
+			})
+			.then((result: CheckPullRequestBranchPreconditionsResponse) => {
+				// setPreconditionError({ type: "", message: "", url: "" });
+				// setFormState({ type: "", message: "", url: "" });
+				if (result && result.error) {
+					setFormState({
+						type: result.error.type || "UNKNOWN",
+						message: result.error.message || "",
+						url: result.error.url || ""
+					});
+					// setPreconditionError({
+					// type: result.error.type || "UNKNOWN",
+					// message: result.error.message || "",
+					// url: result.error.url || ""
+					// });
+				} else {
+					setFormState({ type: "", message: "", url: "" });
+				}
+			});
+	};
+
+	useEffect(() => {
+		checkPullRequestBranchPreconditions();
+	}, [prBranch, reviewBranch]);
+
+	const renderBaseBranchesDropdown = () => {
 		const items = branches!.map(_ => {
 			return {
 				label: _,
 				key: _,
 				action: async () => {
-					// optimistically
 					setPrBranch(_);
-
-					let repoId: string = "";
-					if (!derivedState.reviewId) {
-						if (!derivedState.reviewId) {
-							// if we're not creating a PR from a review, then get the current
-							// repo and branch from the editor
-							const response = await HostApi.instance.send(GetReposScmRequestType, {
-								inEditorOnly: true
-							});
-
-							if (response && response.repositories) {
-								repoId = response.repositories[0].id || "";
-							}
-						}
-					}
-					HostApi.instance
-						.send(CheckPullRequestBranchPreconditionsRequestType, {
-							reviewId: derivedState.reviewId,
-							repoId,
-							providerId: prProviderId,
-							baseRefName: _,
-							headRefName: reviewBranch
-						})
-						.then((result: CheckPullRequestBranchPreconditionsResponse) => {
-							setPreconditionError({ type: "", message: "", url: "" });
-							setFormState({ type: "", message: "", url: "" });
-							if (result && result.error) {
-								setFormState({
-									type: result.error.type || "UNKNOWN",
-									message: result.error.message || "",
-									url: result.error.url || ""
-								});
-							} else {
-								setFormState({ type: "", message: "", url: "" });
-							}
-						});
 				}
 			};
 		});
@@ -473,6 +462,24 @@ export const CreatePullRequestPanel = props => {
 		);
 	};
 
+	const renderCompareBranchesDropdown = () => {
+		const items = branches!.map(_ => {
+			return {
+				label: _,
+				key: _,
+				action: async () => {
+					setReviewBranch(_);
+				}
+			};
+		});
+		if (items.length === 0) return undefined;
+		return (
+			<DropdownButton variant="secondary" items={items}>
+				<span className="subtle">compare:</span> <strong>{reviewBranch}</strong>
+			</DropdownButton>
+		);
+	};
+
 	const renderReposDropdown = () => {
 		const items = openRepos!.map(_ => {
 			const repoName = _.id && derivedState.repos[_.id] ? derivedState.repos[_.id].name : _.path;
@@ -482,38 +489,28 @@ export const CreatePullRequestPanel = props => {
 				action: async () => {
 					// optimistically
 					// setPrBranch(_);
-
-					HostApi.instance
-						.send(CheckPullRequestBranchPreconditionsRequestType, {
-							repoId: _.id,
-							providerId: prProviderId,
-							// baseRefName: _,
-							headRefName: reviewBranch
-						})
-						.then((result: CheckPullRequestBranchPreconditionsResponse) => {
-							setPreconditionError({ type: "", message: "", url: "" });
-							setFormState({ type: "", message: "", url: "" });
-							if (result && result.error) {
-								setFormState({
-									type: result.error.type || "UNKNOWN",
-									message: result.error.message || "",
-									url: result.error.url || ""
-								});
-							} else {
-								setFormState({ type: "", message: "", url: "" });
-							}
-						});
+					setSelectedRepo(_);
 				}
 			};
 		});
 		if (items.length === 0) return undefined;
-		return (
-			<span>
-				<DropdownButton variant="secondary" items={items}>
-					<span className="subtle">repo:</span> <strong>{prBranch || reviewBranch}</strong>
-				</DropdownButton>
-			</span>
-		);
+		if (
+			derivedState.repos &&
+			selectedRepo &&
+			selectedRepo.id &&
+			derivedState.repos[selectedRepo.id]
+		) {
+			return (
+				<span>
+					<DropdownButton variant="secondary" items={items}>
+						<span className="subtle">repo:</span>{" "}
+						<strong>{derivedState.repos[selectedRepo.id].name}</strong>
+					</DropdownButton>
+				</span>
+			);
+		} else {
+			return null;
+		}
 	};
 
 	const renderDisplayHost = host => {
@@ -762,6 +759,7 @@ export const CreatePullRequestPanel = props => {
 		return <PrePRProviderInfoModal {...propsForPrePRProviderInfoModal} />;
 	}
 	const { userStatus, reviewId } = derivedState;
+	console.warn("CURRENT STEP IS: ", currentStep, "PCE: ", preconditionError, "loading: ", loading);
 	return (
 		<Root className="full-height-codemark-form">
 			<PanelHeader title="Open a Pull Request">
@@ -808,11 +806,9 @@ export const CreatePullRequestPanel = props => {
 												</>
 											)}
 											<Icon name="git-compare" />
-											{renderBranchesDropdown()}
+											{renderBaseBranchesDropdown()}
 											<Icon name="arrow-left" />
-											<DropdownButton variant="secondary" items={[]}>
-												<span className="subtle">compare:</span> <strong>{reviewBranch}</strong>
-											</DropdownButton>
+											{renderCompareBranchesDropdown()}
 										</PRCompare>
 									</div>
 									{!loading && preconditionError.type ? null : (

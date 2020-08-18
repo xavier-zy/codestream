@@ -199,15 +199,22 @@ export class ScmManager {
 	@log()
 	async getBranches({ uri: documentUri }: GetBranchesRequest): Promise<GetBranchesResponse> {
 		const cc = Logger.getCorrelationContext();
-
-		const uri = URI.parse(documentUri);
-		const { git } = SessionContainer.instance();
 		let repoPath = "";
 		let result: { branches: string[]; current: string } | undefined = undefined;
 		let gitError;
 		let repoId = "";
-
 		try {
+			const { git } = SessionContainer.instance();
+			if (
+				documentUri.startsWith("codestream-diff://") &&
+				csUri.Uris.isCodeStreamDiffUri(documentUri)
+			) {
+				const parsed = csUri.Uris.fromCodeStreamDiffUri<CodeStreamDiffUriData>(documentUri)!;
+				const repo = await git.getRepositoryById(parsed.repoId);
+				documentUri = paths.join(repo?.path!, parsed.path);
+			}
+			const uri = URI.parse(documentUri);
+
 			repoPath = (await git.getRepoRoot(uri.fsPath)) || "";
 			if (repoPath.length) {
 				result = await git.getBranches(repoPath);

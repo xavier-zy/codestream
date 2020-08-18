@@ -92,6 +92,50 @@ const PRError = styled.div`
 			margin-left: auto;
 		}
 	}
+	strong {
+		font-weight: normal;
+		color: var(--text-color-highlight);
+	}
+	a {
+		text-decoration: none;
+		color: var(--text-color-highlight);
+		&:hover {
+			color: var(--text-color-info) !important;
+		}
+	}
+	.spacer {
+		// height: 10px;
+	}
+`;
+const PRCompare = styled.div`
+	margin-top: 5px;
+	.octicon-arrow-left {
+		display: inline-block;
+		margin: 0 10px;
+	}
+	.octicon-git-compare {
+		margin-right: 10px;
+	}
+`;
+const PRError = styled.div`
+	padding: 15px 15px 10px 15px;
+	display: flex;
+	align-items: center;
+	> .icon {
+		flex-grow: 0;
+		flex-shrink: 0;
+		display: inline-block;
+		margin-right: 15px;
+		transform: scale(1.5);
+	}
+	> div {
+		flex-grow: 10;
+		display: flex;
+		align-items: center;
+		button {
+			margin-left: auto;
+		}
+	}
 `;
 
 // select service
@@ -681,6 +725,7 @@ export const CreatePullRequestPanel = props => {
 									<b>{derivedState.currentUser.username}</b>
 									</div> 
 								*/}
+								<div className="spacer" />
 								{!loading && formErrorMessages()}
 								{loading && <LoadingMessage>Loading repo info...</LoadingMessage>}
 								<Step1 step={currentStep}>
@@ -688,7 +733,6 @@ export const CreatePullRequestPanel = props => {
 								</Step1>
 								<Step2 step={currentStep}>{providerAuthenticationMessage()}</Step2>
 								<Step3 step={currentStep}>
-									<div className="small-spacer" />
 									{unexpectedError && (
 										<div className="error-message form-error">
 											<FormattedMessage

@@ -302,6 +302,9 @@ export const PRReaction = styled.div`
 		margin: 0 2px 0 0;
 		padding: 0;
 		vertical-align: -1px;
+		.emoji {
+			color: var(--text-color-highlight);
+		}
 	}
 `;
 
@@ -321,6 +324,20 @@ export const PRReactions = styled.div`
 
 export const PRButtonRow = styled.div`
 	padding-top: 10px;
+	text-align: right;
+
+	&.align-left {
+		text-align: left;
+	}
+	&.border-top {
+		border-top: 1px solid var(--base-border-color);
+		margin-left: -15px;
+		margin-right: -15px;
+		padding: 10px 15px 0 15px;
+	}
+	button + button {
+		margin-left: 10px;
+	}
 `;
 
 export const PRThreadedCommentCard = styled.div`
@@ -356,15 +373,6 @@ export const PRThreadedCommentCard = styled.div`
 		margin: 0 5px 5px;
 		border: 1px solid var(--base-border-color);
 		border-radius: 5px;
-	}
-	${PRButtonRow} {
-		border-top: 1px solid var(--base-border-color);
-		margin-left: -15px;
-		margin-right: -15px;
-		padding: 10px 15px 0 15px;
-	}
-	button + button {
-		margin-left: 10px;
 	}
 `;
 
@@ -715,10 +723,6 @@ export const PRCodeCommentReply = styled.div`
 	}
 	.open-comment #input-div {
 		min-height: 100px !important;
-	}
-	${PRButtonRow} {
-		text-align: right;
-		border-top: none;
 	}
 `;
 

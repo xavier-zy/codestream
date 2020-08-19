@@ -261,6 +261,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 			/\/pull\/\d+$/,
 			""
 		);
+		response.repository.pullRequest.baseUrl = this.baseUrl;
 
 		response.repository.repoOwner = repoOwner!;
 		response.repository.repoName = repoName!;
@@ -972,6 +973,20 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 		return response;
 	}
 
+	async updateComment(request: { commentId: string; body: string }) {
+		const query = `mutation UpdateComment($pullRequestReviewCommentId: String!, $body:String!) {
+			updatePullRequestReviewComment(input: {pullRequestReviewCommentId: $pullRequestReviewCommentId, body:$body}) {
+				  clientMutationId
+				}
+			  }`;
+
+		const response = await this.client.request<any>(query, {
+			pullRequestReviewCommentId: request.commentId,
+			body: request.body
+		});
+		return response;
+	}
+
 	async addPullRequestReview(request: { pullRequestId: string }) {
 		const query = `
 		mutation AddPullRequestReview($pullRequestId:String!) {
@@ -1652,6 +1667,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 					createdAt
 					activeLockReason
 					locked
+					resourcePath
 					viewerSubscription
 					files(first: 100) {
 						totalCount
@@ -1679,6 +1695,15 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 								createdAt
 								replyTo {
 								  id
+								}
+								resourcePath
+								reactionGroups {
+								  content
+								  users(first: 10) {
+								    nodes {
+									  login
+									}
+								  }
 								}
 							  }
 							}
@@ -1818,6 +1843,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 							  }
 							}
 						  }
+						  resourcePath
 						}
 						... on HeadRefRestoredEvent {
 						  __typename
@@ -2059,6 +2085,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 						  viewerCanUpdate
 						  viewerCanReact
 						  viewerCanDelete
+						  resourcePath
 						  comments(first: 15) {
 							nodes {
 							  author {
@@ -2110,6 +2137,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 								  }
 								}
 							  }
+							  resourcePath
 							}
 						  }
 						  authorAssociation

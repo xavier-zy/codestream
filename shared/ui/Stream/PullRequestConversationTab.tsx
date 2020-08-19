@@ -50,6 +50,7 @@ import { Dialog } from "../src/components/Dialog";
 import { Link } from "./Link";
 import { PullRequestReactButton, PullRequestReactions } from "./PullRequestReactions";
 import { setUserPreference } from "./actions";
+import { PullRequestCommentMenu } from "./PullRequestCommentMenu";
 
 const Circle = styled.div`
 	width: 12px;
@@ -89,6 +90,9 @@ export const UserIsMember = login => {
 };
 
 const EMPTY_HASH = {};
+let insertText;
+let insertNewline;
+let focusOnMessageInput;
 
 export const PullRequestConversationTab = props => {
 	const { pr, ghRepo, fetch, setIsLoadingMessage } = props;
@@ -125,7 +129,21 @@ export const PullRequestConversationTab = props => {
 	const [isLockingReason, setIsLockingReason] = useState("");
 	const [isLoadingLocking, setIsLoadingLocking] = useState(false);
 	const [mergeMethod, setMergeMethod] = useState(derivedState.defaultMergeMethod);
-	console.warn("MERGE METHOD IS: ", mergeMethod);
+
+	const __onDidRender = ({ insertTextAtCursor, insertNewlineAtCursor, focus }) => {
+		insertText = insertTextAtCursor;
+		insertNewline = insertNewlineAtCursor;
+		focusOnMessageInput = focus;
+	};
+
+	const quote = text => {
+		if (!insertText) return;
+		focusOnMessageInput &&
+			focusOnMessageInput(() => {
+				insertText && insertText("> " + text);
+				insertNewline && insertNewline();
+			});
+	};
 
 	const onCommentClick = async (event?: React.SyntheticEvent) => {
 		setIsLoadingComment(true);
@@ -570,10 +588,9 @@ export const PullRequestConversationTab = props => {
 		fetch();
 	};
 
-	console.warn("ASSI: ", assigneeMenuItems);
+	// console.warn("ASSI: ", assigneeMenuItems);
 	const me = "ppezaris"; // FIXME
 	const meId = "MDQ6VXNlcjE0ODMwMjQ="; // FIXME
-	let prBody = pr.body;
 	return (
 		<PRContent>
 			{isLocking && (
@@ -658,51 +675,11 @@ export const PullRequestConversationTab = props => {
 			<div className="main-content">
 				<PRConversation>
 					{/* in the GH data model, the top box is part of the pr, rather than the timeline */}
-					<PRComment style={{ marginTop: "10px" }}>
-						<PRHeadshot person={pr.author} size={40} />
-						<PRCommentCard>
-							<PRCommentHeader>
-								<div>
-									<PRAuthor>{pr.author.login}</PRAuthor> commented{" "}
-									<Timestamp time={pr.createdAt!} relative />
-								</div>
-								<PRActionIcons>
-									{pr.author.login === me && Author}
-									{pr.author.login === me ? <IAmMember /> : <UserIsMember />}
-									<PullRequestReactButton
-										targetId={pr.id}
-										setIsLoadingMessage={setIsLoadingMessage}
-										fetch={fetch}
-										reactionGroups={pr.reactionGroups}
-									/>
-									<Icon name="kebab-horizontal" />
-								</PRActionIcons>
-							</PRCommentHeader>
-							{prBody && (
-								<PRCommentBody
-									dangerouslySetInnerHTML={{
-										__html: markdownify(prBody)
-									}}
-								></PRCommentBody>
-							)}
-							{!prBody && (
-								<PRCommentBody>
-									<i>No description provided.</i>
-								</PRCommentBody>
-							)}
-
-							<PullRequestReactions
-								targetId={pr.id}
-								setIsLoadingMessage={setIsLoadingMessage}
-								fetch={fetch}
-								reactionGroups={pr.reactionGroups}
-							/>
-						</PRCommentCard>
-					</PRComment>
 					<PullRequestTimelineItems
 						pr={pr}
 						setIsLoadingMessage={setIsLoadingMessage}
 						fetch={fetch}
+						quote={quote}
 					/>
 					<PRFoot />
 				</PRConversation>
@@ -751,7 +728,7 @@ export const PullRequestConversationTab = props => {
 								</div>
 							</PRCommentHeader>
 							<div style={{ padding: "5px 0" }}>
-								<PRButtonRow>
+								<PRButtonRow className="align-left">
 									{/*
 						<Tooltip
 							title={
@@ -901,6 +878,7 @@ export const PullRequestConversationTab = props => {
 								placeholder="Add Comment..."
 								onChange={setText}
 								onSubmit={onCommentClick}
+								__onDidRender={__onDidRender}
 							/>
 						</div>
 						<ButtonRow>

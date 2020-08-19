@@ -466,7 +466,9 @@ export interface FetchThirdPartyPullRequestPullRequest {
 	title: string;
 	url: string;
 	repoUrl: string;
+	baseUrl: string;
 	updatedAt: string;
+	reactionGroups: any;
 }
 
 export interface FetchThirdPartyPullRequestRepository {

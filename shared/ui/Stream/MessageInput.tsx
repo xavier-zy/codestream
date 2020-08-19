@@ -87,7 +87,7 @@ interface Props extends ConnectedProps {
 	onChangeSelectedTags?(tag: any): any;
 	onEmptyUpArrow?(event: React.KeyboardEvent): any;
 	onDismiss?(): any;
-	onSubmit?(): any;
+	onSubmit?: any;
 	onFocus?: any;
 	selectedTags?: any;
 	toggleTag?: Function;
@@ -487,7 +487,7 @@ export class MessageInput extends React.Component<Props, State> {
 		}
 	};
 
-	insertNewlineAtCursor() {
+	insertNewlineAtCursor = () => {
 		let sel, range;
 		sel = window.getSelection();
 
@@ -524,7 +524,7 @@ export class MessageInput extends React.Component<Props, State> {
 				cursorPosition: getCurrentCursorPosition("input-div")
 			});
 		}
-	}
+	};
 
 	// this is asynchronous so callers should provide a callback for code that depends on the completion of this
 	focus = debounceAndCollectToAnimationFrame((...cbs: Function[]) => {
@@ -1051,7 +1051,11 @@ export class MessageInput extends React.Component<Props, State> {
 		const { placeholder, text, __onDidRender } = this.props;
 
 		__onDidRender &&
-			__onDidRender({ insertTextAtCursor: this.insertTextAtCursor, focus: this.focus });
+			__onDidRender({
+				insertTextAtCursor: this.insertTextAtCursor,
+				insertNewlineAtCursor: this.insertNewlineAtCursor,
+				focus: this.focus
+			});
 
 		return (
 			<div

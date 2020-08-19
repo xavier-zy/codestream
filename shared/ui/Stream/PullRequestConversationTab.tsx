@@ -140,7 +140,7 @@ export const PullRequestConversationTab = props => {
 		if (!insertText) return;
 		focusOnMessageInput &&
 			focusOnMessageInput(() => {
-				insertText && insertText("> " + text);
+				insertText && insertText(text.replace(/^/gm, "> "));
 				insertNewline && insertNewline();
 			});
 	};

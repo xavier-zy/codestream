@@ -569,7 +569,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 												handleTextInputFocus(comment.databaseId);
 												focusOnMessageInput &&
 													focusOnMessageInput(() => {
-														insertText && insertText("> " + text);
+														insertText && insertText(text.replace(/^/gm, "> "));
 														insertNewline && insertNewline();
 													});
 											};

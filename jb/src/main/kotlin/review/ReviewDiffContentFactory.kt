@@ -27,6 +27,30 @@ fun createReviewDiffContent(
 ): DocumentContent {
     val checkpointStr = checkpoint?.toString() ?: "undefined"
     val fullPath = "$reviewId/$checkpointStr/$repoId/${side.path}/$path"
+
+    return createDiffContent(project, fullPath, side, path, text)
+}
+
+fun createRevisionDiffContent(
+    project: Project,
+    repoId: String,
+    sha: String,
+    side: ReviewDiffSide,
+    path: String,
+    text: String
+): DocumentContent {
+    val fullPath = "$repoId/$sha/${side.path}/$path"
+
+    return createDiffContent(project, fullPath, side, path, text)
+}
+
+fun createDiffContent(
+    project: Project,
+    fullPath: String,
+    side: ReviewDiffSide,
+    path: String,
+    text: String
+): DocumentContent {
     val filePath = RemoteFilePath(fullPath, false)
 
     val fileType = when (filePath.fileType) {
@@ -52,4 +76,3 @@ fun createReviewDiffContent(
 
     return content
 }
-

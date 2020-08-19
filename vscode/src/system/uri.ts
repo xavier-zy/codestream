@@ -15,7 +15,7 @@ export namespace Uris {
 	export function fromCodeStreamDiffUri<T>(uri: string): T | undefined {
 		const uriObject = Uri.parse(uri);
 		const decoded = Buffer.from(
-			uriObject.fsPath.substring(0, uriObject.fsPath.indexOf("-0-")),
+			uriObject.fsPath.substring(0, uriObject.fsPath.indexOf("-0-")).replace(/^\/+|\/+$/, ""),
 			"base64"
 		).toString("utf8") as any;
 		return JSON.parse(decoded) as T;

@@ -6,6 +6,7 @@ import com.codestream.editorService
 import com.codestream.gson
 import com.codestream.protocols.agent.SetServerUrlParams
 import com.codestream.protocols.webview.ActiveEditorContextResponse
+import com.codestream.protocols.webview.CompareLocalFilesRequest
 import com.codestream.protocols.webview.EditorRangeHighlightRequest
 import com.codestream.protocols.webview.EditorRangeRevealRequest
 import com.codestream.protocols.webview.EditorRangeRevealResponse
@@ -115,6 +116,7 @@ class WebViewRouter(val project: Project) {
             "host/review/changedFiles/previous" -> reviewPreviousFile(message)
             "host/server-url" -> updateServerUrl(message)
             "host/url/open" -> openUrl(message)
+            "host/files/compare" -> compareLocalFiles(message)
             else -> logger.warn("Unhandled host message ${message.method}")
         }
         if (message.id != null) {
@@ -257,6 +259,13 @@ class WebViewRouter(val project: Project) {
     private fun openUrl(message: WebViewMessage) {
         val request = gson.fromJson<OpenUrlRequest>(message.params!!)
         BrowserUtil.browse(request.url.replace(" ", SPACE_ENCODED))
+    }
+
+    private suspend fun compareLocalFiles(message: WebViewMessage) {
+        val request = gson.fromJson<CompareLocalFilesRequest>(message.params!!)
+        val reviewService = project.reviewService ?: return
+
+        reviewService.showRevisionsDiff(request.repoId, request.filePath, request.headSha, request.headBranch, request.baseSha, request.baseBranch, request.context )
     }
 
     private fun parse(json: String): WebViewMessage {

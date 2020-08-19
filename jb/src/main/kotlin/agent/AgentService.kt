@@ -11,6 +11,8 @@ import com.codestream.protocols.agent.DocumentMarkersParams
 import com.codestream.protocols.agent.DocumentMarkersResult
 import com.codestream.protocols.agent.GetAllReviewContentsParams
 import com.codestream.protocols.agent.GetAllReviewContentsResult
+import com.codestream.protocols.agent.GetFileContentsAtRevisionParams
+import com.codestream.protocols.agent.GetFileContentsAtRevisionResult
 import com.codestream.protocols.agent.GetLocalReviewContentsParams
 import com.codestream.protocols.agent.GetPostParams
 import com.codestream.protocols.agent.GetReviewContentsParams
@@ -359,6 +361,13 @@ class AgentService(private val project: Project) : Disposable {
     suspend fun setServerUrl(params: SetServerUrlParams): SetServerUrlResult {
         val json = remoteEndpoint
             .request("codestream/set-server", params)
+            .await() as JsonObject
+        return gson.fromJson(json)
+    }
+
+    suspend fun getFileContentsAtRevision(params: GetFileContentsAtRevisionParams): GetFileContentsAtRevisionResult {
+        val json = remoteEndpoint
+            .request("codestream/scm/file/diff", params)
             .await() as JsonObject
         return gson.fromJson(json)
     }

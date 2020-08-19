@@ -148,3 +148,22 @@ class UpdateServerUrlRequest(
 class OpenUrlRequest(
     val url: String
 )
+
+class CompareLocalFilesRequest(
+    val repoId: String,
+    val filePath: String,
+    val headSha: String,
+    val headBranch: String,
+    val baseSha: String,
+    val baseBranch: String,
+    val context: Context
+)
+
+class Context(
+    val pullRequest: PullRequest
+)
+
+class PullRequest(
+    val providerId: String,
+    val id: String
+)

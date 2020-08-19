@@ -316,3 +316,14 @@ class Marker(
     val id: String,
     val code: String
 )
+
+class GetFileContentsAtRevisionParams(
+    val repoId: String,
+    val path: String,
+    val sha: String
+)
+
+class GetFileContentsAtRevisionResult(
+    val content: String,
+    val error: String?
+)

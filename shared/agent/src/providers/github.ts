@@ -1104,6 +1104,10 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 					updatedAt
 					lastEditedAt
 					id
+					headRefName
+					headRepository {
+						name
+					}
 				}
 			  }
 			}

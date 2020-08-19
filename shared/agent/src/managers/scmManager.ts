@@ -56,6 +56,7 @@ import { xfs } from "../xfs";
 import { Container, SessionContainer } from "./../container";
 import { IgnoreFilesHelper } from "./ignoreFilesManager";
 import { ReviewsManager } from "./reviewsManager";
+import { GitRepository } from "git/gitService";
 
 @lsp
 export class ScmManager {
@@ -121,12 +122,16 @@ export class ScmManager {
 	async getRepos(request?: GetReposScmRequest): Promise<GetReposScmResponse> {
 		const cc = Logger.getCorrelationContext();
 		let gitError;
-		let repositories;
+		let repositories: GitRepository[] = [];
+		let branches: (string | undefined)[];
 		try {
 			const { git } = SessionContainer.instance();
 			repositories = Array.from(await git.getRepositories());
 			if (request && request.inEditorOnly && repositories) {
 				repositories = repositories.filter(_ => _.isInWorkspace);
+			}
+			if (request && request.includeCurrentBranches) {
+				branches = await Promise.all(repositories.map(repo => git.getCurrentBranch(repo.path)));
 			}
 		} catch (ex) {
 			gitError = ex.toString();
@@ -135,12 +140,13 @@ export class ScmManager {
 		}
 		return {
 			repositories: repositories
-				? repositories.map(_ => {
+				? repositories.map((_, index) => {
 						return {
 							id: _.id,
 							path: _.path,
 							folder: _.folder,
-							root: _.root
+							root: _.root,
+							currentBranch: branches[index]
 						};
 				  })
 				: undefined,

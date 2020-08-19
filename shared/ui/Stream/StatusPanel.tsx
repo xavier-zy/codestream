@@ -543,7 +543,8 @@ export const StatusPanel = () => {
 
 	const getBranches = async (uri?: string): Promise<{ openRepos?: ReposScm[] }> => {
 		const response = await HostApi.instance.send(GetReposScmRequestType, {
-			inEditorOnly: true
+			inEditorOnly: true,
+			includeCurrentBranches: true
 		});
 		if (response && response.repositories) {
 			setOpenRepos(response.repositories);
@@ -1021,7 +1022,7 @@ export const StatusPanel = () => {
 			)}
 			<ScrollBox>
 				<div className="channel-list vscroll">
-					<OpenReviews />
+					<OpenReviews openRepos={openRepos} />
 					<StatusSection>
 						<RoundedLink
 							onClick={() => {

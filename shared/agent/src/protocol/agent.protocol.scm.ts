@@ -161,6 +161,10 @@ export interface ReposScm {
 	*/
 	folder: { uri: string; name: string };
 	root?: boolean;
+	/**
+	 * only returned if includeCurrentBranch is set
+	 */
+	currentBranch?: string;
 }
 
 export interface GetReposScmRequest {
@@ -169,6 +173,7 @@ export interface GetReposScmRequest {
 	 * (rather than including any repos that might have been later dynamically added [and removed])
 	 */
 	inEditorOnly?: boolean;
+	includeCurrentBranches?: boolean;
 }
 
 export interface GetReposScmResponse {

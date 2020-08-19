@@ -18,20 +18,30 @@ import { HostApi } from "../webview-api";
 import {
 	ExecuteThirdPartyTypedRequest,
 	GetMyPullRequestsResponse,
-	GetMyPullRequestsRequest
+	GetMyPullRequestsRequest,
+	ReposScm
 } from "@codestream/protocols/agent";
 
-export function OpenReviews() {
+interface Props {
+	openRepos: ReposScm[];
+}
+
+export function OpenReviews(props: Props) {
 	const dispatch = useDispatch();
 	const derivedState = useSelector((state: CodeStreamState) => {
-		const { session, context, providers } = state;
+		const { session } = state;
 
 		const currentUserId = session.userId!;
 		const teamMembers = userSelectors.getTeamMembers(state);
 		const reviews = reviewSelectors.getByStatusAndUser(state, "open", currentUserId);
 		const isGitHubConnected = isConnected(state, { name: "github" });
+		const repos = props.openRepos.map(repo => {
+			const id = repo.id || "";
+			return { ...repo, name: state.repos[id] ? state.repos[id].name : "" };
+		});
 
 		return {
+			repos,
 			reviews,
 			currentUserId,
 			teamMembers,
@@ -166,9 +176,21 @@ export function OpenReviews() {
 							<H4>Pull Requests</H4>
 						</div>
 						{prs.map(pr => {
+							console.warn("IN A PR: ", derivedState.repos);
+							const selected = derivedState.repos.find(repo => {
+								console.warn("COMPARING: ", repo, " TO ", pr);
+								return (
+									repo.currentBranch === pr.headRefName && repo.name === pr.headRepository.name
+								);
+							});
 							return (
-								<Row key={"pr-" + pr.id} onClick={() => dispatch(setCurrentPullRequest(pr.id))}>
+								<Row
+									key={"pr-" + pr.id}
+									className={selected ? "selected" : ""}
+									onClick={() => dispatch(setCurrentPullRequest(pr.id))}
+								>
 									<div>
+										{selected && <Icon name="arrow-right" className="selected-icon" />}
 										<PRHeadshot person={pr.author} />
 									</div>
 									<div>
@@ -199,5 +221,5 @@ export function OpenReviews() {
 				)}
 			</>
 		);
-	}, [reviews, prs, teamMembers, isLoadingPRs, query, queryOpen]);
+	}, [reviews, prs, teamMembers, isLoadingPRs, query, queryOpen, props.openRepos]);
 }

@@ -474,6 +474,7 @@ export interface FetchThirdPartyPullRequestPullRequest {
 export interface FetchThirdPartyPullRequestRepository {
 	id: string;
 	url: string;
+	resourcePath: string;
 	rebaseMergeAllowed: boolean;
 	squashMergeAllowed: boolean;
 	mergeCommitAllowed: boolean;

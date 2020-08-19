@@ -261,7 +261,10 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 			/\/pull\/\d+$/,
 			""
 		);
-		response.repository.pullRequest.baseUrl = response.repository.url;
+		response.repository.pullRequest.baseUrl = response.repository.url.replace(
+			response.repository.resourcePath,
+			""
+		);
 
 		response.repository.repoOwner = repoOwner!;
 		response.repository.repoName = repoName!;
@@ -1651,6 +1654,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 				repository(name:$name, owner:$owner) {
 				  id
 				  url
+				  resourcePath
 				  pullRequest(number:$pullRequestNumber) {
 					id
 					repository {

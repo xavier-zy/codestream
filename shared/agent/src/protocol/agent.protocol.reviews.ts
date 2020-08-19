@@ -334,11 +334,13 @@ export interface CheckPullRequestPreconditionsResponse {
 		message?: string;
 		type?: "ALREADY_HAS_PULL_REQUEST" | string;
 		url?: string;
+		id?: string;
 	};
 	error?: {
 		message?: string;
 		type?: "REPO_NOT_FOUND" | "HAS_LOCAL_COMMITS" | "UNKNOWN" | string;
 		url?: string;
+		id?: string;
 	};
 }
 
@@ -379,6 +381,7 @@ export interface CreatePullRequestResponse {
 			| string;
 		message?: string;
 		url?: string;
+		id?: string;
 	};
 }
 

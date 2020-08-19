@@ -162,10 +162,15 @@ export const CreatePullRequestPanel = props => {
 	const [loading, setLoading] = useState(true);
 	const [submitting, setSubmitting] = useState(false);
 
-	const [preconditionError, setPreconditionError] = useState({ message: "", type: "", url: "" });
+	const [preconditionError, setPreconditionError] = useState({
+		message: "",
+		type: "",
+		url: "",
+		id: ""
+	});
 	const [unexpectedError, setUnexpectedError] = useState(false);
 
-	const [formState, setFormState] = useState({ message: "", type: "", url: "" });
+	const [formState, setFormState] = useState({ message: "", type: "", url: "", id: "" });
 	const [titleValidity, setTitleValidity] = useState(true);
 	const pauseDataNotifications = useRef(false);
 
@@ -201,8 +206,8 @@ export const CreatePullRequestPanel = props => {
 	useTimeout(stopWaiting, waitFor);
 
 	const fetchPreconditionData = async () => {
-		setFormState({ type: "", message: "", url: "" });
-		setPreconditionError({ type: "", message: "", url: "" });
+		setFormState({ type: "", message: "", url: "", id: "" });
+		setPreconditionError({ type: "", message: "", url: "", id: "" });
 		// already waiting on a provider auth, keep using that loading ui
 		if (currentStep != 2) {
 			setLoading(true);
@@ -255,11 +260,12 @@ export const CreatePullRequestPanel = props => {
 						setPreconditionError({
 							type: result.warning.type,
 							message: result.warning.message || "",
-							url: result.warning.url || ""
+							url: result.warning.url || "",
+							id: result.warning.id || ""
 						});
 					}
 				} else {
-					setPreconditionError({ type: "", message: "", url: "" });
+					setPreconditionError({ type: "", message: "", url: "", id: "" });
 				}
 			} else if (result && result.error && result.error.type) {
 				if (result.error.type === "REQUIRES_PROVIDER") {
@@ -268,7 +274,8 @@ export const CreatePullRequestPanel = props => {
 					setPreconditionError({
 						type: result.error.type || "UNKNOWN",
 						message: result.error.message || "",
-						url: result.error.url || ""
+						url: result.error.url || "",
+						id: result.error.id || ""
 					});
 				}
 			}
@@ -339,8 +346,8 @@ export const CreatePullRequestPanel = props => {
 
 		let success = false;
 		setSubmitting(true);
-		setFormState({ message: "", type: "", url: "" });
-		setPreconditionError({ message: "", type: "", url: "" });
+		setFormState({ message: "", type: "", url: "", id: "" });
+		setPreconditionError({ message: "", type: "", url: "", id: "" });
 		try {
 			const result = await HostApi.instance.send(CreatePullRequestRequestType, {
 				reviewId: derivedState.reviewId!,
@@ -359,14 +366,15 @@ export const CreatePullRequestPanel = props => {
 				setFormState({
 					message: result.error.message || "",
 					type: result.error.type || "UNKNOWN",
-					url: result.error.url || ""
+					url: result.error.url || "",
+					id: result.error.id || ""
 				});
 			} else {
 				HostApi.instance.track("Pull Request Created", {
 					Service: prProviderId
 				});
 				success = true;
-				setFormState({ message: "", type: "", url: "" });
+				setFormState({ message: "", type: "", url: "", id: "" });
 				props.closePanel();
 				if (derivedState.reviewId) {
 					// FIXME -- should we go to the review, or the PR
@@ -392,8 +400,8 @@ export const CreatePullRequestPanel = props => {
 
 	const checkPullRequestBranchPreconditions = async (localPrBranch, localReviewBranch) => {
 		if (localPrBranch === localReviewBranch) {
-			setPreconditionError({ type: "BRANCHES_MUST_NOT_MATCH", message: "", url: "" });
-			setFormState({ type: "", message: "", url: "" });
+			setPreconditionError({ type: "BRANCHES_MUST_NOT_MATCH", message: "", url: "", id: "" });
+			setFormState({ type: "", message: "", url: "", id: "" });
 			return;
 		}
 
@@ -424,8 +432,8 @@ export const CreatePullRequestPanel = props => {
 				skipLocalModificationsCheck: true
 			})
 			.then((result: CheckPullRequestPreconditionsResponse) => {
-				setPreconditionError({ type: "", message: "", url: "" });
-				setFormState({ type: "", message: "", url: "" });
+				setPreconditionError({ type: "", message: "", url: "", id: "" });
+				setFormState({ type: "", message: "", url: "", id: "" });
 				if (result && result.error) {
 					// setFormState({
 					// 	type: result.error.type || "UNKNOWN",
@@ -435,16 +443,18 @@ export const CreatePullRequestPanel = props => {
 					setPreconditionError({
 						type: result.error.type || "UNKNOWN",
 						message: result.error.message || "",
-						url: result.error.url || ""
+						url: result.error.url || "",
+						id: result.error.id || ""
 					});
 				} else if (result && result.warning) {
 					setPreconditionError({
 						type: result.warning.type || "UNKNOWN",
 						message: result.warning.message || "",
-						url: result.warning.url || ""
+						url: result.warning.url || "",
+						id: result.warning.id || ""
 					});
 				} else {
-					setFormState({ type: "", message: "", url: "" });
+					setFormState({ type: "", message: "", url: "", id: "" });
 				}
 			});
 	};
@@ -613,7 +623,8 @@ export const CreatePullRequestPanel = props => {
 			let preconditionErrorMessageElement = getErrorElement(
 				preconditionError.type,
 				preconditionError.message,
-				preconditionError.url
+				preconditionError.url,
+				preconditionError.id
 			);
 			if (preconditionErrorMessageElement) {
 				return (
@@ -629,7 +640,12 @@ export const CreatePullRequestPanel = props => {
 	const formErrorMessages = () => {
 		if (!formState || !formState.type) return undefined;
 
-		let formErrorMessageElement = getErrorElement(formState.type, formState.message, formState.url);
+		let formErrorMessageElement = getErrorElement(
+			formState.type,
+			formState.message,
+			formState.url,
+			formState.id
+		);
 		if (formErrorMessageElement) {
 			return (
 				<PRError>
@@ -640,7 +656,7 @@ export const CreatePullRequestPanel = props => {
 		return undefined;
 	};
 
-	const getErrorElement = (type, message, url) => {
+	const getErrorElement = (type, message, url, id) => {
 		let messageElement = <></>;
 		switch (type) {
 			case "BRANCHES_MUST_NOT_MATCH": {
@@ -684,16 +700,18 @@ export const CreatePullRequestPanel = props => {
 				break;
 			}
 			case "ALREADY_HAS_PULL_REQUEST": {
-				if (url) {
+				if (url || id) {
 					messageElement = (
 						<div>
 							<span>There is already an open pull request for this branch.</span>
 							<Button
 								onClick={e => {
 									e.preventDefault();
-									HostApi.instance.send(OpenUrlRequestType, {
-										url: url!
-									});
+									if (id) {
+										dispatch(setCurrentPullRequest(id));
+									} else {
+										HostApi.instance.send(OpenUrlRequestType, { url: url! });
+									}
 								}}
 							>
 								<Icon name="pull-request" /> View pull request

@@ -743,7 +743,8 @@ export class ReviewsManager extends CachedEntityManagerBase<CSReview> {
 								if (existingPullRequest) {
 									warning = {
 										type: "ALREADY_HAS_PULL_REQUEST",
-										url: existingPullRequest.url
+										url: existingPullRequest.url,
+										id: existingPullRequest.id
 									};
 								}
 							}

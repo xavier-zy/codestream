@@ -550,6 +550,30 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 												startLine
 											);
 
+											let insertText: Function;
+											let insertNewline: Function;
+											let focusOnMessageInput: Function;
+
+											const __onDidRender = ({
+												insertTextAtCursor,
+												insertNewlineAtCursor,
+												focus
+											}) => {
+												insertText = insertTextAtCursor;
+												insertNewline = insertNewlineAtCursor;
+												focusOnMessageInput = focus;
+											};
+
+											const quote = text => {
+												if (!insertText) return;
+												handleTextInputFocus(comment.databaseId);
+												focusOnMessageInput &&
+													focusOnMessageInput(() => {
+														insertText && insertText("> " + text);
+														insertNewline && insertNewline();
+													});
+											};
+
 											return (
 												<PRThreadedCommentCard>
 													<PRCodeComment>
@@ -583,7 +607,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 																		pr={pr}
 																		comment={comment}
 																		setEdit={setEditingComment}
-																		quote={props.quote}
+																		quote={quote}
 																	/>
 																</PRActionIcons>
 															</PRThreadedCommentHeader>
@@ -645,7 +669,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 																						pr={pr}
 																						comment={c}
 																						setEdit={setEditingComment}
-																						quote={props.quote}
+																						quote={quote}
 																					/>
 																				</PRActionIcons>
 																			</PRThreadedCommentHeader>
@@ -708,6 +732,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 																placeholder="Reply..."
 																onChange={e => handleTextInputChanged(e, comment.databaseId)}
 																onSubmit={e => handleComment(e, comment.databaseId)}
+																__onDidRender={__onDidRender}
 															/>
 														</div>
 														{openComments[comment.databaseId] && (

@@ -1,27 +1,18 @@
-import { CSReviewChangeset } from "@codestream/protocols/api";
 import React, { useEffect, useState, useCallback } from "react";
 import {
-	ReviewPlus,
 	FetchThirdPartyPullRequestPullRequest,
-	GetReposScmRequestType,
 	FetchAllRemotesRequestType
 } from "@codestream/protocols/agent";
 import { HostApi } from "..";
-import * as path from "path-browserify";
 import { ChangesetFile } from "./Review/ChangesetFile";
-import { useSelector, useDispatch } from "react-redux";
+import { useSelector } from "react-redux";
 import { CodeStreamState } from "@codestream/webview/store";
-import { showDiff } from "@codestream/webview/store/reviews/actions";
-import { Dispatch } from "../store/common";
 import Icon from "./Icon";
-import { safe } from "@codestream/webview/utils";
-import { getById } from "@codestream/webview/store/repos/reducer";
 import {
 	ShowNextChangedFileNotificationType,
 	ShowPreviousChangedFileNotificationType
 } from "@codestream/protocols/webview";
 import { WriteTextFileRequestType, ReadTextFileRequestType } from "@codestream/protocols/agent";
-import { Range } from "vscode-languageserver-types";
 import { useDidMount } from "../utilities/hooks";
 import { CompareLocalFilesRequestType } from "../ipc/host.protocol";
 import { URI } from "vscode-uri";
@@ -39,7 +30,6 @@ export const PullRequestFilesChanged = (props: {
 	const { pr, loading, filesChanged } = props;
 	// const dispatch = useDispatch<Dispatch>();
 	const [repoId, setRepoId] = useState("");
-	const [pullRequestReviewId, setPullRequestReviewId] = useState("");
 	const derivedState = useSelector((state: CodeStreamState) => {
 		const userId = state.session.userId || "";
 		const matchFile =

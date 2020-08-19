@@ -276,7 +276,7 @@ class TeamPanel extends React.Component<Props, State> {
 	};
 
 	clearScmInfoSummary = async () => {
-		this.props.clearModifiedFiles();
+		this.props.clearModifiedFiles(this.props.teamId);
 	};
 
 	onEmailChange = event => {

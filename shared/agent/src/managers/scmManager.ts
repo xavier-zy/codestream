@@ -123,7 +123,7 @@ export class ScmManager {
 		const cc = Logger.getCorrelationContext();
 		let gitError;
 		let repositories: GitRepository[] = [];
-		let branches: (string | undefined)[];
+		let branches: (string | undefined)[] = [];
 		try {
 			const { git } = SessionContainer.instance();
 			repositories = Array.from(await git.getRepositories());

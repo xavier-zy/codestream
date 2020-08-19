@@ -156,7 +156,7 @@ class CompareLocalFilesRequest(
     val headBranch: String,
     val baseSha: String,
     val baseBranch: String,
-    val context: Context
+    val context: Context?
 )
 
 class Context(

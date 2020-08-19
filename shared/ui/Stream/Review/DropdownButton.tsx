@@ -119,6 +119,7 @@ const Root = styled.div<{ splitDropdown?: boolean }>`
 		transform: scale(0.8);
 	}
 	button + button {
-		border-left: 1px solid var(--base-border-color) !important;
+		// border-left: 1px solid var(--base-border-color) !important;
+		margin-left: 1px !important;
 	}
 `;

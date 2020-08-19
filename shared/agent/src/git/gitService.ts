@@ -463,20 +463,17 @@ export class GitService implements IGitService, Disposable {
 		}
 	}
 
-	async getRemoteDefaultBranchHeadRevisions(repoUri: URI, remotes: string[]): Promise<string[]>;
-	async getRemoteDefaultBranchHeadRevisions(repoPath: string, remotes: string[]): Promise<string[]>;
-	async getRemoteDefaultBranchHeadRevisions(
-		repoUriOrPath: URI | string,
-		remotes: string[]
-	): Promise<string[]> {
+	async getRemoteDefaultBranchHeadRevisions(repoUri: URI): Promise<string[]>;
+	async getRemoteDefaultBranchHeadRevisions(repoPath: string): Promise<string[]>;
+	async getRemoteDefaultBranchHeadRevisions(repoUriOrPath: URI | string): Promise<string[]> {
 		const repoPath = typeof repoUriOrPath === "string" ? repoUriOrPath : repoUriOrPath.fsPath;
 		const revisions = new Set<string>();
 
-		for (const remote of remotes) {
-			const defaultBranch = await this.getDefaultBranch(repoPath, remote);
-			const revision =
-				defaultBranch &&
-				(await this.getHeadRevision(repoPath, `refs/remotes/${remote}/${defaultBranch}`));
+		const repo = await this._repositories.find(r => r.path === repoPath);
+		const references = (await repo?.getDefaultRemoteBranchReferences()) || [];
+
+		for (const reference of references) {
+			const revision = reference && (await this.getHeadRevision(repoPath, reference));
 			if (revision) revisions.add(revision);
 		}
 

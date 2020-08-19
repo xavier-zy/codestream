@@ -7,6 +7,7 @@ export class GitRepository {
 	readonly normalizedPath: string;
 
 	private readonly _knownRepositorySearchPromise: Promise<CSRepository | undefined>;
+	private readonly _defaultRemoteBranchReferencesPromise: Promise<(string | undefined)[]>;
 	private _knownRepository: CSRepository | undefined;
 
 	constructor(
@@ -19,6 +20,7 @@ export class GitRepository {
 		this.normalizedPath = (this.path.endsWith("/") ? this.path : `${this.path}/`).toLowerCase();
 
 		this._knownRepositorySearchPromise = this.searchForKnownRepository(knownRepos);
+		this._defaultRemoteBranchReferencesPromise = this.getDefaultRemoteBranchReferencesPromise();
 	}
 
 	get id() {
@@ -57,5 +59,21 @@ export class GitRepository {
 
 	setKnownRepository(repo: CSRepository) {
 		this._knownRepository = repo;
+	}
+
+	private async getDefaultRemoteBranchReferencesPromise() {
+		const { git } = SessionContainer.instance();
+		const references: string[] = [];
+		for (const remote of ["upstream", "origin"]) {
+			const branchName = await git.getDefaultBranch(this.path, remote);
+			if (branchName) {
+				references.push(`refs/remotes/${remote}/${branchName}`);
+			}
+		}
+		return references;
+	}
+
+	getDefaultRemoteBranchReferences() {
+		return this._defaultRemoteBranchReferencesPromise;
 	}
 }

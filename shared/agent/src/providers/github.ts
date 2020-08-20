@@ -1715,6 +1715,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 					activeLockReason
 					locked
 					resourcePath
+					includesCreatedEdit
 					viewerSubscription
 					files(first: 100) {
 						totalCount
@@ -1740,6 +1741,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 								bodyHTML
 								createdAt
 								id
+								includesCreatedEdit
 								isMinimized
 								minimizedReason
 								replyTo {
@@ -1884,6 +1886,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 						  body
 						  bodyText
 						  createdAt
+						  includesCreatedEdit
 						  isMinimized
 						  minimizedReason
 						  reactionGroups {
@@ -2130,6 +2133,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 						  body
 						  bodyText
 						  createdAt
+						  includesCreatedEdit
 						  lastEditedAt
 						  state
 						  viewerDidAuthor
@@ -2143,20 +2147,20 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 								login
 								avatarUrl
 							  }
+							  authorAssociation
 							  body
 							  bodyText
-							  diffHunk
-							  body
-							  lastEditedAt
 							  createdAt
-							  id
 							  databaseId
-							  state
-							  authorAssociation
 							  draftedAt
+							  diffHunk
+							  id
+							  includesCreatedEdit
 							  isMinimized
+							  lastEditedAt
 							  minimizedReason
 							  publishedAt
+							  state
 							  replyTo {
 								diffHunk
 								id

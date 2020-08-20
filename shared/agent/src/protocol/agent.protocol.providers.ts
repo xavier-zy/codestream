@@ -469,6 +469,7 @@ export interface FetchThirdPartyPullRequestPullRequest {
 	baseUrl: string;
 	updatedAt: string;
 	reactionGroups: any;
+	includesCreatedEdit: boolean;
 }
 
 export interface FetchThirdPartyPullRequestRepository {

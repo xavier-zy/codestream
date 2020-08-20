@@ -342,6 +342,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 						<div>
 							<PRAuthor>{pr.author.login}</PRAuthor> commented{" "}
 							<Timestamp time={pr.createdAt!} relative />
+							{pr.includesCreatedEdit ? <> • edited</> : ""}
 						</div>
 						<PRActionIcons>
 							{pr.author.login === me && Author}
@@ -417,6 +418,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 												<div>
 													<PRAuthor>{item.author.login}</PRAuthor> commented{" "}
 													<Timestamp time={item.createdAt!} relative />
+													{item.includesCreatedEdit ? <> • edited</> : ""}
 												</div>
 												<PRActionIcons>
 													{myItem && Author}
@@ -485,7 +487,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 									<PRHeadshot key={index} size={40} person={item.author} />
 									{reviewIcon}
 									<PRTimelineItemBody>
-										<span className="highlight">{item.author.login}</span>{" "}
+										<PRAuthor>{item.author.login}</PRAuthor>{" "}
 										{item.state === "APPROVED" && "approved this review"}
 										{item.state === "CHANGES_REQUESTED" && "requested changes"}
 										{item.state === "COMMENTED" && "reviewed"}
@@ -507,6 +509,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 													<div>
 														<PRAuthor>{item.author.login}</PRAuthor> commented{" "}
 														<Timestamp time={item.createdAt!} relative />
+														{item.includesCreatedEdit ? <> • edited</> : ""}
 													</div>
 													<PRActionIcons>
 														{myItem && Author}
@@ -733,8 +736,9 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 																		<PRCodeCommentBody>
 																			<PRHeadshot key={c.id + i} size={30} person={c.author} />
 																			<PRThreadedCommentHeader>
-																				{c.author.login}
+																				<b>{c.author.login}</b>
 																				<Timestamp time={c.createdAt} />
+																				{c.includesCreatedEdit ? <> • edited</> : ""}
 																				<PRActionIcons>
 																					{myComment && Author}
 																					{myPR ? <IAmMember /> : <UserIsMember />}

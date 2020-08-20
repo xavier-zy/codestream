@@ -481,6 +481,7 @@ export const PRTimelineItem = styled.div`
 export const PRTimelineItemBody = styled.div`
 	${PRHeadshotName} {
 		color: var(--text-color-highlight);
+		font-weight: bold;
 		padding-right: 5px;
 	}
 `;

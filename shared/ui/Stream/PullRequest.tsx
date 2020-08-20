@@ -121,6 +121,43 @@ export const PullRequest = () => {
 		setIsLoadingMessage("");
 	};
 
+	const _submitPullRequestReview = async (type: string, text?: string) => {
+		await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
+			method: "submitReview",
+			providerId: "github*com",
+			params: {
+				pullRequestId: derivedState.currentPullRequestId!,
+				eventType: type,
+				text: text
+			}
+		});
+		return fetch();
+	};
+
+	const submitPullRequestReview = async e => {
+		await _submitPullRequestReview("COMMENT");
+	};
+
+	const approvePullRequest = async e => {
+		await _submitPullRequestReview("APPROVE");
+	};
+
+	const requestChangesToPullRequest = async e => {
+		await _submitPullRequestReview("REQUEST_CHANGES");
+	};
+
+	const deletePullRequestReview = async (e, id) => {
+		await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
+			method: "deletePullRequestReview",
+			providerId: "github*com",
+			params: {
+				pullRequestId: derivedState.currentPullRequestId!,
+				pullRequestReviewId: id
+			}
+		});
+		fetch();
+	};
+
 	const checkout = async () => {
 		//
 	};
@@ -307,6 +344,15 @@ export const PullRequest = () => {
 							</span>
 						</PRActionButtons>
 					</PRStatus>
+
+					{pr && pr.pendingReview && (
+						<>
+							<a onClick={submitPullRequestReview}>comment</a>{" "}
+							<a onClick={approvePullRequest}>approve</a>{" "}
+							<a onClick={requestChangesToPullRequest}>request changes</a>{" "}
+							<a onClick={e => deletePullRequestReview(e, pr.pendingReview.id)}>delete review</a>
+						</>
+					)}
 				</PRHeader>
 				{!derivedState.composeCodemarkActive && (
 					<ScrollBox>

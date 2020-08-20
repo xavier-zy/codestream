@@ -58,6 +58,8 @@ export interface SharingNewCodemarkAttributes extends BaseNewCodemarkAttributes 
 	parentPostId?: string;
 	isChangeRequest?: boolean;
 	isPseudoCodemark?: boolean;
+	/** Signifies if this comment should be part of a code provider's PR review */
+	isProviderReview?: boolean;
 }
 
 export interface LegacyNewCodemarkAttributes extends BaseNewCodemarkAttributes {
@@ -95,7 +97,8 @@ export const createCodemark = (attributes: SharingNewCodemarkAttributes) => asyn
 			mentionedUserIds: attributes.mentionedUserIds,
 			addedUsers: attributes.addedUsers,
 			parentPostId: attributes.parentPostId,
-			isPseudoCodemark: attributes.isPseudoCodemark
+			isPseudoCodemark: attributes.isPseudoCodemark,
+			isProviderReview: attributes.isProviderReview
 		});
 		if (response) {
 			let result;

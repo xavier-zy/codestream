@@ -358,6 +358,7 @@ export interface FetchThirdPartyPullRequestFilesResponse {
 
 export interface FetchThirdPartyPullRequestPullRequest {
 	id: string;
+	// this is the parent repo
 	repository: {
 		name: string;
 		nameWithOwner: string;
@@ -424,11 +425,23 @@ export interface FetchThirdPartyPullRequestPullRequest {
 	};
 	reviews: {
 		nodes: {
+			id: string;
 			author: {
 				login: string;
 				avatarUrl: string;
 			};
 		}[];
+	};
+	/**
+	 * this is a single pending review for the current user (there can only be 1 at a time for
+	 * certain providers, like github)
+	 */
+	pendingReview: {
+		id: string;
+		author: {
+			login: string;
+			avatarUrl: string;
+		};
 	};
 	timelineItems: {
 		__typename: string;

@@ -83,6 +83,14 @@ export interface CreateShareableCodemarkRequest {
 	// codemarks can now be replies
 	parentPostId?: string;
 	isPseudoCodemark?: boolean;
+	/**
+	 * true, if this "comment" is part of a PR provider review, rather than a single comment
+	 */
+	isProviderReview?: boolean;
+	/**
+	 * the possible reviewId of
+	 */
+	pullRequestReviewId?: string;
 }
 
 export interface CreateShareableCodemarkResponse {

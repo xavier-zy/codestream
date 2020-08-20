@@ -860,7 +860,7 @@ export class ScmManager {
 		contents,
 		skipBlame
 	}: GetRangeScmInfoRequest): Promise<GetRangeScmInfoResponse> {
-		const { git, reviews } = SessionContainer.instance();
+		const { git, providerRegistry } = SessionContainer.instance();
 		range = Ranges.ensureStartBeforeEnd(range);
 
 		const codeStreamDiff = csUri.Uris.fromCodeStreamDiffUri<CodeStreamDiffUriData>(documentUri);
@@ -886,6 +886,26 @@ export class ScmManager {
 		const gitRemotes = await repo.getRemotes();
 		const remotes = [...Iterables.map(gitRemotes, r => ({ name: r.name, url: r.normalizedUrl }))];
 
+		let pullRequestReviewId;
+		let context;
+		// if we're looking at a review for a provider we support...
+		// try to lookup any possible metadata for additional context...
+		// github, for example, only allows 1 review per PR per user...
+		// so we want to know if we already have one...
+		if (codeStreamDiff.context?.pullRequest?.providerId === "github*com") {
+			if (codeStreamDiff.context?.pullRequest?.id) {
+				pullRequestReviewId = await providerRegistry.executeMethod({
+					method: "getPullRequestReviewId",
+					providerId: codeStreamDiff.context.pullRequest.providerId,
+					params: {
+						pullRequestId: codeStreamDiff.context.pullRequest.id
+					}
+				});
+				context = codeStreamDiff.context;
+				context.pullRequest!.pullRequestReviewId = pullRequestReviewId;
+			}
+		}
+
 		return {
 			// keep this as the original uri, as it is used in follow up requests
 			uri: documentUri.toString(),
@@ -901,6 +921,7 @@ export class ScmManager {
 				branch:
 					codeStreamDiff.side === "left" ? codeStreamDiff.baseBranch : codeStreamDiff.headBranch
 			},
+			context: context,
 			error: undefined
 		};
 	}

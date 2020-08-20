@@ -923,23 +923,6 @@ export class PostsManager extends EntityManagerBase<CSPost> {
 					true
 				);
 				if (diff) {
-					// https://stackoverflow.com/questions/41662127/how-to-comment-on-a-specific-line-number-on-a-pr-on-github
-					// let i = 0;
-					// let relativeLine = 0;
-					// for (const h of diff.hunks) {
-					// 	// can't increment for the first hunk
-					// 	if (i !== 0) relativeLine++;
-					// 	const linesWithMetadata = [];
-					// 	let j = 0;
-					// 	for (const line of h.lines) {
-					// 		relativeLine++;
-					// 		linesWithMetadata.push({ line: line, relativeLine: relativeLine, index: j });
-					// 		j++;
-					// 	}
-					// 	(h as any).linesWithMetadata = linesWithMetadata;
-					// 	i++;
-					// }
-
 					const startingHunk = diff.hunks.find(
 						_ => startLine >= _.newStart && startLine <= _.newStart + _.newLines
 					);
@@ -1004,80 +987,63 @@ export class PostsManager extends EntityManagerBase<CSPost> {
 						};
 					}
 
-					// the line the user is asking for minus the start of this hunk
-					// that will give us the index of where it is in the hunk
-					// from there, we fetch the relativeLine which is what github needs
-					// const offset = line - hunk.newStart;
-					// const lineWithMetadata = (hunk as any).linesWithMetadata.find(
-					// 	(b: any) => b.index === offset
-					// );
-
-					const result = await providerRegistry.executeMethod({
-						method: "createCommitComment",
-						providerId: parsedUri.context.pullRequest.providerId,
-						params: {
-							pullRequestId: parsedUri.context.pullRequest.id,
-							sha: parsedUri.rightSha,
-							text: request.attributes.text || "",
-							path: parsedUri.path,
-							startLine: startLine, // lineWithMetadata.relativeLine
-							endLine: endingHunk ? endLine : undefined
+					let result;
+					if (request.isProviderReview) {
+						// https://stackoverflow.com/questions/41662127/how-to-comment-on-a-specific-line-number-on-a-pr-on-github
+						let i = 0;
+						let relativeLine = 0;
+						for (const h of diff.hunks) {
+							// can't increment for the first hunk
+							if (i !== 0) relativeLine++;
+							const linesWithMetadata = [];
+							let j = 0;
+							for (const line of h.lines) {
+								relativeLine++;
+								linesWithMetadata.push({ line: line, relativeLine: relativeLine, index: j });
+								j++;
+							}
+							(h as any).linesWithMetadata = linesWithMetadata;
+							i++;
 						}
-					});
-					// this will create an implicit review
-					// const result = await providerRegistry.executeMethod({
-					// 	method: "createPullRequestReviewComment",
-					// 	providerId: parsedUri.context.pullRequest.providerId,
-					// 	params: {
-					// 		pullRequestId: parsedUri.context.pullRequest.id,
-					// 		text: request.attributes.text || "",
-					// 		filePath: parsedUri.path,
-					// 		position: lineWithMetadata.relativeLine
-					// 	}
-					// });
+						// the line the user is asking for minus the start of this hunk
+						// that will give us the index of where it is in the hunk
+						// from there, we fetch the relativeLine which is what github needs
+						const offset = startLine - startingHunk.newStart;
+						const lineWithMetadata = (startingHunk as any).linesWithMetadata.find(
+							(b: any) => b.index === offset
+						);
+						if (lineWithMetadata) {
+							result = await providerRegistry.executeMethod({
+								method: "createPullRequestReviewComment",
+								providerId: parsedUri.context.pullRequest.providerId,
+								params: {
+									pullRequestId: parsedUri.context.pullRequest.id,
+									// pullRequestReviewId will be looked up
+									text: request.attributes.text || "",
+									filePath: parsedUri.path,
+									position: lineWithMetadata.relativeLine
+								}
+							});
+						} else {
+							throw new Error("Failed to create comment");
+						}
+					} else {
+						result = await providerRegistry.executeMethod({
+							method: "createCommitComment",
+							providerId: parsedUri.context.pullRequest.providerId,
+							params: {
+								pullRequestId: parsedUri.context.pullRequest.id,
+								sha: parsedUri.rightSha,
+								text: request.attributes.text || "",
+								path: parsedUri.path,
+								startLine: startLine,
+								endLine: endingHunk ? endLine : undefined
+							}
+						});
+					}
+
 					return {
 						isPassThrough: true,
-						// codemark: {
-						// 	creatorId: "",
-						// 	createdAt: new Date().getTime(),
-						// 	modifiedAt: new Date().getTime(),
-						// 	id: "",
-						// 	teamId: "",
-						// 	streamId: "",
-						// 	postId: "",
-						// 	fileStreamIds: [],
-						// 	type: CodemarkType.Comment,
-						// 	permalink: "",
-						// 	status: CodemarkStatus.Open,
-						// 	title: "",
-						// 	assignees: [],
-						// 	text: request.attributes.text || "",
-						// 	numReplies: 0,
-						// 	pinned: false,
-						// 	lastActivityAt: new Date().getTime(),
-						// 	lastReplyAt: 0,
-						// 	markers: [
-						// 		{
-						// 			creatorId: "",
-						// 			id: "",
-						// 			teamId: "",
-						// 			repoId: "",
-						// 			file: "",
-						// 			postId: "",
-						// 			fileStreamId: "",
-						// 			postStreamId: "",
-						// 			providerType: undefined,
-						// 			codemarkId: "",
-						// 			commitHashWhenCreated: "",
-						// 			locationWhenCreated: [0, 0, 0, 0, undefined],
-						// 			supersededByMarkerId: "",
-						// 			code: lineWithMetadata.line,
-						// 			referenceLocations: [],
-						// 			createdAt: new Date().getTime(),
-						// 			modifiedAt: new Date().getTime()
-						// 		}
-						// 	]
-						// },
 						pullRequest: {
 							id: parsedUri.context.pullRequest.id
 						},

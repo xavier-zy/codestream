@@ -241,11 +241,12 @@ export interface CodeStreamDiffUriData {
 	headBranch: string;
 	leftSha: string;
 	rightSha: string;
-	// left or right
+	/** values are `left` or `right` */
 	side: string;
 	context?: {
 		pullRequest?: {
 			providerId: string;
+			pullRequestReviewId?: string;
 			id: string;
 		};
 	};

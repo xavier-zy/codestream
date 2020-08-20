@@ -1048,6 +1048,43 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 		return response;
 	}
 
+	/**
+	 * Returns the reviewId (if it exists) for the specificed pull request (there can only be 1 review per pull request per user)
+	 * @param request
+	 */
+	async getPullRequestReviewId(request: { pullRequestId: string }) {
+		const metaData = await this.getRepoOwnerFromPullRequestId(request.pullRequestId);
+		const query = `query GetPullRequestReviewId($owner:String!, $name:String!, $pullRequestNumber:Int!) {
+			viewer {
+			  login
+			}
+			repository(owner:$owner, name:$name) {
+			  pullRequest(number:$pullRequestNumber) {
+				reviews(states: PENDING, first: 50) {
+				  nodes {
+					id
+					createdAt
+					author {
+					  login
+					}
+				  }
+				}
+			  }
+			}
+		  }
+		  `;
+		const response = await this.client.request<any>(query, metaData);
+		if (!response) return undefined;
+
+		const user = response.viewer.login;
+		// find the first pending review
+		const lastPendingReview = response.repository?.pullRequest?.reviews?.nodes.find(
+			(_: any) => _.author.login === user
+		);
+
+		return lastPendingReview ? lastPendingReview.id : undefined;
+	}
+
 	async createPullRequestReviewComment(request: {
 		pullRequestId: string;
 		pullRequestReviewId?: string;
@@ -1064,6 +1101,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 		  }
 		  `;
 		} else {
+			request.pullRequestReviewId = await this.getPullRequestReviewId(request);
 			query = `mutation AddPullRequestReviewComment($text:String!, $pullRequestId:String!, $filePath:String, $position:Int) {
 				addPullRequestReviewComment(input: {body:$text, pullRequestId:$pullRequestId, path:$filePath, position:$position}) {
 				  clientMutationId
@@ -1075,6 +1113,19 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 		return response;
 	}
 
+	async deletePullRequestReview(request: { pullRequestId: string; pullRequestReviewId: string }) {
+		const query = `mutation DeletePullRequestReview($pullRequestReviewId:String!) {
+			deletePullRequestReview(input: {pullRequestReviewId: $pullRequestReviewId}){
+			  clientMutationId
+			}
+		  }
+		  `;
+		const response = await this.client.request<any>(query, {
+			pullRequestReviewId: request.pullRequestReviewId
+		});
+		return response;
+	}
+
 	async submitReview(request: { pullRequestId: string; text: string; eventType: string }) {
 		if (!request.eventType) {
 			request.eventType = "COMMENT";
@@ -1082,13 +1133,14 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 		if (
 			request.eventType !== "COMMENT" &&
 			request.eventType !== "APPROVE" &&
-			request.eventType !== "DISMISS" &&
+			// for some reason I cannot get DISMISS to work...
+			// request.eventType !== "DISMISS" &&
 			request.eventType !== "REQUEST_CHANGES"
 		) {
 			throw new Error("Invalid eventType");
 		}
 
-		const query = `mutation SubmitPullRequestReview($pullRequestId:String!, $body:String!) {
+		const query = `mutation SubmitPullRequestReview($pullRequestId:String!, $body:String) {
 			submitPullRequestReview(input: {event: ${request.eventType}, body: $body, pullRequestId: $pullRequestId}){
 			  clientMutationId
 			}
@@ -1533,14 +1585,14 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 	>();
 
 	async getRepoOwnerFromPullRequestId(
-		id: string
+		pullRequestId: string
 	): Promise<{
 		pullRequestNumber: number;
 		name: string;
 		owner: string;
 	}> {
-		if (this._pullRequestIdCache.has(id)) {
-			return this._pullRequestIdCache.get(id)!;
+		if (this._pullRequestIdCache.has(pullRequestId)) {
+			return this._pullRequestIdCache.get(pullRequestId)!;
 		}
 
 		const query = `query GetRepoIdFromPullRequestId($id: [ID!]!) {
@@ -1563,7 +1615,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 			}
 		  }`;
 		const response = await this.client.request<any>(query, {
-			id: id
+			id: pullRequestId
 		});
 
 		const data = {
@@ -1571,7 +1623,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 			name: response.nodes[0].repository.name,
 			owner: response.nodes[0].repository.owner.login
 		};
-		this._pullRequestIdCache.set(id, data);
+		this._pullRequestIdCache.set(pullRequestId, data);
 
 		return data;
 	}
@@ -1659,6 +1711,16 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 			`/repos/${ownerData.owner}/${ownerData.name}/pulls/${ownerData.pullRequestNumber}/files`
 		);
 		return data.body;
+
+		// const pullRequestReviewId = await this.getPullRequestReviewId(request);
+		// return {
+		// 	files: data.body,
+		// 	context: {
+		// 		pullRequest: {
+		// 			userCurrentReviewId: pullRequestReviewId
+		// 		}
+		// 	}
+		// };
 	}
 
 	async pullRequestTimelineQuery(
@@ -1692,6 +1754,9 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 				  cost
 				  remaining
 				  resetAt
+				}
+				viewer {
+					login
 				}
 				repository(name:$name, owner:$owner) {
 				  id
@@ -1816,8 +1881,9 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 						  }
 						}
 					  }
-					  reviews(first: 50) {
+					  reviews(first: 10, states:PENDING) {
 						nodes {
+						  id
 						  author {
 							login
 							avatarUrl
@@ -2385,6 +2451,17 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 					}
 				}
 			}
+			if (
+				response.repository.pullRequest.reviews &&
+				response.repository.pullRequest.reviews.nodes
+			) {
+				const myPendingReview = response.repository.pullRequest.reviews.nodes.find(
+					(_: any) => _.author.login === response.viewer.login
+				);
+				// only returns your pending reviews
+				response.repository.pullRequest.pendingReview = myPendingReview;
+			}
+
 			Logger.debug(
 				`pullRequestTimelineQuery rateLimit=${JSON.stringify(response.rateLimit)} cursor=${cursor}`
 			);

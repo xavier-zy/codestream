@@ -241,6 +241,17 @@ export interface GetRangeScmInfoResponse {
 		branch?: string;
 	};
 	error?: string;
+	/**
+	 * Holder for additional metadata that this uri might contain, and/or
+	 * a spot to attach additional info
+	 */
+	context?: {
+		pullRequest?: {
+			id: string;
+			providerId: string;
+			pullRequestReviewId?: string;
+		};
+	};
 }
 export const GetRangeScmInfoRequestType = new RequestType<
 	GetRangeScmInfoRequest,

@@ -180,6 +180,7 @@ export interface CompareLocalFilesRequest {
 	context?: {
 		pullRequest: {
 			providerId: string;
+			pullRequestReviewId?: string;
 			id: string;
 		};
 	};

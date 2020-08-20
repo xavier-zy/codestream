@@ -16,6 +16,7 @@ import {
 	setCreatePullRequest
 } from "../store/context/actions";
 import { ComposeKeybindings } from "./ComposeTitles";
+import { getPRLabel } from "../store/providers/reducer";
 
 interface PlusMenuProps {
 	menuTarget: any;
@@ -29,7 +30,8 @@ export function PlusMenu(props: PlusMenuProps) {
 			kickstartEnabled: isFeatureEnabled(state, "kickstart"),
 			activePanel: state.context.panelStack[0],
 			textEditorUri: state.editorContext && state.editorContext.textEditorUri,
-			lightningCodeReviewsEnabled: isFeatureEnabled(state, "lightningCodeReviews")
+			lightningCodeReviewsEnabled: isFeatureEnabled(state, "lightningCodeReviews"),
+			prLabel: getPRLabel(state)
 		};
 	});
 
@@ -117,8 +119,8 @@ export function PlusMenu(props: PlusMenuProps) {
 	if (menuItems.length > 0) menuItems.push({ label: "-" });
 	menuItems.push({
 		icon: <Icon name="pull-request" />,
-		label: "New Pull Request",
-		subtextWide: "Open a Pull Request on GitHub",
+		label: `New ${derivedState.prLabel.PullRequest}`,
+		subtextWide: `Open a ${derivedState.prLabel.PullRequest}`,
 		action: () => go(WebviewPanels.NewPullRequest),
 		shortcut: ComposeKeybindings.pr,
 		key: "pr"

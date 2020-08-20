@@ -36,6 +36,33 @@ function isNameOption(o: ProviderPropertyOption): o is { name: string } {
 	return (o as any).name != undefined;
 }
 
+export const getPRLabel = createSelector(
+	(state: CodeStreamState) => state,
+	(
+		state: CodeStreamState
+	): {
+		PullRequest: string;
+		pullrequest: string;
+		PR: string;
+		pr: string;
+	} => {
+		return isConnected(state, { name: "gitlab" }) ||
+			isConnected(state, { name: "gitlab_enterprise" })
+			? {
+					PullRequest: "Merge Request",
+					pullrequest: "merge request",
+					PR: "MR",
+					pr: "mr"
+			  }
+			: {
+					PullRequest: "Pull Request",
+					pullrequest: "pull request",
+					PR: "PR",
+					pr: "pr"
+			  };
+	}
+);
+
 export const isConnected = (
 	state: CodeStreamState,
 	option: ProviderPropertyOption,
@@ -53,7 +80,7 @@ export const isConnected = (
 		switch (providerName) {
 			case "jiraserver":
 			case "github_enterprise":
-			case "gitlab_enterprise": 
+			case "gitlab_enterprise":
 			case "bitbucket_server": {
 				// enterprise/on-prem providers need the `hosts` validated
 				return (

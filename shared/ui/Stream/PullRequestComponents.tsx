@@ -265,6 +265,7 @@ export const PRActionCommentCard = styled.div`
 	border-radius: 5px;
 	padding: 10px 15px;
 	margin-left: 60px;
+	margin-bottom: 15px;
 	z-index: 2;
 	h1 {
 		font-size: 15px;

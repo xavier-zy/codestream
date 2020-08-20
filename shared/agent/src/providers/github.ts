@@ -976,7 +976,21 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 		return response;
 	}
 
-	async updateComment(request: { commentId: string; body: string }) {
+	async updateIssueComment(request: { id: string; body: string }) {
+		const query = `mutation UpdateComment($id: String!, $body:String!) {
+			updateIssueComment(input: {id: $id, body:$body}) {
+				  clientMutationId
+				}
+			  }`;
+
+		const response = await this.client.request<any>(query, {
+			id: request.id,
+			body: request.body
+		});
+		return response;
+	}
+
+	async updateReviewComment(request: { id: string; body: string }) {
 		const query = `mutation UpdateComment($pullRequestReviewCommentId: String!, $body:String!) {
 			updatePullRequestReviewComment(input: {pullRequestReviewCommentId: $pullRequestReviewCommentId, body:$body}) {
 				  clientMutationId
@@ -984,7 +998,35 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 			  }`;
 
 		const response = await this.client.request<any>(query, {
-			pullRequestReviewCommentId: request.commentId,
+			pullRequestReviewCommentId: request.id,
+			body: request.body
+		});
+		return response;
+	}
+
+	async updateReview(request: { id: string; body: string }) {
+		const query = `mutation UpdateComment($pullRequestReviewId: String!, $body:String!) {
+			updatePullRequestReview(input: {pullRequestReviewId: $pullRequestReviewId, body:$body}) {
+				  clientMutationId
+				}
+			  }`;
+
+		const response = await this.client.request<any>(query, {
+			pullRequestReviewId: request.id,
+			body: request.body
+		});
+		return response;
+	}
+
+	async updatePullRequestBody(request: { id: string; body: string }) {
+		const query = `mutation UpdateComment($pullRequestId: String!, $body:String!) {
+			updatePullRequest(input: {pullRequestId: $pullRequestId, body:$body}) {
+				  clientMutationId
+				}
+			  }`;
+
+		const response = await this.client.request<any>(query, {
+			pullRequestId: request.id,
 			body: request.body
 		});
 		return response;
@@ -1696,8 +1738,10 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 								}
 								body
 								bodyHTML
-								id
 								createdAt
+								id
+								isMinimized
+								minimizedReason
 								replyTo {
 								  id
 								}
@@ -1840,6 +1884,8 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 						  body
 						  bodyText
 						  createdAt
+						  isMinimized
+						  minimizedReason
 						  reactionGroups {
 							content
 							users(first: 10) {

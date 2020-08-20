@@ -47,6 +47,7 @@ import { confirmPopup } from "./Confirm";
 import { PullRequestCommentMenu } from "./PullRequestCommentMenu";
 import { setEditorContext } from "../store/editorContext/actions";
 import { markdownify } from "./Markdowner";
+import { PullRequestMinimizedComment } from "./PullRequestMinimizedComment";
 
 const ReviewIcons = {
 	APPROVED: <Icon name="check" className="circled green" />,
@@ -75,6 +76,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 	const [openComments, setOpenComments] = useState({});
 	const [pendingComments, setPendingComments] = useState({});
 	const [editingComments, setEditingComments] = useState({});
+	const [expandedComments, setExpandedComments] = useState({});
 
 	// const [pendingComment, setPendingComment] = useState("");
 	//const submitReview = async (event?: React.SyntheticEvent) => {
@@ -126,6 +128,13 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 		setPendingComments({
 			...pendingComments,
 			[comment.id]: value ? comment.body : ""
+		});
+	};
+
+	const expandComment = id => {
+		setExpandedComments({
+			...expandedComments,
+			[id]: !expandedComments[id]
 		});
 	};
 
@@ -198,18 +207,25 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 		}
 	};
 
-	const handleEdit = async (e, id) => {
+	const handleEdit = async (id: string, type: "PR" | "ISSUE" | "REVIEW" | "REVIEW_COMMENT") => {
 		setIsLoadingMessage("Updating Comment...");
 		try {
 			const value = pendingComments[id];
 			if (value == null) return;
 
 			await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
-				method: "updateComment",
+				method:
+					type === "REVIEW_COMMENT"
+						? "updateReviewComment"
+						: type === "ISSUE"
+						? "updateIssueComment"
+						: type === "PR"
+						? "updatePullRequestBody"
+						: "updateReview",
 				providerId: "github*com",
 				params: {
 					pullRequestId: pr.id,
-					commentId: id,
+					id,
 					body: value
 				}
 			});
@@ -353,14 +369,14 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 										multiCompose
 										text={pendingComments[pr.id] || ""}
 										onChange={e => handleTextInputChanged(e, pr.id)}
-										onSubmit={e => handleEdit(e, pr.id)}
+										onSubmit={() => handleEdit(pr.id, "PR")}
 									/>
 								</div>
 								<PRButtonRow>
 									<Button variant="secondary" onClick={e => handleCancelEdit(e, pr.id)}>
 										Cancel
 									</Button>
-									<Button variant="primary" onClick={e => handleEdit(e, pr.id)}>
+									<Button variant="primary" onClick={() => handleEdit(pr.id, "PR")}>
 										Update comment
 									</Button>
 								</PRButtonRow>
@@ -382,7 +398,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 			</PRComment>
 
 			{timelineNodes.map((item, index) => {
-				console.warn("TIMELINE ITEM: ", item);
+				// console.warn("TIMELINE ITEM: ", item);
 				const myItem = item.author && item.author.login === me;
 				switch (item.__typename) {
 					case "IssueComment":
@@ -390,59 +406,74 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 							<PRComment key={index}>
 								<PRHeadshot key={index} size={40} person={item.author} />
 								<PRCommentCard>
-									<PRCommentHeader>
-										<div>
-											<PRAuthor>{item.author.login}</PRAuthor> commented{" "}
-											<Timestamp time={item.createdAt!} relative />
-										</div>
-										<PRActionIcons>
-											{myItem && Author}
-											{myPR ? <IAmMember /> : <UserIsMember />}
-											<PullRequestReactButton
+									{item.isMinimized && !expandedComments[item.id] ? (
+										<PullRequestMinimizedComment
+											reason={item.minimizedReason}
+											onClick={() => expandComment(item.id)}
+										/>
+									) : (
+										<>
+											<PRCommentHeader>
+												<div>
+													<PRAuthor>{item.author.login}</PRAuthor> commented{" "}
+													<Timestamp time={item.createdAt!} relative />
+												</div>
+												<PRActionIcons>
+													{myItem && Author}
+													{myPR ? <IAmMember /> : <UserIsMember />}
+													<PullRequestReactButton
+														targetId={item.id}
+														setIsLoadingMessage={setIsLoadingMessage}
+														fetch={fetch}
+														reactionGroups={item.reactionGroups}
+													/>
+													<PullRequestCommentMenu
+														pr={pr}
+														comment={item}
+														setEdit={setEditingComment}
+														quote={props.quote}
+													/>
+												</PRActionIcons>
+											</PRCommentHeader>
+											<PRCommentBody>
+												{editingComments[item.id] ? (
+													<>
+														<div style={{ border: "1px solid var(--base-border-color)" }}>
+															<MessageInput
+																autoFocus
+																multiCompose
+																text={pendingComments[item.id] || ""}
+																onChange={e => handleTextInputChanged(e, item.id)}
+																onSubmit={() => handleEdit(item.id, "ISSUE")}
+															/>
+														</div>
+														<PRButtonRow>
+															<Button
+																variant="secondary"
+																onClick={e => handleCancelEdit(e, item.id)}
+															>
+																Cancel
+															</Button>
+															<Button
+																variant="primary"
+																onClick={() => handleEdit(item.id, "ISSUE")}
+															>
+																Update comment
+															</Button>
+														</PRButtonRow>
+													</>
+												) : (
+													<MarkdownText text={item.body} excludeParagraphWrap />
+												)}
+											</PRCommentBody>
+											<PullRequestReactions
 												targetId={item.id}
 												setIsLoadingMessage={setIsLoadingMessage}
 												fetch={fetch}
 												reactionGroups={item.reactionGroups}
 											/>
-											<PullRequestCommentMenu
-												pr={pr}
-												comment={item}
-												setEdit={setEditingComment}
-												quote={props.quote}
-											/>
-										</PRActionIcons>
-									</PRCommentHeader>
-									<PRCommentBody>
-										{editingComments[item.id] ? (
-											<>
-												<div style={{ border: "1px solid var(--base-border-color)" }}>
-													<MessageInput
-														autoFocus
-														multiCompose
-														text={pendingComments[item.id] || ""}
-														onChange={e => handleTextInputChanged(e, item.id)}
-														onSubmit={e => handleEdit(e, item.id)}
-													/>
-												</div>
-												<PRButtonRow>
-													<Button variant="secondary" onClick={e => handleCancelEdit(e, item.id)}>
-														Cancel
-													</Button>
-													<Button variant="primary" onClick={e => handleEdit(e, item.id)}>
-														Update comment
-													</Button>
-												</PRButtonRow>
-											</>
-										) : (
-											<MarkdownText text={item.body} excludeParagraphWrap />
-										)}
-									</PRCommentBody>
-									<PullRequestReactions
-										targetId={item.id}
-										setIsLoadingMessage={setIsLoadingMessage}
-										fetch={fetch}
-										reactionGroups={item.reactionGroups}
-									/>
+										</>
+									)}
 								</PRCommentCard>
 							</PRComment>
 						);
@@ -465,65 +496,90 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 								</PRTimelineItem>
 								{item.body && (
 									<PRActionCommentCard>
-										<PRCommentHeader>
-											<div>
-												<PRAuthor>{item.author.login}</PRAuthor> commented{" "}
-												<Timestamp time={item.createdAt!} relative />
-											</div>
-											<PRActionIcons>
-												{myItem && Author}
-												{myPR ? <IAmMember /> : <UserIsMember />}
-												<PullRequestReactButton
+										{item.isMinimized && !expandedComments[item.id] ? (
+											<PullRequestMinimizedComment
+												reason={item.minimizedReason}
+												onClick={() => expandComment(item.id)}
+											/>
+										) : (
+											<>
+												<PRCommentHeader>
+													<div>
+														<PRAuthor>{item.author.login}</PRAuthor> commented{" "}
+														<Timestamp time={item.createdAt!} relative />
+													</div>
+													<PRActionIcons>
+														{myItem && Author}
+														{myPR ? <IAmMember /> : <UserIsMember />}
+														<PullRequestReactButton
+															targetId={item.id}
+															setIsLoadingMessage={setIsLoadingMessage}
+															fetch={fetch}
+															reactionGroups={item.reactionGroups}
+														/>
+														<PullRequestCommentMenu
+															pr={pr}
+															comment={item}
+															setEdit={setEditingComment}
+															quote={props.quote}
+														/>
+													</PRActionIcons>
+												</PRCommentHeader>
+
+												<PRCommentBody>
+													{editingComments[item.id] ? (
+														<>
+															<div style={{ border: "1px solid var(--base-border-color)" }}>
+																<MessageInput
+																	autoFocus
+																	multiCompose
+																	text={pendingComments[item.id] || ""}
+																	onChange={e => handleTextInputChanged(e, item.id)}
+																	onSubmit={() => handleEdit(item.id, "REVIEW")}
+																/>
+															</div>
+															<PRButtonRow>
+																<Button
+																	variant="secondary"
+																	onClick={e => handleCancelEdit(e, item.id)}
+																>
+																	Cancel
+																</Button>
+																<Button
+																	variant="primary"
+																	onClick={() => handleEdit(item.id, "REVIEW")}
+																>
+																	Update comment
+																</Button>
+															</PRButtonRow>
+														</>
+													) : (
+														<MarkdownText text={item.body} excludeParagraphWrap />
+													)}
+												</PRCommentBody>
+												<PullRequestReactions
 													targetId={item.id}
 													setIsLoadingMessage={setIsLoadingMessage}
 													fetch={fetch}
 													reactionGroups={item.reactionGroups}
 												/>
-												<PullRequestCommentMenu
-													pr={pr}
-													comment={item}
-													setEdit={setEditingComment}
-													quote={props.quote}
-												/>
-											</PRActionIcons>
-										</PRCommentHeader>
-
-										<PRCommentBody>
-											{editingComments[item.id] ? (
-												<>
-													<div style={{ border: "1px solid var(--base-border-color)" }}>
-														<MessageInput
-															autoFocus
-															multiCompose
-															text={pendingComments[item.id] || ""}
-															onChange={e => handleTextInputChanged(e, item.id)}
-															onSubmit={e => handleEdit(e, item.id)}
-														/>
-													</div>
-													<PRButtonRow>
-														<Button variant="secondary" onClick={e => handleCancelEdit(e, item.id)}>
-															Cancel
-														</Button>
-														<Button variant="primary" onClick={e => handleEdit(e, item.id)}>
-															Update comment
-														</Button>
-													</PRButtonRow>
-												</>
-											) : (
-												<MarkdownText text={item.body} excludeParagraphWrap />
-											)}
-										</PRCommentBody>
-										<PullRequestReactions
-											targetId={item.id}
-											setIsLoadingMessage={setIsLoadingMessage}
-											fetch={fetch}
-											reactionGroups={item.reactionGroups}
-										/>
+											</>
+										)}
 									</PRActionCommentCard>
 								)}
 								{item.comments && item.comments.nodes && (
 									<>
 										{item.comments.nodes.map((comment, commentIndex) => {
+											if (comment.isResolved && !expandedComments[`resolved-${comment.id}`]) {
+												return (
+													<PullRequestMinimizedComment
+														reason={comment.path}
+														isResolved
+														className="outline"
+														onClick={() => expandComment(`resolved-${comment.id}`)}
+													/>
+												);
+											}
 											let extension = Path.extname(comment.path).toLowerCase();
 											if (extension.startsWith(".")) {
 												extension = extension.substring(1);
@@ -590,55 +646,68 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 															dangerouslySetInnerHTML={{ __html: codeHTML }}
 														/>
 														<PRCodeCommentBody>
-															<PRHeadshot key={commentIndex} size={30} person={comment.author} />
-															<PRThreadedCommentHeader>
-																{item.author.login}
-																<Timestamp time={comment.createdAt} />
-																<PRActionIcons>
-																	{myComment && Author}
-																	{myPR ? <IAmMember /> : <UserIsMember />}
-																	<PullRequestReactButton
-																		targetId={comment.id}
-																		setIsLoadingMessage={setIsLoadingMessage}
-																		fetch={fetch}
-																		reactionGroups={comment.reactionGroups}
-																	/>
-																	<PullRequestCommentMenu
-																		pr={pr}
-																		comment={comment}
-																		setEdit={setEditingComment}
-																		quote={quote}
-																	/>
-																</PRActionIcons>
-															</PRThreadedCommentHeader>
-															{editingComments[comment.id] ? (
-																<>
-																	<div style={{ border: "1px solid var(--base-border-color)" }}>
-																		<MessageInput
-																			autoFocus
-																			multiCompose
-																			text={pendingComments[comment.id] || ""}
-																			onChange={e => handleTextInputChanged(e, comment.id)}
-																			onSubmit={e => handleEdit(e, comment.id)}
-																		/>
-																	</div>
-																	<PRButtonRow>
-																		<Button
-																			variant="secondary"
-																			onClick={e => handleCancelEdit(e, comment.id)}
-																		>
-																			Cancel
-																		</Button>
-																		<Button
-																			variant="primary"
-																			onClick={e => handleEdit(e, comment.id)}
-																		>
-																			Update comment
-																		</Button>
-																	</PRButtonRow>
-																</>
+															{comment.isMinimized && !expandedComments[comment.id] ? (
+																<PullRequestMinimizedComment
+																	reason={item.minimizedReason}
+																	onClick={() => expandComment(comment.id)}
+																/>
 															) : (
-																<MarkdownText text={comment.body} excludeParagraphWrap />
+																<>
+																	<PRHeadshot
+																		key={commentIndex}
+																		size={30}
+																		person={comment.author}
+																	/>
+																	<PRThreadedCommentHeader>
+																		{item.author.login}
+																		<Timestamp time={comment.createdAt} />
+																		<PRActionIcons>
+																			{myComment && Author}
+																			{myPR ? <IAmMember /> : <UserIsMember />}
+																			<PullRequestReactButton
+																				targetId={comment.id}
+																				setIsLoadingMessage={setIsLoadingMessage}
+																				fetch={fetch}
+																				reactionGroups={comment.reactionGroups}
+																			/>
+																			<PullRequestCommentMenu
+																				pr={pr}
+																				comment={comment}
+																				setEdit={setEditingComment}
+																				quote={quote}
+																			/>
+																		</PRActionIcons>
+																	</PRThreadedCommentHeader>
+																	{editingComments[comment.id] ? (
+																		<>
+																			<div style={{ border: "1px solid var(--base-border-color)" }}>
+																				<MessageInput
+																					autoFocus
+																					multiCompose
+																					text={pendingComments[comment.id] || ""}
+																					onChange={e => handleTextInputChanged(e, comment.id)}
+																					onSubmit={() => handleEdit(comment.id, "REVIEW_COMMENT")}
+																				/>
+																			</div>
+																			<PRButtonRow>
+																				<Button
+																					variant="secondary"
+																					onClick={e => handleCancelEdit(e, comment.id)}
+																				>
+																					Cancel
+																				</Button>
+																				<Button
+																					variant="primary"
+																					onClick={() => handleEdit(comment.id, "REVIEW_COMMENT")}
+																				>
+																					Update comment
+																				</Button>
+																			</PRButtonRow>
+																		</>
+																	) : (
+																		<MarkdownText text={comment.body} excludeParagraphWrap />
+																	)}
+																</>
 															)}
 														</PRCodeCommentBody>
 														<PullRequestReactions
@@ -649,6 +718,16 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 														/>
 														{comment.replies &&
 															comment.replies.map((c, i) => {
+																if (c.isMinimized && !expandedComments[c.id]) {
+																	return (
+																		<PullRequestMinimizedComment
+																			reason={c.minimizedReason}
+																			className="threaded"
+																			onClick={() => expandComment(c.id)}
+																		/>
+																	);
+																}
+
 																return (
 																	<>
 																		<PRCodeCommentBody>
@@ -683,7 +762,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 																							multiCompose
 																							text={pendingComments[c.id] || ""}
 																							onChange={e => handleTextInputChanged(e, c.id)}
-																							onSubmit={e => handleEdit(e, c.id)}
+																							onSubmit={() => handleEdit(c.id, "REVIEW_COMMENT")}
 																						/>
 																					</div>
 																					<PRButtonRow>
@@ -695,7 +774,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 																						</Button>
 																						<Button
 																							variant="primary"
-																							onClick={e => handleEdit(e, c.id)}
+																							onClick={() => handleEdit(c.id, "REVIEW_COMMENT")}
 																						>
 																							Update comment
 																						</Button>

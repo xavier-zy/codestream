@@ -78,6 +78,10 @@ export default class Menu extends Component {
 		if (this.props && this.props.target) {
 			const align = this.props.align || "";
 			const rect = this.props.target.getBoundingClientRect();
+			if ((this.props.align || "").match(/^dropdown/)) {
+				this._div.style.minWidth = rect.width + 20 + "px";
+			}
+
 			var computedStyle = window.getComputedStyle(this._div);
 			this._div.style.top =
 				this.props.valign === "bottom" ? rect.bottom + 10 + "px" : rect.top + "px";

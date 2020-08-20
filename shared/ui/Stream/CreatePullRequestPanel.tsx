@@ -22,7 +22,7 @@ import {
 	CheckPullRequestPreconditionsResponse
 } from "@codestream/protocols/agent";
 import { connectProvider } from "./actions";
-import { isConnected } from "../store/providers/reducer";
+import { isConnected, getPRLabel } from "../store/providers/reducer";
 import { CodeStreamState } from "../store";
 import { inMillis } from "../utils";
 import { useInterval, useTimeout } from "../utilities/hooks";
@@ -127,6 +127,9 @@ const Step2 = props => (props.step !== 2 ? null : <div>{props.children}</div>);
 // form
 const Step3 = props => (props.step !== 3 ? null : <div>{props.children}</div>);
 
+// success! PR was created but we need to link to the web site
+const Step4 = props => (props.step !== 4 ? null : <div>{props.children}</div>);
+
 export const CreatePullRequestPanel = props => {
 	const dispatch = useDispatch();
 	const derivedState = useSelector((state: CodeStreamState) => {
@@ -157,9 +160,12 @@ export const CreatePullRequestPanel = props => {
 			isConnectedToGitHubEnterprise: isConnected(state, { name: "github_enterprise" }),
 			isConnectedToGitLabEnterprise: isConnected(state, { name: "gitlab_enterprise" }),
 			isConnectedToBitbucket: isConnected(state, { name: "bitbucket" }),
-			isConnectedToBitbucketServer: isConnected(state, { name: "bitbucket_server" })
+			isConnectedToBitbucketServer: isConnected(state, { name: "bitbucket_server" }),
+			prLabel: getPRLabel(state)
 		};
 	});
+	const { userStatus, reviewId, prLabel } = derivedState;
+
 	const [loading, setLoading] = useState(true);
 	const [submitting, setSubmitting] = useState(false);
 
@@ -189,6 +195,7 @@ export const CreatePullRequestPanel = props => {
 	const [prProviderIconName, setPrProviderIconName] = useState("");
 	const [prUpstreamOn, setPrUpstreamOn] = useState(true);
 	const [prUpstream, setPrUpstream] = useState("");
+	const [prRepoId, setPrRepoId] = useState("");
 
 	const [addressesStatus, setAddressesStatus] = useState(true);
 	const [openRepos, setOpenRepos] = useState<ReposScm[]>([]);
@@ -198,6 +205,8 @@ export const CreatePullRequestPanel = props => {
 
 	const [isWaiting, setIsWaiting] = useState(false);
 	const [propsForPrePRProviderInfoModal, setPropsForPrePRProviderInfoModal] = useState<any>();
+
+	const [prUrl, setPrUrl] = useState("");
 
 	const stopWaiting = useCallback(() => {
 		setIsWaiting(false);
@@ -228,6 +237,7 @@ export const CreatePullRequestPanel = props => {
 					setOpenRepos(response.repositories);
 					if (!selectedRepo) setSelectedRepo(response.repositories[0]);
 					args.repoId = (selectedRepo || response.repositories[0]).id || "";
+					setPrRepoId(args.repoId);
 
 					let branchInfo = await HostApi.instance.send(GetBranchesRequestType, {
 						uri: (selectedRepo || response.repositories[0]).folder.uri
@@ -265,6 +275,12 @@ export const CreatePullRequestPanel = props => {
 							id: result.warning.id || ""
 						});
 					}
+				} else if (
+					result.pullRequestProvider &&
+					result.pullRequestProvider.defaultBranch === result.branch
+				) {
+					setPreconditionError({ type: "BRANCHES_MUST_NOT_MATCH", message: "", url: "", id: "" });
+					setFormState({ type: "", message: "", url: "", id: "" });
 				} else {
 					setPreconditionError({ type: "", message: "", url: "", id: "" });
 				}
@@ -352,6 +368,7 @@ export const CreatePullRequestPanel = props => {
 		try {
 			const result = await HostApi.instance.send(CreatePullRequestRequestType, {
 				reviewId: derivedState.reviewId!,
+				repoId: prRepoId,
 				providerId: prProviderId,
 				title: prTitle,
 				description: prText,
@@ -376,13 +393,18 @@ export const CreatePullRequestPanel = props => {
 				});
 				success = true;
 				setFormState({ message: "", type: "", url: "", id: "" });
-				props.closePanel();
-				if (derivedState.reviewId) {
-					// FIXME -- should we go to the review, or the PR
-					// in this case?
-					dispatch(setCurrentReview(derivedState.reviewId!));
-				} else if (result.id) {
+				if (prProviderId === "github*com") {
+					// FIXME look for enterprise
+					props.closePanel();
 					dispatch(setCurrentPullRequest(result.id));
+				} else {
+					if (derivedState.reviewId) {
+						props.closePanel();
+						dispatch(setCurrentReview(derivedState.reviewId!));
+					} else {
+						setPrUrl(result.url!);
+						setCurrentStep(4);
+					}
 				}
 			}
 		} catch (error) {
@@ -666,7 +688,9 @@ export const CreatePullRequestPanel = props => {
 		let messageElement = <></>;
 		switch (type) {
 			case "BRANCHES_MUST_NOT_MATCH": {
-				messageElement = <span>Choose different branches above to open a pull request.</span>;
+				messageElement = (
+					<span>Choose different branches above to open a {prLabel.pullrequest}.</span>
+				);
 				break;
 			}
 			// TODO move these into en.js
@@ -709,7 +733,7 @@ export const CreatePullRequestPanel = props => {
 				if (url || id) {
 					messageElement = (
 						<div>
-							<span>There is already an open pull request for this branch.</span>
+							<span>There is already an open {prLabel.pullrequest} for this branch.</span>
 							<Button
 								onClick={e => {
 									e.preventDefault();
@@ -720,12 +744,14 @@ export const CreatePullRequestPanel = props => {
 									}
 								}}
 							>
-								<Icon name="pull-request" /> View pull request
+								<Icon name="pull-request" /> View {prLabel.pullrequest}
 							</Button>
 						</div>
 					);
 				} else {
-					messageElement = <span>There is already an open PR for this branch</span>;
+					messageElement = (
+						<span>There is already an open {prLabel.pullrequest} for this branch</span>
+					);
 				}
 				break;
 			}
@@ -799,12 +825,11 @@ export const CreatePullRequestPanel = props => {
 	if (propsForPrePRProviderInfoModal) {
 		return <PrePRProviderInfoModal {...propsForPrePRProviderInfoModal} />;
 	}
-	const { userStatus, reviewId } = derivedState;
-	console.warn("CURRENT STEP IS: ", currentStep, "PCE: ", preconditionError, "loading: ", loading);
+	// console.warn("CURRENT STEP IS: ", currentStep, "PCE: ", preconditionError, "loading: ", loading);
 	return (
 		<Root className="full-height-codemark-form">
-			<PanelHeader title="Open a Pull Request">
-				{reviewId ? "" : "Choose two branches to start a new pull request."}
+			<PanelHeader title={`Open a ${prLabel.PullRequest}`}>
+				{reviewId ? "" : `Choose two branches to start a new ${prLabel.pullrequest}.`}
 			</PanelHeader>
 			<CancelButton onClick={props.closePanel} />
 			<span className="plane-container">
@@ -822,7 +847,9 @@ export const CreatePullRequestPanel = props => {
 								{!loading && formErrorMessages()}
 								{loading && <LoadingMessage>Loading repo info...</LoadingMessage>}
 								<Step1 step={currentStep}>
-									<div>Open a pull request on {renderProviders()}</div>
+									<div>
+										Open a {prLabel.pullrequest} on {renderProviders()}
+									</div>
 								</Step1>
 								<Step2 step={currentStep}>{providerAuthenticationMessage()}</Step2>
 								<Step3 step={currentStep}>
@@ -867,7 +894,7 @@ export const CreatePullRequestPanel = props => {
 												<TextInput
 													name="title"
 													value={prTitle}
-													placeholder="Pull request title"
+													placeholder={`${prLabel.Pullrequest} title`}
 													autoFocus
 													onChange={setPrTitle}
 													onValidityChanged={onValidityChanged}
@@ -881,7 +908,7 @@ export const CreatePullRequestPanel = props => {
 													rows={5}
 													value={prText}
 													onChange={e => setPrText(e.target.value)}
-													placeholder="Pull request description (optional)"
+													placeholder={`${prLabel.Pullrequest}  description (optional)`}
 													style={{ resize: "vertical" }}
 												/>
 											</div>
@@ -904,7 +931,7 @@ export const CreatePullRequestPanel = props => {
 															title={`This will run 'git push -u ${prUpstream} ${reviewBranch}'`}
 														>
 															<span className="subtle">
-																Set upstream to
+																Set upstream to{" "}
 																{origins.length > 1 && (
 																	<DropdownButton
 																		variant="text"
@@ -921,7 +948,11 @@ export const CreatePullRequestPanel = props => {
 																		{`${prUpstream || origins[0]}/${reviewBranch}`}
 																	</DropdownButton>
 																)}
-																{origins.length === 1 && `${origins[0]}/${reviewBranch}`}
+																{origins.length === 1 && (
+																	<span className="highlight">
+																		{origins[0]}/{reviewBranch}
+																	</span>
+																)}
 															</span>
 														</Tooltip>
 													</Checkbox>
@@ -965,12 +996,27 @@ export const CreatePullRequestPanel = props => {
 													{prProviderIconName && (
 														<Icon name={prProviderIconName} style={{ marginRight: "3px" }} />
 													)}
-													Create Pull Request
+													Create {prLabel.PullRequest}
 												</Button>
 											</ButtonRow>
 										</div>
 									)}
 								</Step3>
+								<Step4 step={currentStep}>
+									<PRError>
+										<Icon name="pull-request" />
+										<div>
+											<span>{prLabel.Pullrequest} created.</span>
+											<Button
+												onClick={() => {
+													HostApi.instance.send(OpenUrlRequestType, { url: prUrl! });
+												}}
+											>
+												<Icon name="pull-request" /> View {prLabel.pullrequest}
+											</Button>
+										</div>
+									</PRError>
+								</Step4>
 							</div>
 						</fieldset>
 					</form>

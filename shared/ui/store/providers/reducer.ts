@@ -42,6 +42,7 @@ export const getPRLabel = createSelector(
 		state: CodeStreamState
 	): {
 		PullRequest: string;
+		Pullrequest: string;
 		pullrequest: string;
 		PR: string;
 		pr: string;
@@ -50,12 +51,14 @@ export const getPRLabel = createSelector(
 			isConnected(state, { name: "gitlab_enterprise" })
 			? {
 					PullRequest: "Merge Request",
+					Pullrequest: "Merge request",
 					pullrequest: "merge request",
 					PR: "MR",
 					pr: "mr"
 			  }
 			: {
 					PullRequest: "Pull Request",
+					Pullrequest: "Pull request",
 					pullrequest: "pull request",
 					PR: "PR",
 					pr: "pr"

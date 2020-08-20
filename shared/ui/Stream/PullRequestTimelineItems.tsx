@@ -337,7 +337,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 		<div>
 			<PRComment style={{ marginTop: "10px" }}>
 				<PRHeadshot person={pr.author} size={40} />
-				<PRCommentCard>
+				<PRCommentCard className="dark-header">
 					<PRCommentHeader>
 						<div>
 							<PRAuthor>{pr.author.login}</PRAuthor> commented{" "}
@@ -406,7 +406,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 						return (
 							<PRComment key={index}>
 								<PRHeadshot key={index} size={40} person={item.author} />
-								<PRCommentCard>
+								<PRCommentCard className={`dark-header${item.isMinimized ? " no-arrow" : ""}`}>
 									{item.isMinimized && !expandedComments[item.id] ? (
 										<PullRequestMinimizedComment
 											reason={item.minimizedReason}
@@ -497,7 +497,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 									</PRTimelineItemBody>
 								</PRTimelineItem>
 								{item.body && (
-									<PRActionCommentCard>
+									<PRActionCommentCard className="dark-header">
 										{item.isMinimized && !expandedComments[item.id] ? (
 											<PullRequestMinimizedComment
 												reason={item.minimizedReason}

@@ -24,18 +24,20 @@ const PRCommitContent = styled.div`
 	position: relative;
 `;
 
-const STATUS_MAP = {
-	modified: FileStatus.modified
-};
-
-const PRDiffHunk = styled.div`
+const PRDiffHunks = styled.div`
 	font-family: Menlo, Consolas, "DejaVu Sans Mono", monospace;
 	white-space: pre;
+}
+`;
+
+const PRDiffHunk = styled.div`
 	overflow-x: auto;
 	max-width: 100%;
 	font-size: 12px;
 	border: 1px solid var(--base-border-color);
-	margin: 20px 0 5px 0;
+	border-radius: 5px;
+	overflow: hidden;
+	margin: 0 0 20px 0;
 	pre {
 		display: inline;
 		white-space: pre !important;
@@ -71,6 +73,10 @@ const PRDiffHunk = styled.div`
 		border-bottom: 1px solid var(--base-border-color);
 	}
 `;
+
+const STATUS_MAP = {
+	modified: FileStatus.modified
+};
 
 export const PullRequestFilesChangedTab = props => {
 	const { pr, ghRepo } = props;
@@ -200,14 +206,16 @@ export const PullRequestFilesChangedTab = props => {
 			{mode == "files" ? (
 				<PullRequestFilesChanged pr={pr} filesChanged={filesChanged} />
 			) : (
-				filesChanged.map(_ => {
-					return (
-						<PRDiffHunk>
-							<h1>{_.filename}</h1>
-							<pre>{renderPatch(_.patch, _.filename)}</pre>
-						</PRDiffHunk>
-					);
-				})
+				<PRDiffHunks>
+					{filesChanged.map(_ => {
+						return (
+							<PRDiffHunk>
+								<h1>{_.filename}</h1>
+								<pre>{renderPatch(_.patch, _.filename)}</pre>
+							</PRDiffHunk>
+						);
+					})}
+				</PRDiffHunks>
 			)}
 		</PRCommitContent>
 	);

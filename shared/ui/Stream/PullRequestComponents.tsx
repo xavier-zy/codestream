@@ -240,8 +240,8 @@ export const PRCommentCard = styled.div`
 	border: 1px solid;
 	border-color: var(--base-border-color);
 	background: var(--app-background-color);
-	.vscode-dark &,
-	&.add-comment {
+	&.add-comment,
+	.vscode-dark & {
 		background: var(--base-background-color);
 	}
 	border-radius: 5px;
@@ -267,7 +267,15 @@ export const PRCommentCard = styled.div`
 		transform: rotate(45deg);
 		border-left: 1px solid var(--base-border-color);
 		border-bottom: 1px solid var(--base-border-color);
+		background: var(--app-background-color);
+	}
+	.vscode-dark &:before,
+	&.add-comment:before,
+	&.dark-header:before {
 		background: var(--base-background-color);
+	}
+	&.no-arrow:before {
+		display: none;
 	}
 	&.green-border:before {
 		border-color: #7aba5d;
@@ -279,8 +287,7 @@ export const PRActionCommentCard = styled.div`
 	border: 1px solid;
 	border-color: var(--base-border-color);
 	background: var(--app-background-color);
-	.vscode-dark &,
-	&.add-comment {
+	.vscode-dark & {
 		background: var(--base-background-color);
 	}
 	border-radius: 5px;
@@ -307,6 +314,10 @@ export const PRActionCommentCard = styled.div`
 		transform: rotate(45deg);
 		border-left: 1px solid var(--base-border-color);
 		border-top: 1px solid var(--base-border-color);
+		background: var(--app-background-color);
+	}
+	.vscode-dark &:before,
+	&.dark-header:before {
 		background: var(--base-background-color);
 	}
 	&.green-border:before {
@@ -367,8 +378,7 @@ export const PRThreadedCommentCard = styled.div`
 	border: 1px solid;
 	border-color: var(--base-border-color);
 	background: var(--app-background-color);
-	.vscode-dark &,
-	&.add-comment {
+	.vscode-dark & {
 		background: var(--base-background-color);
 	}
 	border-radius: 5px;
@@ -617,7 +627,7 @@ export const PRSidebar = styled.div`
 
 export const PRCommentHeader = styled.div`
 	padding: 10px 15px 10px 15px;
-	margin: -10px -14px 0 -14px;
+	margin: -10px -15px 0 -15px;
 	border-bottom: 1px solid var(--base-border-color);
 	background: var(--base-background-color);
 	display: flex;

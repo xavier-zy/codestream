@@ -32,7 +32,7 @@ export const PRCommitCard = styled.div`
 	border-color: var(--base-border-color);
 	background: var(--app-background-color);
 	.vscode-dark &,
-	&.add-comment {
+	&.dark-header {
 		background: var(--base-background-color);
 	}
 	padding: 10px 15px 10px 15px;

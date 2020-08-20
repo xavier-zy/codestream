@@ -2424,6 +2424,7 @@
 	}
 
 	.invite-panel .standard-form,
+	.team-panel .standard-form,
 	.configure-provider-panel .standard-form,
 	.create-channel-panel .standard-form {
 		max-width: 100%;
@@ -2434,6 +2435,9 @@
 			background: @base-background-color;
 			border: 1px solid @base-background-color;
 			color: @text-color;
+			&.outline {
+				border: 1px solid var(--base-border-color) !important;
+			}
 		}
 	}
 	.configure-provider-panel .standard-form textarea.input-text {

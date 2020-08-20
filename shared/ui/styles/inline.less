@@ -307,6 +307,9 @@
 		max-width: calc(~"100vw - 62px") !important;
 		// background: @app-background-color;
 		outline: 1px solid @base-border-color !important;
-		background: rgba(0, 0, 0, 0.1) !important;
+		background: @app-background-color !important;
+		.vscode-dark & {
+			background: rgba(0, 0, 0, 0.1) !important;
+		}
 	}
 }

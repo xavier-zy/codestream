@@ -71,6 +71,26 @@ export const PRActionButtons = styled.div`
 	}
 `;
 
+export const PRSelectorButtons = styled.div`
+	cursor: pointer;
+	border: 1px solid var(--base-border-color);
+	border-radius: 5px;
+	background: var(--app-background-color);
+	white-space: nowrap;
+	display: inline-flex;
+	overflow: hidden;
+	> span {
+		display: inline-block;
+		padding: 5px 10px;
+		&.selected {
+			background: var(--base-background-color);
+		}
+	}
+	> span + span {
+		border-left: 1px solid var(--base-border-color);
+	}
+`;
+
 export const PREditTitle = styled.div`
 	width: 100%;
 	display: flex;

@@ -169,7 +169,7 @@ body.preload * {
 		font-family: inherit !important;
 		opacity: 1 !important;
 		color: @text-color !important;
-		background-color: @background-color-highlight-light;
+		background-color: @app-background-color;
 
 		&.clearable {
 			padding-right: 31px !important;
@@ -448,7 +448,10 @@ body.preload * {
 
 	.react-select__control {
 		border: 1px solid @base-border-color;
-		background-color: rgba(0, 0, 0, 0.1);
+		background-color: @app-background-color;
+		.vscode-dark & {
+			background-color: rgba(0, 0, 0, 0.1);
+		}
 		color: @text-color;
 		margin: 0;
 		font-family: inherit;

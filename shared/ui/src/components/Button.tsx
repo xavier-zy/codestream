@@ -59,7 +59,7 @@ const getColors = (variant = "primary") => {
 				background-color: rgba(127, 127, 127, 0.1);
 				color: var(--text-color);
 				:hover {
-					background-color: rgba(127, 127, 127, 0.13);
+					background-color: rgba(127, 127, 127, 0.15);
 					color: var(--text-color-highlight);
 				}
 			`;

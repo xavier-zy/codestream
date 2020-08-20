@@ -4,7 +4,7 @@ import Icon from "./Icon";
 import Timestamp from "./Timestamp";
 import Tooltip from "./Tooltip";
 import { PRHeadshotName } from "../src/components/HeadshotName";
-import { PRContent } from "./PullRequestComponents";
+import { PRContent, PRSelectorButtons } from "./PullRequestComponents";
 import styled from "styled-components";
 import { ExecuteThirdPartyTypedType } from "@codestream/protocols/agent";
 import { useDidMount } from "../utilities/hooks";
@@ -14,6 +14,9 @@ import { CodeStreamState } from "../store";
 import { PullRequestFilesChanged } from "./PullRequestFilesChanged";
 import { FileStatus } from "@codestream/protocols/api";
 import { LoadingMessage } from "../src/components/LoadingMessage";
+import { PRCommitCard } from "./PullRequestCommitsTab";
+import * as Path from "path-browserify";
+import { prettyPrintOne } from "code-prettify";
 
 const PRCommitContent = styled.div`
 	margin: 0 20px 20px 40px;
@@ -24,6 +27,45 @@ const STATUS_MAP = {
 	modified: FileStatus.modified
 };
 
+const PRDiffHunk = styled.div`
+	font-family: Menlo, Consolas, "DejaVu Sans Mono", monospace;
+	white-space: pre;
+	overflow-x: auto;
+	max-width: 100%;
+	font-size: 12px;
+	pre {
+		border: 1px solid var(--base-border-color);
+		white-space: nowrap;
+	}
+	pre > div {
+		width: 100%;
+		padding: 3px 10px;
+		// color: #24292e;
+		// background: #fff;
+		> span.linenum {
+			opacity: 0.5;
+		}
+	}
+	.added {
+		background: #e6ffed;
+		background: rgba(170, 255, 0, 0.1);
+	}
+	.deleted {
+		background: #ffeef0;
+		background: rgba(255, 0, 0, 0.15);
+	}
+	.header {
+		background: #f1f8ff;
+		background: var(--base-background-color);
+		border-bottom: 1px solid var(--base-border-color);
+	}
+	h1 {
+		font-size: 12px;
+		font-weight: normal;
+		margin: 20px 0 5px 0;
+	}
+`;
+
 export const PullRequestFilesChangedTab = props => {
 	const { pr, ghRepo } = props;
 	const derivedState = useSelector((state: CodeStreamState) => {
@@ -32,6 +74,7 @@ export const PullRequestFilesChangedTab = props => {
 		};
 	});
 
+	const [mode, setMode] = useState("files");
 	const [isLoading, setIsLoading] = useState(true);
 	const [filesChanged, setFilesChanged] = useState<any[]>([]);
 
@@ -47,6 +90,7 @@ export const PullRequestFilesChangedTab = props => {
 			});
 			const filesChanged = data.map(_ => {
 				return {
+					..._,
 					linesAdded: _.additions,
 					linesRemoved: _.deletions,
 					file: _.filename,
@@ -68,59 +112,71 @@ export const PullRequestFilesChangedTab = props => {
 
 	if (!filesChanged || !filesChanged.length) return null;
 
-	const renderPatch = (patch: string) => {
+	const renderPatch = (patch: string, filename: string) => {
 		if (!patch) return null;
+		let leftLine;
+		let rightLine;
+		let width;
+
+		let extension = Path.extname(filename).toLowerCase();
+		if (extension.startsWith(".")) {
+			extension = extension.substring(1);
+		}
+
+		const renderLineNum = line => (
+			<span className="linenum">{(line + "").padStart(width, " ") + "  "}</span>
+		);
+
+		const syntaxHighlight = string => {
+			return (
+				<span
+					className="prettyprint"
+					dangerouslySetInnerHTML={{ __html: prettyPrintOne(string, extension) }}
+				/>
+			);
+		};
+
 		return patch.split("\n").map(_ => {
 			if (_.indexOf("@@ ") === 0) {
+				const matches = _.match(/@@ \-(\d+).*? \+(\d+)/);
+				if (matches) {
+					leftLine = matches[1];
+					rightLine = matches[2];
+					width = rightLine.length + 2;
+				}
 				return (
-					<div
-						style={{
-							background: "#f1f8ff",
-							fontFamily: "monospace",
-							color: "#24292e",
-							padding: "10px 0 10px 0"
-						}}
-					>
-						{_}
+					<div className="header">
+						{renderLineNum("")}
+						{renderLineNum("")}
+						{syntaxHighlight(_)}
 					</div>
 				);
 			} else if (_.indexOf("+") === 0) {
+				rightLine++;
 				return (
-					<div
-						style={{
-							background: "#e6ffed",
-							fontFamily: "monospace",
-							color: "#24292e",
-							padding: "5px 0 0px 5px"
-						}}
-					>
-						{_}
+					<div className="added">
+						{renderLineNum("")}
+						{renderLineNum(rightLine)}
+						{syntaxHighlight(_)}
 					</div>
 				);
 			} else if (_.indexOf("-") === 0) {
+				leftLine++;
 				return (
-					<div
-						style={{
-							background: "#ffeef0",
-							fontFamily: "monospace",
-							color: "#24292e",
-							padding: "5px 0 0px 5px"
-						}}
-					>
-						{_}
+					<div className="deleted">
+						{renderLineNum(leftLine)}
+						{renderLineNum("")}
+						{syntaxHighlight(_)}
 					</div>
 				);
 			} else {
+				leftLine++;
+				rightLine++;
 				return (
-					<div
-						style={{
-							background: "#fff",
-							fontFamily: "monospace",
-							color: "#24292e",
-							padding: "5px 0 0px 5px"
-						}}
-					>
-						&nbsp;{_}
+					<div>
+						{renderLineNum(leftLine)}
+						{renderLineNum(rightLine)}
+						{syntaxHighlight(_)}
 					</div>
 				);
 			}
@@ -129,21 +185,33 @@ export const PullRequestFilesChangedTab = props => {
 
 	return (
 		<PRCommitContent>
-			<PullRequestFilesChanged pr={pr} filesChanged={filesChanged} />
+			<PRSelectorButtons>
+				<span className={mode == "files" ? "selected" : ""} onClick={() => setMode("files")}>
+					Files
+				</span>
+				<span className={mode == "hunks" ? "selected" : ""} onClick={() => setMode("hunks")}>
+					Diff Hunks
+				</span>
+			</PRSelectorButtons>
+			<div style={{ height: "10px" }} />
+			{mode == "files" ? (
+				<PullRequestFilesChanged pr={pr} filesChanged={filesChanged} />
+			) : (
+				filesChanged.map(_ => {
+					return (
+						<PRDiffHunk>
+							<h1>{_.filename}</h1>
+							<pre>{renderPatch(_.patch, _.filename)}</pre>
+						</PRDiffHunk>
+					);
+				})
+			)}
 		</PRCommitContent>
 	);
 
 	// return (
 	// 	<PRCommitContent>
 	// 		<div>
-	// 			{filesChanged.map(_ => {
-	// 				return (
-	// 					<PRCommitCard>
-	// 						<h1>{_.filename}</h1>
-	// 						{/*<div>{renderPatch(_.patch)}</div>*/}
-	// 					</PRCommitCard>
-	// 				);
-	// 			})}
 	// 		</div>
 	// 	</PRCommitContent>
 	// );

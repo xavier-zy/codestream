@@ -445,7 +445,7 @@ class TeamPanel extends React.Component<Props, State> {
 					<div style={{ display: "flex", alignItems: "flex-end" }}>
 						<div className="control-group" style={{ flexGrow: 3 }}>
 							<input
-								className="input-text"
+								className="input-text outline"
 								id="invite-email-input"
 								type="text"
 								value={newMemberEmail}

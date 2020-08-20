@@ -82,7 +82,8 @@ export const PRSelectorButtons = styled.div`
 	> span {
 		display: inline-block;
 		padding: 5px 10px;
-		&.selected {
+		&.selected,
+		&:hover {
 			background: var(--base-background-color);
 		}
 	}

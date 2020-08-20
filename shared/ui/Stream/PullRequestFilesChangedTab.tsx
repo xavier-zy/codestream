@@ -17,6 +17,7 @@ import { LoadingMessage } from "../src/components/LoadingMessage";
 import { PRCommitCard } from "./PullRequestCommitsTab";
 import * as Path from "path-browserify";
 import { prettyPrintOne } from "code-prettify";
+import { escapeHtml } from "../utils";
 
 const PRCommitContent = styled.div`
 	margin: 0 20px 20px 40px;
@@ -33,9 +34,12 @@ const PRDiffHunk = styled.div`
 	overflow-x: auto;
 	max-width: 100%;
 	font-size: 12px;
+	border: 1px solid var(--base-border-color);
+	margin: 20px 0 5px 0;
 	pre {
-		border: 1px solid var(--base-border-color);
-		white-space: nowrap;
+		display: inline;
+		white-space: pre !important;
+		margin: 0;
 	}
 	pre > div {
 		width: 100%;
@@ -45,24 +49,26 @@ const PRDiffHunk = styled.div`
 		> span.linenum {
 			opacity: 0.5;
 		}
+		margin: 0;
 	}
 	.added {
 		background: #e6ffed;
-		background: rgba(170, 255, 0, 0.1);
+		background: rgba(150, 255, 0, 0.1);
 	}
 	.deleted {
 		background: #ffeef0;
 		background: rgba(255, 0, 0, 0.15);
 	}
 	.header {
-		background: #f1f8ff;
-		background: var(--base-background-color);
-		border-bottom: 1px solid var(--base-border-color);
+		background: rgba(0, 150, 255, 0.1);
 	}
 	h1 {
 		font-size: 12px;
 		font-weight: normal;
-		margin: 20px 0 5px 0;
+		margin: 0;
+		padding: 10px;
+		background: var(--base-background-color);
+		border-bottom: 1px solid var(--base-border-color);
 	}
 `;
 
@@ -128,12 +134,9 @@ export const PullRequestFilesChangedTab = props => {
 		);
 
 		const syntaxHighlight = string => {
-			return (
-				<span
-					className="prettyprint"
-					dangerouslySetInnerHTML={{ __html: prettyPrintOne(string, extension) }}
-				/>
-			);
+			const string2 = string.slice(0, 1) + " " + string.slice(1);
+			const html = prettyPrintOne(escapeHtml(string2), extension);
+			return <pre className="prettyprint" dangerouslySetInnerHTML={{ __html: html }} />;
 		};
 
 		return patch.split("\n").map(_ => {
@@ -142,7 +145,7 @@ export const PullRequestFilesChangedTab = props => {
 				if (matches) {
 					leftLine = matches[1];
 					rightLine = matches[2];
-					width = rightLine.length + 2;
+					width = Math.max(5, rightLine.length + 1);
 				}
 				return (
 					<div className="header">

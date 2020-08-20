@@ -36,6 +36,7 @@ import { PanelHeader } from "../src/components/PanelHeader";
 import { CSMe } from "@codestream/protocols/api";
 import Headshot from "./Headshot";
 import { EMPTY_STATUS } from "./StatusPanel";
+import Tooltip from "./Tooltip";
 
 // base branch dropdown: show only pushed branches
 // base branch dropdown: try to default to fork point branch
@@ -434,7 +435,12 @@ export const CreatePullRequestPanel = props => {
 			.then((result: CheckPullRequestPreconditionsResponse) => {
 				setPreconditionError({ type: "", message: "", url: "", id: "" });
 				setFormState({ type: "", message: "", url: "", id: "" });
-				if (result && result.error) {
+				console.warn("RESULT IS: ", result);
+				if (result && result.warning && result.warning.type === "REQUIRES_UPSTREAM") {
+					setRequiresUpstream(true);
+					setOrigins(result.origins!);
+					setPrUpstream(result.origins![0]);
+				} else if (result && result.error) {
 					// setFormState({
 					// 	type: result.error.type || "UNKNOWN",
 					// 	message: result.error.message || "",
@@ -449,7 +455,7 @@ export const CreatePullRequestPanel = props => {
 				} else if (result && result.warning) {
 					setPreconditionError({
 						type: result.warning.type || "UNKNOWN",
-						message: result.warning.message || "",
+						message: result.warning.message || "Unknown error.",
 						url: result.warning.url || "",
 						id: result.warning.id || ""
 					});
@@ -894,30 +900,30 @@ export const CreatePullRequestPanel = props => {
 															}
 														}}
 													>
-														<span className="subtle">Set upstream to </span>
-														{origins.length > 1 && (
-															<DropdownButton
-																variant="text"
-																items={origins.map((_: any) => {
-																	return {
-																		label: `${_}/${reviewBranch}`,
-																		key: _,
-																		action: () => {
-																			setPrUpstream(_);
-																		}
-																	};
-																})}
-															>
-																<strong
-																	title={`This will run 'git push -u ${prUpstream} ${reviewBranch}'`}
-																>{`${origins[0]}/${reviewBranch}`}</strong>
-															</DropdownButton>
-														)}
-														{origins.length === 1 && (
-															<strong
-																title={`This will run 'git push -u ${prUpstream} ${reviewBranch}'`}
-															>{`${origins[0]}/${reviewBranch}`}</strong>
-														)}
+														<Tooltip
+															title={`This will run 'git push -u ${prUpstream} ${reviewBranch}'`}
+														>
+															<span className="subtle">
+																Set upstream to
+																{origins.length > 1 && (
+																	<DropdownButton
+																		variant="text"
+																		items={origins.map((_: any) => {
+																			return {
+																				label: `${_}/${reviewBranch}`,
+																				key: _,
+																				action: () => {
+																					setPrUpstream(_);
+																				}
+																			};
+																		})}
+																	>
+																		{`${prUpstream || origins[0]}/${reviewBranch}`}
+																	</DropdownButton>
+																)}
+																{origins.length === 1 && `${origins[0]}/${reviewBranch}`}
+															</span>
+														</Tooltip>
 													</Checkbox>
 												</div>
 											)}

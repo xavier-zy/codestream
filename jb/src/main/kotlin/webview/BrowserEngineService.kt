@@ -35,7 +35,7 @@ class BrowserEngineService : Disposable {
             .licenseKey(licenseKey)
             .userDataDir(Paths.get(dir.toURI()))
             .disableGpu()
-            .disableChromiumTraffic()
+            // .disableWebSecurity()
             .addSwitch("--disable-gpu-compositing")
             .addSwitch("--enable-begin-frame-scheduling")
             .addSwitch("--software-rendering-fps=60")

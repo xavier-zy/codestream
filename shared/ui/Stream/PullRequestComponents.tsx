@@ -299,7 +299,8 @@ export const PRActionCommentCard = styled.div`
 // this is the "Finish your review" button
 export const PRSubmitReviewButton = styled.div`
 	position: relative;
-	button {
+	> button {
+		margin-left: 10px;
 		// border-radius: 5px;
 		white-space: nowrap;
 		${PRBadge} {

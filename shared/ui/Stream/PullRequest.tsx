@@ -328,6 +328,7 @@ export const PullRequest = () => {
 												}}
 											>
 												<MessageInput
+													autoFocus
 													multiCompose
 													text={reviewText}
 													placeholder="Leave a comment"

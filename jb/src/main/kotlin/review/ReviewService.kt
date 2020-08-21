@@ -152,7 +152,7 @@ class ReviewService(private val project: Project) {
         headBranch: String,
         baseSha: String,
         baseBranch: String,
-        context: Context
+        context: Context?
     ) {
         val agent = project.agentService ?: return
 

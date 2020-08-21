@@ -131,35 +131,6 @@ export const PRStatusMessage = styled.div`
 	flex-grow: 10;
 `;
 
-export const PRStatus = styled.div`
-	display: flex;
-	width: 100%;
-	justify-content: center;
-	align-items: center;
-	margin: 10px 0 20px 0;
-
-	@media only screen and (max-width: 450px) {
-		flex-wrap: wrap;
-		${PRStatusMessage} {
-			order: 1;
-			width: 100%;
-			margin-bottom: 10px;
-		}
-		${PRStatusButton} {
-			order: 2;
-			// max-width: 40%;
-			flex-grow: 0;
-			margin-right: auto;
-		}
-		${PRActionButtons} {
-			order: 3;
-			// max-width: 40%;
-			flex-grow: 0;
-			margin-left: auto;
-		}
-	}
-`;
-
 export const PRAuthor = styled.span`
 	font-weight: bold;
 	padding-right: 5px;
@@ -322,6 +293,33 @@ export const PRActionCommentCard = styled.div`
 	}
 	&.green-border:before {
 		border-color: #7aba5d;
+	}
+`;
+
+// this is the "Finish your review" button
+export const PRSubmitReviewButton = styled.div`
+	position: relative;
+	button {
+		// border-radius: 5px;
+		white-space: nowrap;
+		${PRBadge} {
+			line-height: 1.42857143 !important;
+			background-color: rgba(0, 0, 0, 0.2);
+		}
+	}
+	${PRCommentCard} {
+		position: absolute;
+		z-index: 50;
+		right: 0;
+		top: 30px;
+		box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+		.vscode-dark& {
+			box-shadow: 0 5px 10px rgba(0, 0, 0, 0.5);
+		}
+		min-width: 75vw;
+		label {
+			color: var(--text-color-highlight);
+		}
 	}
 `;
 
@@ -535,6 +533,7 @@ export const PRContent = styled.div`
 			${PRStatusHeadshot} {
 				display: none;
 			}
+			${PRActionCommentCard},
 			${PRCommentCard} {
 				margin-left: 0;
 				&:before {
@@ -549,6 +548,12 @@ export const PRContent = styled.div`
 			}
 			${PRTimelineItem} {
 				padding-left: 3px;
+			}
+			.threaded {
+				margin-left: 0;
+			}
+			.outline {
+				margin-left: 30px !important;
 			}
 		}
 	}
@@ -667,6 +672,7 @@ export const PRStatusIcon = styled.div`
 
 export const ButtonRow = styled.div`
 	display: flex;
+	align-items: center;
 	button + button {
 		margin-left: 10px;
 	}
@@ -761,4 +767,34 @@ export const PRCodeCommentReply = styled.div`
 
 export const PRCodeCommentReplyPlaceholder = styled.div`
 	border: 1px solid var(--base-border-color);
+`;
+
+export const PRStatus = styled.div`
+	display: flex;
+	width: 100%;
+	justify-content: center;
+	align-items: center;
+	margin: 10px 0 20px 0;
+
+	@media only screen and (max-width: 450px) {
+		flex-wrap: wrap;
+		${PRStatusMessage} {
+			order: 1;
+			width: 100%;
+			margin-bottom: 10px;
+		}
+		${PRStatusButton} {
+			order: 2;
+			// max-width: 40%;
+			flex-grow: 0;
+			margin-right: auto;
+		}
+		${PRSubmitReviewButton},
+		${PRActionButtons} {
+			order: 3;
+			// max-width: 40%;
+			flex-grow: 0;
+			margin-left: auto;
+		}
+	}
 `;

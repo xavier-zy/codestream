@@ -34,7 +34,10 @@ import {
 	PRBadge,
 	PRPlusMinus,
 	PREditTitle,
-	PRActionButtons
+	PRActionButtons,
+	PRCommentCard,
+	ButtonRow,
+	PRSubmitReviewButton
 } from "./PullRequestComponents";
 import { LoadingMessage } from "../src/components/LoadingMessage";
 import { Modal } from "./Modal";
@@ -45,6 +48,9 @@ import * as reviewSelectors from "../store/reviews/reducer";
 import { PullRequestFilesChangedTab } from "./PullRequestFilesChangedTab";
 import { FloatingLoadingMessage } from "../src/components/FloatingLoadingMessage";
 import { Button } from "../src/components/Button";
+import MessageInput from "./MessageInput";
+import { RadioGroup, Radio } from "../src/components/RadioGroup";
+import Tooltip from "./Tooltip";
 
 export const WidthBreakpoint = "630px";
 
@@ -101,6 +107,12 @@ export const PullRequest = () => {
 	const [savingTitle, setSavingTitle] = useState(false);
 	const [title, setTitle] = useState("");
 
+	const [finishReviewOpen, setFinishReviewOpen] = useState(false);
+	const [reviewText, setReviewText] = useState("");
+	const [reviewType, setReviewType] = useState<"COMMENT" | "APPROVE" | "REQUEST_CHANGES">(
+		"COMMENT"
+	);
+
 	const exit = async () => {
 		await dispatch(setCurrentPullRequest());
 	};
@@ -121,7 +133,10 @@ export const PullRequest = () => {
 		setIsLoadingMessage("");
 	};
 
-	const _submitPullRequestReview = async (type: string, text?: string) => {
+	const _submitPullRequestReview = async (
+		type: "COMMENT" | "APPROVE" | "REQUEST_CHANGES",
+		text?: string
+	) => {
 		await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
 			method: "submitReview",
 			providerId: "github*com",
@@ -134,16 +149,8 @@ export const PullRequest = () => {
 		return fetch();
 	};
 
-	const submitPullRequestReview = async e => {
-		await _submitPullRequestReview("COMMENT");
-	};
-
-	const approvePullRequest = async e => {
-		await _submitPullRequestReview("APPROVE");
-	};
-
-	const requestChangesToPullRequest = async e => {
-		await _submitPullRequestReview("REQUEST_CHANGES");
+	const submitReview = async e => {
+		await _submitPullRequestReview(reviewType, reviewText);
 	};
 
 	const deletePullRequestReview = async (e, id) => {
@@ -304,55 +311,137 @@ export const PullRequest = () => {
 							</PRAction>
 							<Timestamp time={pr.createdAt} relative />
 						</PRStatusMessage>
-						<PRActionButtons>
-							<span>
-								<Icon
-									title="Edit Title"
-									trigger={["hover"]}
-									delay={1}
-									onClick={() => {
-										setTitle(pr.title);
-										setEditingTitle(true);
-									}}
-									placement="bottom"
-									name="pencil"
-								/>
-							</span>
-							<span>
-								<Icon
-									title="Checkout Branch"
-									trigger={["hover"]}
-									delay={1}
-									onClick={checkout}
-									placement="bottom"
-									name="repo"
-								/>
-							</span>
-							<span>
-								<Icon
-									title="Reload"
-									trigger={["hover"]}
-									delay={1}
-									onClick={() => fetch("Reloading...")}
-									placement="bottom"
-									className={`${isLoadingPR ? "spin" : ""}`}
-									name="refresh"
-								/>
-							</span>
-							<span>
-								<CancelButton className="button" title="Close" onClick={exit} />
-							</span>
-						</PRActionButtons>
+						{pr && pr.pendingReview && (
+							<PRSubmitReviewButton>
+								<Button variant="success" onClick={() => setFinishReviewOpen(!finishReviewOpen)}>
+									Finish your review
+									<PRBadge>3</PRBadge>
+									<Icon name="chevron-down" />
+								</Button>
+								{finishReviewOpen && (
+									<>
+										<PRCommentCard className="add-comment no-arrow">
+											<div
+												style={{
+													margin: "5px 0 15px 0",
+													border: "1px solid var(--base-border-color)"
+												}}
+											>
+												<MessageInput
+													multiCompose
+													text={reviewText}
+													placeholder="Leave a comment"
+													onChange={setReviewText}
+													onSubmit={submitReview}
+												/>
+											</div>
+											<RadioGroup
+												name="approval"
+												selectedValue={reviewType}
+												onChange={value => setReviewType(value)}
+											>
+												<Radio value={"COMMENT"}>
+													Comment
+													<div className="subtle">
+														Submit general feedback without explicit approval.
+													</div>
+												</Radio>
+												<Radio disabled={pr.viewerDidAuthor} value={"APPROVE"}>
+													<Tooltip
+														title={
+															pr.viewerDidAuthor
+																? "Pull request authors can't approve their own pull request"
+																: ""
+														}
+														placement="top"
+													>
+														<span>
+															Approve
+															<div className="subtle">
+																Submit feedback and approve merging these changes.{" "}
+															</div>
+														</span>
+													</Tooltip>
+												</Radio>
+												<Radio disabled={pr.viewerDidAuthor} value={"REQUEST_CHANGES"}>
+													<Tooltip
+														title={
+															pr.viewerDidAuthor
+																? "Pull request authors can't request changes on their own pull request"
+																: ""
+														}
+														placement="top"
+													>
+														<span>
+															{" "}
+															Request Changes
+															<div className="subtle">
+																Submit feedback that must be addressed before merging.
+															</div>
+														</span>
+													</Tooltip>
+												</Radio>
+											</RadioGroup>
+											{/* 
+											<a onClick={submitPullRequestReview}>comment</a>{" "}
+											<a onClick={approvePullRequest}>approve</a>{" "}
+											<a onClick={requestChangesToPullRequest}>request changes</a>{" "}
+											<a onClick={e => deletePullRequestReview(e, pr.pendingReview.id)}>
+												delete review
+											</a>*/}
+											<ButtonRow>
+												<Button onClick={submitReview}>Submit Review</Button>
+												<div className="subtle" style={{ margin: "10px 0 0 10px" }}>
+													3 pending comments
+												</div>
+											</ButtonRow>
+										</PRCommentCard>
+									</>
+								)}
+							</PRSubmitReviewButton>
+						)}
+						{pr && !pr.pendingReview && (
+							<PRActionButtons>
+								<span>
+									<Icon
+										title="Edit Title"
+										trigger={["hover"]}
+										delay={1}
+										onClick={() => {
+											setTitle(pr.title);
+											setEditingTitle(true);
+										}}
+										placement="bottom"
+										name="pencil"
+									/>
+								</span>
+								<span>
+									<Icon
+										title="Checkout Branch"
+										trigger={["hover"]}
+										delay={1}
+										onClick={checkout}
+										placement="bottom"
+										name="repo"
+									/>
+								</span>
+								<span>
+									<Icon
+										title="Reload"
+										trigger={["hover"]}
+										delay={1}
+										onClick={() => fetch("Reloading...")}
+										placement="bottom"
+										className={`${isLoadingPR ? "spin" : ""}`}
+										name="refresh"
+									/>
+								</span>
+								<span>
+									<CancelButton className="button" title="Close" onClick={exit} />
+								</span>
+							</PRActionButtons>
+						)}
 					</PRStatus>
-
-					{pr && pr.pendingReview && (
-						<>
-							<a onClick={submitPullRequestReview}>comment</a>{" "}
-							<a onClick={approvePullRequest}>approve</a>{" "}
-							<a onClick={requestChangesToPullRequest}>request changes</a>{" "}
-							<a onClick={e => deletePullRequestReview(e, pr.pendingReview.id)}>delete review</a>
-						</>
-					)}
 				</PRHeader>
 				{!derivedState.composeCodemarkActive && (
 					<ScrollBox>

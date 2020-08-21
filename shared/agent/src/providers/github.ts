@@ -1782,6 +1782,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 					resourcePath
 					includesCreatedEdit
 					viewerSubscription
+					viewerDidAuthor
 					files(first: 100) {
 						totalCount
 						nodes {

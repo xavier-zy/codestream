@@ -253,6 +253,7 @@ export class GitService implements IGitService, Disposable {
 
 	async getDefaultBranch(repoPath: string, remote: string): Promise<string | undefined> {
 		try {
+			Logger.debug("IN GDB: " + remote);
 			const data = await git(
 				{ cwd: repoPath, env: { GIT_TERMINAL_PROMPT: "0" }, throwRawExceptions: true },
 				"remote",
@@ -266,7 +267,7 @@ export class GitService implements IGitService, Disposable {
 
 			return headBranchLine ? headBranchLine.split(":")[1].trim() : undefined;
 		} catch (ex) {
-			Logger.debug(ex.message);
+			Logger.debug("getDefaultBranch: " + ex.message);
 			return undefined;
 		}
 	}

@@ -128,7 +128,7 @@ export const PullRequestFilesChanged = (props: {
 				}
 			})(i);
 		},
-		[repoId]
+		[repoId, visitedFiles]
 	);
 
 	const nextFile = () => {

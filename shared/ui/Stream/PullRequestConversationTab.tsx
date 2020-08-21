@@ -954,11 +954,11 @@ export const PullRequestConversationTab = props => {
 						</InlineMenu>
 					</h1>
 					{reviewers.length > 0
-						? reviewers.map(_ => (
-								<>
+						? reviewers.map((_, index) => (
+								<span key={index}>
 									<PRHeadshotName key={_.avatarUrl} person={_} size={20} />
 									<br />
-								</>
+								</span>
 						  ))
 						: "No reviews"}
 				</PRSection>
@@ -976,11 +976,11 @@ export const PullRequestConversationTab = props => {
 						</InlineMenu>
 					</h1>
 					{pr.assignees && pr.assignees.nodes.length > 0 ? (
-						pr.assignees.nodes.map((_: any) => (
-							<>
+						pr.assignees.nodes.map((_: any, index: number) => (
+							<span key={index}>
 								<PRHeadshotName key={_.avatarUrl} person={_} size={20} />
 								<br />
-							</>
+							</span>
 						))
 					) : (
 						<>
@@ -1002,7 +1002,9 @@ export const PullRequestConversationTab = props => {
 						</InlineMenu>
 					</h1>
 					{pr.labels && pr.labels.nodes.length > 0
-						? pr.labels.nodes.map(_ => <Tag tag={{ label: _.name, color: `#${_.color}` }} />)
+						? pr.labels.nodes.map((_, index) => (
+								<Tag key={index} tag={{ label: _.name, color: `#${_.color}` }} />
+						  ))
 						: "None yet"}
 				</PRSection>
 				<PRSection>

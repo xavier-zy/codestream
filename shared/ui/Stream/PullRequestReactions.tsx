@@ -176,7 +176,7 @@ export const PullRequestReactions = (props: ReactionProps) => {
 
 	const me = "ppezaris"; // FIXME
 	const reactions = reactionGroups
-		.map(reaction => {
+		.map((reaction, index) => {
 			const num = reaction.users ? reaction.users.nodes.length : 0;
 			if (num == 0) return null;
 			const emoji = emojify(":" + REACTION_MAP[reaction.content] + ":");
@@ -189,7 +189,7 @@ export const PullRequestReactions = (props: ReactionProps) => {
 			);
 			const iReacted = loginList.includes(me);
 			return (
-				<Tooltip placement="bottomLeft" delay={1} title={title} trigger={["hover"]}>
+				<Tooltip key={index} placement="bottomLeft" delay={1} title={title} trigger={["hover"]}>
 					<PRReaction
 						className={iReacted ? "mine" : ""}
 						onClick={() => saveReaction(reaction.content, !iReacted)}

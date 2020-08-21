@@ -109,6 +109,7 @@ export const PullRequest = () => {
 
 	const [finishReviewOpen, setFinishReviewOpen] = useState(false);
 	const [reviewText, setReviewText] = useState("");
+	const [submittingReview, setSubmittingReview] = useState(false);
 	const [reviewType, setReviewType] = useState<"COMMENT" | "APPROVE" | "REQUEST_CHANGES">(
 		"COMMENT"
 	);
@@ -133,27 +134,23 @@ export const PullRequest = () => {
 		setIsLoadingMessage("");
 	};
 
-	const _submitPullRequestReview = async (
-		type: "COMMENT" | "APPROVE" | "REQUEST_CHANGES",
-		text?: string
-	) => {
+	const submitReview = async e => {
+		setIsLoadingMessage("Submitting Review...");
+		setSubmittingReview(true);
 		await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
 			method: "submitReview",
 			providerId: "github*com",
 			params: {
 				pullRequestId: derivedState.currentPullRequestId!,
-				eventType: type,
-				text: text
+				eventType: reviewType,
+				text: reviewText
 			}
 		});
 		return fetch();
 	};
 
-	const submitReview = async e => {
-		await _submitPullRequestReview(reviewType, reviewText);
-	};
-
-	const deletePullRequestReview = async (e, id) => {
+	const cancelReview = async (e, id) => {
+		setIsLoadingMessage("Canceling Review...");
 		await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
 			method: "deletePullRequestReview",
 			providerId: "github*com",
@@ -221,8 +218,8 @@ export const PullRequest = () => {
 		fetch();
 	});
 
-	console.warn("PR: ", pr);
-	console.warn("REPO: ", ghRepo);
+	// console.warn("PR: ", pr);
+	// console.warn("REPO: ", ghRepo);
 	if (!pr) {
 		return (
 			<Modal verticallyCenter showGlobalNav>
@@ -391,7 +388,10 @@ export const PullRequest = () => {
 												delete review
 											</a>*/}
 											<ButtonRow>
-												<Button onClick={submitReview}>Submit Review</Button>
+												<Button isLoading={submittingReview} onClick={submitReview}>
+													Submit review
+												</Button>
+												<Button onClick={e => cancelReview(e, "FIXME")}>Cancel review</Button>
 												<div className="subtle" style={{ margin: "10px 0 0 10px" }}>
 													3 pending comments
 												</div>

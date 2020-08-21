@@ -84,7 +84,7 @@ export const CheckEmailVsGit = () => {
 		setLoading(false);
 	};
 
-	console.warn("A: ", addBlameMapEnabled, " : ", scmEmail);
+	// console.warn("A: ", addBlameMapEnabled, " : ", scmEmail);
 	if (addBlameMapEnabled && scmEmail && !mappedMe && !skipGitEmailCheck)
 		return (
 			<Modal translucent>

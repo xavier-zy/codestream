@@ -580,6 +580,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 														isResolved
 														className="outline"
 														onClick={() => expandComment(`resolved-${comment.id}`)}
+														key={`min-${comment.id}`}
 													/>
 												);
 											}
@@ -634,7 +635,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 											};
 
 											return (
-												<PRThreadedCommentCard>
+												<PRThreadedCommentCard key={commentIndex}>
 													<PRCodeComment>
 														<div className="row-with-icon-actions monospace ellipsis-left-container no-hover">
 															<Icon name="file" />
@@ -732,7 +733,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 																}
 
 																return (
-																	<>
+																	<div key={i}>
 																		<PRCodeCommentBody>
 																			<PRHeadshot key={c.id + i} size={30} person={c.author} />
 																			<PRThreadedCommentHeader>
@@ -794,7 +795,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 																			fetch={fetch}
 																			reactionGroups={c.reactionGroups}
 																		/>
-																	</>
+																	</div>
 																);
 															})}
 													</PRCodeComment>
@@ -898,7 +899,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 						const { author, committer } = item.commit;
 
 						return (
-							<>
+							<div key={index}>
 								{futureCommitCount > 0 && (
 									<PRTimelineItem key={`commits-{index}`} className="tall-top">
 										<Icon name="repo-push" className="circled" />
@@ -939,7 +940,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 										</Link>
 									</div>
 								</PRTimelineItem>
-							</>
+							</div>
 						);
 					}
 					case "AssignedEvent": {
@@ -1065,7 +1066,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 					case "ClosedEvent": {
 						if (pr.state === "MERGED") {
 							return (
-								<>
+								<div key={index}>
 									<PRTimelineItem key={index} className="tall">
 										<Icon name="git-merge" className="circled purple" />
 										<PRTimelineItemBody>
@@ -1075,11 +1076,11 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 										</PRTimelineItemBody>
 									</PRTimelineItem>
 									{/* <PRFoot /> */}
-								</>
+								</div>
 							);
 						} else {
 							return (
-								<>
+								<div key={index}>
 									<PRTimelineItem key={index} className="tall">
 										<Icon name="circle-slash" className="circled red" />
 										<PRTimelineItemBody>
@@ -1089,7 +1090,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 										</PRTimelineItemBody>
 									</PRTimelineItem>
 									{/* <PRFoot /> */}
-								</>
+								</div>
 							);
 						}
 					}

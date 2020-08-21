@@ -109,7 +109,7 @@ export function PlusMenu(props: PlusMenuProps) {
 		menuItems.push({
 			icon: <Icon name="review" />,
 			label: "Request a Code Review",
-			subtextWide: "Get feedback on your WIP",
+			subtextWide: "Get quick feedback on your WIP",
 			action: () => go(WebviewPanels.NewReview),
 			shortcut: ComposeKeybindings.review,
 			key: "review"

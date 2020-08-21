@@ -167,6 +167,7 @@ export const CreatePullRequestPanel = props => {
 	const { userStatus, reviewId, prLabel } = derivedState;
 
 	const [loading, setLoading] = useState(true);
+	const [loadingBranchInfo, setLoadingBranchInfo] = useState(false);
 	const [submitting, setSubmitting] = useState(false);
 
 	const [preconditionError, setPreconditionError] = useState({
@@ -428,6 +429,8 @@ export const CreatePullRequestPanel = props => {
 			return;
 		}
 
+		setLoadingBranchInfo(true);
+
 		let repoId: string = "";
 		if (!derivedState.reviewId) {
 			// if we're not creating a PR from a review, then get the current
@@ -484,6 +487,7 @@ export const CreatePullRequestPanel = props => {
 				} else {
 					setFormState({ type: "", message: "", url: "", id: "" });
 				}
+				setLoadingBranchInfo(false);
 			});
 	};
 
@@ -883,7 +887,8 @@ export const CreatePullRequestPanel = props => {
 											</PRDropdown>
 										</PRCompare>
 									</div>
-									{!loading && preconditionError.type ? null : (
+									{loadingBranchInfo && <LoadingMessage>Loading branch info...</LoadingMessage>}
+									{(!loading && preconditionError.type) || loadingBranchInfo ? null : (
 										<div>
 											<div className="control-group">
 												{!titleValidity && (
@@ -1020,7 +1025,7 @@ export const CreatePullRequestPanel = props => {
 							</div>
 						</fieldset>
 					</form>
-					{!loading && preconditionError.type && preconditionErrorMessages()}
+					{!loading && !loadingBranchInfo && preconditionError.type && preconditionErrorMessages()}
 				</div>
 			</span>
 		</Root>

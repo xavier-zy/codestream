@@ -20,6 +20,8 @@ export interface ProviderDisplay {
 	hasCustomFilters?: boolean;
 	customFilterExample?: string;
 	customFilterHelp?: string;
+
+	supportsPR2CR?: boolean;
 }
 
 export const PROVIDER_MAPPINGS: { [provider: string]: ProviderDisplay } = {
@@ -63,7 +65,8 @@ export const PROVIDER_MAPPINGS: { [provider: string]: ProviderDisplay } = {
 		customFilterExample: "Example: is:open milestone:jan assignee:@me",
 		customFilterHelp:
 			'See <a href="https://docs.github.com/en/github/searching-for-information-on-github/searching-issues-and-pull-requests">Searching issues</a> for a detailed list of qualifiers.',
-		supportsStartWork: true
+		supportsStartWork: true,
+		supportsPR2CR: true
 	},
 	github_enterprise: {
 		displayName: "GitHub Enterprise",

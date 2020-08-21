@@ -420,10 +420,7 @@ class CodeStreamDiffMarkersBuilder extends MarkersBuilder {
 			endLine: locationAtCurrentCommit.lineEnd - 1,
 			retryWithTrimmedEndOnFailure: true
 		});
-		const remoteDefaultBranchRevisionsPromises = git.getRemoteDefaultBranchHeadRevisions(repoPath, [
-			"upstream",
-			"origin"
-		]);
+		const remoteDefaultBranchRevisionsPromises = git.getRemoteDefaultBranchHeadRevisions(repoPath);
 		const backtrackShas = [
 			...(await blameRevisionsPromises).map(revision => revision.sha),
 			...(await remoteDefaultBranchRevisionsPromises)

@@ -1723,6 +1723,451 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 		// };
 	}
 
+	_timelineQueryItemsString!: string;
+	get getTimelineQueryItemsString() {
+		if (this._timelineQueryItemsString) return this._timelineQueryItemsString;
+
+		// NOTE, all of the commented out timeline items below are ones
+		// we do not currently show in the UI
+		const items = [
+			// 	`... on AddedToProjectEvent {
+			// 	__typename
+			//   }`,
+			`... on AssignedEvent {
+			__typename
+			actor {
+			  login
+			  avatarUrl
+			}
+			createdAt
+			assignee {
+			  ... on User {
+				id
+				email
+				login
+			  }
+			}
+		  }`,
+			// 	`... on AutomaticBaseChangeFailedEvent {
+			// 	__typename
+			//   }`,
+			// 	`... on AutomaticBaseChangeSucceededEvent {
+			// 	__typename
+			//   }`,
+			// 	`... on BaseRefChangedEvent {
+			// 	__typename
+			//   }`,
+			// 	`... on BaseRefForcePushedEvent {
+			// 	__typename
+			//   }`,
+			`... on ClosedEvent {
+			__typename
+			actor {
+			  login
+			  avatarUrl
+			}
+			createdAt
+		  }`,
+			`... on CommentDeletedEvent {
+			__typename
+			actor {
+			  login
+			  avatarUrl
+			}
+		  }`,
+			// 	`... on ConnectedEvent {
+			// 	__typename
+			//   }`,
+			`... on ConvertToDraftEvent {
+			__typename
+			actor {
+			  login
+			  avatarUrl
+			}
+		  }`,
+			// 	`... on ConvertedNoteToIssueEvent {
+			// 	__typename
+			// 	id
+			//   }`,
+			// 	`... on CrossReferencedEvent {
+			// 	__typename
+			// 	id
+			// 	actor {
+			// 	  login
+			// 	  avatarUrl
+			// 	}
+			//   }`,
+			`... on DemilestonedEvent {
+			__typename
+			actor {
+			  login
+			  avatarUrl
+			  resourcePath
+			  url
+			}
+			id
+			milestoneTitle
+			createdAt
+		  }`,
+			// 	`... on DeployedEvent {
+			// 	__typename
+			// 	id
+			//   }`,
+			// 	`... on DeploymentEnvironmentChangedEvent {
+			// 	__typename
+			// 	id
+			//   }`,
+			// 	`... on DisconnectedEvent {
+			// 	__typename
+			// 	id
+			//   }`,
+			`... on HeadRefDeletedEvent {
+			__typename
+			actor {
+			  login
+			  avatarUrl
+			}
+		  }`,
+			`... on HeadRefForcePushedEvent {
+			__typename
+			actor {
+			  login
+			  avatarUrl
+			}
+			beforeCommit {
+			  abbreviatedOid
+			}
+			afterCommit {
+			  abbreviatedOid
+			}
+			createdAt
+			ref {
+			  name
+			}
+		  }`,
+			// 	`... on HeadRefRestoredEvent {
+			// 	__typename
+			//   }`,
+			`... on IssueComment {
+			__typename
+			id
+			author {
+			  login
+			  avatarUrl
+			}
+			body
+			bodyText
+			createdAt
+			includesCreatedEdit
+			isMinimized
+			minimizedReason
+			reactionGroups {
+			  content
+			  users(first: 10) {
+				nodes {
+				  login
+				}
+			  }
+			}
+			resourcePath
+		  }`,
+			`... on LabeledEvent {
+			__typename
+			label {
+			  name
+			  description
+			  color
+			}
+			actor {
+			  login
+			  avatarUrl
+			}
+			createdAt
+		  }`,
+			`... on LockedEvent {
+			__typename
+			actor {
+			  login
+			  avatarUrl
+			}
+			lockReason
+			createdAt
+		  }`,
+			`... on MarkedAsDuplicateEvent {
+			__typename
+		  }`,
+			`... on MentionedEvent {
+			__typename
+			actor {
+			  login
+			  avatarUrl
+			}
+			createdAt
+		  }`,
+			`... on MergedEvent {
+			__typename
+			actor {
+			  login
+			  avatarUrl
+			}
+			mergeRefName
+			createdAt
+			commit {
+			  abbreviatedOid
+			}
+		  }`,
+			`... on MilestonedEvent {
+			__typename
+			actor {
+			  login
+			  avatarUrl
+			  resourcePath
+			  url
+			}
+			createdAt
+			milestoneTitle
+		  }`,
+			// 	`... on MovedColumnsInProjectEvent {
+			// 	__typename
+			//   }`,
+			// 	`... on PinnedEvent {
+			// 	__typename
+			//   }`,
+			`... on PullRequestCommit {
+			__typename
+			id
+			commit {
+			  changedFiles
+			  author {
+				avatarUrl
+				name
+				user {
+				  login
+				}
+			  }
+			  committer {
+				avatarUrl
+				name
+				user {
+				  login
+				}
+			  }
+			  id
+			  message
+			  messageBody
+			  messageHeadline
+			  messageHeadlineHTML
+			  messageBodyHTML
+			  abbreviatedOid
+			  authoredDate
+			}
+		  }`,
+			// 	`... on PullRequestCommitCommentThread {
+			// 	__typename
+			//   }`,
+			`... on PullRequestReview {
+			  id
+			__typename
+			author {
+			  login
+			  avatarUrl
+			}
+			body
+			bodyText
+			createdAt
+			includesCreatedEdit
+			lastEditedAt
+			state
+			viewerDidAuthor
+			viewerCanUpdate
+			viewerCanReact
+			viewerCanDelete
+			resourcePath
+			comments(first: 15) {
+			  nodes {
+				author {
+				  login
+				  avatarUrl
+				}
+				authorAssociation
+				body
+				bodyText
+				createdAt
+				databaseId
+				draftedAt
+				diffHunk
+				id
+				includesCreatedEdit
+				isMinimized
+				lastEditedAt
+				minimizedReason
+				publishedAt
+				state
+				replyTo {
+				  diffHunk
+				  id
+				  body
+				  bodyText
+				}
+				commit {
+				  message
+				  messageBody
+				  messageHeadline
+				  oid
+				}
+				editor {
+				  login
+				  avatarUrl
+				}
+				outdated
+				path
+				position
+				pullRequestReview {
+				  body
+				  bodyText
+				}
+				reactionGroups {
+				  content
+				  users(first: 10) {
+					nodes {
+					  login
+					}
+				  }
+				}
+				resourcePath
+			  }
+			}
+			authorAssociation
+			bodyHTML
+		  }`,
+			// 	`... on PullRequestReviewThread {
+			// 	__typename
+			//   }`,
+			`... on PullRequestRevisionMarker {
+			__typename
+			createdAt
+			pullRequest {
+			  state
+			}
+			lastSeenCommit {
+			  abbreviatedOid
+			  status {
+				state
+			  }
+			}
+		  }`,
+			// 	`... on ReadyForReviewEvent {
+			// 	__typename
+			//   }`,
+			`... on ReferencedEvent {
+			__typename
+			actor {
+			  login
+			  avatarUrl
+			}
+			commit {
+			  messageBody
+			  messageHeadline
+			  status {
+				state
+			  }
+			  oid
+			}
+		  }`,
+			`... on RemovedFromProjectEvent {
+			__typename
+		  }`,
+			`... on RenamedTitleEvent {
+			__typename
+			actor {
+			  login
+			  avatarUrl
+			}
+			currentTitle
+			previousTitle
+			createdAt
+		  }`,
+			`... on ReopenedEvent {
+			__typename
+			actor {
+			  login
+			  avatarUrl
+			}
+			createdAt
+		  }`,
+			// 	`... on ReviewDismissedEvent {
+			// 	__typename
+			//   }`,
+			// 	`... on ReviewRequestRemovedEvent {
+			// 	__typename
+			//   }`,
+			`... on ReviewRequestedEvent {
+			__typename
+			actor {
+			  login
+			  avatarUrl
+			}
+		  }`,
+			// 	`... on SubscribedEvent {
+			// 	__typename
+			//   }`,
+			// 	`... on TransferredEvent {
+			// 	__typename
+			//   }`,
+			`... on UnassignedEvent {
+			__typename
+			actor {
+			  login
+			  avatarUrl
+			}
+			createdAt
+			assignee {
+			  ... on User {
+				id
+				email
+				login
+			  }
+			}
+		  }`,
+			`... on UnlabeledEvent {
+			__typename
+			label {
+			  color
+			  name
+			  description
+			}
+			actor {
+			  login
+			  avatarUrl
+			}
+			createdAt
+		  }`,
+			`... on UnlockedEvent {
+			__typename
+			actor {
+			  login
+			  avatarUrl
+			}
+			createdAt
+		  }`
+			// 	`... on UnmarkedAsDuplicateEvent {
+			// 	__typename
+			//   }`,
+			// 	`... on UnpinnedEvent {
+			// 	__typename
+			//   }`,
+			// 	`... on UnsubscribedEvent {
+			// 	__typename
+			//   }`,
+			// 	`... on UserBlockedEvent {
+			// 	__typename
+			//   }`
+		];
+
+		this._timelineQueryItemsString = items.join("\n");
+		return this._timelineQueryItemsString;
+	}
+
 	async pullRequestTimelineQuery(
 		owner: string,
 		repo: string,
@@ -1902,438 +2347,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 					  }
 					  __typename
 					  nodes {
-						... on UserBlockedEvent {
-						  __typename
-						}
-						... on AddedToProjectEvent {
-						  __typename
-						}
-						... on AssignedEvent {
-						  __typename
-						  actor {
-							login
-							avatarUrl
-						  }
-						  createdAt
-						  assignee {
-							... on User {
-							  id
-							  email
-							  login
-							}
-						  }
-						}
-						... on AutomaticBaseChangeFailedEvent {
-						  __typename
-						}
-						... on AutomaticBaseChangeSucceededEvent {
-						  __typename
-						}
-						... on BaseRefChangedEvent {
-						  __typename
-						}
-						... on BaseRefForcePushedEvent {
-						  __typename
-						}
-						... on ClosedEvent {
-						  __typename
-						  actor {
-							login
-							avatarUrl
-						  }
-						  createdAt
-						}
-						... on IssueComment {
-						  __typename
-						  id
-						  author {
-							login
-							avatarUrl
-						  }
-						  body
-						  bodyText
-						  createdAt
-						  includesCreatedEdit
-						  isMinimized
-						  minimizedReason
-						  reactionGroups {
-							content
-							users(first: 10) {
-							  nodes {
-								login
-							  }
-							}
-						  }
-						  resourcePath
-						}
-						... on HeadRefRestoredEvent {
-						  __typename
-						}
-						... on HeadRefForcePushedEvent {
-						  __typename
-						  actor {
-							login
-							avatarUrl
-						  }
-						  beforeCommit {
-							abbreviatedOid
-						  }
-						  afterCommit {
-							abbreviatedOid
-						  }
-						  createdAt
-						  ref {
-							name
-						  }
-						}
-						... on HeadRefDeletedEvent {
-						  __typename
-						  actor {
-							login
-							avatarUrl
-						  }
-						}
-						... on DisconnectedEvent {
-						  __typename
-						  id
-						}
-						... on DeploymentEnvironmentChangedEvent {
-						  __typename
-						  id
-						}
-						... on DeployedEvent {
-						  __typename
-						  id
-						}
-						... on DemilestonedEvent {
-						  __typename
-						  actor {
-							login
-							avatarUrl
-							resourcePath
-							url
-						  }
-						  id
-						  milestoneTitle
-						  createdAt
-						}
-						... on CrossReferencedEvent {
-						  __typename
-						  id
-						  actor {
-							login
-							avatarUrl
-						  }
-						}
-						... on ConvertedNoteToIssueEvent {
-						  __typename
-						  id
-						}
-						... on ConvertToDraftEvent {
-						  __typename
-						  actor {
-							login
-							avatarUrl
-						  }
-						}
-						... on ConnectedEvent {
-						  __typename
-						}
-						... on CommentDeletedEvent {
-						  __typename
-						  actor {
-							login
-							avatarUrl
-						  }
-						}
-						... on LabeledEvent {
-						  __typename
-						  label {
-							name
-							description
-							color
-						  }
-						  actor {
-							login
-							avatarUrl
-						  }
-						  createdAt
-						}
-						... on LockedEvent {
-						  __typename
-						  actor {
-							login
-							avatarUrl
-						  }
-						  lockReason
-						  createdAt
-						}
-						... on MarkedAsDuplicateEvent {
-						  __typename
-						}
-						... on UnsubscribedEvent {
-						  __typename
-						}
-						... on UnpinnedEvent {
-						  __typename
-						}
-						... on UnmarkedAsDuplicateEvent {
-						  __typename
-						}
-						... on UnlockedEvent {
-						  __typename
-						  actor {
-							login
-							avatarUrl
-						  }
-						  createdAt
-						}
-						... on UnlabeledEvent {
-						  __typename
-						  label {
-							color
-							name
-							description
-						  }
-						  actor {
-							login
-							avatarUrl
-						  }
-						  createdAt
-						}
-						... on UnassignedEvent {
-						  __typename
-						  actor {
-							login
-							avatarUrl
-						  }
-						  createdAt
-						  assignee {
-							... on User {
-							  id
-							  email
-							  login
-							}
-						  }
-						}
-						... on TransferredEvent {
-						  __typename
-						}
-						... on SubscribedEvent {
-						  __typename
-						}
-						... on ReviewRequestedEvent {
-						  __typename
-						  actor {
-							login
-							avatarUrl
-						  }
-						}
-						... on ReviewRequestRemovedEvent {
-						  __typename
-						}
-						... on ReviewDismissedEvent {
-						  __typename
-						}
-						... on ReopenedEvent {
-						  __typename
-						  actor {
-							login
-							avatarUrl
-						  }
-						  createdAt
-						}
-						... on RenamedTitleEvent {
-						  __typename
-						  actor {
-							login
-							avatarUrl
-						  }
-						  currentTitle
-						  previousTitle
-						  createdAt
-						}
-						... on RemovedFromProjectEvent {
-						  __typename
-						}
-						... on ReferencedEvent {
-						  __typename
-						  actor {
-							login
-							avatarUrl
-						  }
-						  commit {
-							messageBody
-							messageHeadline
-							status {
-							  state
-							}
-							oid
-						  }
-						}
-						... on ReadyForReviewEvent {
-						  __typename
-						}
-						... on PullRequestRevisionMarker {
-						  __typename
-						  createdAt
-						  pullRequest {
-							state
-						  }
-						  lastSeenCommit {
-							abbreviatedOid
-							status {
-							  state
-							}
-						  }
-						}
-						... on PullRequestReviewThread {
-						  __typename
-						}
-						... on PullRequestReview {
-							id
-						  __typename
-						  author {
-							login
-							avatarUrl
-						  }
-						  body
-						  bodyText
-						  createdAt
-						  includesCreatedEdit
-						  lastEditedAt
-						  state
-						  viewerDidAuthor
-						  viewerCanUpdate
-						  viewerCanReact
-						  viewerCanDelete
-						  resourcePath
-						  comments(first: 15) {
-							nodes {
-							  author {
-								login
-								avatarUrl
-							  }
-							  authorAssociation
-							  body
-							  bodyText
-							  createdAt
-							  databaseId
-							  draftedAt
-							  diffHunk
-							  id
-							  includesCreatedEdit
-							  isMinimized
-							  lastEditedAt
-							  minimizedReason
-							  publishedAt
-							  state
-							  replyTo {
-								diffHunk
-								id
-								body
-								bodyText
-							  }
-							  commit {
-								message
-								messageBody
-								messageHeadline
-								oid
-							  }
-							  editor {
-								login
-								avatarUrl
-							  }
-							  outdated
-							  path
-							  position
-							  pullRequestReview {
-								body
-								bodyText
-							  }
-							  reactionGroups {
-								content
-								users(first: 10) {
-								  nodes {
-									login
-								  }
-								}
-							  }
-							  resourcePath
-							}
-						  }
-						  authorAssociation
-						  bodyHTML
-						}
-						... on PullRequestCommitCommentThread {
-						  __typename
-						}
-						... on PullRequestCommit {
-						  __typename
-						  id
-						  commit {
-							changedFiles
-							author {
-							  avatarUrl
-							  name
-							  user {
-								login
-							  }
-							}
-							committer {
-							  avatarUrl
-							  name
-							  user {
-							    login
-							  }
-							}
-							id
-							message
-							messageBody
-							messageHeadline
-							messageHeadlineHTML
-							messageBodyHTML
-							abbreviatedOid
-							authoredDate
-						  }
-						}
-						... on PinnedEvent {
-						  __typename
-						}
-						... on MovedColumnsInProjectEvent {
-						  __typename
-						}
-						... on MilestonedEvent {
-						  __typename
-						  actor {
-							login
-							avatarUrl
-							resourcePath
-							url
-						  }
-						  createdAt
-						  milestoneTitle
-						}
-						... on MergedEvent {
-						  __typename
-						  actor {
-							login
-							avatarUrl
-						  }
-						  mergeRefName
-						  createdAt
-						  commit {
-							abbreviatedOid
-						  }
-						}
-						... on MentionedEvent {
-						  __typename
-						  actor {
-							login
-							avatarUrl
-						  }
-						  createdAt
-						}
+						  ${this.getTimelineQueryItemsString}
 					  }
 					}
 					milestone {

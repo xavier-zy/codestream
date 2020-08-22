@@ -1,7 +1,8 @@
 import React, { useEffect, useState, useCallback } from "react";
 import {
 	FetchThirdPartyPullRequestPullRequest,
-	FetchAllRemotesRequestType
+	FetchAllRemotesRequestType,
+	GetReposScmRequestType
 } from "@codestream/protocols/agent";
 import { HostApi } from "..";
 import { ChangesetFile } from "./Review/ChangesetFile";
@@ -10,12 +11,15 @@ import { CodeStreamState } from "@codestream/webview/store";
 import Icon from "./Icon";
 import {
 	ShowNextChangedFileNotificationType,
-	ShowPreviousChangedFileNotificationType
+	ShowPreviousChangedFileNotificationType,
+	EditorRevealRangeRequestType
 } from "@codestream/protocols/webview";
 import { WriteTextFileRequestType, ReadTextFileRequestType } from "@codestream/protocols/agent";
 import { useDidMount } from "../utilities/hooks";
 import { CompareLocalFilesRequestType } from "../ipc/host.protocol";
 import { URI } from "vscode-uri";
+import * as path from "path-browserify";
+import { Range } from "vscode-languageserver-types";
 
 // const VISITED_REVIEW_FILES = "review:changeset-file-list";
 const NOW = new Date().getTime(); // a rough timestamp so we know when the file was visited
@@ -51,6 +55,7 @@ export const PullRequestFilesChanged = (props: {
 	});
 
 	const [visitedFiles, setVisitedFiles] = React.useState({ _latest: 0 });
+	const [currentRepoRoot, setCurrentRepoRoot] = React.useState("");
 
 	const visitFile = (visitedKey: string, index: number) => {
 		const newVisitedFiles = { ...visitedFiles, [visitedKey]: NOW, _latest: index };
@@ -149,19 +154,31 @@ export const PullRequestFilesChanged = (props: {
 		const f = filesChanged[index];
 		const visitedKey = [f.file].join(":");
 
-		// if (changeset.repoId && props.repoRoots) {
-		// 	const repoRoot = props.repoRoots[changeset.repoId];
-		// 	const response = HostApi.instance.send(EditorRevealRangeRequestType, {
-		// 		uri: path.join(repoRoot, f.file),
-		// 		range: Range.create(0, 0, 0, 0)
-		// 	});
+		let repoRoot = currentRepoRoot;
+		if (!repoRoot) {
+			const response = await HostApi.instance.send(GetReposScmRequestType, {
+				inEditorOnly: true
+			});
+			if (!response.repositories) return;
+			const currentRepoInfo = response.repositories.find(
+				r => r.id === derivedState.currentRepo!.id
+			);
+			if (currentRepoInfo) {
+				setCurrentRepoRoot(currentRepoInfo.path);
+				repoRoot = currentRepoInfo.path;
+			}
+		}
 
-		// 	if (props.withTelemetry && pr.id) {
-		// 		HostApi.instance.track("PR File Viewed", {
-		// 			"PR ID": pr.id
-		// 		});
-		// 	}
-		// }
+		const response = HostApi.instance.send(EditorRevealRangeRequestType, {
+			uri: path.join(repoRoot, f.file),
+			range: Range.create(0, 0, 0, 0)
+		});
+
+		if (props.withTelemetry && pr.id) {
+			HostApi.instance.track("PR File Viewed", {
+				"PR ID": pr.id
+			});
+		}
 	};
 
 	const latest = visitedFiles[key] ? visitedFiles[key]._latest : 0;

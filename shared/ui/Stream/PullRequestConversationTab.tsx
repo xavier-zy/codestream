@@ -17,7 +17,8 @@ import {
 	CreatePullRequestCommentRequest,
 	ExecuteThirdPartyTypedType,
 	MergeMethod,
-	MergePullRequestRequest
+	MergePullRequestRequest,
+	FetchThirdPartyPullRequestPullRequest
 } from "@codestream/protocols/agent";
 import { markdownify } from "./Markdowner";
 import {
@@ -69,27 +70,56 @@ const UL = styled.ul`
 	margin: 20px 0;
 `;
 
-export const Author = (
-	<Tooltip title="You are the author of this pull request" placement="bottom">
-		<div className="author">Author</div>
-	</Tooltip>
-);
+// https://docs.github.com/en/graphql/reference/enums#commentauthorassociation
+const AUTHOR_ASSOCIATION_MAP = {
+	COLLABORATOR: ["Collaborator", "Author has been invited to collaborate on the repository."],
+	CONTRIBUTOR: ["Contributor", "Author has previously committed to the repository."],
+	FIRST_TIMER: ["First Timer", "Author has not previously committed to GitHub."],
+	FIRST_TIME_CONTRIBUTOR: [
+		"First Time Contributor",
+		"Author has not previously committed to the repository."
+	],
+	MEMBER: ["Member", "Author is a member of the organization that owns the repository."],
+	NONE: ["None", "Author has no association with the repository."],
+	OWNER: ["Owner", "Author is the owner of the repository."]
+};
 
-export const IAmMember = () => (
-	<Tooltip title="You are a member of this organization" placement="bottom">
-		<div className="member">Member</div>
-	</Tooltip>
-);
+export const PRAuthorBadges = (props: { pr: FetchThirdPartyPullRequestPullRequest; node: any }) => {
+	const { pr, node } = props;
 
-export const UserIsMember = login => {
-	return (
-		<Tooltip title={`${login} is a member of this organization`} placement="bottom">
-			<div className="member">Member</div>
-		</Tooltip>
-	);
+	const badges: any[] = [];
+
+	if (node.author.login === pr.author.login) {
+		const isMe = node.author.login === pr.viewer.login;
+		badges.push(
+			<Tooltip
+				key="author"
+				title={`${isMe ? "You are" : "This user is"} the author of this pull request`}
+				placement="bottom"
+			>
+				<div className="author">Author</div>
+			</Tooltip>
+		);
+	}
+
+	if (AUTHOR_ASSOCIATION_MAP[node.authorAssociation]) {
+		badges.push(
+			<Tooltip
+				key="association"
+				title={AUTHOR_ASSOCIATION_MAP[node.authorAssociation][1]}
+				placement="bottom"
+			>
+				<div className="member">{AUTHOR_ASSOCIATION_MAP[node.authorAssociation][0]}</div>
+			</Tooltip>
+		);
+	} else {
+		console.warn("NO MEMBER ASSOCIATION FOR: ", node.authorAssociation);
+	}
+	return <>{badges}</>;
 };
 
 const EMPTY_HASH = {};
+const EMPTY_ARRAY = [];
 let insertText;
 let insertNewline;
 let focusOnMessageInput;
@@ -100,7 +130,7 @@ export const PullRequestConversationTab = props => {
 	const derivedState = useSelector((state: CodeStreamState) => {
 		const currentUser = state.users[state.session.userId!] as CSMe;
 		const team = state.teams[state.context.currentTeamId];
-		const blameMap = team.settings ? team.settings.blameMap : {};
+		const blameMap = team.settings ? team.settings.blameMap : EMPTY_HASH;
 		const skipGitEmailCheck = state.preferences.skipGitEmailCheck;
 		const addBlameMapEnabled = isFeatureEnabled(state, "addBlameMap");
 		const { preferences } = state;
@@ -117,12 +147,12 @@ export const PullRequestConversationTab = props => {
 	});
 
 	const [text, setText] = useState("");
-	const [availableLabels, setAvailableLabels] = useState([]);
-	const [availableReviewers, setAvailableReviewers] = useState([]);
-	const [availableAssignees, setAvailableAssignees] = useState([]);
-	const [availableProjects, setAvailableProjects] = useState([]);
-	const [availableMilestones, setAvailableMilestones] = useState([]);
-	const [availableIssues, setAvailableIssues] = useState([]);
+	const [availableLabels, setAvailableLabels] = useState(EMPTY_ARRAY);
+	const [availableReviewers, setAvailableReviewers] = useState(EMPTY_ARRAY);
+	const [availableAssignees, setAvailableAssignees] = useState(EMPTY_ARRAY);
+	const [availableProjects, setAvailableProjects] = useState(EMPTY_ARRAY);
+	const [availableMilestones, setAvailableMilestones] = useState(EMPTY_ARRAY);
+	const [availableIssues, setAvailableIssues] = useState(EMPTY_ARRAY);
 	const [isLoadingComment, setIsLoadingComment] = useState(false);
 	const [isLoadingCommentAndClose, setIsLoadingCommentAndClose] = useState(false);
 	const [isLocking, setIsLocking] = useState(false);

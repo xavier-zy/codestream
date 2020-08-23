@@ -106,18 +106,18 @@ export const PullRequestCommitsTab = props => {
 	console.warn("DOMMITRS: ", byDay);
 	return (
 		<PRCommitContent>
-			{Object.keys(byDay).map(day => {
+			{Object.keys(byDay).map((day, index) => {
 				return (
-					<>
+					<div key={index}>
 						<PRCommitDay>
 							<Icon name="git-commit" />
 							Commits on {day}
 						</PRCommitDay>
 						<div>
-							{byDay[day].map(_ => {
+							{byDay[day].map((_, index) => {
 								const { author, committer } = _.commit;
 								return (
-									<PRCommitCard>
+									<PRCommitCard key={index}>
 										<h1>{_.commit.message}</h1>
 										{author.name !== committer.name && (
 											<>
@@ -162,7 +162,7 @@ export const PullRequestCommitsTab = props => {
 								);
 							})}
 						</div>
-					</>
+					</div>
 				);
 			})}
 		</PRCommitContent>

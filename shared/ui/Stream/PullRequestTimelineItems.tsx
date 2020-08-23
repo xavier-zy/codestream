@@ -30,7 +30,7 @@ import {
 import Tag from "./Tag";
 import { Link } from "./Link";
 import { PRHeadshotName } from "../src/components/HeadshotName";
-import { Author, IAmMember, UserIsMember } from "./PullRequestConversationTab";
+import { PRAuthorBadges } from "./PullRequestConversationTab";
 import { prettyPrintOne } from "code-prettify";
 import { escapeHtml } from "../utils";
 import * as Path from "path-browserify";
@@ -345,8 +345,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 							{pr.includesCreatedEdit ? <> • edited</> : ""}
 						</div>
 						<PRActionIcons>
-							{pr.author.login === me && Author}
-							{pr.author.login === me ? <IAmMember /> : <UserIsMember />}
+							<PRAuthorBadges pr={pr} node={pr} />
 							<PullRequestReactButton
 								pr={pr}
 								targetId={pr.id}
@@ -423,8 +422,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 													{item.includesCreatedEdit ? <> • edited</> : ""}
 												</div>
 												<PRActionIcons>
-													{myItem && Author}
-													{myPR ? <IAmMember /> : <UserIsMember />}
+													<PRAuthorBadges pr={pr} node={item} />
 													<PullRequestReactButton
 														pr={pr}
 														targetId={item.id}
@@ -516,8 +514,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 														{item.includesCreatedEdit ? <> • edited</> : ""}
 													</div>
 													<PRActionIcons>
-														{myItem && Author}
-														{myPR ? <IAmMember /> : <UserIsMember />}
+														<PRAuthorBadges pr={pr} node={item} />
 														<PullRequestReactButton
 															pr={pr}
 															targetId={item.id}
@@ -672,8 +669,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 																		{item.author.login}
 																		<Timestamp time={comment.createdAt} />
 																		<PRActionIcons>
-																			{myComment && Author}
-																			{myPR ? <IAmMember /> : <UserIsMember />}
+																			<PRAuthorBadges pr={pr} node={comment} />
 																			<PullRequestReactButton
 																				pr={pr}
 																				targetId={comment.id}
@@ -749,8 +745,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 																				<Timestamp time={c.createdAt} />
 																				{c.includesCreatedEdit ? <> • edited</> : ""}
 																				<PRActionIcons>
-																					{myComment && Author}
-																					{myPR ? <IAmMember /> : <UserIsMember />}
+																					<PRAuthorBadges pr={pr} node={c} />
 																					<PullRequestReactButton
 																						pr={pr}
 																						targetId={c.id}

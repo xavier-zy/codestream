@@ -372,6 +372,14 @@ export interface FetchThirdPartyPullRequestPullRequest {
 		login: string;
 		avatarUrl: string;
 	};
+	authorAssociation:
+		| "COLLABORATOR"
+		| "CONTRIBUTOR"
+		| "FIRST_TIMER"
+		| "FIRST_TIME_CONTRIBUTOR"
+		| "MEMBER"
+		| "NONE"
+		| "OWNER";
 	createdAt: string;
 	commits: {
 		totalCount: number;
@@ -485,6 +493,11 @@ export interface FetchThirdPartyPullRequestPullRequest {
 	reactionGroups: any;
 	includesCreatedEdit: boolean;
 	viewerDidAuthor: boolean;
+
+	/** this isn't part of the GH object model, but we add it for convenience */
+	viewer: {
+		login: string;
+	};
 }
 
 export interface FetchThirdPartyPullRequestRepository {

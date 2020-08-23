@@ -249,6 +249,16 @@ export class SimpleInlineCodemarks extends Component<Props, State> {
 		HostApi.instance.track("Spatial Error State", { "Error State": error });
 	}
 
+	componentWillReceiveProps(nextProps) {
+		Object.keys(nextProps)
+			.filter(key => {
+				return nextProps[key] !== this.props[key];
+			})
+			.map(key => {
+				console.warn("changed property:", key, "from", this.props[key], "to", nextProps[key]);
+			});
+	}
+
 	componentDidUpdate(prevProps: Props) {
 		this._updateEmitter.emit();
 		const { textEditorUri } = this.props;
@@ -1132,6 +1142,7 @@ export class SimpleInlineCodemarks extends Component<Props, State> {
 		const { currentReviewId, currentPullRequestId, composeCodemarkActive } = this.props;
 
 		const composeOpen = composeCodemarkActive ? true : false;
+		console.warn("RENDERIN IC");
 		return (
 			<div ref={this.root} className={cx("panel inline-panel full-height")}>
 				{currentReviewId ? (

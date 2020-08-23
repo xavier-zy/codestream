@@ -82,6 +82,9 @@ const Root = styled.div`
 	}
 `;
 
+const EMPTY_HASH = {};
+const EMPTY_ARRAY = [];
+
 export const PullRequest = () => {
 	const dispatch = useDispatch();
 	const derivedState = useSelector((state: CodeStreamState) => {
@@ -98,11 +101,11 @@ export const PullRequest = () => {
 	});
 
 	const [activeTab, setActiveTab] = useState(1);
-	const [ghRepo, setGhRepo] = useState<any>({});
+	const [ghRepo, setGhRepo] = useState<any>(EMPTY_HASH);
 	const [isLoadingPR, setIsLoadingPR] = useState(false);
 	const [isLoadingMessage, setIsLoadingMessage] = useState("");
 	const [pr, setPr] = useState<FetchThirdPartyPullRequestPullRequest | undefined>();
-	const [openRepos, setOpenRepos] = useState<ReposScm[]>([]);
+	const [openRepos, setOpenRepos] = useState<ReposScm[]>(EMPTY_ARRAY);
 	const [editingTitle, setEditingTitle] = useState(false);
 	const [savingTitle, setSavingTitle] = useState(false);
 	const [title, setTitle] = useState("");
@@ -218,7 +221,7 @@ export const PullRequest = () => {
 		fetch();
 	});
 
-	// console.warn("PR: ", pr);
+	console.warn("PR: ", pr);
 	// console.warn("REPO: ", ghRepo);
 	if (!pr) {
 		return (

@@ -41,6 +41,7 @@ export enum WebviewPanels {
 	NewReview = "new-review",
 	People = "people",
 	Profile = "profile",
+	PullRequest = "pull-request",
 	Review = "review",
 	Status = "status",
 	Tasks = "tasks",

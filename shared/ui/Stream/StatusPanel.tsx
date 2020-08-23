@@ -357,6 +357,8 @@ export const EMPTY_STATUS = {
 	invisible: false
 };
 
+const EMPTY_ARRAY = [];
+
 export const StatusPanel = () => {
 	const dispatch = useDispatch();
 	const derivedState = useSelector((state: CodeStreamState) => {
@@ -428,10 +430,10 @@ export const StatusPanel = () => {
 	const [manuallySelectedBranch, setManuallySelectedBranch] = useState("");
 	const [currentBranch, setCurrentBranch] = useState("");
 	const [editingBranch, setEditingBranch] = useState(false);
-	const [branches, setBranches] = useState([] as string[]);
+	const [branches, setBranches] = useState(EMPTY_ARRAY as string[]);
 	const [customBranchName, setCustomBranchName] = useState("");
 	const [configureBranchNames, setConfigureBranchNames] = useState(false);
-	const [openRepos, setOpenRepos] = useState<ReposScm[]>([]);
+	const [openRepos, setOpenRepos] = useState<ReposScm[]>(EMPTY_ARRAY);
 	const [repoUri, setRepoUri] = useState("");
 	const [currentRepoId, setCurrentRepoId] = useState("");
 	const [currentRepoName, setCurrentRepoName] = useState("");

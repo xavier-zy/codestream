@@ -64,13 +64,24 @@ export function reduceEditorContext(state = initialState, action: EditorContextA
 
 const emptyArray = [];
 
+let LAST_SELECTION: any = {};
 export const getCurrentSelection = createSelector(
 	(state: EditorContextState) => state.textEditorSelections || emptyArray,
-	selections => selections[0]
+	selections => {
+		if (JSON.stringify(selections[0]) !== JSON.stringify(LAST_SELECTION)) {
+			LAST_SELECTION = selections[0];
+		}
+		return selections[0];
+	}
 );
 
-export const getVisibleRanges = (state: EditorContextState) =>
-	state.textEditorVisibleRanges || emptyArray;
+let LAST_RANGES: any = [];
+export const getVisibleRanges = (state: EditorContextState) => {
+	if (JSON.stringify(state.textEditorVisibleRanges) !== JSON.stringify(LAST_RANGES)) {
+		LAST_RANGES = state.textEditorVisibleRanges || emptyArray;
+	}
+	return LAST_RANGES;
+};
 
 export const getLine0ForEditorLine = (
 	textEditorVisibleRanges: Range[],

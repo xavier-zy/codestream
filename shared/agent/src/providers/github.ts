@@ -1854,6 +1854,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 			  login
 			  avatarUrl
 			}
+			authorAssociation
 			body
 			bodyText
 			createdAt
@@ -1971,6 +1972,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 			  login
 			  avatarUrl
 			}
+			authorAssociation
 			body
 			bodyText
 			createdAt
@@ -2200,7 +2202,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 				  resetAt
 				}
 				viewer {
-					login
+				  login
 				}
 				repository(name:$name, owner:$owner) {
 				  id
@@ -2220,6 +2222,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 					  login
 					  avatarUrl
 					}
+					authorAssociation
 					createdAt
 					activeLockReason
 					locked
@@ -2247,6 +2250,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 								  login
 								  avatarUrl
 								}
+								authorAssociation
 								body
 								bodyHTML
 								createdAt
@@ -2333,6 +2337,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 							login
 							avatarUrl
 						  }
+						  authorAssociation
 						  state
 						}
 					  }
@@ -2475,6 +2480,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 				// only returns your pending reviews
 				response.repository.pullRequest.pendingReview = myPendingReview;
 			}
+			response.repository.pullRequest.viewer = { ...response.viewer };
 
 			Logger.debug(
 				`pullRequestTimelineQuery rateLimit=${JSON.stringify(response.rateLimit)} cursor=${cursor}`
@@ -2544,6 +2550,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 											author {
 												login
 											}
+											authorAssociation
 											body
 											bodyText
 											createdAt

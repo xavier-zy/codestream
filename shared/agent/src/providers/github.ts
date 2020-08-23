@@ -257,10 +257,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 		if (response?.repository?.pullRequest?.timelineItems != null) {
 			response.repository.pullRequest.timelineItems.nodes = allTimelineItems;
 		}
-		response.repository.pullRequest.repoUrl = response.repository.pullRequest.url.replace(
-			/\/pull\/\d+$/,
-			""
-		);
+		response.repository.pullRequest.repoUrl = response.repository.url;
 		response.repository.pullRequest.baseUrl = response.repository.url.replace(
 			response.repository.resourcePath,
 			""
@@ -268,6 +265,8 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 
 		response.repository.repoOwner = repoOwner!;
 		response.repository.repoName = repoName!;
+		response.repository.pullRequest.providerId = "github*com";
+		response.repository.providerId = "github*com";
 		return response;
 	}
 

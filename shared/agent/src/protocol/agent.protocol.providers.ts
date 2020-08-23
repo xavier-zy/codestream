@@ -358,6 +358,7 @@ export interface FetchThirdPartyPullRequestFilesResponse {
 
 export interface FetchThirdPartyPullRequestPullRequest {
 	id: string;
+	providerId: string; // e.g. "github*com"
 	// this is the parent repo
 	repository: {
 		name: string;
@@ -496,6 +497,7 @@ export interface FetchThirdPartyPullRequestRepository {
 	repoOwner: string;
 	repoName: string;
 	pullRequest: FetchThirdPartyPullRequestPullRequest;
+	providerId: string;
 }
 
 export interface FetchThirdPartyPullRequestResponse {

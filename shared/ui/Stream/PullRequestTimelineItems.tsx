@@ -82,7 +82,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 	//const submitReview = async (event?: React.SyntheticEvent) => {
 	// await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
 	// 	method: "submitReview",
-	// 	providerId: "github*com",
+	//  providerId: pr.providerId,
 	// 	params: {
 	// 		pullRequestId: pr.id!,
 	// 		text: reviewOptionText,
@@ -95,7 +95,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 	// const cancelReview = async (event?: React.SyntheticEvent) => {
 	// 	await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
 	// 		method: "submitReview",
-	// 		providerId: "github*com",
+	//      providerId: pr.providerId,
 	// 		params: {
 	// 			pullRequestId: pr.id!,
 	// 			text: reviewOptionText,
@@ -146,7 +146,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 
 			await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
 				method: "createCommentReply",
-				providerId: "github*com",
+				providerId: pr.providerId,
 				params: {
 					pullRequestId: pr.id,
 					commentId: databaseCommentId,
@@ -222,7 +222,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 						: type === "PR"
 						? "updatePullRequestBody"
 						: "updateReview",
-				providerId: "github*com",
+				providerId: pr.providerId,
 				params: {
 					pullRequestId: pr.id,
 					id,
@@ -288,7 +288,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 			setIsResolving(true);
 			await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
 				method: "resolveReviewThread",
-				providerId: "github*com",
+				providerId: pr.providerId,
 				params: {
 					threadId: threadId
 				}
@@ -307,7 +307,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 			setIsResolving(true);
 			await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
 				method: "unresolveReviewThread",
-				providerId: "github*com",
+				providerId: pr.providerId,
 				params: {
 					threadId: threadId
 				}
@@ -348,6 +348,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 							{pr.author.login === me && Author}
 							{pr.author.login === me ? <IAmMember /> : <UserIsMember />}
 							<PullRequestReactButton
+								pr={pr}
 								targetId={pr.id}
 								setIsLoadingMessage={setIsLoadingMessage}
 								fetch={fetch}
@@ -390,6 +391,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 					</PRCommentBody>
 
 					<PullRequestReactions
+						pr={pr}
 						targetId={pr.id}
 						setIsLoadingMessage={setIsLoadingMessage}
 						fetch={fetch}
@@ -424,6 +426,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 													{myItem && Author}
 													{myPR ? <IAmMember /> : <UserIsMember />}
 													<PullRequestReactButton
+														pr={pr}
 														targetId={item.id}
 														setIsLoadingMessage={setIsLoadingMessage}
 														fetch={fetch}
@@ -469,6 +472,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 												)}
 											</PRCommentBody>
 											<PullRequestReactions
+												pr={pr}
 												targetId={item.id}
 												setIsLoadingMessage={setIsLoadingMessage}
 												fetch={fetch}
@@ -515,6 +519,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 														{myItem && Author}
 														{myPR ? <IAmMember /> : <UserIsMember />}
 														<PullRequestReactButton
+															pr={pr}
 															targetId={item.id}
 															setIsLoadingMessage={setIsLoadingMessage}
 															fetch={fetch}
@@ -561,6 +566,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 													)}
 												</PRCommentBody>
 												<PullRequestReactions
+													pr={pr}
 													targetId={item.id}
 													setIsLoadingMessage={setIsLoadingMessage}
 													fetch={fetch}
@@ -669,6 +675,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 																			{myComment && Author}
 																			{myPR ? <IAmMember /> : <UserIsMember />}
 																			<PullRequestReactButton
+																				pr={pr}
 																				targetId={comment.id}
 																				setIsLoadingMessage={setIsLoadingMessage}
 																				fetch={fetch}
@@ -715,6 +722,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 															)}
 														</PRCodeCommentBody>
 														<PullRequestReactions
+															pr={pr}
 															targetId={comment.id}
 															setIsLoadingMessage={setIsLoadingMessage}
 															fetch={fetch}
@@ -744,6 +752,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 																					{myComment && Author}
 																					{myPR ? <IAmMember /> : <UserIsMember />}
 																					<PullRequestReactButton
+																						pr={pr}
 																						targetId={c.id}
 																						setIsLoadingMessage={setIsLoadingMessage}
 																						fetch={fetch}
@@ -790,6 +799,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 																			)}
 																		</PRCodeCommentBody>
 																		<PullRequestReactions
+																			pr={pr}
 																			targetId={c.id}
 																			setIsLoadingMessage={setIsLoadingMessage}
 																			fetch={fetch}

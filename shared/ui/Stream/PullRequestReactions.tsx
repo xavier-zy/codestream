@@ -9,9 +9,13 @@ import { PRReactions, PRReaction } from "./PullRequestComponents";
 import Tooltip from "./Tooltip";
 import { SmartFormattedList } from "./SmartFormattedList";
 import { HostApi } from "../webview-api";
-import { ExecuteThirdPartyTypedType } from "@codestream/protocols/agent";
+import {
+	ExecuteThirdPartyTypedType,
+	FetchThirdPartyPullRequestPullRequest
+} from "@codestream/protocols/agent";
 
 interface Props {
+	pr: FetchThirdPartyPullRequestPullRequest;
 	targetId: string;
 	setIsLoadingMessage: Function;
 	fetch: Function;
@@ -52,7 +56,7 @@ export const PullRequestReactButton = styled((props: Props) => {
 
 		await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
 			method: "toggleReaction",
-			providerId: "github*com",
+			providerId: props.pr.providerId,
 			params: {
 				subjectId: props.targetId,
 				content: key,
@@ -127,6 +131,7 @@ export const PullRequestReactButton = styled((props: Props) => {
 })``;
 
 interface ReactionProps {
+	pr: FetchThirdPartyPullRequestPullRequest;
 	reactionGroups: any;
 	targetId: string;
 	setIsLoadingMessage: Function;
@@ -164,7 +169,7 @@ export const PullRequestReactions = (props: ReactionProps) => {
 
 		await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
 			method: "toggleReaction",
-			providerId: "github*com",
+			providerId: props.pr.providerId,
 			params: {
 				subjectId: props.targetId,
 				content: key,
@@ -206,6 +211,7 @@ export const PullRequestReactions = (props: ReactionProps) => {
 			<PRReactions>
 				{reactions}
 				<PullRequestReactButton
+					pr={props.pr}
 					targetId={props.targetId}
 					setIsLoadingMessage={props.setIsLoadingMessage}
 					fetch={props.fetch}

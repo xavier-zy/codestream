@@ -118,7 +118,7 @@ export const PullRequestFilesChanged = (props: {
 					repoId: derivedState.currentRepo!.id!,
 					context: {
 						pullRequest: {
-							providerId: "github*com",
+							providerId: pr.providerId,
 							id: pr.id
 						}
 					}

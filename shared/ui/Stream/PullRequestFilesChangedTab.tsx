@@ -95,7 +95,7 @@ export const PullRequestFilesChangedTab = props => {
 		(async () => {
 			const data = await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
 				method: "getPullRequestFilesChanged",
-				providerId: "github*com",
+				providerId: pr.providerId,
 				params: {
 					pullRequestId: derivedState.currentPullRequestId
 				}

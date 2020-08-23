@@ -139,7 +139,7 @@ export const PullRequest = () => {
 		setSubmittingReview(true);
 		await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
 			method: "submitReview",
-			providerId: "github*com",
+			providerId: pr!.providerId,
 			params: {
 				pullRequestId: derivedState.currentPullRequestId!,
 				eventType: reviewType,
@@ -153,7 +153,7 @@ export const PullRequest = () => {
 		setIsLoadingMessage("Canceling Review...");
 		await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
 			method: "deletePullRequestReview",
-			providerId: "github*com",
+			providerId: pr!.providerId,
 			params: {
 				pullRequestId: derivedState.currentPullRequestId!,
 				pullRequestReviewId: id
@@ -172,7 +172,7 @@ export const PullRequest = () => {
 
 		await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
 			method: "updatePullRequestTitle",
-			providerId: "github*com",
+			providerId: pr!.providerId,
 			params: {
 				pullRequestId: derivedState.currentPullRequestId!,
 				title

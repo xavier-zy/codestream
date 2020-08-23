@@ -173,7 +173,9 @@ export function OpenReviews(props: Props) {
 									/>
 								</span>
 							</RoundedSearchLink>
-							<H4>Pull Requests</H4>
+							<H4>
+								Pull Requests <sup className="subtle">(beta)</sup>
+							</H4>
 						</div>
 						{prs.map(pr => {
 							console.warn("IN A PR: ", derivedState.repos);

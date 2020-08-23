@@ -151,7 +151,7 @@ export const PullRequestConversationTab = props => {
 			new ExecuteThirdPartyTypedType<CreatePullRequestCommentRequest, any>(),
 			{
 				method: "createPullRequestComment",
-				providerId: "github*com",
+				providerId: pr.providerId,
 				params: {
 					pullRequestId: derivedState.currentPullRequestId!,
 					text: text
@@ -169,7 +169,7 @@ export const PullRequestConversationTab = props => {
 			new ExecuteThirdPartyTypedType<CreatePullRequestCommentAndCloseRequest, any>(),
 			{
 				method: "createPullRequestCommentAndClose",
-				providerId: "github*com",
+				providerId: pr.providerId,
 				params: {
 					pullRequestId: derivedState.currentPullRequestId!,
 					text: text
@@ -187,7 +187,7 @@ export const PullRequestConversationTab = props => {
 			new ExecuteThirdPartyTypedType<CreatePullRequestCommentAndCloseRequest, any>(),
 			{
 				method: "createPullRequestCommentAndReopen",
-				providerId: "github*com",
+				providerId: pr.providerId,
 				params: {
 					pullRequestId: derivedState.currentPullRequestId!,
 					text: text
@@ -205,7 +205,7 @@ export const PullRequestConversationTab = props => {
 			new ExecuteThirdPartyTypedType<MergePullRequestRequest, boolean>(),
 			{
 				method: "mergePullRequest",
-				providerId: "github*com",
+				providerId: pr.providerId,
 				params: {
 					pullRequestId: derivedState.currentPullRequestId!,
 					mergeMethod: options.mergeMethod
@@ -235,7 +235,7 @@ export const PullRequestConversationTab = props => {
 
 		await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
 			method: "lockPullRequest",
-			providerId: "github*com",
+			providerId: pr.providerId,
 			params: {
 				pullRequestId: derivedState.currentPullRequestId!,
 				lockReason: reason
@@ -251,7 +251,7 @@ export const PullRequestConversationTab = props => {
 		setIsLoadingLocking(true);
 		await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
 			method: "unlockPullRequest",
-			providerId: "github*com",
+			providerId: pr.providerId,
 			params: {
 				pullRequestId: derivedState.currentPullRequestId!
 			}
@@ -285,7 +285,7 @@ export const PullRequestConversationTab = props => {
 	const fetchAvailableReviewers = async (e?) => {
 		const reviewers = await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
 			method: "getReviewers",
-			providerId: "github*com",
+			providerId: pr.providerId,
 			params: {
 				owner: ghRepo.repoOwner,
 				repo: ghRepo.repoName
@@ -315,7 +315,7 @@ export const PullRequestConversationTab = props => {
 	const toggleReviewer = async id => {
 		await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
 			method: "addReviewerToPullRequest",
-			providerId: "github*com",
+			providerId: pr.providerId,
 			params: {
 				owner: ghRepo.repoOwner,
 				repo: ghRepo.repoName,
@@ -329,7 +329,7 @@ export const PullRequestConversationTab = props => {
 	const fetchAvailableAssignees = async (e?) => {
 		const assignees = await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
 			method: "getReviewers",
-			providerId: "github*com",
+			providerId: pr.providerId,
 			params: {
 				owner: ghRepo.repoOwner,
 				repo: ghRepo.repoName
@@ -360,7 +360,7 @@ export const PullRequestConversationTab = props => {
 		setIsLoadingMessage(onOff ? "Adding Assignee..." : "Removing Assignee...");
 		await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
 			method: "setAssigneeOnPullRequest",
-			providerId: "github*com",
+			providerId: pr.providerId,
 			params: {
 				pullRequestId: derivedState.currentPullRequestId,
 				assigneeId: id,
@@ -373,7 +373,7 @@ export const PullRequestConversationTab = props => {
 	const fetchAvailableLabels = async (e?) => {
 		const labels = await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
 			method: "getLabels",
-			providerId: "github*com",
+			providerId: pr.providerId,
 			params: {
 				owner: ghRepo.repoOwner,
 				repo: ghRepo.repoName
@@ -412,7 +412,7 @@ export const PullRequestConversationTab = props => {
 		setIsLoadingMessage(onOff ? "Adding Label..." : "Removing Label...");
 		await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
 			method: "setLabelOnPullRequest",
-			providerId: "github*com",
+			providerId: pr.providerId,
 			params: {
 				pullRequestId: derivedState.currentPullRequestId,
 				labelId: id,
@@ -425,7 +425,7 @@ export const PullRequestConversationTab = props => {
 	const fetchAvailableProjects = async (e?) => {
 		const projects = await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
 			method: "getProjects",
-			providerId: "github*com",
+			providerId: pr.providerId,
 			params: {
 				owner: ghRepo.repoOwner,
 				repo: ghRepo.repoName
@@ -461,7 +461,7 @@ export const PullRequestConversationTab = props => {
 		setIsLoadingMessage(onOff ? "Adding to Project..." : "Removing from Project...");
 		await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
 			method: "toggleProjectOnPullRequest",
-			providerId: "github*com",
+			providerId: pr.providerId,
 			params: {
 				pullRequestId: derivedState.currentPullRequestId,
 				projectId: id,
@@ -474,7 +474,7 @@ export const PullRequestConversationTab = props => {
 	const fetchAvailableMilestones = async (e?) => {
 		const milestones = await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
 			method: "getMilestones",
-			providerId: "github*com",
+			providerId: pr.providerId,
 			params: {
 				owner: ghRepo.repoOwner,
 				repo: ghRepo.repoName
@@ -513,7 +513,7 @@ export const PullRequestConversationTab = props => {
 		setIsLoadingMessage(onOff ? "Adding Milestone..." : "Clearing Milestone...");
 		await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
 			method: "toggleMilestoneOnPullRequest",
-			providerId: "github*com",
+			providerId: pr.providerId,
 			params: {
 				pullRequestId: derivedState.currentPullRequestId,
 				milestoneId: id,
@@ -526,7 +526,7 @@ export const PullRequestConversationTab = props => {
 	const fetchAvailableIssues = async (e?) => {
 		const issues = await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
 			method: "getIssues",
-			providerId: "github*com",
+			providerId: pr.providerId,
 			params: {
 				owner: ghRepo.repoOwner,
 				repo: ghRepo.repoName
@@ -560,7 +560,7 @@ export const PullRequestConversationTab = props => {
 		setIsLoadingMessage(onOff ? "Adding Issue..." : "Removing Issue...");
 		await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
 			method: "setIssueOnPullRequest",
-			providerId: "github*com",
+			providerId: pr.providerId,
 			params: {
 				owner: ghRepo.repoOwner,
 				repo: ghRepo.repoName,
@@ -577,7 +577,7 @@ export const PullRequestConversationTab = props => {
 		setIsLoadingMessage(onOff ? "Subscribing..." : "Unsubscribing...");
 		await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
 			method: "updatePullRequestSubscription",
-			providerId: "github*com",
+			providerId: pr.providerId,
 			params: {
 				owner: ghRepo.repoOwner,
 				repo: ghRepo.repoName,

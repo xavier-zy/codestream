@@ -1142,7 +1142,6 @@ export class SimpleInlineCodemarks extends Component<Props, State> {
 		const { currentReviewId, currentPullRequestId, composeCodemarkActive } = this.props;
 
 		const composeOpen = composeCodemarkActive ? true : false;
-		console.warn("RENDERIN IC");
 		return (
 			<div ref={this.root} className={cx("panel inline-panel full-height")}>
 				{currentReviewId ? (

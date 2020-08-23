@@ -264,6 +264,10 @@ export const PRActionCommentCard = styled.div`
 	border-radius: 5px;
 	padding: 10px 15px;
 	margin-left: 60px;
+	&.shift-left {
+		margin-top: 10px;
+		margin-left: -10px;
+	}
 	margin-bottom: 15px;
 	z-index: 2;
 	h1 {
@@ -509,6 +513,7 @@ export const PRTimelineItem = styled.div`
 `;
 
 export const PRTimelineItemBody = styled.div`
+	flex-grow: 10;
 	${PRHeadshotName} {
 		color: var(--text-color-highlight);
 		font-weight: bold;

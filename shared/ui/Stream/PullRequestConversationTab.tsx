@@ -619,8 +619,6 @@ export const PullRequestConversationTab = props => {
 	};
 
 	// console.warn("ASSI: ", assigneeMenuItems);
-	const me = "ppezaris"; // FIXME
-	const meId = "MDQ6VXNlcjE0ODMwMjQ="; // FIXME
 	return (
 		<PRContent>
 			{isLocking && (
@@ -1014,7 +1012,8 @@ export const PullRequestConversationTab = props => {
 						))
 					) : (
 						<>
-							None yet&mdash;<a onClick={() => toggleAssignee(meId, true)}>assign yourself</a>
+							None yet&mdash;
+							<a onClick={() => toggleAssignee(pr.viewer.id, true)}>assign yourself</a>
 						</>
 					)}
 				</PRSection>

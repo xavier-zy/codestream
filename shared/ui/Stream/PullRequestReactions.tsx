@@ -67,7 +67,7 @@ export const PullRequestReactButton = styled((props: Props) => {
 	};
 
 	const isMine = (key: string) => {
-		const me = "ppezaris"; // FIXME
+		const me = props.pr.viewer.login;
 		if (!props.reactionGroups) return false;
 		const reaction = props.reactionGroups.find(_ => _.content === key);
 		if (!reaction) return false;
@@ -179,7 +179,7 @@ export const PullRequestReactions = (props: ReactionProps) => {
 		props.fetch();
 	};
 
-	const me = "ppezaris"; // FIXME
+	const me = props.pr.viewer.login;
 	const reactions = reactionGroups
 		.map((reaction, index) => {
 			const num = reaction.users ? reaction.users.nodes.length : 0;

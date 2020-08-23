@@ -2096,9 +2096,19 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 			}
 			createdAt
 		  }`,
-			// 	`... on ReviewDismissedEvent {
-			// 	__typename
-			//   }`,
+			`... on ReviewDismissedEvent {
+			__typename
+			actor {
+				login
+				avatarUrl
+			}
+			dismissalMessage
+			review {
+			  author {
+				login
+			  }
+			}
+		  }`,
 			// 	`... on ReviewRequestRemovedEvent {
 			// 	__typename
 			//   }`,
@@ -2202,6 +2212,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 				  resetAt
 				}
 				viewer {
+				  id
 				  login
 				}
 				repository(name:$name, owner:$owner) {

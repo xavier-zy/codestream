@@ -53,7 +53,6 @@ const ReviewIcons = {
 	APPROVED: <Icon name="check" className="circled green" />,
 	CHANGES_REQUESTED: <Icon name="plus-minus" className="circled red" />,
 	COMMENTED: <Icon name="eye" className="circled" />,
-	// FIXME
 	DISMISSED: <Icon name="x" className="circled" />,
 	PENDING: <Icon name="blank" className="circled" />
 };
@@ -330,8 +329,6 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 		return { currentUser };
 	});
 
-	const me = "ppezaris"; // FIXME
-	const myPR = pr.author.login === me;
 	const timelineNodes = pr.timelineItems.nodes;
 	return (
 		<div>
@@ -401,7 +398,6 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 
 			{timelineNodes.map((item, index) => {
 				// console.warn("TIMELINE ITEM: ", item);
-				const myItem = item.author && item.author.login === me;
 				switch (item.__typename) {
 					case "IssueComment":
 						return (
@@ -591,9 +587,6 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 											if (extension.startsWith(".")) {
 												extension = extension.substring(1);
 											}
-
-											// FIXME
-											const myComment = comment.author && comment.author.login === me;
 
 											let startLine = 1;
 											if (comment.diffHunk) {
@@ -1151,7 +1144,21 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 						);
 					}
 					case "ReviewDismissedEvent": {
-						return null; // FIXME
+						return (
+							<>
+								<PRTimelineItem key={index} className="tall">
+									<Icon name="x" className="circled" />
+									<PRTimelineItemBody>
+										<PRHeadshotName key={index} person={item.actor} />
+										dismissed <b>{item.review.author.login}</b>'s review
+										<Timestamp time={item.createdAt!} relative />
+										<PRActionCommentCard className="dark-header shift-left">
+											{item.dismissalMessage}
+										</PRActionCommentCard>
+									</PRTimelineItemBody>
+								</PRTimelineItem>
+							</>
+						);
 					}
 					default: {
 						console.warn(`timelineItem not found: ${item.__typename} item is: `, item);

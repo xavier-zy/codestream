@@ -496,6 +496,7 @@ export interface FetchThirdPartyPullRequestPullRequest {
 
 	/** this isn't part of the GH object model, but we add it for convenience */
 	viewer: {
+		id: string;
 		login: string;
 	};
 }

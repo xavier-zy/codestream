@@ -9,7 +9,7 @@ import styled from "styled-components";
 import { ExecuteThirdPartyTypedType } from "@codestream/protocols/agent";
 import { useDidMount } from "../utilities/hooks";
 import { HostApi } from "../webview-api";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { CodeStreamState } from "../store";
 import { PullRequestFilesChanged } from "./PullRequestFilesChanged";
 import { FileStatus } from "@codestream/protocols/api";
@@ -18,6 +18,7 @@ import { PRCommitCard } from "./PullRequestCommitsTab";
 import * as Path from "path-browserify";
 import { prettyPrintOne } from "code-prettify";
 import { escapeHtml } from "../utils";
+import { setUserPreference } from "./actions";
 
 const PRCommitContent = styled.div`
 	margin: 0 20px 20px 40px;
@@ -80,15 +81,20 @@ const STATUS_MAP = {
 
 export const PullRequestFilesChangedTab = props => {
 	const { pr, ghRepo } = props;
+	const dispatch = useDispatch();
 	const derivedState = useSelector((state: CodeStreamState) => {
 		return {
+			pullRequestFilesChangedMode: state.preferences.pullRequestFilesChangedMode || "files",
 			currentPullRequestId: state.context.currentPullRequestId
 		};
 	});
 
-	const [mode, setMode] = useState("files");
 	const [isLoading, setIsLoading] = useState(true);
 	const [filesChanged, setFilesChanged] = useState<any[]>([]);
+
+	const setMode = mode => {
+		dispatch(setUserPreference(["pullRequestFilesChangedMode"], mode));
+	};
 
 	useDidMount(() => {
 		setIsLoading(true);
@@ -191,6 +197,8 @@ export const PullRequestFilesChangedTab = props => {
 			}
 		});
 	};
+
+	const mode = derivedState.pullRequestFilesChangedMode;
 
 	return (
 		<PRCommitContent>

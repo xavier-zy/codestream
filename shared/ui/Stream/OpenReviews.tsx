@@ -19,8 +19,10 @@ import {
 	ExecuteThirdPartyTypedRequest,
 	GetMyPullRequestsResponse,
 	GetMyPullRequestsRequest,
-	ReposScm
+	ReposScm,
+	ExecuteThirdPartyRequestUntypedType
 } from "@codestream/protocols/agent";
+import { OpenUrlRequestType } from "@codestream/protocols/webview";
 
 interface Props {
 	openRepos: ReposScm[];
@@ -86,6 +88,30 @@ export function OpenReviews(props: Props) {
 			fetchPRs();
 		}
 	});
+
+	const goPR = async (url: string) => {
+		HostApi.instance
+			.send(ExecuteThirdPartyRequestUntypedType, {
+				method: "getPullRequestIdFromUrl",
+				providerId: "github*com",
+				params: { url }
+			})
+			.then((id: any) => {
+				if (id) {
+					dispatch(setCurrentReview(""));
+					dispatch(setCurrentPullRequest(id));
+				} else {
+					HostApi.instance.send(OpenUrlRequestType, {
+						url
+					});
+				}
+			})
+			.catch(e => {
+				HostApi.instance.send(OpenUrlRequestType, {
+					url
+				});
+			});
+	};
 
 	const { reviews, teamMembers } = derivedState;
 
@@ -160,7 +186,7 @@ export function OpenReviews(props: Props) {
 									<input
 										autoFocus
 										id="pr-search-input"
-										placeholder="Enter PR #"
+										placeholder="Enter PR URL"
 										type="text"
 										value={query}
 										onChange={e => setQuery(e.target.value)}
@@ -168,6 +194,9 @@ export function OpenReviews(props: Props) {
 											if (e.key == "Escape") {
 												setQuery("");
 												setQueryOpen(false);
+											}
+											if (e.key == "Enter") {
+												goPR(query);
 											}
 										}}
 									/>

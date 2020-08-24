@@ -207,9 +207,7 @@ export function OpenReviews(props: Props) {
 							</H4>
 						</div>
 						{prs.map(pr => {
-							console.warn("IN A PR: ", derivedState.repos);
 							const selected = derivedState.repos.find(repo => {
-								console.warn("COMPARING: ", repo, " TO ", pr);
 								return (
 									repo.currentBranch === pr.headRefName && repo.name === pr.headRepository.name
 								);
@@ -226,7 +224,7 @@ export function OpenReviews(props: Props) {
 									</div>
 									<div>
 										<span>{pr.title}</span>
-										<span className="subtle">{pr.bodyText}</span>
+										<span className="subtle">{pr.bodyText || pr.body}</span>
 									</div>
 									<div className="icons">
 										<Icon

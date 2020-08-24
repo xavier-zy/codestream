@@ -490,7 +490,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 										{item.state === "CHANGES_REQUESTED" && "requested changes"}
 										{item.state === "COMMENTED" && "reviewed"}
 										{item.state === "DISMISSED" && "dismissed this review"}
-										{item.state === "PENDING" && "left a pending review" /* FIXME */}
+										{item.state === "PENDING" && "left a pending review"}
 										<Timestamp time={item.createdAt!} relative />
 									</PRTimelineItemBody>
 								</PRTimelineItem>

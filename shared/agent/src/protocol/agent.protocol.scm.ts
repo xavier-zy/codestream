@@ -345,3 +345,23 @@ export const GetFileContentsAtRevisionRequestType = new RequestType<
 	void,
 	void
 >("codestream/scm/file/diff");
+
+export interface FetchForkPointRequest {
+	/**
+	 * CodeStream repositoryId
+	 * */
+	repoId: string;
+	baseSha: string;
+	headSha: string;
+}
+
+export interface FetchForkPointResponse {
+	sha: string;
+}
+
+export const FetchForkPointRequestType = new RequestType<
+	FetchForkPointRequest,
+	FetchForkPointResponse,
+	void,
+	void
+>("codestream/scm/forkPoint");

@@ -2,7 +2,8 @@ import React, { useEffect, useState, useCallback } from "react";
 import {
 	FetchThirdPartyPullRequestPullRequest,
 	FetchAllRemotesRequestType,
-	GetReposScmRequestType
+	GetReposScmRequestType,
+	FetchForkPointRequestType
 } from "@codestream/protocols/agent";
 import { HostApi } from "..";
 import { ChangesetFile } from "./Review/ChangesetFile";
@@ -66,6 +67,7 @@ export const PullRequestFilesChanged = (props: {
 
 	const [visitedFiles, setVisitedFiles] = React.useState({ _latest: 0 });
 	const [currentRepoRoot, setCurrentRepoRoot] = React.useState("");
+	const [forkPointSha, setForkPointSha] = React.useState("");
 
 	const visitFile = (visitedKey: string, index: number) => {
 		const newVisitedFiles = { ...visitedFiles, [visitedKey]: NOW, _latest: index };
@@ -86,6 +88,18 @@ export const PullRequestFilesChanged = (props: {
 		HostApi.instance.send(FetchAllRemotesRequestType, {
 			repoId: derivedState.currentRepo!.id!
 		});
+		(async () => {
+			const forkPointResponse = await HostApi.instance.send(FetchForkPointRequestType, {
+				repoId: derivedState.currentRepo!.id!,
+				baseSha: props.pr.baseRefOid,
+				headSha: props.pr.headRefOid
+			});
+			if (forkPointResponse && forkPointResponse.sha) {
+				setForkPointSha(forkPointResponse.sha);
+			} else {
+				console.warn("Could not find fork point");
+			}
+		})();
 	});
 
 	useEffect(() => {
@@ -122,7 +136,7 @@ export const PullRequestFilesChanged = (props: {
 				console.warn(props.pr.baseRefOid + " vs ", props.pr.headRefOid);
 				await HostApi.instance.send(CompareLocalFilesRequestType, {
 					baseBranch: props.pr.baseRefName,
-					baseSha: props.pr.baseRefOid,
+					baseSha: forkPointSha,
 					headBranch: props.pr.headRefName,
 					headSha: props.pr.headRefOid,
 					filePath: f.file,
@@ -144,7 +158,7 @@ export const PullRequestFilesChanged = (props: {
 				}
 			})(i);
 		},
-		[repoId, visitedFiles]
+		[repoId, visitedFiles, forkPointSha]
 	);
 
 	const nextFile = () => {

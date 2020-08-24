@@ -5,7 +5,12 @@ import { URI } from "vscode-uri";
 import { Ranges } from "../api/extensions";
 import { GitNumStat } from "../git/models/numstat";
 import { Logger } from "../logger";
-import { CodeStreamDiffUriData } from "../protocol/agent.protocol";
+import {
+	CodeStreamDiffUriData,
+	FetchForkPointRequestType,
+	FetchForkPointRequest,
+	FetchForkPointResponse
+} from "../protocol/agent.protocol";
 import {
 	BlameAuthor,
 	CoAuthors,
@@ -1177,6 +1182,21 @@ export class ScmManager {
 		const contents = (await git.getFileContentForRevision(filePath, request.sha)) || "";
 		return {
 			content: contents
+		};
+	}
+
+	@log()
+	@lspHandler(FetchForkPointRequestType)
+	async getForkPointRequestType(request: FetchForkPointRequest): Promise<FetchForkPointResponse> {
+		const { git } = SessionContainer.instance();
+
+		const repo = await git.getRepositoryById(request.repoId);
+		if (!repo) throw new Error(`Could not load repo with ID ${request.repoId}`);
+
+		const forkPointSha =
+			(await git.getRepoBranchForkPoint(repo.path, request.baseSha, request.headSha)) || "";
+		return {
+			sha: forkPointSha
 		};
 	}
 }

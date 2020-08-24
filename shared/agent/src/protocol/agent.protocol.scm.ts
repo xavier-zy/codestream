@@ -326,8 +326,10 @@ export interface GetFileContentsAtRevisionRequest {
 	 * relative file path
 	 * */
 	path: string;
-	leftSha: string;
-	rightSha: string;
+	/**
+	 * git commit sha
+	 * */
+	sha: string;
 
 	fetchAllRemotes?: boolean;
 }

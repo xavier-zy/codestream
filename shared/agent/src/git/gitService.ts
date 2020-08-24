@@ -568,25 +568,6 @@ export class GitService implements IGitService, Disposable {
 		return commits;
 	}
 
-	async getRepoBranchForkPoint(
-		repoUriOrPath: URI | string,
-		sha1: string,
-		sha2: string
-	): Promise<string | undefined> {
-		const repoPath = typeof repoUriOrPath === "string" ? repoUriOrPath : repoUriOrPath.fsPath;
-
-		let data: string | undefined;
-		try {
-			data = await git({ cwd: repoPath }, "merge-base", sha1, sha2, "--");
-			if (data) {
-				data = data.trim();
-			}
-		} catch {}
-		if (!data) return undefined;
-
-		return data;
-	}
-
 	async getRepoHeadRevision(repoUri: URI): Promise<string | undefined>;
 	async getRepoHeadRevision(repoPath: string): Promise<string | undefined>;
 	async getRepoHeadRevision(repoUriOrPath: URI | string): Promise<string | undefined> {

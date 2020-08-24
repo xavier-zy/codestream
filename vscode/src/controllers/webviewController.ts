@@ -107,6 +107,7 @@ import { Logger } from "../logger";
 import { Functions, log } from "../system";
 import { CodeStreamWebviewPanel, toLoggableIpcMessage } from "../webviews/webviewPanel";
 import { BuiltInCommands } from "../constants";
+import * as csUri from "../system/uri";
 
 const emptyObj = {};
 
@@ -1066,6 +1067,11 @@ export class WebviewController implements Disposable {
 				case "codestream-diff":
 					const csReviewDiffInfo = Strings.parseCSReviewDiffUrl(originalUri.toString());
 					if (csReviewDiffInfo && csReviewDiffInfo.version === "right") {
+						uri = originalUri;
+						break;
+					}
+					const codeStreamDiffURi = csUri.Uris.isCodeStreamDiffUri(originalUri.toString());
+					if (codeStreamDiffURi) {
 						uri = originalUri;
 					}
 					break;

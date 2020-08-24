@@ -20,6 +20,15 @@ import { CompareLocalFilesRequestType } from "../ipc/host.protocol";
 import { URI } from "vscode-uri";
 import * as path from "path-browserify";
 import { Range } from "vscode-languageserver-types";
+import styled from "styled-components";
+
+const MetaIcons = styled.div`
+	margin-bottom: 10px;
+	height: 14px;
+	.icon {
+		margin-right: 5px;
+	}
+`;
 
 // const VISITED_REVIEW_FILES = "review:changeset-file-list";
 const NOW = new Date().getTime(); // a rough timestamp so we know when the file was visited
@@ -50,7 +59,8 @@ export const PullRequestFilesChanged = (props: {
 			repos: state.repos,
 			// TODO more solid filtering
 			currentRepo: Object.values(state.repos).find(_ => _.name === props.pr.repository.name),
-			numFiles: props.filesChanged.length
+			numFiles: props.filesChanged.length,
+			isInVscode: state.ide.name === "VSC"
 		};
 	});
 
@@ -269,5 +279,46 @@ export const PullRequestFilesChanged = (props: {
 		return files;
 	}, [pr, loading, derivedState.matchFile, latest, visitedFiles]);
 
-	return <>{changedFiles}</>;
+	if (changedFiles.length > 1) {
+		const isMacintosh = navigator.appVersion.includes("Macintosh");
+		const nextFileKeyboardShortcut = () => (isMacintosh ? `⌥ F6` : "Alt-F6");
+		const previousFileKeyboardShortcut = () => (isMacintosh ? `⇧ ⌥ F6` : "Shift-Alt-F6");
+		return (
+			<>
+				<MetaIcons>
+					<Icon
+						onClick={nextFile}
+						name="arrow-down"
+						className="clickable"
+						placement="top"
+						delay={1}
+						title={
+							derivedState.isInVscode && (
+								<span>
+									Next File <span className="keybinding">{nextFileKeyboardShortcut()}</span>
+								</span>
+							)
+						}
+					/>
+					<Icon
+						onClick={prevFile}
+						name="arrow-up"
+						className="clickable"
+						placement="top"
+						delay={1}
+						title={
+							derivedState.isInVscode && (
+								<span>
+									Previous File <span className="keybinding">{previousFileKeyboardShortcut()}</span>
+								</span>
+							)
+						}
+					/>
+				</MetaIcons>
+				{changedFiles}
+			</>
+		);
+	} else {
+		return <>{changedFiles}</>;
+	}
 };

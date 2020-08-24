@@ -99,7 +99,7 @@ export const PullRequestFilesChanged = (props: {
 		];
 
 		return () => disposables.forEach(disposable => disposable.dispose());
-	}, [pr, filesChanged]);
+	}, [pr, filesChanged, visitedFiles]);
 
 	const goDiff = useCallback(
 		i => {

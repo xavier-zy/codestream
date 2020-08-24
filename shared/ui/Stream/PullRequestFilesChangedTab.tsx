@@ -163,7 +163,7 @@ export const PullRequestFilesChangedTab = props => {
 					<div className="header">
 						{renderLineNum("")}
 						{renderLineNum("")}
-						{syntaxHighlight(_)}
+						<pre className="prettyprint">{_}</pre>
 					</div>
 				);
 			} else if (_.indexOf("+") === 0) {

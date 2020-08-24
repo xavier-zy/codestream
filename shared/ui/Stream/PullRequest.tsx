@@ -315,7 +315,9 @@ export const PullRequest = () => {
 							<PRSubmitReviewButton>
 								<Button variant="success" onClick={() => setFinishReviewOpen(!finishReviewOpen)}>
 									Finish your review
-									<PRBadge>3</PRBadge>
+									<PRBadge>
+										{pr.pendingReview.comments ? pr.pendingReview.comments.totalCount : 0}
+									</PRBadge>
 									<Icon name="chevron-down" />
 								</Button>
 								{finishReviewOpen && (
@@ -391,7 +393,8 @@ export const PullRequest = () => {
 													Cancel review
 												</Button>
 												<div className="subtle" style={{ margin: "10px 0 0 10px" }}>
-													3 pending comments
+													{pr.pendingReview.comments ? pr.pendingReview.comments.totalCount : 0}{" "}
+													pending comments
 												</div>
 											</ButtonRow>
 										</PRCommentCard>

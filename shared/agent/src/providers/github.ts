@@ -2344,6 +2344,9 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 					  reviews(first: 10, states:PENDING) {
 						nodes {
 						  id
+						  comments(first:100) {
+							totalCount
+						  }
 						  author {
 							login
 							avatarUrl
@@ -2488,8 +2491,10 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 				const myPendingReview = response.repository.pullRequest.reviews.nodes.find(
 					(_: any) => _.author.login === response.viewer.login
 				);
-				// only returns your pending reviews
-				response.repository.pullRequest.pendingReview = myPendingReview;
+				if (myPendingReview) {
+					// only returns your pending reviews
+					response.repository.pullRequest.pendingReview = myPendingReview;
+				}
 			}
 			response.repository.pullRequest.viewer = { ...response.viewer };
 

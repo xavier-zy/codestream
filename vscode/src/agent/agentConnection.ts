@@ -600,12 +600,16 @@ export class CodeStreamAgentConnection implements Disposable {
 		getFileContentsAtRevision(
 			repoId: string,
 			path: string,
-			sha: string
+			leftSha: string,
+			rightSha: string,
+			fetchAllRemotes?: boolean
 		): Promise<GetFileContentsAtRevisionResponse> {
 			return this._connection.sendRequest(GetFileContentsAtRevisionRequestType, {
 				repoId: repoId,
 				path: path,
-				sha: sha
+				leftSha: leftSha,
+				rightSha: rightSha,
+				fetchAllRemotes: fetchAllRemotes
 			});
 		}
 	})(this);

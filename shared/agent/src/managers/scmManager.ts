@@ -1174,7 +1174,15 @@ export class ScmManager {
 		if (request.fetchAllRemotes) {
 			await git.fetchAllRemotes(repo.path);
 		}
-		const contents = (await git.getFileContentForRevision(filePath, request.sha)) || "";
+
+		const sha = await git.getRepoBranchForkPoint(repo.path, request.leftSha, request.rightSha);
+		if (!sha) {
+			Logger.warn(`Could not find fork point between ${request.leftSha} and ${request.rightSha}`);
+			return {
+				content: ""
+			};
+		}
+		const contents = (await git.getFileContentForRevision(filePath, sha)) || "";
 		return {
 			content: contents
 		};

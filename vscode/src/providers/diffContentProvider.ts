@@ -192,7 +192,9 @@ export class ReviewDiffContentProvider implements TextDocumentContentProvider, D
 			const contents = await Container.agent.scm.getFileContentsAtRevision(
 				codeStreamDiff.repoId,
 				codeStreamDiff.path,
-				codeStreamDiff.side === "left" ? codeStreamDiff.leftSha : codeStreamDiff.rightSha
+				codeStreamDiff.leftSha,
+				codeStreamDiff.rightSha,
+				true
 			);
 			return contents.content! || "";
 		}

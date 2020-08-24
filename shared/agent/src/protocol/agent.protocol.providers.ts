@@ -451,6 +451,9 @@ export interface FetchThirdPartyPullRequestPullRequest {
 			login: string;
 			avatarUrl: string;
 		};
+		comments?: {
+			totalCount: number;
+		};
 	};
 	timelineItems: {
 		__typename: string;

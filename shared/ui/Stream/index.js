@@ -226,7 +226,7 @@ export class SimpleStream extends Component {
 		let { activePanel, activeModal } = this.props;
 		const { q } = this.state;
 
-		console.warn("RENDERING STREAM");
+		// console.warn("RENDERING STREAM");
 		if (activePanel === WebviewPanels.LandingRedirect) activePanel = WebviewPanels.Status;
 
 		const isConfigurationPanel =

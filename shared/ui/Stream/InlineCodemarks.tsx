@@ -249,15 +249,15 @@ export class SimpleInlineCodemarks extends Component<Props, State> {
 		HostApi.instance.track("Spatial Error State", { "Error State": error });
 	}
 
-	componentWillReceiveProps(nextProps) {
-		Object.keys(nextProps)
-			.filter(key => {
-				return nextProps[key] !== this.props[key];
-			})
-			.map(key => {
-				console.warn("changed property:", key, "from", this.props[key], "to", nextProps[key]);
-			});
-	}
+	// componentWillReceiveProps(nextProps) {
+	// 	Object.keys(nextProps)
+	// 		.filter(key => {
+	// 			return nextProps[key] !== this.props[key];
+	// 		})
+	// 		.map(key => {
+	// 			console.warn("changed property:", key, "from", this.props[key], "to", nextProps[key]);
+	// 		});
+	// }
 
 	componentDidUpdate(prevProps: Props) {
 		this._updateEmitter.emit();

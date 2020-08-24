@@ -119,6 +119,7 @@ export const PullRequestFilesChanged = (props: {
 				const f = filesChanged[index];
 				const visitedKey = [f.file].join(":");
 
+				console.warn(props.pr.baseRefOid + " vs ", props.pr.headRefOid);
 				await HostApi.instance.send(CompareLocalFilesRequestType, {
 					baseBranch: props.pr.baseRefName,
 					baseSha: props.pr.baseRefOid,

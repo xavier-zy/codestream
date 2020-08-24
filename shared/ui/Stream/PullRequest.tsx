@@ -383,18 +383,13 @@ export const PullRequest = () => {
 													</Tooltip>
 												</Radio>
 											</RadioGroup>
-											{/* 
-											<a onClick={submitPullRequestReview}>comment</a>{" "}
-											<a onClick={approvePullRequest}>approve</a>{" "}
-											<a onClick={requestChangesToPullRequest}>request changes</a>{" "}
-											<a onClick={e => deletePullRequestReview(e, pr.pendingReview.id)}>
-												delete review
-											</a>*/}
 											<ButtonRow>
 												<Button isLoading={submittingReview} onClick={submitReview}>
 													Submit review
 												</Button>
-												<Button onClick={e => cancelReview(e, "FIXME")}>Cancel review</Button>
+												<Button onClick={e => cancelReview(e, pr.pendingReview.id)}>
+													Cancel review
+												</Button>
 												<div className="subtle" style={{ margin: "10px 0 0 10px" }}>
 													3 pending comments
 												</div>

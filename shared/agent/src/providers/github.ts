@@ -1387,6 +1387,56 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 		return true;
 	}
 
+	async getReviewersForPullRequest(request: { pullRequestId: string }) {
+		const ownerData = await this.getRepoOwnerFromPullRequestId(request.pullRequestId);
+		const response = await this.client.request<any>(
+			`query GetReviewersForPullRequest($owner:String!, $name:String!, $pullRequestNumber:Int!) {
+			repository(name:$name, owner:$owner) {
+			  pullRequest(number: $pullRequestNumber) {
+				id
+				reviewRequests(first: 25) {
+				  edges {
+					node {
+					  id
+					  requestedReviewer {
+						... on User {
+						  id
+						  login
+						}
+					  }
+					}
+				  }
+				}
+			  }
+			}
+		  }`,
+			{
+				name: ownerData.name,
+				owner: ownerData.owner,
+				pullRequestNumber: ownerData.pullRequestNumber
+			}
+		);
+		return response?.repository?.pullRequest?.reviewRequests?.edges.map(
+			(_: any) => _.node.requestedReviewer.id
+		);
+	}
+
+	async addReviewerToPullRequest(request: { pullRequestId: string; userId: string }) {
+		const currentReviewers = await this.getReviewersForPullRequest(request);
+		const response = await this.client.request<any>(
+			`mutation RequestReviews($pullRequestId: String!, $userIds:[String!]!) {
+				requestReviews(input: {pullRequestId:$pullRequestId, userIds:$userIds}) {
+			  clientMutationId
+			}
+		  }`,
+			{
+				pullRequestId: request.pullRequestId,
+				userIds: (currentReviewers || []).concat(request.userId)
+			}
+		);
+		return response;
+	}
+
 	async createPullRequestCommentAndClose(request: { pullRequestId: string; text: string }) {
 		if (request.text) {
 			await this.client.request<any>(
@@ -2335,13 +2385,14 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 						nodes {
 						  requestedReviewer {
 							... on User {
+							  id
 							  login
 							  avatarUrl
 							}
 						  }
 						}
 					  }
-					  reviews(first: 10, states:PENDING) {
+					  reviews(last: 20) {
 						nodes {
 						  id
 						  comments(first:100) {
@@ -2488,9 +2539,13 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 				response.repository.pullRequest.reviews &&
 				response.repository.pullRequest.reviews.nodes
 			) {
-				const myPendingReview = response.repository.pullRequest.reviews.nodes.find(
-					(_: any) => _.author.login === response.viewer.login
+				let nodes = response.repository.pullRequest.reviews.nodes.filter(
+					(_: any) => _.state === "PENDING"
 				);
+				nodes = response.repository.pullRequest.reviews.nodes.sort(
+					(a: any, b: any) => a.createdAt - b.createdAt
+				);
+				const myPendingReview = nodes.find((_: any) => _.author.login === response.viewer.login);
 				if (myPendingReview) {
 					// only returns your pending reviews
 					response.repository.pullRequest.pendingReview = myPendingReview;

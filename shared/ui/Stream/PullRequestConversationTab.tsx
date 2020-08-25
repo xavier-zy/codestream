@@ -297,20 +297,26 @@ export const PullRequestConversationTab = props => {
 
 	var reviewersHash: any = {};
 	// the list of reviewers isn't in a single spot...
+	// these are reviews that have been requested (though not started)
 	pr.reviewRequests &&
 		pr.reviewRequests.nodes.reduce((map, obj) => {
-			map[obj.requestedReviewer.login] = obj.requestedReviewer.avatarUrl;
+			map[obj.requestedReviewer.id] = {
+				...obj.requestedReviewer,
+				isPending: true
+			};
 			return map;
 		}, reviewersHash);
+	// these are in-progress reviews
 	pr.reviews &&
 		pr.reviews.nodes.reduce((map, obj) => {
-			map[obj.author.login] = obj.author.avatarUrl;
+			map[obj.author.id] = obj.author;
 			return map;
 		}, reviewersHash);
 
 	const reviewers = Object.keys(reviewersHash).map(key => {
-		return { login: key, avatarUrl: reviewersHash[key] };
-	}) as { login: string; avatarUrl: string }[];
+		const val = reviewersHash[key];
+		return { ...val, id: key };
+	}) as { id: string; login: string; avatarUrl: string; isPending: boolean }[];
 
 	const fetchAvailableReviewers = async (e?) => {
 		const reviewers = await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
@@ -325,15 +331,15 @@ export const PullRequestConversationTab = props => {
 	};
 
 	const reviewerMenuItems = React.useMemo(() => {
-		const reviewerIds = reviewers.map(_ => _.login);
+		const reviewerIds = reviewers.map(_ => _.id);
 		if (availableReviewers && availableReviewers.length) {
 			const menuItems = availableReviewers.map((_: any) => ({
-				checked: reviewerIds.includes(_.login),
+				checked: reviewerIds.includes(_.id),
 				label: <PRHeadshotName person={_} className="no-padding" />,
 				subtle: _.name,
 				searchLabel: `${_.login}:${_.name}`,
 				key: _.id,
-				action: () => toggleReviewer(_.id)
+				action: () => (_.isPending ? removeReviewer(_.id) : addReviewer(_.id))
 			})) as any;
 			menuItems.unshift({ type: "search", placeholder: "Type or choose a name" });
 			return menuItems;
@@ -342,15 +348,24 @@ export const PullRequestConversationTab = props => {
 		}
 	}, [availableReviewers, pr]);
 
-	const toggleReviewer = async id => {
+	const removeReviewer = async id => {
+		// await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
+		// 	method: "removeReviewerFromPullRequest",
+		// 	providerId: pr.providerId,
+		// 	params: {
+		// 		pullRequestId: pr.id,
+		// 		userId: id
+		// 	}
+		// });
+		// fetch();
+	};
+	const addReviewer = async id => {
 		await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
 			method: "addReviewerToPullRequest",
 			providerId: pr.providerId,
 			params: {
-				owner: ghRepo.repoOwner,
-				repo: ghRepo.repoName,
-				pullRequestId: pr.number,
-				reviewerId: id
+				pullRequestId: pr.id,
+				userId: id
 			}
 		});
 		fetch();
@@ -985,10 +1000,25 @@ export const PullRequestConversationTab = props => {
 						? reviewers.map((_, index) => (
 								<span key={index}>
 									<PRHeadshotName key={_.avatarUrl} person={_} size={20} />
+									{_.isPending && (
+										<Tooltip placement="top" content={"Awaiting requested review from " + _.login}>
+											<svg
+												className="octicon octicon-dot-fill"
+												style={{ color: "#dbab09" }}
+												viewBox="0 0 16 16"
+												version="1.1"
+												width="16"
+												height="16"
+												aria-hidden="true"
+											>
+												<path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8z"></path>
+											</svg>
+										</Tooltip>
+									)}
 									<br />
 								</span>
 						  ))
-						: "No reviews"}
+						: "No reviewers"}
 				</PRSection>
 				<PRSection>
 					<h1>

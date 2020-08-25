@@ -55,7 +55,7 @@ const ReviewIcons = {
 	CHANGES_REQUESTED: <Icon name="plus-minus" className="circled red" />,
 	COMMENTED: <Icon name="eye" className="circled" />,
 	DISMISSED: <Icon name="x" className="circled" />,
-	PENDING: <Icon name="blank" className="circled" />
+	PENDING: <Icon name="eye" className="circled" />
 };
 
 interface Props {
@@ -481,7 +481,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 					case "PullRequestReview": {
 						const reviewIcon = ReviewIcons[item.state];
 						return (
-							<PRComment key={index}>
+							<PRComment key={index} className={`review-${item.state}`}>
 								<PRTimelineItem key={index}>
 									<PRHeadshot key={index} size={40} person={item.author} />
 									{reviewIcon}
@@ -491,7 +491,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 										{item.state === "CHANGES_REQUESTED" && "requested changes"}
 										{item.state === "COMMENTED" && "reviewed"}
 										{item.state === "DISMISSED" && "dismissed this review"}
-										{item.state === "PENDING" && "left a pending review"}
+										{item.state === "PENDING" && "started a review"}
 										<Timestamp time={item.createdAt!} relative />
 									</PRTimelineItemBody>
 								</PRTimelineItem>
@@ -795,67 +795,71 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 																);
 															})}
 													</PRCodeComment>
-													<PRCodeCommentReply>
-														<Headshot key={index} size={30} person={derivedState.currentUser} />
+													{item.state !== "PENDING" && (
+														<>
+															<PRCodeCommentReply>
+																<Headshot key={index} size={30} person={derivedState.currentUser} />
 
-														<div
-															style={{
-																margin: "0 0 0 40px",
-																border: "1px solid var(--base-border-color)"
-															}}
-															className={openComments[comment.databaseId] ? "open-comment" : ""}
-															onClick={e => handleTextInputFocus(comment.databaseId)}
-														>
-															<MessageInput
-																multiCompose
-																text={pendingComments[comment.databaseId] || ""}
-																placeholder="Reply..."
-																onChange={e => handleTextInputChanged(e, comment.databaseId)}
-																onSubmit={e => handleComment(e, comment.databaseId)}
-																__onDidRender={__onDidRender}
-															/>
-														</div>
-														{openComments[comment.databaseId] && (
-															<PRButtonRow>
-																<Button
-																	variant="secondary"
-																	onClick={e => handleCancelComment(e, comment.databaseId)}
+																<div
+																	style={{
+																		margin: "0 0 0 40px",
+																		border: "1px solid var(--base-border-color)"
+																	}}
+																	className={openComments[comment.databaseId] ? "open-comment" : ""}
+																	onClick={e => handleTextInputFocus(comment.databaseId)}
 																>
-																	Cancel
-																</Button>
+																	<MessageInput
+																		multiCompose
+																		text={pendingComments[comment.databaseId] || ""}
+																		placeholder="Reply..."
+																		onChange={e => handleTextInputChanged(e, comment.databaseId)}
+																		onSubmit={e => handleComment(e, comment.databaseId)}
+																		__onDidRender={__onDidRender}
+																	/>
+																</div>
+																{openComments[comment.databaseId] && (
+																	<PRButtonRow>
+																		<Button
+																			variant="secondary"
+																			onClick={e => handleCancelComment(e, comment.databaseId)}
+																		>
+																			Cancel
+																		</Button>
 
-																<Button
-																	variant="primary"
-																	isLoading={isSubmitting}
-																	onClick={e => handleComment(e, comment.databaseId)}
-																>
-																	Comment
-																</Button>
+																		<Button
+																			variant="primary"
+																			isLoading={isSubmitting}
+																			onClick={e => handleComment(e, comment.databaseId)}
+																		>
+																			Comment
+																		</Button>
+																	</PRButtonRow>
+																)}
+															</PRCodeCommentReply>
+															<div style={{ height: "15px" }}></div>
+															<PRButtonRow className="align-left border-top">
+																{comment.isResolved && (
+																	<Button
+																		variant="secondary"
+																		isLoading={isResolving}
+																		onClick={e => handleUnresolve(e, comment.threadId)}
+																	>
+																		Unresolve conversation
+																	</Button>
+																)}
+
+																{!comment.isResolved && (
+																	<Button
+																		variant="secondary"
+																		isLoading={isResolving}
+																		onClick={e => handleResolve(e, comment.threadId)}
+																	>
+																		Resolve conversation
+																	</Button>
+																)}
 															</PRButtonRow>
-														)}
-													</PRCodeCommentReply>
-													<div style={{ height: "15px" }}></div>
-													<PRButtonRow className="align-left border-top">
-														{comment.isResolved && (
-															<Button
-																variant="secondary"
-																isLoading={isResolving}
-																onClick={e => handleUnresolve(e, comment.threadId)}
-															>
-																Unresolve conversation
-															</Button>
-														)}
-
-														{!comment.isResolved && (
-															<Button
-																variant="secondary"
-																isLoading={isResolving}
-																onClick={e => handleResolve(e, comment.threadId)}
-															>
-																Resolve conversation
-															</Button>
-														)}
-													</PRButtonRow>
+														</>
+													)}
 												</PRThreadedCommentCard>
 											);
 										})}

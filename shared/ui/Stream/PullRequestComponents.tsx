@@ -385,6 +385,16 @@ export const PRThreadedCommentCard = styled.div`
 	.vscode-dark & {
 		background: var(--base-background-color);
 	}
+	.review-PENDING & {
+		border-color: rgb(249, 197, 19);
+	}
+	.review-PENDING & .row-with-icon-actions {
+		background: rgb(255, 253, 239);
+		margin: -10px -15px !important;
+		padding: 10px 15px 5px 15px !important;
+		height: auto !important;
+		border-radius: 5px 5px 0 0;
+	}
 	border-radius: 5px;
 	padding: 10px 15px;
 	margin: 15px 0 15px 90px;
@@ -834,12 +844,12 @@ export const PRReviewer = styled.div`
 export const PRCloneURLButtons = styled.div`
 	display: inline-flex;
 	border-radius: 5px;
-	overflow: hidden;	
+	overflow: hidden;
 	margin-right: 5px;
-	> button { 
+	> button {
 		margin-left: 1px;
 	}
-`
+`;
 export const PRCloneURL = styled.div`
 	display: flex;
 	flex: 1;
@@ -847,11 +857,11 @@ export const PRCloneURL = styled.div`
 	justify-content: space-between;
 	border: 1px solid var(--base-border-color);
 	border-radius: 5px;
-	padding: 5px 0 5px 10px;	
-	.icon { 
+	padding: 5px 0 5px 10px;
+	.icon {
 		margin: 0 10px;
 	}
-`
+`;
 
 export const PRCloneURLWrapper = styled.div`
 	display: flex;
@@ -861,19 +871,19 @@ export const PRCloneURLWrapper = styled.div`
 			margin-bottom: 1em;
 		}
 	}
-`
+`;
 
 export const PRCopyableTerminal = styled.div`
 	position: relative;
-    code {
-    	width: 100%;
-    }
-    pre {
-    	width: 100%;
-    }
-    .icon {
+	code {
+		width: 100%;
+	}
+	pre {
+		width: 100%;
+	}
+	.icon {
 		position: absolute !important;
-    	top: 10px;
-    	right: 10px;    
-    }
-`
+		top: 10px;
+		right: 10px;
+	}
+`;

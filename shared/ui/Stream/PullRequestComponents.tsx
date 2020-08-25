@@ -389,9 +389,9 @@ export const PRThreadedCommentCard = styled.div`
 		border-color: rgb(249, 197, 19);
 	}
 	.review-PENDING & .row-with-icon-actions {
-		background: rgb(255, 253, 239);
+		background: rgba(255, 223, 0, 0.1);
 		margin: -10px -15px !important;
-		padding: 10px 15px 5px 15px !important;
+		padding: 10px 15px 3px 15px !important;
 		height: auto !important;
 		border-radius: 5px 5px 0 0;
 	}
@@ -716,6 +716,7 @@ export const PRActionIcons = styled.div`
 	margin-left: auto;
 	align-items: top;
 	text-align: right;
+	.pending,
 	.member,
 	.author {
 		display: inline-block;
@@ -727,8 +728,12 @@ export const PRActionIcons = styled.div`
 		font-size: smaller;
 		color: var(--text-color-subtle);
 	}
-	.author {
-		margin-right: 5px;
+	.pending {
+		border-color: rgb(249, 197, 19);
+		background: rgba(255, 223, 0, 0.1);
+	}
+	div + div {
+		margin-left: 5px;
 	}
 	.icon {
 		opacity: 0.5;

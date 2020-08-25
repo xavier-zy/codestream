@@ -91,10 +91,18 @@ const AUTHOR_ASSOCIATION_MAP = {
 	OWNER: ["Owner", "Author is the owner of the repository."]
 };
 
-export const PRAuthorBadges = (props: { pr: FetchThirdPartyPullRequestPullRequest; node: any }) => {
-	const { pr, node } = props;
+export const PRAuthorBadges = (props: {
+	pr: FetchThirdPartyPullRequestPullRequest;
+	node: any;
+	isPending?: boolean;
+}) => {
+	const { pr, node, isPending } = props;
 
 	const badges: any[] = [];
+
+	if (isPending) {
+		badges.push(<div className="pending">Pending</div>);
+	}
 
 	if (node.author.login === pr.author.login) {
 		const isMe = node.author.login === pr.viewer.login;

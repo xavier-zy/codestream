@@ -661,7 +661,11 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 																		{item.author.login}
 																		<Timestamp time={comment.createdAt} />
 																		<PRActionIcons>
-																			<PRAuthorBadges pr={pr} node={comment} />
+																			<PRAuthorBadges
+																				pr={pr}
+																				node={comment}
+																				isPending={item.state === "PENDING"}
+																			/>
 																			<PullRequestReactButton
 																				pr={pr}
 																				targetId={comment.id}

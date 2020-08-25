@@ -830,3 +830,50 @@ export const PRReviewer = styled.div`
 		}
 	}
 `;
+
+export const PRCloneURLButtons = styled.div`
+	display: inline-flex;
+	border-radius: 5px;
+	overflow: hidden;	
+	margin-right: 5px;
+	> button { 
+		margin-left: 1px;
+	}
+`
+export const PRCloneURL = styled.div`
+	display: flex;
+	flex: 1;
+	align-items: center;
+	justify-content: space-between;
+	border: 1px solid var(--base-border-color);
+	border-radius: 5px;
+	padding: 5px 0 5px 10px;	
+	.icon { 
+		margin: 0 10px;
+	}
+`
+
+export const PRCloneURLWrapper = styled.div`
+	display: flex;
+	@media only screen and (max-width: 630px) {
+		flex-direction: column;
+		${PRCloneURLButtons} {
+			margin-bottom: 1em;
+		}
+	}
+`
+
+export const PRCopyableTerminal = styled.div`
+	position: relative;
+    code {
+    	width: 100%;
+    }
+    pre {
+    	width: 100%;
+    }
+    .icon {
+		position: absolute !important;
+    	top: 10px;
+    	right: 10px;    
+    }
+`

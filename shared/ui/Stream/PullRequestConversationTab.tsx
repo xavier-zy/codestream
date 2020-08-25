@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useReducer } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { OpenUrlRequestType } from "@codestream/protocols/webview";
 import { CodeStreamState } from "../store";
 import { Button } from "../src/components/Button";
 import { CSMe } from "@codestream/protocols/api";
@@ -39,7 +40,11 @@ import {
 	PRBranch,
 	PRTimelineItem,
 	PRAction,
-	PRReviewer
+	PRReviewer,
+	PRCloneURLButtons,
+	PRCloneURL,
+	PRCopyableTerminal,
+	PRCloneURLWrapper
 } from "./PullRequestComponents";
 import { ButtonRow } from "./StatusPanel";
 import { PullRequestTimelineItems } from "./PullRequestTimelineItems";
@@ -53,6 +58,7 @@ import { Link } from "./Link";
 import { PullRequestReactButton, PullRequestReactions } from "./PullRequestReactions";
 import { setUserPreference } from "./actions";
 import { PullRequestCommentMenu } from "./PullRequestCommentMenu";
+import copy from "copy-to-clipboard";
 
 const Circle = styled.div`
 	width: 12px;
@@ -160,6 +166,9 @@ export const PullRequestConversationTab = props => {
 	const [isLockingReason, setIsLockingReason] = useState("");
 	const [isLoadingLocking, setIsLoadingLocking] = useState(false);
 	const [mergeMethod, setMergeMethod] = useState(derivedState.defaultMergeMethod);
+	const [clInstructionsIsOpen, toggleClInstructions] = useReducer((open: boolean) => !open, false);
+	const [cloneURLType, setCloneURLType] = useState("https");
+	const [cloneURL, setCloneURL] = useState(`${pr.repository.url}.git`);
 
 	const __onDidRender = ({ insertTextAtCursor, insertNewlineAtCursor, focus }) => {
 		insertText = insertTextAtCursor;
@@ -885,10 +894,95 @@ export const PullRequestConversationTab = props => {
 									<PRIconButton className="gray-background">
 										<Icon name="alert" />
 									</PRIconButton>
-									<div style={{ marginLeft: "10px" }}>
+									<div style={{ marginLeft: "10px", marginRight: "10px"   }}>
 										<h1>This branch has conflicts that must be resolved</h1>
 									</div>
+									<Button
+										variant="secondary"
+										onClick={() => {
+											HostApi.instance.send(OpenUrlRequestType, { url: `${pr.url}/conflicts` });
+										}}
+									>
+										Resolve conflicts
+									</Button>
 								</div>
+								<div>
+									<p>
+										Use the <Link href={`${pr.url}/conflicts`}>web editor</Link>{" "}
+										or the <Link onClick={toggleClInstructions}>command line</Link>{" "}
+										to resolve conflicts.
+									</p>
+								</div>
+								{clInstructionsIsOpen && (
+									<div>
+										<hr />
+										<h3>Checkout via command line</h3>
+										<p>
+											If you cannot merge a pull request automatically here, you have the option
+											of checking it out via command line to resolve conflicts and perform
+											a manual merge.
+										</p>
+										<PRCloneURLWrapper>
+											<PRCloneURLButtons>
+												<Button
+													variant={ cloneURLType === "https" ? "primary" : "secondary" }
+													onClick={e => {
+														setCloneURLType("https");
+														setCloneURL(`${pr.repository.url}.git`);
+													}}
+												>
+													HTTPS
+												</Button>
+												<Button
+													variant={ cloneURLType === "ssh" ? "primary" : "secondary" }
+													onClick={e => {
+														setCloneURLType("ssh") ;
+														setCloneURL(`git@github.com:${pr.repository.nameWithOwner}.git`);
+													}}
+												>
+													SSH
+												</Button>
+												<Button
+													variant={ cloneURLType === "patch" ? "primary" : "secondary" }
+													onClick={e => {
+														setCloneURLType("patch");
+														setCloneURL(`${pr.url}.patch`);
+													}}
+												>
+													Patch
+												</Button>
+											</PRCloneURLButtons>
+											<PRCloneURL>
+												<div className="clone-url">
+													{cloneURL}
+												</div>
+												<Icon
+													title="Copy"
+													placement="bottom"
+													name="copy"
+													className="clickable"
+													onClick={e => copy(cloneURL)}
+												/>
+											</PRCloneURL>
+										</PRCloneURLWrapper>
+										<p><b>Step 1:</b> From your project repository, bring in the changes and test.</p>
+										<CopyableTerminal
+											code={
+												`git fetch origin\n` +
+												`git checkout -b ${pr.repository.name} origin/${pr.repository.name}\n` +
+												`git merge ${pr.baseRefName}`
+											}
+										/>
+										<p><b>Step 2:</b> Merge the changes and update on GitHub.</p>
+										<CopyableTerminal
+											code={
+												`git checkout ${pr.baseRefName}\n` +
+												`git merge --no-ff ${pr.repository.name}\n` +
+												`git push origin ${pr.baseRefName}`
+											}
+										/>
+									</div>
+								)}
 							</div>
 						</PRCommentCard>
 					)}
@@ -1171,5 +1265,24 @@ export const PullRequestConversationTab = props => {
 				</PRSection>
 			</PRSidebar>
 		</PRContent>
+	);
+};
+
+const CopyableTerminal = (props: any) => {
+	return (
+		<PRCopyableTerminal>
+			<code>
+				<pre>
+					{props.code}
+				</pre>
+			</code>
+			<Icon
+				title="Copy"
+				placement="bottom"
+				name="copy"
+				className="clickable"
+				onClick={e => copy(props.code)}
+			/>
+		</PRCopyableTerminal>
 	);
 };

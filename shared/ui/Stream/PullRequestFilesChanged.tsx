@@ -23,6 +23,7 @@ import { Range } from "vscode-languageserver-types";
 import styled from "styled-components";
 import { parseCodeStreamDiffUri } from "../store/codemarks/actions";
 import { LocateRepoButton } from "./LocateRepoButton";
+import { Link } from "./Link";
 
 const MetaIcons = styled.div`
 	margin-bottom: 10px;
@@ -278,7 +279,9 @@ export const PullRequestFilesChanged = (props: {
 		return (
 			<div style={{ marginTop: "10px" }}>
 				<Icon name="alert" className="margin-right" />
-				Repo not found in your editor. Diffs are visible under Diff Hunks button above.
+				Repo <span className="monospace highlight">{pr.repository.name}</span> not found in your
+				editor. Diffs are visible under Diff Hunks button above, or{" "}
+				<Link href={pr.repository.url}>clone the repo</Link>.
 			</div>
 		);
 	}

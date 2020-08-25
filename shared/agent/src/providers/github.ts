@@ -1926,6 +1926,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 			authorAssociation
 			body
 			bodyText
+			bodyHTML
 			createdAt
 			includesCreatedEdit
 			isMinimized
@@ -2045,6 +2046,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 			authorAssociation
 			body
 			bodyText
+			bodyHTML
 			createdAt
 			includesCreatedEdit
 			lastEditedAt
@@ -2071,6 +2073,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 				authorAssociation
 				body
 				bodyText
+				bodyHTML
 				createdAt
 				databaseId
 				draftedAt
@@ -2087,6 +2090,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 				  id
 				  body
 				  bodyText
+				  bodyHTML
 				}
 				commit {
 				  message
@@ -2104,6 +2108,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 				pullRequestReview {
 				  body
 				  bodyText
+				  bodyHTML
 				}
 				reactionGroups {
 				  content
@@ -2306,6 +2311,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
   						url
 					}
 					body
+					bodyHTML
 					baseRefName
 					baseRefOid
 					author {
@@ -2657,6 +2663,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 											authorAssociation
 											body
 											bodyText
+											bodyHTML
 											createdAt
 											url
 											path

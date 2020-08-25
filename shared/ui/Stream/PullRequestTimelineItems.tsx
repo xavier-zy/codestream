@@ -380,8 +380,8 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 									</Button>
 								</PRButtonRow>
 							</>
-						) : pr.body ? (
-							<MarkdownText text={pr.body} excludeParagraphWrap />
+						) : pr.bodyHTML ? (
+							<MarkdownText text={pr.bodyHTML} isHtml={true} excludeParagraphWrap />
 						) : (
 							<i>No description provided.</i>
 						)}
@@ -463,7 +463,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 														</PRButtonRow>
 													</>
 												) : (
-													<MarkdownText text={item.body} excludeParagraphWrap />
+													<MarkdownText text={item.bodyHTML} isHtml={true} excludeParagraphWrap />
 												)}
 											</PRCommentBody>
 											<PullRequestReactions
@@ -495,7 +495,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 										<Timestamp time={item.createdAt!} relative />
 									</PRTimelineItemBody>
 								</PRTimelineItem>
-								{item.body && (
+								{item.bodyHTML && (
 									<PRActionCommentCard className="dark-header">
 										{item.isMinimized && !expandedComments[item.id] ? (
 											<PullRequestMinimizedComment
@@ -556,7 +556,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 															</PRButtonRow>
 														</>
 													) : (
-														<MarkdownText text={item.body} excludeParagraphWrap />
+														<MarkdownText text={item.bodyHTML} isHtml={true} excludeParagraphWrap />
 													)}
 												</PRCommentBody>
 												<PullRequestReactions
@@ -601,11 +601,12 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 												}
 											}
 
-											const codeHTML = prettyPrintOne(
-												escapeHtml(comment.diffHunk),
-												extension,
-												startLine
-											);
+											// [BC] not used???
+											// const codeHTML = prettyPrintOne(
+											// 	escapeHtml(comment.diffHunk),
+											// 	extension,
+											// 	startLine
+											// );
 
 											let insertText: Function;
 											let insertNewline: Function;
@@ -703,7 +704,11 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 																			</PRButtonRow>
 																		</>
 																	) : (
-																		<MarkdownText text={comment.body} excludeParagraphWrap />
+																		<MarkdownText
+																			text={comment.bodyHTML}
+																			isHtml={true}
+																			excludeParagraphWrap
+																		/>
 																	)}
 																</>
 															)}
@@ -781,7 +786,11 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 																					</PRButtonRow>
 																				</>
 																			) : (
-																				<MarkdownText text={c.body} excludeParagraphWrap />
+																				<MarkdownText
+																					text={c.bodyHTML}
+																					isHtml={true}
+																					excludeParagraphWrap
+																				/>
 																			)}
 																		</PRCodeCommentBody>
 																		<PullRequestReactions

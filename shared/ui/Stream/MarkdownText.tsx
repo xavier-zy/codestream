@@ -9,6 +9,7 @@ export const MarkdownText = styled(
 		className?: string;
 		excludeParagraphWrap?: boolean;
 		excludeOnlyEmoji?: boolean;
+		isHtml?: boolean;
 	}) => {
 		const markdownifyToHtml = useMarkdownifyToHtml();
 
@@ -18,10 +19,12 @@ export const MarkdownText = styled(
 			{
 				className: props.className,
 				dangerouslySetInnerHTML: {
-					__html: markdownifyToHtml(props.text, {
-						excludeParagraphWrap: !!props.excludeParagraphWrap,
-						excludeOnlyEmoji: !!props.excludeOnlyEmoji
-					})
+					__html: props.isHtml
+						? props.text
+						: markdownifyToHtml(props.text, {
+								excludeParagraphWrap: !!props.excludeParagraphWrap,
+								excludeOnlyEmoji: !!props.excludeOnlyEmoji
+						  })
 				}
 			},
 			null

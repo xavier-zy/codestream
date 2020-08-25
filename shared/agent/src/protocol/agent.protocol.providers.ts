@@ -367,6 +367,7 @@ export interface FetchThirdPartyPullRequestPullRequest {
 	};
 	locked: any;
 	body: string;
+	bodyHTML: string;
 	baseRefName: string;
 	baseRefOid: string;
 	author: {

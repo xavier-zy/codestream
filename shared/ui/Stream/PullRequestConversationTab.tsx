@@ -38,7 +38,8 @@ import {
 	PRSection,
 	PRBranch,
 	PRTimelineItem,
-	PRAction
+	PRAction,
+	PRReviewer
 } from "./PullRequestComponents";
 import { ButtonRow } from "./StatusPanel";
 import { PullRequestTimelineItems } from "./PullRequestTimelineItems";
@@ -1004,25 +1005,17 @@ export const PullRequestConversationTab = props => {
 					</h1>
 					{reviewers.length > 0
 						? reviewers.map((_, index) => (
-								<span key={index}>
+								<PRReviewer key={index}>
 									<PRHeadshotName key={_.avatarUrl} person={_} size={20} />
 									{_.isPending && (
 										<Tooltip placement="top" content={"Awaiting requested review from " + _.login}>
-											<svg
-												className="octicon octicon-dot-fill"
-												style={{ color: "#dbab09" }}
-												viewBox="0 0 16 16"
-												version="1.1"
-												width="16"
-												height="16"
-												aria-hidden="true"
-											>
-												<path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8z"></path>
-											</svg>
+											<div className="status">
+												<b className="pending" />
+											</div>
 										</Tooltip>
 									)}
 									<br />
-								</span>
+								</PRReviewer>
 						  ))
 						: "No reviewers"}
 				</PRSection>

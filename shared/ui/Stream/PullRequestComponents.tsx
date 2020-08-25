@@ -811,3 +811,22 @@ export const PRStatus = styled.div`
 		}
 	}
 `;
+
+export const PRReviewer = styled.div`
+	display: flex;
+	.status {
+		flex-grow: 10;
+		margin-left: auto;
+		text-align: right;
+		b {
+			display: inline-block;
+			width: 8px;
+			height: 8px;
+			margin: 6px 3px 0 0;
+			border-radius: 4px;
+			&.pending {
+				background: #dbab09;
+			}
+		}
+	}
+`;

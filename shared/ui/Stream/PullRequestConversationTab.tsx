@@ -131,7 +131,12 @@ let insertText;
 let insertNewline;
 let focusOnMessageInput;
 
-export const PullRequestConversationTab = props => {
+export const PullRequestConversationTab = (props: {
+	pr: FetchThirdPartyPullRequestPullRequest;
+	setIsLoadingMessage: Function;
+	fetch: Function;
+	ghRepo: any;
+}) => {
 	const { pr, ghRepo, fetch, setIsLoadingMessage } = props;
 	const dispatch = useDispatch();
 	const derivedState = useSelector((state: CodeStreamState) => {
@@ -319,14 +324,14 @@ export const PullRequestConversationTab = props => {
 	// these are in-progress reviews
 	pr.reviews &&
 		pr.reviews.nodes.reduce((map, obj) => {
-			map[obj.author.id] = obj.author;
+			map[obj.author.id] = { ...obj, ...obj.author };
 			return map;
 		}, reviewersHash);
 
 	const reviewers = Object.keys(reviewersHash).map(key => {
 		const val = reviewersHash[key];
 		return { ...val, id: key };
-	}) as { id: string; login: string; avatarUrl: string; isPending: boolean }[];
+	}) as { id: string; login: string; avatarUrl: string; isPending: boolean; state: string }[];
 
 	const fetchAvailableReviewers = async (e?) => {
 		const reviewers = await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
@@ -596,26 +601,26 @@ export const PullRequestConversationTab = props => {
 		setAvailableIssues(issues);
 	};
 
-	const issueMenuItems = React.useMemo(() => {
-		if (availableIssues && availableIssues.length) {
-			const existingIssueIds = pr.issues ? pr.issues.nodes.map(_ => _.id) : [];
-			const menuItems = availableIssues.map((_: any) => {
-				const checked = existingIssueIds.includes(_.id);
-				return {
-					checked,
-					label: <>{_.name}</>,
-					searchLabel: _.name,
-					key: _.id,
-					subtext: <div style={{ maxWidth: "250px", whiteSpace: "normal" }}>{_.description}</div>,
-					action: () => setIssue(_.id, !checked)
-				};
-			}) as any;
-			menuItems.unshift({ type: "search", placeholder: "Filter" });
-			return menuItems;
-		} else {
-			return [{ label: <LoadingMessage>Loading Issues...</LoadingMessage>, noHover: true }];
-		}
-	}, [availableIssues, pr]);
+	// const issueMenuItems = React.useMemo(() => {
+	// 	if (availableIssues && availableIssues.length) {
+	// 		const existingIssueIds = pr.issues ? pr.issues.nodes.map(_ => _.id) : [];
+	// 		const menuItems = availableIssues.map((_: any) => {
+	// 			const checked = existingIssueIds.includes(_.id);
+	// 			return {
+	// 				checked,
+	// 				label: <>{_.name}</>,
+	// 				searchLabel: _.name,
+	// 				key: _.id,
+	// 				subtext: <div style={{ maxWidth: "250px", whiteSpace: "normal" }}>{_.description}</div>,
+	// 				action: () => setIssue(_.id, !checked)
+	// 			};
+	// 		}) as any;
+	// 		menuItems.unshift({ type: "search", placeholder: "Filter" });
+	// 		return menuItems;
+	// 	} else {
+	// 		return [{ label: <LoadingMessage>Loading Issues...</LoadingMessage>, noHover: true }];
+	// 	}
+	// }, [availableIssues, pr]);
 
 	const setIssue = async (id: string, onOff: boolean) => {
 		setIsLoadingMessage(onOff ? "Adding Issue..." : "Removing Issue...");
@@ -1108,6 +1113,22 @@ export const PullRequestConversationTab = props => {
 											</div>
 										</Tooltip>
 									)}
+									{/*	{_.state === "APPROVED" && (
+										<>
+											<Tooltip placement="top" content={"Re-request review"}>
+												<div className="status">
+													<div className="status">
+														<b onClick={e => addReviewer(_.id)}>↺</b>
+													</div>
+												</div>
+									</Tooltip>
+											<Tooltip placement="top" content={_.login + " approved these changes"}>
+												<div className="status">
+													<b>✓</b>
+												</div>
+											</Tooltip>
+										</>
+									)}*/}
 									<br />
 								</PRReviewer>
 						  ))

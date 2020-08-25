@@ -365,6 +365,7 @@ export interface FetchThirdPartyPullRequestPullRequest {
 		nameWithOwner: string;
 		url: string;
 	};
+	locked: any;
 	body: string;
 	baseRefName: string;
 	baseRefOid: string;
@@ -410,6 +411,7 @@ export interface FetchThirdPartyPullRequestPullRequest {
 	headRefOid: string;
 	labels: {
 		nodes: {
+			id: string;
 			color: string;
 			description: string;
 			name: string;
@@ -420,6 +422,7 @@ export interface FetchThirdPartyPullRequestPullRequest {
 	reviewRequests: {
 		nodes: {
 			requestedReviewer: {
+				id: string;
 				login: string;
 				avatarUrl: string;
 			};
@@ -428,6 +431,7 @@ export interface FetchThirdPartyPullRequestPullRequest {
 	projectCards: {
 		nodes: {
 			project: {
+				id: string;
 				name: string;
 			};
 		}[];
@@ -436,6 +440,7 @@ export interface FetchThirdPartyPullRequestPullRequest {
 		nodes: {
 			id: string;
 			author: {
+				id: string;
 				login: string;
 				avatarUrl: string;
 			};
@@ -497,6 +502,7 @@ export interface FetchThirdPartyPullRequestPullRequest {
 	includesCreatedEdit: boolean;
 	viewerDidAuthor: boolean;
 	viewerCanUpdate: boolean;
+	viewerSubscription: string;
 
 	/** this isn't part of the GH object model, but we add it for convenience */
 	viewer: {

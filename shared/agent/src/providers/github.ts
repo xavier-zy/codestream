@@ -1835,13 +1835,13 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 			}
 			createdAt
 		  }`,
-			`... on CommentDeletedEvent {
-			__typename
-			actor {
-			  login
-			  avatarUrl
-			}
-		  }`,
+			// 	`... on CommentDeletedEvent {
+			// 	__typename
+			// 	actor {
+			// 	  login
+			// 	  avatarUrl
+			// 	}
+			//   }`,
 			// 	`... on ConnectedEvent {
 			// 	__typename
 			//   }`,
@@ -2431,6 +2431,9 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 						  author {
 							login
 							avatarUrl
+							... on User {
+								id
+							}
 						  }
 						  authorAssociation
 						  state

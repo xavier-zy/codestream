@@ -1187,16 +1187,25 @@ export class ScmManager {
 
 	@log()
 	@lspHandler(FetchForkPointRequestType)
-	async getForkPointRequestType(request: FetchForkPointRequest): Promise<FetchForkPointResponse> {
+	async getForkPointRequestType(
+		request: FetchForkPointRequest
+	): Promise<FetchForkPointResponse | undefined> {
+		const cc = Logger.getCorrelationContext();
 		const { git } = SessionContainer.instance();
 
 		const repo = await git.getRepositoryById(request.repoId);
 		if (!repo) throw new Error(`Could not load repo with ID ${request.repoId}`);
-
-		const forkPointSha =
-			(await git.getRepoBranchForkPoint(repo.path, request.baseSha, request.headSha)) || "";
-		return {
-			sha: forkPointSha
-		};
+		try {
+			await git.fetchAllRemotes(repo.path);
+			const forkPointSha =
+				(await git.getRepoBranchForkPoint(repo.path, request.baseSha, request.headSha)) || "";
+			return {
+				sha: forkPointSha
+			};
+		} catch (ex) {
+			Logger.error(ex, cc);
+			debugger;
+		}
+		return undefined;
 	}
 }

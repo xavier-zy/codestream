@@ -82,9 +82,6 @@ export const PullRequestFilesChanged = (props: {
 
 	useDidMount(() => {
 		if (derivedState.currentRepo) {
-			HostApi.instance.send(FetchAllRemotesRequestType, {
-				repoId: derivedState.currentRepo.id!
-			});
 			(async () => {
 				const forkPointResponse = await HostApi.instance.send(FetchForkPointRequestType, {
 					repoId: derivedState.currentRepo!.id!,
@@ -175,7 +172,6 @@ export const PullRequestFilesChanged = (props: {
 		if (index < 0) index = derivedState.numFiles - 1;
 		if (index > derivedState.numFiles - 1) index = 0;
 		const f = filesChanged[index];
-		const visitedKey = [f.file].join(":");
 
 		let repoRoot = currentRepoRoot;
 		if (!repoRoot) {
@@ -192,7 +188,7 @@ export const PullRequestFilesChanged = (props: {
 			}
 		}
 
-		const response = HostApi.instance.send(EditorRevealRangeRequestType, {
+		HostApi.instance.send(EditorRevealRangeRequestType, {
 			uri: path.join(repoRoot, f.file),
 			range: Range.create(0, 0, 0, 0)
 		});

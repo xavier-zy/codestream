@@ -104,9 +104,10 @@ export const PRAuthorBadges = (props: {
 		badges.push(<div className="pending">Pending</div>);
 	}
 
-	const author = node.author || GHOST;
-	if (author.login === author.login) {
-		const isMe = author.login === pr.viewer.login;
+	const nodeAuthor = node.author || GHOST;
+	const prAuthor = pr.author || GHOST;
+	if (prAuthor.login === nodeAuthor.login) {
+		const isMe = nodeAuthor.login === pr.viewer.login;
 		badges.push(
 			<Tooltip
 				key="author"

@@ -1154,19 +1154,21 @@ export const PullRequestConversationTab = props => {
 						))}
 				</PRSection>
 				<PRSection style={{ borderBottom: "none" }}>
-					<h1 style={{ margin: 0, display: "flex" }}>
-						{pr.locked ? (
-							<a onClick={() => setIsLocking(true)}>
-								<Icon name="key" className="clickable" style={{ marginRight: "5px" }} />
-								Unlock Conversation
-							</a>
-						) : (
-							<a onClick={() => setIsLocking(true)}>
-								<Icon name="lock" className="clickable" style={{ marginRight: "5px" }} />
-								Lock Conversation
-							</a>
-						)}
-					</h1>
+					{pr.viewerCanUpdate && (
+						<h1 style={{ margin: 0, display: "flex" }}>
+							{pr.locked ? (
+								<a onClick={() => setIsLocking(true)}>
+									<Icon name="key" className="clickable" style={{ marginRight: "5px" }} />
+									Unlock Conversation
+								</a>
+							) : (
+								<a onClick={() => setIsLocking(true)}>
+									<Icon name="lock" className="clickable" style={{ marginRight: "5px" }} />
+									Lock Conversation
+								</a>
+							)}
+						</h1>
+					)}
 				</PRSection>
 			</PRSidebar>
 		</PRContent>

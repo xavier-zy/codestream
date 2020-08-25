@@ -353,7 +353,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 							/>
 							<PullRequestCommentMenu
 								pr={pr}
-								comment={pr}
+								node={pr}
 								setEdit={setEditingComment}
 								quote={props.quote}
 							/>
@@ -429,7 +429,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 													/>
 													<PullRequestCommentMenu
 														pr={pr}
-														comment={item}
+														node={item}
 														setEdit={setEditingComment}
 														quote={props.quote}
 													/>
@@ -521,7 +521,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 														/>
 														<PullRequestCommentMenu
 															pr={pr}
-															comment={item}
+															node={item}
 															setEdit={setEditingComment}
 															quote={props.quote}
 														/>
@@ -672,7 +672,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 																			/>
 																			<PullRequestCommentMenu
 																				pr={pr}
-																				comment={comment}
+																				node={comment}
 																				setEdit={setEditingComment}
 																				quote={quote}
 																			/>
@@ -748,7 +748,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 																					/>
 																					<PullRequestCommentMenu
 																						pr={pr}
-																						comment={c}
+																						node={c}
 																						setEdit={setEditingComment}
 																						quote={quote}
 																					/>

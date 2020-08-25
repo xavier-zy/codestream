@@ -496,6 +496,7 @@ export interface FetchThirdPartyPullRequestPullRequest {
 	reactionGroups: any;
 	includesCreatedEdit: boolean;
 	viewerDidAuthor: boolean;
+	viewerCanUpdate: boolean;
 
 	/** this isn't part of the GH object model, but we add it for convenience */
 	viewer: {

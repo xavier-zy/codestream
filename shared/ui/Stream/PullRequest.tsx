@@ -405,19 +405,21 @@ export const PullRequest = () => {
 						)}
 						{pr && !pr.pendingReview && (
 							<PRActionButtons>
-								<span>
-									<Icon
-										title="Edit Title"
-										trigger={["hover"]}
-										delay={1}
-										onClick={() => {
-											setTitle(pr.title);
-											setEditingTitle(true);
-										}}
-										placement="bottom"
-										name="pencil"
-									/>
-								</span>
+								{pr.viewerCanUpdate && (
+									<span>
+										<Icon
+											title="Edit Title"
+											trigger={["hover"]}
+											delay={1}
+											onClick={() => {
+												setTitle(pr.title);
+												setEditingTitle(true);
+											}}
+											placement="bottom"
+											name="pencil"
+										/>
+									</span>
+								)}
 								<span>
 									<Icon
 										title="Checkout Branch"

@@ -16,35 +16,33 @@ import copy from "copy-to-clipboard";
 
 interface CommentMenuProps {
 	pr: any;
-	comment: any;
+	node: any;
 	setEdit?: Function;
 	quote?: Function;
 }
 
 export const PullRequestCommentMenu = (props: CommentMenuProps) => {
-	const { pr, comment, setEdit, quote } = props;
+	const { pr, node, setEdit, quote } = props;
 
 	const items: any[] = [];
 
-	if (comment.resourcePath) {
+	if (node.resourcePath) {
 		items.push({
 			label: "Copy Link",
 			key: "copy",
-			action: () => copy(pr.baseUrl + comment.resourcePath)
+			action: () => copy(pr.baseUrl + node.resourcePath)
 		});
 	}
 	if (quote) {
-		items.push(
-			{ label: "Quote Reply", key: "quote", action: () => quote(comment.body) },
-			{ label: "-" }
-		);
+		items.push({ label: "Quote Reply", key: "quote", action: () => quote(node.body) });
 	}
-	if (setEdit) {
+	if (node.viewerCanUpdate && setEdit) {
+		items.push({ label: "-" });
 		items.push({
 			label: "Edit",
 			key: "edit",
 			action: () => {
-				if (setEdit) setEdit(comment, true);
+				if (setEdit) setEdit(node, true);
 			}
 		});
 	}

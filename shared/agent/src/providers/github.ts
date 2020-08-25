@@ -1938,7 +1938,8 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 			  }
 			}
 			resourcePath
-		  }`,
+			viewerCanUpdate
+		}`,
 			`... on LabeledEvent {
 			__typename
 			label {
@@ -2112,6 +2113,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 				  }
 				}
 				resourcePath
+				viewerCanUpdate
 			  }
 			}
 			authorAssociation
@@ -2317,6 +2319,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 					includesCreatedEdit
 					viewerSubscription
 					viewerDidAuthor
+					viewerCanUpdate
 					files(first: 100) {
 						totalCount
 						nodes {
@@ -2357,6 +2360,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 									}
 								  }
 								}
+								viewerCanUpdate
 							  }
 							}
 						  }

@@ -1131,14 +1131,18 @@ export const PullRequestConversationTab = props => {
 							<Button variant="secondary" onClick={toggleSubscription}>
 								<Icon name="mute" /> <span className="wide-text">Unsubscribe</span>
 							</Button>
-							You’re receiving notifications because you’re subscribed to this pull request.
+							<span className="wide-text">
+								You’re receiving notifications because you’re subscribed to this pull request.
+							</span>
 						</>
 					) : (
 						<>
 							<Button variant="secondary" onClick={toggleSubscription}>
 								<Icon name="unmute" /> <span className="wide-text">Subscribe</span>
 							</Button>
-							You’re not receiving notifications from this pull request.
+							<span className="wide-text">
+								You’re not receiving notifications from this pull request.
+							</span>
 						</>
 					)}
 				</PRSection>

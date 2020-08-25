@@ -56,11 +56,11 @@ const PRDiffHunk = styled.div`
 	}
 	.added {
 		background: #e6ffed;
-		background: rgba(150, 255, 0, 0.1);
+		background: rgba(80, 255, 0, 0.1);
 	}
 	.deleted {
 		background: #ffeef0;
-		background: rgba(255, 0, 0, 0.15);
+		background: rgba(255, 0, 0, 0.12);
 	}
 	.header {
 		background: rgba(0, 150, 255, 0.1);

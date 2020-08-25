@@ -18,10 +18,10 @@ import {
 import { WriteTextFileRequestType, ReadTextFileRequestType } from "@codestream/protocols/agent";
 import { useDidMount } from "../utilities/hooks";
 import { CompareLocalFilesRequestType } from "../ipc/host.protocol";
-import { URI } from "vscode-uri";
 import * as path from "path-browserify";
 import { Range } from "vscode-languageserver-types";
 import styled from "styled-components";
+import { parseCodeStreamDiffUri } from "../store/codemarks/actions";
 
 const MetaIcons = styled.div`
 	margin-bottom: 10px;
@@ -207,29 +207,6 @@ export const PullRequestFilesChanged = (props: {
 	};
 
 	const latest = visitedFiles[key] ? visitedFiles[key]._latest : 0;
-
-	const parseCodeStreamDiffUri = (
-		uri: string
-	):
-		| {
-				path: string;
-		  }
-		| undefined => {
-		if (!uri) return undefined;
-
-		const parsed = URI.parse(uri);
-		if (parsed && parsed.path) {
-			const m = parsed.path.match(/\/(.*)\/\-\d\-/);
-			if (m && m.length) {
-				try {
-					return JSON.parse(atob(m[1])) as any;
-				} catch (ex) {
-					console.warn(ex);
-				}
-			}
-		}
-		return undefined;
-	};
 
 	const changedFiles = React.useMemo(() => {
 		const files: any[] = [];

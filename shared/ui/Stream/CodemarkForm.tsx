@@ -72,7 +72,7 @@ import { escapeHtml } from "../utils";
 import { CodeStreamState } from "../store";
 import { LabeledSwitch } from "../src/components/controls/LabeledSwitch";
 import { CSText } from "../src/components/CSText";
-import { NewCodemarkAttributes } from "../store/codemarks/actions";
+import { NewCodemarkAttributes, parseCodeStreamDiffUri } from "../store/codemarks/actions";
 import { SharingControls, SharingAttributes } from "./SharingControls";
 import { SmartFormattedList } from "./SmartFormattedList";
 import { Modal } from "./Modal";
@@ -85,7 +85,6 @@ import { openPanel, setUserPreference } from "./actions";
 import CancelButton from "./CancelButton";
 import { VideoLink } from "./Flow";
 import { PanelHeader } from "../src/components/PanelHeader";
-import { URI } from "vscode-uri";
 
 export interface ICrossPostIssueContext {
 	setSelectedAssignees(any: any): void;
@@ -1475,7 +1474,7 @@ class CodemarkForm extends React.Component<Props, State> {
 					}
 					file = marker.file || "";
 				} else {
-					return this.renderAddLocation()
+					return this.renderAddLocation();
 				}
 			}
 
@@ -2266,29 +2265,6 @@ class CodemarkForm extends React.Component<Props, State> {
 }
 
 const EMPTY_OBJECT = {};
-
-const parseCodeStreamDiffUri = (
-	uri?: string
-):
-	| {
-			path: string;
-	  }
-	| undefined => {
-	if (!uri) return undefined;
-
-	const parsed = URI.parse(uri);
-	if (parsed && parsed.path) {
-		const m = parsed.path.match(/\/(.*)\/\-\d\-/);
-		if (m && m.length) {
-			try {
-				return JSON.parse(atob(m[1])) as any;
-			} catch (ex) {
-				console.warn(ex);
-			}
-		}
-	}
-	return undefined;
-};
 
 const mapStateToProps = (state: CodeStreamState): ConnectedProps => {
 	const {

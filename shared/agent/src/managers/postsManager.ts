@@ -934,12 +934,6 @@ export class PostsManager extends EntityManagerBase<CSPost> {
 							)}`
 						);
 						const codeBlock = request.attributes.codeBlocks[0];
-						// const builder = MarkersBuilder.newBuilder({ uri: codeBlock.uri });
-						// const descriptor = await builder.build(
-						// 	codeBlock.contents,
-						// 	codeBlock.range,
-						// 	codeBlock.scm
-						// );
 						const repo = await repos.getById(parsedUri.repoId);
 						let remoteList: string[] | undefined;
 						if (repo && repo.remotes && repo.remotes.length) {

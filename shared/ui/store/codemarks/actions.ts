@@ -18,6 +18,7 @@ import { getConnectedProviders } from "../providers/reducer";
 import { CodeStreamState } from "..";
 import { capitalize } from "@codestream/webview/utils";
 import { isObject } from "lodash-es";
+import { URI } from "vscode-uri";
 
 export const reset = () => action("RESET");
 
@@ -186,5 +187,34 @@ export const canCreateCodemark = (textEditorUri: string | undefined) => {
 	if (textEditorUri.startsWith("file://")) return true;
 	const regex = /codestream-diff:\/\/(\w+)\/(\w+)\/(\w+)\/right\/(.+)/;
 	const match = regex.exec(textEditorUri);
-	return match && match.length;
+	if (match && match.length) return true;
+
+	try {
+		const parsed = parseCodeStreamDiffUri(textEditorUri);
+		return parsed && parsed.side === "right";
+	} catch {}
+
+	return false;
+};
+
+export const parseCodeStreamDiffUri = (
+	uri?: string
+):
+	| {
+			path: string;
+			side: string;
+	  }
+	| undefined => {
+	if (!uri) return undefined;
+
+	const m = uri.match(/\/-\d\-\/(.*)\/\-\d\-/);
+	if (m && m.length) {
+		try {
+			return JSON.parse(atob(decodeURIComponent(m[1]))) as any;
+		} catch (ex) {
+			console.warn(ex);
+		}
+	}
+
+	return undefined;
 };

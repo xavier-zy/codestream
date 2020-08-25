@@ -22,6 +22,7 @@ import * as path from "path-browserify";
 import { Range } from "vscode-languageserver-types";
 import styled from "styled-components";
 import { parseCodeStreamDiffUri } from "../store/codemarks/actions";
+import { LocateRepoButton } from "./LocateRepoButton";
 
 const MetaIcons = styled.div`
 	margin-bottom: 10px;
@@ -85,21 +86,23 @@ export const PullRequestFilesChanged = (props: {
 	};
 
 	useDidMount(() => {
-		HostApi.instance.send(FetchAllRemotesRequestType, {
-			repoId: derivedState.currentRepo!.id!
-		});
-		(async () => {
-			const forkPointResponse = await HostApi.instance.send(FetchForkPointRequestType, {
-				repoId: derivedState.currentRepo!.id!,
-				baseSha: props.pr.baseRefOid,
-				headSha: props.pr.headRefOid
+		if (derivedState.currentRepo) {
+			HostApi.instance.send(FetchAllRemotesRequestType, {
+				repoId: derivedState.currentRepo.id!
 			});
-			if (forkPointResponse && forkPointResponse.sha) {
-				setForkPointSha(forkPointResponse.sha);
-			} else {
-				console.warn("Could not find fork point");
-			}
-		})();
+			(async () => {
+				const forkPointResponse = await HostApi.instance.send(FetchForkPointRequestType, {
+					repoId: derivedState.currentRepo!.id!,
+					baseSha: props.pr.baseRefOid,
+					headSha: props.pr.headRefOid
+				});
+				if (forkPointResponse && forkPointResponse.sha) {
+					setForkPointSha(forkPointResponse.sha);
+				} else {
+					console.warn("Could not find fork point");
+				}
+			})();
+		}
 	});
 
 	useEffect(() => {
@@ -271,6 +274,14 @@ export const PullRequestFilesChanged = (props: {
 		return files;
 	}, [pr, loading, derivedState.matchFile, latest, visitedFiles]);
 
+	if (!derivedState.currentRepo) {
+		return (
+			<div style={{ marginTop: "10px" }}>
+				<Icon name="alert" className="margin-right" />
+				Repo not found in your editor. Diffs are visible under Diff Hunks button above.
+			</div>
+		);
+	}
 	if (changedFiles.length > 1) {
 		const isMacintosh = navigator.appVersion.includes("Macintosh");
 		const nextFileKeyboardShortcut = () => (isMacintosh ? `⌥ F6` : "Alt-F6");

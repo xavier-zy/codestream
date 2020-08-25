@@ -24,14 +24,8 @@ import styled from "styled-components";
 import { parseCodeStreamDiffUri } from "../store/codemarks/actions";
 import { LocateRepoButton } from "./LocateRepoButton";
 import { Link } from "./Link";
-
-const MetaIcons = styled.div`
-	margin-bottom: 10px;
-	height: 14px;
-	.icon {
-		margin-right: 5px;
-	}
-`;
+import { Meta, MetaLabel } from "./Codemark/BaseCodemark";
+import { MetaIcons } from "./Review";
 
 // const VISITED_REVIEW_FILES = "review:changeset-file-list";
 const NOW = new Date().getTime(); // a rough timestamp so we know when the file was visited
@@ -290,39 +284,43 @@ export const PullRequestFilesChanged = (props: {
 		const nextFileKeyboardShortcut = () => (isMacintosh ? `⌥ F6` : "Alt-F6");
 		const previousFileKeyboardShortcut = () => (isMacintosh ? `⇧ ⌥ F6` : "Shift-Alt-F6");
 		return (
-			<>
-				<MetaIcons>
-					<Icon
-						onClick={nextFile}
-						name="arrow-down"
-						className="clickable"
-						placement="top"
-						delay={1}
-						title={
-							derivedState.isInVscode && (
-								<span>
-									Next File <span className="keybinding">{nextFileKeyboardShortcut()}</span>
-								</span>
-							)
-						}
-					/>
-					<Icon
-						onClick={prevFile}
-						name="arrow-up"
-						className="clickable"
-						placement="top"
-						delay={1}
-						title={
-							derivedState.isInVscode && (
-								<span>
-									Previous File <span className="keybinding">{previousFileKeyboardShortcut()}</span>
-								</span>
-							)
-						}
-					/>
-				</MetaIcons>
+			<Meta id="changed-files">
+				<MetaLabel>
+					{pr.files.totalCount} Changed Files
+					<MetaIcons>
+						<Icon
+							onClick={nextFile}
+							name="arrow-down"
+							className="clickable"
+							placement="top"
+							delay={1}
+							title={
+								derivedState.isInVscode && (
+									<span>
+										Next File <span className="keybinding">{nextFileKeyboardShortcut()}</span>
+									</span>
+								)
+							}
+						/>
+						<Icon
+							onClick={prevFile}
+							name="arrow-up"
+							className="clickable"
+							placement="top"
+							delay={1}
+							title={
+								derivedState.isInVscode && (
+									<span>
+										Previous File{" "}
+										<span className="keybinding">{previousFileKeyboardShortcut()}</span>
+									</span>
+								)
+							}
+						/>
+					</MetaIcons>
+				</MetaLabel>
 				{changedFiles}
-			</>
+			</Meta>
 		);
 	} else {
 		return <>{changedFiles}</>;

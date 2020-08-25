@@ -219,7 +219,7 @@ export const MetaCheckboxWithHoverIcon = styled.div`
 	}
 `;
 
-const MetaIcons = styled.span`
+export const MetaIcons = styled.span`
 	margin-left: 5px;
 	display: inline-block;
 	height: 14px;

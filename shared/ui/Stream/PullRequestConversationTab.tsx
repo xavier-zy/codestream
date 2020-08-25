@@ -899,10 +899,11 @@ export const PullRequestConversationTab = (props: {
 									<PRIconButton className="gray-background">
 										<Icon name="alert" />
 									</PRIconButton>
-									<div style={{ marginLeft: "10px", marginRight: "10px"   }}>
+									<div style={{ marginLeft: "10px", marginRight: "10px" }}>
 										<h1>This branch has conflicts that must be resolved</h1>
 									</div>
 									<Button
+										className="no-wrap"
 										variant="secondary"
 										onClick={() => {
 											HostApi.instance.send(OpenUrlRequestType, { url: `${pr.url}/conflicts` });
@@ -913,9 +914,8 @@ export const PullRequestConversationTab = (props: {
 								</div>
 								<div>
 									<p>
-										Use the <Link href={`${pr.url}/conflicts`}>web editor</Link>{" "}
-										or the <Link onClick={toggleClInstructions}>command line</Link>{" "}
-										to resolve conflicts.
+										Use the <Link href={`${pr.url}/conflicts`}>web editor</Link> or the{" "}
+										<Link onClick={toggleClInstructions}>command line</Link> to resolve conflicts.
 									</p>
 								</div>
 								{clInstructionsIsOpen && (
@@ -923,14 +923,14 @@ export const PullRequestConversationTab = (props: {
 										<hr />
 										<h3>Checkout via command line</h3>
 										<p>
-											If you cannot merge a pull request automatically here, you have the option
-											of checking it out via command line to resolve conflicts and perform
-											a manual merge.
+											If you cannot merge a pull request automatically here, you have the option of
+											checking it out via command line to resolve conflicts and perform a manual
+											merge.
 										</p>
 										<PRCloneURLWrapper>
-											<PRCloneURLButtons>
+											<PRCloneURLButtons style={{ flexShrink: 0 }}>
 												<Button
-													variant={ cloneURLType === "https" ? "primary" : "secondary" }
+													variant={cloneURLType === "https" ? "primary" : "secondary"}
 													onClick={e => {
 														setCloneURLType("https");
 														setCloneURL(`${pr.repository.url}.git`);
@@ -939,16 +939,16 @@ export const PullRequestConversationTab = (props: {
 													HTTPS
 												</Button>
 												<Button
-													variant={ cloneURLType === "ssh" ? "primary" : "secondary" }
+													variant={cloneURLType === "ssh" ? "primary" : "secondary"}
 													onClick={e => {
-														setCloneURLType("ssh") ;
+														setCloneURLType("ssh");
 														setCloneURL(`git@github.com:${pr.repository.nameWithOwner}.git`);
 													}}
 												>
 													SSH
 												</Button>
 												<Button
-													variant={ cloneURLType === "patch" ? "primary" : "secondary" }
+													variant={cloneURLType === "patch" ? "primary" : "secondary"}
 													onClick={e => {
 														setCloneURLType("patch");
 														setCloneURL(`${pr.url}.patch`);
@@ -958,9 +958,7 @@ export const PullRequestConversationTab = (props: {
 												</Button>
 											</PRCloneURLButtons>
 											<PRCloneURL>
-												<div className="clone-url">
-													{cloneURL}
-												</div>
+												<div className="clone-url">{cloneURL}</div>
 												<Icon
 													title="Copy"
 													placement="bottom"
@@ -970,7 +968,9 @@ export const PullRequestConversationTab = (props: {
 												/>
 											</PRCloneURL>
 										</PRCloneURLWrapper>
-										<p><b>Step 1:</b> From your project repository, bring in the changes and test.</p>
+										<p>
+											<b>Step 1:</b> From your project repository, bring in the changes and test.
+										</p>
 										<CopyableTerminal
 											code={
 												`git fetch origin\n` +
@@ -978,7 +978,9 @@ export const PullRequestConversationTab = (props: {
 												`git merge ${pr.baseRefName}`
 											}
 										/>
-										<p><b>Step 2:</b> Merge the changes and update on GitHub.</p>
+										<p>
+											<b>Step 2:</b> Merge the changes and update on GitHub.
+										</p>
 										<CopyableTerminal
 											code={
 												`git checkout ${pr.baseRefName}\n` +
@@ -1156,7 +1158,7 @@ export const PullRequestConversationTab = (props: {
 						))
 					) : (
 						<>
-							None yet&mdash;
+							No one&mdash;
 							<a onClick={() => toggleAssignee(pr.viewer.id, true)}>assign yourself</a>
 						</>
 					)}
@@ -1293,9 +1295,7 @@ const CopyableTerminal = (props: any) => {
 	return (
 		<PRCopyableTerminal>
 			<code>
-				<pre>
-					{props.code}
-				</pre>
+				<pre>{props.code}</pre>
 			</code>
 			<Icon
 				title="Copy"

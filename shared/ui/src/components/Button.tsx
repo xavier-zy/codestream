@@ -126,7 +126,6 @@ export const ButtonRoot = styled.button<ButtonProps>(props => {
 	line-height: ${props.variant == "text" ? "2em" : "inherit"};
 	user-select: none;
 	-webkit-user-select: none;
-	// white-space: nowrap;
 	z-index: 0;
 	text-shadow: none;
 	opacity: ${props.disabled ? 0.5 : 1};
@@ -137,6 +136,10 @@ export const ButtonRoot = styled.button<ButtonProps>(props => {
 	border-radius: 0;
 	border: 1px solid transparent !important;
 	outline: none !important;
+
+	&.no-wrap {
+		white-space: nowrap;
+	}
 `;
 });
 

@@ -1826,9 +1826,23 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 			// 	`... on BaseRefChangedEvent {
 			// 	__typename
 			//   }`,
-			// 	`... on BaseRefForcePushedEvent {
-			// 	__typename
-			//   }`,
+			`... on BaseRefForcePushedEvent {
+			__typename
+			actor {
+			  login
+			  avatarUrl
+			}
+			beforeCommit {
+			  abbreviatedOid
+			}
+			afterCommit {
+			  abbreviatedOid
+			}
+			createdAt
+			ref {
+			  name
+			}
+		  }`,
 			`... on ClosedEvent {
 			__typename
 			actor {

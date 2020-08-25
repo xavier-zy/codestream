@@ -1160,16 +1160,17 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 							</PRTimelineItem>
 						);
 					}
-					case "HeadRefForcePushedEvent": {
+					case "HeadRefForcePushedEvent":
+					case "BaseRefForcePushedEvent": {
 						return (
 							<PRTimelineItem key={index} className="tall">
 								<Icon name="milestone" className="circled" />
 								<PRTimelineItemBody>
 									<PRHeadshotName key={index} person={item.actor} />
-									force-pushed the
+									force-pushed the{" "}
 									{item.ref && item.ref.name && <PRBranch>{item.ref.name}</PRBranch>} branch from{" "}
 									<PRBranch>{item.beforeCommit.abbreviatedOid}</PRBranch> to{" "}
-									<PRBranch>{item.afterCommit.abbreviatedOid}</PRBranch>
+									<PRBranch>{item.afterCommit.abbreviatedOid}</PRBranch> on
 									<Timestamp time={item.createdAt!} relative />
 								</PRTimelineItemBody>
 							</PRTimelineItem>

@@ -762,7 +762,7 @@ export const PullRequestConversationTab = props => {
 </PRStatusIcon>
 */}
 					{!pr.merged && pr.mergeable === "MERGEABLE" && pr.state !== "CLOSED" && (
-						<PRCommentCard className="green-border">
+						<PRCommentCard className="green-border dark-header">
 							<PRStatusHeadshot className="green-background">
 								<Icon name="git-merge" />
 							</PRStatusHeadshot>

@@ -2051,7 +2051,15 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 			viewerCanUpdate
 			viewerCanReact
 			viewerCanDelete
-			resourcePath
+			reactionGroups {
+				content
+				users(first: 10) {
+				  nodes {
+					login
+				  }
+				}
+			  }
+		 	resourcePath
 			comments(first: 15) {
 			  nodes {
 				author {

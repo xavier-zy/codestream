@@ -1757,6 +1757,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 	}): Promise<FetchThirdPartyPullRequestFilesResponse[]> {
 		const ownerData = await this.getRepoOwnerFromPullRequestId(request.pullRequestId);
 
+		// https://developer.github.com/v3/pulls/#list-pull-requests-files
 		const changedFiles: FetchThirdPartyPullRequestFilesResponse[] = [];
 		try {
 			let url:

@@ -24,31 +24,31 @@ import Icon from "./Icon";
 import { MarkdownText } from "./MarkdownText";
 import {
 	FetchThirdPartyPullRequestPullRequest,
-	ExecuteThirdPartyTypedType,
-	CreatePullRequestCommentRequest
+	ExecuteThirdPartyTypedType
 } from "@codestream/protocols/agent";
 import Tag from "./Tag";
 import { Link } from "./Link";
 import { PRHeadshotName } from "../src/components/HeadshotName";
 import { PRAuthorBadges } from "./PullRequestConversationTab";
-import { prettyPrintOne } from "code-prettify";
-import { escapeHtml } from "../utils";
 import * as Path from "path-browserify";
 import MessageInput from "./MessageInput";
 import { Button } from "../src/components/Button";
 import { PullRequestReactButton, PullRequestReactions } from "./PullRequestReactions";
 import { HostApi } from "../webview-api";
-import { RadioGroup, Radio } from "../src/components/RadioGroup";
 import { useSelector } from "react-redux";
 import { CodeStreamState } from "../store";
 import { CSMe } from "@codestream/protocols/api";
 import { SmartFormattedList } from "./SmartFormattedList";
 import { confirmPopup } from "./Confirm";
 import { PullRequestCommentMenu } from "./PullRequestCommentMenu";
-import { setEditorContext } from "../store/editorContext/actions";
-import { markdownify } from "./Markdowner";
 import { PullRequestMinimizedComment } from "./PullRequestMinimizedComment";
 import { PullRequestPatch } from "./PullRequestPatch";
+
+export const GHOST = {
+	login: "ghost",
+	avatarUrl:
+		"https://avatars2.githubusercontent.com/u/10137?s=460&u=b1951d34a583cf12ec0d3b0781ba19be97726318&v=4"
+};
 
 const ReviewIcons = {
 	APPROVED: <Icon name="check" className="circled green" />,
@@ -381,7 +381,11 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 								</PRButtonRow>
 							</>
 						) : pr.bodyHTML ? (
-							<MarkdownText text={pr.bodyHTML} isHtml={true} excludeParagraphWrap />
+							<MarkdownText
+								text={pr.bodyHTML ? pr.bodyHTML : pr.body}
+								isHtml={pr.bodyHTML ? true : false}
+								excludeParagraphWrap
+							/>
 						) : (
 							<i>No description provided.</i>
 						)}
@@ -398,12 +402,13 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 			</PRComment>
 
 			{timelineNodes.map((item, index) => {
-				// console.warn("TIMELINE ITEM: ", item);
+				const author = item.author || GHOST;
+				// console.warn("ITEM: ", index, item);
 				switch (item.__typename) {
 					case "IssueComment":
 						return (
 							<PRComment key={index}>
-								<PRHeadshot key={index} size={40} person={item.author} />
+								<PRHeadshot key={index} size={40} person={author} />
 								<PRCommentCard className={`dark-header${item.isMinimized ? " no-arrow" : ""}`}>
 									{item.isMinimized && !expandedComments[item.id] ? (
 										<PullRequestMinimizedComment
@@ -414,7 +419,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 										<>
 											<PRCommentHeader>
 												<div>
-													<PRAuthor>{item.author.login}</PRAuthor> commented{" "}
+													<PRAuthor>{author.login}</PRAuthor> commented{" "}
 													<Timestamp time={item.createdAt!} relative />
 													{item.includesCreatedEdit ? <> • edited</> : ""}
 												</div>
@@ -463,7 +468,11 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 														</PRButtonRow>
 													</>
 												) : (
-													<MarkdownText text={item.bodyHTML} isHtml={true} excludeParagraphWrap />
+													<MarkdownText
+														text={item.bodyHTML ? item.bodyHTML : item.bodyText}
+														isHtml={item.bodyHTML ? true : false}
+														excludeParagraphWrap
+													/>
 												)}
 											</PRCommentBody>
 											<PullRequestReactions
@@ -483,10 +492,10 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 						return (
 							<PRComment key={index} className={`review-${item.state}`}>
 								<PRTimelineItem key={index}>
-									<PRHeadshot key={index} size={40} person={item.author} />
+									<PRHeadshot key={index} size={40} person={author} />
 									{reviewIcon}
 									<PRTimelineItemBody>
-										<PRAuthor>{item.author.login}</PRAuthor>{" "}
+										<PRAuthor>{author.login}</PRAuthor>{" "}
 										{item.state === "APPROVED" && "approved this review"}
 										{item.state === "CHANGES_REQUESTED" && "requested changes"}
 										{item.state === "COMMENTED" && "reviewed"}
@@ -506,7 +515,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 											<>
 												<PRCommentHeader>
 													<div>
-														<PRAuthor>{item.author.login}</PRAuthor> commented{" "}
+														<PRAuthor>{author.login}</PRAuthor> commented{" "}
 														<Timestamp time={item.createdAt!} relative />
 														{item.includesCreatedEdit ? <> • edited</> : ""}
 													</div>
@@ -556,7 +565,11 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 															</PRButtonRow>
 														</>
 													) : (
-														<MarkdownText text={item.bodyHTML} isHtml={true} excludeParagraphWrap />
+														<MarkdownText
+															text={item.bodyHTML ? item.bodyHTML : item.bodyText}
+															isHtml={item.bodyHTML ? true : false}
+															excludeParagraphWrap
+														/>
 													)}
 												</PRCommentBody>
 												<PullRequestReactions
@@ -655,10 +668,10 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 																	<PRHeadshot
 																		key={commentIndex}
 																		size={30}
-																		person={comment.author}
+																		person={comment.author || GHOST}
 																	/>
 																	<PRThreadedCommentHeader>
-																		{item.author.login}
+																		{author.login}
 																		<Timestamp time={comment.createdAt} />
 																		<PRActionIcons>
 																			<PRAuthorBadges
@@ -709,8 +722,8 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 																		</>
 																	) : (
 																		<MarkdownText
-																			text={comment.bodyHTML}
-																			isHtml={true}
+																			text={comment.bodyHTML ? comment.bodyHTML : comment.bodyText}
+																			isHtml={comment.bodyHTML ? true : false}
 																			excludeParagraphWrap
 																		/>
 																	)}
@@ -739,9 +752,13 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 																return (
 																	<div key={i}>
 																		<PRCodeCommentBody>
-																			<PRHeadshot key={c.id + i} size={30} person={c.author} />
+																			<PRHeadshot
+																				key={c.id + i}
+																				size={30}
+																				person={c.author || GHOST}
+																			/>
 																			<PRThreadedCommentHeader>
-																				<b>{c.author.login}</b>
+																				<b>{(c.author || GHOST).login}</b>
 																				<Timestamp time={c.createdAt} />
 																				{c.includesCreatedEdit ? <> • edited</> : ""}
 																				<PRActionIcons>
@@ -791,8 +808,8 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 																				</>
 																			) : (
 																				<MarkdownText
-																					text={c.bodyHTML}
-																					isHtml={true}
+																					text={c.bodyHTML ? c.bodyHTML : c.bodyText}
+																					isHtml={c.bodyHTML ? true : false}
 																					excludeParagraphWrap
 																				/>
 																			)}

@@ -47,7 +47,7 @@ import {
 	PRCloneURLWrapper
 } from "./PullRequestComponents";
 import { ButtonRow } from "./StatusPanel";
-import { PullRequestTimelineItems } from "./PullRequestTimelineItems";
+import { PullRequestTimelineItems, GHOST } from "./PullRequestTimelineItems";
 import { DropdownButton } from "./Review/DropdownButton";
 import { InlineMenu } from "../src/components/controls/InlineMenu";
 import { LoadingMessage } from "../src/components/LoadingMessage";
@@ -104,8 +104,9 @@ export const PRAuthorBadges = (props: {
 		badges.push(<div className="pending">Pending</div>);
 	}
 
-	if (node.author.login === pr.author.login) {
-		const isMe = node.author.login === pr.viewer.login;
+	const author = node.author || GHOST;
+	if (author.login === author.login) {
+		const isMe = author.login === pr.viewer.login;
 		badges.push(
 			<Tooltip
 				key="author"

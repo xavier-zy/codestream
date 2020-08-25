@@ -631,8 +631,6 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 													});
 											};
 
-											console.warn("HUNK IS: ", comment.diffHunk);
-
 											return (
 												<PRThreadedCommentCard key={commentIndex}>
 													<PRCodeComment>

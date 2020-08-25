@@ -223,6 +223,8 @@ export const PullRequest = () => {
 
 	console.warn("PR: ", pr);
 	// console.warn("REPO: ", ghRepo);
+	const pendingCommentCount =
+		pr && pr.pendingReview && pr.pendingReview.comments ? pr.pendingReview.comments.totalCount : 0;
 	if (!pr) {
 		return (
 			<Modal verticallyCenter showGlobalNav>
@@ -393,8 +395,7 @@ export const PullRequest = () => {
 													Cancel review
 												</Button>
 												<div className="subtle" style={{ margin: "10px 0 0 10px" }}>
-													{pr.pendingReview.comments ? pr.pendingReview.comments.totalCount : 0}{" "}
-													pending comments
+													{pendingCommentCount} pending comment{pendingCommentCount == 1 ? "" : "s"}
 												</div>
 											</ButtonRow>
 										</PRCommentCard>

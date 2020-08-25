@@ -14,8 +14,8 @@ import {
 	PRThreadedCommentCard,
 	PRCodeCommentReply,
 	PRThreadedCommentHeader,
-	PRFoot,
-	PRButtonRow
+	PRButtonRow,
+	PRCodeCommentPatch
 } from "./PullRequestComponents";
 import React, { PropsWithChildren, useState } from "react";
 import { PRHeadshot, Headshot } from "../src/components/Headshot";
@@ -48,6 +48,7 @@ import { PullRequestCommentMenu } from "./PullRequestCommentMenu";
 import { setEditorContext } from "../store/editorContext/actions";
 import { markdownify } from "./Markdowner";
 import { PullRequestMinimizedComment } from "./PullRequestMinimizedComment";
+import { PullRequestPatch } from "./PullRequestPatch";
 
 const ReviewIcons = {
 	APPROVED: <Icon name="check" className="circled green" />,
@@ -630,6 +631,8 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 													});
 											};
 
+											console.warn("HUNK IS: ", comment.diffHunk);
+
 											return (
 												<PRThreadedCommentCard key={commentIndex}>
 													<PRCodeComment>
@@ -639,12 +642,9 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 																<bdi dir="ltr">{comment.path}</bdi>
 															</span>
 														</div>
-														<pre
-															style={{ margin: "5px 0 10px 0" }}
-															className="code prettyprint"
-															data-scrollable="true"
-															dangerouslySetInnerHTML={{ __html: codeHTML }}
-														/>
+														<PRCodeCommentPatch>
+															<PullRequestPatch patch={comment.diffHunk} filename={comment.path} />
+														</PRCodeCommentPatch>
 														<PRCodeCommentBody>
 															{comment.isMinimized && !expandedComments[comment.id] ? (
 																<PullRequestMinimizedComment

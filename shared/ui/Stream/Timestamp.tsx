@@ -54,14 +54,18 @@ export const distanceOfTimeInWords = (
 		// 1.5 months
 		distance = Math.round(seconds / (60 * 60 * 24 * 7));
 		when = `${distance} ${plural(abbreviated ? "wk" : "week", distance)}`;
-	} else if (seconds < YEAR) {
-		// # 1 year
-		distance = Math.round(seconds / (60 * 60 * 24 * (365 / 12)));
-		when = `${distance} ${plural(abbreviated ? "month" : "month", distance)}`;
 	} else {
-		distance = Math.round(seconds / (60 * 60 * 24 * 365));
-		when = `${distance} ${plural(abbreviated ? "yr" : "year", distance)}`;
+		return prettyDateDay(time);
 	}
+
+	// if (seconds < YEAR) {
+	// 	// # 1 year
+	// 	distance = Math.round(seconds / (60 * 60 * 24 * (365 / 12)));
+	// 	when = `${distance} ${plural(abbreviated ? "month" : "month", distance)}`;
+	// } else {
+	// 	distance = Math.round(seconds / (60 * 60 * 24 * 365));
+	// 	when = `${distance} ${plural(abbreviated ? "yr" : "year", distance)}`;
+	// }
 
 	if (!relativeToNow) {
 		return when;

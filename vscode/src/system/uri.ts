@@ -1,5 +1,6 @@
 import { Uri } from "vscode";
 import { CodeStreamDiffUriData } from "@codestream/protocols/agent";
+import { Logger } from "../logger";
 
 export namespace Uris {
 	export const CodeStreamDiffPrefix = "-0-";
@@ -13,12 +14,17 @@ export namespace Uris {
 	}
 
 	export function fromCodeStreamDiffUri<T>(uri: string): T | undefined {
-		const uriObject = Uri.parse(uri);
-		const decoded = Buffer.from(
-			uriObject.fsPath.substring(0, uriObject.fsPath.indexOf("-0-")).replace(/^\/+|\/+$/, ""),
-			"base64"
-		).toString("utf8") as any;
-		return JSON.parse(decoded) as T;
+		try {
+			const match = uri.match(
+				`codestream-diff://${CodeStreamDiffPrefix}/(.+)/${CodeStreamDiffSuffix}/`
+			);
+			if (!match) return undefined;
+			const decoded = Buffer.from(decodeURIComponent(match[1]), "base64").toString("utf8") as any;
+			return JSON.parse(decoded) as T;
+		} catch (ex) {
+			Logger.warn(ex);
+			return undefined;
+		}
 	}
 
 	export function isCodeStreamDiffUri(uri: string) {

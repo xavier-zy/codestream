@@ -1271,14 +1271,14 @@ export const PullRequestConversationTab = (props: {
 				</PRSection>
 				<PRSection style={{ borderBottom: "none" }}>
 					{pr.viewerCanUpdate && (
-						<h1 style={{ margin: 0, display: "flex" }}>
+						<h1 style={{ margin: 0 }}>
 							{pr.locked ? (
-								<a onClick={() => setIsLocking(true)}>
+								<a onClick={() => setIsLocking(true)} style={{ display: "flex" }}>
 									<Icon name="key" className="clickable" style={{ marginRight: "5px" }} />
 									Unlock Conversation
 								</a>
 							) : (
-								<a onClick={() => setIsLocking(true)}>
+								<a onClick={() => setIsLocking(true)} style={{ display: "flex" }}>
 									<Icon name="lock" className="clickable" style={{ marginRight: "5px" }} />
 									Lock Conversation
 								</a>

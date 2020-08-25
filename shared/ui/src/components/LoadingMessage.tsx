@@ -4,6 +4,7 @@ import Icon from "@codestream/webview/Stream/Icon";
 
 interface Props extends PropsWithChildren<{}> {
 	className?: string;
+	noIcon?: boolean;
 	align?: "left" | "right" | "center";
 }
 
@@ -20,7 +21,7 @@ const Root = styled.div<Props>`
 export const LoadingMessage = React.forwardRef((props: Props, ref: React.Ref<HTMLDivElement>) => {
 	return (
 		<Root align={props.align} ref={ref} className={props.className}>
-			<Icon className="spin" name="sync" />
+			{!props.noIcon && <Icon className="spin" name="sync" />}
 			{props.children}
 		</Root>
 	);

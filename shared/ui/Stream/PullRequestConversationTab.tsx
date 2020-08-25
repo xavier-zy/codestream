@@ -150,8 +150,8 @@ export const PullRequestConversationTab = props => {
 	const [availableLabels, setAvailableLabels] = useState(EMPTY_ARRAY);
 	const [availableReviewers, setAvailableReviewers] = useState(EMPTY_ARRAY);
 	const [availableAssignees, setAvailableAssignees] = useState(EMPTY_ARRAY);
-	const [availableProjects, setAvailableProjects] = useState(EMPTY_ARRAY);
-	const [availableMilestones, setAvailableMilestones] = useState(EMPTY_ARRAY);
+	const [availableProjects, setAvailableProjects] = useState<[] | undefined>();
+	const [availableMilestones, setAvailableMilestones] = useState<[] | undefined>();
 	const [availableIssues, setAvailableIssues] = useState(EMPTY_ARRAY);
 	const [isLoadingComment, setIsLoadingComment] = useState(false);
 	const [isLoadingCommentAndClose, setIsLoadingCommentAndClose] = useState(false);
@@ -497,6 +497,8 @@ export const PullRequestConversationTab = props => {
 			}) as any;
 			menuItems.unshift({ type: "search", placeholder: "Filter Projects" });
 			return menuItems;
+		} else if (availableProjects) {
+			return [{ label: <LoadingMessage noIcon>No projects found</LoadingMessage>, noHover: true }];
 		} else {
 			return [{ label: <LoadingMessage>Loading Projects...</LoadingMessage>, noHover: true }];
 		}
@@ -549,6 +551,10 @@ export const PullRequestConversationTab = props => {
 			}) as any;
 			menuItems.unshift({ type: "search", placeholder: "Filter Milestones" });
 			return menuItems;
+		} else if (availableMilestones) {
+			return [
+				{ label: <LoadingMessage noIcon>No milestones found</LoadingMessage>, noHover: true }
+			];
 		} else {
 			return [{ label: <LoadingMessage>Loading Milestones...</LoadingMessage>, noHover: true }];
 		}

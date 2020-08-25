@@ -118,7 +118,7 @@ export const PullRequestFilesChanged = (props: {
 				console.warn("Error parsing JSON data: ", response.contents);
 			}
 		})();
-	}, [pr, filesChanged]);
+	}, [pr, filesChanged, forkPointSha]);
 
 	useEffect(() => {
 		const disposables = [
@@ -127,7 +127,7 @@ export const PullRequestFilesChanged = (props: {
 		];
 
 		return () => disposables.forEach(disposable => disposable.dispose());
-	}, [pr, filesChanged, visitedFiles]);
+	}, [pr, filesChanged, visitedFiles, forkPointSha]);
 
 	const goDiff = useCallback(
 		i => {
@@ -273,7 +273,7 @@ export const PullRequestFilesChanged = (props: {
 			})
 		);
 		return files;
-	}, [pr, loading, derivedState.matchFile, latest, visitedFiles]);
+	}, [pr, loading, derivedState.matchFile, latest, visitedFiles, forkPointSha]);
 
 	if (!derivedState.currentRepo) {
 		return (

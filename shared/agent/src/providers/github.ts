@@ -1756,10 +1756,28 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 		pullRequestId: string;
 	}): Promise<FetchThirdPartyPullRequestFilesResponse[]> {
 		const ownerData = await this.getRepoOwnerFromPullRequestId(request.pullRequestId);
-		const data = await this.get<any>(
-			`/repos/${ownerData.owner}/${ownerData.name}/pulls/${ownerData.pullRequestNumber}/files`
-		);
-		return data.body;
+
+		const changedFiles: FetchThirdPartyPullRequestFilesResponse[] = [];
+		try {
+			let url:
+				| string
+				| undefined = `/repos/${ownerData.owner}/${ownerData.name}/pulls/${ownerData.pullRequestNumber}/files`;
+			do {
+				const apiResponse = await this.get<FetchThirdPartyPullRequestFilesResponse[]>(url);
+				changedFiles.push(...apiResponse.body);
+				url = this.nextPage(apiResponse.response);
+			} while (url);
+		} catch (err) {
+			Logger.error(err);
+			debugger;
+		}
+
+		return changedFiles;
+
+		// const data = await this.get<any>(
+		// 	`/repos/${ownerData.owner}/${ownerData.name}/pulls/${ownerData.pullRequestNumber}/files`
+		// );
+		// return data.body;
 
 		// const pullRequestReviewId = await this.getPullRequestReviewId(request);
 		// return {

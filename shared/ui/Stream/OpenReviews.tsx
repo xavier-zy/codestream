@@ -223,7 +223,9 @@ export function OpenReviews(props: Props) {
 										<PRHeadshot person={pr.author} />
 									</div>
 									<div>
-										<span>{pr.title}</span>
+										<span>
+											{pr.title} #{pr.number}
+										</span>
 										<span className="subtle">{pr.bodyText || pr.body}</span>
 									</div>
 									<div className="icons">

@@ -80,6 +80,19 @@ const Root = styled.div`
 	.mine {
 		background: rgba(90, 127, 255, 0.08);
 	}
+	.codestream .stream & ul.contains-task-list {
+		margin: 0 !important;
+		padding: 0 !important;
+		white-space: normal;
+		li.task-list-item {
+			margin: 0 !important;
+			padding: 3px 0 3px 30px !important;
+			list-style: none;
+			input {
+				margin-left: -30px;
+			}
+		}
+	}
 `;
 
 const EMPTY_HASH = {};

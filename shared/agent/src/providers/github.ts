@@ -2574,12 +2574,11 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 				response.repository.pullRequest.reviews.nodes
 			) {
 				let nodes = response.repository.pullRequest.reviews.nodes.filter(
-					(_: any) => _.state === "PENDING"
+					(_: any) => _.state === "PENDING" && _.author.id === response.viewer.id
 				);
-				nodes = response.repository.pullRequest.reviews.nodes.sort(
-					(a: any, b: any) => a.createdAt - b.createdAt
-				);
-				const myPendingReview = nodes.find((_: any) => _.author.login === response.viewer.login);
+				// find the last one
+				nodes = nodes.sort((a: any, b: any) => b.createdAt - a.createdAt);
+				const myPendingReview = nodes.find((_: any) => _.author.id === response.viewer.id);
 				if (myPendingReview) {
 					// only returns your pending reviews
 					response.repository.pullRequest.pendingReview = myPendingReview;

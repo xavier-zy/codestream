@@ -1209,6 +1209,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 					  avatarUrl(size: 20)
 					  url
 					}
+					body
 					bodyText
 					number
 					state

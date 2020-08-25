@@ -380,7 +380,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 									</Button>
 								</PRButtonRow>
 							</>
-						) : pr.bodyHTML ? (
+						) : pr.bodyHTML || pr.body ? (
 							<MarkdownText
 								text={pr.bodyHTML ? pr.bodyHTML : pr.body}
 								isHtml={pr.bodyHTML ? true : false}

@@ -1064,7 +1064,12 @@ export const PullRequestConversationTab = (props: {
 							) : (
 								<div style={{ textAlign: "right", flexGrow: 1 }}>
 									{!pr.merged && (
-										<Button isLoading={isLoadingCommentAndClose} onClick={onCommentAndCloseClick}>
+										<Button
+											isLoading={isLoadingCommentAndClose}
+											onClick={onCommentAndCloseClick}
+											variant="secondary"
+										>
+											<Icon name="issue-closed" className="red-color margin-right" />
 											{text ? "Close and comment" : "Close pull request"}
 										</Button>
 									)}

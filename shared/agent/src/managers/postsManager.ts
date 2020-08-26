@@ -902,19 +902,20 @@ export class PostsManager extends EntityManagerBase<CSPost> {
 			const parsedUri = csUri.Uris.fromCodeStreamDiffUri<CodeStreamDiffUriData>(
 				request.textDocuments[0].uri
 			);
-			if (!parsedUri) throw new Error("Could not parse uri");
+			if (!parsedUri) throw new Error(`Could not parse uri ${request.textDocuments[0].uri}`);
 			if (parsedUri.context && parsedUri.context.pullRequest) {
 				if (parsedUri.context.pullRequest.providerId !== "github*com") {
-					throw new Error("UnsupportedProvider");
+					throw new Error(`UnsupportedProvider ${parsedUri.context.pullRequest.providerId}`);
 				}
 			} else {
-				throw new Error("MissingContext");
+				throw new Error("missingContext");
 			}
 
 			if (parsedUri.context.pullRequest.providerId === "github*com") {
 				// lines are 1-based on GH
 				const startLine = request.attributes.codeBlocks[0].range.start.line + 1;
 				const endLine = request.attributes.codeBlocks[0].range.end.line + 1;
+				// get the diff hunk between the two shas
 				const diff = await git.getDiffBetweenCommits(
 					parsedUri.leftSha,
 					parsedUri.rightSha,
@@ -927,6 +928,8 @@ export class PostsManager extends EntityManagerBase<CSPost> {
 					);
 					const endingHunk = diff.hunks.find(_ => endLine <= _.newStart + _.newLines);
 					if (!startingHunk || !endingHunk) {
+						// if we couldn't find a hunk, we're going to go down the path of using
+						// a "code fence" aka ``` for showing the code comment
 						Logger.warn(
 							`Could not find hunk for startLine=${startLine} or endLine=${endLine} for ${JSON.stringify(
 								parsedUri.context
@@ -981,6 +984,15 @@ export class PostsManager extends EntityManagerBase<CSPost> {
 					let result;
 					if (request.isProviderReview) {
 						// https://stackoverflow.com/questions/41662127/how-to-comment-on-a-specific-line-number-on-a-pr-on-github
+						// according to github:
+						/**
+						 * The position value equals the number of lines down from the first "@@" hunk header in the file you want to add a comment.
+						 * The line just below the "@@" line is position 1, the next line is position 2, and so on.
+						 * The position in the diff continues to increase through lines of whitespace and additional hunks until the beginning of a new file.
+						 *
+						 * see: https://docs.github.com/en/rest/reference/pulls#create-a-review-for-a-pull-request
+						 */
+
 						let i = 0;
 						let relativeLine = 0;
 						for (const h of diff.hunks) {
@@ -999,10 +1011,21 @@ export class PostsManager extends EntityManagerBase<CSPost> {
 						// the line the user is asking for minus the start of this hunk
 						// that will give us the index of where it is in the hunk
 						// from there, we fetch the relativeLine which is what github needs
-						const offset = startLine - startingHunk.newStart;
-						const lineWithMetadata = (startingHunk as any).linesWithMetadata.find(
-							(b: any) => b.index === offset
-						);
+						let offset: number;
+						let lineWithMetadata;
+						if (startLine === endLine) {
+							// is a single line if startLine === endLine
+							offset = startLine - startingHunk.newStart;
+							lineWithMetadata = (startingHunk as any).linesWithMetadata.find(
+								(b: any) => b.index === offset
+							);
+						} else {
+							// it is a range
+							offset = endLine - endingHunk.newStart;
+							lineWithMetadata = (endingHunk as any).linesWithMetadata.find(
+								(b: any) => b.index === offset
+							);
+						}
 						if (lineWithMetadata) {
 							result = await providerRegistry.executeMethod({
 								method: "createPullRequestReviewComment",
@@ -1016,9 +1039,10 @@ export class PostsManager extends EntityManagerBase<CSPost> {
 								}
 							});
 						} else {
-							throw new Error("Failed to create comment");
+							throw new Error("Failed to create review comment");
 						}
 					} else {
+						// is a single comment against a commit
 						result = await providerRegistry.executeMethod({
 							method: "createCommitComment",
 							providerId: parsedUri.context.pullRequest.providerId,

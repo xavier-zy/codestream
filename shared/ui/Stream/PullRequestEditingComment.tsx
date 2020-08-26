@@ -36,7 +36,7 @@ export const PullRequestEditingComment = styled((props: Props) => {
 	const handleEdit = async () => {
 		setIsLoadingMessage("Updating Comment...");
 		try {
-			if (text == "") return;
+			if (text == "" || text == props.text) return;
 
 			await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
 				method:
@@ -67,7 +67,7 @@ export const PullRequestEditingComment = styled((props: Props) => {
 	};
 
 	const handleCancelEdit = async () => {
-		if (text == null || text == undefined) {
+		if (text == null || text == undefined || text == props.text) {
 			done();
 			return;
 		}

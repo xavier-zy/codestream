@@ -104,6 +104,7 @@ export interface CreatePassthroughCodemarkResponse {
 	isPassThrough: boolean;
 	codemark?: CodemarkPlus;
 	pullRequest: {
+		providerId: string;
 		id: string;
 	};
 	success: boolean;

@@ -1,9 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { PRSelectorButtons } from "./PullRequestComponents";
 import styled from "styled-components";
-import { ExecuteThirdPartyTypedType } from "@codestream/protocols/agent";
 import { useDidMount } from "../utilities/hooks";
-import { HostApi } from "../webview-api";
 import { useSelector, useDispatch } from "react-redux";
 import { CodeStreamState } from "../store";
 import { PullRequestFilesChanged } from "./PullRequestFilesChanged";
@@ -11,6 +9,7 @@ import { FileStatus } from "@codestream/protocols/api";
 import { LoadingMessage } from "../src/components/LoadingMessage";
 import { setUserPreference } from "./actions";
 import { PullRequestPatch } from "./PullRequestPatch";
+import { getPullRequestFiles } from "../store/providerPullRequests/actions";
 
 const PRCommitContent = styled.div`
 	margin: 0 20px 20px 40px;
@@ -46,6 +45,7 @@ export const PullRequestFilesChangedTab = props => {
 	const dispatch = useDispatch();
 	const derivedState = useSelector((state: CodeStreamState) => {
 		return {
+			providerPullRequests: state.providerPullRequests.pullRequests,
 			pullRequestFilesChangedMode: state.preferences.pullRequestFilesChangedMode || "files",
 			currentPullRequestId: state.context.currentPullRequestId
 		};
@@ -58,28 +58,38 @@ export const PullRequestFilesChangedTab = props => {
 		dispatch(setUserPreference(["pullRequestFilesChangedMode"], mode));
 	};
 
+	const _mapData = data => {
+		const filesChanged = data.map(_ => {
+			return {
+				..._,
+				linesAdded: _.additions,
+				linesRemoved: _.deletions,
+				file: _.filename,
+				sha: _.sha,
+				status: STATUS_MAP[_.status]
+			};
+		});
+		setFilesChanged(filesChanged);
+		setIsLoading(false);
+	};
+
+	useEffect(() => {
+		// re-render if providerPullRequests changes
+		(async () => {
+			const data = await dispatch(
+				getPullRequestFiles(pr.providerId, derivedState.currentPullRequestId!)
+			);
+			_mapData(data);
+		})();
+	}, [derivedState.providerPullRequests]);
+
 	useDidMount(() => {
 		setIsLoading(true);
 		(async () => {
-			const data = await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
-				method: "getPullRequestFilesChanged",
-				providerId: pr.providerId,
-				params: {
-					pullRequestId: derivedState.currentPullRequestId
-				}
-			});
-			const filesChanged = data.map(_ => {
-				return {
-					..._,
-					linesAdded: _.additions,
-					linesRemoved: _.deletions,
-					file: _.filename,
-					sha: _.sha,
-					status: STATUS_MAP[_.status]
-				};
-			});
-			setFilesChanged(filesChanged);
-			setIsLoading(false);
+			const data = await dispatch(
+				getPullRequestFiles(pr.providerId, derivedState.currentPullRequestId!)
+			);
+			_mapData(data);
 		})();
 	});
 

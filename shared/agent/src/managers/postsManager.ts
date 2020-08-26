@@ -973,9 +973,7 @@ export class PostsManager extends EntityManagerBase<CSPost> {
 						});
 						return {
 							isPassThrough: true,
-							pullRequest: {
-								id: parsedUri.context.pullRequest.id
-							},
+							pullRequest: parsedUri.context.pullRequest,
 							success: result != null
 						};
 					}
@@ -1037,9 +1035,7 @@ export class PostsManager extends EntityManagerBase<CSPost> {
 
 					return {
 						isPassThrough: true,
-						pullRequest: {
-							id: parsedUri.context.pullRequest.id
-						},
+						pullRequest: parsedUri.context.pullRequest,
 						success: result != null
 					};
 				}

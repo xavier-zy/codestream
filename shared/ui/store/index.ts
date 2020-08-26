@@ -55,6 +55,8 @@ import { CompaniesState } from "./companies/types";
 import { reduceDocuments } from "./documents/reducer";
 import { DocumentsState } from "./documents/types";
 import { reduceReviews } from "./reviews/reducer";
+import { reduceProviderPullRequests } from "./providerPullRequests/reducer";
+import { ProviderPullRequestsState } from "./providerPullRequests/types";
 
 const pluginVersion = (state = "", action) => {
 	if (action.type === "@pluginVersion/Set") return action.payload;
@@ -88,7 +90,8 @@ const reducer = combineReducers({
 	services: reduceServices,
 	providers: reduceProviders,
 	versioning: reduceVersioning,
-	apiVersioning: reduceApiVersioning
+	apiVersioning: reduceApiVersioning,
+	providerPullRequests: reduceProviderPullRequests
 });
 
 export function createCodeStreamStore(
@@ -126,6 +129,7 @@ export interface CodeStreamState {
 	posts: PostsState;
 	preferences: PreferencesState;
 	providers: ProvidersState;
+	providerPullRequests: ProviderPullRequestsState;
 	repos: ReposState;
 	reviews: ReviewsState;
 	services: ServicesState;

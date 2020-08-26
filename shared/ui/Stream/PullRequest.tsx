@@ -16,8 +16,6 @@ import { useDidMount } from "../utilities/hooks";
 import { HostApi } from "../webview-api";
 import {
 	FetchThirdPartyPullRequestPullRequest,
-	FetchThirdPartyPullRequestRequestType,
-	FetchThirdPartyPullRequestResponse,
 	GetReposScmRequestType,
 	ReposScm,
 	ExecuteThirdPartyTypedType
@@ -51,6 +49,11 @@ import MessageInput from "./MessageInput";
 import { RadioGroup, Radio } from "../src/components/RadioGroup";
 import Tooltip from "./Tooltip";
 import { PullRequestFinishReview } from "./PullRequestFinishReview";
+import {
+	getPullRequestConversationsFromProvider,
+	clearPullRequestFiles,
+	getPullRequestConversations
+} from "../store/providerPullRequests/actions";
 
 export const WidthBreakpoint = "630px";
 
@@ -104,6 +107,7 @@ export const PullRequest = () => {
 		const currentUser = state.users[state.session.userId!] as CSMe;
 		const team = state.teams[state.context.currentTeamId];
 		return {
+			providerPullRequests: state.providerPullRequests.pullRequests,
 			reviewsState: state.reviews,
 			reviews: reviewSelectors.getAllReviews(state),
 			currentUser,
@@ -129,20 +133,68 @@ export const PullRequest = () => {
 		await dispatch(setCurrentPullRequest());
 	};
 
-	const fetch = async (message?: string) => {
-		if (message) setIsLoadingMessage(message);
-		setIsLoadingPR(true);
-		const r = (await HostApi.instance.send(FetchThirdPartyPullRequestRequestType, {
-			providerId: "github*com",
-			pullRequestId: derivedState.currentPullRequestId!
-		})) as FetchThirdPartyPullRequestResponse;
-		setGhRepo(r.repository);
-		setPr(r.repository.pullRequest);
-		setTitle(r.repository.pullRequest.title);
+	const _assignState = pr => {
+		if (!pr) return;
+		setGhRepo(pr.repository);
+		setPr(pr.repository.pullRequest);
+		setTitle(pr.repository.pullRequest.title);
 		setEditingTitle(false);
 		setSavingTitle(false);
 		setIsLoadingPR(false);
 		setIsLoadingMessage("");
+	};
+
+	const providerId = "github*com";
+
+	useEffect(() => {
+		const providerPullRequests = derivedState.providerPullRequests[providerId];
+		if (providerPullRequests) {
+			let data = providerPullRequests[derivedState.currentPullRequestId!];
+			if (data) {
+				_assignState(data.conversations);
+			}
+		}
+	}, [derivedState.providerPullRequests]);
+
+	const initialFetch = async (message?: string) => {
+		if (message) setIsLoadingMessage(message);
+		setIsLoadingPR(true);
+
+		const response = (await dispatch(
+			getPullRequestConversations(providerId, derivedState.currentPullRequestId!)
+		)) as any;
+		_assignState(response);
+	};
+
+	/**
+	 * Called after an action that requires us to re-fetch from the provider
+	 * @param message
+	 */
+	const fetch = async (message?: string) => {
+		if (message) setIsLoadingMessage(message);
+		setIsLoadingPR(true);
+
+		const response = (await dispatch(
+			getPullRequestConversationsFromProvider(pr!.providerId, derivedState.currentPullRequestId!)
+		)) as any;
+		_assignState(response);
+	};
+
+	/**
+	 * This is called when a user clicks the "reload" button.
+	 * with a "hard-reload" we need to refresh the conversation and file data
+	 * @param message
+	 */
+	const reload = async (message?: string) => {
+		if (message) setIsLoadingMessage(message);
+		setIsLoadingPR(true);
+		const response = (await dispatch(
+			getPullRequestConversationsFromProvider(pr!.providerId, derivedState.currentPullRequestId!)
+		)) as any;
+		_assignState(response);
+
+		// just clear the files data -- it will be fetched if necessary (since it has its own api call)
+		dispatch(clearPullRequestFiles(providerId, derivedState.currentPullRequestId!));
 	};
 
 	const checkout = async () => {
@@ -198,7 +250,7 @@ export const PullRequest = () => {
 		if (!derivedState.reviewsState.bootstrapped) {
 			dispatch(bootstrapReviews());
 		}
-		fetch();
+		initialFetch();
 	});
 
 	console.warn("PR: ", pr);
@@ -343,7 +395,7 @@ export const PullRequest = () => {
 										title="Reload"
 										trigger={["hover"]}
 										delay={1}
-										onClick={() => fetch("Reloading...")}
+										onClick={() => reload("Reloading...")}
 										placement="bottom"
 										className={`${isLoadingPR ? "spin" : ""}`}
 										name="refresh"

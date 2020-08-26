@@ -19,6 +19,7 @@ import { CodeStreamState } from "..";
 import { capitalize } from "@codestream/webview/utils";
 import { isObject } from "lodash-es";
 import { URI } from "vscode-uri";
+import { getPullRequestConversationsFromProvider } from "../providerPullRequests/actions";
 
 export const reset = () => action("RESET");
 
@@ -103,9 +104,15 @@ export const createCodemark = (attributes: SharingNewCodemarkAttributes) => asyn
 		});
 		if (response) {
 			let result;
-			if ((response as any).isPassThrough) {
+			let responseAsPassthrough = (response as any) as CreatePassthroughCodemarkResponse;
+			if (responseAsPassthrough.isPassThrough) {
 				// is pass through -- aka a fake "codemark" that was sent to a code provider
-				// like Github
+				dispatch(
+					getPullRequestConversationsFromProvider(
+						responseAsPassthrough.pullRequest.providerId,
+						responseAsPassthrough.pullRequest.id
+					)
+				);
 			} else {
 				result = dispatch(addCodemarks([response.codemark]));
 				dispatch(addStreams([response.stream]));

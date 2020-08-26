@@ -528,7 +528,12 @@ export class MessageInput extends React.Component<Props, State> {
 
 	// this is asynchronous so callers should provide a callback for code that depends on the completion of this
 	focus = debounceAndCollectToAnimationFrame((...cbs: Function[]) => {
-		if (this._contentEditable) this._contentEditable.htmlEl.focus();
+		if (this._contentEditable) {
+			this._contentEditable.htmlEl.focus();
+			this._contentEditable.htmlEl.scrollIntoView({
+				behavior: "smooth"
+			});
+		}
 		cbs.forEach(cb => cb.apply(undefined));
 	});
 

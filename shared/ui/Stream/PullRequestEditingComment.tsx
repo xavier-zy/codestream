@@ -1,0 +1,123 @@
+import React, { useState } from "react";
+import { useSelector } from "react-redux";
+import { CodeStreamState } from "../store";
+import styled from "styled-components";
+import { PRButtonRow } from "./PullRequestComponents";
+import { HostApi } from "../webview-api";
+import {
+	ExecuteThirdPartyTypedType,
+	FetchThirdPartyPullRequestPullRequest
+} from "@codestream/protocols/agent";
+import MessageInput from "./MessageInput";
+import { CSMe } from "@codestream/protocols/api";
+import { Button } from "../src/components/Button";
+import { confirmPopup } from "./Confirm";
+
+interface Props {
+	pr: FetchThirdPartyPullRequestPullRequest;
+	setIsLoadingMessage: Function;
+	fetch: Function;
+	className?: string;
+	id: string;
+	type: "PR" | "ISSUE" | "REVIEW" | "REVIEW_COMMENT";
+	done: Function;
+	text: string;
+}
+
+export const PullRequestEditingComment = styled((props: Props) => {
+	const { pr, fetch, setIsLoadingMessage, type, id, done } = props;
+	const derivedState = useSelector((state: CodeStreamState) => {
+		const currentUser = state.users[state.session.userId!] as CSMe;
+		return { currentUser, currentPullRequestId: state.context.currentPullRequestId };
+	});
+
+	const [text, setText] = useState(props.text);
+
+	const handleEdit = async () => {
+		setIsLoadingMessage("Updating Comment...");
+		try {
+			if (text == "") return;
+
+			await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
+				method:
+					type === "REVIEW_COMMENT"
+						? "updateReviewComment"
+						: type === "ISSUE"
+						? "updateIssueComment"
+						: type === "PR"
+						? "updatePullRequestBody"
+						: "updateReview",
+				providerId: pr.providerId,
+				params: {
+					pullRequestId: pr.id,
+					id,
+					body: text
+				}
+			});
+
+			fetch().then(() => {
+				setText("");
+				done();
+			});
+		} catch (ex) {
+			console.warn(ex);
+		} finally {
+			setIsLoadingMessage();
+		}
+	};
+
+	const handleCancelEdit = async () => {
+		if (text == null || text == undefined) {
+			done();
+			return;
+		}
+		if (text.length > 0) {
+			confirmPopup({
+				title: "Are you sure?",
+				message: "",
+				centered: true,
+				buttons: [
+					{ label: "Go Back", className: "control-button" },
+					{
+						label: "Discard Edits",
+						className: "delete",
+						wait: true,
+						action: () => {
+							setText("");
+							done();
+						}
+					}
+				]
+			});
+		}
+	};
+
+	const map = {
+		OFF_TOPIC: "off-topic",
+		SPAM: "spam",
+		TOO_HEATED: "too heated",
+		RESOLVED: "resolved"
+	};
+
+	return (
+		<>
+			<div style={{ border: "1px solid var(--base-border-color)" }}>
+				<MessageInput
+					autoFocus
+					multiCompose
+					text={text}
+					onChange={value => setText(value)}
+					onSubmit={handleEdit}
+				/>
+			</div>
+			<PRButtonRow>
+				<Button variant="secondary" onClick={handleCancelEdit}>
+					Cancel
+				</Button>
+				<Button variant="primary" onClick={handleEdit}>
+					Update comment
+				</Button>
+			</PRButtonRow>
+		</>
+	);
+})``;

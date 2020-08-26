@@ -366,6 +366,7 @@ export interface FetchThirdPartyPullRequestPullRequest {
 		url: string;
 	};
 	locked: any;
+	activeLockReason: "OFF_TOPIC" | "SPAM" | "TOO_HEATED" | "RESOLVED";
 	body: string;
 	bodyHTML: string;
 	baseRefName: string;

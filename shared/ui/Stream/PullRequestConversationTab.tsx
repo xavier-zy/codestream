@@ -7,30 +7,23 @@ import { CSMe } from "@codestream/protocols/api";
 import { isFeatureEnabled } from "../store/apiVersioning/reducer";
 import Icon from "./Icon";
 import Timestamp from "./Timestamp";
-import MessageInput from "./MessageInput";
 import Tooltip from "./Tooltip";
-import { Headshot, PRHeadshot } from "../src/components/Headshot";
+import { PRHeadshot } from "../src/components/Headshot";
 import { PRHeadshotName } from "../src/components/HeadshotName";
 import Tag from "./Tag";
 import { HostApi } from "../webview-api";
 import {
-	CreatePullRequestCommentAndCloseRequest,
-	CreatePullRequestCommentRequest,
 	ExecuteThirdPartyTypedType,
 	MergeMethod,
 	MergePullRequestRequest,
 	FetchThirdPartyPullRequestPullRequest
 } from "@codestream/protocols/agent";
-import { markdownify } from "./Markdowner";
 import {
-	PRAuthor,
 	PRContent,
 	PRConversation,
 	PRComment,
 	PRCommentCard,
 	PRCommentHeader,
-	PRActionIcons,
-	PRCommentBody,
 	PRStatusHeadshot,
 	PRIconButton,
 	PRFoot,
@@ -46,7 +39,6 @@ import {
 	PRCopyableTerminal,
 	PRCloneURLWrapper
 } from "./PullRequestComponents";
-import { ButtonRow } from "./StatusPanel";
 import { PullRequestTimelineItems, GHOST } from "./PullRequestTimelineItems";
 import { DropdownButton } from "./Review/DropdownButton";
 import { InlineMenu } from "../src/components/controls/InlineMenu";
@@ -55,10 +47,9 @@ import styled from "styled-components";
 import { Modal } from "./Modal";
 import { Dialog } from "../src/components/Dialog";
 import { Link } from "./Link";
-import { PullRequestReactButton, PullRequestReactions } from "./PullRequestReactions";
 import { setUserPreference } from "./actions";
-import { PullRequestCommentMenu } from "./PullRequestCommentMenu";
 import copy from "copy-to-clipboard";
+import { PullRequestBottomComment } from "./PullRequestBottomComment";
 
 const Circle = styled.div`
 	width: 12px;
@@ -168,15 +159,12 @@ export const PullRequestConversationTab = (props: {
 		};
 	});
 
-	const [text, setText] = useState("");
 	const [availableLabels, setAvailableLabels] = useState(EMPTY_ARRAY);
 	const [availableReviewers, setAvailableReviewers] = useState(EMPTY_ARRAY);
 	const [availableAssignees, setAvailableAssignees] = useState(EMPTY_ARRAY);
 	const [availableProjects, setAvailableProjects] = useState<[] | undefined>();
 	const [availableMilestones, setAvailableMilestones] = useState<[] | undefined>();
 	const [availableIssues, setAvailableIssues] = useState(EMPTY_ARRAY);
-	const [isLoadingComment, setIsLoadingComment] = useState(false);
-	const [isLoadingCommentAndClose, setIsLoadingCommentAndClose] = useState(false);
 	const [isLocking, setIsLocking] = useState(false);
 	const [isLockingReason, setIsLockingReason] = useState("");
 	const [isLoadingLocking, setIsLoadingLocking] = useState(false);
@@ -185,10 +173,10 @@ export const PullRequestConversationTab = (props: {
 	const [cloneURLType, setCloneURLType] = useState("https");
 	const [cloneURL, setCloneURL] = useState(`${pr.repository.url}.git`);
 
-	const __onDidRender = ({ insertTextAtCursor, insertNewlineAtCursor, focus }) => {
-		insertText = insertTextAtCursor;
-		insertNewline = insertNewlineAtCursor;
-		focusOnMessageInput = focus;
+	const __onDidRender = functions => {
+		insertText = functions.insertTextAtCursor;
+		insertNewline = functions.insertNewlineAtCursor;
+		focusOnMessageInput = functions.focus;
 	};
 
 	const quote = text => {
@@ -198,59 +186,6 @@ export const PullRequestConversationTab = (props: {
 				insertText && insertText(text.replace(/^/gm, "> "));
 				insertNewline && insertNewline();
 			});
-	};
-
-	const onCommentClick = async (event?: React.SyntheticEvent) => {
-		setIsLoadingComment(true);
-		await HostApi.instance.send(
-			new ExecuteThirdPartyTypedType<CreatePullRequestCommentRequest, any>(),
-			{
-				method: "createPullRequestComment",
-				providerId: pr.providerId,
-				params: {
-					pullRequestId: derivedState.currentPullRequestId!,
-					text: text
-				}
-			}
-		);
-		setText("");
-		fetch().then(() => setIsLoadingComment(false));
-	};
-
-	const onCommentAndCloseClick = async e => {
-		setIsLoadingMessage("Closing...");
-		setIsLoadingCommentAndClose(true);
-		await HostApi.instance.send(
-			new ExecuteThirdPartyTypedType<CreatePullRequestCommentAndCloseRequest, any>(),
-			{
-				method: "createPullRequestCommentAndClose",
-				providerId: pr.providerId,
-				params: {
-					pullRequestId: derivedState.currentPullRequestId!,
-					text: text
-				}
-			}
-		);
-		setText("");
-		fetch().then(() => setIsLoadingCommentAndClose(false));
-	};
-
-	const onCommentAndReopenClick = async e => {
-		setIsLoadingMessage("Reopening...");
-		setIsLoadingCommentAndClose(true);
-		await HostApi.instance.send(
-			new ExecuteThirdPartyTypedType<CreatePullRequestCommentAndCloseRequest, any>(),
-			{
-				method: "createPullRequestCommentAndReopen",
-				providerId: pr.providerId,
-				params: {
-					pullRequestId: derivedState.currentPullRequestId!,
-					text: text
-				}
-			}
-		);
-		setText("");
-		fetch().then(() => setIsLoadingCommentAndClose(false));
 	};
 
 	const mergePullRequest = async (options: { mergeMethod: MergeMethod }) => {
@@ -1029,81 +964,12 @@ export const PullRequestConversationTab = (props: {
 						</PRCommentCard>
 					)}
 				</PRComment>
-				<PRComment>
-					<Headshot size={40} person={derivedState.currentUser}></Headshot>
-					<PRCommentCard className="add-comment">
-						<div style={{ margin: "5px 0 0 0", border: "1px solid var(--base-border-color)" }}>
-							<MessageInput
-								multiCompose
-								text={text}
-								placeholder="Add Comment..."
-								onChange={setText}
-								onSubmit={onCommentClick}
-								__onDidRender={__onDidRender}
-							/>
-						</div>
-						<ButtonRow>
-							{pr.state === "CLOSED" ? (
-								<div style={{ textAlign: "right", flexGrow: 1 }}>
-									<Button
-										disabled={pr.merged}
-										isLoading={isLoadingCommentAndClose}
-										onClick={onCommentAndReopenClick}
-										variant="secondary"
-									>
-										{text ? "Reopen and comment" : "Reopen pull request"}
-									</Button>
-
-									<Tooltip
-										title={
-											<span>
-												Submit Comment
-												<span className="keybinding extra-pad">
-													{navigator.appVersion.includes("Macintosh") ? "⌘" : "Alt"} ENTER
-												</span>
-											</span>
-										}
-										placement="bottomRight"
-										delay={1}
-									>
-										<Button isLoading={isLoadingComment} onClick={onCommentClick} disabled={!text}>
-											Comment
-										</Button>
-									</Tooltip>
-								</div>
-							) : (
-								<div style={{ textAlign: "right", flexGrow: 1 }}>
-									{!pr.merged && (
-										<Button
-											isLoading={isLoadingCommentAndClose}
-											onClick={onCommentAndCloseClick}
-											variant="secondary"
-										>
-											<Icon name="issue-closed" className="red-color margin-right" />
-											{text ? "Close and comment" : "Close pull request"}
-										</Button>
-									)}
-									<Tooltip
-										title={
-											<span>
-												Submit Comment
-												<span className="keybinding extra-pad">
-													{navigator.appVersion.includes("Macintosh") ? "⌘" : "Alt"} ENTER
-												</span>
-											</span>
-										}
-										placement="bottomRight"
-										delay={1}
-									>
-										<Button isLoading={isLoadingComment} onClick={onCommentClick} disabled={!text}>
-											Comment
-										</Button>
-									</Tooltip>
-								</div>
-							)}
-						</ButtonRow>
-					</PRCommentCard>
-				</PRComment>
+				<PullRequestBottomComment
+					pr={pr}
+					fetch={fetch}
+					setIsLoadingMessage={setIsLoadingMessage}
+					__onDidRender={__onDidRender}
+				/>
 			</div>
 			<PRSidebar>
 				<PRSection>

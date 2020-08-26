@@ -44,6 +44,8 @@ import { PullRequestCommentMenu } from "./PullRequestCommentMenu";
 import { PullRequestMinimizedComment } from "./PullRequestMinimizedComment";
 import { PullRequestPatch } from "./PullRequestPatch";
 import { PullRequestFinishReview } from "./PullRequestFinishReview";
+import { PullRequestEditingComment } from "./PullRequestEditingComment";
+import { PullRequestReplyComment } from "./PullRequestReplyComment";
 
 export const GHOST = {
 	login: "ghost",
@@ -70,7 +72,6 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 	const { pr, setIsLoadingMessage, fetch } = props;
 	if (!pr || !pr.timelineItems) return null;
 
-	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [isResolving, setIsResolving] = useState(false);
 	const [reviewOption, setReviewOption] = useState("COMMENT");
 	const [reviewOptionText, setReviewOptionText] = useState("");
@@ -107,11 +108,8 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 	// 	props.fetch();
 	// };
 
-	const handleTextInputChanged = async (value: string, databaseCommentId: number | string) => {
-		setPendingComments({
-			...pendingComments,
-			[databaseCommentId]: value
-		});
+	const doneEditingComment = id => {
+		setEditingComments({ ...editingComments, [id]: false });
 	};
 
 	const handleTextInputFocus = async (databaseCommentId: number) => {
@@ -137,75 +135,6 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 			...expandedComments,
 			[id]: !expandedComments[id]
 		});
-	};
-
-	const handleComment = async (e, databaseCommentId) => {
-		try {
-			const value = pendingComments[databaseCommentId];
-			if (value == null) return;
-			setIsSubmitting(true);
-
-			await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
-				method: "createCommentReply",
-				providerId: pr.providerId,
-				params: {
-					pullRequestId: pr.id,
-					commentId: databaseCommentId,
-					text: value
-				}
-			});
-
-			fetch().then(() => {
-				setPendingComments({
-					...pendingComments,
-					[databaseCommentId]: undefined
-				});
-				setOpenComments({
-					...openComments,
-					[databaseCommentId]: false
-				});
-			});
-		} catch (ex) {
-			console.warn(ex);
-		} finally {
-			setIsSubmitting(false);
-		}
-	};
-
-	const handleCancelComment = async (e, databaseCommentId) => {
-		const value = pendingComments[databaseCommentId];
-		if (value == null || value == undefined) {
-			setOpenComments({
-				...openComments,
-				[databaseCommentId]: false
-			});
-			return;
-		}
-		if (value.length > 0) {
-			confirmPopup({
-				title: "Are you sure?",
-				message: "",
-				centered: true,
-				buttons: [
-					{ label: "Go Back", className: "control-button" },
-					{
-						label: "Discard Comment",
-						className: "delete",
-						wait: true,
-						action: () => {
-							setPendingComments({
-								...pendingComments,
-								[databaseCommentId]: undefined
-							});
-							setOpenComments({
-								...openComments,
-								[databaseCommentId]: false
-							});
-						}
-					}
-				]
-			});
-		}
 	};
 
 	const handleEdit = async (id: string, type: "PR" | "ISSUE" | "REVIEW" | "REVIEW_COMMENT") => {
@@ -245,42 +174,6 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 			console.warn(ex);
 		} finally {
 			setIsLoadingMessage();
-		}
-	};
-
-	const handleCancelEdit = async (e, id) => {
-		const value = pendingComments[id];
-		if (value == null || value == undefined) {
-			setEditingComments({
-				...editingComments,
-				[id]: false
-			});
-			return;
-		}
-		if (value.length > 0) {
-			confirmPopup({
-				title: "Are you sure?",
-				message: "",
-				centered: true,
-				buttons: [
-					{ label: "Go Back", className: "control-button" },
-					{
-						label: "Discard Edits",
-						className: "delete",
-						wait: true,
-						action: () => {
-							setPendingComments({
-								...pendingComments,
-								[id]: undefined
-							});
-							setEditingComments({
-								...editingComments,
-								[id]: false
-							});
-						}
-					}
-				]
-			});
 		}
 	};
 
@@ -362,25 +255,15 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 					</PRCommentHeader>
 					<PRCommentBody>
 						{editingComments[pr.id] ? (
-							<>
-								<div style={{ border: "1px solid var(--base-border-color)" }}>
-									<MessageInput
-										autoFocus
-										multiCompose
-										text={pendingComments[pr.id] || ""}
-										onChange={e => handleTextInputChanged(e, pr.id)}
-										onSubmit={() => handleEdit(pr.id, "PR")}
-									/>
-								</div>
-								<PRButtonRow>
-									<Button variant="secondary" onClick={e => handleCancelEdit(e, pr.id)}>
-										Cancel
-									</Button>
-									<Button variant="primary" onClick={() => handleEdit(pr.id, "PR")}>
-										Update comment
-									</Button>
-								</PRButtonRow>
-							</>
+							<PullRequestEditingComment
+								pr={pr}
+								fetch={fetch}
+								setIsLoadingMessage={setIsLoadingMessage}
+								id={pr.id}
+								type={"PR"}
+								text={pendingComments[pr.id]}
+								done={() => doneEditingComment(pr.id)}
+							/>
 						) : pr.bodyHTML || pr.body ? (
 							<MarkdownText
 								text={pr.bodyHTML ? pr.bodyHTML : pr.body}
@@ -443,31 +326,15 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 											</PRCommentHeader>
 											<PRCommentBody>
 												{editingComments[item.id] ? (
-													<>
-														<div style={{ border: "1px solid var(--base-border-color)" }}>
-															<MessageInput
-																autoFocus
-																multiCompose
-																text={pendingComments[item.id] || ""}
-																onChange={e => handleTextInputChanged(e, item.id)}
-																onSubmit={() => handleEdit(item.id, "ISSUE")}
-															/>
-														</div>
-														<PRButtonRow>
-															<Button
-																variant="secondary"
-																onClick={e => handleCancelEdit(e, item.id)}
-															>
-																Cancel
-															</Button>
-															<Button
-																variant="primary"
-																onClick={() => handleEdit(item.id, "ISSUE")}
-															>
-																Update comment
-															</Button>
-														</PRButtonRow>
-													</>
+													<PullRequestEditingComment
+														pr={pr}
+														fetch={fetch}
+														setIsLoadingMessage={setIsLoadingMessage}
+														id={item.id}
+														type={"ISSUE"}
+														text={pendingComments[item.id]}
+														done={() => doneEditingComment(item.id)}
+													/>
 												) : (
 													<MarkdownText
 														text={item.bodyHTML ? item.bodyHTML : item.bodyText}
@@ -548,31 +415,15 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 
 												<PRCommentBody>
 													{editingComments[item.id] ? (
-														<>
-															<div style={{ border: "1px solid var(--base-border-color)" }}>
-																<MessageInput
-																	autoFocus
-																	multiCompose
-																	text={pendingComments[item.id] || ""}
-																	onChange={e => handleTextInputChanged(e, item.id)}
-																	onSubmit={() => handleEdit(item.id, "REVIEW")}
-																/>
-															</div>
-															<PRButtonRow>
-																<Button
-																	variant="secondary"
-																	onClick={e => handleCancelEdit(e, item.id)}
-																>
-																	Cancel
-																</Button>
-																<Button
-																	variant="primary"
-																	onClick={() => handleEdit(item.id, "REVIEW")}
-																>
-																	Update comment
-																</Button>
-															</PRButtonRow>
-														</>
+														<PullRequestEditingComment
+															pr={pr}
+															fetch={fetch}
+															setIsLoadingMessage={setIsLoadingMessage}
+															id={item.id}
+															type={"REVIEW"}
+															text={pendingComments[item.id]}
+															done={() => doneEditingComment(item.id)}
+														/>
 													) : (
 														<MarkdownText
 															text={item.bodyHTML ? item.bodyHTML : item.bodyText}
@@ -634,14 +485,10 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 											let insertNewline: Function;
 											let focusOnMessageInput: Function;
 
-											const __onDidRender = ({
-												insertTextAtCursor,
-												insertNewlineAtCursor,
-												focus
-											}) => {
-												insertText = insertTextAtCursor;
-												insertNewline = insertNewlineAtCursor;
-												focusOnMessageInput = focus;
+											const __onDidRender = functions => {
+												insertText = functions.insertTextAtCursor;
+												insertNewline = functions.insertNewlineAtCursor;
+												focusOnMessageInput = functions.focus;
 											};
 
 											const quote = text => {
@@ -704,31 +551,15 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 																		</PRActionIcons>
 																	</PRThreadedCommentHeader>
 																	{editingComments[comment.id] ? (
-																		<>
-																			<div style={{ border: "1px solid var(--base-border-color)" }}>
-																				<MessageInput
-																					autoFocus
-																					multiCompose
-																					text={pendingComments[comment.id] || ""}
-																					onChange={e => handleTextInputChanged(e, comment.id)}
-																					onSubmit={() => handleEdit(comment.id, "REVIEW_COMMENT")}
-																				/>
-																			</div>
-																			<PRButtonRow>
-																				<Button
-																					variant="secondary"
-																					onClick={e => handleCancelEdit(e, comment.id)}
-																				>
-																					Cancel
-																				</Button>
-																				<Button
-																					variant="primary"
-																					onClick={() => handleEdit(comment.id, "REVIEW_COMMENT")}
-																				>
-																					Update comment
-																				</Button>
-																			</PRButtonRow>
-																		</>
+																		<PullRequestEditingComment
+																			pr={pr}
+																			fetch={fetch}
+																			setIsLoadingMessage={setIsLoadingMessage}
+																			id={comment.id}
+																			type={"REVIEW_COMMENT"}
+																			text={pendingComments[comment.id]}
+																			done={() => doneEditingComment(comment.id)}
+																		/>
 																	) : (
 																		<MarkdownText
 																			text={comment.bodyHTML ? comment.bodyHTML : comment.bodyText}
@@ -788,33 +619,15 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 																				</PRActionIcons>
 																			</PRThreadedCommentHeader>
 																			{editingComments[c.id] ? (
-																				<>
-																					<div
-																						style={{ border: "1px solid var(--base-border-color)" }}
-																					>
-																						<MessageInput
-																							autoFocus
-																							multiCompose
-																							text={pendingComments[c.id] || ""}
-																							onChange={e => handleTextInputChanged(e, c.id)}
-																							onSubmit={() => handleEdit(c.id, "REVIEW_COMMENT")}
-																						/>
-																					</div>
-																					<PRButtonRow>
-																						<Button
-																							variant="secondary"
-																							onClick={e => handleCancelEdit(e, c.id)}
-																						>
-																							Cancel
-																						</Button>
-																						<Button
-																							variant="primary"
-																							onClick={() => handleEdit(c.id, "REVIEW_COMMENT")}
-																						>
-																							Update comment
-																						</Button>
-																					</PRButtonRow>
-																				</>
+																				<PullRequestEditingComment
+																					pr={pr}
+																					fetch={fetch}
+																					setIsLoadingMessage={setIsLoadingMessage}
+																					id={c.id}
+																					type={"REVIEW_COMMENT"}
+																					text={pendingComments[c.id]}
+																					done={() => doneEditingComment(c.id)}
+																				/>
 																			) : (
 																				<MarkdownText
 																					text={c.bodyHTML ? c.bodyHTML : c.bodyText}
@@ -836,45 +649,14 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 													</PRCodeComment>
 													{item.state !== "PENDING" && (
 														<>
-															<PRCodeCommentReply>
-																<Headshot key={index} size={30} person={derivedState.currentUser} />
-
-																<div
-																	style={{
-																		margin: "0 0 0 40px",
-																		border: "1px solid var(--base-border-color)"
-																	}}
-																	className={openComments[comment.databaseId] ? "open-comment" : ""}
-																	onClick={e => handleTextInputFocus(comment.databaseId)}
-																>
-																	<MessageInput
-																		multiCompose
-																		text={pendingComments[comment.databaseId] || ""}
-																		placeholder="Reply..."
-																		onChange={e => handleTextInputChanged(e, comment.databaseId)}
-																		onSubmit={e => handleComment(e, comment.databaseId)}
-																		__onDidRender={__onDidRender}
-																	/>
-																</div>
-																{openComments[comment.databaseId] && (
-																	<PRButtonRow>
-																		<Button
-																			variant="secondary"
-																			onClick={e => handleCancelComment(e, comment.databaseId)}
-																		>
-																			Cancel
-																		</Button>
-
-																		<Button
-																			variant="primary"
-																			isLoading={isSubmitting}
-																			onClick={e => handleComment(e, comment.databaseId)}
-																		>
-																			Comment
-																		</Button>
-																	</PRButtonRow>
-																)}
-															</PRCodeCommentReply>
+															<PullRequestReplyComment
+																pr={pr}
+																fetch={fetch}
+																setIsLoadingMessage={setIsLoadingMessage}
+																databaseId={comment.databaseId}
+																isOpen={openComments[comment.databaseId]}
+																__onDidRender={__onDidRender}
+															/>
 															<div style={{ height: "15px" }}></div>
 															<PRButtonRow className="align-left border-top">
 																{comment.isResolved && (

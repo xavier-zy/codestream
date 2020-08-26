@@ -146,9 +146,10 @@ export const PullRequestFilesChanged = (props: {
 						}
 					}
 				};
-				const response = await HostApi.instance.send(CompareLocalFilesRequestType, request);
-				if (!response || response.error) {
-					setErrorMessage(response.error || "Could not open file diff");
+				try {
+					await HostApi.instance.send(CompareLocalFilesRequestType, request);
+				} catch (err) {
+					setErrorMessage(err || "Could not open file diff");
 				}
 
 				visitFile(visitedKey, index);

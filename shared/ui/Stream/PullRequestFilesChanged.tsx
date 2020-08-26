@@ -64,6 +64,7 @@ export const PullRequestFilesChanged = (props: {
 	const [visitedFiles, setVisitedFiles] = React.useState({ _latest: 0 });
 	const [currentRepoRoot, setCurrentRepoRoot] = React.useState("");
 	const [forkPointSha, setForkPointSha] = React.useState("");
+	const [errorMessage, setErrorMessage] = React.useState("");
 
 	const visitFile = (visitedKey: string, index: number) => {
 		const newVisitedFiles = { ...visitedFiles, [visitedKey]: NOW, _latest: index };
@@ -123,13 +124,15 @@ export const PullRequestFilesChanged = (props: {
 	const goDiff = useCallback(
 		i => {
 			(async index => {
+				setErrorMessage("");
 				if (index < 0) index = derivedState.numFiles - 1;
 				if (index > derivedState.numFiles - 1) index = 0;
 				const f = filesChanged[index];
 				const visitedKey = [f.file].join(":");
 
 				console.warn(props.pr.baseRefOid + " vs ", props.pr.headRefOid);
-				await HostApi.instance.send(CompareLocalFilesRequestType, {
+
+				const request = {
 					baseBranch: props.pr.baseRefName,
 					baseSha: forkPointSha,
 					headBranch: props.pr.headRefName,
@@ -142,7 +145,11 @@ export const PullRequestFilesChanged = (props: {
 							id: pr.id
 						}
 					}
-				});
+				};
+				const response = await HostApi.instance.send(CompareLocalFilesRequestType, request);
+				if (!response || response.error) {
+					setErrorMessage(response.error || "Could not open file diff");
+				}
 
 				visitFile(visitedKey, index);
 
@@ -319,6 +326,16 @@ export const PullRequestFilesChanged = (props: {
 			</Meta>
 		);
 	} else {
-		return <>{changedFiles}</>;
+		return (
+			<>
+				{errorMessage && (
+					<div style={{ margin: "10px 0 10px 0" }}>
+						<Icon name="alert" className="margin-right" />
+						{errorMessage}
+					</div>
+				)}
+				{changedFiles}
+			</>
+		);
 	}
 };

@@ -186,7 +186,9 @@ export interface CompareLocalFilesRequest {
 	};
 }
 
-export interface CompareLocalFilesResponse {}
+export interface CompareLocalFilesResponse {
+	error?: string;
+}
 
 export const CompareLocalFilesRequestType = new RequestType<
 	CompareLocalFilesRequest,

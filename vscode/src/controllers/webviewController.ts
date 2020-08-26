@@ -903,8 +903,14 @@ export class WebviewController implements Disposable {
 			}
 			case CompareLocalFilesRequestType.method: {
 				webview.onIpcRequest(CompareLocalFilesRequestType, e, async (_type, params) => {
-					void (await Container.commands.showLocalDiff(params));
-					return emptyObj;
+					try {
+						void (await Container.commands.showLocalDiff(params));
+						return emptyObj;
+					} catch (err) {
+						return {
+							error: err.message
+						};
+					}
 				});
 
 				break;

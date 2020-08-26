@@ -1,7 +1,6 @@
 "use strict";
 import { Marker } from "../api/extensions";
 import { SessionContainer } from "../container";
-import { Logger } from "../logger";
 import {
 	GetMarkerRequest,
 	GetMarkerRequestType,
@@ -15,7 +14,6 @@ import { lsp, lspHandler } from "../system";
 import { IndexParams, IndexType } from "./cache";
 import { getValues, KeyValue } from "./cache/baseCache";
 import { EntityManagerBase, Id } from "./entityManager";
-import { MarkerLocationManager } from "./markerLocationManager";
 import { MarkersBuilder } from "./markersBuilder";
 
 @lsp
@@ -121,20 +119,15 @@ export class MarkersManager extends EntityManagerBase<CSMarker> {
 	@lspHandler(MoveMarkerRequestType)
 	protected async moveMarker(request: MoveMarkerRequest): Promise<MoveMarkerResponse> {
 		const { code, documentId, range, source } = request;
-		const builder = MarkersBuilder.newBuilder(documentId);
-		const descriptor = await builder.build(code, range, source);
-		const response = await this.session.api.moveMarker({
+		const createMarkerRequest = await MarkersBuilder.buildCreateMarkerRequest(
+			documentId,
+			code,
+			range,
+			source
+		);
+		return await this.session.api.moveMarker({
 			oldMarkerId: request.markerId,
-			newMarker: descriptor.marker
+			newMarker: createMarkerRequest
 		});
-
-		MarkerLocationManager.saveUncommittedLocations(
-			[response.marker],
-			[descriptor.uncommittedBacktrackedLocation]
-		).then(() => {
-			Logger.log("Uncommitted locations saved to local cache");
-		});
-
-		return response;
 	}
 }

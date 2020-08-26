@@ -1,5 +1,5 @@
 "use strict";
-import { applyPatch, ParsedDiff, structuredPatch } from "diff";
+import { applyPatch, createPatch, ParsedDiff, parsePatch, structuredPatch } from "diff";
 import * as path from "path";
 import { TextDocumentIdentifier } from "vscode-languageserver";
 import { URI } from "vscode-uri";
@@ -23,7 +23,6 @@ import { ManagerBase } from "./baseManager";
 import { IndexParams, IndexType } from "./cache";
 import { getValues, KeyValue } from "./cache/baseCache";
 import { Id } from "./entityManager";
-import { UncommittedBacktrackedLocation } from "./markersBuilder";
 export interface Markerish {
 	id: string;
 	referenceLocations: CSReferenceLocation[];
@@ -162,7 +161,8 @@ export class MarkerLocationManager extends ManagerBase<CSMarkerLocations> {
 			repoRoot,
 			markers,
 			currentCommitLocations.locations,
-			repoCurrentCommitHash
+			repoCurrentCommitHash,
+			fileCurrentCommitHash
 		);
 
 		const doc = documents.get(documentUri);
@@ -180,7 +180,8 @@ export class MarkerLocationManager extends ManagerBase<CSMarkerLocations> {
 		}
 
 		const currentCommitText =
-			fileCurrentCommitHash && (await git.getFileContentForRevision(filePath, fileCurrentCommitHash));
+			fileCurrentCommitHash &&
+			(await git.getFileContentForRevision(filePath, fileCurrentCommitHash));
 
 		if (Object.keys(committedLocations).length) {
 			Logger.log(`MARKERS: calculating current location for committed locations`);
@@ -301,6 +302,7 @@ export class MarkerLocationManager extends ManagerBase<CSMarkerLocations> {
 		repoPath: string,
 		markers: CSMarker[],
 		committedLocations: MarkerLocationsById,
+		repoCurrentCommit: string | undefined,
 		fileCurrentCommit: string | undefined
 	): Promise<{
 		committedLocations: MarkerLocationsById;
@@ -323,7 +325,8 @@ export class MarkerLocationManager extends ManagerBase<CSMarkerLocations> {
 			if (
 				canonicalLocation &&
 				!canonicalLocation.commitHash &&
-				canonicalLocation.flags.baseCommit === fileCurrentCommit
+				(canonicalLocation.flags.baseCommit === fileCurrentCommit ||
+					canonicalLocation.flags.baseCommit === repoCurrentCommit)
 			) {
 				Logger.log(`MARKERS: ${id}: future reference`);
 				result.futureReferences[id] = canonicalLocation;
@@ -340,37 +343,55 @@ export class MarkerLocationManager extends ManagerBase<CSMarkerLocations> {
 	}
 
 	async backtrackLocation(
-		documentId: TextDocumentIdentifier,
-		text: string,
+		documentUri: string,
+		contents: string,
 		location: CSMarkerLocation,
 		revision: string
-	): Promise<CSMarkerLocation> {
+	): Promise<{
+		location: CSMarkerLocation;
+		diffCommittedToContents?: ParsedDiff;
+		diffContentsToCommitted?: ParsedDiff;
+	}> {
 		Logger.log(`Backtracking location ${MarkerLocation.toArray(location)} to ${revision}`);
 		const { git } = SessionContainer.instance();
-		const documentUri = documentId.uri;
 		const filePath = URI.parse(documentUri).fsPath;
 
 		if (!revision) {
 			Logger.warn("No revision specified for backtracking");
-			return location;
+			return {
+				location
+			};
 		}
 
-		const currentCommitText = await git.getFileContentForRevision(filePath, revision);
-		if (currentCommitText === undefined) {
+		const committedContents = await git.getFileContentForRevision(filePath, revision);
+		if (committedContents === undefined) {
 			throw new Error(`Could not retrieve contents for ${filePath}@${revision}`);
 		}
 
 		// Maybe in this case the IDE should inform the buffer contents to ensure we have the exact same
 		// buffer text the user is seeing
-		const diff = structuredPatch(
+		const patchContentsToCommitted = createPatch(
 			filePath,
-			filePath,
-			Strings.normalizeFileContents(text),
-			Strings.normalizeFileContents(currentCommitText),
+			Strings.normalizeFileContents(contents),
+			Strings.normalizeFileContents(committedContents),
 			"",
 			""
 		);
-		return calculateLocation(location, diff);
+		const patchCommittedToContents = createPatch(
+			filePath,
+			Strings.normalizeFileContents(committedContents),
+			Strings.normalizeFileContents(contents),
+			"",
+			""
+		);
+		const diffContentsToCommitted = parsePatch(patchContentsToCommitted)[0];
+		const diffCommittedToContents = parsePatch(patchCommittedToContents)[0];
+
+		return {
+			location: await calculateLocation(location, diffContentsToCommitted),
+			diffContentsToCommitted,
+			diffCommittedToContents
+		};
 	}
 
 	async getCommitLocations(
@@ -457,7 +478,7 @@ export class MarkerLocationManager extends ManagerBase<CSMarkerLocations> {
 
 						break;
 					}
-				} else if (referenceCommitHash != null && !diffsByCommitHash.has(referenceCommitHash)) {
+				} else if (!diffsByCommitHash.has(referenceCommitHash)) {
 					const diff = await git.getDiffBetweenCommits(
 						referenceCommitHash,
 						commitHash,
@@ -527,35 +548,6 @@ export class MarkerLocationManager extends ManagerBase<CSMarkerLocations> {
 			locations: currentCommitLocations,
 			missingLocations
 		};
-	}
-
-	async saveUncommittedLocation(
-		filePath: string,
-		fileContents: string,
-		location: CSMarkerLocation
-	) {
-		Logger.log(`MARKERS: saving uncommitted marker location ${location.id} to local cache`);
-		const { git } = SessionContainer.instance();
-
-		let repoRoot;
-		try {
-			repoRoot = await git.getRepoRoot(filePath);
-		} catch {
-			throw new Error(`Unable to find Git`);
-		}
-		if (!repoRoot) {
-			throw new Error(`Could not find repo root for ${filePath}`);
-		}
-
-		const cache = await getCache(repoRoot);
-		const uncommittedLocations = cache.getCollection("uncommittedLocations");
-		uncommittedLocations.set(location.id, {
-			fileContents,
-			location
-		} as UncommittedLocation);
-		Logger.log(`MARKERS: flushing local cache`);
-		await cache.flush();
-		Logger.log(`MARKERS: local cache flushed`);
 	}
 
 	async flushUncommittedLocations(repo: GitRepository) {
@@ -742,49 +734,5 @@ export class MarkerLocationManager extends ManagerBase<CSMarkerLocations> {
 			locations: locationsInCurrentBuffer,
 			orphans: orphans
 		};
-	}
-
-	static async saveUncommittedLocations(
-		markers: CSMarker[],
-		backtrackedLocations: (UncommittedBacktrackedLocation | undefined)[]
-	) {
-		let index = 0;
-		for await (const marker of markers) {
-			try {
-				const backtrackedLocation = backtrackedLocations[index];
-				if (!backtrackedLocation) return;
-
-				const atDocument = backtrackedLocation.atDocument;
-				const atCurrentCommit = backtrackedLocation.atCurrentCommit;
-				const filePath = backtrackedLocation.filePath;
-				const fileContents = backtrackedLocation.fileContents;
-
-				if (
-					!atCurrentCommit ||
-					atCurrentCommit.meta?.startWasDeleted ||
-					atCurrentCommit.meta?.endWasDeleted
-				) {
-					const uncommittedLocation = {
-						...atDocument!,
-						id: marker.id
-					};
-
-					await SessionContainer.instance().markerLocations.saveUncommittedLocation(
-						filePath,
-						fileContents,
-						uncommittedLocation
-					);
-				}
-			} catch (ex) {
-				Logger.log(ex);
-				Container.instance().errorReporter.reportMessage({
-					type: ReportingMessageType.Error,
-					message: ex.message,
-					source: "agent",
-					extra: ex.toString()
-				});
-			}
-			index++;
-		}
 	}
 }

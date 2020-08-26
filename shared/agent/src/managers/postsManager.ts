@@ -83,8 +83,7 @@ import { BaseIndex, IndexParams, IndexType } from "./cache";
 import { getValues, KeyValue } from "./cache/baseCache";
 import { EntityCache, EntityCacheCfg } from "./cache/entityCache";
 import { EntityManagerBase, Id } from "./entityManager";
-import { MarkerLocationManager } from "./markerLocationManager";
-import { MarkerCreationDescriptor, MarkersBuilder } from "./markersBuilder";
+import { MarkersBuilder } from "./markersBuilder";
 
 export type FetchPostsFn = (request: FetchPostsRequest) => Promise<FetchPostsResponse>;
 
@@ -1049,21 +1048,23 @@ export class PostsManager extends EntityManagerBase<CSPost> {
 			return undefined;
 		}
 
-		const markerCreationDescriptors: MarkerCreationDescriptor[] = [];
 		let codemark: CodemarkPlus | undefined;
 
 		for (const codeBlock of request.attributes.codeBlocks) {
 			if (!codeBlock.range) continue;
-			const builder = MarkersBuilder.newBuilder({ uri: codeBlock.uri });
-			const descriptor = await builder.build(codeBlock.contents, codeBlock.range, codeBlock.scm);
-			markerCreationDescriptors.push(descriptor);
-			codemarkRequest.markers!.push(descriptor.marker);
+			const createMarkerRequest = await MarkersBuilder.buildCreateMarkerRequest(
+				{ uri: codeBlock.uri },
+				codeBlock.contents,
+				codeBlock.range,
+				codeBlock.scm
+			);
+			codemarkRequest.markers!.push(createMarkerRequest);
 
 			if (!codemarkRequest.remoteCodeUrl) {
-				codemarkRequest.remoteCodeUrl = descriptor.marker.remoteCodeUrl;
+				codemarkRequest.remoteCodeUrl = createMarkerRequest.remoteCodeUrl;
 			}
 			if (!codemarkRequest.remotes) {
-				codemarkRequest.remotes = descriptor.marker.remotes;
+				codemarkRequest.remotes = createMarkerRequest.remotes;
 			}
 		}
 
@@ -1098,16 +1099,6 @@ export class PostsManager extends EntityManagerBase<CSPost> {
 		});
 
 		const { markers } = response!;
-		if (markers) {
-			Logger.log(`createSharingCodemarkPost: will save uncommitted locations`);
-			MarkerLocationManager.saveUncommittedLocations(
-				markers,
-				markerCreationDescriptors.map(descriptor => descriptor.uncommittedBacktrackedLocation)
-			).then(() => {
-				Logger.log("Uncommitted locations saved to local cache");
-			});
-		}
-
 		codemark = response.codemark!;
 
 		if (request.attributes.crossPostIssueValues) {
@@ -1714,22 +1705,23 @@ export class PostsManager extends EntityManagerBase<CSPost> {
 			markers: []
 		};
 
-		const markerCreationDescriptors: MarkerCreationDescriptor[] = [];
-
 		codemarkRequest.streamId = streamId;
 		Logger.log(`createPostWithMarker: preparing descriptors for ${markers.length} markers`);
 		for (const m of markers) {
 			if (!m.range) continue;
-			const builder = MarkersBuilder.newBuilder(m.documentId);
-			const descriptor = await builder.build(m.code, m.range, m.source);
-			markerCreationDescriptors.push(descriptor);
-			codemarkRequest.markers!.push(descriptor.marker);
+			const createMarkerRequest = await MarkersBuilder.buildCreateMarkerRequest(
+				m.documentId,
+				m.code,
+				m.range,
+				m.source
+			);
+			codemarkRequest.markers!.push(createMarkerRequest);
 
 			if (!codemarkRequest.remoteCodeUrl) {
-				codemarkRequest.remoteCodeUrl = descriptor.marker.remoteCodeUrl;
+				codemarkRequest.remoteCodeUrl = createMarkerRequest.remoteCodeUrl;
 			}
 			if (!codemarkRequest.remotes) {
-				codemarkRequest.remotes = descriptor.marker.remotes;
+				codemarkRequest.remotes = createMarkerRequest.remotes;
 			}
 		}
 
@@ -1748,17 +1740,6 @@ export class PostsManager extends EntityManagerBase<CSPost> {
 				textDocuments
 			);
 			Logger.log(`createPostWithMarker: post creation completed`);
-
-			const { markers } = response!;
-			if (markers) {
-				Logger.log(`createPostWithMarker: will save uncommitted locations`);
-				MarkerLocationManager.saveUncommittedLocations(
-					markers,
-					markerCreationDescriptors.map(descriptor => descriptor.uncommittedBacktrackedLocation)
-				).then(() => {
-					Logger.log("Uncommitted locations saved to local cache");
-				});
-			}
 
 			response.codemark!.markers = response.markers || [];
 			Logger.log(`createPostWithMarker: returning`);

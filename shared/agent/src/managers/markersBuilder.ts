@@ -1,5 +1,6 @@
 "use strict";
 
+import { structuredPatch } from "diff";
 import * as path from "path";
 import { Range, TextDocumentIdentifier } from "vscode-languageserver";
 import { URI } from "vscode-uri";
@@ -16,129 +17,125 @@ import { Strings } from "../system";
 import * as csUri from "../system/uri";
 import { xfs } from "../xfs";
 import { ReviewsManager } from "./reviewsManager";
-import { ScmManager } from "./scmManager";
 
 export abstract class MarkersBuilder {
-	static newBuilder(documentId: TextDocumentIdentifier) {
-		if (documentId.uri.startsWith("codestream-diff://")) {
-			if (csUri.Uris.isCodeStreamDiffUri(documentId.uri)) {
-				return new CodeStreamDiffMarkersBuilder(documentId);
-			}
-			return new ReviewDiffMarkersBuilder(documentId);
-		} else {
-			return new DefaultMarkersBuilder(documentId);
-		}
-	}
-
-	protected _documentId: TextDocumentIdentifier;
-	protected _documentUri: URI;
-
-	protected constructor(documentId: TextDocumentIdentifier) {
-		this._documentId = documentId;
-		this._documentUri = URI.parse(documentId.uri);
-	}
-
-	async build(
+	static async buildCreateMarkerRequest(
+		documentId: TextDocumentIdentifier,
 		code: string,
 		range: Range,
 		source?: CodeBlockSource
-	): Promise<MarkerCreationDescriptor> {
-		const { scm } = SessionContainer.instance();
-		let marker: CreateMarkerRequest | undefined;
+	): Promise<CreateMarkerRequest> {
+		return this.newBuilder(documentId, code, range, source).build();
+	}
 
-		Logger.log("prepareMarkerCreationDescriptor: creating post with associated range");
-		range = Ranges.ensureStartBeforeEnd(range);
-		const location = MarkerLocation.fromRange(range);
+	private static newBuilder(
+		documentId: TextDocumentIdentifier,
+		code: string,
+		range: Range,
+		source?: CodeBlockSource
+	) {
+		if (documentId.uri.startsWith("codestream-diff://")) {
+			if (csUri.Uris.isCodeStreamDiffUri(documentId.uri)) {
+				return new CodeStreamDiffMarkersBuilder(documentId, code, range, source);
+			}
+			return new ReviewDiffMarkersBuilder(documentId, code, range, source);
+		} else {
+			return new DefaultMarkersBuilder(documentId, code, range, source);
+		}
+	}
 
-		const {
-			referenceLocations,
-			backtrackedLocation,
-			fileCurrentCommitSha
-		} = await this.getLocationInfo(source, location);
-		const remotes = this.getRemotes(source);
-		const repoIdentifier = await this.getRepoIdentifier(source);
-		const remoteCodeUrl = await this.getRemoteCodeUrl(scm, range, code, remotes);
-		marker = {
-			code,
+	protected documentUri: URI;
+	protected readonly location: CSMarkerLocation;
+
+	protected constructor(
+		protected readonly documentId: TextDocumentIdentifier,
+		protected readonly code: string,
+		protected readonly range: Range,
+		protected readonly source?: CodeBlockSource
+	) {
+		this.documentUri = URI.parse(documentId.uri);
+		this.range = Ranges.ensureStartBeforeEnd(range);
+		this.location = MarkerLocation.fromRange(this.range);
+	}
+
+	async build(): Promise<CreateMarkerRequest> {
+		let createMarkerRequest: CreateMarkerRequest | undefined;
+
+		Logger.log("MarkersBuilder: creating marker descriptor");
+
+		const { referenceLocations, fileCurrentCommitSha } = await this.getLocationInfo();
+		const remotes = await this.getRemotes();
+		const repoIdentifier = await this.getRepoIdentifier();
+		const remoteCodeUrl = await this.getRemoteCodeUrl(remotes);
+		createMarkerRequest = {
+			code: this.code,
 			commitHash: fileCurrentCommitSha,
 			referenceLocations,
-			branchWhenCreated: (source && source.branch) || undefined,
+			branchWhenCreated: this.source?.branch,
 			remotes: remotes,
 			remoteCodeUrl,
 			...repoIdentifier
 		};
 
-		Logger.log(`prepareMarkerCreationDescriptor: preparation complete`);
-		return {
-			marker,
-			uncommittedBacktrackedLocation: backtrackedLocation
-		};
+		Logger.log(`MarkersBuilder: marker descriptor created`);
+		return createMarkerRequest;
 	}
 
-	protected abstract getLocationInfo(
-		source: CodeBlockSource | undefined,
-		location: CSMarkerLocation
-	): Promise<{
+	protected abstract getLocationInfo(): Promise<{
 		referenceLocations: CSReferenceLocation[];
-		backtrackedLocation?: UncommittedBacktrackedLocation;
 		fileCurrentCommitSha?: string;
 	}>;
 
-	private getRemotes(source: CodeBlockSource | undefined) {
-		if (source && source.remotes && source.remotes.length > 0) {
-			return source.remotes.map(r => r.url);
+	private getRemotes() {
+		const remotes = this.source?.remotes;
+		if (remotes && remotes.length > 0) {
+			return remotes.map(r => r.url);
 		}
 		return undefined;
 	}
 
-	private async getRepoIdentifier(source?: CodeBlockSource): Promise<RepoIdentifier> {
-		if (source == null || source.file == null) {
-			Logger.log(`prepareMarkerCreationDescriptor: marker has no source file`);
+	private async getRepoIdentifier(): Promise<RepoIdentifier> {
+		const source = this.source;
+		if (source?.file == null) {
+			Logger.log(`MarkersBuilder: marker has no source file`);
 			return {};
 		}
 
-		Logger.log(`prepareMarkerCreationDescriptor: identifying stream for file ${source.file}`);
+		Logger.log(`MarkersBuilder: identifying stream for file ${source.file}`);
 		const { git, files } = SessionContainer.instance();
 		const fullPath = path.join(source.repoPath, source.file);
 		const stream = await files.getByPath(fullPath);
 		if (stream && stream.id) {
-			Logger.log(`prepareMarkerCreationDescriptor: stream id=${stream.id}`);
+			Logger.log(`MarkersBuilder: stream id=${stream.id}`);
 			return {
 				fileStreamId: stream.id
 			};
 		}
 
-		Logger.log(`prepareMarkerCreationDescriptor: no stream id found`);
+		Logger.log(`MarkersBuilder: no stream id found`);
 		const identifier: RepoIdentifier = {};
 		identifier.file = source.file;
 		const repo = await git.getRepositoryByFilePath(fullPath);
 		if (repo && repo.id) {
-			Logger.log(`prepareMarkerCreationDescriptor: repo id=${repo.id}`);
+			Logger.log(`MarkersBuilder: repo id=${repo.id}`);
 			identifier.repoId = repo.id;
 		} else {
 			identifier.knownCommitHashes = await git.getKnownCommitHashes(source.repoPath);
 			Logger.log(
-				`prepareMarkerCreationDescriptor: known commit hashes = ${identifier.knownCommitHashes.join(
-					", "
-				)}`
+				`MarkersBuilder: known commit hashes = ${identifier.knownCommitHashes.join(", ")}`
 			);
 		}
 
 		return identifier;
 	}
 
-	private async getRemoteCodeUrl(
-		scm: ScmManager,
-		range: Range,
-		code: string,
-		remotes: string[] | undefined
-	) {
+	private async getRemoteCodeUrl(remotes: string[] | undefined) {
 		try {
-			Logger.log(`prepareMarkerCreationDescriptor: retrieving range information`);
+			const { scm } = SessionContainer.instance();
 			const scmResponse = await scm.getRangeInfo({
-				uri: this._documentId.uri,
-				range: range,
-				contents: code,
+				uri: this.documentId.uri,
+				range: this.range,
+				contents: this.code,
 				skipBlame: true
 			});
 
@@ -153,7 +150,7 @@ export abstract class MarkersBuilder {
 					);
 
 					if (remoteCodeUrl !== undefined) {
-						Logger.log(`prepareMarkerCreationDescriptor: remote code URL = ${remoteCodeUrl}`);
+						Logger.log(`MarkersBuilder: remote code URL = ${remoteCodeUrl}`);
 						return remoteCodeUrl;
 					}
 				}
@@ -166,23 +163,24 @@ export abstract class MarkersBuilder {
 }
 
 class DefaultMarkersBuilder extends MarkersBuilder {
-	constructor(documentId: TextDocumentIdentifier) {
-		super(documentId);
+	constructor(
+		documentId: TextDocumentIdentifier,
+		code: string,
+		range: Range,
+		source?: CodeBlockSource
+	) {
+		super(documentId, code, range, source);
 	}
 
-	protected async getLocationInfo(
-		source: CodeBlockSource | undefined,
-		location: CSMarkerLocation
-	): Promise<{
+	protected async getLocationInfo(): Promise<{
 		referenceLocations: CSReferenceLocation[];
-		backtrackedLocation?: UncommittedBacktrackedLocation;
 		fileCurrentCommitSha?: string;
 	}> {
-		if (source == null) return this.getLocationInfoWithoutSource();
-		if (source.revision == null) {
-			return this.getLocationInfoWithoutRevision(source.repoPath, location);
+		if (this.source == null) return this.getLocationInfoWithoutSource();
+		if (this.source?.revision == null) {
+			return this.getLocationInfoWithoutRevision();
 		}
-		return this.getLocationInfoCore(source.repoPath, source.revision, location);
+		return this.getLocationInfoCore();
 	}
 
 	private getLocationInfoWithoutSource() {
@@ -191,60 +189,68 @@ class DefaultMarkersBuilder extends MarkersBuilder {
 		};
 	}
 
-	private async getLocationInfoWithoutRevision(repoPath: string, location: CSMarkerLocation) {
-		Logger.log(`prepareMarkerCreationDescriptor: no source revision - file has no commits`);
+	private async getLocationInfoWithoutRevision() {
+		Logger.log(`MarkersBuilder: no source revision - file has no commits`);
 		const { git } = SessionContainer.instance();
+		const { repoPath } = this.source!;
 
 		const repoHead = await git.getRepoHeadRevision(repoPath);
 		if (repoHead == null) throw new Error(`Cannot determine HEAD revision for ${repoPath}`);
 
+		const fileContents = await this.getFileContents();
+		const diff = structuredPatch(
+			this.getFilePath(repoPath),
+			this.getFilePath(repoPath),
+			Strings.normalizeFileContents(""),
+			Strings.normalizeFileContents(fileContents),
+			"",
+			""
+		);
+
 		return {
 			referenceLocations: [
 				{
-					commitHash: repoHead,
-					location: MarkerLocation.toArray(MarkerLocation.empty()),
+					commitHash: undefined,
 					flags: {
-						unversionedFile: true
-					}
+						canonical: true,
+						uncommitted: true,
+						baseCommit: repoHead,
+						diff
+					},
+					location: MarkerLocation.toArray(this.location)
 				}
 			],
-			backtrackedLocation: {
-				atDocument: location,
-				fileContents: await this.getFileContents(),
-				filePath: this._documentUri.fsPath
-			},
 			fileCurrentCommitSha: repoHead
 		};
 	}
 
-	private async getLocationInfoCore(
-		repoPath: string,
-		fileCurrentCommitSha: string,
-		location: CSMarkerLocation
-	): Promise<{
+	protected async getLocationInfoCore(): Promise<{
 		referenceLocations: CSReferenceLocation[];
-		backtrackedLocation?: UncommittedBacktrackedLocation;
 		fileCurrentCommitSha?: string;
 	}> {
-		Logger.log(`prepareMarkerCreationDescriptor: source revision ${fileCurrentCommitSha}`);
+		const { repoPath, revision: fileCurrentCommitSha } = this.source!;
+		Logger.log(`MarkersBuilder: source revision ${fileCurrentCommitSha}`);
 
 		const { git } = SessionContainer.instance();
 
 		const fileContents = await this.getFileContents();
-		const locationAtCurrentCommit = await SessionContainer.instance().markerLocations.backtrackLocation(
-			this._documentId,
+		const {
+			diffCommittedToContents,
+			diffContentsToCommitted,
+			location: locationAtCurrentCommit
+		} = await SessionContainer.instance().markerLocations.backtrackLocation(
+			this.getFileURI(repoPath),
 			fileContents,
-			location,
+			this.location,
 			fileCurrentCommitSha
 		);
 		Logger.log(
-			`prepareMarkerCreationDescriptor: location at current commit ${MarkerLocation.toArray(
+			`MarkersBuilder: location at current commit ${MarkerLocation.toArray(
 				locationAtCurrentCommit
 			)}`
 		);
 
-		const filePath = this._documentUri.fsPath;
-		const blameRevisionsPromises = git.getBlameRevisions(filePath, {
+		const blameRevisionsPromises = git.getBlameRevisions(this.getFilePath(repoPath), {
 			ref: fileCurrentCommitSha,
 			// it expects 0-based ranges
 			startLine: locationAtCurrentCommit.lineStart - 1,
@@ -259,15 +265,17 @@ class DefaultMarkersBuilder extends MarkersBuilder {
 		].filter(function(sha, index, self) {
 			return sha !== fileCurrentCommitSha && index === self.indexOf(sha);
 		});
-		Logger.log(
-			`prepareMarkerCreationDescriptor: backtracking location to ${backtrackShas.length} revisions`
-		);
+		Logger.log(`MarkersBuilder: backtracking location to ${backtrackShas.length} revisions`);
 
 		const promises = backtrackShas.map(async (sha, index) => {
-			const diff = await git.getDiffBetweenCommits(fileCurrentCommitSha!, sha, filePath);
+			const diff = await git.getDiffBetweenCommits(
+				fileCurrentCommitSha!,
+				sha,
+				this.getFilePath(repoPath)
+			);
 			const location = await calculateLocation(locationAtCurrentCommit!, diff!);
 			const locationArray = MarkerLocation.toArray(location);
-			Logger.log(`prepareMarkerCreationDescriptor: backtracked at ${sha} to ${locationArray}`);
+			Logger.log(`MarkersBuilder: backtracked at ${sha} to ${locationArray}`);
 			return {
 				commitHash: sha,
 				location: locationArray,
@@ -278,47 +286,52 @@ class DefaultMarkersBuilder extends MarkersBuilder {
 		});
 
 		const meta = locationAtCurrentCommit.meta || {};
-		const canonical = !meta.startWasDeleted && !meta.endWasDeleted;
-		const referenceLocation = {
-			commitHash: fileCurrentCommitSha,
-			location: MarkerLocation.toArray(locationAtCurrentCommit),
-			flags: {
-				canonical,
-				backtracked: !canonical
-			}
-		};
+		const canonicalLocation = meta.contentChanged
+			? {
+					commitHash: undefined,
+					flags: {
+						canonical: true,
+						uncommitted: true,
+						baseCommit: fileCurrentCommitSha,
+						diff: diffCommittedToContents
+					},
+					location: MarkerLocation.toArray(this.location)
+			  }
+			: {
+					commitHash: fileCurrentCommitSha,
+					location: MarkerLocation.toArray(locationAtCurrentCommit),
+					flags: {
+						canonical: true
+					}
+			  };
 		const backtrackedLocations = await Promise.all(promises);
-		const referenceLocations = [referenceLocation, ...backtrackedLocations];
-		Logger.log(
-			`prepareMarkerCreationDescriptor: ${referenceLocations.length} reference locations calculated`
-		);
+		const referenceLocations: CSReferenceLocation[] = [canonicalLocation, ...backtrackedLocations];
 
-		let backtrackedLocation: UncommittedBacktrackedLocation | undefined;
-		if (!canonical) {
-			backtrackedLocation = {
-				atCurrentCommit: locationAtCurrentCommit,
-				atDocument: location,
-				fileContents,
-				filePath
-			};
-		}
+		Logger.log(`MarkersBuilder: ${referenceLocations.length} reference locations calculated`);
 
 		return {
 			referenceLocations,
-			backtrackedLocation,
 			fileCurrentCommitSha
 		};
 	}
 
-	private async getFileContents() {
+	protected getFileURI(repoPath: string): string {
+		return this.documentId.uri;
+	}
+
+	protected getFilePath(repoPath: string): string {
+		return this.documentUri.fsPath;
+	}
+
+	protected async getFileContents() {
 		const { documents } = Container.instance();
 
-		const document = documents.get(this._documentId.uri);
-		const filePath = this._documentUri.fsPath;
+		const document = documents.get(this.documentId.uri);
+		const filePath = this.documentUri.fsPath;
 		const fileContents = document ? document.getText() : await xfs.readText(filePath);
 		if (fileContents === undefined) {
 			throw new Error(
-				`prepareMarkerCreationDescriptor: Could not retrieve contents for ${this._documentId.uri} from document manager or file system. File does not exist in current branch.`
+				`MarkersBuilder: Could not retrieve contents for ${this.documentId.uri} from document manager or file system. File does not exist in current branch.`
 			);
 		}
 
@@ -326,159 +339,32 @@ class DefaultMarkersBuilder extends MarkersBuilder {
 	}
 }
 
-class CodeStreamDiffMarkersBuilder extends MarkersBuilder {
+class CodeStreamDiffMarkersBuilder extends DefaultMarkersBuilder {
 	private readonly codeStreamDiffUri: CodeStreamDiffUriData;
 
-	constructor(documentId: TextDocumentIdentifier) {
-		super(documentId);
+	constructor(
+		documentId: TextDocumentIdentifier,
+		code: string,
+		range: Range,
+		source?: CodeBlockSource
+	) {
+		super(documentId, code, range, source);
 
 		this.codeStreamDiffUri = csUri.Uris.fromCodeStreamDiffUri<CodeStreamDiffUriData>(
 			documentId.uri
 		)!;
 	}
 
-	protected async getLocationInfo(
-		source: CodeBlockSource | undefined,
-		location: CSMarkerLocation
-	): Promise<{
-		referenceLocations: CSReferenceLocation[];
-		backtrackedLocation?: UncommittedBacktrackedLocation;
-		fileCurrentCommitSha?: string;
-	}> {
-		if (source == null) return this.getLocationInfoWithoutSource();
-		if (source.revision == null) {
-			return this.getLocationInfoWithoutRevision(source.repoPath, location);
-		}
-		return this.getLocationInfoCore(source.repoPath, source.revision, location);
-	}
-
-	private getLocationInfoWithoutSource() {
-		return {
-			referenceLocations: []
-		};
-	}
-
-	private async getLocationInfoWithoutRevision(repoPath: string, location: CSMarkerLocation) {
-		Logger.log(`prepareMarkerCreationDescriptor: no source revision - file has no commits`);
-		const { git } = SessionContainer.instance();
-
-		const repoHead = await git.getRepoHeadRevision(repoPath);
-		if (repoHead == null) throw new Error(`Cannot determine HEAD revision for ${repoPath}`);
-
+	protected getFileURI(repoPath: string): string {
 		const filePath = path.join(repoPath, this.codeStreamDiffUri.path);
-
-		return {
-			referenceLocations: [
-				{
-					commitHash: repoHead,
-					location: MarkerLocation.toArray(MarkerLocation.empty()),
-					flags: {
-						unversionedFile: true
-					}
-				}
-			],
-			backtrackedLocation: {
-				atDocument: location,
-				fileContents: await this.getFileContents(),
-				filePath: filePath
-			},
-			fileCurrentCommitSha: repoHead
-		};
+		return Strings.pathToFileURL(filePath);
 	}
 
-	private async getLocationInfoCore(
-		repoPath: string,
-		fileCurrentCommitSha: string,
-		location: CSMarkerLocation
-	): Promise<{
-		referenceLocations: CSReferenceLocation[];
-		backtrackedLocation?: UncommittedBacktrackedLocation;
-		fileCurrentCommitSha?: string;
-	}> {
-		Logger.log(`prepareMarkerCreationDescriptor: source revision ${fileCurrentCommitSha}`);
-
-		const { git } = SessionContainer.instance();
-
-		const fileContents = await this.getFileContents();
-		const filePath = path.join(repoPath, this.codeStreamDiffUri.path);
-		const locationAtCurrentCommit = await SessionContainer.instance().markerLocations.backtrackLocation(
-			{ uri: Strings.pathToFileURL(filePath) },
-			fileContents,
-			location,
-			fileCurrentCommitSha
-		);
-		Logger.log(
-			`prepareMarkerCreationDescriptor: location at current commit ${MarkerLocation.toArray(
-				locationAtCurrentCommit
-			)}`
-		);
-
-		const blameRevisionsPromises = git.getBlameRevisions(filePath, {
-			ref: fileCurrentCommitSha,
-			// it expects 0-based ranges
-			startLine: locationAtCurrentCommit.lineStart - 1,
-			endLine: locationAtCurrentCommit.lineEnd - 1,
-			retryWithTrimmedEndOnFailure: true
-		});
-		const remoteDefaultBranchRevisionsPromises = git.getRemoteDefaultBranchHeadRevisions(repoPath);
-		const backtrackShas = [
-			...(await blameRevisionsPromises).map(revision => revision.sha),
-			...(await remoteDefaultBranchRevisionsPromises)
-		].filter(function(sha, index, self) {
-			return sha !== fileCurrentCommitSha && index === self.indexOf(sha);
-		});
-		Logger.log(
-			`prepareMarkerCreationDescriptor: backtracking location to ${backtrackShas.length} revisions`
-		);
-
-		const promises = backtrackShas.map(async (sha, index) => {
-			const diff = await git.getDiffBetweenCommits(fileCurrentCommitSha!, sha, filePath);
-			const location = await calculateLocation(locationAtCurrentCommit!, diff!);
-			const locationArray = MarkerLocation.toArray(location);
-			Logger.log(`prepareMarkerCreationDescriptor: backtracked at ${sha} to ${locationArray}`);
-			return {
-				commitHash: sha,
-				location: locationArray,
-				flags: {
-					backtracked: true
-				}
-			};
-		});
-
-		const meta = locationAtCurrentCommit.meta || {};
-		const canonical = !meta.startWasDeleted && !meta.endWasDeleted;
-		const referenceLocation = {
-			commitHash: fileCurrentCommitSha,
-			location: MarkerLocation.toArray(locationAtCurrentCommit),
-			flags: {
-				canonical,
-				backtracked: !canonical
-			}
-		};
-		const backtrackedLocations = await Promise.all(promises);
-		const referenceLocations = [referenceLocation, ...backtrackedLocations];
-		Logger.log(
-			`prepareMarkerCreationDescriptor: ${referenceLocations.length} reference locations calculated`
-		);
-
-		let backtrackedLocation: UncommittedBacktrackedLocation | undefined;
-		if (!canonical) {
-			backtrackedLocation = {
-				atCurrentCommit: locationAtCurrentCommit,
-				atDocument: location,
-				fileContents,
-				filePath
-			};
-		}
-
-		return {
-			referenceLocations,
-			backtrackedLocation,
-			fileCurrentCommitSha
-		};
+	protected getFilePath(repoPath: string): string {
+		return path.join(repoPath, this.codeStreamDiffUri.path);
 	}
 
-	private async getFileContents() {
+	protected async getFileContents() {
 		const { git } = SessionContainer.instance();
 
 		const repo = await git.getRepositoryById(this.codeStreamDiffUri.repoId);
@@ -506,8 +392,13 @@ class ReviewDiffMarkersBuilder extends MarkersBuilder {
 	private _version: string;
 	private _path: string;
 
-	constructor(documentId: TextDocumentIdentifier) {
-		super(documentId);
+	constructor(
+		documentId: TextDocumentIdentifier,
+		code: string,
+		range: Range,
+		source?: CodeBlockSource
+	) {
+		super(documentId, code, range, source);
 
 		const { reviewId, checkpoint, repoId, version, path } = ReviewsManager.parseUri(documentId.uri);
 		this._reviewId = reviewId;
@@ -517,12 +408,8 @@ class ReviewDiffMarkersBuilder extends MarkersBuilder {
 		this._path = path;
 	}
 
-	protected async getLocationInfo(
-		source: CodeBlockSource | undefined,
-		location: CSMarkerLocation
-	): Promise<{
+	protected async getLocationInfo(): Promise<{
 		referenceLocations: CSReferenceLocation[];
-		backtrackedLocation?: UncommittedBacktrackedLocation;
 		fileCurrentCommitSha?: string;
 	}> {
 		const { reviews } = SessionContainer.instance();
@@ -553,11 +440,11 @@ class ReviewDiffMarkersBuilder extends MarkersBuilder {
 		);
 
 		const latestCommitLocation = toLatestCommitDiff
-			? await calculateLocation(location, toLatestCommitDiff)
-			: location;
+			? await calculateLocation(this.location, toLatestCommitDiff)
+			: this.location;
 		const baseCommitLocation = toBaseCommitDiff
-			? await calculateLocation(location, toBaseCommitDiff)
-			: location;
+			? await calculateLocation(this.location, toBaseCommitDiff)
+			: this.location;
 
 		const latestCommitSha = diffCheckpoint.diff.latestCommitSha;
 		const referenceLocations: CSReferenceLocation[] = [];
@@ -571,7 +458,7 @@ class ReviewDiffMarkersBuilder extends MarkersBuilder {
 					baseCommit: latestCommitSha,
 					diff: fromLatestCommitDiff
 				},
-				location: MarkerLocation.toArray(location)
+				location: MarkerLocation.toArray(this.location)
 			});
 		}
 
@@ -591,18 +478,6 @@ class ReviewDiffMarkersBuilder extends MarkersBuilder {
 			fileCurrentCommitSha: latestCommitSha
 		};
 	}
-}
-
-export interface UncommittedBacktrackedLocation {
-	atDocument: CSMarkerLocation;
-	atCurrentCommit?: CSMarkerLocation;
-	fileContents: string;
-	filePath: string;
-}
-
-export interface MarkerCreationDescriptor {
-	marker: CreateMarkerRequest;
-	uncommittedBacktrackedLocation: UncommittedBacktrackedLocation | undefined;
 }
 
 interface RepoIdentifier {

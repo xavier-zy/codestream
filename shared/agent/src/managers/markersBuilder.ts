@@ -8,13 +8,11 @@ import { Marker, MarkerLocation, Ranges } from "../api/extensions";
 import { Container, SessionContainer } from "../container";
 import { Logger } from "../logger";
 import { calculateLocation } from "../markerLocation/calculator";
-import { CodeStreamDiffUriData } from "../protocol/agent.protocol";
 import { CreateMarkerRequest } from "../protocol/agent.protocol.codemarks";
 import { CodeBlockSource } from "../protocol/agent.protocol.posts";
 import { CSReviewCheckpoint } from "../protocol/api.protocol";
 import { CSMarkerLocation, CSReferenceLocation } from "../protocol/api.protocol.models";
 import { Strings } from "../system";
-import * as csUri from "../system/uri";
 import { xfs } from "../xfs";
 import { ReviewsManager } from "./reviewsManager";
 
@@ -35,9 +33,6 @@ export abstract class MarkersBuilder {
 		source?: CodeBlockSource
 	) {
 		if (documentId.uri.startsWith("codestream-diff://")) {
-			if (csUri.Uris.isCodeStreamDiffUri(documentId.uri)) {
-				return new CodeStreamDiffMarkersBuilder(documentId, code, range, source);
-			}
 			return new ReviewDiffMarkersBuilder(documentId, code, range, source);
 		} else {
 			return new DefaultMarkersBuilder(documentId, code, range, source);
@@ -336,52 +331,6 @@ class DefaultMarkersBuilder extends MarkersBuilder {
 		}
 
 		return fileContents;
-	}
-}
-
-class CodeStreamDiffMarkersBuilder extends DefaultMarkersBuilder {
-	private readonly codeStreamDiffUri: CodeStreamDiffUriData;
-
-	constructor(
-		documentId: TextDocumentIdentifier,
-		code: string,
-		range: Range,
-		source?: CodeBlockSource
-	) {
-		super(documentId, code, range, source);
-
-		this.codeStreamDiffUri = csUri.Uris.fromCodeStreamDiffUri<CodeStreamDiffUriData>(
-			documentId.uri
-		)!;
-	}
-
-	protected getFileURI(repoPath: string): string {
-		const filePath = path.join(repoPath, this.codeStreamDiffUri.path);
-		return Strings.pathToFileURL(filePath);
-	}
-
-	protected getFilePath(repoPath: string): string {
-		return path.join(repoPath, this.codeStreamDiffUri.path);
-	}
-
-	protected async getFileContents() {
-		const { git } = SessionContainer.instance();
-
-		const repo = await git.getRepositoryById(this.codeStreamDiffUri.repoId);
-		if (!repo) {
-			throw new Error(`Could not load repo with ID ${this.codeStreamDiffUri.repoId}`);
-		}
-
-		const fullPath = path.join(repo.path, this.codeStreamDiffUri.path);
-
-		const contents = await git.getFileContentForRevision(
-			URI.parse(fullPath),
-			this.codeStreamDiffUri.side === "left"
-				? this.codeStreamDiffUri.leftSha
-				: this.codeStreamDiffUri.rightSha
-		);
-
-		return contents || "";
 	}
 }
 

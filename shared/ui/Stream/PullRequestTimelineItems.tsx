@@ -43,6 +43,7 @@ import { confirmPopup } from "./Confirm";
 import { PullRequestCommentMenu } from "./PullRequestCommentMenu";
 import { PullRequestMinimizedComment } from "./PullRequestMinimizedComment";
 import { PullRequestPatch } from "./PullRequestPatch";
+import { PullRequestFinishReview } from "./PullRequestFinishReview";
 
 export const GHOST = {
 	login: "ghost",
@@ -504,6 +505,14 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 										<Timestamp time={item.createdAt!} relative />
 									</PRTimelineItemBody>
 								</PRTimelineItem>
+								{item.state === "PENDING" && (
+									<PullRequestFinishReview
+										pr={pr}
+										mode="timeline"
+										fetch={fetch}
+										setIsLoadingMessage={setIsLoadingMessage}
+									/>
+								)}
 								{item.bodyHTML && (
 									<PRActionCommentCard className="dark-header">
 										{item.isMinimized && !expandedComments[item.id] ? (

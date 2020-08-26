@@ -36,7 +36,6 @@ import {
 	PREditTitle,
 	PRActionButtons,
 	PRCommentCard,
-	ButtonRow,
 	PRSubmitReviewButton
 } from "./PullRequestComponents";
 import { LoadingMessage } from "../src/components/LoadingMessage";
@@ -51,6 +50,7 @@ import { Button } from "../src/components/Button";
 import MessageInput from "./MessageInput";
 import { RadioGroup, Radio } from "../src/components/RadioGroup";
 import Tooltip from "./Tooltip";
+import { PullRequestFinishReview } from "./PullRequestFinishReview";
 
 export const WidthBreakpoint = "630px";
 
@@ -124,11 +124,6 @@ export const PullRequest = () => {
 	const [title, setTitle] = useState("");
 
 	const [finishReviewOpen, setFinishReviewOpen] = useState(false);
-	const [reviewText, setReviewText] = useState("");
-	const [submittingReview, setSubmittingReview] = useState(false);
-	const [reviewType, setReviewType] = useState<"COMMENT" | "APPROVE" | "REQUEST_CHANGES">(
-		"COMMENT"
-	);
 
 	const exit = async () => {
 		await dispatch(setCurrentPullRequest());
@@ -148,34 +143,6 @@ export const PullRequest = () => {
 		setSavingTitle(false);
 		setIsLoadingPR(false);
 		setIsLoadingMessage("");
-	};
-
-	const submitReview = async e => {
-		setIsLoadingMessage("Submitting Review...");
-		setSubmittingReview(true);
-		await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
-			method: "submitReview",
-			providerId: pr!.providerId,
-			params: {
-				pullRequestId: derivedState.currentPullRequestId!,
-				eventType: reviewType,
-				text: reviewText
-			}
-		});
-		return fetch();
-	};
-
-	const cancelReview = async (e, id) => {
-		setIsLoadingMessage("Canceling Review...");
-		await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
-			method: "deletePullRequestReview",
-			providerId: pr!.providerId,
-			params: {
-				pullRequestId: derivedState.currentPullRequestId!,
-				pullRequestReviewId: id
-			}
-		});
-		fetch();
 	};
 
 	const checkout = async () => {
@@ -236,8 +203,6 @@ export const PullRequest = () => {
 
 	console.warn("PR: ", pr);
 	// console.warn("REPO: ", ghRepo);
-	const pendingCommentCount =
-		pr && pr.pendingReview && pr.pendingReview.comments ? pr.pendingReview.comments.totalCount : 0;
 	if (!pr) {
 		return (
 			<Modal verticallyCenter showGlobalNav>
@@ -336,83 +301,13 @@ export const PullRequest = () => {
 									<Icon name="chevron-down" />
 								</Button>
 								{finishReviewOpen && (
-									<>
-										<PRCommentCard className="add-comment no-arrow">
-											<div
-												style={{
-													margin: "5px 0 15px 0",
-													border: "1px solid var(--base-border-color)"
-												}}
-											>
-												<MessageInput
-													autoFocus
-													multiCompose
-													text={reviewText}
-													placeholder="Leave a comment"
-													onChange={setReviewText}
-													onSubmit={submitReview}
-												/>
-											</div>
-											<RadioGroup
-												name="approval"
-												selectedValue={reviewType}
-												onChange={value => setReviewType(value)}
-											>
-												<Radio value={"COMMENT"}>
-													Comment
-													<div className="subtle">
-														Submit general feedback without explicit approval.
-													</div>
-												</Radio>
-												<Radio disabled={pr.viewerDidAuthor} value={"APPROVE"}>
-													<Tooltip
-														title={
-															pr.viewerDidAuthor
-																? "Pull request authors can't approve their own pull request"
-																: ""
-														}
-														placement="top"
-													>
-														<span>
-															Approve
-															<div className="subtle">
-																Submit feedback and approve merging these changes.{" "}
-															</div>
-														</span>
-													</Tooltip>
-												</Radio>
-												<Radio disabled={pr.viewerDidAuthor} value={"REQUEST_CHANGES"}>
-													<Tooltip
-														title={
-															pr.viewerDidAuthor
-																? "Pull request authors can't request changes on their own pull request"
-																: ""
-														}
-														placement="top"
-													>
-														<span>
-															{" "}
-															Request Changes
-															<div className="subtle">
-																Submit feedback that must be addressed before merging.
-															</div>
-														</span>
-													</Tooltip>
-												</Radio>
-											</RadioGroup>
-											<ButtonRow>
-												<Button isLoading={submittingReview} onClick={submitReview}>
-													Submit review
-												</Button>
-												<Button onClick={e => cancelReview(e, pr.pendingReview.id)}>
-													Cancel review
-												</Button>
-												<div className="subtle" style={{ margin: "10px 0 0 10px" }}>
-													{pendingCommentCount} pending comment{pendingCommentCount == 1 ? "" : "s"}
-												</div>
-											</ButtonRow>
-										</PRCommentCard>
-									</>
+									<PullRequestFinishReview
+										pr={pr}
+										mode="dropdown"
+										fetch={fetch}
+										setIsLoadingMessage={setIsLoadingMessage}
+										setFinishReviewOpen={setFinishReviewOpen}
+									/>
 								)}
 							</PRSubmitReviewButton>
 						)}

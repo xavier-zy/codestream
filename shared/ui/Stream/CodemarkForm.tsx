@@ -700,6 +700,21 @@ class CodemarkForm extends React.Component<Props, State> {
 			this.setState({ isLoading: true });
 		}
 
+		if (this.props.currentPullRequestId) {
+			const { textEditorUriContext } = this.props;
+			const providerId =
+				textEditorUriContext &&
+				textEditorUriContext.context &&
+				textEditorUriContext.context.pullRequest
+					? textEditorUriContext.context.pullRequest.providerId
+					: "";
+			HostApi.instance.track("PR Comment Added", {
+				Host: providerId,
+				"Comment Type": "Review Comment",
+				"Started Review": this.state.isProviderReview
+			});
+		}
+
 		let parentPostId: string | undefined = undefined;
 		// all codemarks created while in a review are attached to that review
 		if (this.props.currentReviewId) {

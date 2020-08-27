@@ -37,8 +37,17 @@ export const PullRequestBottomComment = styled((props: Props) => {
 	const [isLoadingComment, setIsLoadingComment] = useState(false);
 	const [isLoadingCommentAndClose, setIsLoadingCommentAndClose] = useState(false);
 
+	const trackComment = type => {
+		HostApi.instance.track("PR Comment Added", {
+			Host: pr.providerId,
+			"Comment Type": type,
+			"Started Review": false
+		});
+	};
+
 	const onCommentClick = async (event?: React.SyntheticEvent) => {
 		setIsLoadingComment(true);
+		trackComment("Comment");
 		await HostApi.instance.send(
 			new ExecuteThirdPartyTypedType<CreatePullRequestCommentRequest, any>(),
 			{
@@ -57,6 +66,7 @@ export const PullRequestBottomComment = styled((props: Props) => {
 	const onCommentAndCloseClick = async e => {
 		setIsLoadingMessage("Closing...");
 		setIsLoadingCommentAndClose(true);
+		trackComment("Comment and Close");
 		await HostApi.instance.send(
 			new ExecuteThirdPartyTypedType<CreatePullRequestCommentAndCloseRequest, any>(),
 			{
@@ -75,6 +85,7 @@ export const PullRequestBottomComment = styled((props: Props) => {
 	const onCommentAndReopenClick = async e => {
 		setIsLoadingMessage("Reopening...");
 		setIsLoadingCommentAndClose(true);
+		trackComment("Comment and Reopen");
 		await HostApi.instance.send(
 			new ExecuteThirdPartyTypedType<CreatePullRequestCommentAndCloseRequest, any>(),
 			{

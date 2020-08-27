@@ -44,6 +44,10 @@ export const PullRequestFinishReview = (props: {
 	const submitReview = async e => {
 		setIsLoadingMessage("Submitting Review...");
 		setSubmittingReview(true);
+		HostApi.instance.track("PR Review Finished", {
+			Host: pr.providerId,
+			"Review Type": reviewType
+		});
 		await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
 			method: "submitReview",
 			providerId: pr!.providerId,

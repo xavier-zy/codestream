@@ -40,6 +40,12 @@ export const PullRequestReplyComment = styled((props: Props) => {
 			if (text == null || text == "") return;
 			setIsSubmitting(true);
 
+			HostApi.instance.track("PR Comment Added", {
+				Host: pr.providerId,
+				"Comment Type": "ReviewReply",
+				"Started Review": false
+			});
+
 			await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
 				method: "createCommentReply",
 				providerId: pr.providerId,

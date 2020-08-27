@@ -147,6 +147,7 @@ export const PullRequest = () => {
 		setIsLoadingMessage("");
 	};
 
+	// FIXME this shouldn't be hard-coded
 	const providerId = "github*com";
 
 	useEffect(() => {
@@ -167,6 +168,11 @@ export const PullRequest = () => {
 			getPullRequestConversations(providerId, derivedState.currentPullRequestId!)
 		)) as any;
 		_assignState(response);
+		if (response) {
+			HostApi.instance.track("PR Clicked", {
+				Host: response.providerId
+			});
+		}
 	};
 
 	/**
@@ -204,11 +210,11 @@ export const PullRequest = () => {
 		if (!pr) return;
 		const currentRepo = Object.values(derivedState.reposState).find(
 			_ => _.name === pr.repository.name
-		)
-		const result = await HostApi.instance.send(
-			SwitchBranchRequestType,
-			{ branch: pr!.headRefName, repoId: currentRepo ? currentRepo.id : "" }
 		);
+		const result = await HostApi.instance.send(SwitchBranchRequestType, {
+			branch: pr!.headRefName,
+			repoId: currentRepo ? currentRepo.id : ""
+		});
 		if (result.error) {
 			console.warn("ERROR FROM SET BRANCH: ", result.error);
 			return;

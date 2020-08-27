@@ -5,6 +5,8 @@ import { Team } from "./api/extensions";
 import { SessionContainer } from "./container";
 import {
 	CodeStreamEnvironment,
+	ReportBreadcrumbRequest,
+	ReportBreadcrumbRequestType,
 	ReportMessageRequest,
 	ReportMessageRequestType
 } from "./protocol/agent.protocol";
@@ -65,4 +67,15 @@ export class ErrorReporter {
 			}
 		});
 	}
+
+	@lspHandler(ReportBreadcrumbRequestType)
+	reportBreadcrumb(request: ReportBreadcrumbRequest) {
+		Sentry.addBreadcrumb({
+			message: request.message,
+			data: request.data,
+			level: request.level ? Severity.fromString(request.level) : undefined,
+			category: request.category
+		});
+	}
+
 }

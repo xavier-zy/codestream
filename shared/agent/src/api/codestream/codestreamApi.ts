@@ -722,10 +722,16 @@ export class CodeStreamApiProvider implements ApiProvider {
 				try {
 					if (
 						this._unreads !== undefined &&
-						(me.lastReads == null ||
-							Objects.isEmpty(me.lastReads) ||
-							!Objects.shallowEquals(lastReads, this._user.lastReads))
+						!Objects.shallowEquals(lastReads, this._user.lastReads || {})
 					) {
+						Container.instance().errorReporter.reportBreadcrumb({
+							message: "Computing lastReads from user message",
+							category: "unreads",
+							data: {
+								lastReads: me.lastReads,
+								prevLastReads: this._user.lastReads
+							}
+						});
 						this._unreads.compute(me.lastReads);
 					}
 					if (!this._preferences) {
@@ -2228,7 +2234,6 @@ export class CodeStreamApiProvider implements ApiProvider {
 				await Functions.wait(250 * count);
 				return this.fetchCore(count, url, init);
 			}
-
 			throw ex;
 		}
 	}

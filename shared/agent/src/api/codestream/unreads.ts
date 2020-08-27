@@ -1,6 +1,6 @@
 "use strict";
 import { Emitter, Event } from "vscode-languageserver";
-import { SessionContainer } from "../../container";
+import { Container, SessionContainer } from "../../container";
 import { Logger } from "../../logger";
 import { Unreads } from "../../protocol/agent.protocol";
 import { CSLastReads, CSPost, CSStream, StreamType } from "../../protocol/api.protocol";
@@ -106,6 +106,11 @@ export class CodeStreamUnreads {
 
 		Logger.debug(`Unreads.compute:`, "Computing...");
 
+		Container.instance().errorReporter.reportBreadcrumb({
+			message: "Getting unread streams",
+			category: "unreads",
+			data: { lastReads }
+		});
 		const unreadStreams = (await SessionContainer.instance().streams.getUnread()).streams;
 		if (unreadStreams.length !== 0) {
 			const entries = Object.entries(lastReads);

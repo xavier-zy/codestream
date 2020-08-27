@@ -194,6 +194,17 @@ export const ReportMessageRequestType = new RequestType<ReportMessageRequest, vo
 	"codestream/reporting/message"
 );
 
+export interface ReportBreadcrumbRequest {
+	message: string;
+	category?: string;
+	level?: ReportingMessageType;
+	data?: object;
+}
+
+export const ReportBreadcrumbRequestType = new RequestType<ReportBreadcrumbRequest, void, void, void>(
+	"codestream/reporting/breadcrumb"
+);
+
 /**
  * @param eventName The name of the telemetry event you want to track, eg: "Page Viewed"
  * @param properties Optional properties to pass along with eventName

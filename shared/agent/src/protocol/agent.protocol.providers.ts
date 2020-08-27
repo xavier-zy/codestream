@@ -473,12 +473,7 @@ export interface FetchThirdPartyPullRequestPullRequest {
 			endCursor: string;
 			hasNextPage: boolean;
 		};
-		nodes: {
-			comments?: {
-				nodes: any[];
-			};
-			__typename: string;
-		}[];
+		nodes: any[];
 	};
 	milestone: {
 		title: string;

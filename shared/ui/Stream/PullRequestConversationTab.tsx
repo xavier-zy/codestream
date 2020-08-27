@@ -37,7 +37,8 @@ import {
 	PRCloneURLButtons,
 	PRCloneURL,
 	PRCopyableTerminal,
-	PRCloneURLWrapper
+	PRCloneURLWrapper,
+	PRResolveConflictsRow
 } from "./PullRequestComponents";
 import { PullRequestTimelineItems, GHOST } from "./PullRequestTimelineItems";
 import { DropdownButton } from "./Review/DropdownButton";
@@ -840,13 +841,11 @@ export const PullRequestConversationTab = (props: {
 								<Icon name="git-merge" />
 							</PRStatusHeadshot>
 							<div style={{ padding: "5px 0" }}>
-								<div style={{ display: "flex" }}>
+								<PRResolveConflictsRow>
 									<PRIconButton className="gray-background">
 										<Icon name="alert" />
 									</PRIconButton>
-									<div style={{ marginLeft: "10px", marginRight: "10px" }}>
-										<h1>This branch has conflicts that must be resolved</h1>
-									</div>
+									<h1>This branch has conflicts that must be resolved</h1>
 									<Button
 										className="no-wrap"
 										variant="secondary"
@@ -856,7 +855,7 @@ export const PullRequestConversationTab = (props: {
 									>
 										Resolve conflicts
 									</Button>
-								</div>
+								</PRResolveConflictsRow>
 								<div>
 									<p>
 										Use the <Link href={`${pr.url}/conflicts`}>web editor</Link> or the{" "}

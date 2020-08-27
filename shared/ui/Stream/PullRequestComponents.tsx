@@ -910,3 +910,16 @@ export const PRCopyableTerminal = styled.div`
 		right: 10px;
 	}
 `;
+
+export const PRResolveConflictsRow = styled.div`
+	display: flex;
+	align-items: center;
+	button {
+		flex-grow: 0;
+		flex-shrink: 0;
+		margin-left: auto;
+	}
+	h1 {
+		margin: 0 10px;
+	}
+`;

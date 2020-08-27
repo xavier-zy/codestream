@@ -84,6 +84,7 @@ export abstract class MarkersBuilder {
 	private getRemotes() {
 		const remotes = this.source?.remotes;
 		if (remotes && remotes.length > 0) {
+			remotes.sort(compareRemotes);
 			return remotes.map(r => r.url);
 		}
 		return undefined;
@@ -435,3 +436,15 @@ interface RepoIdentifier {
 	file?: string;
 	fileStreamId?: string;
 }
+
+const remoteNameValues = new Map([
+	["upstream", 1],
+	["origin", 2]
+]);
+
+const compareRemotes = (r1: { name: string }, r2: { name: string }) => {
+	const r1Val = remoteNameValues.get(r1.name) || Number.MAX_SAFE_INTEGER;
+	const r2Val = remoteNameValues.get(r2.name) || Number.MAX_SAFE_INTEGER;
+
+	return r1Val - r2Val;
+};

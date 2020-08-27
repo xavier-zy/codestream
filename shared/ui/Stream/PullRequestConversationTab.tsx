@@ -980,6 +980,7 @@ export const PullRequestConversationTab = (props: {
 							onOpen={fetchAvailableReviewers}
 							title="Request up to 15 reviewers"
 							noChevronDown
+							noFocusOnSelect
 						>
 							<Icon name="gear" className="settings clickable" onClick={() => {}} />
 							Reviewers
@@ -1025,6 +1026,7 @@ export const PullRequestConversationTab = (props: {
 							onOpen={fetchAvailableAssignees}
 							title="Assign up to 10 people to this pull request"
 							noChevronDown
+							noFocusOnSelect
 						>
 							<Icon name="gear" className="settings clickable" onClick={() => {}} />
 							Assignees
@@ -1052,6 +1054,7 @@ export const PullRequestConversationTab = (props: {
 							onOpen={fetchAvailableLabels}
 							title="Apply labels to this pull request"
 							noChevronDown
+							noFocusOnSelect
 						>
 							<Icon name="gear" className="settings clickable" />
 							Labels
@@ -1071,6 +1074,7 @@ export const PullRequestConversationTab = (props: {
 							onOpen={fetchAvailableProjects}
 							title="Projects"
 							noChevronDown
+							noFocusOnSelect
 						>
 							<Icon name="gear" className="settings clickable" onClick={() => {}} />
 							Projects
@@ -1092,6 +1096,7 @@ export const PullRequestConversationTab = (props: {
 							onOpen={fetchAvailableMilestones}
 							title="Set milestone"
 							noChevronDown
+							noFocusOnSelect
 						>
 							<Icon name="gear" className="settings clickable" onClick={() => {}} />
 							Milestone
@@ -1108,6 +1113,7 @@ export const PullRequestConversationTab = (props: {
 							onOpen={fetchAvailableIssues}
 							title="Link an issue from this repository"
 							noChevronDown
+							noFocusOnSelect
 						>
 							<Icon name="gear" className="settings clickable" onClick={() => {}} />
 							Linked Issues

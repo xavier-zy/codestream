@@ -20,6 +20,7 @@ export interface InlineMenuProps {
 	className?: string;
 	onOpen?: Function;
 	noChevronDown?: boolean;
+	noFocusOnSelect?: boolean;
 }
 
 export const TextButton = styled.span`
@@ -74,7 +75,7 @@ export function InlineMenu(props: InlineMenuProps) {
 					noCloseIcon={props.noCloseIcon}
 					target={buttonRef.current}
 					items={props.items}
-					focusOnSelect={buttonRef.current}
+					focusOnSelect={props.noFocusOnSelect ? null : buttonRef.current}
 				/>
 			)}
 			<TextButton

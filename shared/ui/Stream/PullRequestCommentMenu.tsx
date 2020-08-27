@@ -48,7 +48,7 @@ export const PullRequestCommentMenu = (props: CommentMenuProps) => {
 	}
 
 	return (
-		<InlineMenu noChevronDown items={items}>
+		<InlineMenu noChevronDown noFocusOnSelect items={items}>
 			<Icon name="kebab-horizontal" className="clickable" />
 		</InlineMenu>
 	);

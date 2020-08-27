@@ -275,18 +275,30 @@ export class ScmManager {
 	@lspHandler(SwitchBranchRequestType)
 	@log()
 	async switchBranch({
+		branch,
 		uri: documentUri,
-		branch
+		repoId
 	}: SwitchBranchRequest): Promise<SwitchBranchResponse> {
 		const cc = Logger.getCorrelationContext();
 
-		const uri = URI.parse(documentUri);
 		const { git } = SessionContainer.instance();
 		let repoPath = "";
 		let gitError;
 
 		try {
-			repoPath = (await git.getRepoRoot(uri.fsPath)) || "";
+
+			if (!documentUri) {
+				if (!repoId) throw new Error(`A uri or repoId is required`);
+
+				const repo = await git.getRepositoryById(repoId);
+				if (repo == null) throw new Error(`No repository could be found for repoId=${repoId}`);
+
+				repoPath = repo.path;
+			} else {
+				const uri = URI.parse(documentUri);
+				repoPath = (await git.getRepoRoot(uri.fsPath)) || "";
+			}
+
 			if (repoPath !== undefined) {
 				await git.switchBranch(repoPath, branch);
 			}

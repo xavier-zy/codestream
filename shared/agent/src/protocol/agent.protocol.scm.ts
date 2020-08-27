@@ -41,8 +41,9 @@ export const CreateBranchRequestType = new RequestType<
 >("codestream/scm/create-branch");
 
 export interface SwitchBranchRequest {
-	uri: string;
 	branch: string;
+	uri?: string;
+	repoId?: string;
 	fromBranch?: string; // never used
 }
 export interface SwitchBranchResponse {

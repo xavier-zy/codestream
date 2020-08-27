@@ -18,7 +18,8 @@ import {
 	FetchThirdPartyPullRequestPullRequest,
 	GetReposScmRequestType,
 	ReposScm,
-	ExecuteThirdPartyTypedType
+	ExecuteThirdPartyTypedType,
+	SwitchBranchRequestType
 } from "@codestream/protocols/agent";
 import {
 	PRHeader,
@@ -113,7 +114,9 @@ export const PullRequest = () => {
 			currentUser,
 			currentPullRequestId: state.context.currentPullRequestId,
 			composeCodemarkActive: state.context.composeCodemarkActive,
-			team
+			team,
+			textEditorUri: state.editorContext.textEditorUri,
+			reposState: state.repos
 		};
 	});
 
@@ -198,7 +201,19 @@ export const PullRequest = () => {
 	};
 
 	const checkout = async () => {
-		//
+		if (!pr) return;
+		const currentRepo = Object.values(derivedState.reposState).find(
+			_ => _.name === pr.repository.name
+		)
+		const result = await HostApi.instance.send(
+			SwitchBranchRequestType,
+			{ branch: pr!.headRefName, repoId: currentRepo ? currentRepo.id : "" }
+		);
+		if (result.error) {
+			console.warn("ERROR FROM SET BRANCH: ", result.error);
+			return;
+		}
+		fetch("Reloading...");
 	};
 
 	const saveTitle = async () => {

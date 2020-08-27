@@ -38,7 +38,8 @@ import {
 	PRCloneURL,
 	PRCopyableTerminal,
 	PRCloneURLWrapper,
-	PRResolveConflictsRow
+	PRResolveConflictsRow,
+	PRHeadshots
 } from "./PullRequestComponents";
 import { PullRequestTimelineItems, GHOST } from "./PullRequestTimelineItems";
 import { DropdownButton } from "./Review/DropdownButton";
@@ -1186,10 +1187,12 @@ export const PullRequestConversationTab = (props: {
 				</PRSection>
 				<PRSection>
 					<h1>{participantsLabel}</h1>
-					{pr.participants &&
-						pr.participants.nodes.map((_: any) => (
-							<PRHeadshot display="inline-block" key={_.avatarUrl} person={_} size={20} />
-						))}
+					<PRHeadshots>
+						{pr.participants &&
+							pr.participants.nodes.map((_: any) => (
+								<PRHeadshot display="inline-block" key={_.avatarUrl} person={_} size={20} />
+							))}
+					</PRHeadshots>
 				</PRSection>
 				<PRSection style={{ borderBottom: "none" }}>
 					{pr.viewerCanUpdate && (

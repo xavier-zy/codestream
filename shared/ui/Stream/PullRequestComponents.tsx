@@ -934,3 +934,10 @@ export const PRResolveConflictsRow = styled.div`
 		margin: 0 10px;
 	}
 `;
+
+export const PRHeadshots = styled.div`
+	margin-bottom: -5px;
+	${PRHeadshot} {
+		margin: 0 5px 5px 0;
+	}
+`;

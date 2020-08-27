@@ -231,7 +231,9 @@ export function EllipsisMenu(props: EllipsisMenuProps) {
 					action: () => dispatch(openModal(WebviewModals.ChangeTeamName))
 				},
 				{ label: "-" },
-				{ label: "Delete Team", action: deleteTeam }
+				{ label: "Delete Team", action: deleteTeam },
+				{ label: "-" },
+				{ label: "Export Data", action: () => go(WebviewPanels.Export) }
 			];
 			return {
 				label: "Team Admin",

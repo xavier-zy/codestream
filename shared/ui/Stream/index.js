@@ -4,6 +4,7 @@ import { injectIntl } from "react-intl";
 import { connect } from "react-redux";
 import cx from "classnames";
 import { ActivityPanel } from "./ActivityPanel";
+import { ExportPanel } from "./ExportPanel";
 import { StatusPanel } from "./StatusPanel";
 import { Notifications } from "./Notifications";
 import { ChangeEmail } from "./ChangeEmail";
@@ -351,6 +352,7 @@ export class SimpleStream extends Component {
 					{activePanel === WebviewPanels.Tester && <Tester />}
 					{activePanel === WebviewPanels.FilterSearch && <FilterSearchPanel />}
 					{activePanel === WebviewPanels.Activity && <ActivityPanel />}
+					{activePanel === WebviewPanels.Export && <ExportPanel />}
 					{activePanel === WebviewPanels.PRInfo && <PRInfoModal onClose={this.props.closePanel} />}
 					{activePanel === WebviewPanels.NewComment && (
 						<CodemarkForm

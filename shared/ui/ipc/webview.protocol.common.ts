@@ -34,6 +34,7 @@ export enum WebviewPanels {
 	Activity = "activity",
 	Codemarks = "knowledge",
 	CodemarksForFile = "codemarks-for-file",
+	Export = "export",
 	FilterSearch = "filter-search",
 	Invite = "invite",
 	NewComment = "new-comment",

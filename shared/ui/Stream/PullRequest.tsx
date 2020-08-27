@@ -261,6 +261,27 @@ export const PullRequest = () => {
 		};
 	}, [derivedState.reviews]);
 
+	const numComments = React.useMemo(() => {
+		if (!pr || !pr.timelineItems || !pr.timelineItems.nodes) return 0;
+		const reducer = (accumulator, node) => {
+			let count = 0;
+			const typename = node.__typename;
+			if (typename.indexOf("Comment") > -1) count = 1;
+			if (typename === "PullRequestReview") {
+				// pullrequestreview can have a top-level comment,
+				// and multiple comment threads.
+				if (node.body) count++; // top-level comment (optional)
+				count += node.comments.nodes.length; // threads
+				node.comments.nodes.forEach(c => {
+					// each thread can have replies
+					if (c.replies) count += c.replies.length;
+				});
+			}
+			return count + accumulator;
+		};
+		return pr.timelineItems.nodes.reduce(reducer, 0);
+	}, [pr]);
+
 	useDidMount(() => {
 		if (!derivedState.reviewsState.bootstrapped) {
 			dispatch(bootstrapReviews());
@@ -430,17 +451,7 @@ export const PullRequest = () => {
 								<Tab onClick={e => setActiveTab(1)} active={activeTab == 1}>
 									<Icon name="comment" />
 									<span className="wide-text">Conversation</span>
-									<PRBadge>
-										{pr.timelineItems && pr.timelineItems.nodes
-											? pr.timelineItems.nodes.filter(_ => {
-													const typename = _.__typename;
-													return (
-														typename &&
-														(typename.indexOf("Comment") > -1 || typename === "PullRequestReview")
-													);
-											  }).length
-											: 0}
-									</PRBadge>
+									<PRBadge>{numComments}</PRBadge>
 								</Tab>
 								<Tab onClick={e => setActiveTab(2)} active={activeTab == 2}>
 									<Icon name="git-commit" />

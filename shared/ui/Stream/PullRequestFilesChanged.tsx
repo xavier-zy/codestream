@@ -130,8 +130,6 @@ export const PullRequestFilesChanged = (props: {
 				const f = filesChanged[index];
 				const visitedKey = [f.file].join(":");
 
-				console.warn(props.pr.baseRefOid + " vs ", props.pr.headRefOid);
-
 				const request = {
 					baseBranch: props.pr.baseRefName,
 					baseSha: forkPointSha,

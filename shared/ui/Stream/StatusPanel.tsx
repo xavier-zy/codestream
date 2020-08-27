@@ -218,9 +218,15 @@ export const RoundedLink = styled.a`
 	color: var(--text-color);
 	&:hover {
 		color: var(--text-color-highlight);
-		background: rgba(127, 127, 127, 0.3);
+		background: rgba(127, 127, 127, 0.1);
+		.vscode-dark & {
+			background: rgba(127, 127, 127, 0.3);
+		}
 	}
-	background: rgba(127, 127, 127, 0.15);
+	background: rgba(127, 127, 127, 0.05);
+	.vscode-dark & {
+		background: rgba(127, 127, 127, 0.15);
+	}
 	border: 1px solid var(--base-border-color);
 	padding: 3px 8px 3px 4px;
 	margin: -3px 0 2px 5px;

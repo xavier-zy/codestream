@@ -191,6 +191,19 @@ export const PullRequestConversationTab = (props: {
 			});
 	};
 
+	const setIsDraftPullRequest = async (onOff: boolean) => {
+		setIsLoadingMessage("Updating...");
+		await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, boolean>(), {
+			method: "setIsDaftPullRequest",
+			providerId: pr.providerId,
+			params: {
+				pullRequestId: derivedState.currentPullRequestId!,
+				onOff
+			}
+		});
+		fetch();
+	};
+
 	const mergePullRequest = async (options: { mergeMethod: MergeMethod }) => {
 		setIsLoadingMessage("Merging...");
 		dispatch(setUserPreference(["lastPRMergeMethod"], options.mergeMethod));
@@ -727,12 +740,29 @@ export const PullRequestConversationTab = (props: {
 				)}
 
 				<PRComment>
-					{/* 
-<PRStatusIcon>
-	<Icon name={statusIcon}  />
-</PRStatusIcon>
-*/}
-					{!pr.merged && pr.mergeable === "MERGEABLE" && pr.state !== "CLOSED" && (
+					{pr.isDraft ? (
+						<PRCommentCard>
+							<PRStatusHeadshot className="gray-background">
+								<Icon name="git-merge" />
+							</PRStatusHeadshot>
+							<PRResolveConflictsRow>
+								<PRIconButton className="gray-background">
+									<Icon name="alert" />
+								</PRIconButton>
+								<div className="middle">
+									<h1>This pull request is still a work in progress</h1>
+									Draft pull requests cannot be merged
+								</div>
+								<Button
+									className="no-wrap"
+									variant="secondary"
+									onClick={() => setIsDraftPullRequest(true)}
+								>
+									Ready for review
+								</Button>
+							</PRResolveConflictsRow>
+						</PRCommentCard>
+					) : !pr.merged && pr.mergeable === "MERGEABLE" && pr.state !== "CLOSED" ? (
 						<PRCommentCard className="green-border dark-header">
 							<PRStatusHeadshot className="green-background">
 								<Icon name="git-merge" />
@@ -759,43 +789,6 @@ export const PullRequestConversationTab = (props: {
 							</PRCommentHeader>
 							<div style={{ padding: "5px 0" }}>
 								<PRButtonRow className="align-left">
-									{/*
-						<Tooltip
-							title={
-								<span>
-									All commits from this branch will be added to the base branch via
-									a merge commit.
-									{!ghRepo.mergeCommitAllowed && (
-										<>
-											<br />
-											<small>Not enabled for this repository</small>
-										</>
-									)}
-								</span>
-							}
-							placement="bottomRight"
-							delay={1}
-						>
-							<Button
-								disabled={!ghRepo.mergeCommitAllowed}
-								onClick={e => mergePullRequest({ mergeMethod: "MERGE" })}
-							>
-								Create a merge commit
-							</Button>
-						</Tooltip>
-						<Button
-							disabled={!ghRepo.squashMergeAllowed}
-							onClick={e => mergePullRequest({ mergeMethod: "SQUASH" })}
-						>
-							Squash and merge
-						</Button>
-						<Button
-							disabled={!ghRepo.rebaseMergeAllowed}
-							onClick={e => mergePullRequest({ mergeMethod: "REBASE" })}
-						>
-							Rebase and merge
-						</Button>
-						*/}
 									<DropdownButton
 										items={[
 											{
@@ -854,8 +847,7 @@ export const PullRequestConversationTab = (props: {
 								</PRButtonRow>
 							</div>
 						</PRCommentCard>
-					)}
-					{!pr.merged && pr.mergeable === "CONFLICTING" && (
+					) : !pr.merged && pr.mergeable === "CONFLICTING" ? (
 						<PRCommentCard>
 							<PRStatusHeadshot className="gray-background">
 								<Icon name="git-merge" />
@@ -865,7 +857,9 @@ export const PullRequestConversationTab = (props: {
 									<PRIconButton className="gray-background">
 										<Icon name="alert" />
 									</PRIconButton>
-									<h1>This branch has conflicts that must be resolved</h1>
+									<div className="middle">
+										><h1>This branch has conflicts that must be resolved</h1>
+									</div>
 									<Button
 										className="no-wrap"
 										variant="secondary"
@@ -956,8 +950,7 @@ export const PullRequestConversationTab = (props: {
 								)}
 							</div>
 						</PRCommentCard>
-					)}
-					{!pr.merged && pr.mergeable !== "CONFLICTING" && pr.state === "CLOSED" && (
+					) : !pr.merged && pr.mergeable !== "CONFLICTING" && pr.state === "CLOSED" ? (
 						<PRCommentCard>
 							<PRStatusHeadshot className="gray-background">
 								<Icon name="git-merge" />
@@ -968,9 +961,7 @@ export const PullRequestConversationTab = (props: {
 								has unmerged commits.
 							</div>
 						</PRCommentCard>
-					)}
-					{/* !pr.merged && pr.state === "CLOSED" && <div>Pull request is closed</div> */}
-					{pr.merged && (
+					) : pr.merged ? (
 						<PRCommentCard>
 							<PRStatusHeadshot className="pr-purple-background">
 								<Icon name="git-merge" />
@@ -981,7 +972,7 @@ export const PullRequestConversationTab = (props: {
 								deleted.
 							</div>
 						</PRCommentCard>
-					)}
+					) : null}
 				</PRComment>
 				<PullRequestBottomComment
 					pr={pr}

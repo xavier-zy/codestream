@@ -421,6 +421,7 @@ export interface FetchThirdPartyPullRequestPullRequest {
 	};
 	number: number;
 	state: string;
+	isDraft: boolean;
 	reviewRequests: {
 		nodes: {
 			requestedReviewer: {

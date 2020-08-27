@@ -102,6 +102,15 @@ const getColors = (variant = "primary") => {
 				}
 			`;
 		}
+		case "neutral": {
+			return `
+				background-color: rgb(127, 127, 127);
+				color: white;
+				:hover {
+					opacity: 0.85;
+				}
+			`;
+		}
 		case "primary":
 		default: {
 			return `
@@ -165,7 +174,8 @@ type ButtonVariant =
 	| "success"
 	| "warning"
 	| "text"
-	| "merged";
+	| "merged"
+	| "neutral";
 
 export interface ButtonProps extends PropsWithChildren<{}> {
 	variant?: ButtonVariant;

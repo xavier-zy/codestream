@@ -909,6 +909,10 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 		return query.repository.collaborators.nodes;
 	}
 
+	async setIsDraftPullRequest(request: { pullRequestId: string; onOff: boolean }) {
+		// FIXME Brian
+	}
+
 	async setLabelOnPullRequest(request: { pullRequestId: string; labelId: string; onOff: boolean }) {
 		const method = request.onOff ? "addLabelsToLabelable" : "removeLabelsFromLabelable";
 		const Method = request.onOff ? "AddLabelsToLabelable" : "RemoveLabelsFromLabelable";
@@ -2336,9 +2340,10 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 					authorAssociation
 					createdAt
 					activeLockReason
+					includesCreatedEdit
+					isDraft
 					locked
 					resourcePath
-					includesCreatedEdit
 					viewerSubscription
 					viewerDidAuthor
 					viewerCanUpdate

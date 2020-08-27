@@ -930,7 +930,7 @@ export const PRResolveConflictsRow = styled.div`
 		flex-shrink: 0;
 		margin-left: auto;
 	}
-	h1 {
+	.middle {
 		margin: 0 10px;
 	}
 `;

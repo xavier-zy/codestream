@@ -271,6 +271,7 @@ export const PullRequest = () => {
 		if (!pr || !pr.timelineItems || !pr.timelineItems.nodes) return 0;
 		const reducer = (accumulator, node) => {
 			let count = 0;
+			if (!node || !node.__typename) return accumulator;
 			const typename = node.__typename;
 			if (typename.indexOf("Comment") > -1) count = 1;
 			if (typename === "PullRequestReview") {
@@ -350,7 +351,9 @@ export const PullRequest = () => {
 					<PRStatus>
 						<PRStatusButton
 							variant={
-								pr.state === "OPEN"
+								pr.isDraft
+									? "neutral"
+									: pr.state === "OPEN"
 									? "success"
 									: pr.state === "MERGED"
 									? "merged"
@@ -360,7 +363,7 @@ export const PullRequest = () => {
 							}
 						>
 							<Icon name={statusIcon} />
-							{pr.state && pr.state.toLowerCase()}
+							{pr.isDraft ? "Draft" : pr.state ? pr.state.toLowerCase() : ""}
 						</PRStatusButton>
 						<PRStatusMessage>
 							<PRAuthor>{pr.author.login}</PRAuthor>

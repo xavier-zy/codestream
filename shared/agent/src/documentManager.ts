@@ -79,7 +79,7 @@ export class DocumentManager implements Disposable {
 		if (doc !== undefined) return doc;
 
 		const decodedUri = URI.parse(uri).toString(true);
-		const encodedSpacesUri = decodedUri.replace(/ /, "%20");
+		const encodedSpacesUri = decodedUri.replace(/ /g, "%20");
 		doc = this._documents.get(decodedUri) || this._documents.get(encodedSpacesUri);
 		if (doc !== undefined) {
 			this._normalizedUriLookup.set(uri, doc.uri);

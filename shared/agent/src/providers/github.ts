@@ -2600,12 +2600,9 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 			) {
 				// here we're looking for your last pending review as you can only have 1 pending review
 				// per user per PR
-				let nodes = response.repository.pullRequest.reviews.nodes.filter(
+				const myPendingReview = response.repository.pullRequest.reviews.nodes.find(
 					(_: any) => _.state === "PENDING" && _.author.id === response.viewer.id
 				);
-				// find the last one
-				nodes = nodes.sort((a: any, b: any) => b.createdAt - a.createdAt);
-				const myPendingReview = nodes.find((_: any) => _.author.id === response.viewer.id);
 				if (myPendingReview) {
 					// only returns your pending reviews
 					response.repository.pullRequest.pendingReview = myPendingReview;

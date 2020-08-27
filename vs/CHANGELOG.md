@@ -1,5 +1,12 @@
 # Change Log
 
+## [8.3.4] - 2020-8-27
+
+### Fixed
+
+- Fixes an issue related to certain upper-case paths
+- Addresses [#257](https://github.com/TeamCodeStream/codestream/issues/257) &mdash; Visual Studio 2019 Extension code selection/range fails when path contains two or more spaces.
+
 ## [8.3.3] - 2020-8-21
 
 ### Fixed
@@ -62,7 +69,7 @@
 ### Fixed
 
 - Fixes an issue where you weren't able to adjust notification settings if your on-prem installation didn't have outbound email configured
-- Fixes an issue where illegal characters weren't being stripped out of the name when creating a branch 
+- Fixes an issue where illegal characters weren't being stripped out of the name when creating a branch
 
 ## [8.1.4] - 2020-7-16
 
@@ -164,9 +171,9 @@
 ### Added
 
 - Adds the ability to create a pull request on GitHub or GitLab (cloud or on-prem) once a code review has been approved
-- Adds a more granular Help submenu 
+- Adds a more granular Help submenu
 - If your CodeStream email doesn't match your git email, you can now map your git email to your CodeStream email
-- Code ownership can also be reassigned as part of assigning reviewers in a code review 
+- Code ownership can also be reassigned as part of assigning reviewers in a code review
 
 ## [7.4.1] - 2020-6-9
 

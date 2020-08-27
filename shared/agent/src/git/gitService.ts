@@ -1278,14 +1278,16 @@ export class GitService implements IGitService, Disposable {
 			// extensionless file name!
 			const repoRoot = await this.getRepoRoot(fileOrFolderPath);
 			if (repoRoot) {
-				const parsedPath = path.parse(fileOrFolderPath);
-				const newPath = path.join(repoRoot, parsedPath.base);
-				if (newPath !== fileOrFolderPath) {
+				// normalize the part of the repo that could be wrong (repo path)
+				const newFilePath = fileOrFolderPath
+					.replace(/\\/g, "/")
+					.replace(new RegExp(repoRoot, "i"), repoRoot);
+				if (newFilePath !== fileOrFolderPath.replace(/\\/g, "/")) {
 					Logger.warn(
-						`getRepositoryByFilePath: Possible repo casing issue newPath=${newPath} vs. fileOrFolderPath=${fileOrFolderPath}`
+						`getRepositoryByFilePath: Possible repo casing issue newPath=${newFilePath} vs. fileOrFolderPath=${fileOrFolderPath}`
 					);
 				}
-				repo = await this._repositories.getByFilePath(newPath);
+				repo = await this._repositories.getByFilePath(newFilePath);
 			} else {
 				repo = await this._repositories.getByFilePath(fileOrFolderPath);
 			}

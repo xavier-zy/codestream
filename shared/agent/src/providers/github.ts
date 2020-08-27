@@ -2538,12 +2538,9 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 			// comments and any replies (as a `replies` object) that might exist for those comments.
 			// MORE here: https://github.community/t/bug-v4-graphql-api-trouble-retrieving-pull-request-review-comments/13708/2
 			if (response.repository.pullRequest.timelineItems.nodes) {
-				for (const node of response.repository.pullRequest.timelineItems.nodes) {
-					if (node.__typename === "PullRequestReview") {
-						let replies: any = [];
-						let threadId;
-						let isResolved;
-						for (const comment of node.comments.nodes) {
+				for (const timelineItem of response.repository.pullRequest.timelineItems.nodes) {
+					if (timelineItem.__typename === "PullRequestReview") {
+						for (const comment of timelineItem.comments.nodes) {
 							// a parent comment has a null replyTo
 							if (
 								comment.replyTo == null &&
@@ -2552,6 +2549,9 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 								response.repository.pullRequest.reviewThreads &&
 								response.repository.pullRequest.reviewThreads.edges
 							) {
+								let replies: any = [];
+								let threadId;
+								let isResolved;
 								for (const edge of response.repository.pullRequest.reviewThreads.edges) {
 									if (edge.node.comments.nodes.length > 1) {
 										for (const node1 of edge.node.comments.nodes) {
@@ -2573,20 +2573,15 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 										}
 									}
 								}
+								if (timelineItem.comments.nodes.length) {
+									comment.threadId = threadId;
+									comment.isResolved = isResolved;
+									if (replies.length) {
+										comment.replies = replies;
+									}
+								}
 							}
 						}
-						// this api always returns only 1 node/comment (with no replies)
-						// do just attach it to nodes[0]
-						if (node.comments.nodes.length) {
-							node.comments.nodes[0].threadId = threadId;
-							node.comments.nodes[0].isResolved = isResolved;
-							if (replies.length) {
-								node.comments.nodes[0].replies = replies;
-							}
-						}
-						replies = null;
-						threadId = null;
-						isResolved = null;
 					}
 				}
 			}

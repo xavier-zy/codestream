@@ -1135,7 +1135,7 @@ export const PullRequestConversationTab = (props: {
 								<Icon name="mute" /> <span className="wide-text">Unsubscribe</span>
 							</Button>
 							<span className="wide-text">
-								You’re receiving notifications because you’re subscribed to this pull request.
+								You’re receiving notifications because you’re watching this repository.
 							</span>
 						</>
 					) : (

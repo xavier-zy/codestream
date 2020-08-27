@@ -430,6 +430,9 @@ export interface FetchThirdPartyPullRequestPullRequest {
 			};
 		}[];
 	};
+	reviewThreads: {
+		edges: any[];
+	};
 	projectCards: {
 		nodes: {
 			project: {
@@ -470,7 +473,12 @@ export interface FetchThirdPartyPullRequestPullRequest {
 			endCursor: string;
 			hasNextPage: boolean;
 		};
-		nodes: any[];
+		nodes: {
+			comments?: {
+				nodes: any[];
+			};
+			__typename: string;
+		}[];
 	};
 	milestone: {
 		title: string;
@@ -534,6 +542,10 @@ export interface FetchThirdPartyPullRequestResponse {
 		resetAt: any;
 	};
 	repository: FetchThirdPartyPullRequestRepository;
+	viewer: {
+		id: string;
+		login: string;
+	};
 }
 
 export const FetchThirdPartyPullRequestRequestType = new RequestType<

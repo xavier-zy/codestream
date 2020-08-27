@@ -2444,7 +2444,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 						  }
 						}
 					  }
-					  reviews(last: 20) {
+					  reviews(first: 50) {
 						nodes {
 						  id
 						  comments(first:100) {
@@ -2519,12 +2519,12 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 				  mergeCommitAllowed
 				}
 			  }`;
-			const response = await this.client.request<any>(query, {
+			const response = (await this.client.request<any>(query, {
 				owner: owner,
 				name: repo,
 				pullRequestNumber: pullRequestNumber,
 				cursor: cursor
-			});
+			})) as FetchThirdPartyPullRequestResponse;
 
 			this._prTimelineQueryRateLimit = {
 				cost: response.rateLimit.cost,
@@ -2537,58 +2537,69 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 			// and they live on the parent `pullRequest` object. below, we're stiching together
 			// comments and any replies (as a `replies` object) that might exist for those comments.
 			// MORE here: https://github.community/t/bug-v4-graphql-api-trouble-retrieving-pull-request-review-comments/13708/2
-			if (response.repository.pullRequest.timelineItems.nodes) {
-				for (const timelineItem of response.repository.pullRequest.timelineItems.nodes) {
-					if (timelineItem.__typename === "PullRequestReview") {
-						for (const comment of timelineItem.comments.nodes) {
-							// a parent comment has a null replyTo
-							if (
-								comment.replyTo == null &&
-								response.repository &&
-								response.repository.pullRequest &&
-								response.repository.pullRequest.reviewThreads &&
-								response.repository.pullRequest.reviewThreads.edges
-							) {
-								let replies: any = [];
-								let threadId;
-								let isResolved;
-								for (const edge of response.repository.pullRequest.reviewThreads.edges) {
-									if (edge.node.comments.nodes.length > 1) {
-										for (const node1 of edge.node.comments.nodes) {
-											if (node1.id === comment.id) {
-												threadId = edge.node.id;
-												isResolved = edge.node.isResolved;
-												// find all the comments except the parent
-												replies = replies.concat(
-													edge.node.comments.nodes.filter((_: any) => _.id !== node1.id)
-												);
-												break;
-											}
-										}
-									} else if (edge.node.comments.nodes.length === 1) {
-										const node = edge.node.comments.nodes[0];
-										if (node.id === comment.id) {
-											threadId = edge.node.id;
-											isResolved = edge.node.isResolved;
-										}
+
+			if (
+				response.repository.pullRequest.timelineItems.nodes &&
+				response.repository &&
+				response.repository.pullRequest &&
+				response.repository.pullRequest.reviewThreads &&
+				response.repository.pullRequest.reviewThreads.edges
+			) {
+				// find all the PullRequestReview timelineItems as we will attach
+				// additional data to them
+				for (const timelineItem of response.repository.pullRequest.timelineItems.nodes.filter(
+					(_: any) => _.__typename === "PullRequestReview"
+				)) {
+					if (!timelineItem.comments) continue;
+					for (const comment of timelineItem.comments.nodes) {
+						// a parent comment has a null replyTo
+						if (comment.replyTo != null) continue;
+
+						let replies: any = [];
+						let threadId;
+						let isResolved;
+						for (const reviewThread of response.repository.pullRequest.reviewThreads.edges) {
+							if (reviewThread.node.comments.nodes.length > 1) {
+								for (const reviewThreadComment of reviewThread.node.comments.nodes) {
+									if (reviewThreadComment.id === comment.id) {
+										threadId = reviewThread.node.id;
+										isResolved = reviewThread.node.isResolved;
+										// find all the comments except the parent
+										replies = replies.concat(
+											reviewThread.node.comments.nodes.filter(
+												(_: any) => _.id !== reviewThreadComment.id
+											)
+										);
+										break;
 									}
 								}
-								if (timelineItem.comments.nodes.length) {
-									comment.threadId = threadId;
-									comment.isResolved = isResolved;
-									if (replies.length) {
-										comment.replies = replies;
-									}
+							} else if (reviewThread.node.comments.nodes.length === 1) {
+								const reviewThreadComment = reviewThread.node.comments.nodes[0];
+								if (reviewThreadComment.id === comment.id) {
+									threadId = reviewThread.node.id;
+									isResolved = reviewThread.node.isResolved;
 								}
+							}
+						}
+						if (timelineItem.comments.nodes.length) {
+							comment.threadId = threadId;
+							comment.isResolved = isResolved;
+							if (replies.length) {
+								comment.replies = replies;
 							}
 						}
 					}
 				}
 			}
+
+			// note the graphql for this.. it's the _first_ X not the _last_ X
+			// you'd think last would mean the last as in most recent, but it's actually the opposite
 			if (
 				response.repository.pullRequest.reviews &&
 				response.repository.pullRequest.reviews.nodes
 			) {
+				// here we're looking for your last pending review as you can only have 1 pending review
+				// per user per PR
 				let nodes = response.repository.pullRequest.reviews.nodes.filter(
 					(_: any) => _.state === "PENDING" && _.author.id === response.viewer.id
 				);

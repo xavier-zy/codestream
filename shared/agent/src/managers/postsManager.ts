@@ -4,6 +4,7 @@ import { ParsedDiff } from "diff";
 import * as fs from "fs";
 import { groupBy, last, orderBy } from "lodash-es";
 import sizeof from "object-sizeof";
+import * as path from "path";
 import { TextDocumentIdentifier } from "vscode-languageserver";
 import { URI } from "vscode-uri";
 import { MessageType } from "../api/apiProvider";
@@ -912,6 +913,8 @@ export class PostsManager extends EntityManagerBase<CSPost> {
 			}
 
 			if (parsedUri.context.pullRequest.providerId === "github*com") {
+				// get the git repo, so we can use the repo root
+				const gitRepo = await git.getRepositoryById(parsedUri.repoId);
 				// lines are 1-based on GH
 				const startLine = request.attributes.codeBlocks[0].range.start.line + 1;
 				const endLine = request.attributes.codeBlocks[0].range.end.line + 1;
@@ -919,7 +922,7 @@ export class PostsManager extends EntityManagerBase<CSPost> {
 				const diff = await git.getDiffBetweenCommits(
 					parsedUri.leftSha,
 					parsedUri.rightSha,
-					parsedUri.path,
+					path.join(gitRepo ? gitRepo.path : "", parsedUri.path),
 					true
 				);
 				if (diff) {

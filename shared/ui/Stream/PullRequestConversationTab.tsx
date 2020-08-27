@@ -919,7 +919,7 @@ export const PullRequestConversationTab = (props: {
 										<CopyableTerminal
 											code={
 												`git fetch origin\n` +
-												`git checkout -b ${pr.repository.name} origin/${pr.repository.name}\n` +
+												`git checkout -b ${pr.headRefName} origin/${pr.headRefName}\n` +
 												`git merge ${pr.baseRefName}`
 											}
 										/>
@@ -929,7 +929,7 @@ export const PullRequestConversationTab = (props: {
 										<CopyableTerminal
 											code={
 												`git checkout ${pr.baseRefName}\n` +
-												`git merge --no-ff ${pr.repository.name}\n` +
+												`git merge --no-ff ${pr.headRefName}\n` +
 												`git push origin ${pr.baseRefName}`
 											}
 										/>

@@ -194,7 +194,7 @@ export const PullRequestConversationTab = (props: {
 	const setIsDraftPullRequest = async (onOff: boolean) => {
 		setIsLoadingMessage("Updating...");
 		await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, boolean>(), {
-			method: "setIsDaftPullRequest",
+			method: "setIsDraftPullRequest",
 			providerId: pr.providerId,
 			params: {
 				pullRequestId: derivedState.currentPullRequestId!,

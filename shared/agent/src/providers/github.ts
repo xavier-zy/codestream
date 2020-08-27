@@ -909,8 +909,30 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 		return query.repository.collaborators.nodes;
 	}
 
-	async setIsDraftPullRequest(request: { pullRequestId: string; onOff: boolean }) {
-		// FIXME Brian
+	async setIsDraftPullRequest(request: { pullRequestId: string; isDraft: boolean }) {
+		if (!request.isDraft) {
+			const query = `mutation MarkPullRequestReadyForReview($pullRequestId: String!) {
+				markPullRequestReadyForReview(input: {pullRequestId: $pullRequestId}) {
+					  clientMutationId
+					}
+				  }`;
+
+			const response = await this.client.request<any>(query, {
+				pullRequestId: request.pullRequestId
+			});
+			return response;
+		} else {
+			// const query = `mutation UpdateDraft($pullRequestId: String!, $isDraft:Boolean!) {
+			// 	updatePullRequest(input: {pullRequestId: $pullRequestId, isDraft:$isDraft}) {
+			// 		  clientMutationId
+			// 		}
+			// 	  }`;
+			// const response = await this.client.request<any>(query, {
+			// 	pullRequestId: request.pullRequestId,
+			// 	isDraft: request.isDraft
+			// });
+			// return response;
+		}
 	}
 
 	async setLabelOnPullRequest(request: { pullRequestId: string; labelId: string; onOff: boolean }) {

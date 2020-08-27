@@ -260,18 +260,35 @@ export const PullRequestConversationTab = (props: {
 	var reviewersHash: any = {};
 	// the list of reviewers isn't in a single spot...
 	// these are reviews that have been requested (though not started)
+
+	// these are in-progress reviews
+	if (pr.reviews) {
+		pr.reviews.nodes
+			.filter((_: any) => _.state === "COMMENTED")
+			.reduce((map, obj) => {
+				map[obj.author.id] = { ...obj, ...obj.author };
+				return map;
+			}, reviewersHash);
+		pr.reviews.nodes
+			.filter((_: any) => _.state === "APPROVED")
+			.reduce((map, obj) => {
+				map[obj.author.id] = { ...obj, ...obj.author };
+				return map;
+			}, reviewersHash);
+		pr.reviews.nodes
+			.filter((_: any) => _.state === "CHANGES_REQUESTED")
+			.reduce((map, obj) => {
+				map[obj.author.id] = { ...obj, ...obj.author };
+				return map;
+			}, reviewersHash);
+	}
+
 	pr.reviewRequests &&
 		pr.reviewRequests.nodes.reduce((map, obj) => {
 			map[obj.requestedReviewer.id] = {
 				...obj.requestedReviewer,
 				isPending: true
 			};
-			return map;
-		}, reviewersHash);
-	// these are in-progress reviews
-	pr.reviews &&
-		pr.reviews.nodes.reduce((map, obj) => {
-			map[obj.author.id] = { ...obj, ...obj.author };
 			return map;
 		}, reviewersHash);
 
@@ -997,7 +1014,7 @@ export const PullRequestConversationTab = (props: {
 											</div>
 										</Tooltip>
 									)}
-									{/*	{_.state === "APPROVED" && (
+									{_.state === "CHANGES_REQUESTED" && (
 										<>
 											<Tooltip placement="top" content={"Re-request review"}>
 												<div className="status">
@@ -1005,14 +1022,46 @@ export const PullRequestConversationTab = (props: {
 														<b onClick={e => addReviewer(_.id)}>↺</b>
 													</div>
 												</div>
-									</Tooltip>
+											</Tooltip>
+											<Tooltip placement="top" content={_.login + " requested changes"}>
+												<div className="status">
+													<b>BadDocument</b>
+												</div>
+											</Tooltip>
+										</>
+									)}
+									{_.state === "COMMENTED" && (
+										<>
+											<Tooltip placement="top" content={"Re-request review"}>
+												<div className="status">
+													<div className="status">
+														<b onClick={e => addReviewer(_.id)}>↺</b>
+													</div>
+												</div>
+											</Tooltip>
+											<Tooltip placement="top" content={_.login + " left review comments"}>
+												<div className="status">
+													<b>ChatBubble</b>
+												</div>
+											</Tooltip>
+										</>
+									)}
+									{_.state === "APPROVED" && (
+										<>
+											<Tooltip placement="top" content={"Re-request review"}>
+												<div className="status">
+													<div className="status">
+														<b onClick={e => addReviewer(_.id)}>↺</b>
+													</div>
+												</div>
+											</Tooltip>
 											<Tooltip placement="top" content={_.login + " approved these changes"}>
 												<div className="status">
 													<b>✓</b>
 												</div>
 											</Tooltip>
 										</>
-									)}*/}
+									)}
 									<br />
 								</PRReviewer>
 						  ))

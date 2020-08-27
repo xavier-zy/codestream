@@ -339,6 +339,7 @@ export const PullRequestConversationTab = (props: {
 		// fetch();
 	};
 	const addReviewer = async id => {
+		setIsLoadingMessage("Requesting Review...");
 		await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
 			method: "addReviewerToPullRequest",
 			providerId: pr.providerId,
@@ -1007,62 +1008,47 @@ export const PullRequestConversationTab = (props: {
 						? reviewers.map((_, index) => (
 								<PRReviewer key={index}>
 									<PRHeadshotName key={_.avatarUrl} person={_} size={20} />
-									{_.isPending && (
-										<Tooltip placement="top" content={"Awaiting requested review from " + _.login}>
-											<div className="status">
+									<div className="status">
+										{_.isPending && (
+											<Tooltip placement="top" title={"Awaiting requested review from " + _.login}>
 												<b className="pending" />
-											</div>
-										</Tooltip>
-									)}
-									{_.state === "CHANGES_REQUESTED" && (
-										<>
-											<Tooltip placement="top" content={"Re-request review"}>
-												<div className="status">
-													<div className="status">
-														<b onClick={e => addReviewer(_.id)}>↺</b>
-													</div>
-												</div>
 											</Tooltip>
-											<Tooltip placement="top" content={_.login + " requested changes"}>
-												<div className="status">
-													<b>BadDocument</b>
-												</div>
-											</Tooltip>
-										</>
-									)}
-									{_.state === "COMMENTED" && (
-										<>
-											<Tooltip placement="top" content={"Re-request review"}>
-												<div className="status">
-													<div className="status">
-														<b onClick={e => addReviewer(_.id)}>↺</b>
-													</div>
-												</div>
-											</Tooltip>
-											<Tooltip placement="top" content={_.login + " left review comments"}>
-												<div className="status">
-													<b>ChatBubble</b>
-												</div>
-											</Tooltip>
-										</>
-									)}
-									{_.state === "APPROVED" && (
-										<>
-											<Tooltip placement="top" content={"Re-request review"}>
-												<div className="status">
-													<div className="status">
-														<b onClick={e => addReviewer(_.id)}>↺</b>
-													</div>
-												</div>
-											</Tooltip>
-											<Tooltip placement="top" content={_.login + " approved these changes"}>
-												<div className="status">
-													<b>✓</b>
-												</div>
-											</Tooltip>
-										</>
-									)}
-									<br />
+										)}
+										{_.state === "CHANGES_REQUESTED" && (
+											<>
+												<Tooltip placement="top" title={"Re-request review"}>
+													<Icon name="refresh" onClick={e => addReviewer(_.id)} />
+												</Tooltip>
+												<Tooltip placement="top" title={_.login + " requested changes"}>
+													<Icon name="file-diff" className="rejected" />
+												</Tooltip>
+											</>
+										)}
+										{_.state === "COMMENTED" && (
+											<>
+												{_.login !== pr.viewer.login && (
+													<Tooltip placement="top" title={"Re-request review"}>
+														<Icon name="refresh" onClick={e => addReviewer(_.id)} />
+													</Tooltip>
+												)}
+												<Tooltip placement="top" title={_.login + " left review comments"}>
+													<Icon name="comment" />
+												</Tooltip>
+											</>
+										)}
+										{_.state === "APPROVED" && (
+											<>
+												{_.login !== pr.viewer.login && (
+													<Tooltip placement="top" title={"Re-request review"}>
+														<Icon name="refresh" onClick={e => addReviewer(_.id)} />
+													</Tooltip>
+												)}
+												<Tooltip placement="top" title={_.login + " approved these changes"}>
+													<Icon name="check" className="approved" />
+												</Tooltip>
+											</>
+										)}
+									</div>
 								</PRReviewer>
 						  ))
 						: "No reviewers"}
@@ -1180,7 +1166,7 @@ export const PullRequestConversationTab = (props: {
 					</h1>
 					{pr.viewerSubscription === "SUBSCRIBED" ? (
 						<>
-							<Button variant="secondary" onClick={toggleSubscription}>
+							<Button variant="secondary" className="no-wrap" onClick={toggleSubscription}>
 								<Icon name="mute" /> <span className="wide-text">Unsubscribe</span>
 							</Button>
 							<span className="wide-text">

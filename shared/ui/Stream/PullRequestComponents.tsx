@@ -608,7 +608,7 @@ export const PRSection = styled.div`
 		.icon.settings {
 			float: right;
 			display: inline-block;
-			transform: scale(0.7);
+			transform: scale(0.8);
 			opacity: 0.7;
 		}
 	}
@@ -851,11 +851,22 @@ export const PRReviewer = styled.div`
 		flex-grow: 10;
 		margin-left: auto;
 		text-align: right;
+		.icon {
+			display: inline-block;
+			transform: scale(0.8);
+			margin-left: 5px;
+		}
+		.approved {
+			color: #66aa66;
+		}
+		.rejected {
+			color: #cc3366;
+		}
 		b {
 			display: inline-block;
 			width: 8px;
 			height: 8px;
-			margin: 6px 3px 0 0;
+			margin: 6px 4px 0 0;
 			border-radius: 4px;
 			&.pending {
 				background: #dbab09;

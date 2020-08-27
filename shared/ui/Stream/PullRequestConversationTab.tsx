@@ -79,7 +79,8 @@ const AUTHOR_ASSOCIATION_MAP = {
 		"Author has not previously committed to the repository."
 	],
 	MEMBER: ["Member", "Author is a member of the organization that owns the repository."],
-	NONE: ["None", "Author has no association with the repository."],
+	// as per https://trello.com/c/P14tmDQQ/4528-dont-show-none-badge don't show "None"
+	// NONE: ["None", "Author has no association with the repository."],
 	OWNER: ["Owner", "Author is the owner of the repository."]
 };
 

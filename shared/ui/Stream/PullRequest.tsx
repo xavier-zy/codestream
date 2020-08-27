@@ -417,9 +417,13 @@ export const PullRequest = () => {
 									<span className="wide-text">Conversation</span>
 									<PRBadge>
 										{pr.timelineItems && pr.timelineItems.nodes
-											? pr.timelineItems.nodes.filter(
-													_ => _.__typename && _.__typename.indexOf("Comment") > -1
-											  ).length
+											? pr.timelineItems.nodes.filter(_ => {
+													const typename = _.__typename;
+													return (
+														typename &&
+														(typename.indexOf("Comment") > -1 || typename === "PullRequestReview")
+													);
+											  }).length
 											: 0}
 									</PRBadge>
 								</Tab>

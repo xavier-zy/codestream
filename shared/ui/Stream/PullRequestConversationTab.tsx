@@ -52,6 +52,7 @@ import { Link } from "./Link";
 import { setUserPreference } from "./actions";
 import copy from "copy-to-clipboard";
 import { PullRequestBottomComment } from "./PullRequestBottomComment";
+import { reduce as _reduce, groupBy as _groupBy, map as _map } from "lodash-es";
 
 const Circle = styled.div`
 	width: 12px;
@@ -276,25 +277,29 @@ export const PullRequestConversationTab = (props: {
 	// these are reviews that have been requested (though not started)
 
 	// these are in-progress reviews
-	if (pr.reviews) {
-		pr.reviews.nodes
-			.filter((_: any) => _.state === "COMMENTED")
-			.reduce((map, obj) => {
-				map[obj.author.id] = { ...obj, ...obj.author };
-				return map;
-			}, reviewersHash);
-		pr.reviews.nodes
-			.filter((_: any) => _.state === "APPROVED")
-			.reduce((map, obj) => {
-				map[obj.author.id] = { ...obj, ...obj.author };
-				return map;
-			}, reviewersHash);
-		pr.reviews.nodes
-			.filter((_: any) => _.state === "CHANGES_REQUESTED")
-			.reduce((map, obj) => {
-				map[obj.author.id] = { ...obj, ...obj.author };
-				return map;
-			}, reviewersHash);
+	if (pr.reviews && pr.reviews.nodes) {
+		// group by author
+		const gb = _groupBy(pr.reviews.nodes, _ => _.author.id);
+		// then convert to hash... key is the author,
+		// value is the last review
+		const map = _map(gb, (values, key) => {
+			const last = values.sort(
+				(a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+			)[0] as any;
+			return {
+				key: key,
+				value: { ...last, ...last.author }
+			};
+		});
+		// reduce to create the correct object structure
+		reviewersHash = _reduce(
+			map,
+			function(obj, param) {
+				obj[param.key] = param.value;
+				return obj;
+			},
+			{}
+		);
 	}
 
 	pr.reviewRequests &&
@@ -858,7 +863,7 @@ export const PullRequestConversationTab = (props: {
 										<Icon name="alert" />
 									</PRIconButton>
 									<div className="middle">
-										><h1>This branch has conflicts that must be resolved</h1>
+										<h1>This branch has conflicts that must be resolved</h1>
 									</div>
 									<Button
 										className="no-wrap"

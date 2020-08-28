@@ -445,6 +445,7 @@ export interface FetchThirdPartyPullRequestPullRequest {
 	reviews: {
 		nodes: {
 			id: string;
+			createdAt: string;
 			author: {
 				id: string;
 				login: string;

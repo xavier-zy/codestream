@@ -2474,6 +2474,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 					  reviews(first: 50) {
 						nodes {
 						  id
+						  createdAt
 						  comments(first:100) {
 							totalCount
 						  }

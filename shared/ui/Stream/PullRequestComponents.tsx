@@ -908,7 +908,11 @@ export const PRCloneURL = styled.div`
 	justify-content: space-between;
 	border: 1px solid var(--base-border-color);
 	border-radius: 5px;
-	padding: 5px 0 5px 10px;
+	padding: 5px 0 5px 5px;
+	input {
+		flex: 1;
+		background: none !important;
+	}
 	.icon {
 		margin: 0 10px;
 	}

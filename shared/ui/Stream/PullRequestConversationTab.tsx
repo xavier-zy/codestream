@@ -929,7 +929,7 @@ export const PullRequestConversationTab = (props: {
 												</Button>
 											</PRCloneURLButtons>
 											<PRCloneURL>
-												<div className="clone-url">{cloneURL}</div>
+												<input type="text" value={cloneURL} disabled={true}/>
 												<Icon
 													title="Copy"
 													placement="bottom"

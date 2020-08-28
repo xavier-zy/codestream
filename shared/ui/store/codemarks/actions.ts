@@ -210,6 +210,12 @@ export const parseCodeStreamDiffUri = (
 	| {
 			path: string;
 			side: string;
+			context?: {
+				pullRequest: {
+					providerId: string;
+					id: string;
+				};
+			};
 	  }
 	| undefined => {
 	if (!uri) return undefined;

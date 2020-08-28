@@ -60,10 +60,12 @@ export const WidthBreakpoint = "630px";
 
 const Root = styled.div`
 	${Tabs} {
-		margin: 10px 20px 10px 20px;
+		margin: 10px 0;
 	}
 	${Tab} {
 		font-size: 13px;
+		white-space: nowrap;
+		padding: 0 5px 10px 5px;
 		.icon {
 			// vertical-align: -2px;
 			display: inline-block;
@@ -344,7 +346,10 @@ export const PullRequest = () => {
 							</PREditTitle>
 						) : (
 							<>
-								{title || pr.title} <Link href={pr.url}>#{pr.number}</Link>
+								{title || pr.title}{" "}
+								<Tooltip title="Open on GitHub" placement="top">
+									<Link href={pr.url}>#{pr.number}</Link>
+								</Tooltip>
 							</>
 						)}
 					</PRTitle>
@@ -388,10 +393,76 @@ export const PullRequest = () => {
 							</PRAction>
 							<Timestamp time={pr.createdAt} relative />
 						</PRStatusMessage>
-						{pr && pr.pendingReview && (
+						<PRActionButtons>
+							{pr.viewerCanUpdate && (
+								<span>
+									<Icon
+										title="Edit Title"
+										trigger={["hover"]}
+										delay={1}
+										onClick={() => {
+											setTitle(pr.title);
+											setEditingTitle(true);
+										}}
+										placement="bottom"
+										name="pencil"
+									/>
+								</span>
+							)}
+							<span>
+								<Icon
+									title="Checkout Branch"
+									trigger={["hover"]}
+									delay={1}
+									onClick={checkout}
+									placement="bottom"
+									name="repo"
+								/>
+							</span>
+							<span>
+								<Icon
+									title="Reload"
+									trigger={["hover"]}
+									delay={1}
+									onClick={() => reload("Reloading...")}
+									placement="bottom"
+									className={`${isLoadingPR ? "spin" : ""}`}
+									name="refresh"
+								/>
+							</span>
+							<span>
+								<CancelButton className="button" title="Close" onClick={exit} />
+							</span>
+						</PRActionButtons>
+					</PRStatus>
+					<Tabs style={{ marginTop: 0 }}>
+						<Tab onClick={e => setActiveTab(1)} active={activeTab == 1}>
+							<Icon name="comment" />
+							<span className="wide-text">Conversation</span>
+							<PRBadge>{numComments}</PRBadge>
+						</Tab>
+						<Tab onClick={e => setActiveTab(2)} active={activeTab == 2}>
+							<Icon name="git-commit" />
+							<span className="wide-text">Commits</span>
+							<PRBadge>{pr.commits.totalCount}</PRBadge>
+						</Tab>
+						{/*
+		<Tab onClick={e => setActiveTab(3)} active={activeTab == 3}>
+			<Icon name="check" />
+			<span className="wide-text">Checks</span>
+			<PRBadge>{pr.numChecks}</PRBadge>
+		</Tab>
+		 */}
+						<Tab onClick={e => setActiveTab(4)} active={activeTab == 4}>
+							<Icon name="plus-minus" />
+							<span className="wide-text">Files Changed</span>
+							<PRBadge>{pr.files.totalCount}</PRBadge>
+						</Tab>
+
+						{pr.pendingReview ? (
 							<PRSubmitReviewButton>
 								<Button variant="success" onClick={() => setFinishReviewOpen(!finishReviewOpen)}>
-									Finish your review
+									Finish<span className="wide-text"> review</span>
 									<PRBadge>
 										{pr.pendingReview.comments ? pr.pendingReview.comments.totalCount : 0}
 									</PRBadge>
@@ -407,102 +478,35 @@ export const PullRequest = () => {
 									/>
 								)}
 							</PRSubmitReviewButton>
+						) : (
+							<PRPlusMinus>
+								<span className="added">
+									+
+									{!pr.files
+										? 0
+										: pr.files.nodes
+												.map(_ => _.additions)
+												.reduce((acc, val) => acc + val)
+												.toString()
+												.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
+								</span>{" "}
+								<span className="deleted">
+									-
+									{!pr.files
+										? 0
+										: pr.files.nodes
+												.map(_ => _.deletions)
+												.reduce((acc, val) => acc + val)
+												.toString()
+												.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
+								</span>
+							</PRPlusMinus>
 						)}
-						{pr && !pr.pendingReview && (
-							<PRActionButtons>
-								{pr.viewerCanUpdate && (
-									<span>
-										<Icon
-											title="Edit Title"
-											trigger={["hover"]}
-											delay={1}
-											onClick={() => {
-												setTitle(pr.title);
-												setEditingTitle(true);
-											}}
-											placement="bottom"
-											name="pencil"
-										/>
-									</span>
-								)}
-								<span>
-									<Icon
-										title="Checkout Branch"
-										trigger={["hover"]}
-										delay={1}
-										onClick={checkout}
-										placement="bottom"
-										name="repo"
-									/>
-								</span>
-								<span>
-									<Icon
-										title="Reload"
-										trigger={["hover"]}
-										delay={1}
-										onClick={() => reload("Reloading...")}
-										placement="bottom"
-										className={`${isLoadingPR ? "spin" : ""}`}
-										name="refresh"
-									/>
-								</span>
-								<span>
-									<CancelButton className="button" title="Close" onClick={exit} />
-								</span>
-							</PRActionButtons>
-						)}
-					</PRStatus>
+					</Tabs>
 				</PRHeader>
 				{!derivedState.composeCodemarkActive && (
 					<ScrollBox>
 						<div className="channel-list vscroll">
-							<Tabs style={{ marginTop: 0 }}>
-								<Tab onClick={e => setActiveTab(1)} active={activeTab == 1}>
-									<Icon name="comment" />
-									<span className="wide-text">Conversation</span>
-									<PRBadge>{numComments}</PRBadge>
-								</Tab>
-								<Tab onClick={e => setActiveTab(2)} active={activeTab == 2}>
-									<Icon name="git-commit" />
-									<span className="wide-text">Commits</span>
-									<PRBadge>{pr.commits.totalCount}</PRBadge>
-								</Tab>
-								{/*
-					<Tab onClick={e => setActiveTab(3)} active={activeTab == 3}>
-						<Icon name="check" />
-						<span className="wide-text">Checks</span>
-						<PRBadge>{pr.numChecks}</PRBadge>
-					</Tab>
-					 */}
-								<Tab onClick={e => setActiveTab(4)} active={activeTab == 4}>
-									<Icon name="plus-minus" />
-									<span className="wide-text">Files Changed</span>
-									<PRBadge>{pr.files.totalCount}</PRBadge>
-								</Tab>
-
-								<PRPlusMinus>
-									<span className="added">
-										+
-										{!pr.files
-											? 0
-											: pr.files.nodes
-													.map(_ => _.additions)
-													.reduce((acc, val) => acc + val)
-													.toString()
-													.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
-									</span>{" "}
-									<span className="deleted">
-										-
-										{!pr.files
-											? 0
-											: pr.files.nodes
-													.map(_ => _.deletions)
-													.reduce((acc, val) => acc + val)
-													.toString()
-													.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
-									</span>
-								</PRPlusMinus>
-							</Tabs>
 							{activeTab === 1 && (
 								<PullRequestConversationTab
 									pr={pr}

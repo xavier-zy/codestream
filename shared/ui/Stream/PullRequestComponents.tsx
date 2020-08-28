@@ -321,9 +321,12 @@ export const PRActionCommentCard = styled.div`
 // this is the "Finish your review" button
 export const PRSubmitReviewButton = styled.div`
 	position: relative;
+	float: right;
+	margin-left: auto;
+	margin-top: -10px;
 	> button {
 		margin-left: 10px;
-		// border-radius: 5px;
+		border-radius: 5px;
 		white-space: nowrap;
 		${PRBadge} {
 			line-height: 1.42857143 !important;
@@ -839,7 +842,6 @@ export const PRStatus = styled.div`
 			flex-grow: 0;
 			margin-right: auto;
 		}
-		${PRSubmitReviewButton},
 		${PRActionButtons} {
 			order: 3;
 			// max-width: 40%;

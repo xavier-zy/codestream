@@ -12,11 +12,12 @@ const Root = styled.div`
 	pre {
 		white-space: pre !important;
 		margin: 0;
+		display: inline-block;
 	}
 	> div {
 		display: flex;
 		background-origin: content-box;
-		padding: 3px 10px;
+		padding: 2px 10px;
 		> span.linenum {
 			opacity: 0.5;
 		}
@@ -52,7 +53,7 @@ export const PullRequestPatch = (props: {
 	}
 
 	const renderLineNum = line => (
-		<span className="linenum">{(line + "").padStart(width, " ") + "  "}</span>
+		<pre className="linenum">{(line + "").padStart(width, " ") + "  "}</pre>
 	);
 
 	const syntaxHighlight = string => {

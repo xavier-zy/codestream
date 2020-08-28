@@ -23,6 +23,7 @@ import {
 	ExecuteThirdPartyRequestUntypedType
 } from "@codestream/protocols/agent";
 import { OpenUrlRequestType } from "@codestream/protocols/webview";
+import { Button } from "../src/components/Button";
 
 interface Props {
 	openRepos: ReposScm[];
@@ -119,7 +120,7 @@ export function OpenReviews(props: Props) {
 	sortedReviews.sort((a, b) => b.createdAt - a.createdAt);
 
 	return React.useMemo(() => {
-		if (reviews.length == 0 && prs.length == 0) return null;
+		if (reviews.length == 0 && !derivedState.isGitHubConnected) return null;
 		return (
 			<>
 				{reviews.length > 0 && (
@@ -158,54 +159,95 @@ export function OpenReviews(props: Props) {
 						})}
 					</WideStatusSection>
 				)}
-				{prs.length > 0 && (
+				{derivedState.isGitHubConnected && (
 					<WideStatusSection>
-						<div style={{ padding: "0 20px 0 20px" }}>
+						<div className="filters" style={{ padding: "0 20px 0 20px" }}>
 							<Tooltip title="Reload" placement="bottom" delay={1}>
 								<RoundedLink onClick={() => fetchPRs({ force: true })}>
 									<Icon name="refresh" className={`spinnable ${isLoadingPRs ? "spin" : ""}`} />
 									&nbsp;&nbsp;Refresh
 								</RoundedLink>
 							</Tooltip>
-							<RoundedSearchLink className={queryOpen ? "" : "collapsed"}>
-								<Icon
-									name="hash"
-									onClick={() => {
-										setQueryOpen(true);
-										document.getElementById("pr-search-input")!.focus();
-									}}
-								/>
-								<span className="accordion">
-									<Icon
-										name="x"
-										onClick={() => {
-											setQuery("");
-											setQueryOpen(false);
-										}}
-									/>
-									<input
-										autoFocus
-										id="pr-search-input"
-										placeholder="Enter PR URL"
-										type="text"
-										value={query}
-										onChange={e => setQuery(e.target.value)}
-										onKeyDown={e => {
-											if (e.key == "Escape") {
-												setQuery("");
-												setQueryOpen(false);
-											}
-											if (e.key == "Enter") {
-												goPR(query);
-											}
-										}}
-									/>
-								</span>
-							</RoundedSearchLink>
 							<H4>
 								Pull Requests <sup className="subtle">(beta)</sup>
 							</H4>
 						</div>
+						<Row
+							key="load"
+							className={queryOpen ? "no-hover" : ""}
+							onClick={() => {
+								setQueryOpen(true);
+								document.getElementById("pr-search-input")!.focus();
+							}}
+						>
+							<div>
+								<Icon name="link" />
+							</div>
+							<div>
+								<input
+									id="pr-search-input"
+									placeholder="Load PR from URL"
+									type="text"
+									style={{ background: "transparent", width: "100%" }}
+									value={query}
+									onChange={e => setQuery(e.target.value)}
+									onKeyDown={e => {
+										if (e.key == "Escape") {
+											setQuery("");
+										}
+										if (e.key == "Enter") {
+											goPR(query);
+										}
+									}}
+									onBlur={e => setQueryOpen(false)}
+								/>
+							</div>
+							{(query || queryOpen) && (
+								<div className="go-pr">
+									<Button className="go-pr" size="compact" onClick={() => goPR(query)}>
+										Go
+									</Button>
+								</div>
+							)}
+						</Row>
+
+						{/*
+						<RoundedSearchLink className={queryOpen ? "" : "collapsed"}>
+							<Icon
+								name="hash"
+								onClick={() => {
+									setQueryOpen(true);
+									document.getElementById("pr-search-input")!.focus();
+								}}
+							/>
+							<span className="accordion">
+								<Icon
+									name="x"
+									onClick={() => {
+										setQuery("");
+										setQueryOpen(false);
+									}}
+								/>
+								<input
+									autoFocus
+									id="pr-search-input"
+									placeholder="Enter PR URL"
+									type="text"
+									value={query}
+									onChange={e => setQuery(e.target.value)}
+									onKeyDown={e => {
+										if (e.key == "Escape") {
+											setQuery("");
+											setQueryOpen(false);
+										}
+										if (e.key == "Enter") {
+											goPR(query);
+										}
+									}}
+								/>
+							</span>
+						</RoundedSearchLink>
+								*/}
 						{prs.map(pr => {
 							const selected = derivedState.repos.find(repo => {
 								return (

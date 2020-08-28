@@ -2,7 +2,7 @@ import React, { PropsWithChildren } from "react";
 import styled from "styled-components";
 import Icon from "@codestream/webview/Stream/Icon";
 
-type ButtonSize = "default" | "large" | "compact";
+type ButtonSize = "default" | "large" | "compact" | "subcompact";
 
 const getFontSize = (size?: ButtonSize, variant?: ButtonVariant) => {
 	if (variant == "text") return "font-size: inherit !important";
@@ -10,6 +10,8 @@ const getFontSize = (size?: ButtonSize, variant?: ButtonVariant) => {
 		case "large":
 			return "font-size: 1.15em !important;";
 		case "compact":
+			return "font-size: 12px !important;";
+		case "subcompact":
 			return "font-size: 12px !important;";
 		case "default":
 		default:
@@ -24,6 +26,8 @@ const getPadding = (size?: ButtonSize, variant?: ButtonVariant) => {
 			return "padding: 1px 15px;";
 		case "compact":
 			return "padding: 1px 5px;";
+		case "subcompact":
+			return "padding: 1px 5px;";
 		case "default":
 		default:
 			return "padding: 1px 10px;";
@@ -37,6 +41,8 @@ const getLineHeight = (size?: ButtonSize, variant?: ButtonVariant) => {
 			return "line-height: 2em;";
 		case "compact":
 			return "line-height: 1.6em;";
+		case "subcompact":
+			return "line-height: 1.4em;";
 		case "default":
 		default:
 			return "line-height: 2em;";

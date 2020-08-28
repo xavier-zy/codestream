@@ -583,10 +583,11 @@ export function IssueList(props: React.PropsWithChildren<IssueListProps>) {
 
 		const providerDisplay = PROVIDER_MAPPINGS[provider.name];
 		if (providerDisplay.hasCustomFilters) {
-			const activeFilters = keyFilter(filterCustom.filters)
-				.filter(f => typeof filterCustom.filters[f] === 'string');
+			const activeFilters = keyFilter(filterCustom.filters).filter(
+				f => typeof filterCustom.filters[f] === "string"
+			);
 			activeFilters.forEach((filter: any) => {
-				if (typeof filterCustom.filters[filter] !== 'string') return; // failsafe
+				if (typeof filterCustom.filters[filter] !== "string") return; // failsafe
 				const checked = filterCustom.selected === filter;
 				items.push({
 					checked,
@@ -1262,6 +1263,33 @@ export const Row = styled.div`
 		position: absolute !important;
 		left: 2px;
 		top: 3px;
+	}
+	#pr-search-input {
+		margin: -3px 0 !important;
+		padding: 3px 0 !important;
+		&:focus {
+			padding: 3px 5px !important;
+		}
+		&:focus::placeholder {
+			opacity: 0 !important;
+		}
+		&:not(:focus) {
+			cursor: pointer;
+		}
+		&::placeholder {
+			opacity: 1 !important;
+			color: var(--text-color);
+		}
+		&:hover::placeholder {
+			color: var(--text-color-highlight);
+		}
+	}
+	div.go-pr {
+		padding: 0;
+		margin-left: auto;
+		button {
+			margin-top: 0px;
+		}
 	}
 `;
 

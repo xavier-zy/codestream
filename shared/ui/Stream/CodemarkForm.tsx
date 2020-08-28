@@ -711,8 +711,7 @@ class CodemarkForm extends React.Component<Props, State> {
 					: "";
 			HostApi.instance.track("PR Comment Added", {
 				Host: providerId,
-				"Comment Type": "Review Comment",
-				"Started Review": this.state.isProviderReview
+				"Comment Type": this.state.isProviderReview ? "Review Comment" : "Single Comment"
 			});
 		}
 

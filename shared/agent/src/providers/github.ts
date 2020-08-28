@@ -1279,6 +1279,24 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 		return response;
 	}
 
+	async getPullRequestLastUpdated(request: { pullRequestId: string }) {
+		const response = await this.client.request<any>(
+			`query GetPullRequestLastUpdated($pullRequestId:ID!) {
+					node(id:$pullRequestId) {
+						... on PullRequest {
+							updatedAt
+						  }
+						}
+				  }`,
+			{
+				pullRequestId: request.pullRequestId
+			}
+		);
+		return {
+			updatedAt: response && response.node ? response.node.updatedAt : undefined
+		};
+	}
+
 	async getPullRequestIdFromUrl(request: { url: string }) {
 		// since we only the url for the PR -- parse it out for the
 		// data we need.

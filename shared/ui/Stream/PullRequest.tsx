@@ -298,6 +298,52 @@ export const PullRequest = () => {
 		initialFetch();
 	});
 
+	let interval;
+	let intervalCounter = 0;
+	useEffect(() => {
+		interval && clearInterval(interval);
+		if (pr) {
+			interval = setInterval(async () => {
+				if (intervalCounter >= 120) {
+					interval && clearInterval(interval);
+					intervalCounter = 0;
+					console.warn(`stopped getPullRequestLastUpdated interval counter=${intervalCounter}`);
+					return;
+				}
+				try {
+					const response = await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
+						method: "getPullRequestLastUpdated",
+						providerId: pr.providerId,
+						params: {
+							pullRequestId: derivedState.currentPullRequestId!
+						}
+					});
+
+					if (pr && response && response.updatedAt !== pr.updatedAt) {
+						console.log(
+							"getPullRequestLastUpdated is updating",
+							response.updatedAt,
+							pr.updatedAt,
+							intervalCounter
+						);
+						intervalCounter = 0;
+						reload();
+						clearInterval(interval);
+					} else {
+						intervalCounter++;
+					}
+				} catch (ex) {
+					console.error(ex);
+					interval && clearInterval(interval);
+				}
+			}, 60000); //60000 === 1 minute
+		}
+
+		return () => {
+			interval && clearInterval(interval);
+		};
+	}, [pr]);
+
 	console.warn("PR: ", pr);
 	// console.warn("REPO: ", ghRepo);
 	if (!pr) {

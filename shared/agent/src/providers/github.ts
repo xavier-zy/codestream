@@ -1461,6 +1461,22 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 		return response;
 	}
 
+	async removeReviewerFromPullRequest(request: { pullRequestId: string; userId: string }) {
+		const currentReviewers = await this.getReviewersForPullRequest(request);
+		const response = await this.client.request<any>(
+			`mutation RequestReviews($pullRequestId: String!, $userIds:[String!]!) {
+				requestReviews(input: {pullRequestId:$pullRequestId, userIds:$userIds}) {
+			  clientMutationId
+			}
+		  }`,
+			{
+				pullRequestId: request.pullRequestId,
+				userIds: (currentReviewers || []).filter((_: string) => _ !== request.userId)
+			}
+		);
+		return response;
+	}
+
 	async createPullRequestCommentAndClose(request: { pullRequestId: string; text: string }) {
 		if (request.text) {
 			await this.client.request<any>(

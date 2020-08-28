@@ -337,7 +337,14 @@ export const PullRequestConversationTab = (props: {
 				subtle: _.name,
 				searchLabel: `${_.login}:${_.name}`,
 				key: _.id,
-				action: () => (_.isPending ? removeReviewer(_.id) : addReviewer(_.id))
+				action: () => {
+					const reviewer = (reviewers || []).find(r => r.id === _.id);
+					if (reviewer && reviewer.isPending) {
+						removeReviewer(_.id);
+					} else {
+						addReviewer(_.id);
+					}
+				}
 			})) as any;
 			menuItems.unshift({ type: "search", placeholder: "Type or choose a name" });
 			return menuItems;
@@ -347,15 +354,16 @@ export const PullRequestConversationTab = (props: {
 	}, [availableReviewers, pr]);
 
 	const removeReviewer = async id => {
-		// await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
-		// 	method: "removeReviewerFromPullRequest",
-		// 	providerId: pr.providerId,
-		// 	params: {
-		// 		pullRequestId: pr.id,
-		// 		userId: id
-		// 	}
-		// });
-		// fetch();
+		setIsLoadingMessage("Removing Reviewer...");
+		await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
+			method: "removeReviewerFromPullRequest",
+			providerId: pr.providerId,
+			params: {
+				pullRequestId: pr.id,
+				userId: id
+			}
+		});
+		fetch();
 	};
 	const addReviewer = async id => {
 		setIsLoadingMessage("Requesting Review...");

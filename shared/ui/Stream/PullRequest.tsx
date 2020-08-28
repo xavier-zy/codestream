@@ -172,7 +172,7 @@ export const PullRequest = () => {
 		_assignState(response);
 		if (response) {
 			HostApi.instance.track("PR Clicked", {
-				Host: response.providerId
+				Host: providerId
 			});
 		}
 	};

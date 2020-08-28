@@ -42,7 +42,7 @@ export const PullRequestReplyComment = styled((props: Props) => {
 
 			HostApi.instance.track("PR Comment Added", {
 				Host: pr.providerId,
-				"Comment Type": "ReviewReply",
+				"Comment Type": "Review Reply",
 				"Started Review": false
 			});
 

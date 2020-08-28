@@ -586,10 +586,13 @@ export abstract class ThirdPartyIssueProviderBase<
 			}
 		}
 		if (request.metadata.addresses) {
-			request.description += "\n\n**This PR Addresses:**  \n";
+			let addressesText = "\n\n**This PR Addresses:**  \n";
+			let foundOneWithUrl = false;
 			request.metadata.addresses.forEach(issue => {
-				request.description += `[${issue.title}](${issue.url})  \n`;
+				addressesText += `[${issue.title}](${issue.url})  \n`;
+				if (issue.url) foundOneWithUrl = true;
 			});
+			if (foundOneWithUrl) request.description += addressesText;
 		}
 		return request.description;
 	}

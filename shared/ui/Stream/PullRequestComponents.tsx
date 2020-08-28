@@ -860,6 +860,8 @@ export const PRReviewer = styled.div`
 		.icon {
 			display: inline-block;
 			transform: scale(0.8);
+		}
+		.icon + .icon {
 			margin-left: 5px;
 		}
 		.approved {

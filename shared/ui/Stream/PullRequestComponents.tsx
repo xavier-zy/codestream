@@ -10,6 +10,15 @@ export const PENDING_BORDER_COLOR = "rgba(249, 197, 19, 0.6)";
 
 export const PRHeader = styled.div`
 	margin: 45px 15px 0 20px;
+	.open-external {
+		margin-left: 5px;
+		vertical-align: 3px;
+		font-size: 12px;
+		display: none;
+	}
+	&:hover .open-external {
+		display: inline-block;
+	}
 `;
 
 export const PRTitle = styled.div`

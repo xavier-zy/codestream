@@ -348,13 +348,20 @@ export const PullRequest = () => {
 							<>
 								{title || pr.title}{" "}
 								<Tooltip title="Open on GitHub" placement="top">
-									<Link href={pr.url}>#{pr.number}</Link>
+									<span>
+										<Link href={pr.url}>
+											#{pr.number}
+											<Icon name="link-external" className="open-external" />
+										</Link>
+									</span>
 								</Tooltip>
 							</>
 						)}
 					</PRTitle>
 					<PRStatus>
 						<PRStatusButton
+							disabled
+							fullOpacity
 							variant={
 								pr.isDraft
 									? "neutral"

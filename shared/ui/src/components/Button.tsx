@@ -43,83 +43,91 @@ const getLineHeight = (size?: ButtonSize, variant?: ButtonVariant) => {
 	}
 };
 
-const getColors = (variant = "primary") => {
+const getColors = (variant = "primary", fullOpacity = false) => {
 	switch (variant) {
 		case "text": {
 			return `
 			background-color: inherit;
 			color: var(--text-color);
-				:hover {
+				${!fullOpacity &&
+					`:hover {
 					color: var(--text-color-highlight);
 				}
-			`;
+			`}`;
 		}
 		case "secondary": {
 			return `
 				background-color: rgba(127, 127, 127, 0.1);
 				color: var(--text-color);
-				:hover {
+				${!fullOpacity &&
+					`:hover {
 					background-color: rgba(127, 127, 127, 0.15);
 					color: var(--text-color-highlight);
 				}
-			`;
+			`}`;
 		}
 		case "destructive": {
 			return `
 				background-color: #c00;
 				color: white;
-				:hover {
+				${!fullOpacity &&
+					`:hover {
 					opacity: 0.85;
 				}
-			`;
+			`}`;
 		}
 		case "success": {
 			return `
 			background-color: #17ca65;
 			background-color: #24A100;
 			color: white;
-				:hover {
+			${!fullOpacity &&
+				`:hover {
 					opacity: 0.85;
 				}
-			`;
+			`}`;
 		}
 		case "warning": {
 			return `
 				background-color: #ffaa2c;
 				color: white;
-				:hover {
+				${!fullOpacity &&
+					`:hover {
 					opacity: 0.85;
 				}
-			`;
+			`}`;
 		}
 		case "merged": {
 			return `
 				background-color: #6f42c1;
 				// background-color: #b87cda;
 				color: white;
-				:hover {
+				${!fullOpacity &&
+					`:hover {
 					opacity: 0.85;
 				}
-			`;
+			`}`;
 		}
 		case "neutral": {
 			return `
 				background-color: rgb(127, 127, 127);
 				color: white;
-				:hover {
+				${!fullOpacity &&
+					`:hover {
 					opacity: 0.85;
 				}
-			`;
+			`}`;
 		}
 		case "primary":
 		default: {
 			return `
 				background-color: var(--button-background-color);
 				color: var(--button-foreground-color);
-				:hover {
+				${!fullOpacity &&
+					`:hover {
 					background-color: var(--button-background-color-hover);
 				}
-			`;
+			`}`;
 		}
 	}
 };
@@ -127,7 +135,7 @@ const getColors = (variant = "primary") => {
 export const ButtonRoot = styled.button<ButtonProps>(props => {
 	return `
 	width: ${props.fillParent ? "100%" : "max-content"};
-	${getColors(props.variant)}
+	${getColors(props.variant, props.fullOpacity)}
 	cursor: ${props.isLoading || props.disabled ? "default" : "pointer"};
 	display: inline-flex;
 	align-items: center;
@@ -137,7 +145,7 @@ export const ButtonRoot = styled.button<ButtonProps>(props => {
 	-webkit-user-select: none;
 	z-index: 0;
 	text-shadow: none;
-	opacity: ${props.disabled ? 0.5 : 1};
+	opacity: ${props.disabled && !props.fullOpacity ? 0.5 : 1};
 
 	${getFontSize(props.size, props.variant)}
 	${getPadding(props.size, props.variant)}
@@ -180,6 +188,7 @@ type ButtonVariant =
 export interface ButtonProps extends PropsWithChildren<{}> {
 	variant?: ButtonVariant;
 	disabled?: boolean;
+	fullOpacity?: boolean;
 	isLoading?: boolean;
 	size?: ButtonSize;
 	prependIcon?: React.ReactNode;
@@ -194,6 +203,7 @@ export function getButtonProps<P extends ButtonProps>(props: P): ButtonProps {
 	return {
 		variant: props.variant,
 		disabled: props.disabled,
+		fullOpacity: props.fullOpacity,
 		isLoading: props.isLoading,
 		size: props.size,
 		prependIcon: props.prependIcon,

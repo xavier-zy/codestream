@@ -229,13 +229,23 @@ export function OpenReviews(props: Props) {
 										<span className="subtle">{pr.bodyText || pr.body}</span>
 									</div>
 									<div className="icons">
-										<Icon
-											name="globe"
-											className="clickable"
-											title="View on GitHub"
-											placement="bottomLeft"
-											delay={1}
-										/>
+										<span
+											onClick={e => {
+												e.preventDefault();
+												e.stopPropagation();
+												HostApi.instance.send(OpenUrlRequestType, {
+													url: pr.url
+												});
+											}}
+										>
+											<Icon
+												name="globe"
+												className="clickable"
+												title="View on GitHub"
+												placement="bottomLeft"
+												delay={1}
+											/>
+										</span>
 										<Icon
 											name="review"
 											className="clickable"

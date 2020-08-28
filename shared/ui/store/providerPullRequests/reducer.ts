@@ -4,7 +4,7 @@ import { ProviderPullRequestActionsTypes, ProviderPullRequestsState } from "./ty
 
 type ProviderPullRequestActions = ActionType<typeof actions>;
 
-const initialState: ProviderPullRequestsState = { pullRequests: {} };
+const initialState: ProviderPullRequestsState = { pullRequests: {}, myPullRequests: {} };
 
 const createNewObject = (state, action) => {
 	const newState = { ...state.pullRequests };
@@ -17,6 +17,38 @@ export function reduceProviderPullRequests(
 	action: ProviderPullRequestActions
 ): ProviderPullRequestsState {
 	switch (action.type) {
+		case ProviderPullRequestActionsTypes.AddMyPullRequests: {
+			const newState = { ...state.myPullRequests };
+			newState[action.payload.providerId] = {
+				data: action.payload.data
+			};
+			return {
+				myPullRequests: newState,
+				pullRequests: { ...state.pullRequests }
+			};
+		}
+		case ProviderPullRequestActionsTypes.RemoveFromMyPullRequests: {
+			const newState = { ...state.myPullRequests };
+			newState[action.payload.providerId] = {
+				data: (newState[action.payload.providerId].data || []).filter(
+					_ => _.id !== action.payload.id
+				)
+			};
+			return {
+				myPullRequests: newState,
+				pullRequests: { ...state.pullRequests }
+			};
+		}
+		case ProviderPullRequestActionsTypes.ClearMyPullRequests: {
+			const newState = { ...state.myPullRequests };
+			newState[action.payload.providerId] = {
+				data: undefined
+			};
+			return {
+				myPullRequests: newState,
+				pullRequests: { ...state.pullRequests }
+			};
+		}
 		case ProviderPullRequestActionsTypes.AddPullRequestFiles: {
 			const newState = createNewObject(state, action);
 			newState[action.payload.providerId][action.payload.id] = {
@@ -24,10 +56,10 @@ export function reduceProviderPullRequests(
 				files: action.payload.pullRequestFiles
 			};
 			return {
+				myPullRequests: { ...state.myPullRequests },
 				pullRequests: newState
 			};
 		}
-
 		case ProviderPullRequestActionsTypes.ClearPullRequestFiles: {
 			const newState = createNewObject(state, action);
 			newState[action.payload.providerId][action.payload.id] = {
@@ -35,6 +67,7 @@ export function reduceProviderPullRequests(
 				files: []
 			};
 			return {
+				myPullRequests: { ...state.myPullRequests },
 				pullRequests: newState
 			};
 		}
@@ -45,6 +78,7 @@ export function reduceProviderPullRequests(
 				files: action.payload.pullRequestFiles
 			};
 			return {
+				myPullRequests: { ...state.myPullRequests },
 				pullRequests: newState
 			};
 		}
@@ -55,6 +89,7 @@ export function reduceProviderPullRequests(
 				conversations: action.payload.pullRequest
 			};
 			return {
+				myPullRequests: { ...state.myPullRequests },
 				pullRequests: newState
 			};
 		}

@@ -53,6 +53,7 @@ import { setUserPreference } from "./actions";
 import copy from "copy-to-clipboard";
 import { PullRequestBottomComment } from "./PullRequestBottomComment";
 import { reduce as _reduce, groupBy as _groupBy, map as _map } from "lodash-es";
+import { removeFromMyPullRequests } from "../store/providerPullRequests/actions";
 
 const Circle = styled.div`
 	width: 12px;
@@ -219,7 +220,9 @@ export const PullRequestConversationTab = (props: {
 				}
 			}
 		);
-		fetch();
+		fetch().then(_ => {
+			dispatch(removeFromMyPullRequests(pr.providerId, derivedState.currentPullRequestId!));
+		});
 	};
 
 	const lockPullRequest = async () => {
@@ -929,7 +932,7 @@ export const PullRequestConversationTab = (props: {
 												</Button>
 											</PRCloneURLButtons>
 											<PRCloneURL>
-												<input type="text" value={cloneURL} disabled={true}/>
+												<input type="text" value={cloneURL} disabled={true} />
 												<Icon
 													title="Copy"
 													placement="bottom"

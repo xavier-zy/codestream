@@ -24,6 +24,7 @@ import {
 } from "@codestream/protocols/agent";
 import { OpenUrlRequestType } from "@codestream/protocols/webview";
 import { Button } from "../src/components/Button";
+import { getMyPullRequests } from "../store/providerPullRequests/actions";
 
 interface Props {
 	openRepos: ReposScm[];
@@ -61,21 +62,7 @@ export function OpenReviews(props: Props) {
 
 	const fetchPRs = async (options?: { force?: boolean }) => {
 		setIsLoadingPRs(true);
-		const request = new RequestType<
-			ExecuteThirdPartyTypedRequest<GetMyPullRequestsRequest>,
-			GetMyPullRequestsResponse[],
-			any,
-			any
-		>("codestream/provider/generic");
-		const response = await HostApi.instance.send(request, {
-			method: "getMyPullRequests",
-			providerId: "github*com",
-			params: {
-				force: options && options.force,
-				isOpen: true
-			}
-		});
-		// console.warn("GOT PRS: ", response);
+		const response: any = await dispatch(getMyPullRequests("github*com", options));
 		setIsLoadingPRs(false);
 		setPRs(response);
 	};

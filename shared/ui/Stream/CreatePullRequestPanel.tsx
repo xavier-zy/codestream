@@ -37,6 +37,7 @@ import { CSMe } from "@codestream/protocols/api";
 import Headshot from "./Headshot";
 import { EMPTY_STATUS } from "./StatusPanel";
 import Tooltip from "./Tooltip";
+import { clearMyPullRequests } from "../store/providerPullRequests/actions";
 
 // base branch dropdown: show only pushed branches
 // base branch dropdown: try to default to fork point branch
@@ -419,6 +420,9 @@ export const CreatePullRequestPanel = props => {
 				// if we were a success, the panel will just close
 				pauseDataNotifications.current = false;
 			}
+		}
+		if (success) {
+			await dispatch(clearMyPullRequests(prProviderId));
 		}
 	};
 

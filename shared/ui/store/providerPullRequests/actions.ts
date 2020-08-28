@@ -5,9 +5,13 @@ import { HostApi } from "@codestream/webview/webview-api";
 import {
 	FetchThirdPartyPullRequestRequestType,
 	FetchThirdPartyPullRequestResponse,
-	ExecuteThirdPartyTypedType
+	ExecuteThirdPartyTypedType,
+	ExecuteThirdPartyTypedRequest,
+	GetMyPullRequestsRequest,
+	GetMyPullRequestsResponse
 } from "@codestream/protocols/agent";
 import { CodeStreamState } from "..";
+import { RequestType } from "vscode-languageserver-protocol";
 
 export const reset = () => action("RESET");
 
@@ -30,6 +34,12 @@ export const _addPullRequestCommits = (providerId: string, id: string, pullReque
 		providerId,
 		id,
 		pullRequestCommits
+	});
+
+export const _addMyPullRequests = (providerId: string, data: any) =>
+	action(ProviderPullRequestActionsTypes.AddMyPullRequests, {
+		providerId,
+		data
 	});
 
 export const getPullRequestConversationsFromProvider = (
@@ -114,6 +124,57 @@ export const getPullRequestFiles = (providerId: string, id: string) => async (
 		return response;
 	} catch (error) {
 		logError(`failed to get pullRequest files: ${error}`, { providerId, id });
+	}
+	return undefined;
+};
+
+export const clearMyPullRequests = (providerId: string) =>
+	action(ProviderPullRequestActionsTypes.ClearMyPullRequests, {
+		providerId
+	});
+
+export const removeFromMyPullRequests = (providerId: string, id: string) =>
+	action(ProviderPullRequestActionsTypes.RemoveFromMyPullRequests, {
+		providerId,
+		id
+	});
+
+export const getMyPullRequests = (providerId: string, options?: { force?: boolean }) => async (
+	dispatch,
+	getState: () => CodeStreamState
+) => {
+	try {
+		let force = false;
+		if (!options || !options.force) {
+			const state = getState();
+			const provider = state.providerPullRequests.myPullRequests[providerId];
+			if (provider && provider.data != null) {
+				console.log(`fetched myPullRequest data from store providerId=${providerId}`);
+				return provider.data;
+			}
+			// if the data was wiped... set force to get data from the provider api and
+			// bypass our cache
+			force = true;
+		}
+		const request = new RequestType<
+			ExecuteThirdPartyTypedRequest<GetMyPullRequestsRequest>,
+			GetMyPullRequestsResponse[],
+			any,
+			any
+		>("codestream/provider/generic");
+		const response = await HostApi.instance.send(request, {
+			method: "getMyPullRequests",
+			providerId: "github*com",
+			params: {
+				force: force || (options && options.force),
+				isOpen: true
+			}
+		});
+
+		dispatch(_addMyPullRequests(providerId, response));
+		return response;
+	} catch (error) {
+		logError(`failed to get my pullRequests: ${error}`, { providerId });
 	}
 	return undefined;
 };

@@ -596,6 +596,11 @@ export interface GetMyPullRequestsResponse {
 	url: string;
 	title: string;
 	createdAt: number;
+	headRefName: string;
+	headRepository: {
+		name: string;
+		nameWithOwner: String;
+	};
 	author: {
 		login: string;
 		avatarUrl: string;

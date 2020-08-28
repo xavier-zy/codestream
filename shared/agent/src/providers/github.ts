@@ -1227,6 +1227,11 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 					url
 					title
 					createdAt
+					headRefName
+					headRepository {
+						name
+						nameWithOwner
+					}
 					author {
 					  login
 					  avatarUrl(size: 20)
@@ -1259,17 +1264,15 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 			this.client.request<any>(query(`${repoQuery}${isOpenQuery}is:pr reviewed-by:@me`))
 		]);
 		const items = await promises;
-		let rateLimit;
+
 		for (const item of items) {
 			if (item && item.search && item.search.edges) {
 				results = results.concat(item.search.edges.map((_: any) => _.node));
 			}
 			if (item.rateLimit) {
-				rateLimit = item.rateLimit;
+				Logger.debug(`github getMyPullRequests rateLimit=${JSON.stringify(item.rateLimit)}`);
 			}
 		}
-
-		Logger.debug(`github getMyPullRequests rateLimit=${JSON.stringify(rateLimit)}`);
 
 		results = _uniqBy(results, (_: { id: string }) => _.id);
 		const response: GetMyPullRequestsResponse[] = results

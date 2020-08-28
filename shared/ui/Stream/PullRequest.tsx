@@ -273,7 +273,7 @@ export const PullRequest = () => {
 			let count = 0;
 			if (!node || !node.__typename) return accumulator;
 			const typename = node.__typename;
-			if (typename.indexOf("Comment") > -1) count = 1;
+			if (typename && typename.indexOf("Comment") > -1) count = 1;
 			if (typename === "PullRequestReview") {
 				// pullrequestreview can have a top-level comment,
 				// and multiple comment threads.

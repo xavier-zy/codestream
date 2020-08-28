@@ -616,6 +616,8 @@ export interface PullRequestComment {
 	path: string;
 	pullRequest: {
 		id: number;
+		externalId?: string;
+		title?: string;
 		url: string;
 		isOpen: boolean;
 		targetBranch: string;

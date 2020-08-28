@@ -56,7 +56,12 @@ import {
 	EditorRevealRangeRequestType,
 	OpenUrlRequestType
 } from "@codestream/protocols/webview";
-import { setCurrentCodemark, repositionCodemark, setCurrentReview } from "../store/context/actions";
+import {
+	setCurrentCodemark,
+	repositionCodemark,
+	setCurrentReview,
+	setCurrentPullRequest
+} from "../store/context/actions";
 import { RelatedCodemark } from "./RelatedCodemark";
 import { addDocumentMarker } from "../store/documentMarkers/actions";
 import { Link } from "./Link";
@@ -66,6 +71,8 @@ import { getReview } from "../store/reviews/reducer";
 import { DropdownButton } from "./Review/DropdownButton";
 import { isFeatureEnabled } from "../store/apiVersioning/reducer";
 import { HeadshotName } from "../src/components/HeadshotName";
+import { PRCodeCommentPatch } from "./PullRequestComponents";
+import { PullRequestPatch } from "./PullRequestPatch";
 
 interface State {
 	hover: boolean;
@@ -75,6 +82,7 @@ interface State {
 	menuOpen?: boolean;
 	menuTarget?: any;
 	shareModalOpen: boolean;
+	showDiffHunk: boolean;
 }
 
 interface DispatchProps {
@@ -90,6 +98,7 @@ interface DispatchProps {
 	addDocumentMarker: typeof addDocumentMarker;
 	addCodemarks: typeof addCodemarks;
 	setCurrentReview: typeof setCurrentReview;
+	setCurrentPullRequest: typeof setCurrentPullRequest;
 }
 
 interface ConnectedProps {
@@ -152,7 +161,8 @@ export class Codemark extends React.Component<Props, State> {
 			isEditing: false,
 			isInjecting: false,
 			menuOpen: false,
-			shareModalOpen: false
+			shareModalOpen: false,
+			showDiffHunk: false
 		};
 	}
 
@@ -1520,10 +1530,10 @@ export class Codemark extends React.Component<Props, State> {
 
 	renderFromExternalContent() {
 		const { hidden, selected, author, marker } = this.props;
-		const providerName = marker.externalContent!.provider.name;
+		const externalContent = marker.externalContent!;
+		const providerName = externalContent.provider.name;
 
-		const pullOrMergeRequestText =
-			providerName === "Bitbucket" || providerName === "GitLab" ? "merge" : "pull";
+		const pullOrMergeRequestText = providerName === "GitLab" ? "merge" : "pull";
 
 		return (
 			<div
@@ -1539,6 +1549,9 @@ export class Codemark extends React.Component<Props, State> {
 						range: marker.range,
 						preserveFocus: true
 					});
+					if (externalContent.externalId) {
+						this.props.setCurrentPullRequest(externalContent.externalId);
+					}
 				}}
 				onMouseEnter={this.handleMouseEnterCodemark}
 				onMouseLeave={this.handleMouseLeaveCodemark}
@@ -1548,10 +1561,12 @@ export class Codemark extends React.Component<Props, State> {
 						<div className="header">
 							<div className="author">
 								<span style={{ paddingRight: "5px" }}>
-									<Icon name={marker.externalContent!.provider.icon || "codestream"} />
+									<Icon name={externalContent.provider.icon || "codestream"} />
 								</span>
-								{author.username} commented on {pullOrMergeRequestText} request{" "}
-								{marker.externalContent!.subhead}
+								{author.username}{" "}
+								<span className="verb">commented on {pullOrMergeRequestText} request </span>
+								{externalContent.title}{" "}
+								<span className="verb subtle">{externalContent.subhead}</span>
 								<Timestamp relative time={marker.createdAt} />
 							</div>
 							{/* <div className="right">
@@ -1560,19 +1575,50 @@ export class Codemark extends React.Component<Props, State> {
 								</span>
 							</div> */}
 						</div>
-						<div
-							style={{ position: "absolute", top: "5px", right: "5px" }}
-							onClick={this.handleMenuClick}
-						></div>
+						{/*
+							<div
+								style={{ position: "absolute", top: "5px", right: "5px" }}
+								onClick={this.handleMenuClick}
+							></div> */}
+						{externalContent.diffHunk && this.state.showDiffHunk && (
+							<PRCodeCommentPatch>
+								<PullRequestPatch patch={externalContent.diffHunk} filename={marker.file} />
+							</PRCodeCommentPatch>
+						)}
 						{this.renderTextLinkified(marker.summary)}
 						{!selected && this.renderPinnedReplies()}
 						{!selected && this.renderDetailIcons(marker)}
-						{(marker.externalContent!.actions || emptyArray).length > 0 && (
+						{((marker.externalContent!.actions || emptyArray).length > 0 ||
+							externalContent.diffHunk ||
+							externalContent.externalId) && (
 							<div style={{ marginTop: "10px" }}>
+								{externalContent.diffHunk && (
+									<span
+										style={{ marginRight: "10px" }}
+										onClick={e => {
+											e.preventDefault();
+											e.stopPropagation();
+											this.setState({ showDiffHunk: !this.state.showDiffHunk });
+										}}
+									>
+										<Icon name="diff" className="margin-right" />
+										{this.state.showDiffHunk ? "Hide" : "Show"} Diff
+									</span>
+								)}
+								{externalContent.externalId && (
+									<span
+										style={{ marginRight: "10px" }}
+										onClick={() => this.props.setCurrentPullRequest(externalContent.externalId)}
+									>
+										<Icon name="pull-request" className="margin-right" />
+										View Pull Request
+									</span>
+								)}
+
 								{(marker.externalContent!.actions || emptyArray).map(action => (
 									<span key={action.uri} style={{ marginRight: "10px" }}>
 										<span style={{ marginRight: "5px" }}>
-											<Icon name="link-external" />
+											<Icon name={action.icon || "link-external"} />
 										</span>
 										<Link
 											onClick={e => {
@@ -1672,9 +1718,7 @@ export class Codemark extends React.Component<Props, State> {
 					<li>
 						Codemarks are <b>branch-agnostic</b>. That means this codemark will appear "in the right
 						place" even for your teammates who are checked out to a different version of this file.{" "}
-						<a href="https://docs.codestream.com/userguide/workflow/discuss-code/">
-							learn more
-						</a>
+						<a href="https://docs.codestream.com/userguide/workflow/discuss-code/">learn more</a>
 					</li>
 					<li>
 						Codemarks <b>move with the code</b>, so your conversation remains connected to the right
@@ -1686,16 +1730,12 @@ export class Codemark extends React.Component<Props, State> {
 					<li>
 						Codemarks <b>can be managed</b> by archiving or deleting them if they're no longer
 						relevant.{" "}
-						<a href="https://docs.codestream.com/userguide/workflow/discuss-code/">
-							see how
-						</a>
+						<a href="https://docs.codestream.com/userguide/workflow/discuss-code/">see how</a>
 					</li>
 					<li>
 						<b>Replies can be promoted</b> with a <Icon name="star" /> so the best answer surfaces
 						to the top, like in stack overflow.{" "}
-						<a href="https://docs.codestream.com/userguide/workflow/discuss-code/">
-							see how
-						</a>
+						<a href="https://docs.codestream.com/userguide/workflow/discuss-code/">see how</a>
 					</li>
 				</ul>
 			</div>
@@ -1837,7 +1877,8 @@ export default connect(
 		addDocumentMarker,
 		addCodemarks,
 		createPost,
-		setCurrentReview
+		setCurrentReview,
+		setCurrentPullRequest
 	}
 	// @ts-ignore
 )(Codemark);

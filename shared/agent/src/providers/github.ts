@@ -467,16 +467,11 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 						icon: "mark-github"
 					},
 					subhead: `#${comment.pullRequest.id}`,
-					actions: [
-						{
-							label: "Open Comment",
-							uri: comment.url
-						},
-						{
-							label: `Open Pull Request #${comment.pullRequest.id}`,
-							uri: comment.pullRequest.url
-						}
-					]
+					externalId: comment.pullRequest.externalId,
+					externalType: "PullRequest",
+					title: comment.pullRequest.title,
+					diffHunk: comment.diffHunk,
+					actions: []
 				},
 				range: MarkerLocation.toRange(location),
 				location: location,
@@ -725,6 +720,8 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 					createdAt: new Date(prComment.createdAt).getTime(),
 					pullRequest: {
 						id: pr.number,
+						title: pr.title,
+						externalId: pr.id,
 						url: pr.url,
 						isOpen: pr.state === "OPEN",
 						targetBranch: pr.baseRefName,
@@ -2684,6 +2681,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 							hasNextPage
 						}
 						nodes {
+							id
 							title
 							number
 							url
@@ -2767,6 +2765,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 interface GitHubPullRequest {
 	title: string;
 	number: number;
+	id: string;
 	url: string;
 	state: string;
 	baseRefName: string;

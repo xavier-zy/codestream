@@ -65,6 +65,10 @@ export type DocumentMarker = CSEntity &
 						name: string;
 						icon?: string;
 					};
+					externalId?: string;
+					externalType?: string;
+					diffHunk?: string;
+					title?: string;
 					subhead?: string;
 					actions?: { label?: string; icon?: string; uri: string }[];
 				};

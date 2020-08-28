@@ -12,7 +12,7 @@ import MessageInput from "./MessageInput";
 import { CSMe } from "@codestream/protocols/api";
 import { Button } from "../src/components/Button";
 import { confirmPopup } from "./Confirm";
-import { Headshot } from "../src/components/Headshot";
+import { Headshot, PRHeadshot } from "../src/components/Headshot";
 
 interface Props {
 	pr: FetchThirdPartyPullRequestPullRequest;
@@ -94,7 +94,7 @@ export const PullRequestReplyComment = styled((props: Props) => {
 
 	return (
 		<PRCodeCommentReply>
-			<Headshot size={30} person={derivedState.currentUser} />
+			<PRHeadshot size={30} person={pr.viewer} />
 
 			<div
 				style={{

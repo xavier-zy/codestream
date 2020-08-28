@@ -12,7 +12,7 @@ import {
 	CreatePullRequestCommentRequest,
 	CreatePullRequestCommentAndCloseRequest
 } from "@codestream/protocols/agent";
-import { Headshot } from "../src/components/Headshot";
+import { Headshot, PRHeadshot } from "../src/components/Headshot";
 import MessageInput from "./MessageInput";
 import { CSMe } from "@codestream/protocols/api";
 import { ButtonRow } from "./StatusPanel";
@@ -109,7 +109,7 @@ export const PullRequestBottomComment = styled((props: Props) => {
 
 	return (
 		<PRComment>
-			<Headshot size={40} person={derivedState.currentUser}></Headshot>
+			<PRHeadshot size={40} person={pr.viewer}></PRHeadshot>
 			<PRCommentCard className="add-comment">
 				{pr.locked ? (
 					<>

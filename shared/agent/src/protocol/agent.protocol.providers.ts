@@ -515,6 +515,7 @@ export interface FetchThirdPartyPullRequestPullRequest {
 	viewer: {
 		id: string;
 		login: string;
+		avatarUrl: string;
 	};
 }
 
@@ -542,6 +543,7 @@ export interface FetchThirdPartyPullRequestResponse {
 	viewer: {
 		id: string;
 		login: string;
+		avatarUrl: string;
 	};
 }
 

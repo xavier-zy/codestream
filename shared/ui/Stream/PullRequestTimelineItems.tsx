@@ -961,7 +961,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 									force-pushed the{" "}
 									{item.ref && item.ref.name && <PRBranch>{item.ref.name}</PRBranch>} branch from{" "}
 									<PRBranch>{item.beforeCommit.abbreviatedOid}</PRBranch> to{" "}
-									<PRBranch>{item.afterCommit.abbreviatedOid}</PRBranch> on
+									<PRBranch>{item.afterCommit.abbreviatedOid}</PRBranch>
 									<Timestamp time={item.createdAt!} relative />
 								</PRTimelineItemBody>
 							</PRTimelineItem>

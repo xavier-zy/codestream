@@ -57,7 +57,6 @@ export const PRActionButtons = styled.div`
 		border-left: 1px solid var(--base-border-color);
 	}
 	.icon {
-		cursor: pointer;
 		vertical-align: 2px;
 		display: inline-block;
 		font-size: 11px !important; // to match the spinnable icon
@@ -66,11 +65,15 @@ export const PRActionButtons = styled.div`
 		padding: 8px !important;
 		width: auto !important;
 		height: auto !important;
-		&:hover {
-			opacity: 1;
-			background: var(--button-background-color) !important;
-			color: var(--button-foreground-color) !important;
-		}
+	}
+	> span:not(.disabled) .icon:hover {
+		cursor: pointer;
+		opacity: 1;
+		background: var(--button-background-color) !important;
+		color: var(--button-foreground-color) !important;
+	}
+	> span.disabled .icon {
+		opacity: 0.25;
 	}
 	.cancel-button {
 		opacity: 1 !important;

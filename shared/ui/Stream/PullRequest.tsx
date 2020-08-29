@@ -55,6 +55,7 @@ import {
 	clearPullRequestFiles,
 	getPullRequestConversations
 } from "../store/providerPullRequests/actions";
+import { confirmPopup } from "./Confirm";
 
 export const WidthBreakpoint = "630px";
 
@@ -101,6 +102,10 @@ const Root = styled.div`
 	}
 `;
 
+interface ReposScmPlusName extends ReposScm {
+	name: string;
+}
+
 const EMPTY_HASH = {};
 const EMPTY_ARRAY = [];
 
@@ -127,7 +132,7 @@ export const PullRequest = () => {
 	const [isLoadingPR, setIsLoadingPR] = useState(false);
 	const [isLoadingMessage, setIsLoadingMessage] = useState("");
 	const [pr, setPr] = useState<FetchThirdPartyPullRequestPullRequest | undefined>();
-	const [openRepos, setOpenRepos] = useState<ReposScm[]>(EMPTY_ARRAY);
+	const [openRepos, setOpenRepos] = useState<ReposScmPlusName[]>(EMPTY_ARRAY);
 	const [editingTitle, setEditingTitle] = useState(false);
 	const [savingTitle, setSavingTitle] = useState(false);
 	const [title, setTitle] = useState("");
@@ -219,10 +224,43 @@ export const PullRequest = () => {
 		});
 		if (result.error) {
 			console.warn("ERROR FROM SET BRANCH: ", result.error);
+			confirmPopup({
+				title: "Git Error",
+				className: "wide",
+				message: (
+					<div className="monospace" style={{ fontSize: "11px" }}>
+						{result.error}
+					</div>
+				),
+				centered: false,
+				buttons: [{ label: "OK", className: "control-button" }]
+			});
 			return;
+		} else {
+			getOpenRepos();
 		}
-		fetch("Reloading...");
+		// i don't think we need to reload here, do we?
+		// fetch("Reloading...");
 	};
+
+	const hasRepoOpen = React.useMemo(() => {
+		return pr && openRepos.find(_ => _.name === pr.repository.name);
+	}, [pr, openRepos]);
+
+	const cantCheckoutReason = React.useMemo(() => {
+		if (pr) {
+			const currentRepo = openRepos.find(_ => _.name === pr.repository.name);
+			if (!currentRepo) {
+				return `You don't have the ${pr.repository.name} repo open in your IDE`;
+			}
+			if (currentRepo.currentBranch == pr.headRefName) {
+				return `You are on the ${pr.headRefName} branch`;
+			}
+			return "";
+		} else {
+			return "PR not loaded";
+		}
+	}, [pr, openRepos]);
 
 	const saveTitle = async () => {
 		setIsLoadingMessage("Saving Title...");
@@ -239,12 +277,18 @@ export const PullRequest = () => {
 		fetch();
 	};
 
-	const getROpenRepos = async () => {
+	const getOpenRepos = async () => {
+		const { reposState } = derivedState;
 		const response = await HostApi.instance.send(GetReposScmRequestType, {
-			inEditorOnly: true
+			inEditorOnly: true,
+			includeCurrentBranches: true
 		});
 		if (response && response.repositories) {
-			setOpenRepos(response.repositories);
+			const repos = response.repositories.map(repo => {
+				const id = repo.id || "";
+				return { ...repo, name: reposState[id] ? reposState[id].name : "" };
+			});
+			setOpenRepos(repos);
 		}
 	};
 
@@ -295,6 +339,7 @@ export const PullRequest = () => {
 		if (!derivedState.reviewsState.bootstrapped) {
 			dispatch(bootstrapReviews());
 		}
+		getOpenRepos();
 		initialFetch();
 	});
 
@@ -462,9 +507,18 @@ export const PullRequest = () => {
 									/>
 								</span>
 							)}
-							<span>
+							<span className={cantCheckoutReason ? "disabled" : ""}>
 								<Icon
-									title="Checkout Branch"
+									title={
+										<>
+											Checkout Branch
+											{cantCheckoutReason && (
+												<div className="subtle smaller" style={{ maxWidth: "200px" }}>
+													Disabled: {cantCheckoutReason}
+												</div>
+											)}
+										</>
+									}
 									trigger={["hover"]}
 									delay={1}
 									onClick={checkout}

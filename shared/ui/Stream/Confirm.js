@@ -20,10 +20,14 @@ export default class Confirm extends Component {
 		modalRoot.classList.add("active");
 		this.disposables.push(
 			KeystrokeDispatcher.withLevel(),
-			KeystrokeDispatcher.onKeyDown("Escape", event => {
-				event.stopPropagation();
-				this.closePopup();
-			}, { source: "Confirm.js", level: -1 }),
+			KeystrokeDispatcher.onKeyDown(
+				"Escape",
+				event => {
+					event.stopPropagation();
+					this.closePopup();
+				},
+				{ source: "Confirm.js", level: -1 }
+			)
 		);
 
 		this.el.getElementsByTagName("button")[0].focus();
@@ -32,11 +36,9 @@ export default class Confirm extends Component {
 	componentWillUnmount() {
 		try {
 			this.closePopup();
-		}
-		catch (err) {
+		} catch (err) {
 			logWarning(err);
-		}
-		finally {
+		} finally {
 			this.disposables.forEach(d => d.dispose());
 		}
 	}
@@ -75,7 +77,7 @@ export default class Confirm extends Component {
 	}
 
 	render() {
-		const bodyClass = createClassString({
+		const bodyClass = createClassString(this.props.className || "", {
 			"confirm-popup-body": true,
 			centered: this.props.centered
 		});

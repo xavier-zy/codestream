@@ -596,10 +596,11 @@ export interface GetMyPullRequestsResponse {
 	url: string;
 	title: string;
 	createdAt: number;
+	baseRefName: string;
 	headRefName: string;
 	headRepository: {
 		name: string;
-		nameWithOwner: String;
+		nameWithOwner: string;
 	};
 	author: {
 		login: string;
@@ -608,6 +609,7 @@ export interface GetMyPullRequestsResponse {
 	bodyText: string;
 	number: number;
 	state: string;
+	isDraft: boolean;
 	updatedAt: string;
 	lastEditedAt: string;
 }

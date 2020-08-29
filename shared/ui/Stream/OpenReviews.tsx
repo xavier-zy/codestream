@@ -25,6 +25,64 @@ import {
 import { OpenUrlRequestType } from "@codestream/protocols/webview";
 import { Button } from "../src/components/Button";
 import { getMyPullRequests } from "../store/providerPullRequests/actions";
+import { PRStatusButton, PRBranch } from "./PullRequestComponents";
+import { PRHeadshotName } from "../src/components/HeadshotName";
+import styled from "styled-components";
+
+export const PullRequestTooltip = (props: { pr: GetMyPullRequestsResponse }) => {
+	const { pr } = props;
+	const statusIcon =
+		pr.isDraft || pr.state === "OPEN" || pr.state === "CLOSED" ? "pull-request" : "git-merge";
+
+	const color = pr.isDraft
+		? "gray"
+		: pr.state === "OPEN"
+		? "green"
+		: pr.state === "MERGED"
+		? "purple"
+		: pr.state === "CLOSED"
+		? "red"
+		: "blue";
+
+	return (
+		<div>
+			<div style={{ maxWidth: "400px", padding: "10px" }}>
+				{pr.headRepository.nameWithOwner} <Timestamp time={pr.createdAt} relative />
+				<div style={{ marginTop: "10px" }}>
+					<div style={{ display: "flex" }}>
+						<Icon name={statusIcon} className={`margin-right ${color}-color`} />
+						<div>
+							<span style={{ fontSize: "larger" }}>
+								<span className="highlight">{pr.title}</span>{" "}
+								<span className="subtle">#{pr.number}</span>
+							</span>
+							<div className="subtle" style={{ margin: "2px 0 10px 0", fontSize: "larger" }}>
+								{pr.bodyText}
+							</div>
+							<div className="monospace" style={{ fontSize: "smaller" }}>
+								<PRBranch>{pr.baseRefName}&nbsp;</PRBranch>
+								<span style={{ verticalAlign: "3px" }}>
+									<Icon name="arrow-left" />
+								</span>
+								<PRBranch>&nbsp;{pr.headRefName}</PRBranch>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div
+				style={{
+					margin: "5px -5px 0 -5px",
+					padding: "15px 15px 0 15px",
+					borderTop: "1px solid rgba(0, 0, 0, 0.1)"
+				}}
+			>
+				<PRHeadshotName person={pr.author} size={16} />
+				opened
+			</div>
+		</div>
+	);
+};
 
 interface Props {
 	openRepos: ReposScm[];
@@ -242,49 +300,56 @@ export function OpenReviews(props: Props) {
 								);
 							});
 							return (
-								<Row
-									key={"pr-" + pr.id}
-									className={selected ? "selected" : ""}
-									onClick={() => dispatch(setCurrentPullRequest(pr.id))}
+								<Tooltip
+									key={"pr-tt-" + pr.id}
+									title={<PullRequestTooltip pr={pr} />}
+									delay={0.5}
+									placement="top"
 								>
-									<div>
-										{selected && <Icon name="arrow-right" className="selected-icon" />}
-										<PRHeadshot person={pr.author} />
-									</div>
-									<div>
-										<span>
-											{pr.title} #{pr.number}
-										</span>
-										<span className="subtle">{pr.bodyText || pr.body}</span>
-									</div>
-									<div className="icons">
-										<span
-											onClick={e => {
-												e.preventDefault();
-												e.stopPropagation();
-												HostApi.instance.send(OpenUrlRequestType, {
-													url: pr.url
-												});
-											}}
-										>
+									<Row
+										key={"pr-" + pr.id}
+										className={selected ? "selected" : ""}
+										onClick={() => dispatch(setCurrentPullRequest(pr.id))}
+									>
+										<div>
+											{selected && <Icon name="arrow-right" className="selected-icon" />}
+											<PRHeadshot person={pr.author} />
+										</div>
+										<div>
+											<span>
+												{pr.title} #{pr.number}
+											</span>
+											<span className="subtle">{pr.bodyText || pr.body}</span>
+										</div>
+										<div className="icons">
+											<span
+												onClick={e => {
+													e.preventDefault();
+													e.stopPropagation();
+													HostApi.instance.send(OpenUrlRequestType, {
+														url: pr.url
+													});
+												}}
+											>
+												<Icon
+													name="globe"
+													className="clickable"
+													title="View on GitHub"
+													placement="bottomLeft"
+													delay={1}
+												/>
+											</span>
 											<Icon
-												name="globe"
+												name="review"
 												className="clickable"
-												title="View on GitHub"
+												title="Review Changes"
 												placement="bottomLeft"
 												delay={1}
 											/>
-										</span>
-										<Icon
-											name="review"
-											className="clickable"
-											title="Review Changes"
-											placement="bottomLeft"
-											delay={1}
-										/>
-										<Timestamp time={pr.createdAt} relative abbreviated />
-									</div>
-								</Row>
+											<Timestamp time={pr.createdAt} relative abbreviated />
+										</div>
+									</Row>
+								</Tooltip>
 							);
 						})}
 					</WideStatusSection>

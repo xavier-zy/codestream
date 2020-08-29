@@ -1227,6 +1227,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 					url
 					title
 					createdAt
+					baseRefName
 					headRefName
 					headRepository {
 						name
@@ -1241,6 +1242,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 					bodyText
 					number
 					state
+					isDraft
 					updatedAt
 					lastEditedAt
 					id

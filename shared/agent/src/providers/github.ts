@@ -1250,7 +1250,15 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 					headRepository {
 						name
 					}
-				}
+					labels(first: 10) {
+						nodes {
+						  color
+						  description
+						  name
+						  id
+						}
+					  }
+				  }
 			  }
 			}
 		  }

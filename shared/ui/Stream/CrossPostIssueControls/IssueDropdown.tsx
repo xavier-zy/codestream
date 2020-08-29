@@ -1291,6 +1291,15 @@ export const Row = styled.div`
 			margin-top: 0px;
 		}
 	}
+	.cs-tag {
+		margin-bottom: 0;
+	}
+	.cs-tag-container {
+		display: inline-block;
+		margin-top: -1px;
+		vertical-align: top;
+		padding-left: 10px;
+	}
 `;
 
 export const IssueRows = styled.div`

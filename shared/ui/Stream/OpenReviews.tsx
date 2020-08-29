@@ -28,6 +28,7 @@ import { getMyPullRequests } from "../store/providerPullRequests/actions";
 import { PRStatusButton, PRBranch } from "./PullRequestComponents";
 import { PRHeadshotName } from "../src/components/HeadshotName";
 import styled from "styled-components";
+import Tag from "./Tag";
 
 export const PullRequestTooltip = (props: { pr: GetMyPullRequestsResponse }) => {
 	const { pr } = props;
@@ -50,7 +51,11 @@ export const PullRequestTooltip = (props: { pr: GetMyPullRequestsResponse }) => 
 				{pr.headRepository.nameWithOwner} <Timestamp time={pr.createdAt} relative />
 				<div style={{ marginTop: "10px" }}>
 					<div style={{ display: "flex" }}>
-						<Icon name={statusIcon} className={`margin-right ${color}-color`} />
+						<Icon
+							name={statusIcon}
+							className={`margin-right ${color}-color`}
+							style={{ marginTop: "2px" }}
+						/>
 						<div>
 							<span style={{ fontSize: "larger" }}>
 								<span className="highlight">{pr.title}</span>{" "}
@@ -103,6 +108,7 @@ export function OpenReviews(props: Props) {
 		});
 
 		return {
+			teamTagsHash: userSelectors.getTeamTagsHash(state),
 			repos,
 			reviews,
 			currentUserId,
@@ -187,6 +193,14 @@ export function OpenReviews(props: Props) {
 									</div>
 									<div>
 										<span>{review.title}</span>
+										{review.tags && review.tags.length > 0 && (
+											<span className="cs-tag-container">
+												{(review.tags || []).map(tagId => {
+													const tag = derivedState.teamTagsHash[tagId];
+													return tag ? <Tag tag={tag} /> : null;
+												})}
+											</span>
+										)}
 										<span className="subtle">{review.text}</span>
 									</div>
 									<div className="icons">
@@ -319,6 +333,13 @@ export function OpenReviews(props: Props) {
 											<span>
 												{pr.title} #{pr.number}
 											</span>
+											{pr.labels && pr.labels.nodes.length > 0 && (
+												<span className="cs-tag-container">
+													{pr.labels.nodes.map((_, index) => (
+														<Tag key={index} tag={{ label: _.name, color: `#${_.color}` }} />
+													))}
+												</span>
+											)}
 											<span className="subtle">{pr.bodyText || pr.body}</span>
 										</div>
 										<div className="icons">

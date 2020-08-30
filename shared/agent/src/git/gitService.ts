@@ -1251,6 +1251,21 @@ export class GitService implements IGitService, Disposable {
 		}
 	}
 
+	async isAncestor(repoPath: string, commitA: string, commitB: string): Promise<boolean> {
+		try {
+			const data = await git(
+				{ cwd: repoPath, throwRawExceptions: true },
+				"merge-base",
+				"--is-ancestor",
+				commitA,
+				commitB
+			);
+			return true;
+		} catch (err) {
+			return false;
+		}
+	}
+
 	getRepositories(): Promise<Iterable<GitRepository>> {
 		return this._repositories.get();
 	}

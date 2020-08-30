@@ -114,7 +114,8 @@ interface ConnectedProps {
 	relatedCodemarkIds: string[];
 	isCodeStreamTeam: boolean;
 	teamTagsHash: any;
-	entirelyDeleted: boolean;
+	codeWasDeleted?: boolean;
+	codeWillExist?: boolean;
 	textEditorUri: string;
 	jumpToMarkerId?: string;
 	currentMarkerId?: string;
@@ -1194,7 +1195,8 @@ export class Codemark extends React.Component<Props, State> {
 			codemarkKeybindings,
 			hidden,
 			selected,
-			entirelyDeleted,
+			codeWasDeleted,
+			codeWillExist,
 			author,
 			marker,
 			isRepositioning,
@@ -1309,7 +1311,8 @@ export class Codemark extends React.Component<Props, State> {
 			(renderExpandedBody || !hidden) &&
 			(!codemark.pinned ||
 				codemark.status === "closed" ||
-				entirelyDeleted ||
+				codeWasDeleted ||
+				codeWillExist ||
 				// @ts-ignore
 				(marker && marker.notLocatedReason));
 
@@ -1390,7 +1393,12 @@ export class Codemark extends React.Component<Props, State> {
 							)}
 							{!codemark.pinned && <div>This codemark is archived.</div>}
 							{codemark.status == "closed" && <div>This codemark is resolved.</div>}
-							{entirelyDeleted && <div>This codemark refers to deleted code.</div>}
+							{codeWasDeleted && <div>This codemark refers to deleted code.</div>}
+							{codeWillExist && (
+								<div>
+									This codemark refers to code that will exist on a future version of this file.
+								</div>
+							)}
 						</div>
 					)}
 					<div className="body">
@@ -1815,9 +1823,16 @@ const mapStateToProps = (state: CodeStreamState, props: InheritedProps): Connect
 
 	const teamTagsHash = getTeamTagsHash(state);
 
-	let entirelyDeleted = false;
-	if (marker && marker.location && marker.location.meta && marker.location.meta.entirelyDeleted)
-		entirelyDeleted = true;
+	const meta = marker && marker.location && marker.location.meta;
+	const codeWasDeleted =
+		meta &&
+		meta.entirelyDeleted &&
+		(meta.isDescendant ||
+			(meta.createdAtCurrentCommit && marker.creatorId === state.session.userId));
+	const codeWillExist =
+		meta &&
+		meta.entirelyDeleted &&
+		(meta.isAncestor || (meta.createdAtCurrentCommit && marker.creatorId !== state.session.userId));
 
 	const author = (() => {
 		if (codemark != undefined) {
@@ -1855,7 +1870,8 @@ const mapStateToProps = (state: CodeStreamState, props: InheritedProps): Connect
 		teammates: getTeamMembers(state),
 		usernames: getUsernames(state),
 		teamTagsHash,
-		entirelyDeleted,
+		codeWasDeleted,
+		codeWillExist,
 		textEditorUri: editorContext.textEditorUri || "",
 		isRepositioning: context.isRepositioning,
 		moveMarkersEnabled: isFeatureEnabled(state, "moveMarkers2")

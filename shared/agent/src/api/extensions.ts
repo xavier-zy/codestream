@@ -46,7 +46,8 @@ export namespace MarkerLocation {
 			lineStart: array[0],
 			colStart: array[1],
 			lineEnd: array[2],
-			colEnd: array[3]
+			colEnd: array[3],
+			meta: array[4]
 		};
 	}
 
@@ -293,7 +294,7 @@ export namespace User {
 		const teamProviderInfo = me.providerInfo[teamId] && me.providerInfo[teamId][name];
 		const namedProvider = userProviderInfo || teamProviderInfo;
 		if (!namedProvider) return;
-		const typedProvider = namedProvider as any as T;
+		const typedProvider = (namedProvider as any) as T;
 
 		if (!host) {
 			return typedProvider;

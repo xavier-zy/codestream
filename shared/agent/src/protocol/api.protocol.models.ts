@@ -103,10 +103,13 @@ export interface CSMarker extends CSEntity, CSMarkerIdentifier {
 }
 
 export interface CSLocationMeta {
+	createdAtCurrentCommit?: boolean;
 	startWasDeleted?: boolean;
 	endWasDeleted?: boolean;
 	entirelyDeleted?: boolean;
 	contentChanged?: boolean;
+	isAncestor?: boolean;
+	isDescendant?: boolean;
 }
 
 export type CSLocationArray = [number, number, number, number, CSLocationMeta | undefined];

@@ -200,6 +200,10 @@ export class MarkerLocationManager extends ManagerBase<CSMarkerLocations> {
 			for (const id in committedLocations) {
 				const commLoc = committedLocations[id];
 				const currLoc = calculatedLocations[id];
+				currLoc.meta = {
+					...commLoc.meta,
+					...currLoc.meta
+				};
 				Logger.log(
 					`MARKERS: ${id} [${commLoc.lineStart}, ${commLoc.colStart}, ${commLoc.lineEnd}, ${commLoc.colEnd}] => [${currLoc.lineStart}, ${currLoc.colStart}, ${currLoc.lineEnd}, ${currLoc.colEnd}]`
 				);
@@ -272,10 +276,11 @@ export class MarkerLocationManager extends ManagerBase<CSMarkerLocations> {
 
 		for (const marker of markers) {
 			const location = result.locations[marker.id];
+			if (!location) continue;
+			if (location.meta == undefined) location.meta = {};
 			if (
 				marker.referenceLocations &&
 				marker.referenceLocations.length &&
-				location !== undefined &&
 				location.lineStart === location.lineEnd &&
 				location.colStart === location.colEnd
 			) {
@@ -285,13 +290,20 @@ export class MarkerLocationManager extends ManagerBase<CSMarkerLocations> {
 					lineEndWhenCreated,
 					colEndWhenCreated
 				] = marker.referenceLocations[0].location;
-				if (location.meta === undefined) location.meta = {};
 				if (
 					lineStartWhenCreated !== lineEndWhenCreated ||
 					colStartWhenCreated !== colEndWhenCreated
 				) {
 					location.meta.entirelyDeleted = true;
 				}
+			}
+
+			const canonicalLocation = marker.referenceLocations?.find(rl => rl.flags.canonical);
+			if (
+				canonicalLocation?.commitHash === fileCurrentCommitHash ||
+				canonicalLocation?.flags?.baseCommit === fileCurrentCommitHash
+			) {
+				location.meta.createdAtCurrentCommit = true;
 			}
 		}
 
@@ -430,7 +442,11 @@ export class MarkerLocationManager extends ManagerBase<CSMarkerLocations> {
 		}
 
 		const { git, session } = SessionContainer.instance();
-		const diffsByCommitHash: Map<string, ParsedDiff> = new Map();
+		const repoRoot = await git.getRepoRoot(filePath);
+		const diffsByCommitHash: Map<
+			string,
+			{ diff: ParsedDiff; isAncestor: boolean; isDescendant: boolean }
+		> = new Map();
 		const locationsByCommitHash: Map<string, MarkerLocationsById> = new Map();
 		let fetchIfCommitNotFound = true;
 		for (const missingMarker of missingMarkers) {
@@ -462,6 +478,12 @@ export class MarkerLocationManager extends ManagerBase<CSMarkerLocations> {
 						);
 
 						if (referenceLocation.flags.canonical) {
+							const isAncestor = await git.isAncestor(repoRoot!, commitHash, baseCommit);
+							const isDescendant = await git.isAncestor(repoRoot!, baseCommit, commitHash);
+							const meta = calculatedLocation.meta || (calculatedLocation.meta = {});
+							meta.isAncestor = isAncestor;
+							meta.isDescendant = isDescendant;
+
 							Logger.log(
 								`MARKERS: saving location calculated from canonical reference for missing marker ${missingMarker.id}`
 							);
@@ -487,7 +509,9 @@ export class MarkerLocationManager extends ManagerBase<CSMarkerLocations> {
 					);
 					fetchIfCommitNotFound = false;
 					if (diff) {
-						diffsByCommitHash.set(referenceCommitHash, diff);
+						const isAncestor = await git.isAncestor(repoRoot!, commitHash, referenceCommitHash);
+						const isDescendant = await git.isAncestor(repoRoot!, referenceCommitHash, commitHash);
+						diffsByCommitHash.set(referenceCommitHash, { diff, isAncestor, isDescendant });
 						if (!locationsByCommitHash.has(referenceCommitHash)) {
 							locationsByCommitHash.set(referenceCommitHash, {});
 						}
@@ -516,7 +540,8 @@ export class MarkerLocationManager extends ManagerBase<CSMarkerLocations> {
 			}
 		}
 
-		for (const [referenceCommitHash, diff] of diffsByCommitHash.entries()) {
+		for (const [referenceCommitHash, diffInfo] of diffsByCommitHash.entries()) {
+			const { diff, isAncestor, isDescendant } = diffInfo;
 			Logger.log(
 				`MARKERS: calculating locations based on diff from ${referenceCommitHash} to ${commitHash}`
 			);
@@ -525,8 +550,12 @@ export class MarkerLocationManager extends ManagerBase<CSMarkerLocations> {
 			Object.assign(currentCommitLocations, calculatedLocations);
 
 			for (const id in calculatedLocations) {
-				const origLoc = locationsToCalculate[id] || {};
 				const currLoc = calculatedLocations[id] || {};
+				const meta = currLoc.meta || (currLoc.meta = {});
+				meta.isAncestor = isAncestor;
+				meta.isDescendant = isDescendant;
+
+				const origLoc = locationsToCalculate[id] || {};
 				Logger.log(
 					`MARKERS: ${id} [${origLoc.lineStart}, ${origLoc.colStart}, ${origLoc.lineEnd}, ${origLoc.colEnd}] => [${currLoc.lineStart}, ${currLoc.colStart}, ${currLoc.lineEnd}, ${currLoc.colEnd}]`
 				);

@@ -69,6 +69,7 @@ export const IntegrationButtons = styled.div`
 	margin-bottom: 15px;
 	padding: 0 20px 20px 20px;
 	border-bottom: 1px solid var(--base-border-color);
+	align-items: start;
 `;
 
 export const IntegrationsPanel = () => {

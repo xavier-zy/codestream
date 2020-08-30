@@ -409,6 +409,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 															node={item}
 															setEdit={setEditingComment}
 															quote={props.quote}
+															isPending={item.state === "PENDING"}
 														/>
 													</PRActionIcons>
 												</PRCommentHeader>
@@ -547,6 +548,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 																				node={comment}
 																				setEdit={setEditingComment}
 																				quote={quote}
+																				isPending={item.state === "PENDING"}
 																			/>
 																		</PRActionIcons>
 																	</PRThreadedCommentHeader>
@@ -615,6 +617,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 																						node={c}
 																						setEdit={setEditingComment}
 																						quote={quote}
+																						isPending={item.state === "PENDING"}
 																					/>
 																				</PRActionIcons>
 																			</PRThreadedCommentHeader>

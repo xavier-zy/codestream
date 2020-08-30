@@ -19,10 +19,11 @@ interface CommentMenuProps {
 	node: any;
 	setEdit?: Function;
 	quote?: Function;
+	isPending?: boolean;
 }
 
 export const PullRequestCommentMenu = (props: CommentMenuProps) => {
-	const { pr, node, setEdit, quote } = props;
+	const { pr, node, setEdit, quote, isPending } = props;
 
 	const items: any[] = [];
 
@@ -33,7 +34,7 @@ export const PullRequestCommentMenu = (props: CommentMenuProps) => {
 			action: () => copy(pr.baseUrl + node.resourcePath)
 		});
 	}
-	if (quote) {
+	if (!isPending && quote) {
 		items.push({ label: "Quote Reply", key: "quote", action: () => quote(node.body) });
 	}
 	if (node.viewerCanUpdate && setEdit) {
@@ -47,9 +48,11 @@ export const PullRequestCommentMenu = (props: CommentMenuProps) => {
 		});
 	}
 
-	return (
-		<InlineMenu noChevronDown noFocusOnSelect items={items}>
-			<Icon name="kebab-horizontal" className="clickable" />
-		</InlineMenu>
-	);
+	if (items.length === 0) return null;
+	else
+		return (
+			<InlineMenu noChevronDown noFocusOnSelect items={items}>
+				<Icon name="kebab-horizontal" className="clickable" />
+			</InlineMenu>
+		);
 };

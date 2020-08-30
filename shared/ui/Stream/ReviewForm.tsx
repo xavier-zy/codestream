@@ -1390,7 +1390,7 @@ class ReviewForm extends React.Component<Props, State> {
 						{/* headshot */}
 						<span
 							dangerouslySetInnerHTML={{
-								__html: markdownify(title)
+								__html: markdownify(title, { excludeOnlyEmoji: true, excludeParagraphWrap: true })
 							}}
 						/>
 					</label>

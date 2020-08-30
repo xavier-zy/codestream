@@ -159,13 +159,15 @@ export class ScmManager {
 							remotes: remotes[index],
 							providerGuess:
 								// FIXME -- not sure how to map remotes to github enterprise, gitlab onprem, etc.
-								remotes[index] && remotes[index].find(remote => remote.domain.includes("github"))
-									? "github"
-									: remotes[index].find(remote => remote.domain.includes("gitlab"))
-									? "gitlab"
-									: remotes[index].find(remote => remote.domain.includes("bitbucket"))
-									? "bitbucket"
-									: ""
+								remotes[index]
+									? remotes[index].find(remote => remote.domain.includes("github"))
+										? "github"
+										: remotes[index].find(remote => remote.domain.includes("gitlab"))
+										? "gitlab"
+										: remotes[index].find(remote => remote.domain.includes("bitbucket"))
+										? "bitbucket"
+										: ""
+									: undefined
 						};
 				  })
 				: undefined,

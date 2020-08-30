@@ -130,7 +130,7 @@ export function OpenReviews(props: Props) {
 		setIsLoadingPRs(true);
 		const response: any = await dispatch(getMyPullRequests("github*com", options));
 		setIsLoadingPRs(false);
-		// setPRs(response);
+		setPRs(response);
 	};
 
 	useDidMount(() => {

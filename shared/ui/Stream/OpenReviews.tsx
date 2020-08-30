@@ -126,6 +126,7 @@ export function OpenReviews(props: Props) {
 			teamMembers,
 			isPRSupportedCodeHostConnected,
 			hasPRSupportedRepos,
+			// FIXME hardcoded github
 			PRSupportedProviders: [state.providers["github*com"]]
 		};
 	});
@@ -139,7 +140,13 @@ export function OpenReviews(props: Props) {
 
 	const fetchPRs = async (options?: { force?: boolean }) => {
 		setIsLoadingPRs(true);
+		// FIXME hardcoded github
 		const response: any = await dispatch(getMyPullRequests("github*com", options));
+		if (response && response.length) {
+			HostApi.instance.track("PR List Rendered", {
+				"PR Count": response.length
+			});
+		}
 		setIsLoadingPRs(false);
 		setPRs(response);
 	};

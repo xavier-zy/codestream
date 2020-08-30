@@ -1,8 +1,6 @@
 "use strict";
 import { Range, RequestType } from "vscode-languageserver-protocol";
-import { SendPasswordResetEmailRequest } from "./agent.protocol.auth";
 import { ModifiedFile } from "./api.protocol";
-// import { GitCommit } from "./agent.protocol";
 
 export interface GetBranchesRequest {
 	uri: string;
@@ -166,6 +164,10 @@ export interface ReposScm {
 	 * only returned if includeCurrentBranch is set
 	 */
 	currentBranch?: string;
+	/**
+	 * only returned if includeProviders is set
+	 */
+	providerGuess?: string;
 }
 
 export interface GetReposScmRequest {
@@ -174,7 +176,14 @@ export interface GetReposScmRequest {
 	 * (rather than including any repos that might have been later dynamically added [and removed])
 	 */
 	inEditorOnly?: boolean;
+	/**
+	 * Set this flag to also return the current branch for each of the repos
+	 */
 	includeCurrentBranches?: boolean;
+	/**
+	 * Set this flag to also return the provider for each repo
+	 */
+	includeProviders?: boolean;
 }
 
 export interface GetReposScmResponse {

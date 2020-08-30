@@ -16,9 +16,7 @@ import { isConnected } from "../store/providers/reducer";
 import { RequestType } from "vscode-languageserver-protocol";
 import { HostApi } from "../webview-api";
 import {
-	ExecuteThirdPartyTypedRequest,
 	GetMyPullRequestsResponse,
-	GetMyPullRequestsRequest,
 	ReposScm,
 	ExecuteThirdPartyRequestUntypedType
 } from "@codestream/protocols/agent";
@@ -101,11 +99,14 @@ export function OpenReviews(props: Props) {
 		const currentUserId = session.userId!;
 		const teamMembers = userSelectors.getTeamMembers(state);
 		const reviews = reviewSelectors.getByStatusAndUser(state, "open", currentUserId);
-		const isGitHubConnected = isConnected(state, { name: "github" });
 		const repos = props.openRepos.map(repo => {
 			const id = repo.id || "";
 			return { ...repo, name: state.repos[id] ? state.repos[id].name : "" };
 		});
+
+		// FIXME hardcoded github
+		const isPRSuportedCodeHostConnected = isConnected(state, { name: "github" });
+		const PRSupportedRepos = repos.filter(r => r.providerGuess === "github");
 
 		return {
 			teamTagsHash: userSelectors.getTeamTagsHash(state),
@@ -113,7 +114,8 @@ export function OpenReviews(props: Props) {
 			reviews,
 			currentUserId,
 			teamMembers,
-			isGitHubConnected
+			isPRSuportedCodeHostConnected,
+			PRSupportedRepos
 		};
 	});
 
@@ -128,7 +130,7 @@ export function OpenReviews(props: Props) {
 		setIsLoadingPRs(true);
 		const response: any = await dispatch(getMyPullRequests("github*com", options));
 		setIsLoadingPRs(false);
-		setPRs(response);
+		// setPRs(response);
 	};
 
 	useDidMount(() => {
@@ -136,7 +138,7 @@ export function OpenReviews(props: Props) {
 			dispatch(bootstrapReviews());
 		}
 
-		if (derivedState.isGitHubConnected) {
+		if (derivedState.isPRSuportedCodeHostConnected) {
 			fetchPRs();
 		}
 	});
@@ -171,7 +173,7 @@ export function OpenReviews(props: Props) {
 	sortedReviews.sort((a, b) => b.createdAt - a.createdAt);
 
 	return React.useMemo(() => {
-		if (reviews.length == 0 && !derivedState.isGitHubConnected) return null;
+		if (reviews.length == 0 && !derivedState.isPRSuportedCodeHostConnected) return null;
 		return (
 			<>
 				{reviews.length > 0 && (
@@ -218,7 +220,7 @@ export function OpenReviews(props: Props) {
 						})}
 					</WideStatusSection>
 				)}
-				{derivedState.isGitHubConnected && (
+				{derivedState.isPRSuportedCodeHostConnected && (
 					<WideStatusSection>
 						<div className="filters" style={{ padding: "0 20px 0 20px" }}>
 							<Tooltip title="Reload" placement="bottom" delay={1}>

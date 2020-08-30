@@ -552,7 +552,8 @@ export const StatusPanel = () => {
 	const getBranches = async (uri?: string): Promise<{ openRepos?: ReposScm[] }> => {
 		const response = await HostApi.instance.send(GetReposScmRequestType, {
 			inEditorOnly: true,
-			includeCurrentBranches: true
+			includeCurrentBranches: true,
+			includeProviders: true
 		});
 		if (response && response.repositories) {
 			setOpenRepos(response.repositories);

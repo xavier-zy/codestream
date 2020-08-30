@@ -61,7 +61,7 @@ import { xfs } from "../xfs";
 import { Container, SessionContainer } from "./../container";
 import { IgnoreFilesHelper } from "./ignoreFilesManager";
 import { ReviewsManager } from "./reviewsManager";
-import { GitRepository } from "git/gitService";
+import { GitRepository, GitRemote } from "git/gitService";
 
 @lsp
 export class ScmManager {
@@ -129,6 +129,7 @@ export class ScmManager {
 		let gitError;
 		let repositories: GitRepository[] = [];
 		let branches: (string | undefined)[] = [];
+		let remotes: GitRemote[][] = [];
 		try {
 			const { git } = SessionContainer.instance();
 			repositories = Array.from(await git.getRepositories());
@@ -137,6 +138,9 @@ export class ScmManager {
 			}
 			if (request && request.includeCurrentBranches) {
 				branches = await Promise.all(repositories.map(repo => git.getCurrentBranch(repo.path)));
+			}
+			if (request && request.includeProviders) {
+				remotes = await Promise.all(repositories.map(repo => repo.getRemotes()));
 			}
 		} catch (ex) {
 			gitError = ex.toString();
@@ -151,7 +155,17 @@ export class ScmManager {
 							path: _.path,
 							folder: _.folder,
 							root: _.root,
-							currentBranch: branches[index]
+							currentBranch: branches[index],
+							remotes: remotes[index],
+							providerGuess:
+								// FIXME -- not sure how to map remotes to github enterprise, gitlab onprem, etc.
+								remotes[index] && remotes[index].find(remote => remote.domain.includes("github"))
+									? "github"
+									: remotes[index].find(remote => remote.domain.includes("gitlab"))
+									? "gitlab"
+									: remotes[index].find(remote => remote.domain.includes("bitbucket"))
+									? "bitbucket"
+									: ""
 						};
 				  })
 				: undefined,
@@ -286,7 +300,6 @@ export class ScmManager {
 		let gitError;
 
 		try {
-
 			if (!documentUri) {
 				if (!repoId) throw new Error(`A uri or repoId is required`);
 

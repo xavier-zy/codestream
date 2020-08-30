@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import * as reviewSelectors from "../store/reviews/reducer";
 import * as userSelectors from "../store/users/reducer";
@@ -27,6 +27,9 @@ import { PRStatusButton, PRBranch } from "./PullRequestComponents";
 import { PRHeadshotName } from "../src/components/HeadshotName";
 import styled from "styled-components";
 import Tag from "./Tag";
+import { Provider, IntegrationButtons } from "./IntegrationsPanel";
+import { connectProvider } from "./actions";
+import { PROVIDER_MAPPINGS } from "./CrossPostIssueControls/types";
 
 export const PullRequestTooltip = (props: { pr: GetMyPullRequestsResponse }) => {
 	const { pr } = props;
@@ -87,6 +90,13 @@ export const PullRequestTooltip = (props: { pr: GetMyPullRequestsResponse }) => 
 	);
 };
 
+const ConnectToCodeHost = styled.div`
+	margin: 10px 20px 0 20px;
+	button {
+		margin: 0 10px 10px 0;
+	}
+`;
+
 interface Props {
 	openRepos: ReposScm[];
 }
@@ -105,8 +115,8 @@ export function OpenReviews(props: Props) {
 		});
 
 		// FIXME hardcoded github
-		const isPRSuportedCodeHostConnected = isConnected(state, { name: "github" });
-		const PRSupportedRepos = repos.filter(r => r.providerGuess === "github");
+		const isPRSupportedCodeHostConnected = isConnected(state, { name: "github" });
+		const hasPRSupportedRepos = repos.filter(r => r.providerGuess === "github").length > 0;
 
 		return {
 			teamTagsHash: userSelectors.getTeamTagsHash(state),
@@ -114,8 +124,9 @@ export function OpenReviews(props: Props) {
 			reviews,
 			currentUserId,
 			teamMembers,
-			isPRSuportedCodeHostConnected,
-			PRSupportedRepos
+			isPRSupportedCodeHostConnected,
+			hasPRSupportedRepos,
+			PRSupportedProviders: [state.providers["github*com"]]
 		};
 	});
 
@@ -137,11 +148,13 @@ export function OpenReviews(props: Props) {
 		if (!reviewsState.bootstrapped) {
 			dispatch(bootstrapReviews());
 		}
+	});
 
-		if (derivedState.isPRSuportedCodeHostConnected) {
+	useMemo(() => {
+		if (derivedState.isPRSupportedCodeHostConnected) {
 			fetchPRs();
 		}
-	});
+	}, [derivedState.isPRSupportedCodeHostConnected]);
 
 	const goPR = async (url: string) => {
 		HostApi.instance
@@ -172,8 +185,13 @@ export function OpenReviews(props: Props) {
 	const sortedReviews = [...reviews];
 	sortedReviews.sort((a, b) => b.createdAt - a.createdAt);
 
-	return React.useMemo(() => {
-		if (reviews.length == 0 && !derivedState.isPRSuportedCodeHostConnected) return null;
+	return useMemo(() => {
+		if (
+			reviews.length == 0 &&
+			!derivedState.isPRSupportedCodeHostConnected &&
+			!derivedState.hasPRSupportedRepos
+		)
+			return null;
 		return (
 			<>
 				{reviews.length > 0 && (
@@ -220,7 +238,7 @@ export function OpenReviews(props: Props) {
 						})}
 					</WideStatusSection>
 				)}
-				{derivedState.isPRSuportedCodeHostConnected && (
+				{(derivedState.isPRSupportedCodeHostConnected || derivedState.hasPRSupportedRepos) && (
 					<WideStatusSection>
 						<div className="filters" style={{ padding: "0 20px 0 20px" }}>
 							<Tooltip title="Reload" placement="bottom" delay={1}>
@@ -309,6 +327,21 @@ export function OpenReviews(props: Props) {
 							</span>
 						</RoundedSearchLink>
 								*/}
+						{derivedState.hasPRSupportedRepos && !derivedState.isPRSupportedCodeHostConnected && (
+							<ConnectToCodeHost>
+								{derivedState.PRSupportedProviders.map(provider => {
+									const providerDisplay = PROVIDER_MAPPINGS[provider.name];
+									if (providerDisplay) {
+										return (
+											<Button onClick={() => dispatch(connectProvider(provider.id, "Status"))}>
+												<Icon name={providerDisplay.icon} />
+												Connect to {providerDisplay.displayName} to see your PRs
+											</Button>
+										);
+									} else return null;
+								})}
+							</ConnectToCodeHost>
+						)}
 						{prs.map(pr => {
 							const selected = derivedState.repos.find(repo => {
 								return (
@@ -379,5 +412,15 @@ export function OpenReviews(props: Props) {
 				)}
 			</>
 		);
-	}, [reviews, prs, teamMembers, isLoadingPRs, query, queryOpen, props.openRepos]);
+	}, [
+		reviews,
+		prs,
+		teamMembers,
+		isLoadingPRs,
+		query,
+		queryOpen,
+		props.openRepos,
+		derivedState.isPRSupportedCodeHostConnected,
+		derivedState.hasPRSupportedRepos
+	]);
 }

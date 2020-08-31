@@ -559,11 +559,6 @@ export const StatusPanel = () => {
 			setOpenRepos(response.repositories);
 		}
 
-		if (!uri && !derivedState.textEditorUri) {
-			return {
-				openRepos: response ? response.repositories : []
-			};
-		}
 		if (uri) {
 			setRepoUri(uri);
 		}
@@ -579,6 +574,7 @@ export const StatusPanel = () => {
 				branchInfo = await HostApi.instance.send(GetBranchesRequestType, {
 					uri: response.repositories[0].folder.uri
 				});
+				setRepoUri(response.repositories[0].folder.uri);
 			}
 		}
 

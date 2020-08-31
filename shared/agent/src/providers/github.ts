@@ -2616,6 +2616,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 				  rebaseMergeAllowed
 				  squashMergeAllowed
 				  mergeCommitAllowed
+				  viewerPermission
 				}
 			  }`;
 			const response = (await this.client.request<any>(query, {

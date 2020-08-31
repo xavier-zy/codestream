@@ -96,6 +96,7 @@ export interface FetchDocumentMarkersRequest {
 	textDocument: TextDocumentIdentifier;
 	filters?: {
 		excludeArchived?: boolean;
+		excludePRs?: boolean;
 	};
 }
 export interface FetchDocumentMarkersResponse {

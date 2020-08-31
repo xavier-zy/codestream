@@ -218,7 +218,7 @@ export class SimpleInlineCodemarks extends Component<Props, State> {
 		this.disposables.push(
 			HostApi.instance.on(DidChangeDocumentMarkersNotificationType, ({ textDocument }) => {
 				if (this.props.textEditorUri === textDocument.uri) {
-					this.props.fetchDocumentMarkers(textDocument.uri);
+					this.props.fetchDocumentMarkers(textDocument.uri, !this.props.showPRComments);
 				}
 			}),
 			{
@@ -451,7 +451,7 @@ export class SimpleInlineCodemarks extends Component<Props, State> {
 		const scmError = getFileScmError(scmInfo);
 		this.setState({ problem: scmError });
 
-		await this.props.fetchDocumentMarkers(textEditorUri);
+		await this.props.fetchDocumentMarkers(textEditorUri, !this.props.showPRComments);
 		this.setState(state => (state.isLoading ? { isLoading: false } : null));
 		if (scmError && renderErrorCallback !== undefined) {
 			renderErrorCallback(mapFileScmErrorForTelemetry(scmError));
@@ -942,7 +942,7 @@ export class SimpleInlineCodemarks extends Component<Props, State> {
 			}
 
 			// now get the new document markers
-			await this.props.fetchDocumentMarkers(this.props.textEditorUri!);
+			await this.props.fetchDocumentMarkers(this.props.textEditorUri!, !this.props.showPRComments);
 
 			if (docMarker) {
 				batch(() => {

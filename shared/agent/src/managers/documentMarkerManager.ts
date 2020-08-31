@@ -407,17 +407,19 @@ export class DocumentMarkerManager {
 				}
 			}
 
-			try {
-				const prMarkers = await this.getPullRequestDocumentMarkers({
-					uri: documentUri,
-					streamId: stream && stream.id
-				});
-				if (prMarkers.length > 0) {
-					documentMarkers.push(...prMarkers);
+			if (!filters?.excludePRs) {
+				try {
+					const prMarkers = await this.getPullRequestDocumentMarkers({
+						uri: documentUri,
+						streamId: stream && stream.id
+					});
+					if (prMarkers.length > 0) {
+						documentMarkers.push(...prMarkers);
+					}
+				} catch (ex) {
+					Logger.error(ex, cc);
+					debugger;
 				}
-			} catch (ex) {
-				Logger.error(ex, cc);
-				debugger;
 			}
 
 			return {

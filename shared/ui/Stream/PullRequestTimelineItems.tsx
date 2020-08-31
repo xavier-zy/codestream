@@ -39,7 +39,6 @@ import { useSelector } from "react-redux";
 import { CodeStreamState } from "../store";
 import { CSMe } from "@codestream/protocols/api";
 import { SmartFormattedList } from "./SmartFormattedList";
-import { confirmPopup } from "./Confirm";
 import { PullRequestCommentMenu } from "./PullRequestCommentMenu";
 import { PullRequestMinimizedComment } from "./PullRequestMinimizedComment";
 import { PullRequestPatch } from "./PullRequestPatch";
@@ -248,6 +247,9 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 							<PullRequestCommentMenu
 								pr={pr}
 								node={pr}
+								nodeType={"ROOT_COMMENT"}
+								fetch={fetch}
+								setIsLoadingMessage={setIsLoadingMessage}
 								setEdit={setEditingComment}
 								quote={props.quote}
 							/>
@@ -318,7 +320,11 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 													/>
 													<PullRequestCommentMenu
 														pr={pr}
+														fetch={fetch}
+														setIsLoadingMessage={setIsLoadingMessage}
 														node={item}
+														nodeType="ISSUE_COMMENT"
+														viewerCanDelete={item.viewerCanDelete}
 														setEdit={setEditingComment}
 														quote={props.quote}
 													/>
@@ -406,7 +412,11 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 														/>
 														<PullRequestCommentMenu
 															pr={pr}
+															fetch={fetch}
+															setIsLoadingMessage={setIsLoadingMessage}
 															node={item}
+															nodeType="REVIEW"
+															viewerCanDelete={item.viewerCanDelete && item.state === "PENDING"}
 															setEdit={setEditingComment}
 															quote={props.quote}
 															isPending={item.state === "PENDING"}
@@ -545,7 +555,11 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 																			/>
 																			<PullRequestCommentMenu
 																				pr={pr}
+																				fetch={fetch}
+																				setIsLoadingMessage={setIsLoadingMessage}
 																				node={comment}
+																				nodeType="REVIEW_COMMENT"
+																				viewerCanDelete={comment.viewerCanDelete}
 																				setEdit={setEditingComment}
 																				quote={quote}
 																				isPending={item.state === "PENDING"}
@@ -614,7 +628,11 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 																					/>
 																					<PullRequestCommentMenu
 																						pr={pr}
+																						fetch={fetch}
+																						setIsLoadingMessage={setIsLoadingMessage}
 																						node={c}
+																						nodeType="REVIEW_COMMENT"
+																						viewerCanDelete={c.viewerCanDelete}
 																						setEdit={setEditingComment}
 																						quote={quote}
 																						isPending={item.state === "PENDING"}

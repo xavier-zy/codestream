@@ -318,6 +318,7 @@ export default class Menu extends Component {
 				className={createClassString({
 					"menu-item": true,
 					disabled: item.disabled,
+					destructive: item.destructive,
 					hover: selected && !item.noHover && !item.customHover,
 					"custom-hover": selected && item.customHover,
 					"has-submenu": item.submenu ? true : false

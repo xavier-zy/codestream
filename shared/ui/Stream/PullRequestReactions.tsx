@@ -132,6 +132,7 @@ export const PullRequestReactButton = styled((props: Props) => {
 
 interface ReactionProps {
 	pr: FetchThirdPartyPullRequestPullRequest;
+	// node: any;
 	reactionGroups: any;
 	targetId: string;
 	setIsLoadingMessage: Function;

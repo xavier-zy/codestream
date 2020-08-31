@@ -13,17 +13,66 @@ import { ExecuteThirdPartyTypedType } from "@codestream/protocols/agent";
 import { DropdownButton } from "./Review/DropdownButton";
 import { InlineMenu } from "../src/components/controls/InlineMenu";
 import copy from "copy-to-clipboard";
+import { confirmPopup } from "./Confirm";
 
 interface CommentMenuProps {
 	pr: any;
 	node: any;
+	nodeType: "ISSUE_COMMENT" | "ROOT_COMMENT" | "REVIEW_COMMENT" | "REVIEW";
+	viewerCanDelete?: boolean;
 	setEdit?: Function;
 	quote?: Function;
 	isPending?: boolean;
+	fetch: Function;
+	setIsLoadingMessage: Function;
 }
 
 export const PullRequestCommentMenu = (props: CommentMenuProps) => {
-	const { pr, node, setEdit, quote, isPending } = props;
+	const { pr, node, setEdit, quote, isPending, fetch, setIsLoadingMessage } = props;
+
+	const deleteComment = () => {
+		confirmPopup({
+			title: "Are you sure?",
+			message: "",
+			centered: true,
+			buttons: [
+				{ label: "Go Back", className: "control-button" },
+				{
+					label: "Delete",
+					className: "delete",
+					wait: true,
+					action: async () => {
+						setIsLoadingMessage("Deleting Comment...");
+						HostApi.instance.track("PR Comment Deleted", {
+							Host: pr.providerId
+						});
+
+						if (props.nodeType === "REVIEW") {
+							await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
+								method: "deletePullRequestReview",
+								providerId: pr.providerId,
+								params: {
+									pullRequestId: pr.id,
+									pullRequestReviewId: node.id
+								}
+							});
+						} else {
+							await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
+								method: "deletePullRequestComment",
+								providerId: pr.providerId,
+								params: {
+									pullRequestId: pr.id,
+									type: props.nodeType,
+									id: node.id
+								}
+							});
+						}
+						fetch();
+					}
+				}
+			]
+		});
+	};
 
 	const items: any[] = [];
 
@@ -34,9 +83,11 @@ export const PullRequestCommentMenu = (props: CommentMenuProps) => {
 			action: () => copy(pr.baseUrl + node.resourcePath)
 		});
 	}
+
 	if (!isPending && quote) {
 		items.push({ label: "Quote Reply", key: "quote", action: () => quote(node.body) });
 	}
+
 	if (node.viewerCanUpdate && setEdit) {
 		items.push({ label: "-" });
 		items.push({
@@ -45,6 +96,15 @@ export const PullRequestCommentMenu = (props: CommentMenuProps) => {
 			action: () => {
 				if (setEdit) setEdit(node, true);
 			}
+		});
+	}
+
+	if (props.viewerCanDelete) {
+		items.push({
+			label: "Delete",
+			key: "delete",
+			destructive: true,
+			action: () => deleteComment()
 		});
 	}
 

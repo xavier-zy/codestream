@@ -1688,6 +1688,24 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 		return true;
 	}
 
+	async deletePullRequestComment(request: {
+		id: string;
+		type: "ISSUE_COMMENT" | "REVIEW_COMMENT";
+	}) {
+		const method =
+			request.type === "ISSUE_COMMENT" ? "deleteIssueComment" : "deletePullRequestReviewComment";
+		const query = `mutation DeleteCommentFromPullRequest($id: String!) {
+				${method}(input: {id: $id}) {
+				  clientMutationId
+				}
+			  }`;
+
+		await this.client.request<any>(query, {
+			id: request.id
+		});
+		return true;
+	}
+
 	_pullRequestIdCache: Map<
 		string,
 		{
@@ -2026,6 +2044,8 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 			}
 			resourcePath
 			viewerCanUpdate
+			viewerCanReact
+			viewerCanDelete
 		}`,
 			`... on LabeledEvent {
 			__typename
@@ -2205,6 +2225,8 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 				}
 				resourcePath
 				viewerCanUpdate
+				viewerCanReact
+				viewerCanDelete
 			  }
 			}
 			authorAssociation
@@ -2455,6 +2477,8 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 								  }
 								}
 								viewerCanUpdate
+								viewerCanReact
+								viewerCanDelete
 							  }
 							}
 						  }

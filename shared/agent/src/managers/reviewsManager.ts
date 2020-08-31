@@ -835,6 +835,9 @@ export class ReviewsManager extends CachedEntityManagerBase<CSReview> {
 
 			// if we have this, then we want to create the branch's remote
 			if (request.remoteName && repoId) {
+				Logger.log(
+					`createPullRequest: attempting to create remote? remoteName=${request.remoteName} repoId=${repoId}`
+				);
 				const repo = await git.getRepositoryById(repoId);
 				if (!repo) {
 					Logger.warn(`createPullRequest: repoId=${repoId} not found`);
@@ -852,7 +855,7 @@ export class ReviewsManager extends CachedEntityManagerBase<CSReview> {
 					);
 
 					if (result) {
-						Logger.debug(result);
+						Logger.log(`createPullRequest: ${result}`);
 					} else {
 						Logger.warn(
 							`createPullRequest: BRANCH_REMOTE_CREATION_FAILED ${repo.path} branch remote (${branchRemote}) for ${request.headRefName}`
@@ -863,7 +866,9 @@ export class ReviewsManager extends CachedEntityManagerBase<CSReview> {
 						};
 					}
 				} else {
-					Logger.debug(`${repo.path} branch remote (${branchRemote}) for ${request.headRefName}`);
+					Logger.log(
+						`createPullRequest: ${repo.path} branch remote (${branchRemote}) for ${request.headRefName}`
+					);
 				}
 			}
 
@@ -895,15 +900,19 @@ export class ReviewsManager extends CachedEntityManagerBase<CSReview> {
 			}
 
 			if (review) {
-				const updateReviewResult = await this.update({
+				void (await this.update({
 					id: review.id,
 					pullRequestProviderId: request.providerId,
 					pullRequestTitle: result.title,
 					pullRequestUrl: result.url
-				});
+				}));
 
-				Logger.debug(
+				Logger.log(
 					`createPullRequest: success for reviewId=${request.reviewId} providerId=${request.providerId} headRefName=${request.headRefName} baseRefName=${request.baseRefName}`
+				);
+			} else {
+				Logger.log(
+					`createPullRequest: success for providerId=${request.providerId} headRefName=${request.headRefName} baseRefName=${request.baseRefName}`
 				);
 			}
 

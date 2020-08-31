@@ -261,7 +261,6 @@ export const IntegrationsPanel = () => {
 					<Provider
 						key={providerId}
 						onClick={() => dispatch(connectProvider(providerId, "Integrations Panel"))}
-						variant="success"
 					>
 						{display.icon && <Icon name={display.icon} />}
 						{display.displayName}

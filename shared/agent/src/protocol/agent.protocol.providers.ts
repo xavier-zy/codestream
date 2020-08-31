@@ -447,6 +447,7 @@ export interface FetchThirdPartyPullRequestPullRequest {
 		nodes: {
 			id: string;
 			createdAt: string;
+			state: string;
 			author: {
 				id: string;
 				login: string;

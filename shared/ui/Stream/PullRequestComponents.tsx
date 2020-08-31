@@ -782,7 +782,9 @@ export const PRIconButton = styled.div`
 	width: 30px;
 	height: 30px;
 	border-radius: 15px;
-	.icon {
+	&.gray-background .icon,
+	&.red-background .icon,
+	&.green-background .icon {
 		color: white;
 	}
 `;
@@ -948,7 +950,7 @@ export const PRCopyableTerminal = styled.div`
 
 export const PRResolveConflictsRow = styled.div`
 	display: flex;
-	align-items: center;
+	align-items: flex-start;
 	button {
 		flex-grow: 0;
 		flex-shrink: 0;

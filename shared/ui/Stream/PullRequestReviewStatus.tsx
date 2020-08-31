@@ -72,7 +72,7 @@ export const Donut = styled.div<{ degrees: number }>`
 
 export const PullRequestReviewStatus = (props: {
 	pr: FetchThirdPartyPullRequestPullRequest;
-	finishedReviews: any[];
+	opinionatedReviews: any[];
 }) => {
 	const dispatch = useDispatch();
 	const derivedState = useSelector((state: CodeStreamState) => {
@@ -90,12 +90,14 @@ export const PullRequestReviewStatus = (props: {
 	const [approvedOpen, setApprovedOpen] = useState(false);
 	const [pendingOpen, setPendingOpen] = useState(false);
 
-	const { pr, finishedReviews = [] } = props;
+	const { pr, opinionatedReviews = [] } = props;
 	const pendingReviewers = pr.reviewRequests.nodes;
 
 	const reviewState = useMemo(() => {
-		const approvals = finishedReviews.filter(review => review.state === "APPROVED");
-		const changeRequests = finishedReviews.filter(review => review.state === "CHANGES_REQUESTED");
+		const approvals = opinionatedReviews.filter(review => review.state === "APPROVED");
+		const changeRequests = opinionatedReviews.filter(
+			review => review.state === "CHANGES_REQUESTED"
+		);
 		const totalReviews = approvals.length + changeRequests.length;
 		const degrees = totalReviews === 0 ? 0 : (360 * approvals.length) / totalReviews;
 		return {

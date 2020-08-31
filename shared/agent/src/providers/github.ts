@@ -2449,6 +2449,8 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 						  node {
 							id
 							isResolved
+							viewerCanResolve
+							viewerCanUnresolve
 							comments(first: 50) {
 							  totalCount
 							  nodes {
@@ -2655,12 +2657,16 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 						let replies: any = [];
 						let threadId;
 						let isResolved;
+						let viewerCanResolve;
+						let viewerCanUnresolve;
 						for (const reviewThread of response.repository.pullRequest.reviewThreads.edges) {
 							if (reviewThread.node.comments.nodes.length > 1) {
 								for (const reviewThreadComment of reviewThread.node.comments.nodes) {
 									if (reviewThreadComment.id === comment.id) {
 										threadId = reviewThread.node.id;
 										isResolved = reviewThread.node.isResolved;
+										viewerCanResolve = reviewThread.node.viewerCanResolve;
+										viewerCanUnresolve = reviewThread.node.viewerCanUnresolve;
 										// find all the comments except the parent
 										replies = replies.concat(
 											reviewThread.node.comments.nodes.filter(
@@ -2675,12 +2681,16 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 								if (reviewThreadComment.id === comment.id) {
 									threadId = reviewThread.node.id;
 									isResolved = reviewThread.node.isResolved;
+									viewerCanResolve = reviewThread.node.viewerCanResolve;
+									viewerCanUnresolve = reviewThread.node.viewerCanUnresolve;
 								}
 							}
 						}
 						if (timelineItem.comments.nodes.length) {
 							comment.threadId = threadId;
 							comment.isResolved = isResolved;
+							comment.viewerCanResolve = viewerCanResolve;
+							comment.viewerCanUnresolve = viewerCanUnresolve;
 							if (replies.length) {
 								comment.replies = replies;
 							}
@@ -2852,6 +2862,8 @@ interface GitHubPullRequest {
 		nodes: {
 			id: string;
 			isResolved: boolean;
+			viewerCanResolve: boolean;
+			viewerCanUnresolve: boolean;
 			comments: {
 				totalCount: number;
 				nodes: {

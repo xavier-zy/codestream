@@ -679,8 +679,8 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 																__onDidRender={__onDidRender}
 															/>
 															<div style={{ height: "15px" }}></div>
-															<PRButtonRow className="align-left border-top">
-																{comment.isResolved && (
+															{comment.isResolved && comment.viewerCanUnresolve && (
+																<PRButtonRow className="align-left border-top">
 																	<Button
 																		variant="secondary"
 																		isLoading={isResolving}
@@ -688,9 +688,10 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 																	>
 																		Unresolve conversation
 																	</Button>
-																)}
-
-																{!comment.isResolved && (
+																</PRButtonRow>
+															)}
+															{!comment.isResolved && comment.viewerCanResolve && (
+																<PRButtonRow className="align-left border-top">
 																	<Button
 																		variant="secondary"
 																		isLoading={isResolving}
@@ -698,8 +699,8 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 																	>
 																		Resolve conversation
 																	</Button>
-																)}
-															</PRButtonRow>
+																</PRButtonRow>
+															)}
 														</>
 													)}
 												</PRThreadedCommentCard>

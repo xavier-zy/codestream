@@ -34,10 +34,9 @@ const NOW = new Date().getTime(); // a rough timestamp so we know when the file 
 export const PullRequestFilesChanged = (props: {
 	pr: FetchThirdPartyPullRequestPullRequest;
 	filesChanged: any[];
-	loading?: boolean;
 	withTelemetry?: boolean;
 }) => {
-	const { pr, loading, filesChanged } = props;
+	const { pr, filesChanged } = props;
 	// const dispatch = useDispatch<Dispatch>();
 	const [repoId, setRepoId] = useState("");
 	const derivedState = useSelector((state: CodeStreamState) => {
@@ -65,6 +64,7 @@ export const PullRequestFilesChanged = (props: {
 	const [currentRepoRoot, setCurrentRepoRoot] = React.useState("");
 	const [forkPointSha, setForkPointSha] = React.useState("");
 	const [errorMessage, setErrorMessage] = React.useState("");
+	const [loading, setLoading] = React.useState(false);
 
 	const visitFile = (visitedKey: string, index: number) => {
 		const newVisitedFiles = { ...visitedFiles, [visitedKey]: NOW, _latest: index };
@@ -84,15 +84,22 @@ export const PullRequestFilesChanged = (props: {
 	useDidMount(() => {
 		if (derivedState.currentRepo) {
 			(async () => {
-				const forkPointResponse = await HostApi.instance.send(FetchForkPointRequestType, {
-					repoId: derivedState.currentRepo!.id!,
-					baseSha: props.pr.baseRefOid,
-					headSha: props.pr.headRefOid
-				});
-				if (forkPointResponse && forkPointResponse.sha) {
-					setForkPointSha(forkPointResponse.sha);
-				} else {
-					console.warn("Could not find fork point");
+				setLoading(true);
+				try {
+					const forkPointResponse = await HostApi.instance.send(FetchForkPointRequestType, {
+						repoId: derivedState.currentRepo!.id!,
+						baseSha: props.pr.baseRefOid,
+						headSha: props.pr.headRefOid
+					});
+					if (forkPointResponse && forkPointResponse.sha) {
+						setForkPointSha(forkPointResponse.sha);
+					} else {
+						console.warn("Could not find fork point");
+					}
+				} catch (ex) {
+					console.error(ex);
+				} finally {
+					setLoading(false);
 				}
 			})();
 		}
@@ -240,10 +247,15 @@ export const PullRequestFilesChanged = (props: {
 					<ChangesetFile
 						selected={selected}
 						icon={icon && <Icon name={icon} className={iconClass} />}
-						onClick={async e => {
-							e.preventDefault();
-							goDiff(i);
-						}}
+						noHover={loading}
+						onClick={
+							loading
+								? undefined
+								: async e => {
+										e.preventDefault();
+										goDiff(i);
+								  }
+						}
 						actionIcons={
 							!loading && (
 								<div className="actions">

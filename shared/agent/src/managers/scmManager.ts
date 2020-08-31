@@ -1228,7 +1228,7 @@ export class ScmManager {
 		const { git, repositoryMappings } = SessionContainer.instance();
 
 		const repo = await git.getRepositoryById(request.repoId);
-		let repoPath;
+		let repoPath: string | undefined;
 		if (repo) {
 			repoPath = repo.path;
 		} else {
@@ -1237,7 +1237,18 @@ export class ScmManager {
 
 		if (!repoPath) throw new Error(`Could not load repo with ID ${request.repoId}`);
 		try {
-			await git.fetchAllRemotes(repoPath);
+			const shas = [request.baseSha, request.headSha];
+			const results = await Promise.all(
+				shas.map(sha => git.isValidReference(repoPath as string, sha))
+			);
+			// if no results, or there is at least 1 false, fetch all remotes
+			if (!results || results.find(_ => !_)) {
+				Logger.warn(
+					`Could not find shas ${shas.join(" or ")}...fetching all remotes repoPath=${repoPath}`
+				);
+				await git.fetchAllRemotes(repoPath);
+			}
+
 			const forkPointSha =
 				(await git.getRepoBranchForkPoint(repoPath, request.baseSha, request.headSha)) || "";
 			return {

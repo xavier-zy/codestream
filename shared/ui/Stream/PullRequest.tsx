@@ -19,7 +19,9 @@ import {
 	GetReposScmRequestType,
 	ReposScm,
 	ExecuteThirdPartyTypedType,
-	SwitchBranchRequestType
+	SwitchBranchRequestType,
+	DidChangeDataNotificationType,
+	ChangeDataType
 } from "@codestream/protocols/agent";
 import {
 	PRHeader,
@@ -136,6 +138,7 @@ export const PullRequest = () => {
 	const [editingTitle, setEditingTitle] = useState(false);
 	const [savingTitle, setSavingTitle] = useState(false);
 	const [title, setTitle] = useState("");
+	const [currentRepoChanged, setCurrentRepoChanged] = useState(false);
 
 	const [finishReviewOpen, setFinishReviewOpen] = useState(false);
 
@@ -247,6 +250,28 @@ export const PullRequest = () => {
 		return pr && openRepos.find(_ => _.name === pr.repository.name);
 	}, [pr, openRepos]);
 
+	useEffect(() => {
+		if (!pr) return;
+
+		const _didChangeDataNotification = HostApi.instance.on(
+			DidChangeDataNotificationType,
+			(e: any) => {
+				if (e.type === ChangeDataType.Commits) {
+					getOpenRepos().then(_ => {
+						const currentOpenRepo = openRepos.find(_ => _.name === pr.repository.name);
+						setCurrentRepoChanged(
+							!!(e.data.repo && currentOpenRepo && currentOpenRepo.currentBranch == pr.headRefName)
+						);
+					});
+				}
+			}
+		);
+
+		return () => {
+			_didChangeDataNotification && _didChangeDataNotification.dispose();
+		};
+	}, [openRepos, pr]);
+
 	const cantCheckoutReason = React.useMemo(() => {
 		if (pr) {
 			const currentRepo = openRepos.find(_ => _.name === pr.repository.name);
@@ -260,7 +285,7 @@ export const PullRequest = () => {
 		} else {
 			return "PR not loaded";
 		}
-	}, [pr, openRepos]);
+	}, [pr, openRepos, currentRepoChanged]);
 
 	const saveTitle = async () => {
 		setIsLoadingMessage("Saving Title...");

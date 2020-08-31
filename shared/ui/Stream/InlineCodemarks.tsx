@@ -1218,10 +1218,12 @@ export class SimpleInlineCodemarks extends Component<Props, State> {
 	};
 
 	togglePRComments = () => {
+		const newShowPRComments = !this.props.showPRComments;
 		if (this.props.hasPRProvider)
-			this.enableAnimations(() =>
-				this.props.setSpatialViewPRCommentsToggle(!this.props.showPRComments)
-			);
+			this.enableAnimations(() => {
+				this.props.setSpatialViewPRCommentsToggle(newShowPRComments);
+				this.props.fetchDocumentMarkers(this.props.textEditorUri!, !newShowPRComments);
+			});
 		else {
 			this._waitingForPRProviderConnection = true;
 			this.setState({ showPRInfoModal: true });

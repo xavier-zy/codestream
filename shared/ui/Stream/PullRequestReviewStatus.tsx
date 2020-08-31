@@ -108,10 +108,21 @@ export const PullRequestReviewStatus = (props: {
 
 	return (
 		<>
+			{reviewState.totalReviews === 0 && pendingReviewers.length > 0 && (
+				<PRStatusRow>
+					<PRIconButton className="green-background">
+						<Icon name="check" />
+					</PRIconButton>
+					<div className="middle">
+						<h1>Review Requested</h1>
+						Review has been requested on this pull request.
+					</div>
+				</PRStatusRow>
+			)}
 			{reviewState.changeRequests.length === 0 && reviewState.totalReviews > 0 && (
 				<PRStatusRow>
-					<PRIconButton>
-						<Icon name="check" className="green-color" />
+					<PRIconButton className="green-background">
+						<Icon name="check" />
 					</PRIconButton>
 					<div className="middle">
 						<h1>Changes Approved</h1>

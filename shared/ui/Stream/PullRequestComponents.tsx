@@ -7,6 +7,7 @@ import { TextButton } from "../src/components/controls/InlineMenu";
 import { WidthBreakpoint } from "./PullRequest";
 
 export const PENDING_BORDER_COLOR = "rgba(249, 197, 19, 0.6)";
+export const PENDING_BACKGROUND_COLOR = "rgba(255, 223, 0, 0.1)";
 
 export const PRHeader = styled.div`
 	margin: 45px 15px 0 20px;
@@ -268,7 +269,7 @@ export const PRCommentCard = styled.div`
 			border-color: ${PENDING_BORDER_COLOR};
 		}
 		.review-PENDING & .row-with-icon-actions {
-			background: rgba(255, 223, 0, 0.1);
+			background: ${PENDING_BACKGROUND_COLOR};
 		}
 		&:before {
 			left: 10px;
@@ -419,10 +420,11 @@ export const PRThreadedCommentCard = styled.div`
 		background: var(--base-background-color);
 	}
 	.review-PENDING & {
+		display: flex;
 		border-color: ${PENDING_BORDER_COLOR};
 	}
 	.review-PENDING & .row-with-icon-actions {
-		background: rgba(255, 223, 0, 0.1);
+		background: ${PENDING_BACKGROUND_COLOR};
 		margin: -10px -15px !important;
 		padding: 10px 15px 3px 15px !important;
 		height: auto !important;
@@ -432,6 +434,7 @@ export const PRThreadedCommentCard = styled.div`
 	padding: 10px 15px;
 	margin: 15px 0 15px 90px;
 	z-index: 2;
+
 	h1 {
 		font-size: 15px;
 		margin: 0 0 2px 0;
@@ -760,10 +763,11 @@ export const PRActionIcons = styled.div`
 		padding: 1px 7px;
 		font-size: smaller;
 		color: var(--text-color-subtle);
+		display: flex;
 	}
 	.pending {
 		border-color: ${PENDING_BORDER_COLOR};
-		background: rgba(255, 223, 0, 0.1);
+		background: ${PENDING_BACKGROUND_COLOR};
 	}
 	div + div {
 		margin-left: 5px;
@@ -965,5 +969,19 @@ export const PRHeadshots = styled.div`
 	margin-bottom: -5px;
 	${PRHeadshot} {
 		margin: 0 5px 5px 0;
+	}
+`;
+
+export const PRIAmRequested = styled.div`
+	display: flex;
+	align-items: center;
+	margin: 0 0 10px 0;
+	padding: 10px;
+	border-radius: 5px;
+	border: 1px solid ${PENDING_BORDER_COLOR};
+	background: ${PENDING_BACKGROUND_COLOR};
+	button {
+		border-radius: 5px;
+		margin-left: auto;
 	}
 `;

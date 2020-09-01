@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { CodeStreamState } from "../store";
 import styled from "styled-components";
@@ -37,7 +37,8 @@ import {
 	PREditTitle,
 	PRActionButtons,
 	PRCommentCard,
-	PRSubmitReviewButton
+	PRSubmitReviewButton,
+	PRIAmRequested
 } from "./PullRequestComponents";
 import { LoadingMessage } from "../src/components/LoadingMessage";
 import { Modal } from "./Modal";
@@ -246,7 +247,7 @@ export const PullRequest = () => {
 		// fetch("Reloading...");
 	};
 
-	const hasRepoOpen = React.useMemo(() => {
+	const hasRepoOpen = useMemo(() => {
 		return pr && openRepos.find(_ => _.name === pr.repository.name);
 	}, [pr, openRepos]);
 
@@ -272,7 +273,7 @@ export const PullRequest = () => {
 		};
 	}, [openRepos, pr]);
 
-	const cantCheckoutReason = React.useMemo(() => {
+	const cantCheckoutReason = useMemo(() => {
 		if (pr) {
 			const currentRepo = openRepos.find(_ => _.name === pr.repository.name);
 			if (!currentRepo) {
@@ -338,7 +339,7 @@ export const PullRequest = () => {
 		};
 	}, [derivedState.reviews]);
 
-	const numComments = React.useMemo(() => {
+	const numComments = useMemo(() => {
 		if (!pr || !pr.timelineItems || !pr.timelineItems.nodes) return 0;
 		const reducer = (accumulator, node) => {
 			let count = 0;
@@ -414,6 +415,15 @@ export const PullRequest = () => {
 		};
 	}, [pr]);
 
+	const iAmRequested = useMemo(() => {
+		if (pr) {
+			return pr.reviewRequests.nodes.find(
+				request => request.requestedReviewer.login === pr.viewer.login
+			);
+		}
+		return false;
+	}, [pr]);
+
 	console.warn("PR: ", pr);
 	// console.warn("REPO: ", ghRepo);
 	if (!pr) {
@@ -433,6 +443,22 @@ export const PullRequest = () => {
 				<CreateCodemarkIcons narrow onebutton />
 				{isLoadingMessage && <FloatingLoadingMessage>{isLoadingMessage}</FloatingLoadingMessage>}
 				<PRHeader>
+					{iAmRequested && activeTab == 1 && (
+						<PRIAmRequested>
+							<div>
+								<b>{pr.author.login}</b> requested your review on this pull request.
+							</div>
+							<Button
+								variant="success"
+								size="compact"
+								onClick={() => {
+									setActiveTab(4);
+								}}
+							>
+								Add your review
+							</Button>
+						</PRIAmRequested>
+					)}
 					<PRTitle className={editingTitle ? "editing" : ""}>
 						{editingTitle ? (
 							<PREditTitle>

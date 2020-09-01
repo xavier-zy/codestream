@@ -100,6 +100,7 @@ export interface CSMarker extends CSEntity, CSMarkerIdentifier {
 	code: string;
 	referenceLocations: CSReferenceLocation[];
 	supersededByMarkerId: string;
+	remoteCodeUrl?: { displayName: string; name: string; url: string };
 }
 
 export interface CSLocationMeta {

@@ -39,6 +39,7 @@ import {
 } from "../protocol/api.protocol";
 import { Functions, log, lsp, lspHandler, Strings } from "../system";
 import * as csUri from "../system/uri";
+import { compareRemotes } from "./markersBuilder";
 import { ReviewsManager } from "./reviewsManager";
 
 const emojiMap: { [key: string]: string } = require("../../emoji/emojis.json");
@@ -158,7 +159,7 @@ export class DocumentMarkerManager {
 			contents: contents,
 			skipBlame: true
 		});
-		const remotes = scmResponse.scm && scmResponse.scm.remotes.map(r => r.url);
+		const remotes = scmResponse.scm && scmResponse.scm.remotes.sort(compareRemotes).map(r => r.url);
 
 		let remoteCodeUrl;
 		if (remotes !== undefined && scmResponse.scm !== undefined && scmResponse.scm.revision) {

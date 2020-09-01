@@ -25,6 +25,7 @@ import {
 	toReviewActionId,
 	toReviewReplyActionId
 } from "../extensions";
+import getProviderDisplayName = Marker.getProviderDisplayName;
 
 const defaultCreatedAt = 181886400000;
 const multiPartyNamesRegEx = /^mpdm-([^-]+)(--.*)-1$/;
@@ -741,8 +742,9 @@ export function toSlackPostBlocks(
 				repo = repos[marker.repoId];
 			}
 
-			let url;
+			let url = marker.remoteCodeUrl;
 			if (
+				!url &&
 				remotes !== undefined &&
 				remotes.length !== 0 &&
 				start !== undefined &&
@@ -772,6 +774,9 @@ export function toSlackPostBlocks(
 						}
 					}
 				}
+			}
+			if (url && !url.displayName) {
+				url.displayName = getProviderDisplayName(url.name) || "";
 			}
 
 			if (repo) {

@@ -170,6 +170,11 @@ const remoteProviders: [
 ];
 
 export namespace Marker {
+	export function getProviderDisplayName(name: string): string | undefined {
+		const provider = remoteProviders.find(_ => _[0] === name);
+		return provider && provider[1];
+	}
+
 	export function getRemoteCodeUrl(
 		remote: string,
 		ref: string,

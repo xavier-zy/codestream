@@ -45,7 +45,7 @@ export interface CreateMarkerRequest {
 	commitHash?: string;
 	location?: CSLocationArray;
 	branchWhenCreated?: string;
-	remoteCodeUrl?: { name: string; url: string };
+	remoteCodeUrl?: { displayName: string; name: string; url: string };
 	knownCommitHashes?: string[];
 }
 

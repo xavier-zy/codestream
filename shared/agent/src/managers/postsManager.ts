@@ -85,6 +85,7 @@ import { getValues, KeyValue } from "./cache/baseCache";
 import { EntityCache, EntityCacheCfg } from "./cache/entityCache";
 import { EntityManagerBase, Id } from "./entityManager";
 import { MarkersBuilder } from "./markersBuilder";
+import getProviderDisplayName = Marker.getProviderDisplayName;
 
 export type FetchPostsFn = (request: FetchPostsRequest) => Promise<FetchPostsResponse>;
 
@@ -1945,37 +1946,40 @@ export class PostsManager extends EntityManagerBase<CSPost> {
 						links.push(link);
 					}
 				}
-				if (providerCardRequest.remotes) {
-					let url;
-					if (
-						providerCardRequest.remotes !== undefined &&
-						providerCardRequest.remotes.length !== 0 &&
-						range &&
-						range.start !== undefined &&
-						range.end !== undefined
-					) {
-						for (const remote of providerCardRequest.remotes) {
-							url = Marker.getRemoteCodeUrl(
-								remote,
-								marker.commitHashWhenCreated,
-								marker.file,
-								range.start.line + 1,
-								range.end.line + 1
-							);
 
-							if (url !== undefined) {
-								break;
-							}
+				let url = marker.remoteCodeUrl;
+				if (
+					!url &&
+					range &&
+					range.start !== undefined &&
+					range.end !== undefined &&
+					providerCardRequest.remotes !== undefined &&
+					providerCardRequest.remotes.length !== 0
+				) {
+					for (const remote of providerCardRequest.remotes) {
+						url = Marker.getRemoteCodeUrl(
+							remote,
+							marker.commitHashWhenCreated,
+							marker.file,
+							range.start.line + 1,
+							range.end.line + 1
+						);
+
+						if (url !== undefined) {
+							break;
 						}
 					}
-					if (url) {
-						const link = Strings.interpolate(delimiters.anchorFormat, {
-							text: `Open on ${url.displayName}`,
-							url: url.url
-						});
-						if (link) {
-							links.push(link);
-						}
+				}
+				if (url) {
+					if (!url.displayName) {
+						url.displayName = getProviderDisplayName(url.name) || "";
+					}
+					const link = Strings.interpolate(delimiters.anchorFormat, {
+						text: `Open on ${url.displayName}`,
+						url: url.url
+					});
+					if (link) {
+						links.push(link);
 					}
 				}
 				if (links.length) {

@@ -1275,6 +1275,7 @@ export const Row = styled.div`
 		}
 		&:not(:focus) {
 			cursor: pointer;
+			border: none !important;
 		}
 		&::placeholder {
 			opacity: 1 !important;

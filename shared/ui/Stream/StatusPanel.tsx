@@ -261,15 +261,15 @@ export const RoundedSearchLink = styled(RoundedLink)`
 		line-height: 16px;
 		margin: 0;
 		#search-input,
-		#pr-search-input {
-			width: 90px;
-			background: transparent !important;
-			font-size: 13px !important;
-			padding: 0 5px !important;
-			margin: 0 0 !important;
-			&:focus {
-				outline: none;
-			}
+		// #pr-search-input {
+		// 	width: 90px;
+		// 	background: transparent !important;
+		// 	font-size: 13px !important;
+		// 	padding: 0 5px !important;
+		// 	margin: 0 0 !important;
+		// 	&:focus {
+		// 		outline: none;
+		// 	}
 		}
 		.icon {
 			float: right;

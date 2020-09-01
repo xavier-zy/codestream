@@ -1269,13 +1269,15 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 		// has started or completed the review.
 
 		// see: https://docs.github.com/en/github/searching-for-information-on-github/searching-issues-and-pull-requests
-		const promises = Promise.all([
+		const items = await Promise.all([
 			this.client.request<any>(query(`${repoQuery}${isOpenQuery}is:pr author:@me`)),
 			this.client.request<any>(query(`${repoQuery}${isOpenQuery}is:pr assignee:@me`)),
 			this.client.request<any>(query(`${repoQuery}${isOpenQuery}is:pr review-requested:@me`)),
 			this.client.request<any>(query(`${repoQuery}${isOpenQuery}is:pr reviewed-by:@me`))
-		]);
-		const items = await promises;
+		]).catch(ex => {
+			Logger.error(ex);
+			throw new Error(ex.response ? JSON.stringify(ex.response) : ex.message);
+		});
 
 		for (const item of items) {
 			if (item && item.search && item.search.edges) {

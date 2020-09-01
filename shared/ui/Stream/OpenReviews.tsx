@@ -141,14 +141,21 @@ export function OpenReviews(props: Props) {
 	const fetchPRs = async (options?: { force?: boolean }) => {
 		setIsLoadingPRs(true);
 		// FIXME hardcoded github
-		const response: any = await dispatch(getMyPullRequests("github*com", options));
-		if (response && response.length) {
-			HostApi.instance.track("PR List Rendered", {
-				"PR Count": response.length
-			});
-			setPRs(response);
+		try {
+			const response: any = await dispatch(getMyPullRequests("github*com", options, true));
+			if (response && response.length) {
+				HostApi.instance.track("PR List Rendered", {
+					"PR Count": response.length
+				});
+				setPRs(response);
+			}
+		} catch (ex) {
+			if (ex && ex.indexOf('"message":"Bad credentials"') > -1) {
+				// show message about re-authing?
+			}
+		} finally {
+			setIsLoadingPRs(false);
 		}
-		setIsLoadingPRs(false);
 	};
 
 	useDidMount(() => {

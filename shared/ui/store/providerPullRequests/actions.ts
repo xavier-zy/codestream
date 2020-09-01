@@ -140,10 +140,11 @@ export const removeFromMyPullRequests = (providerId: string, id: string) =>
 		id
 	});
 
-export const getMyPullRequests = (providerId: string, options?: { force?: boolean }) => async (
-	dispatch,
-	getState: () => CodeStreamState
-) => {
+export const getMyPullRequests = (
+	providerId: string,
+	options?: { force?: boolean },
+	throwOnError?: boolean
+) => async (dispatch, getState: () => CodeStreamState) => {
 	try {
 		let force = false;
 		if (!options || !options.force) {
@@ -175,6 +176,10 @@ export const getMyPullRequests = (providerId: string, options?: { force?: boolea
 		dispatch(_addMyPullRequests(providerId, response));
 		return response;
 	} catch (error) {
+		if (throwOnError) {
+			throw error;
+		}
+		// callee is handling, let them handle any logging
 		logError(`failed to get my pullRequests: ${error}`, { providerId });
 	}
 	return undefined;

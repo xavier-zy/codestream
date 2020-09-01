@@ -412,7 +412,7 @@ export class ThirdPartyProviderRegistry {
 			Logger.error(ex, "executeMethod failed", {
 				method: request.method
 			});
-			throw new Error(`Failed to ${request.method} ${ex.message}`);
+			throw ex;
 		}
 		return result;
 	}

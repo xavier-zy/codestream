@@ -146,9 +146,9 @@ export function OpenReviews(props: Props) {
 			HostApi.instance.track("PR List Rendered", {
 				"PR Count": response.length
 			});
+			setPRs(response);
 		}
 		setIsLoadingPRs(false);
-		setPRs(response);
 	};
 
 	useDidMount(() => {

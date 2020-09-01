@@ -116,6 +116,8 @@ interface ConnectedProps {
 	teamTagsHash: any;
 	codeWasDeleted?: boolean;
 	codeWillExist?: boolean;
+	missingCanonicalCommit?: boolean;
+	codeNotInCurrentBranch?: boolean;
 	textEditorUri: string;
 	jumpToMarkerId?: string;
 	currentMarkerId?: string;
@@ -1197,6 +1199,8 @@ export class Codemark extends React.Component<Props, State> {
 			selected,
 			codeWasDeleted,
 			codeWillExist,
+			missingCanonicalCommit,
+			codeNotInCurrentBranch,
 			author,
 			marker,
 			isRepositioning,
@@ -1313,6 +1317,8 @@ export class Codemark extends React.Component<Props, State> {
 				codemark.status === "closed" ||
 				codeWasDeleted ||
 				codeWillExist ||
+				missingCanonicalCommit ||
+				codeNotInCurrentBranch ||
 				// @ts-ignore
 				(marker && marker.notLocatedReason));
 
@@ -1398,6 +1404,14 @@ export class Codemark extends React.Component<Props, State> {
 								<div>
 									This codemark refers to code that will exist on a future version of this file.
 								</div>
+							)}
+							{missingCanonicalCommit && (
+								<div>
+									This codemark refers to code that does not exist in the local git repository.
+								</div>
+							)}
+							{codeNotInCurrentBranch && (
+								<div>This codemark refers to code that does not exist in the current branch.</div>
 							)}
 						</div>
 					)}
@@ -1833,6 +1847,14 @@ const mapStateToProps = (state: CodeStreamState, props: InheritedProps): Connect
 		meta &&
 		meta.entirelyDeleted &&
 		(meta.isAncestor || (meta.createdAtCurrentCommit && marker.creatorId !== state.session.userId));
+	const missingCanonicalCommit =
+		!codeWasDeleted &&
+		!codeWillExist &&
+		meta &&
+		meta.entirelyDeleted &&
+		meta.canonicalCommitDoesNotExist;
+	const codeNotInCurrentBranch =
+		meta && meta.entirelyDeleted && !missingCanonicalCommit && !codeWillExist && !codeWasDeleted;
 
 	const author = (() => {
 		if (codemark != undefined) {
@@ -1872,6 +1894,8 @@ const mapStateToProps = (state: CodeStreamState, props: InheritedProps): Connect
 		teamTagsHash,
 		codeWasDeleted,
 		codeWillExist,
+		missingCanonicalCommit,
+		codeNotInCurrentBranch,
 		textEditorUri: editorContext.textEditorUri || "",
 		isRepositioning: context.isRepositioning,
 		moveMarkersEnabled: isFeatureEnabled(state, "moveMarkers2")

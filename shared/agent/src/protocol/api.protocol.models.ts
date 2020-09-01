@@ -110,6 +110,7 @@ export interface CSLocationMeta {
 	contentChanged?: boolean;
 	isAncestor?: boolean;
 	isDescendant?: boolean;
+	canonicalCommitDoesNotExist?: boolean;
 }
 
 export type CSLocationArray = [number, number, number, number, CSLocationMeta | undefined];

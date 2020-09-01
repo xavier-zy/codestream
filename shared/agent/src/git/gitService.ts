@@ -1266,6 +1266,20 @@ export class GitService implements IGitService, Disposable {
 		}
 	}
 
+	async commitExists(repoPath: string, commit: string): Promise<boolean> {
+		try {
+			await git(
+				{ cwd: repoPath, throwRawExceptions: true },
+				"cat-file",
+				"-e",
+				`${commit}^{commit}`
+			);
+			return true;
+		} catch (err) {
+			return false;
+		}
+	}
+
 	getRepositories(): Promise<Iterable<GitRepository>> {
 		return this._repositories.get();
 	}

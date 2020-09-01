@@ -1,7 +1,6 @@
 "use strict";
 import { applyPatch, createPatch, ParsedDiff, parsePatch, structuredPatch } from "diff";
 import * as path from "path";
-import { TextDocumentIdentifier } from "vscode-languageserver";
 import { URI } from "vscode-uri";
 import { MarkerLocation, MarkerLocationsById } from "../api/extensions";
 import { getCache } from "../cache";
@@ -9,7 +8,7 @@ import { Container, SessionContainer } from "../container";
 import { GitRepository } from "../git/models/repository";
 import { Logger } from "../logger";
 import { calculateLocation, calculateLocations } from "../markerLocation/calculator";
-import { MarkerNotLocatedReason, ReportingMessageType } from "../protocol/agent.protocol";
+import { MarkerNotLocatedReason } from "../protocol/agent.protocol";
 import {
 	CSLocationArray,
 	CSMarker,
@@ -23,6 +22,7 @@ import { ManagerBase } from "./baseManager";
 import { IndexParams, IndexType } from "./cache";
 import { getValues, KeyValue } from "./cache/baseCache";
 import { Id } from "./entityManager";
+
 export interface Markerish {
 	id: string;
 	referenceLocations: CSReferenceLocation[];
@@ -277,7 +277,7 @@ export class MarkerLocationManager extends ManagerBase<CSMarkerLocations> {
 		for (const marker of markers) {
 			const location = result.locations[marker.id];
 			if (!location) continue;
-			if (location.meta == undefined) location.meta = {};
+			const meta = location.meta || (location.meta = {});
 			if (
 				marker.referenceLocations &&
 				marker.referenceLocations.length &&
@@ -294,7 +294,7 @@ export class MarkerLocationManager extends ManagerBase<CSMarkerLocations> {
 					lineStartWhenCreated !== lineEndWhenCreated ||
 					colStartWhenCreated !== colEndWhenCreated
 				) {
-					location.meta.entirelyDeleted = true;
+					meta.entirelyDeleted = true;
 				}
 			}
 
@@ -303,7 +303,15 @@ export class MarkerLocationManager extends ManagerBase<CSMarkerLocations> {
 				canonicalLocation?.commitHash === fileCurrentCommitHash ||
 				canonicalLocation?.flags?.baseCommit === fileCurrentCommitHash
 			) {
-				location.meta.createdAtCurrentCommit = true;
+				meta.createdAtCurrentCommit = true;
+			}
+
+			if (!meta.isAncestor && !meta.isDescendant && !meta.createdAtCurrentCommit) {
+				const canonicalCommit =
+					canonicalLocation?.commitHash || canonicalLocation?.flags?.baseCommit;
+				if (canonicalCommit) {
+					meta.canonicalCommitDoesNotExist = !(await git.commitExists(repoRoot, canonicalCommit));
+				}
 			}
 		}
 
@@ -445,7 +453,7 @@ export class MarkerLocationManager extends ManagerBase<CSMarkerLocations> {
 		const repoRoot = await git.getRepoRoot(filePath);
 		const diffsByCommitHash: Map<
 			string,
-			{ diff: ParsedDiff; isAncestor: boolean; isDescendant: boolean }
+			{ diff: ParsedDiff; isAncestor: boolean; isDescendant?: boolean }
 		> = new Map();
 		const locationsByCommitHash: Map<string, MarkerLocationsById> = new Map();
 		let fetchIfCommitNotFound = true;
@@ -477,13 +485,10 @@ export class MarkerLocationManager extends ManagerBase<CSMarkerLocations> {
 							diff
 						);
 
+						const meta = calculatedLocation.meta || (calculatedLocation.meta = {});
+						meta.isAncestor = await git.isAncestor(repoRoot!, commitHash, baseCommit);
 						if (referenceLocation.flags.canonical) {
-							const isAncestor = await git.isAncestor(repoRoot!, commitHash, baseCommit);
-							const isDescendant = await git.isAncestor(repoRoot!, baseCommit, commitHash);
-							const meta = calculatedLocation.meta || (calculatedLocation.meta = {});
-							meta.isAncestor = isAncestor;
-							meta.isDescendant = isDescendant;
-
+							meta.isDescendant = await git.isAncestor(repoRoot!, baseCommit, commitHash);
 							Logger.log(
 								`MARKERS: saving location calculated from canonical reference for missing marker ${missingMarker.id}`
 							);
@@ -510,7 +515,9 @@ export class MarkerLocationManager extends ManagerBase<CSMarkerLocations> {
 					fetchIfCommitNotFound = false;
 					if (diff) {
 						const isAncestor = await git.isAncestor(repoRoot!, commitHash, referenceCommitHash);
-						const isDescendant = await git.isAncestor(repoRoot!, referenceCommitHash, commitHash);
+						const isDescendant =
+							referenceLocation.flags.canonical &&
+							(await git.isAncestor(repoRoot!, referenceCommitHash, commitHash));
 						diffsByCommitHash.set(referenceCommitHash, { diff, isAncestor, isDescendant });
 						if (!locationsByCommitHash.has(referenceCommitHash)) {
 							locationsByCommitHash.set(referenceCommitHash, {});

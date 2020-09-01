@@ -752,6 +752,7 @@ export const PRActionIcons = styled.div`
 	margin-left: auto;
 	align-items: top;
 	text-align: right;
+	display: flex;
 	.pending,
 	.member,
 	.author {

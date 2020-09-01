@@ -1588,7 +1588,7 @@ class CodemarkForm extends React.Component<Props, State> {
 				placeholder={placeholder}
 				multiCompose
 				onChange={this.handleChange}
-				withTags
+				withTags={!this.props.textEditorUriHasPullRequestContext}
 				toggleTag={this.handleToggleTag}
 				toggleCodemark={this.handleToggleCodemark}
 				shouldShowRelatableCodemark={codemark =>
@@ -1596,7 +1596,7 @@ class CodemarkForm extends React.Component<Props, State> {
 				}
 				onSubmit={this.props.currentPullRequestId ? undefined : this.handleClickSubmit}
 				selectedTags={this.state.selectedTags}
-				relatedCodemarkIds={this.state.relatedCodemarkIds}
+				relatedCodemarkIds={this.props.textEditorUriHasPullRequestContext ? undefined : this.state.relatedCodemarkIds}
 				__onDidRender={__onDidRender}
 			/>
 		);

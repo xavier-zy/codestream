@@ -836,6 +836,13 @@ export class CodeStreamSession {
 			});
 		});
 
+		SessionContainer.instance().git.onGitWorkspaceChanged(data => {
+			SessionContainer.instance().session.agent.sendNotification(DidChangeDataNotificationType, {
+				type: ChangeDataType.Workspace,
+				data: data
+			});
+		});
+
 		// Initialize tracking
 		this.initializeTelemetry(response.user, currentTeam, response.companies);
 

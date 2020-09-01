@@ -18,7 +18,9 @@ import {
 	MoveThirdPartyCardRequestType,
 	GetReposScmRequestType,
 	ReposScm,
-	UpdateThirdPartyStatusRequestType
+	UpdateThirdPartyStatusRequestType,
+	DidChangeDataNotificationType,
+	ChangeDataType
 } from "@codestream/protocols/agent";
 import IssueDropdown, { Row } from "./CrossPostIssueControls/IssueDropdown";
 import { ConfigureBranchNames } from "./ConfigureBranchNames";
@@ -617,6 +619,15 @@ export const StatusPanel = () => {
 		});
 		if (derivedState.webviewFocused)
 			HostApi.instance.track("Page Viewed", { "Page Name": "Status Tab" });
+
+		const disposable = HostApi.instance.on(DidChangeDataNotificationType, async (e: any) => {
+			if (e.type === ChangeDataType.Workspace) {
+				await getBranches();
+			}
+		});
+		return () => {
+			disposable && disposable.dispose();
+		};
 	});
 
 	const showMoveCardCheckbox = React.useMemo(() => {

@@ -58,7 +58,8 @@ export enum ChangeDataType {
 	Unreads = "unreads",
 	Users = "users",
 	Providers = "providers",
-	ApiCapabilities = "apiCapabilities"
+	ApiCapabilities = "apiCapabilities",
+	Workspace = "workspace"
 }
 
 export interface CodemarksChangedNotification {
@@ -153,15 +154,22 @@ export interface CommitsChangedData {
 	type: string;
 	path: string;
 	repo: {
-		id: string | undefined
-		path: string
-		normalizedPath: string
+		id: string | undefined;
+		path: string;
+		normalizedPath: string;
 	};
 }
+
+export interface WorkspaceChangedData {}
 
 export interface CommitsChangedNotification {
 	type: ChangeDataType.Commits;
 	data: CommitsChangedData;
+}
+
+export interface WorkspaceChangedNotification {
+	type: ChangeDataType.Workspace;
+	data: WorkspaceChangedData;
 }
 
 export type DidChangeDataNotification =
@@ -180,7 +188,8 @@ export type DidChangeDataNotification =
 	| ProvidersChangedNotification
 	| ApiCapabilitiesChangedNotification
 	| DocumentsChangedNotification
-	| CommitsChangedNotification;
+	| CommitsChangedNotification
+	| WorkspaceChangedNotification;
 
 export const DidChangeDataNotificationType = new NotificationType<DidChangeDataNotification, void>(
 	"codestream/didChangeData"

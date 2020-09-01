@@ -2,7 +2,7 @@
 import { createPatch, ParsedDiff, parsePatch } from "diff";
 import * as fs from "fs";
 import * as path from "path";
-import { CommitsChangedData } from "protocol/agent.protocol";
+import { CommitsChangedData, WorkspaceChangedData } from "protocol/agent.protocol";
 import { Disposable, Event } from "vscode-languageserver";
 import { URI } from "vscode-uri";
 import { Logger } from "../logger";
@@ -114,6 +114,13 @@ export class GitService implements IGitService, Disposable {
 	 */
 	get onRepositoryChanged(): Event<CommitsChangedData> {
 		return this._repositories.onGitChanged;
+	}
+
+	/**
+	 * Fires when a workspace has changed (folders added or removed, though not on first initialization)
+	 */
+	get onGitWorkspaceChanged(): Event<WorkspaceChangedData> {
+		return this._repositories.onWorkspaceDidChange;
 	}
 
 	async getFileAuthors(uri: URI, options?: BlameOptions): Promise<GitAuthor[]>;

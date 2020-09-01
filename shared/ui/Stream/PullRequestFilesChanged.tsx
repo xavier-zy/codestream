@@ -189,7 +189,7 @@ export const PullRequestFilesChanged = (props: {
 		let repoRoot = currentRepoRoot;
 		if (!repoRoot) {
 			const response = await HostApi.instance.send(GetReposScmRequestType, {
-				inEditorOnly: true
+				inEditorOnly: false
 			});
 			if (!response.repositories) return;
 			const currentRepoInfo = response.repositories.find(
@@ -201,10 +201,14 @@ export const PullRequestFilesChanged = (props: {
 			}
 		}
 
-		HostApi.instance.send(EditorRevealRangeRequestType, {
+		const result = await HostApi.instance.send(EditorRevealRangeRequestType, {
 			uri: path.join(repoRoot, f.file),
 			range: Range.create(0, 0, 0, 0)
 		});
+
+		if (!result.success) {
+			setErrorMessage("Could not open file");
+		}
 
 		if (props.withTelemetry && pr.id) {
 			HostApi.instance.track("PR File Viewed", {

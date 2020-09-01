@@ -56,7 +56,8 @@ import { PullRequestFinishReview } from "./PullRequestFinishReview";
 import {
 	getPullRequestConversationsFromProvider,
 	clearPullRequestFiles,
-	getPullRequestConversations
+	getPullRequestConversations,
+	clearPullRequestCommits
 } from "../store/providerPullRequests/actions";
 import { confirmPopup } from "./Confirm";
 
@@ -213,8 +214,9 @@ export const PullRequest = () => {
 		)) as any;
 		_assignState(response);
 
-		// just clear the files data -- it will be fetched if necessary (since it has its own api call)
+		// just clear the files and commits data -- it will be fetched if necessary (since it has its own api call)
 		dispatch(clearPullRequestFiles(providerId, derivedState.currentPullRequestId!));
+		dispatch(clearPullRequestCommits(providerId, derivedState.currentPullRequestId!));
 	};
 
 	const checkout = async () => {

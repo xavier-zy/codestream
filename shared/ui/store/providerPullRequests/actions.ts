@@ -8,7 +8,8 @@ import {
 	ExecuteThirdPartyTypedType,
 	ExecuteThirdPartyTypedRequest,
 	GetMyPullRequestsRequest,
-	GetMyPullRequestsResponse
+	GetMyPullRequestsResponse,
+	FetchThirdPartyPullRequestCommitsType
 } from "@codestream/protocols/agent";
 import { CodeStreamState } from "..";
 import { RequestType } from "vscode-languageserver-protocol";
@@ -179,46 +180,51 @@ export const getMyPullRequests = (providerId: string, options?: { force?: boolea
 	return undefined;
 };
 
-// TODO implement these
-// export const getPullRequestCommitsFromProvider = (
-// 	providerId: string,
-// 	id: string
-// ) => async dispatch => {
-// 	try {
-// 		const response = await HostApi.instance.send(FetchThirdPartyPullRequestRequestType, {
-// 			providerId: providerId,
-// 			pullRequestId: id
-// 		});
-// 		dispatch(_addPullRequestFiles(providerId, id, response));
-// 		return response;
-// 	} catch (error) {
-// 		logError(`failed to refresh pullRequest commits: ${error}`, { providerId, id });
-// 	}
-// 	return undefined;
-// };
+export const clearPullRequestCommits = (providerId: string, id: string) =>
+	action(ProviderPullRequestActionsTypes.ClearPullRequestCommits, {
+		providerId,
+		id
+	});
 
-// export const getPullRequestCommits = (providerId: string, id: string) => async (
-// 	dispatch,
-// 	getState: () => CodeStreamState
-// ) => {
-// 	try {
-// 		const state = getState();
-// 		const provider = state.providerPullRequests.pullRequests[providerId];
-// 		if (provider) {
-// 			const pr = provider[id];
-// 			if (pr && pr.commits) {
-// 				console.log(`fetched pr from store providerId=${providerId} id=${id}`);
-// 				return pr.commits;
-// 			}
-// 		}
-// 		const response = await HostApi.instance.send(FetchThirdPartyPullRequestRequestType, {
-// 			providerId: providerId,
-// 			pullRequestId: id
-// 		});
-// 		dispatch(_addPullRequestFiles(providerId, id, response));
-// 		return response;
-// 	} catch (error) {
-// 		logError(`failed to get pullRequest files: ${error}`, { providerId, id });
-// 	}
-// 	return undefined;
-// };
+export const getPullRequestCommitsFromProvider = (
+	providerId: string,
+	id: string
+) => async dispatch => {
+	try {
+		const response = await HostApi.instance.send(FetchThirdPartyPullRequestCommitsType, {
+			providerId,
+			pullRequestId: id
+		});
+		dispatch(_addPullRequestCommits(providerId, id, response));
+		return response;
+	} catch (error) {
+		logError(`failed to refresh pullRequest commits: ${error}`, { providerId, id });
+	}
+	return undefined;
+};
+
+export const getPullRequestCommits = (providerId: string, id: string) => async (
+	dispatch,
+	getState: () => CodeStreamState
+) => {
+	try {
+		const state = getState();
+		const provider = state.providerPullRequests.pullRequests[providerId];
+		if (provider) {
+			const pr = provider[id];
+			if (pr && pr.commits && pr.commits.length) {
+				console.log(`fetched pullRequest commits from store providerId=${providerId} id=${id}`);
+				return pr.commits;
+			}
+		}
+		const response = await HostApi.instance.send(FetchThirdPartyPullRequestCommitsType, {
+			providerId: providerId,
+			pullRequestId: id
+		});
+		dispatch(_addPullRequestCommits(providerId, id, response));
+		return response;
+	} catch (error) {
+		logError(`failed to get pullRequest commits: ${error}`, { providerId, id });
+	}
+	return undefined;
+};

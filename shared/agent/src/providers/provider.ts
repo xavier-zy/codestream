@@ -24,6 +24,8 @@ import {
 	FetchThirdPartyCardWorkflowResponse,
 	FetchThirdPartyChannelsRequest,
 	FetchThirdPartyChannelsResponse,
+	FetchThirdPartyPullRequestCommitsRequest,
+	FetchThirdPartyPullRequestCommitsResponse,
 	FetchThirdPartyPullRequestRequest,
 	FetchThirdPartyPullRequestResponse,
 	MoveThirdPartyCardRequest,
@@ -94,6 +96,10 @@ export interface ThirdPartyProviderSupportsPullRequests {
 	getPullRequest(
 		request: FetchThirdPartyPullRequestRequest
 	): Promise<FetchThirdPartyPullRequestResponse>;
+
+	getPullRequestCommits(
+		request: FetchThirdPartyPullRequestCommitsRequest
+	): Promise<FetchThirdPartyPullRequestCommitsResponse>;
 }
 
 export namespace ThirdPartyIssueProvider {

@@ -1,4 +1,5 @@
 "use strict";
+import { pull } from "lodash-es";
 import { CSMe } from "protocol/api.protocol";
 import { Logger } from "../logger";
 import {
@@ -35,7 +36,7 @@ import {
 	FetchThirdPartyCardWorkflowResponse,
 	FetchThirdPartyChannelsRequest,
 	FetchThirdPartyChannelsRequestType,
-	FetchThirdPartyChannelsResponse,
+	FetchThirdPartyChannelsResponse, FetchThirdPartyPullRequestCommitsRequest, FetchThirdPartyPullRequestCommitsType,
 	FetchThirdPartyPullRequestRequest,
 	FetchThirdPartyPullRequestRequestType,
 	MoveThirdPartyCardRequest,
@@ -376,6 +377,19 @@ export class ThirdPartyProviderRegistry {
 
 		const pullRequestProvider = this.getPullRequestProvider(provider);
 		const response = await pullRequestProvider.getPullRequest(request);
+		return response;
+	}
+
+	@log()
+	@lspHandler(FetchThirdPartyPullRequestCommitsType)
+	async getPullRequestCommits(request: FetchThirdPartyPullRequestCommitsRequest) {
+		const provider = getProvider(request.providerId);
+		if (provider === undefined) {
+			throw new Error(`No registered provider for '${request.providerId}'`);
+		}
+
+		const pullRequestProvider = this.getPullRequestProvider(provider);
+		const response = await pullRequestProvider.getPullRequestCommits(request);
 		return response;
 	}
 

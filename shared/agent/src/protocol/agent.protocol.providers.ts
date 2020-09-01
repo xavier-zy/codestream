@@ -387,20 +387,6 @@ export interface FetchThirdPartyPullRequestPullRequest {
 	createdAt: string;
 	commits: {
 		totalCount: number;
-		nodes: {
-			commit: {
-				abbreviatedOid: string;
-				author: {
-					name: string;
-					avatarUrl: string;
-					user: {
-						login: string;
-					};
-				};
-				message: string;
-				authoredDate: string;
-			};
-		}[];
 	};
 	files: {
 		totalCount: number;
@@ -534,13 +520,15 @@ export interface FetchThirdPartyPullRequestRepository {
 	providerId: string;
 }
 
+interface RateLimit {
+	limit: any;
+	cost: any;
+	remaining: any;
+	resetAt: any;
+}
+
 export interface FetchThirdPartyPullRequestResponse {
-	rateLimit: {
-		limit: any;
-		cost: any;
-		remaining: any;
-		resetAt: any;
-	};
+	rateLimit: RateLimit;
 	repository: FetchThirdPartyPullRequestRepository;
 	viewer: {
 		id: string;
@@ -555,6 +543,38 @@ export const FetchThirdPartyPullRequestRequestType = new RequestType<
 	void,
 	void
 >("codestream/provider/pullrequest");
+
+export interface FetchThirdPartyPullRequestCommitsRequest {
+	providerId: string;
+	pullRequestId: string;
+}
+
+export interface FetchThirdPartyPullRequestCommitsResponse {
+	abbreviatedOid: string;
+	author: {
+		name: string;
+		avatarUrl: string;
+		user: {
+			login: string;
+		};
+	};
+	committer: {
+		avatarUrl: string;
+		name: string;
+		user: {
+			login: string;
+		};
+	};
+	message: string;
+	authoredDate: string;
+}
+
+export const FetchThirdPartyPullRequestCommitsType = new RequestType<
+	FetchThirdPartyPullRequestCommitsRequest,
+	FetchThirdPartyPullRequestCommitsResponse[],
+	void,
+	void
+>("codestream/provider/pullrequestcommits");
 
 export interface ExecuteThirdPartyRequest {
 	method: string;

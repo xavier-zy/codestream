@@ -1,4 +1,9 @@
-import React from "react";
+import { LoadingMessage } from "@codestream/webview/src/components/LoadingMessage";
+import { CodeStreamState } from "@codestream/webview/store";
+import { getPullRequestCommits } from "@codestream/webview/store/providerPullRequests/actions";
+import { useDidMount } from "@codestream/webview/utilities/hooks";
+import React, { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { isFeatureEnabled } from "../store/apiVersioning/reducer";
 import Icon from "./Icon";
 import Timestamp from "./Timestamp";
@@ -94,19 +99,70 @@ const PRCommitButtons = styled.div`
 
 export const PullRequestCommitsTab = props => {
 	const { pr, ghRepo } = props;
-
-	const byDay = groupBy(pr.commits.nodes, _ => {
-		return new Intl.DateTimeFormat("en", {
-			day: "numeric",
-			month: "short",
-			year: "numeric"
-		}).format(new Date(_.commit.authoredDate).getTime());
+	const dispatch = useDispatch();
+	const derivedState = useSelector((state: CodeStreamState) => {
+		return {
+			providerPullRequests: state.providerPullRequests.pullRequests,
+			currentPullRequestId: state.context.currentPullRequestId
+		};
 	});
 
-	console.warn("DOMMITRS: ", byDay);
+	const [isLoading, setIsLoading] = useState(true);
+	const [commits, setCommits] = useState<any>({});
+
+	const _mapData = data => {
+		const commitsByDay = groupBy(data, _ => {
+			return new Intl.DateTimeFormat("en", {
+				day: "numeric",
+				month: "short",
+				year: "numeric"
+			}).format(new Date(_.authoredDate).getTime());
+		});
+
+		setCommits(commitsByDay);
+		setIsLoading(false);
+	};
+
+	useEffect(() => {
+		(async () => {
+			const data = await dispatch(
+				getPullRequestCommits(pr.providerId, derivedState.currentPullRequestId!)
+			);
+			_mapData(data);
+		})();
+	}, [derivedState.providerPullRequests]);
+
+	useDidMount(() => {
+		setIsLoading(true);
+		(async () => {
+			const data = await dispatch(
+				getPullRequestCommits(pr.providerId, derivedState.currentPullRequestId!)
+			);
+			_mapData(data);
+		})();
+	});
+
+	if (isLoading)
+		return (
+			<div style={{ marginTop: "100px" }}>
+				<LoadingMessage>Loading Changed Files...</LoadingMessage>
+			</div>
+		);
+
+	// if (!commits || !commits.length) return null;
+
+	// const byDay = groupBy(pr.commits.nodes, _ => {
+	// 	return new Intl.DateTimeFormat("en", {
+	// 		day: "numeric",
+	// 		month: "short",
+	// 		year: "numeric"
+	// 	}).format(new Date(_.commit.authoredDate).getTime());
+	// });
+
+	console.warn("DOMMITRS: ", commits);
 	return (
 		<PRCommitContent>
-			{Object.keys(byDay).map((day, index) => {
+			{Object.keys(commits).map((day, index) => {
 				return (
 					<div key={index}>
 						<PRCommitDay>
@@ -114,11 +170,11 @@ export const PullRequestCommitsTab = props => {
 							Commits on {day}
 						</PRCommitDay>
 						<div>
-							{byDay[day].map((_, index) => {
-								const { author, committer } = _.commit;
+							{commits[day].map((commit, index) => {
+								const { author, committer } = commit;
 								return (
 									<PRCommitCard key={index}>
-										<h1>{_.commit.message}</h1>
+										<h1>{commit.message}</h1>
 										{author.name !== committer.name && (
 											<>
 												<PRHeadshotName className="no-padding" person={author} />
@@ -128,15 +184,15 @@ export const PullRequestCommitsTab = props => {
 										)}
 										<PRHeadshotName className="no-padding" person={committer} />
 										<span className="subtle"> committed</span>
-										<Timestamp time={_.commit.authoredDate} relative />
+										<Timestamp time={commit.authoredDate} relative />
 										<PRCommitButtons>
 											<Tooltip title="View commit on GitHub" placement="bottom">
 												<span>
 													<Link
-														href={`${pr.url}/commits/${_.commit.abbreviatedOid}`}
+														href={`${pr.url}/commits/${commit.abbreviatedOid}`}
 														className="monospace"
 													>
-														{_.commit.abbreviatedOid}
+														{commit.abbreviatedOid}
 													</Link>
 												</span>
 											</Tooltip>
@@ -145,10 +201,10 @@ export const PullRequestCommitsTab = props => {
 												placement="bottom"
 												name="copy"
 												className="clickable"
-												onClick={() => copy(_.commit.abbreviatedOid)}
+												onClick={() => copy(commit.abbreviatedOid)}
 											/>
 											<Link
-												href={pr.url.replace(/\/pull\/\d+$/, `/tree/${_.commit.abbreviatedOid}`)}
+												href={pr.url.replace(/\/pull\/\d+$/, `/tree/${commit.abbreviatedOid}`)}
 											>
 												<Icon
 													title="Browse the repository at this point in the history on GitHub"

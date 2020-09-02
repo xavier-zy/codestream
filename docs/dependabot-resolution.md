@@ -40,6 +40,10 @@ git push --force-with-lease
 
 Continue on and decide if you want to auto accept the PR or deal with it manually.
 
+You can check on the dependency chain with `npm ls <packageName>`.
+
+If for some reason you cannot update a nested dependency, you can try uninstalling and then installing it again.
+
 ### Notes
 
 Any dependabot pull requests that change the `package-lock.json` file are _usually_ low risk\*

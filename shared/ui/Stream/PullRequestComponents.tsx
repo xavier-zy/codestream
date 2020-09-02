@@ -750,7 +750,7 @@ export const PRFoot = styled.div`
 
 export const PRActionIcons = styled.div`
 	margin-left: auto;
-	align-items: top;
+	align-items: flex-start;
 	text-align: right;
 	display: flex;
 	.pending,

@@ -812,6 +812,8 @@ export const PRCodeCommentBody = styled.div`
 `;
 
 export const PRCodeComment = styled.div`
+	flex-grow: 10;
+	max-width: 100%;
 	pre.code {
 		margin: 10px -16px !important;
 	}

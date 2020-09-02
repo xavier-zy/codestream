@@ -367,6 +367,10 @@ export interface FetchForkPointRequest {
 
 export interface FetchForkPointResponse {
 	sha: string;
+	error?: {
+		message?: string;
+		type: "COMMIT_NOT_FOUND";
+	};
 }
 
 export const FetchForkPointRequestType = new RequestType<

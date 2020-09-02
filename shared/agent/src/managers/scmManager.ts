@@ -1242,18 +1242,37 @@ export class ScmManager {
 				shas.map(sha => git.isValidReference(repoPath as string, sha))
 			);
 			// if no results, or there is at least 1 false, fetch all remotes
-			if (!results || results.find(_ => !_)) {
+			if (!results || results.some(_ => !_)) {
 				Logger.warn(
-					`Could not find shas ${shas.join(" or ")}...fetching all remotes repoPath=${repoPath}`
+					`getForkPointRequestType: Could not find shas ${shas.join(
+						" or "
+					)}...fetching all remotes repoPath=${repoPath}`
 				);
 				await git.fetchAllRemotes(repoPath);
 			}
 
 			const forkPointSha =
 				(await git.getRepoBranchForkPoint(repoPath, request.baseSha, request.headSha)) || "";
-			return {
-				sha: forkPointSha
-			};
+
+			if (!forkPointSha) {
+				Logger.warn(
+					`getForkPointRequestType: Could not find forkpoint for shas ${shas.join(
+						" and "
+					)}. repoPath=${repoPath}`
+				);
+				return {
+					sha: "",
+					error: {
+						type: "COMMIT_NOT_FOUND"
+					}
+				};
+			}
+			if (forkPointSha) {
+				return {
+					sha: forkPointSha
+				};
+			}
+			return undefined;
 		} catch (ex) {
 			Logger.error(ex, cc);
 			debugger;

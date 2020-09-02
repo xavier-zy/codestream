@@ -65,6 +65,7 @@ export const PullRequestFilesChanged = (props: {
 	const [forkPointSha, setForkPointSha] = React.useState("");
 	const [errorMessage, setErrorMessage] = React.useState("");
 	const [loading, setLoading] = React.useState(false);
+	const [isDisabled, setIsDisabled] = React.useState(false);
 
 	const visitFile = (visitedKey: string, index: number) => {
 		const newVisitedFiles = { ...visitedFiles, [visitedKey]: NOW, _latest: index };
@@ -91,10 +92,19 @@ export const PullRequestFilesChanged = (props: {
 						baseSha: props.pr.baseRefOid,
 						headSha: props.pr.headRefOid
 					});
-					if (forkPointResponse && forkPointResponse.sha) {
+
+					if (!forkPointResponse || forkPointResponse.error) {
+						setErrorMessage(
+							forkPointResponse &&
+								forkPointResponse.error &&
+								forkPointResponse.error.type === "COMMIT_NOT_FOUND"
+								? "A commit required to perform this review was not found in the local git repository. Fetch all remotes and try again."
+								: "Could not get fork point."
+						);
+
+						setIsDisabled(true);
+					} else if (forkPointResponse.sha) {
 						setForkPointSha(forkPointResponse.sha);
-					} else {
-						console.warn("Could not find fork point");
 					}
 				} catch (ex) {
 					console.error(ex);
@@ -251,9 +261,9 @@ export const PullRequestFilesChanged = (props: {
 					<ChangesetFile
 						selected={selected}
 						icon={icon && <Icon name={icon} className={iconClass} />}
-						noHover={loading}
+						noHover={isDisabled || loading}
 						onClick={
-							loading
+							isDisabled || loading
 								? undefined
 								: async e => {
 										e.preventDefault();
@@ -261,7 +271,8 @@ export const PullRequestFilesChanged = (props: {
 								  }
 						}
 						actionIcons={
-							!loading && (
+							!loading &&
+							!isDisabled && (
 								<div className="actions">
 									<Icon
 										name="goto-file"
@@ -297,60 +308,60 @@ export const PullRequestFilesChanged = (props: {
 			</div>
 		);
 	}
-	if (changedFiles.length > 1) {
-		const isMacintosh = navigator.appVersion.includes("Macintosh");
-		const nextFileKeyboardShortcut = () => (isMacintosh ? `⌥ F6` : "Alt-F6");
-		const previousFileKeyboardShortcut = () => (isMacintosh ? `⇧ ⌥ F6` : "Shift-Alt-F6");
-		return (
-			<Meta id="changed-files">
-				<MetaLabel>
-					{pr.files.totalCount} Changed Files
-					<MetaIcons>
-						<Icon
-							onClick={nextFile}
-							name="arrow-down"
-							className="clickable"
-							placement="top"
-							delay={1}
-							title={
-								derivedState.isInVscode && (
-									<span>
-										Next File <span className="keybinding">{nextFileKeyboardShortcut()}</span>
-									</span>
-								)
-							}
-						/>
-						<Icon
-							onClick={prevFile}
-							name="arrow-up"
-							className="clickable"
-							placement="top"
-							delay={1}
-							title={
-								derivedState.isInVscode && (
-									<span>
-										Previous File{" "}
-										<span className="keybinding">{previousFileKeyboardShortcut()}</span>
-									</span>
-								)
-							}
-						/>
-					</MetaIcons>
-				</MetaLabel>
-				{changedFiles}
-			</Meta>
-		);
-	} else {
-		return (
-			<>
-				{errorMessage && (
-					<div style={{ margin: "10px 0 10px 0" }}>
-						<Icon name="alert" className="margin-right" />
-						{errorMessage}
-					</div>
-				)}
-				{changedFiles}
-			</>
-		);
-	}
+
+	const isMacintosh = navigator.appVersion.includes("Macintosh");
+	const nextFileKeyboardShortcut = () => (isMacintosh ? `⌥ F6` : "Alt-F6");
+	const previousFileKeyboardShortcut = () => (isMacintosh ? `⇧ ⌥ F6` : "Shift-Alt-F6");
+
+	return (
+		<>
+			{changedFiles.length > 1 && (
+				<Meta id="changed-files">
+					<MetaLabel>
+						{pr.files.totalCount} Changed Files
+						{!isDisabled && (
+							<MetaIcons>
+								<Icon
+									onClick={nextFile}
+									name="arrow-down"
+									className="clickable"
+									placement="top"
+									delay={1}
+									title={
+										derivedState.isInVscode && (
+											<span>
+												Next File <span className="keybinding">{nextFileKeyboardShortcut()}</span>
+											</span>
+										)
+									}
+								/>
+								<Icon
+									onClick={prevFile}
+									name="arrow-up"
+									className="clickable"
+									placement="top"
+									delay={1}
+									title={
+										derivedState.isInVscode && (
+											<span>
+												Previous File{" "}
+												<span className="keybinding">{previousFileKeyboardShortcut()}</span>
+											</span>
+										)
+									}
+								/>
+							</MetaIcons>
+						)}
+					</MetaLabel>
+				</Meta>
+			)}
+			{errorMessage && (
+				<div style={{ margin: "10px 0 10px 0" }}>
+					<Icon name="alert" className="margin-right" />
+					{errorMessage}
+				</div>
+			)}
+			{changedFiles}
+		</>
+	);
 };

@@ -1302,6 +1302,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 					node(id:$pullRequestId) {
 						... on PullRequest {
 							updatedAt
+							mergeable
 						  }
 						}
 				  }`,
@@ -1310,7 +1311,8 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 			}
 		);
 		return {
-			updatedAt: response && response.node ? response.node.updatedAt : undefined
+			updatedAt: response && response.node ? response.node.updatedAt : undefined,
+			mergeable: response && response.node ? response.node.mergeable : undefined
 		};
 	}
 

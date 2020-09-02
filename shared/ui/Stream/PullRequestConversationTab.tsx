@@ -55,6 +55,7 @@ import { PullRequestBottomComment } from "./PullRequestBottomComment";
 import { reduce as _reduce, groupBy as _groupBy, map as _map } from "lodash-es";
 import { removeFromMyPullRequests } from "../store/providerPullRequests/actions";
 import { PullRequestReviewStatus } from "./PullRequestReviewStatus";
+import { autoCheckedMergeabilityStatus } from "./PullRequest";
 
 const Circle = styled.div`
 	width: 12px;
@@ -143,6 +144,8 @@ export const PullRequestConversationTab = (props: {
 	setIsLoadingMessage: Function;
 	fetch: Function;
 	ghRepo: any;
+	checkMergeabilityStatus: Function;
+	autoCheckedMergeability: autoCheckedMergeabilityStatus;
 }) => {
 	const { pr, ghRepo, fetch, setIsLoadingMessage } = props;
 	const dispatch = useDispatch();
@@ -909,7 +912,41 @@ export const PullRequestConversationTab = (props: {
 								</div>
 							)}
 						</PRCommentCard>
-					) : !pr.merged && (pr.mergeable === "CONFLICTING" || pr.mergeable === "UNKNOWN") ? (
+					) : !pr.merged && pr.mergeable === "UNKNOWN" ? (
+						<PRCommentCard>
+							<PRStatusHeadshot className="gray-background">
+								<Icon name="git-merge" />
+							</PRStatusHeadshot>
+							<div style={{ padding: "5px 0" }}>
+								<PRResolveConflictsRow>
+									<PRIconButton className="gray-background">
+										<Icon name="alert" />
+									</PRIconButton>
+									<div className="middle">
+										{props.autoCheckedMergeability !== "UNKNOWN" && (
+											<h1>Checking the merge status...</h1>
+										)}
+										{props.autoCheckedMergeability === "UNKNOWN" && (
+											<h1>Unable to check the merge status.</h1>
+										)}
+
+										{props.autoCheckedMergeability !== "UNKNOWN" && (
+											<p>This will update automatically</p>
+										)}
+									</div>
+									{props.autoCheckedMergeability === "UNKNOWN" && (
+										<Button
+											className="no-wrap"
+											variant="secondary"
+											onClick={e => props.checkMergeabilityStatus(e)}
+										>
+											Check status
+										</Button>
+									)}
+								</PRResolveConflictsRow>
+							</div>
+						</PRCommentCard>
+					) : !pr.merged && pr.mergeable === "CONFLICTING" ? (
 						<PRCommentCard>
 							<PRStatusHeadshot className="gray-background">
 								<Icon name="git-merge" />

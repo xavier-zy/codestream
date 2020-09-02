@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { CodeStreamState } from "../store";
 import styled from "styled-components";
@@ -21,7 +21,8 @@ import {
 	ExecuteThirdPartyTypedType,
 	SwitchBranchRequestType,
 	DidChangeDataNotificationType,
-	ChangeDataType
+	ChangeDataType,
+	FetchThirdPartyPullRequestResponse
 } from "@codestream/protocols/agent";
 import {
 	PRHeader,
@@ -113,6 +114,8 @@ interface ReposScmPlusName extends ReposScm {
 const EMPTY_HASH = {};
 const EMPTY_ARRAY = [];
 
+export type autoCheckedMergeabilityStatus = "UNCHECKED" | "CHECKED" | "UNKNOWN";
+
 export const PullRequest = () => {
 	const dispatch = useDispatch();
 	const derivedState = useSelector((state: CodeStreamState) => {
@@ -141,8 +144,10 @@ export const PullRequest = () => {
 	const [savingTitle, setSavingTitle] = useState(false);
 	const [title, setTitle] = useState("");
 	const [currentRepoChanged, setCurrentRepoChanged] = useState(false);
-
 	const [finishReviewOpen, setFinishReviewOpen] = useState(false);
+	const [autoCheckedMergeability, setAutoCheckedMergeability] = useState<
+		autoCheckedMergeabilityStatus
+	>("UNCHECKED");
 
 	const exit = async () => {
 		await dispatch(setCurrentPullRequest());
@@ -207,6 +212,7 @@ export const PullRequest = () => {
 	 * @param message
 	 */
 	const reload = async (message?: string) => {
+		console.log("PullRequest is reloading");
 		if (message) setIsLoadingMessage(message);
 		setIsLoadingPR(true);
 		const response = (await dispatch(
@@ -371,11 +377,54 @@ export const PullRequest = () => {
 		initialFetch();
 	});
 
+	const _getPullRequestLastUpdated = async (providerId: string, pullRequestId: string) => {
+		return HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
+			method: "getPullRequestLastUpdated",
+			providerId: providerId,
+			params: {
+				pullRequestId: pullRequestId
+			}
+		});
+	};
+
+	const _checkMergeabilityStatus = async () => {
+		if (!pr) return undefined;
+		try {
+			const response = await _getPullRequestLastUpdated(
+				pr.providerId,
+				derivedState.currentPullRequestId!
+			);
+			if (pr && response && response.mergeable !== pr.mergeable) {
+				console.log(
+					"getPullRequestLastUpdated is updating (mergeable)",
+					pr.mergeable,
+					response.mergeable
+				);
+				reload();
+				return response.mergeable !== "UNKNOWN";
+			}
+		} catch (ex) {
+			console.error(ex);
+		}
+		return undefined;
+	};
+	const checkMergeabilityStatus = useCallback(() => {
+		_checkMergeabilityStatus();
+	}, [pr, derivedState.currentPullRequestId]);
+
 	let interval;
 	let intervalCounter = 0;
 	useEffect(() => {
 		interval && clearInterval(interval);
 		if (pr) {
+			if (autoCheckedMergeability === "UNCHECKED" && pr.mergeable === "UNKNOWN") {
+				console.log("PullRequest pr mergeable is UNKNOWN");
+				setTimeout(() => {
+					_checkMergeabilityStatus().then(_ => {
+						setAutoCheckedMergeability(_ ? "CHECKED" : "UNKNOWN");
+					});
+				}, 5000);
+			}
 			interval = setInterval(async () => {
 				if (intervalCounter >= 120) {
 					interval && clearInterval(interval);
@@ -384,13 +433,10 @@ export const PullRequest = () => {
 					return;
 				}
 				try {
-					const response = await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
-						method: "getPullRequestLastUpdated",
-						providerId: pr.providerId,
-						params: {
-							pullRequestId: derivedState.currentPullRequestId!
-						}
-					});
+					const response = await _getPullRequestLastUpdated(
+						pr.providerId,
+						derivedState.currentPullRequestId!
+					);
 
 					if (pr && response && response.updatedAt !== pr.updatedAt) {
 						console.log(
@@ -415,7 +461,7 @@ export const PullRequest = () => {
 		return () => {
 			interval && clearInterval(interval);
 		};
-	}, [pr]);
+	}, [pr, autoCheckedMergeability]);
 
 	const iAmRequested = useMemo(() => {
 		if (pr) {
@@ -672,6 +718,8 @@ export const PullRequest = () => {
 									pr={pr}
 									ghRepo={ghRepo}
 									fetch={fetch}
+									autoCheckedMergeability={autoCheckedMergeability}
+									checkMergeabilityStatus={checkMergeabilityStatus}
 									setIsLoadingMessage={setIsLoadingMessage}
 								/>
 							)}

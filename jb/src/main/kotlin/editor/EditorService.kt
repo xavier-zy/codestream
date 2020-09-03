@@ -98,7 +98,8 @@ class EditorService(val project: Project) {
         val document = editor.document
         agentService.onDidStart {
             synchronized(managedDocuments) {
-                if (!managedDocuments.contains(document) && document.uri != null) {
+                if (document.uri?.startsWith("file://") != true) return@synchronized
+                if (!managedDocuments.contains(document)) {
                     managedDocuments[document] = DocumentVersion()
                     agentService.agent.textDocumentService.didOpen(
                         DidOpenTextDocumentParams(document.textDocumentItem)
@@ -122,6 +123,7 @@ class EditorService(val project: Project) {
         val document = editor.document
         agentService.onDidStart {
             synchronized(managedDocuments) {
+                if (document.uri?.startsWith("file://") != true) return@synchronized
                 val editors = EditorFactory.getInstance().getEditors(document, project)
                 if (editors.none { it != editor }) {
                     managedDocuments.remove(document)

@@ -4,7 +4,6 @@ import com.codestream.agentService
 import com.codestream.protocols.agent.GetFileContentsAtRevisionParams
 import com.codestream.protocols.agent.GetLocalReviewContentsParams
 import com.codestream.protocols.agent.GetReviewContentsResult
-import com.codestream.protocols.webview.Context
 import com.intellij.diff.DiffDialogHints
 import com.intellij.diff.DiffManagerEx
 import com.intellij.diff.chains.DiffRequestChain
@@ -152,7 +151,7 @@ class ReviewService(private val project: Project) {
         headBranch: String,
         baseSha: String,
         baseBranch: String,
-        context: Context?
+        context: CodeStreamDiffUriContext?
     ) {
         val agent = project.agentService ?: return
 
@@ -172,11 +171,33 @@ class ReviewService(private val project: Project) {
             )
         )
 
+        val leftData = CodeStreamDiffUriData(
+            filePath,
+            repoId,
+            baseBranch,
+            headBranch,
+            baseSha,
+            headSha,
+            "left",
+            context
+        )
+
+        val rightData = CodeStreamDiffUriData(
+            filePath,
+            repoId,
+            baseBranch,
+            headBranch,
+            baseSha,
+            headSha,
+            "right",
+            context
+        )
+
         val leftContent =
-            createRevisionDiffContent(project, repoId, headSha, ReviewDiffSide.LEFT, filePath, headContents.content)
+            createRevisionDiffContent(project, leftData, ReviewDiffSide.LEFT, baseContents.content)
         val rightContent =
-            createRevisionDiffContent(project, repoId, baseSha, ReviewDiffSide.RIGHT, filePath, baseContents.content)
-        val title = "$filePath (${headSha.take(8)}) ⇔ (${baseSha.take(8)})"
+            createRevisionDiffContent(project, rightData, ReviewDiffSide.RIGHT, headContents.content)
+        val title = "$filePath (${baseSha.take(8)}) ⇔ (${headSha.take(8)})"
         val diffRequest = SimpleDiffRequest(title, leftContent, rightContent, filePath, filePath)
         diffRequest.putUserData(REVIEW_DIFF, true)
         val file = SimpleDiffVirtualFile(diffRequest)

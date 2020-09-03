@@ -2,6 +2,7 @@ package com.codestream.protocols.webview
 
 import com.codestream.agent.ApiVersionCompatibility
 import com.codestream.protocols.agent.Marker
+import com.codestream.review.CodeStreamDiffUriContext
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
 import com.google.gson.annotations.SerializedName
@@ -156,14 +157,5 @@ class CompareLocalFilesRequest(
     val headBranch: String,
     val baseSha: String,
     val baseBranch: String,
-    val context: Context?
-)
-
-class Context(
-    val pullRequest: PullRequest
-)
-
-class PullRequest(
-    val providerId: String,
-    val id: String
+    val context: CodeStreamDiffUriContext?
 )

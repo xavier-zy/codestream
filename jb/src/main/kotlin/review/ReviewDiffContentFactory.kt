@@ -33,15 +33,11 @@ fun createReviewDiffContent(
 
 fun createRevisionDiffContent(
     project: Project,
-    repoId: String,
-    sha: String,
+    data: CodeStreamDiffUriData,
     side: ReviewDiffSide,
-    path: String,
     text: String
 ): DocumentContent {
-    val fullPath = "$repoId/$sha/${side.path}/$path"
-
-    return createDiffContent(project, fullPath, side, path, text)
+    return createDiffContent(project, data.toEncodedPath(), side, data.path, text)
 }
 
 fun createDiffContent(

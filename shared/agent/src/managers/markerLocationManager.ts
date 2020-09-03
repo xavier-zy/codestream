@@ -298,9 +298,7 @@ export class MarkerLocationManager extends ManagerBase<CSMarkerLocations> {
 				}
 			}
 
-			const canonicalLocation = marker.referenceLocations?.find(
-				rl => rl.flags && rl.flags.canonical
-			);
+			const canonicalLocation = marker.referenceLocations?.find(rl => rl.flags?.canonical);
 			if (
 				canonicalLocation?.commitHash === fileCurrentCommitHash ||
 				canonicalLocation?.flags?.baseCommit === fileCurrentCommitHash

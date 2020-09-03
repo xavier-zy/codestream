@@ -238,7 +238,15 @@ export class DocumentMarkerManager {
 	}: FetchDocumentMarkersRequest) {
 		const { codemarks, files, markers, reviews, users, posts } = SessionContainer.instance();
 
-		const { reviewId, path, repoId } = ReviewsManager.parseUri(documentId.uri);
+		let parsedUri;
+		try {
+			parsedUri = ReviewsManager.parseUri(documentId.uri);
+		} catch (e) {
+			// we don't currently support getting document markers for PR diffs
+			return emptyResponse;
+		}
+
+		const { reviewId, path, repoId } = parsedUri;
 		if (reviewId === "local") return emptyResponse;
 
 		const stream = (await files.getByRepoId(repoId)).find(f => f.file === path);

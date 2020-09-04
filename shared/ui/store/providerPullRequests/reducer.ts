@@ -115,7 +115,9 @@ export function reduceProviderPullRequests(
 }
 const getRepos = (state: CodeStreamState) => Object.values(state.repos);
 const getProviderPullRequests = (state: CodeStreamState) => state.providerPullRequests;
-const currentPullRequestId = (state: CodeStreamState) => state.context.currentPullRequestId;
+const currentPullRequest = (state: CodeStreamState) => state.context.currentPullRequest;
+const currentPullRequestId = (state: CodeStreamState) =>
+	state.context.currentPullRequest ? state.context.currentPullRequest.id : undefined;
 
 /**
  * Gets the PR object for the currentPullRequestId

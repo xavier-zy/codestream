@@ -18,7 +18,7 @@ const initialState: ContextState = {
 	currentStreamId: "",
 	currentCodemarkId: undefined,
 	createPullRequestReviewId: undefined,
-	currentPullRequestId: undefined,
+	currentPullRequest: undefined,
 	pullRequestCheckoutBranch: false,
 	isRepositioning: false,
 	issueProvider: undefined,
@@ -119,7 +119,13 @@ export function reduceContext(
 		case ContextActionsType.SetCurrentPullRequest:
 			return {
 				...state,
-				currentPullRequestId: action.payload.prId,
+				currentPullRequest:
+					action.payload.providerId && action.payload.id
+						? {
+								providerId: action.payload.providerId,
+								id: action.payload.id
+						  }
+						: undefined,
 				pullRequestCheckoutBranch: false
 			};
 		case ContextActionsType.SetCurrentPullRequestAndBranch:

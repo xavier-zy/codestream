@@ -95,7 +95,7 @@ export const CreateCodemarkIcons = (props: Props) => {
 			lastVisibleLine,
 			textEditorVisibleRanges,
 			currentReviewId: context.currentReviewId,
-			currentPullRequestId: context.currentPullRequestId,
+			currentPullRequestId: context.currentPullRequest ? context.currentPullRequest.id : undefined,
 			textEditorSelection: getCurrentSelection(editorContext),
 			metrics: editorContext.metrics || {},
 			openIconsOnLine,

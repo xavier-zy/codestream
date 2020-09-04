@@ -80,7 +80,9 @@ export const PullRequestReviewStatus = (props: {
 		const team = state.teams[state.context.currentTeamId];
 		return {
 			currentUser,
-			currentPullRequestId: state.context.currentPullRequestId,
+			currentPullRequestId: state.context.currentPullRequest
+				? state.context.currentPullRequest.id
+				: undefined,
 			composeCodemarkActive: state.context.composeCodemarkActive,
 			team
 		};

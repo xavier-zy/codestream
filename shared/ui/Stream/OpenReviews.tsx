@@ -18,7 +18,8 @@ import { HostApi } from "../webview-api";
 import {
 	GetMyPullRequestsResponse,
 	ReposScm,
-	ExecuteThirdPartyRequestUntypedType
+	ExecuteThirdPartyRequestUntypedType,
+	ThirdPartyProviderConfig
 } from "@codestream/protocols/agent";
 import { OpenUrlRequestType } from "@codestream/protocols/webview";
 import { Button } from "../src/components/Button";
@@ -127,7 +128,7 @@ export function OpenReviews(props: Props) {
 			isPRSupportedCodeHostConnected,
 			hasPRSupportedRepos,
 			// FIXME hardcoded github
-			PRSupportedProviders: [state.providers["github*com"]]
+			PRSupportedProviders: [state.providers["github*com"], state.providers["github/enterprise"]]
 		};
 	});
 
@@ -142,13 +143,26 @@ export function OpenReviews(props: Props) {
 		setIsLoadingPRs(true);
 		// FIXME hardcoded github
 		try {
-			const response: any = await dispatch(getMyPullRequests("github*com", options, true));
-			if (response && response.length) {
-				HostApi.instance.track("PR List Rendered", {
-					"PR Count": response.length
-				});
-				setPRs(response);
+			let _responses = [];
+			for (const _ of derivedState.PRSupportedProviders) {
+				const response: any = await dispatch(getMyPullRequests(_.id, options, true));
+				if (response && response.length) {
+					_responses = _responses.concat(response);
+				}
 			}
+			if (_responses.length) {
+				HostApi.instance.track("PR List Rendered", {
+					"PR Count": _responses.length
+				});
+				setPRs(_responses);
+			}
+			// const response: any = await dispatch(getMyPullRequests("github*com", options, true));
+			// if (response && response.length) {
+			// 	HostApi.instance.track("PR List Rendered", {
+			// 		"PR Count": response.length
+			// 	});
+			// 	setPRs(response);
+			// }
 		} catch (ex) {
 			if (ex && ex.indexOf('"message":"Bad credentials"') > -1) {
 				// show message about re-authing?
@@ -171,27 +185,27 @@ export function OpenReviews(props: Props) {
 	}, [derivedState.isPRSupportedCodeHostConnected]);
 
 	const goPR = async (url: string) => {
-		HostApi.instance
-			.send(ExecuteThirdPartyRequestUntypedType, {
-				method: "getPullRequestIdFromUrl",
-				providerId: "github*com",
-				params: { url }
-			})
-			.then((id: any) => {
-				if (id) {
-					dispatch(setCurrentReview(""));
-					dispatch(setCurrentPullRequest(id));
-				} else {
-					HostApi.instance.send(OpenUrlRequestType, {
-						url
-					});
-				}
-			})
-			.catch(e => {
-				HostApi.instance.send(OpenUrlRequestType, {
-					url
-				});
-			});
+		// HostApi.instance
+		// 	.send(ExecuteThirdPartyRequestUntypedType, {
+		// 		method: "getPullRequestIdFromUrl",
+		// 		providerId: "github*com",
+		// 		params: { url }
+		// 	})
+		// 	.then((id: any) => {
+		// 		if (id) {
+		// 			dispatch(setCurrentReview(""));
+		// 			dispatch(setCurrentPullRequest(id));
+		// 		} else {
+		// 			HostApi.instance.send(OpenUrlRequestType, {
+		// 				url
+		// 			});
+		// 		}
+		// 	})
+		// 	.catch(e => {
+		HostApi.instance.send(OpenUrlRequestType, {
+			url
+		});
+		//	});
 	};
 
 	const { reviews, teamMembers } = derivedState;
@@ -374,7 +388,7 @@ export function OpenReviews(props: Props) {
 									<Row
 										key={"pr-" + pr.id}
 										className={selected ? "selected" : ""}
-										onClick={() => dispatch(setCurrentPullRequest(pr.id))}
+										onClick={() => dispatch(setCurrentPullRequest(pr.providerId, pr.id))}
 									>
 										<div>
 											{selected && <Icon name="arrow-right" className="selected-icon" />}

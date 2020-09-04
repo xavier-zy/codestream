@@ -1328,7 +1328,7 @@ const mapStateToProps = (state: CodeStreamState) => {
 		hasPRProvider,
 		currentStreamId: context.currentStreamId,
 		currentReviewId: context.currentReviewId,
-		currentPullRequestId: context.currentPullRequestId,
+		currentPullRequestId: context.currentPullRequest ? context.currentPullRequest.id : undefined,
 		team: teams[context.currentTeamId],
 		viewInline: context.codemarksFileViewStyle === "inline",
 		viewHeadshots: configs.showHeadshots,

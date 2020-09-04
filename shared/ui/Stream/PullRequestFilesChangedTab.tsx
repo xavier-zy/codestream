@@ -47,7 +47,9 @@ export const PullRequestFilesChangedTab = props => {
 		return {
 			providerPullRequests: state.providerPullRequests.pullRequests,
 			pullRequestFilesChangedMode: state.preferences.pullRequestFilesChangedMode || "files",
-			currentPullRequestId: state.context.currentPullRequestId
+			currentPullRequestId: state.context.currentPullRequest
+				? state.context.currentPullRequest.id
+				: undefined
 		};
 	});
 

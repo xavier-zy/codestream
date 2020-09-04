@@ -160,7 +160,9 @@ export const PullRequestConversationTab = (props: {
 		return {
 			defaultMergeMethod: preferences.lastPRMergeMethod || "SQUASH",
 			currentUser,
-			currentPullRequestId: state.context.currentPullRequestId,
+			currentPullRequestId: state.context.currentPullRequest
+				? state.context.currentPullRequest.id
+				: undefined,
 			blameMap,
 			team,
 			skipGitEmailCheck,

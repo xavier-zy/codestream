@@ -27,7 +27,9 @@ export const PullRequestFinishReview = (props: {
 		return {
 			reviewsState: state.reviews,
 			currentUser,
-			currentPullRequestId: state.context.currentPullRequestId,
+			currentPullRequestId: state.context.currentPullRequest
+				? state.context.currentPullRequest.id
+				: undefined,
 			composeCodemarkActive: state.context.composeCodemarkActive,
 			team
 		};

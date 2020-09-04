@@ -10,7 +10,11 @@ import { Tabs, Tab } from "../src/components/Tabs";
 import Timestamp from "./Timestamp";
 import copy from "copy-to-clipboard";
 import { Link } from "./Link";
-import { setCurrentPullRequest, setCurrentReview } from "../store/context/actions";
+import {
+	clearCurrentPullRequest,
+	setCurrentPullRequest,
+	setCurrentReview
+} from "../store/context/actions";
 import CancelButton from "./CancelButton";
 import { useDidMount } from "../utilities/hooks";
 import { HostApi } from "../webview-api";
@@ -114,7 +118,12 @@ export const PullRequest = () => {
 			reviewsState: state.reviews,
 			reviews: reviewSelectors.getAllReviews(state),
 			currentUser,
-			currentPullRequestId: state.context.currentPullRequestId,
+			currentPullRequestProviderId: state.context.currentPullRequest
+				? state.context.currentPullRequest.providerId
+				: undefined,
+			currentPullRequestId: state.context.currentPullRequest
+				? state.context.currentPullRequest.id
+				: undefined,
 			composeCodemarkActive: state.context.composeCodemarkActive,
 			team,
 			textEditorUri: state.editorContext.textEditorUri,
@@ -142,7 +151,7 @@ export const PullRequest = () => {
 	>("UNCHECKED");
 
 	const exit = async () => {
-		await dispatch(setCurrentPullRequest());
+		await dispatch(clearCurrentPullRequest());
 	};
 
 	const _assignState = pr => {
@@ -156,30 +165,35 @@ export const PullRequest = () => {
 		setIsLoadingMessage("");
 	};
 
-	// FIXME this shouldn't be hard-coded
-	const providerId = "github*com";
-
 	useEffect(() => {
-		const providerPullRequests = derivedState.providerPullRequests[providerId];
+		const providerPullRequests =
+			derivedState.providerPullRequests[derivedState.currentPullRequestProviderId!];
 		if (providerPullRequests) {
 			let data = providerPullRequests[derivedState.currentPullRequestId!];
 			if (data) {
 				_assignState(data.conversations);
 			}
 		}
-	}, [derivedState.providerPullRequests]);
+	}, [
+		derivedState.currentPullRequestProviderId,
+		derivedState.currentPullRequestId,
+		derivedState.providerPullRequests
+	]);
 
 	const initialFetch = async (message?: string) => {
 		if (message) setIsLoadingMessage(message);
 		setIsLoadingPR(true);
 
 		const response = (await dispatch(
-			getPullRequestConversations(providerId, derivedState.currentPullRequestId!)
+			getPullRequestConversations(
+				derivedState.currentPullRequestProviderId!,
+				derivedState.currentPullRequestId!
+			)
 		)) as any;
 		_assignState(response);
 		if (response) {
 			HostApi.instance.track("PR Clicked", {
-				Host: providerId
+				Host: derivedState.currentPullRequestProviderId
 			});
 		}
 	};
@@ -213,8 +227,18 @@ export const PullRequest = () => {
 		_assignState(response);
 
 		// just clear the files and commits data -- it will be fetched if necessary (since it has its own api call)
-		dispatch(clearPullRequestFiles(providerId, derivedState.currentPullRequestId!));
-		dispatch(clearPullRequestCommits(providerId, derivedState.currentPullRequestId!));
+		dispatch(
+			clearPullRequestFiles(
+				derivedState.currentPullRequestProviderId!,
+				derivedState.currentPullRequestId!
+			)
+		);
+		dispatch(
+			clearPullRequestCommits(
+				derivedState.currentPullRequestProviderId!,
+				derivedState.currentPullRequestId!
+			)
+		);
 	};
 
 	const checkout = async () => {
@@ -251,7 +275,7 @@ export const PullRequest = () => {
 		if (pr && pr.headRefName && derivedState.checkoutBranch) {
 			checkout();
 			// clear the branch flag
-			dispatch(setCurrentPullRequest(pr.id));
+			dispatch(setCurrentPullRequest(pr.providerId, pr.id));
 		}
 	}, [pr && pr.headRefName, derivedState.checkoutBranch]);
 
@@ -334,7 +358,7 @@ export const PullRequest = () => {
 			if (review) {
 				e.preventDefault();
 				e.stopPropagation();
-				dispatch(setCurrentPullRequest(""));
+				dispatch(clearCurrentPullRequest());
 				dispatch(setCurrentReview(review.id));
 			}
 		}

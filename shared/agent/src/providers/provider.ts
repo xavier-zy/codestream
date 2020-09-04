@@ -34,7 +34,8 @@ import {
 	ThirdPartyDisconnect,
 	ThirdPartyProviderConfig,
 	UpdateThirdPartyStatusRequest,
-	UpdateThirdPartyStatusResponse
+	UpdateThirdPartyStatusResponse,
+	GetMyPullRequestsResponse
 } from "../protocol/agent.protocol";
 import { CSMe, CSProviderInfos } from "../protocol/api.protocol";
 import { CodeStreamSession } from "../session";
@@ -100,6 +101,12 @@ export interface ThirdPartyProviderSupportsPullRequests {
 	getPullRequestCommits(
 		request: FetchThirdPartyPullRequestCommitsRequest
 	): Promise<FetchThirdPartyPullRequestCommitsResponse>;
+	getMyPullRequests(request: {
+		owner: string;
+		repo: string;
+		isOpen?: boolean;
+		force?: boolean;
+	}): Promise<GetMyPullRequestsResponse[] | undefined>;
 }
 
 export namespace ThirdPartyIssueProvider {
@@ -115,7 +122,10 @@ export namespace ThirdPartyIssueProvider {
 	export function supportsPullRequests(
 		provider: ThirdPartyProvider
 	): provider is ThirdPartyProvider & ThirdPartyProviderSupportsPullRequests {
-		return (provider as any).getPullRequestDocumentMarkers !== undefined;
+		return (
+			(provider as any).getPullRequestDocumentMarkers !== undefined ||
+			(provider as any).getMyPullRequests !== undefined
+		);
 	}
 }
 

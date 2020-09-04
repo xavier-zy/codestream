@@ -42,8 +42,11 @@ export const PullRequestFilesChanged = (props: {
 	const [repoId, setRepoId] = useState("");
 	const derivedState = useSelector((state: CodeStreamState) => {
 		const userId = state.session.userId || "";
+		const currentPullRequestId = state.context.currentPullRequest
+			? state.context.currentPullRequest.id
+			: undefined;
 		const matchFile =
-			state.context.currentPullRequestId &&
+			currentPullRequestId &&
 			state.editorContext.scmInfo &&
 			state.editorContext.scmInfo.uri &&
 			state.editorContext.scmInfo.uri.startsWith("codestream-diff://")

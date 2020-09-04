@@ -32,7 +32,12 @@ export const PullRequestBottomComment = styled((props: Props) => {
 	const { pr, fetch, setIsLoadingMessage } = props;
 	const derivedState = useSelector((state: CodeStreamState) => {
 		const currentUser = state.users[state.session.userId!] as CSMe;
-		return { currentUser, currentPullRequestId: state.context.currentPullRequestId };
+		return {
+			currentUser,
+			currentPullRequestId: state.context.currentPullRequest
+				? state.context.currentPullRequest.id
+				: undefined
+		};
 	});
 
 	const [text, setText] = useState("");

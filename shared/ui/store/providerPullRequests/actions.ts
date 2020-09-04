@@ -166,7 +166,7 @@ export const getMyPullRequests = (
 		>("codestream/provider/generic");
 		const response = await HostApi.instance.send(request, {
 			method: "getMyPullRequests",
-			providerId: "github*com",
+			providerId: providerId,
 			params: {
 				force: force || (options && options.force),
 				isOpen: true

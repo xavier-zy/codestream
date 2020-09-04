@@ -12,7 +12,7 @@ import { HostApi } from "../webview-api";
 import { StartWorkNotificationType } from "@codestream/protocols/webview";
 import {
 	setCurrentReview,
-	setCurrentPullRequest,
+	clearCurrentPullRequest,
 	setCreatePullRequest
 } from "../store/context/actions";
 import { ComposeKeybindings } from "./ComposeTitles";
@@ -43,7 +43,7 @@ export function PlusMenu(props: PlusMenuProps) {
 	});
 
 	const handleStartWorkRequest = () => {
-		dispatch(setCurrentPullRequest());
+		dispatch(clearCurrentPullRequest());
 		dispatch(setCurrentReview());
 		if (derivedState.activePanel === WebviewPanels.Status) {
 			const div = document.getElementById("start-work-div");
@@ -61,7 +61,7 @@ export function PlusMenu(props: PlusMenuProps) {
 
 	const go = panel => {
 		dispatch(setCreatePullRequest());
-		dispatch(setCurrentPullRequest());
+		dispatch(clearCurrentPullRequest());
 		dispatch(setCurrentReview());
 		dispatch(openPanel(panel));
 	};

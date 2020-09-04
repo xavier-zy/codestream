@@ -1596,7 +1596,9 @@ class CodemarkForm extends React.Component<Props, State> {
 				}
 				onSubmit={this.props.currentPullRequestId ? undefined : this.handleClickSubmit}
 				selectedTags={this.state.selectedTags}
-				relatedCodemarkIds={this.props.textEditorUriHasPullRequestContext ? undefined : this.state.relatedCodemarkIds}
+				relatedCodemarkIds={
+					this.props.textEditorUriHasPullRequestContext ? undefined : this.state.relatedCodemarkIds
+				}
 				__onDidRender={__onDidRender}
 			/>
 		);
@@ -2336,7 +2338,9 @@ const mapStateToProps = (state: CodeStreamState): ConnectedProps => {
 		channelStreams: channelStreams,
 		directMessageStreams: directMessageStreams,
 		issueProvider: providers[context.issueProvider!],
-		currentPullRequestId: state.context.currentPullRequestId,
+		currentPullRequestId: state.context.currentPullRequest
+			? state.context.currentPullRequest.id
+			: undefined,
 		providerInfo: (user.providerInfo && user.providerInfo[context.currentTeamId]) || EMPTY_OBJECT,
 		teamProvider: getCurrentTeamProvider(state),
 		currentUser: user,

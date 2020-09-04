@@ -831,7 +831,7 @@ const mapStateToProps = state => {
 		currentCodemarkId: context.currentCodemarkId,
 		currentMarkerId: context.currentMarkerId,
 		currentReviewId: context.currentReviewId,
-		currentPullRequestId: context.currentPullRequestId,
+		currentPullRequestId: context.currentPullRequest ? context.currentPullRequest.id : undefined,
 		capabilities: capabilities,
 		activePanel: context.panelStack[0],
 		activeModal: context.activeModal,

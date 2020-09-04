@@ -15,7 +15,7 @@ import { PlusMenu } from "./PlusMenu";
 import { EllipsisMenu } from "./EllipsisMenu";
 import {
 	setCurrentReview,
-	setCurrentPullRequest,
+	clearCurrentPullRequest,
 	setCreatePullRequest
 } from "../store/context/actions";
 
@@ -37,7 +37,9 @@ export function GlobalNav() {
 			collisions: getCodeCollisions(state),
 			composeCodemarkActive: state.context.composeCodemarkActive,
 			currentReviewId: state.context.currentReviewId,
-			currentPullRequestId: state.context.currentPullRequestId
+			currentPullRequestId: state.context.currentPullRequest
+				? state.context.currentPullRequest.id
+				: undefined
 		};
 	});
 
@@ -78,7 +80,7 @@ export function GlobalNav() {
 
 	const go = panel => {
 		dispatch(setCreatePullRequest());
-		dispatch(setCurrentPullRequest());
+		dispatch(clearCurrentPullRequest());
 		dispatch(setCurrentReview());
 		dispatch(openPanel(panel));
 	};

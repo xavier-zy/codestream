@@ -1554,6 +1554,8 @@ export class Codemark extends React.Component<Props, State> {
 		const { hidden, selected, author, marker } = this.props;
 		const externalContent = marker.externalContent!;
 		const providerName = externalContent.provider.name;
+		// FIXME better id lookup (we only support GH here)
+		const providerId = providerName === "GitHub" ? "github*com" : undefined;
 
 		const pullOrMergeRequestText = providerName === "GitLab" ? "merge" : "pull";
 
@@ -1571,8 +1573,8 @@ export class Codemark extends React.Component<Props, State> {
 						range: marker.range,
 						preserveFocus: true
 					});
-					if (externalContent.externalId) {
-						this.props.setCurrentPullRequest(externalContent.externalId);
+					if (providerId && externalContent.externalId) {
+						this.props.setCurrentPullRequest(providerId!, externalContent.externalId);
 					}
 				}}
 				onMouseEnter={this.handleMouseEnterCodemark}
@@ -1627,10 +1629,12 @@ export class Codemark extends React.Component<Props, State> {
 										{this.state.showDiffHunk ? "Hide" : "Show"} Diff
 									</span>
 								)}
-								{externalContent.externalId && (
+								{providerId && externalContent.externalId && (
 									<span
 										style={{ marginRight: "10px" }}
-										onClick={() => this.props.setCurrentPullRequest(externalContent.externalId)}
+										onClick={() =>
+											this.props.setCurrentPullRequest(providerId!, externalContent.externalId!)
+										}
 									>
 										<Icon name="pull-request" className="margin-right" />
 										View Pull Request

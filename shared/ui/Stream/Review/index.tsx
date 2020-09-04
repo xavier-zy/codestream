@@ -663,11 +663,15 @@ const BaseReview = (props: BaseReviewProps) => {
 										e.preventDefault();
 										e.stopPropagation();
 
-										if (review.pullRequestProviderId === "github*com") {
+										// FIXME github*com
+										if (
+											review.pullRequestProviderId === "github*com" ||
+											review.pullRequestProviderId === "github/enterprise"
+										) {
 											HostApi.instance
 												.send(ExecuteThirdPartyRequestUntypedType, {
 													method: "getPullRequestIdFromUrl",
-													providerId: "github*com",
+													providerId: review.pullRequestProviderId,
 													params: {
 														url: review.pullRequestUrl
 													}
@@ -675,7 +679,7 @@ const BaseReview = (props: BaseReviewProps) => {
 												.then((id: any) => {
 													if (id) {
 														dispatch(setCurrentReview(""));
-														dispatch(setCurrentPullRequest(id));
+														dispatch(setCurrentPullRequest(review.pullRequestProviderId!, id));
 													} else {
 														HostApi.instance.send(OpenUrlRequestType, {
 															url: review.pullRequestUrl!

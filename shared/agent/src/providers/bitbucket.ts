@@ -26,7 +26,8 @@ import {
 	FetchThirdPartyPullRequestRequest,
 	FetchThirdPartyPullRequestResponse,
 	FetchThirdPartyPullRequestCommitsRequest,
-	FetchThirdPartyPullRequestCommitsResponse
+	FetchThirdPartyPullRequestCommitsResponse,
+	GetMyPullRequestsResponse
 } from "../protocol/agent.protocol";
 import {
 	CodemarkType,
@@ -339,6 +340,16 @@ export class BitbucketProvider extends ThirdPartyIssueProviderBase<CSBitbucketPr
 	getPullRequestCommits(
 		request: FetchThirdPartyPullRequestCommitsRequest
 	): Promise<FetchThirdPartyPullRequestCommitsResponse> {
+		throw new Error("Method not implemented.");
+	}
+
+	@log()
+	getMyPullRequests(request: {
+		owner: string;
+		repo: string;
+		isOpen?: boolean | undefined;
+		force?: boolean | undefined;
+	}): Promise<GetMyPullRequestsResponse[] | undefined> {
 		throw new Error("Method not implemented.");
 	}
 

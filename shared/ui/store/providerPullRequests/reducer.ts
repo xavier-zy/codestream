@@ -1,6 +1,9 @@
 import { ActionType, Index } from "../common";
 import * as actions from "./actions";
 import { ProviderPullRequestActionsTypes, ProviderPullRequestsState } from "./types";
+import { createSelector } from "reselect";
+import { CodeStreamState } from "..";
+import { CSRepository } from "@codestream/protocols/api";
 
 type ProviderPullRequestActions = ActionType<typeof actions>;
 
@@ -110,3 +113,56 @@ export function reduceProviderPullRequests(
 			return state;
 	}
 }
+const getRepos = (state: CodeStreamState) => Object.values(state.repos);
+const getProviderPullRequests = (state: CodeStreamState) => state.providerPullRequests;
+const currentPullRequestId = (state: CodeStreamState) => state.context.currentPullRequestId;
+
+/**
+ * Gets the PR object for the currentPullRequestId
+ */
+export const getCurrentProviderPullRequest = createSelector(
+	getProviderPullRequests,
+	currentPullRequestId,
+	(providerPullRequests, id) => {
+		if (!id) return undefined;
+		for (const providerPullRequest of Object.values(providerPullRequests)) {
+			for (const pullRequests of Object.values(providerPullRequest)) {
+				if (!pullRequests) continue;
+				const data = pullRequests[id];
+				if (data) return data;
+			}
+		}
+		return undefined;
+	}
+);
+
+/**
+ *  Attempts to get a CS repo for the current PR
+ */
+export const getProviderPullRequestRepo = createSelector(
+	getRepos,
+	getCurrentProviderPullRequest,
+	(repos, currentPr) => {
+		try {
+			if (!currentPr || !currentPr.conversations) return undefined;
+			const repoName = currentPr.conversations.repository.repoName;
+			const repoUrl = currentPr.conversations.repository.url.toLowerCase();
+			let currentRepo: CSRepository | undefined = undefined;
+			let matchingRepos = repos.filter(_ => _.name === repoName);
+			if (matchingRepos.length != 1) {
+				matchingRepos = matchingRepos.filter(_ =>
+					_.remotes.some(r => repoUrl.indexOf(r.normalizedUrl.toLowerCase()) > -1)
+				);
+				if (matchingRepos.length === 1) {
+					currentRepo = matchingRepos[0];
+				} else {
+					console.warn(`Could not find repo for repoName=${repoName} repoUrl=${repoUrl}`);
+				}
+			} else {
+				currentRepo = matchingRepos[0];
+			}
+			return currentRepo;
+		} catch (error) {}
+		return undefined;
+	}
+);

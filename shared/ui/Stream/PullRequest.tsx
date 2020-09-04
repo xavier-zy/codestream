@@ -60,6 +60,7 @@ import {
 	getPullRequestConversations,
 	clearPullRequestCommits
 } from "../store/providerPullRequests/actions";
+import { getProviderPullRequestRepo } from "../store/providerPullRequests/reducer";
 import { confirmPopup } from "./Confirm";
 
 export const WidthBreakpoint = "630px";
@@ -131,7 +132,8 @@ export const PullRequest = () => {
 			team,
 			textEditorUri: state.editorContext.textEditorUri,
 			reposState: state.repos,
-			checkoutBranch: state.context.pullRequestCheckoutBranch
+			checkoutBranch: state.context.pullRequestCheckoutBranch,
+			currentRepo: getProviderPullRequestRepo(state)
 		};
 	});
 
@@ -231,12 +233,9 @@ export const PullRequest = () => {
 	const checkout = async () => {
 		if (!pr) return;
 		setIsLoadingBranch(true);
-		const currentRepo = Object.values(derivedState.reposState).find(
-			_ => _.name === pr.repository.name
-		);
 		const result = await HostApi.instance.send(SwitchBranchRequestType, {
 			branch: pr!.headRefName,
-			repoId: currentRepo ? currentRepo.id : ""
+			repoId: derivedState.currentRepo ? derivedState.currentRepo.id : ""
 		});
 		if (result.error) {
 			console.warn("ERROR FROM SET BRANCH: ", result.error);

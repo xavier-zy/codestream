@@ -26,6 +26,7 @@ import { LocateRepoButton } from "./LocateRepoButton";
 import { Link } from "./Link";
 import { Meta, MetaLabel } from "./Codemark/BaseCodemark";
 import { MetaIcons } from "./Review";
+import { getProviderPullRequestRepo } from "../store/providerPullRequests/reducer";
 
 // const VISITED_REVIEW_FILES = "review:changeset-file-list";
 const NOW = new Date().getTime(); // a rough timestamp so we know when the file was visited
@@ -53,8 +54,7 @@ export const PullRequestFilesChanged = (props: {
 			matchFile,
 			userId,
 			repos: state.repos,
-			// TODO more solid filtering
-			currentRepo: Object.values(state.repos).find(_ => _.name === props.pr.repository.name),
+			currentRepo: getProviderPullRequestRepo(state),
 			numFiles: props.filesChanged.length,
 			isInVscode: state.ide.name === "VSC"
 		};

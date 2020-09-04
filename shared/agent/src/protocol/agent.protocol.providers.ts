@@ -493,6 +493,7 @@ export interface FetchThirdPartyPullRequestPullRequest {
 	repoUrl: string;
 	baseUrl: string;
 	updatedAt: string;
+	reviewDecision?: "APPROVED" | "CHANGES_REQUESTED" | "REVIEW_REQUIRED";
 	reactionGroups: any;
 	includesCreatedEdit: boolean;
 	viewerDidAuthor: boolean;

@@ -809,6 +809,23 @@ export const PullRequestConversationTab = (props: {
 								</Button>
 							</PRResolveConflictsRow>
 						</PRCommentCard>
+					) : pr.reviewDecision === "REVIEW_REQUIRED" ? (
+						<PRCommentCard>
+							<PRStatusHeadshot className="gray-background">
+								<Icon name="git-merge" />
+							</PRStatusHeadshot>
+							<div style={{ padding: "5px 0" }}>
+								<PRResolveConflictsRow>
+									<PRIconButton className="red-background">
+										<Icon name="x" />
+									</PRIconButton>
+									<div className="middle">
+										<h1>Review Required</h1>
+										Reviews are required by reviewers with write access.
+									</div>
+								</PRResolveConflictsRow>
+							</div>
+						</PRCommentCard>
 					) : !pr.merged && pr.mergeable === "MERGEABLE" && pr.state !== "CLOSED" ? (
 						<PRCommentCard className="green-border dark-header">
 							<PRStatusHeadshot className="green-background">

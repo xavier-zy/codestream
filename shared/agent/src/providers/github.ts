@@ -2439,6 +2439,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 					isDraft
 					locked
 					resourcePath
+					reviewDecision
 					viewerSubscription
 					viewerDidAuthor
 					viewerCanUpdate

@@ -130,14 +130,17 @@ export const PullRequest = () => {
 			composeCodemarkActive: state.context.composeCodemarkActive,
 			team,
 			textEditorUri: state.editorContext.textEditorUri,
-			reposState: state.repos
+			reposState: state.repos,
+			checkoutBranch: state.context.pullRequestCheckoutBranch
 		};
 	});
 
+	console.warn("CHECKOUT: ", derivedState.checkoutBranch);
 	const [activeTab, setActiveTab] = useState(1);
 	const [ghRepo, setGhRepo] = useState<any>(EMPTY_HASH);
 	const [isLoadingPR, setIsLoadingPR] = useState(false);
 	const [isLoadingMessage, setIsLoadingMessage] = useState("");
+	const [isLoadingBranch, setIsLoadingBranch] = useState(false);
 	const [pr, setPr] = useState<FetchThirdPartyPullRequestPullRequest | undefined>();
 	const [openRepos, setOpenRepos] = useState<ReposScmPlusName[]>(EMPTY_ARRAY);
 	const [editingTitle, setEditingTitle] = useState(false);
@@ -227,6 +230,7 @@ export const PullRequest = () => {
 
 	const checkout = async () => {
 		if (!pr) return;
+		setIsLoadingBranch(true);
 		const currentRepo = Object.values(derivedState.reposState).find(
 			_ => _.name === pr.repository.name
 		);
@@ -247,13 +251,23 @@ export const PullRequest = () => {
 				centered: false,
 				buttons: [{ label: "OK", className: "control-button" }]
 			});
+			setIsLoadingBranch(false);
 			return;
 		} else {
+			setIsLoadingBranch(false);
 			getOpenRepos();
 		}
 		// i don't think we need to reload here, do we?
 		// fetch("Reloading...");
 	};
+
+	useEffect(() => {
+		if (pr && pr.headRefName && derivedState.checkoutBranch) {
+			checkout();
+			// clear the branch flag
+			dispatch(setCurrentPullRequest(pr.id));
+		}
+	}, [pr && pr.headRefName, derivedState.checkoutBranch]);
 
 	const hasRepoOpen = useMemo(() => {
 		return pr && openRepos.find(_ => _.name === pr.repository.name);
@@ -606,25 +620,29 @@ export const PullRequest = () => {
 									/>
 								</span>
 							)}
-							<span className={cantCheckoutReason ? "disabled" : ""}>
-								<Icon
-									title={
-										<>
-											Checkout Branch
-											{cantCheckoutReason && (
-												<div className="subtle smaller" style={{ maxWidth: "200px" }}>
-													Disabled: {cantCheckoutReason}
-												</div>
-											)}
-										</>
-									}
-									trigger={["hover"]}
-									delay={1}
-									onClick={checkout}
-									placement="bottom"
-									name="repo"
-								/>
-							</span>
+							{isLoadingBranch ? (
+								<Icon name="sync" className="spin" />
+							) : (
+								<span className={cantCheckoutReason ? "disabled" : ""}>
+									<Icon
+										title={
+											<>
+												Checkout Branch
+												{cantCheckoutReason && (
+													<div className="subtle smaller" style={{ maxWidth: "200px" }}>
+														Disabled: {cantCheckoutReason}
+													</div>
+												)}
+											</>
+										}
+										trigger={["hover"]}
+										delay={1}
+										onClick={checkout}
+										placement="bottom"
+										name="repo"
+									/>
+								</span>
+							)}
 							<span>
 								<Icon
 									title="Reload"

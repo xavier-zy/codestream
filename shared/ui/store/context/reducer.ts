@@ -19,6 +19,7 @@ const initialState: ContextState = {
 	currentCodemarkId: undefined,
 	createPullRequestReviewId: undefined,
 	currentPullRequestId: undefined,
+	pullRequestCheckoutBranch: false,
 	isRepositioning: false,
 	issueProvider: undefined,
 	threadId: undefined,
@@ -116,7 +117,17 @@ export function reduceContext(
 		case ContextActionsType.SetCreatePullRequest:
 			return { ...state, createPullRequestReviewId: action.payload.reviewId };
 		case ContextActionsType.SetCurrentPullRequest:
-			return { ...state, currentPullRequestId: action.payload.prId };
+			return {
+				...state,
+				currentPullRequestId: action.payload.prId,
+				pullRequestCheckoutBranch: false
+			};
+		case ContextActionsType.SetCurrentPullRequestAndBranch:
+			return {
+				...state,
+				currentPullRequestId: action.payload.prId,
+				pullRequestCheckoutBranch: true
+			};
 		case ContextActionsType.SetProfileUser:
 			return { ...state, profileUserId: action.payload };
 		case ContextActionsType.SetSpatialViewPRCommentsToggle:

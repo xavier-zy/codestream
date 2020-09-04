@@ -112,6 +112,9 @@ export const setCreatePullRequest = (reviewId?: string) =>
 export const setCurrentPullRequest = (prId?: string) =>
 	action(ContextActionsType.SetCurrentPullRequest, { prId });
 
+export const setCurrentPullRequestAndBranch = (prId?: string) =>
+	action(ContextActionsType.SetCurrentPullRequestAndBranch, { prId });
+
 export const setProfileUser = (userId?: string) =>
 	action(ContextActionsType.SetProfileUser, userId);
 

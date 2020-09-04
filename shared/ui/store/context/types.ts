@@ -32,7 +32,8 @@ export enum ContextActionsType {
 	RepositionCodemark = "@context/RepositionCodemark",
 	SetCurrentReview = "@context/SetCurrentReview",
 	SetCreatePullRequest = "@context/SetCreatePullRequest",
-	SetCurrentPullRequest = "@context/SetCurrentPullRequest"
+	SetCurrentPullRequest = "@context/SetCurrentPullRequest",
+	SetCurrentPullRequestAndBranch = "@context/SetCurrentPullRequestAndBranch"
 }
 
 /**
@@ -76,6 +77,8 @@ export interface ContextState extends WebviewContext {
 	chatProviderAccess: ChatProviderAccess;
 
 	composeCodemarkActive: CodemarkType | undefined;
+
+	pullRequestCheckoutBranch: boolean;
 }
 
 export type ChatProviderAccess = "strict" | "permissive";

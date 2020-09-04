@@ -65,7 +65,8 @@ import {
 	setCurrentStream,
 	setCurrentCodemark,
 	setCurrentReview,
-	setCurrentPullRequest
+	setCurrentPullRequest,
+	setCurrentPullRequestAndBranch
 } from "./store/context/actions";
 import { URI } from "vscode-uri";
 import { moveCursorToLine } from "./Stream/CodemarkView";
@@ -373,7 +374,6 @@ function listenForEvents(store) {
 				break;
 			}
 			case "pullRequest": {
-				console.warn("GOT A ROUTE OF: ", route);
 				switch (route.action) {
 					case "open": {
 						HostApi.instance
@@ -385,7 +385,9 @@ function listenForEvents(store) {
 							.then((id: any) => {
 								if (id) {
 									store.dispatch(setCurrentReview(""));
-									store.dispatch(setCurrentPullRequest(id));
+									if (route.query.checkoutBranch)
+										store.dispatch(setCurrentPullRequestAndBranch(id));
+									else store.dispatch(setCurrentPullRequest(id));
 								} else {
 									console.warn("Unable to load PR from: ", route);
 								}

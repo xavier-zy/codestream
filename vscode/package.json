@@ -364,6 +364,24 @@
                 "args": {
                     "source": "Shortcut"
                 },
+                "key": "ctrl+shift+/ m",
+                "mac": "ctrl+/ m",
+                "when": "codestream:status == signedIn"
+            },
+            {
+                "command": "codestream.newPullRequest",
+                "args": {
+                    "source": "Shortcut"
+                },
+                "key": "ctrl+shift+/ p",
+                "mac": "ctrl+/ p",
+                "when": "codestream:status == signedIn"
+            },
+            {
+                "command": "codestream.newPullRequest",
+                "args": {
+                    "source": "Shortcut"
+                },
                 "key": "ctrl+shift+/ ctrl+shift+m",
                 "mac": "ctrl+/ ctrl+m",
                 "when": "codestream:status == signedIn"

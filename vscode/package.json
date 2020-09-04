@@ -400,8 +400,8 @@
                 "args": {
                     "source": "Shortcut"
                 },
-                "key": "ctrl+shift+/ p",
-                "mac": "ctrl+/ p",
+                "key": "ctrl+shift+/ l",
+                "mac": "ctrl+/ l",
                 "when": "codestream:status == signedIn"
             },
             {

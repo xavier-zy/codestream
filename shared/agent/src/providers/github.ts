@@ -104,14 +104,18 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 		return Promise.resolve(true);
 	}
 
+	get graphQlBaseUrl() {
+		return `${this.baseUrl}/graphql`;
+	}
+
 	private _client: GraphQLClient | undefined;
-	private get client(): GraphQLClient {
+	protected get client(): GraphQLClient {
 		if (this._client === undefined) {
 			if (!this.accessToken) {
 				throw new Error("No GitHub personal access token could be found");
 			}
 
-			this._client = new GraphQLClient(`${this.baseUrl}/graphql`, {
+			this._client = new GraphQLClient(this.graphQlBaseUrl, {
 				headers: {
 					Authorization: `Bearer ${this.accessToken}`
 				}

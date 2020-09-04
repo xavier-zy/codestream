@@ -34,11 +34,14 @@ export class GitHubEnterpriseProvider extends GitHubProvider {
 			returnHost = host;
 		} else if (forEnterprise) {
 			returnHost = this._providerInfo?.data?.baseUrl || host;
-			return `${returnHost}/api`;
 		} else {
 			returnHost = `https://${apiHost}`;
 		}
 		return `${returnHost}${this.apiPath}`;
+	}
+
+	get graphQlBaseUrl() {
+		return `${this.baseUrl.replace("/v3", "")}/graphql`;
 	}
 
 	getIsMatchingRemotePredicate() {

@@ -145,10 +145,10 @@ export const getProviderPullRequestRepo = createSelector(
 	(repos, currentPr) => {
 		try {
 			if (!currentPr || !currentPr.conversations) return undefined;
-			const repoName = currentPr.conversations.repository.repoName;
+			const repoName = currentPr.conversations.repository.repoName.toLowerCase();
 			const repoUrl = currentPr.conversations.repository.url.toLowerCase();
 			let currentRepo: CSRepository | undefined = undefined;
-			let matchingRepos = repos.filter(_ => _.name === repoName);
+			let matchingRepos = repos.filter(_ => _.name && _.name.toLowerCase() === repoName);
 			if (matchingRepos.length != 1) {
 				matchingRepos = matchingRepos.filter(_ =>
 					_.remotes.some(r => repoUrl.indexOf(r.normalizedUrl.toLowerCase()) > -1)

@@ -59,6 +59,10 @@ export interface NewReviewCommandArgs {
 	source?: string;
 }
 
+export interface NewPullRequestCommandArgs {
+	source?: string;
+}
+
 export interface OpenCodemarkCommandArgs {
 	codemarkId: string;
 	onlyWhenVisible?: boolean;
@@ -346,6 +350,24 @@ export class Commands implements Disposable {
 		return this.newCodemarkRequest(CodemarkType.Link, args);
 	}
 
+	@command("newPullRequest", { showErrorMessage: "Unable to create Pull Request" })
+	newPullRequest(args?: NewPullRequestCommandArgs) {
+		return this.newPullRequestRequest(args);
+	}
+
+	@command("scmNewPullRequest", { showErrorMessage: "Unable to create Pull Request" })
+	async scmNewPullRequest() {
+		try {
+			const editor = window.activeTextEditor;
+			await Container.webview.newPullRequestRequest(
+				editor && editor.selection && !editor.selection.isEmpty ? editor : undefined,
+				"VSC SCM"
+			);
+		} catch (ex) {
+			Logger.error(ex);
+		}
+	}
+
 	@command("copyPermalink", { showErrorMessage: "Unable to copy permalink" })
 	async copyPermalink(_args?: NewCodemarkCommandArgs) {
 		const editor = window.activeTextEditor;
@@ -546,6 +568,13 @@ export class Commands implements Disposable {
 
 	private async newReviewRequest(args: NewCodemarkCommandArgs = {}) {
 		await Container.webview.newReviewRequest(
+			window.activeTextEditor,
+			args.source || "Context Menu"
+		);
+	}
+
+	private async newPullRequestRequest(args: NewPullRequestCommandArgs = {}) {
+		await Container.webview.newPullRequestRequest(
 			window.activeTextEditor,
 			args.source || "Context Menu"
 		);

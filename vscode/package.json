@@ -236,6 +236,15 @@
                 "category": "CodeStream"
             },
             {
+                "command": "codestream.newPullRequest",
+                "title": "New Pull Request",
+                "category": "CodeStream",
+                "icon": {
+                    "light": "assets/images/light/pull-request.svg",
+                    "dark": "assets/images/dark/pull-request.svg"
+                }
+            },
+            {
                 "command": "codestream.scmNewReview",
                 "title": "Request a Code Review",
                 "icon": {
@@ -257,6 +266,14 @@
                 "icon": {
                     "light": "assets/images/light/issue.svg",
                     "dark": "assets/images/dark/issue.svg"
+                }
+            },
+            {
+                "command": "codestream.scmNewPullRequest",
+                "title": "New Pull Request",
+                "icon": {
+                    "light": "assets/images/light/pull-request.svg",
+                    "dark": "assets/images/dark/pull-request.svg"
                 }
             }
         ],
@@ -343,6 +360,24 @@
                 "when": "codestream:status == signedIn"
             },
             {
+                "command": "codestream.newPullRequest",
+                "args": {
+                    "source": "Shortcut"
+                },
+                "key": "ctrl+shift+/ ctrl+shift+m",
+                "mac": "ctrl+/ ctrl+m",
+                "when": "codestream:status == signedIn"
+            },
+            {
+                "command": "codestream.newPullRequest",
+                "args": {
+                    "source": "Shortcut"
+                },
+                "key": "ctrl+shift+/ ctrl+shift+p",
+                "mac": "ctrl+/ ctrl+p",
+                "when": "codestream:status == signedIn"
+            },
+            {
                 "command": "codestream.showNextChangedFile",
                 "args": {
                     "source": "Shortcut"
@@ -374,8 +409,8 @@
                 "args": {
                     "source": "Shortcut"
                 },
-                "key": "ctrl+shift+/ ctrl+shift+p",
-                "mac": "ctrl+/ ctrl+p",
+                "key": "ctrl+shift+/ ctrl+shift+l",
+                "mac": "ctrl+/ ctrl+l",
                 "when": "codestream:status == signedIn"
             },
             {
@@ -383,8 +418,8 @@
                 "args": {
                     "source": "Shortcut"
                 },
-                "key": "ctrl+shift+/ shift+p",
-                "mac": "ctrl+/ shift+p",
+                "key": "ctrl+shift+/ shift+l",
+                "mac": "ctrl+/ shift+l",
                 "when": "editorTextFocus && codestream:status == signedIn"
             }
         ],
@@ -437,6 +472,10 @@
                 {
                     "command": "codestream.copyPermalink",
                     "when": "codestream:status == signedIn"
+                },
+                {
+                    "command": "codestream.newPullRequest",
+                    "when": "codestream:status == signedIn"
                 }
             ],
             "editor/context": [
@@ -459,9 +498,19 @@
                     "command": "codestream.newReview",
                     "when": "codestream:status == signedIn",
                     "group": "9_zcodestream@6"
+                },
+                {
+                    "command": "codestream.newPullRequest",
+                    "when": "codestream:status == signedIn",
+                    "group": "9_zcodestream@7"
                 }
             ],
             "view/title": [
+                {
+                    "command": "codestream.scmNewPullRequest",
+                    "when": "view == scmTreeDataProvider && codestream:status == signedIn",
+                    "group": "navigation"
+                },
                 {
                     "command": "codestream.scmNewReview",
                     "when": "view == scmTreeDataProvider && codestream:status == signedIn",

@@ -51,6 +51,7 @@ import { HostApi } from "../webview-api";
 import {
 	NewCodemarkNotificationType,
 	NewReviewNotificationType,
+	NewPullRequestNotificationType,
 	EditorSelectRangeRequestType,
 	StartWorkNotificationType,
 	WebviewPanels,
@@ -71,6 +72,7 @@ import {
 	setCurrentStream,
 	setNewPostEntry,
 	setCurrentReview,
+	setCurrentPullRequest,
 	setProfileUser
 } from "../store/context/actions";
 import { last as _last, findLastIndex } from "lodash-es";
@@ -112,6 +114,9 @@ export class SimpleStream extends Component {
 		);
 		this.disposables.push(
 			HostApi.instance.on(NewReviewNotificationType, this.handleNewReviewRequest, this)
+		);
+		this.disposables.push(
+			HostApi.instance.on(NewPullRequestNotificationType, this.handleNewPullRequestRequest, this)
 		);
 
 		// this listener pays attention to when the input field resizes,
@@ -187,7 +192,18 @@ export class SimpleStream extends Component {
 			this.props.setNewPostEntry(e.source);
 		}
 		this.props.setCurrentReview("");
+		this.props.setCurrentPullRequest("");
 		this.props.openPanel(WebviewPanels.NewReview);
+	}
+
+	handleNewPullRequestRequest(e) {
+		if (e.source) {
+			// this can come externally (from an IDE)
+			this.props.setNewPostEntry(e.source);
+		}
+		this.props.setCurrentReview("");
+		this.props.setCurrentPullRequest("");
+		this.props.openPanel(WebviewPanels.NewPullRequest);
 	}
 
 	// componentWillReceiveProps(nextProps) {
@@ -849,6 +865,7 @@ const mapStateToProps = state => {
 export default connect(mapStateToProps, {
 	...actions,
 	setCurrentReview,
+	setCurrentPullRequest,
 	setCurrentStream,
 	setProfileUser,
 	editCodemark,

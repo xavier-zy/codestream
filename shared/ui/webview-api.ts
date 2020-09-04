@@ -14,6 +14,8 @@ import {
 	HostDidChangeEditorSelectionNotification,
 	HostDidChangeEditorVisibleRangesNotification,
 	NewCodemarkNotification,
+	NewPullRequestNotificationType,
+	NewPullRequestNotification,
 	NewReviewNotificationType,
 	NewReviewNotification
 } from "./ipc/webview.protocol";

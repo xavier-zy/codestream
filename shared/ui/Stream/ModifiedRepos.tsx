@@ -13,6 +13,7 @@ import * as userSelectors from "../store/users/reducer";
 import { FileStatus } from "@codestream/protocols/api";
 import { ReposScm } from "@codestream/protocols/agent";
 import { Row } from "./CrossPostIssueControls/IssueDropdown";
+import { InlineMenu } from "../src/components/controls/InlineMenu";
 
 const IconLabel = styled.span`
 	white-space: nowrap;
@@ -117,9 +118,11 @@ export const ModifiedRepos = (props: {
 					<div style={{ margin: "0 -20px 0 -20px", padding: "5px 0 10px 0" }}>
 						<div className="related-label" style={{ paddingLeft: "40px", paddingTop: "5px" }}>
 							Modified Files (vs.{" "}
-							<span className="monospace no-transform">
-								{repo.startCommit ? repo.startCommit.substr(0, 8) : "HEAD"}
-							</span>
+							<InlineMenu items={[{ label: "-" }]}>
+								<span className="monospace no-transform">
+									{repo.startCommit ? repo.startCommit.substr(0, 8) : "HEAD"}
+								</span>
+							</InlineMenu>
 							)
 						</div>
 						{modifiedFiles.map(f => {

@@ -59,9 +59,20 @@ export interface NewReviewNotification {
 	source?: string;
 }
 
+export interface NewPullRequestNotification {
+	uri?: string;
+	range?: Range;
+	source?: string;
+}
+
 export const NewReviewNotificationType = new NotificationType<NewReviewNotification, void>(
 	`${IpcRoutes.Webview}/review/new`
 );
+
+export const NewPullRequestNotificationType = new NotificationType<
+	NewPullRequestNotification,
+	void
+>(`${IpcRoutes.Webview}/pullRequest/new`);
 
 export interface StartWorkNotification {
 	uri?: string;

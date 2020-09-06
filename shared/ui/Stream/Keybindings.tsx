@@ -12,6 +12,7 @@ export const Keybindings = (props: PropsWithChildren<Props>) => {
 			<div className="no-codemarks">
 				{props.children}
 				<div className="keybindings">
+					<div className="function-row">{ComposeTitles.pullRequest}</div>
 					<FeatureFlag flag="lightningCodeReviews">
 						{isOn => isOn && <div className="function-row">{ComposeTitles.review}</div>}
 					</FeatureFlag>

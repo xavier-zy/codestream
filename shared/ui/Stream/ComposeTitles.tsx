@@ -22,7 +22,7 @@ const ComposeTitles = {
 		<span className="compose-title">
 			<span className="binding">
 				<span className="keybinding extra-pad">{modifier}</span>
-				<span className="keybinding">p</span>
+				<span className="keybinding">l</span>
 			</span>
 			<span className="function">Get Permalink</span>{" "}
 		</span>
@@ -44,6 +44,17 @@ const ComposeTitles = {
 			</span>
 			<span className="function">
 				Request a Code Review <sup style={{ color: "var(--text-color-highlight)" }}>NEW</sup>
+			</span>{" "}
+		</span>
+	),
+	pullRequest: (
+		<span className="compose-title">
+			<span className="binding">
+				<span className="keybinding extra-pad">{modifier}</span>
+				<span className="keybinding">p</span>
+			</span>
+			<span className="function">
+				Open a Pull Request <sup style={{ color: "var(--text-color-highlight)" }}>NEW</sup>
 			</span>{" "}
 		</span>
 	),
@@ -77,7 +88,7 @@ const ComposeTitles = {
 		<span className="compose-title">
 			<span className="binding">
 				<span className="keybinding extra-pad">{modifier}</span>
-				<span className="keybinding extra-pad">⇧ p</span>
+				<span className="keybinding extra-pad">⇧ l</span>
 			</span>
 			<span className="function">Copy Private Permalink</span>
 		</span>
@@ -99,7 +110,7 @@ export const ComposeKeybindings = {
 	link: (
 		<span className="binding">
 			<span className="keybinding extra-pad">{modifier}</span>
-			<span className="keybinding">p</span>
+			<span className="keybinding">l</span>
 		</span>
 	),
 	issue: (
@@ -123,7 +134,7 @@ export const ComposeKeybindings = {
 	pr: (
 		<span className="binding">
 			<span className="keybinding extra-pad">{modifier}</span>
-			<span className="keybinding">m</span>
+			<span className="keybinding">p</span>
 		</span>
 	),
 	toggleCodeStreamPanel: (

@@ -66,19 +66,6 @@ import { confirmPopup } from "./Confirm";
 export const WidthBreakpoint = "630px";
 
 const Root = styled.div`
-	${Tabs} {
-		margin: 10px 0;
-	}
-	${Tab} {
-		font-size: 13px;
-		white-space: nowrap;
-		padding: 0 5px 10px 5px;
-		.icon {
-			// vertical-align: -2px;
-			display: inline-block;
-			margin: 0 5px;
-		}
-	}
 	@media only screen and (max-width: ${WidthBreakpoint}) {
 		.wide-text {
 			display: none;
@@ -729,7 +716,7 @@ export const PullRequest = () => {
 				</PRHeader>
 				{!derivedState.composeCodemarkActive && (
 					<ScrollBox>
-						<div className="channel-list vscroll">
+						<div className="channel-list vscroll" style={{ paddingTop: "10px" }}>
 							{activeTab === 1 && (
 								<PullRequestConversationTab
 									pr={pr}

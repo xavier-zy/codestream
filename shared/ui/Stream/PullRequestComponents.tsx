@@ -5,6 +5,7 @@ import { PRHeadshotName } from "../src/components/HeadshotName";
 import { PullRequestReactButton } from "./PullRequestReactions";
 import { TextButton } from "../src/components/controls/InlineMenu";
 import { WidthBreakpoint } from "./PullRequest";
+import { Tabs, Tab } from "../src/components/Tabs";
 
 export const PENDING_BORDER_COLOR = "rgba(249, 197, 19, 0.6)";
 export const PENDING_BACKGROUND_COLOR = "rgba(255, 223, 0, 0.1)";
@@ -19,6 +20,19 @@ export const PRHeader = styled.div`
 	}
 	&:hover .open-external {
 		display: inline-block;
+	}
+	${Tabs} {
+		margin: 10px -15px 0 -20px;
+	}
+	${Tab} {
+		font-size: 13px;
+		white-space: nowrap;
+		padding: 0 10px 10px 10px;
+		.icon {
+			// vertical-align: -2px;
+			display: inline-block;
+			margin: 0 5px;
+		}
 	}
 `;
 
@@ -178,6 +192,7 @@ export const PRBadge = styled.span`
 export const PRPlusMinus = styled.div`
 	float: right;
 	margin-left: auto;
+	margin-right: 15px;
 	font-size: smaller;
 	.added {
 		white-space: nowrap;

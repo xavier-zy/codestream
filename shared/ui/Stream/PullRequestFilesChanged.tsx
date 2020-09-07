@@ -212,7 +212,7 @@ export const PullRequestFilesChanged = (props: {
 		}
 
 		const result = await HostApi.instance.send(EditorRevealRangeRequestType, {
-			uri: path.join(repoRoot, f.file),
+			uri: path.join("file://", repoRoot, f.file),
 			range: Range.create(0, 0, 0, 0)
 		});
 

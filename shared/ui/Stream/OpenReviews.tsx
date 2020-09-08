@@ -143,7 +143,6 @@ export function OpenReviews(props: Props) {
 
 	const fetchPRs = async (options?: { force?: boolean }) => {
 		setIsLoadingPRs(true);
-		// FIXME hardcoded github
 		try {
 			let _responses = [];
 			for (const _ of derivedState.PRSupportedProviders) {

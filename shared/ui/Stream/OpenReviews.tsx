@@ -56,6 +56,9 @@ const PRSummaryName = styled.div`
 const PRSummaryGroup = styled.div`
 	${Row} {
 		padding-left: 40px;
+		.selected-icon {
+			left: 20px;
+		}
 	}
 	.actions {
 		margin-left: auto;

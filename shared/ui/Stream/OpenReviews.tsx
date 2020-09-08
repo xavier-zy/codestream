@@ -359,7 +359,9 @@ export function OpenReviews(props: Props) {
 						{prs.map(pr => {
 							const selected = derivedState.repos.find(repo => {
 								return (
-									repo.currentBranch === pr.headRefName && repo.name === pr.headRepository.name
+									repo.currentBranch === pr.headRefName &&
+									pr.headRepository &&
+									repo.name === pr.headRepository.name
 								);
 							});
 							return (

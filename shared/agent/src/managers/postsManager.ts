@@ -901,19 +901,20 @@ export class PostsManager extends EntityManagerBase<CSPost> {
 			csUri.Uris.isCodeStreamDiffUri(request.textDocuments[0].uri)
 		) {
 			const { providerRegistry, git, repos } = SessionContainer.instance();
-			const parsedUri = csUri.Uris.fromCodeStreamDiffUri<CodeStreamDiffUriData>(
-				request.textDocuments[0].uri
-			);
+			const uri = request.textDocuments[0].uri;
+			const parsedUri = csUri.Uris.fromCodeStreamDiffUri<CodeStreamDiffUriData>(uri);
 			if (!parsedUri) throw new Error(`Could not parse uri ${request.textDocuments[0].uri}`);
+			let providerId;
 			if (parsedUri.context && parsedUri.context.pullRequest) {
-				if (parsedUri.context.pullRequest.providerId !== "github*com") {
-					throw new Error(`UnsupportedProvider ${parsedUri.context.pullRequest.providerId}`);
+				providerId = parsedUri.context.pullRequest.providerId;
+				if (providerId !== "github*com" && providerId !== "github/enterprise") {
+					throw new Error(`UnsupportedProvider ${providerId}`);
 				}
 			} else {
-				throw new Error("missingContext");
+				throw new Error(`missing context for uri ${uri}`);
 			}
 
-			if (parsedUri.context.pullRequest.providerId === "github*com") {
+			if (providerId === "github*com" || providerId === "github/enterprise") {
 				// get the git repo, so we can use the repo root
 				const gitRepo = await git.getRepositoryById(parsedUri.repoId);
 				// lines are 1-based on GH

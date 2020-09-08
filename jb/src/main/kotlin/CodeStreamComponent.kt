@@ -20,6 +20,7 @@ import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.util.ui.UIUtil
+import java.awt.KeyboardFocusManager
 import java.awt.event.WindowEvent
 import java.awt.event.WindowFocusListener
 import javax.swing.JLabel
@@ -43,6 +44,7 @@ class CodeStreamComponent(val project: Project) : Disposable {
     init {
         logger.info("Initializing CodeStream")
         CodeStreamDiffURLStreamHandler
+        initDebugMonitors()
         initEditorFactoryListener()
         initMessageBusSubscriptions()
         showToolWindowOnFirstRun()
@@ -170,5 +172,15 @@ class CodeStreamComponent(val project: Project) : Disposable {
     private val _isVisibleObservers = mutableListOf<(Boolean) -> Unit>()
     fun onIsVisibleChanged(observer: (Boolean) -> Unit) {
         _isVisibleObservers += observer
+    }
+
+    private fun initDebugMonitors() {
+        if (!DEBUG) return
+
+        KeyboardFocusManager.getCurrentKeyboardFocusManager().addPropertyChangeListener { evt ->
+            if (evt.propertyName === "focusOwner") {
+                logger.debug("Current focus owner: ${evt.newValue}")
+            }
+        }
     }
 }

@@ -1437,12 +1437,14 @@ export class GitService implements IGitService, Disposable {
 	async setBranchRemote(
 		repoPath: string,
 		remoteName: string,
-		branch: string
+		branch: string,
+		throwOnError: boolean | undefined = false
 	): Promise<string | undefined> {
 		try {
 			const data = await git({ cwd: repoPath }, "push", "-u", remoteName, branch);
 			return data.trim();
-		} catch {
+		} catch (err) {
+			if (throwOnError) throw err;
 			return undefined;
 		}
 	}

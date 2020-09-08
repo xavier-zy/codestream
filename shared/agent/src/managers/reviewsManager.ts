@@ -609,8 +609,8 @@ export class ReviewsManager extends CachedEntityManagerBase<CSReview> {
 	) {
 		if (!user || !user.providerInfo) return false;
 		const teamProviderInfo = user.providerInfo[teamId];
-		if (!teamProviderInfo) return false;
-		if (providerId === "bitbucket*org") {
+
+		if (teamProviderInfo && providerId === "bitbucket*org") {
 			const bitbucket = teamProviderInfo["bitbucket"] as CSBitbucketProviderInfo;
 			// require old apps reconnect to get the PR write scope
 			if (
@@ -622,6 +622,10 @@ export class ReviewsManager extends CachedEntityManagerBase<CSReview> {
 				await provider.disconnect({});
 				return false;
 			}
+		} else {
+			const userProviderId = user.providerInfo[provider.name];
+			if (userProviderId) return true;
+			if (!teamProviderInfo || !teamProviderInfo[provider.name]) return false;
 		}
 		return true;
 	}
@@ -848,21 +852,33 @@ export class ReviewsManager extends CachedEntityManagerBase<CSReview> {
 				}
 				const branchRemote = await git.getBranchRemote(repo.path, request.headRefName);
 				if (!branchRemote) {
-					const result = await git.setBranchRemote(
-						repo.path,
-						request.remoteName,
-						request.headRefName
-					);
+					let result;
+					let message;
+					try {
+						result = await git.setBranchRemote(
+							repo.path,
+							request.remoteName,
+							request.headRefName,
+							true
+						);
+					} catch (err) {
+						const errorIndex = err.message.indexOf("error:");
+						if (errorIndex > -1) {
+							message = err.message.substring(errorIndex + 6).trim();
+						} else {
+							message = err.message;
+						}
+					}
 
 					if (result) {
-						Logger.log(`createPullRequest: ${result}`);
+						Logger.log(`createPullRequest: setBranchRemote success. ${result}`);
 					} else {
 						Logger.warn(
 							`createPullRequest: BRANCH_REMOTE_CREATION_FAILED ${repo.path} branch remote (${branchRemote}) for ${request.headRefName}`
 						);
 						return {
 							success: false,
-							error: { type: "BRANCH_REMOTE_CREATION_FAILED" }
+							error: { type: "BRANCH_REMOTE_CREATION_FAILED", message: message }
 						};
 					}
 				} else {

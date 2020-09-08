@@ -2168,6 +2168,10 @@ export class CodeStreamApiProvider implements ApiProvider {
 
 			if (resp !== undefined && !resp.ok) {
 				traceResult = `API(${id}): FAILED(${retryCount}x) ${method} ${sanitizedUrl}`;
+				Container.instance().errorReporter.reportBreadcrumb({
+					message: traceResult,
+					category: "apiErrorResponse"
+				});
 				throw await this.handleErrorResponse(resp);
 			}
 

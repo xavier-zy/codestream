@@ -3,7 +3,7 @@ import fetch, { RequestInit, Response } from "node-fetch";
 import { URI } from "vscode-uri";
 import { MessageType } from "../api/apiProvider";
 import { User } from "../api/extensions";
-import { SessionContainer } from "../container";
+import { Container, SessionContainer } from "../container";
 import { GitRemote, GitRemoteLike, GitRepository } from "../git/gitService";
 import { Logger } from "../logger";
 import {
@@ -455,6 +455,8 @@ export abstract class ThirdPartyProviderBase<
 		const start = process.hrtime();
 
 		let traceResult;
+		let method;
+		let absoluteUrl;
 		try {
 			if (init !== undefined) {
 				if (init === undefined) {
@@ -471,8 +473,8 @@ export abstract class ThirdPartyProviderBase<
 			// 	init.agent = this._proxyAgent;
 			// }
 
-			const method = (init && init.method) || "GET";
-			const absoluteUrl = options.absoluteUrl ? url : `${this.baseUrl}${url}`;
+			method = (init && init.method) || "GET";
+			absoluteUrl = options.absoluteUrl ? url : `${this.baseUrl}${url}`;
 
 			let json: Promise<R> | undefined;
 			let resp: Response | undefined;
@@ -488,13 +490,37 @@ export abstract class ThirdPartyProviderBase<
 
 			if (resp !== undefined && !resp.ok) {
 				traceResult = `${this.displayName}: FAILED(${retryCount}x) ${method} ${url}`;
-				throw await this.handleErrorResponse(resp);
+				const error = await this.handleErrorResponse(resp);
+				Container.instance().errorReporter.reportBreadcrumb({
+					message: "Third-party provider fetch failed",
+					category: "providerFetch",
+					data: {
+						provider: this.providerConfig.name,
+						retryCount,
+						method,
+						url,
+						errorMessage: error.message
+					}
+				});
+				throw error;
 			}
 
 			return {
 				body: await json!,
 				response: resp!
 			};
+		} catch (ex) {
+			Container.instance().errorReporter.reportBreadcrumb({
+				message: "Third-party provider fetch exception",
+				category: "providerFetch",
+				data: {
+					provider: this.providerConfig.name,
+					method,
+					url,
+					errorMessage: ex.message
+				}
+			});
+			throw ex;
 		} finally {
 			Logger.log(
 				`${traceResult}${

@@ -215,3 +215,12 @@ export const getProviderConfig = createSelector(
 		return undefined;
 	}
 );
+
+export const getSupportedPullRequestHosts = createSelector(
+	(state: CodeStreamState) => state.providers,
+	(providerConfigs: ProvidersState) => {
+		return Object.values(providerConfigs).filter(
+			_ => _.id === "github*com" || _.id === "github/enterprise"
+		);
+	}
+);

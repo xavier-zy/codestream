@@ -11,7 +11,7 @@ import {
 } from "@codestream/protocols/agent";
 import { CSMe } from "@codestream/protocols/api";
 import { logError } from "../../logger";
-import { setIssueProvider } from "../context/actions";
+import { setIssueProvider, openPanel } from "../context/actions";
 import { deleteForProvider } from "../activeIntegrations/actions";
 import { CodeStreamState } from "..";
 
@@ -25,6 +25,22 @@ export const getUserProviderInfo = (user: CSMe, provider: string, teamId: string
 };
 
 export const updateProviders = (data: ProvidersState) => action(ProvidersActionsType.Update, data);
+
+export const configureAndConnectProvider = (
+	providerId: string,
+	connectionLocation: ViewLocation
+) => async (dispatch, getState) => {
+	const { providers } = getState();
+	const provider = providers[providerId];
+	const { forEnterprise, isEnterprise, name, needsConfigure } = provider;
+	if (needsConfigure) {
+		dispatch(openPanel(`configure-provider-${provider.name}-${provider.id}-Integrations Panel`));
+	} else if ((forEnterprise || isEnterprise) && name !== "jiraserver") {
+		dispatch(openPanel(`configure-enterprise-${name}-${provider.id}-Integrations Panel`));
+	} else {
+		dispatch(connectProvider(provider.id, connectionLocation));
+	}
+};
 
 export const connectProvider = (providerId: string, connectionLocation: ViewLocation) => async (
 	dispatch,

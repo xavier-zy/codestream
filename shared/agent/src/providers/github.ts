@@ -2883,12 +2883,14 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 				cursor: cursor
 			});
 
-			this._prQueryRateLimit = {
-				cost: response.rateLimit.cost,
-				limit: response.rateLimit.limit,
-				remaining: response.rateLimit.remaining,
-				resetAt: new Date(response.rateLimit.resetAt)
-			};
+			if (response.rateLimit) {
+				this._prQueryRateLimit = {
+					cost: response.rateLimit.cost,
+					limit: response.rateLimit.limit,
+					remaining: response.rateLimit.remaining,
+					resetAt: new Date(response.rateLimit.resetAt)
+				};
+			}
 
 			return response.repository.pullRequests;
 		} catch (ex) {

@@ -440,16 +440,22 @@ export class ThirdPartyProviderRegistry {
 					return false;
 				}
 			})) {
-				const thirdPartyIssueProvider = provider as ThirdPartyIssueProvider &
-					ThirdPartyProviderSupportsPullRequests;
-				if (
-					thirdPartyIssueProvider.getIsMatchingRemotePredicate()({
-						domain: uri.authority
-					})
-				) {
-					return {
-						providerId: provider.getConfig().id
-					};
+				try {
+					const thirdPartyIssueProvider = provider as ThirdPartyIssueProvider &
+						ThirdPartyProviderSupportsPullRequests;
+					if (
+						thirdPartyIssueProvider.getIsMatchingRemotePredicate()({
+							domain: uri.authority
+						})
+					) {
+						return {
+							providerId: provider.getConfig().id
+						};
+					}
+				} catch (err) {
+					Logger.debug(err, "queryThirdParty failed", {
+						url: request.url
+					});
 				}
 			}
 		} catch (ex) {

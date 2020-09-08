@@ -1003,7 +1003,7 @@ export function IssueList(props: React.PropsWithChildren<IssueListProps>) {
 										}}
 									/>
 									<input
-										autoFocus
+										autoFocus={queryOpen}
 										id="search-input"
 										type="text"
 										value={query}

@@ -624,6 +624,7 @@ export const QueryThirdPartyRequestType = new RequestType<
 export interface GetMyPullRequestsRequest {
 	owner?: string;
 	name?: string;
+	queries: string[];
 	/** if true, only return PRs that are open */
 	isOpen?: boolean;
 	/**
@@ -647,12 +648,14 @@ export interface GetMyPullRequestsResponse {
 		login: string;
 		avatarUrl: string;
 	};
+	body: string;
 	bodyText: string;
 	number: number;
 	state: string;
 	isDraft: boolean;
 	updatedAt: string;
 	lastEditedAt: string;
+	labels: { nodes: { color: string; description: string; name: string; id: string }[] };
 }
 
 export type MergeMethod = "MERGE" | "SQUASH" | "REBASE";

@@ -32,11 +32,11 @@ export function reduceProviderPullRequests(
 		}
 		case ProviderPullRequestActionsTypes.RemoveFromMyPullRequests: {
 			const newState = { ...state.myPullRequests };
-			newState[action.payload.providerId] = {
-				data: (newState[action.payload.providerId].data || []).filter(
-					_ => _.id !== action.payload.id
-				)
-			};
+			// newState[action.payload.providerId] = {
+			// 	data: (newState[action.payload.providerId].data || []).filter(
+			// 		_ => _.id !== action.payload.id
+			// 	)
+			// };
 			return {
 				myPullRequests: newState,
 				pullRequests: { ...state.pullRequests }

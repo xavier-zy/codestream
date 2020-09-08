@@ -142,6 +142,7 @@ export const removeFromMyPullRequests = (providerId: string, id: string) =>
 
 export const getMyPullRequests = (
 	providerId: string,
+	queries: string[],
 	options?: { force?: boolean },
 	throwOnError?: boolean
 ) => async (dispatch, getState: () => CodeStreamState) => {
@@ -160,7 +161,7 @@ export const getMyPullRequests = (
 		}
 		const request = new RequestType<
 			ExecuteThirdPartyTypedRequest<GetMyPullRequestsRequest>,
-			GetMyPullRequestsResponse[],
+			GetMyPullRequestsResponse,
 			any,
 			any
 		>("codestream/provider/generic");
@@ -168,6 +169,7 @@ export const getMyPullRequests = (
 			method: "getMyPullRequests",
 			providerId: providerId,
 			params: {
+				queries,
 				force: force || (options && options.force),
 				isOpen: true
 			}

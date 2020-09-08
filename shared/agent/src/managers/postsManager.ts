@@ -907,166 +907,82 @@ export class PostsManager extends EntityManagerBase<CSPost> {
 			let providerId;
 			if (parsedUri.context && parsedUri.context.pullRequest) {
 				providerId = parsedUri.context.pullRequest.providerId;
-				if (providerId !== "github*com" && providerId !== "github/enterprise") {
+				if (!providerRegistry.providerSupportsPullRequests(providerId)) {
 					throw new Error(`UnsupportedProvider ${providerId}`);
 				}
 			} else {
 				throw new Error(`missing context for uri ${uri}`);
 			}
 
-			if (providerId === "github*com" || providerId === "github/enterprise") {
-				// get the git repo, so we can use the repo root
-				const gitRepo = await git.getRepositoryById(parsedUri.repoId);
-				// lines are 1-based on GH
-				const startLine = request.attributes.codeBlocks[0].range.start.line + 1;
-				const endLine = request.attributes.codeBlocks[0].range.end.line + 1;
-				const repoPath = path.join(gitRepo ? gitRepo.path : "", parsedUri.path);
-				// get the diff hunk between the two shas
-				const diff = await git.getDiffBetweenCommits(
-					parsedUri.leftSha,
-					parsedUri.rightSha,
-					repoPath,
-					true
+			// get the git repo, so we can use the repo root
+			const gitRepo = await git.getRepositoryById(parsedUri.repoId);
+			// lines are 1-based on GH
+			const startLine = request.attributes.codeBlocks[0].range.start.line + 1;
+			const endLine = request.attributes.codeBlocks[0].range.end.line + 1;
+			const repoPath = path.join(gitRepo ? gitRepo.path : "", parsedUri.path);
+			// get the diff hunk between the two shas
+			const diff = await git.getDiffBetweenCommits(
+				parsedUri.leftSha,
+				parsedUri.rightSha,
+				repoPath,
+				true
+			);
+			if (!diff) {
+				const errorMessage = `Could not find diff for leftSha=${parsedUri.leftSha} rightSha=${parsedUri.rightSha} repoPath=${repoPath}`;
+				Logger.warn(errorMessage);
+				throw new Error(errorMessage);
+			}
+			const startingHunk = diff.hunks.find(
+				_ => startLine >= _.newStart && startLine <= _.newStart + _.newLines
+			);
+			const endingHunk = diff.hunks.find(_ => endLine <= _.newStart + _.newLines);
+			if (!startingHunk || !endingHunk) {
+				// if we couldn't find a hunk, we're going to go down the path of using
+				// a "code fence" aka ``` for showing the code comment
+				Logger.warn(
+					`Could not find hunk for startLine=${startLine} or endLine=${endLine} for ${JSON.stringify(
+						parsedUri.context
+					)}`
 				);
-				if (!diff) {
-					const errorMessage = `Could not find diff for leftSha=${parsedUri.leftSha} rightSha=${parsedUri.rightSha} repoPath=${repoPath}`;
-					Logger.warn(errorMessage);
-					throw new Error(errorMessage);
+				const codeBlock = request.attributes.codeBlocks[0];
+				const repo = await repos.getById(parsedUri.repoId);
+				let remoteList: string[] | undefined;
+				if (repo && repo.remotes && repo.remotes.length) {
+					// if we have a list of remotes from the marker / repo (a.k.a. server)... use that
+					remoteList = repo.remotes.map(_ => _.normalizedUrl);
 				}
-				const startingHunk = diff.hunks.find(
-					_ => startLine >= _.newStart && startLine <= _.newStart + _.newLines
-				);
-				const endingHunk = diff.hunks.find(_ => endLine <= _.newStart + _.newLines);
-				if (!startingHunk || !endingHunk) {
-					// if we couldn't find a hunk, we're going to go down the path of using
-					// a "code fence" aka ``` for showing the code comment
-					Logger.warn(
-						`Could not find hunk for startLine=${startLine} or endLine=${endLine} for ${JSON.stringify(
-							parsedUri.context
-						)}`
-					);
-					const codeBlock = request.attributes.codeBlocks[0];
-					const repo = await repos.getById(parsedUri.repoId);
-					let remoteList: string[] | undefined;
-					if (repo && repo.remotes && repo.remotes.length) {
-						// if we have a list of remotes from the marker / repo (a.k.a. server)... use that
-						remoteList = repo.remotes.map(_ => _.normalizedUrl);
-					}
-					let remoteUrl;
-					if (remoteList) {
-						for (const remote of remoteList) {
-							remoteUrl = Marker.getRemoteCodeUrl(
-								remote,
-								parsedUri.rightSha,
-								codeBlock.scm?.file!,
-								startLine,
-								endLine
-							);
+				let remoteUrl;
+				if (remoteList) {
+					for (const remote of remoteList) {
+						remoteUrl = Marker.getRemoteCodeUrl(
+							remote,
+							parsedUri.rightSha,
+							codeBlock.scm?.file!,
+							startLine,
+							endLine
+						);
 
-							if (remoteUrl !== undefined) {
-								break;
-							}
+						if (remoteUrl !== undefined) {
+							break;
 						}
 					}
-					let fileWithUrl;
-					if (remoteUrl) {
-						fileWithUrl = `[${codeBlock.scm?.file}](${remoteUrl.url})`;
-					} else {
-						fileWithUrl = codeBlock.scm?.file;
-					}
-
-					const result = await providerRegistry.executeMethod({
-						method: "addComment",
-						providerId: parsedUri.context.pullRequest.providerId,
-						params: {
-							subjectId: parsedUri.context.pullRequest.id,
-							text: `${request.attributes.text || ""}\n\n\`\`\`\n${codeBlock.contents}\n\`\`\`
-								\n${fileWithUrl} (Line${startLine === endLine ? ` ${startLine}` : `s ${startLine}-${endLine}`})`
-						}
-					});
-					return {
-						isPassThrough: true,
-						pullRequest: parsedUri.context.pullRequest,
-						success: result != null
-					};
 				}
-
-				let result;
-				if (request.isProviderReview) {
-					// https://stackoverflow.com/questions/41662127/how-to-comment-on-a-specific-line-number-on-a-pr-on-github
-					// according to github:
-					/**
-					 * The position value equals the number of lines down from the first "@@" hunk header in the file you want to add a comment.
-					 * The line just below the "@@" line is position 1, the next line is position 2, and so on.
-					 * The position in the diff continues to increase through lines of whitespace and additional hunks until the beginning of a new file.
-					 *
-					 * see: https://docs.github.com/en/rest/reference/pulls#create-a-review-for-a-pull-request
-					 */
-
-					let i = 0;
-					let relativeLine = 0;
-					for (const h of diff.hunks) {
-						// can't increment for the first hunk
-						if (i !== 0) relativeLine++;
-						const linesWithMetadata = [];
-						let j = 0;
-						for (const line of h.lines) {
-							relativeLine++;
-							linesWithMetadata.push({ line: line, relativeLine: relativeLine, index: j });
-							j++;
-						}
-						(h as any).linesWithMetadata = linesWithMetadata;
-						i++;
-					}
-					// the line the user is asking for minus the start of this hunk
-					// that will give us the index of where it is in the hunk
-					// from there, we fetch the relativeLine which is what github needs
-					let offset: number;
-					let lineWithMetadata;
-					if (startLine === endLine) {
-						// is a single line if startLine === endLine
-						offset = startLine - startingHunk.newStart;
-						lineWithMetadata = (startingHunk as any).linesWithMetadata.find(
-							(b: any) => b.index === offset
-						);
-					} else {
-						// it is a range
-						offset = endLine - endingHunk.newStart;
-						lineWithMetadata = (endingHunk as any).linesWithMetadata.find(
-							(b: any) => b.index === offset
-						);
-					}
-					if (lineWithMetadata) {
-						result = await providerRegistry.executeMethod({
-							method: "createPullRequestReviewComment",
-							providerId: parsedUri.context.pullRequest.providerId,
-							params: {
-								pullRequestId: parsedUri.context.pullRequest.id,
-								// pullRequestReviewId will be looked up
-								text: request.attributes.text || "",
-								filePath: parsedUri.path,
-								position: lineWithMetadata.relativeLine
-							}
-						});
-					} else {
-						throw new Error("Failed to create review comment");
-					}
+				let fileWithUrl;
+				if (remoteUrl) {
+					fileWithUrl = `[${codeBlock.scm?.file}](${remoteUrl.url})`;
 				} else {
-					// is a single comment against a commit
-					result = await providerRegistry.executeMethod({
-						method: "createCommitComment",
-						providerId: parsedUri.context.pullRequest.providerId,
-						params: {
-							pullRequestId: parsedUri.context.pullRequest.id,
-							sha: parsedUri.rightSha,
-							text: request.attributes.text || "",
-							path: parsedUri.path,
-							startLine: startLine,
-							endLine: endingHunk ? endLine : undefined
-						}
-					});
+					fileWithUrl = codeBlock.scm?.file;
 				}
 
+				const result = await providerRegistry.executeMethod({
+					method: "addComment",
+					providerId: parsedUri.context.pullRequest.providerId,
+					params: {
+						subjectId: parsedUri.context.pullRequest.id,
+						text: `${request.attributes.text || ""}\n\n\`\`\`\n${codeBlock.contents}\n\`\`\`
+								\n${fileWithUrl} (Line${startLine === endLine ? ` ${startLine}` : `s ${startLine}-${endLine}`})`
+					}
+				});
 				return {
 					isPassThrough: true,
 					pullRequest: parsedUri.context.pullRequest,
@@ -1074,7 +990,87 @@ export class PostsManager extends EntityManagerBase<CSPost> {
 				};
 			}
 
-			return undefined;
+			let result;
+			if (request.isProviderReview) {
+				// https://stackoverflow.com/questions/41662127/how-to-comment-on-a-specific-line-number-on-a-pr-on-github
+				// according to github:
+				/**
+				 * The position value equals the number of lines down from the first "@@" hunk header in the file you want to add a comment.
+				 * The line just below the "@@" line is position 1, the next line is position 2, and so on.
+				 * The position in the diff continues to increase through lines of whitespace and additional hunks until the beginning of a new file.
+				 *
+				 * see: https://docs.github.com/en/rest/reference/pulls#create-a-review-for-a-pull-request
+				 */
+
+				let i = 0;
+				let relativeLine = 0;
+				for (const h of diff.hunks) {
+					// can't increment for the first hunk
+					if (i !== 0) relativeLine++;
+					const linesWithMetadata = [];
+					let j = 0;
+					for (const line of h.lines) {
+						relativeLine++;
+						linesWithMetadata.push({ line: line, relativeLine: relativeLine, index: j });
+						j++;
+					}
+					(h as any).linesWithMetadata = linesWithMetadata;
+					i++;
+				}
+				// the line the user is asking for minus the start of this hunk
+				// that will give us the index of where it is in the hunk
+				// from there, we fetch the relativeLine which is what github needs
+				let offset: number;
+				let lineWithMetadata;
+				if (startLine === endLine) {
+					// is a single line if startLine === endLine
+					offset = startLine - startingHunk.newStart;
+					lineWithMetadata = (startingHunk as any).linesWithMetadata.find(
+						(b: any) => b.index === offset
+					);
+				} else {
+					// it is a range
+					offset = endLine - endingHunk.newStart;
+					lineWithMetadata = (endingHunk as any).linesWithMetadata.find(
+						(b: any) => b.index === offset
+					);
+				}
+				if (lineWithMetadata) {
+					result = await providerRegistry.executeMethod({
+						method: "createPullRequestReviewComment",
+						providerId: parsedUri.context.pullRequest.providerId,
+						params: {
+							pullRequestId: parsedUri.context.pullRequest.id,
+							// pullRequestReviewId will be looked up
+							text: request.attributes.text || "",
+							filePath: parsedUri.path,
+							position: lineWithMetadata.relativeLine
+						}
+					});
+				} else {
+					throw new Error("Failed to create review comment");
+				}
+			} else {
+				// is a single comment against a commit
+				result = await providerRegistry.executeMethod({
+					method: "createCommitComment",
+					providerId: parsedUri.context.pullRequest.providerId,
+					params: {
+						pullRequestId: parsedUri.context.pullRequest.id,
+						sha: parsedUri.rightSha,
+						text: request.attributes.text || "",
+						path: parsedUri.path,
+						startLine: startLine,
+						endLine: endingHunk ? endLine : undefined
+					}
+				});
+			}
+
+			return {
+				isPassThrough: true,
+				pullRequest: parsedUri.context.pullRequest,
+				success: result != null
+			};
 		}
 
 		let codemark: CodemarkPlus | undefined;

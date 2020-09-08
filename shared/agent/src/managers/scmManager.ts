@@ -924,7 +924,9 @@ export class ScmManager {
 		// try to lookup any possible metadata for additional context...
 		// github, for example, only allows 1 review per PR per user...
 		// so we want to know if we already have one...
-		if (codeStreamDiff.context?.pullRequest?.providerId === "github*com") {
+		if (
+			providerRegistry.providerSupportsPullRequests(codeStreamDiff.context?.pullRequest?.providerId)
+		) {
 			if (codeStreamDiff.context?.pullRequest?.id) {
 				pullRequestReviewId = await providerRegistry.executeMethod({
 					method: "getPullRequestReviewId",

@@ -496,4 +496,17 @@ export class ThirdPartyProviderRegistry {
 			(p): p is T => p.isConnected(user) && (predicate == null || predicate(p))
 		);
 	}
+
+	providerSupportsPullRequests(providerId?: string) {
+		try {
+			if (!providerId) return false;
+			const providers = this.getProviders().filter(
+				(_: ThirdPartyProvider) => _.getConfig().id === providerId
+			);
+			if (!providers || !providers.length) return false;
+			return this.getPullRequestProvider(providers[0]);
+		} catch {
+			return false;
+		}
+	}
 }

@@ -352,6 +352,7 @@ export const PRSubmitReviewButton = styled.div`
 	float: right;
 	margin-left: auto;
 	margin-top: -10px;
+	margin-right: 16px;
 	> button {
 		margin-left: 10px;
 		border-radius: 5px;

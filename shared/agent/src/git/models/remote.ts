@@ -26,3 +26,7 @@ export class GitRemote {
 		return `${this.domain}/${this.path}`.toLocaleLowerCase();
 	}
 }
+
+export interface GitRemoteLike {
+	domain: string;
+}

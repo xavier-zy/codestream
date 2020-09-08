@@ -1,6 +1,6 @@
 "use strict";
 
-import { GitRemote } from "git/gitService";
+import { GitRemoteLike } from "git/gitService";
 import { URI } from "vscode-uri";
 import { Logger } from "../logger";
 import { EnterpriseConfigurationData } from "../protocol/agent.protocol.providers";
@@ -15,6 +15,8 @@ import {
 
 @lspProvider("github_enterprise")
 export class GitHubEnterpriseProvider extends GitHubProvider {
+	private static ApiVersionString = "v3";
+
 	get displayName() {
 		return "GitHub Enterprise";
 	}
@@ -24,7 +26,9 @@ export class GitHubEnterpriseProvider extends GitHubProvider {
 	}
 
 	get apiPath() {
-		return this.providerConfig.forEnterprise || this.providerConfig.isEnterprise ? "/api/v3" : "";
+		return this.providerConfig.forEnterprise || this.providerConfig.isEnterprise
+			? `/api/${GitHubEnterpriseProvider.ApiVersionString}`
+			: "";
 	}
 
 	get baseUrl() {
@@ -41,13 +45,13 @@ export class GitHubEnterpriseProvider extends GitHubProvider {
 	}
 
 	get graphQlBaseUrl() {
-		return `${this.baseUrl.replace("/v3", "")}/graphql`;
+		return `${this.baseUrl.replace(`/${GitHubEnterpriseProvider.ApiVersionString}`, "")}/graphql`;
 	}
 
 	getIsMatchingRemotePredicate() {
 		const baseUrl = this._providerInfo?.data?.baseUrl || this.getConfig().host;
 		const configDomain = baseUrl ? URI.parse(baseUrl).authority : "";
-		return (r: GitRemote) => configDomain !== "" && r.domain === configDomain;
+		return (r: GitRemoteLike) => configDomain !== "" && r.domain === configDomain;
 	}
 
 	private _isPRApiCompatible: boolean | undefined;

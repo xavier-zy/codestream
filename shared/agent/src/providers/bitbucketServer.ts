@@ -1,5 +1,5 @@
 "use strict";
-import { GitRemote, GitRepository } from "git/gitService";
+import { GitRemoteLike, GitRepository } from "git/gitService";
 import * as paths from "path";
 import * as qs from "querystring";
 import { URI } from "vscode-uri";
@@ -450,7 +450,7 @@ export class BitbucketServerProvider extends ThirdPartyIssueProviderBase<CSBitbu
 	getIsMatchingRemotePredicate() {
 		const baseUrl = this._providerInfo?.data?.baseUrl || this.getConfig().host;
 		const configDomain = baseUrl ? URI.parse(baseUrl).authority : "";
-		return (r: GitRemote) => configDomain !== "" && r.domain === configDomain;
+		return (r: GitRemoteLike) => configDomain !== "" && r.domain === configDomain;
 	}
 
 	@log()

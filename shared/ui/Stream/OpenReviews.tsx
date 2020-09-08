@@ -19,7 +19,7 @@ import {
 	GetMyPullRequestsResponse,
 	ReposScm,
 	ExecuteThirdPartyRequestUntypedType,
-	ThirdPartyProviderConfig
+	QueryThirdPartyRequestType
 } from "@codestream/protocols/agent";
 import { OpenUrlRequestType } from "@codestream/protocols/webview";
 import { Button } from "../src/components/Button";
@@ -116,7 +116,9 @@ export function OpenReviews(props: Props) {
 		});
 
 		// FIXME hardcoded github
-		const isPRSupportedCodeHostConnected = isConnected(state, { name: "github" });
+		const isPRSupportedCodeHostConnected =
+			isConnected(state, { name: "github" }) || isConnected(state, { name: "github_enterprise" });
+		// FIXME make this more solid
 		const hasPRSupportedRepos = repos.filter(r => r.providerGuess === "github").length > 0;
 
 		return {
@@ -156,13 +158,6 @@ export function OpenReviews(props: Props) {
 				});
 				setPRs(_responses);
 			}
-			// const response: any = await dispatch(getMyPullRequests("github*com", options, true));
-			// if (response && response.length) {
-			// 	HostApi.instance.track("PR List Rendered", {
-			// 		"PR Count": response.length
-			// 	});
-			// 	setPRs(response);
-			// }
 		} catch (ex) {
 			if (ex && ex.indexOf('"message":"Bad credentials"') > -1) {
 				// show message about re-authing?
@@ -185,27 +180,39 @@ export function OpenReviews(props: Props) {
 	}, [derivedState.isPRSupportedCodeHostConnected]);
 
 	const goPR = async (url: string) => {
-		// HostApi.instance
-		// 	.send(ExecuteThirdPartyRequestUntypedType, {
-		// 		method: "getPullRequestIdFromUrl",
-		// 		providerId: "github*com",
-		// 		params: { url }
-		// 	})
-		// 	.then((id: any) => {
-		// 		if (id) {
-		// 			dispatch(setCurrentReview(""));
-		// 			dispatch(setCurrentPullRequest(id));
-		// 		} else {
-		// 			HostApi.instance.send(OpenUrlRequestType, {
-		// 				url
-		// 			});
-		// 		}
-		// 	})
-		// 	.catch(e => {
-		HostApi.instance.send(OpenUrlRequestType, {
-			url
-		});
-		//	});
+		HostApi.instance
+			.send(QueryThirdPartyRequestType, {
+				url: url
+			})
+			.then((providerInfo: any) => {
+				if (providerInfo && providerInfo.providerId) {
+					HostApi.instance
+						.send(ExecuteThirdPartyRequestUntypedType, {
+							method: "getPullRequestIdFromUrl",
+							providerId: providerInfo.providerId,
+							params: { url }
+						})
+						.then(id => {
+							if (id) {
+								dispatch(setCurrentReview(""));
+								dispatch(setCurrentPullRequest(providerInfo.providerId, id as string));
+							} else {
+								HostApi.instance.send(OpenUrlRequestType, {
+									url
+								});
+							}
+						});
+				} else {
+					HostApi.instance.send(OpenUrlRequestType, {
+						url
+					});
+				}
+			})
+			.catch(e => {
+				HostApi.instance.send(OpenUrlRequestType, {
+					url
+				});
+			});
 	};
 
 	const { reviews, teamMembers } = derivedState;

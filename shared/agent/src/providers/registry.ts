@@ -1,6 +1,6 @@
 "use strict";
-import { pull } from "lodash-es";
 import { CSMe } from "protocol/api.protocol";
+import { URI } from "vscode-uri";
 import { Logger } from "../logger";
 import {
 	AddEnterpriseProviderRequest,
@@ -36,12 +36,16 @@ import {
 	FetchThirdPartyCardWorkflowResponse,
 	FetchThirdPartyChannelsRequest,
 	FetchThirdPartyChannelsRequestType,
-	FetchThirdPartyChannelsResponse, FetchThirdPartyPullRequestCommitsRequest, FetchThirdPartyPullRequestCommitsType,
+	FetchThirdPartyChannelsResponse,
+	FetchThirdPartyPullRequestCommitsRequest,
+	FetchThirdPartyPullRequestCommitsType,
 	FetchThirdPartyPullRequestRequest,
 	FetchThirdPartyPullRequestRequestType,
 	MoveThirdPartyCardRequest,
 	MoveThirdPartyCardRequestType,
 	MoveThirdPartyCardResponse,
+	QueryThirdPartyRequest,
+	QueryThirdPartyRequestType,
 	RemoveEnterpriseProviderRequest,
 	RemoveEnterpriseProviderRequestType,
 	UpdateThirdPartyStatusRequest,
@@ -51,6 +55,7 @@ import {
 import { CodeStreamSession } from "../session";
 import { getProvider, getRegisteredProviders, log, lsp, lspHandler } from "../system";
 import {
+	getRemotePaths,
 	ProviderCreatePullRequestRequest,
 	ProviderCreatePullRequestResponse,
 	ProviderGetRepoInfoRequest,
@@ -415,6 +420,40 @@ export class ThirdPartyProviderRegistry {
 			throw ex;
 		}
 		return result;
+	}
+
+	@log({
+		prefix: (context, args) => `${context.prefix}:${args.method}`
+	})
+	@lspHandler(QueryThirdPartyRequestType)
+	async queryThirdParty(request: QueryThirdPartyRequest) {
+		try {
+			if (!request.url) return undefined;
+
+			const uri = URI.parse(request.url);
+			const providers = getRegisteredProviders();
+			for (const provider of providers.filter(_ => {
+				const provider = _ as ThirdPartyIssueProvider & ThirdPartyProviderSupportsPullRequests;
+				return provider.supportsPullRequests != undefined && provider.supportsPullRequests();
+			})) {
+				const thirdPartyIssueProvider = provider as ThirdPartyIssueProvider &
+					ThirdPartyProviderSupportsPullRequests;
+				if (
+					thirdPartyIssueProvider.getIsMatchingRemotePredicate()({
+						domain: uri.authority
+					})
+				) {
+					return {
+						providerId: provider.getConfig().id
+					};
+				}
+			}
+		} catch (ex) {
+			Logger.error(ex, "queryThirdParty failed", {
+				url: request.url
+			});
+		}
+		return undefined;
 	}
 
 	private getPullRequestProvider(

@@ -1,5 +1,5 @@
 "use strict";
-import { GitRemote, GitRepository } from "git/gitService";
+import { GitRemoteLike, GitRepository } from "git/gitService";
 import * as paths from "path";
 import * as qs from "querystring";
 import { URI } from "vscode-uri";
@@ -20,14 +20,14 @@ import {
 	FetchThirdPartyCardsResponse,
 	FetchThirdPartyCardWorkflowRequest,
 	FetchThirdPartyCardWorkflowResponse,
-	MoveThirdPartyCardRequest,
-	MoveThirdPartyCardResponse,
-	ThirdPartyProviderCard,
-	FetchThirdPartyPullRequestRequest,
-	FetchThirdPartyPullRequestResponse,
 	FetchThirdPartyPullRequestCommitsRequest,
 	FetchThirdPartyPullRequestCommitsResponse,
-	GetMyPullRequestsResponse
+	FetchThirdPartyPullRequestRequest,
+	FetchThirdPartyPullRequestResponse,
+	GetMyPullRequestsResponse,
+	MoveThirdPartyCardRequest,
+	MoveThirdPartyCardResponse,
+	ThirdPartyProviderCard
 } from "../protocol/agent.protocol";
 import {
 	CodemarkType,
@@ -590,7 +590,7 @@ export class BitbucketProvider extends ThirdPartyIssueProviderBase<CSBitbucketPr
 		{ expiresAt: number; comments: Promise<PullRequestComment[]> }
 	>();
 
-	private _isMatchingRemotePredicate = (r: GitRemote) => r.domain === "bitbucket.org";
+	private _isMatchingRemotePredicate = (r: GitRemoteLike) => r.domain === "bitbucket.org";
 	getIsMatchingRemotePredicate() {
 		return this._isMatchingRemotePredicate;
 	}

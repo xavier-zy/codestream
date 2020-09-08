@@ -603,6 +603,21 @@ export class ExecuteThirdPartyTypedType<Req, Res> extends RequestType<
 	}
 }
 
+export interface QueryThirdPartyRequest {
+	url: string;
+}
+
+export interface QueryThirdPartyResponse {
+	providerId?: string;
+}
+
+export const QueryThirdPartyRequestType = new RequestType<
+	QueryThirdPartyRequest,
+	QueryThirdPartyResponse,
+	void,
+	void
+>("codestream/provider/query");
+
 export interface GetMyPullRequestsRequest {
 	owner?: string;
 	name?: string;

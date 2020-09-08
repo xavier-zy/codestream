@@ -4,7 +4,7 @@ import { URI } from "vscode-uri";
 import { MessageType } from "../api/apiProvider";
 import { User } from "../api/extensions";
 import { SessionContainer } from "../container";
-import { GitRemote, GitRepository } from "../git/gitService";
+import { GitRemote, GitRemoteLike, GitRepository } from "../git/gitService";
 import { Logger } from "../logger";
 import {
 	AddEnterpriseProviderRequest,
@@ -28,14 +28,14 @@ import {
 	FetchThirdPartyPullRequestCommitsResponse,
 	FetchThirdPartyPullRequestRequest,
 	FetchThirdPartyPullRequestResponse,
+	GetMyPullRequestsResponse,
 	MoveThirdPartyCardRequest,
 	MoveThirdPartyCardResponse,
 	RemoveEnterpriseProviderRequest,
 	ThirdPartyDisconnect,
 	ThirdPartyProviderConfig,
 	UpdateThirdPartyStatusRequest,
-	UpdateThirdPartyStatusResponse,
-	GetMyPullRequestsResponse
+	UpdateThirdPartyStatusResponse
 } from "../protocol/agent.protocol";
 import { CSMe, CSProviderInfos } from "../protocol/api.protocol";
 import { CodeStreamSession } from "../session";
@@ -91,7 +91,7 @@ export interface ThirdPartyProviderSupportsPullRequests {
 		request: ProviderCreatePullRequestRequest
 	): Promise<ProviderCreatePullRequestResponse | undefined>;
 	getRepoInfo(request: ProviderGetRepoInfoRequest): Promise<ProviderGetRepoInfoResponse>;
-	getIsMatchingRemotePredicate(): any;
+	getIsMatchingRemotePredicate(): (remoteLike: GitRemoteLike) => boolean;
 	getRemotePaths(repo: any, _projectsByRemotePath: any): any;
 
 	getPullRequest(

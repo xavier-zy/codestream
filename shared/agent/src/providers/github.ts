@@ -1,5 +1,5 @@
 "use strict";
-import { GitRemote, GitRepository } from "git/gitService";
+import { GitRemoteLike, GitRepository } from "git/gitService";
 import { GraphQLClient } from "graphql-request";
 import { uniqBy as _uniqBy } from "lodash-es";
 import { Response } from "node-fetch";
@@ -629,7 +629,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 	>();
 	private _prsByRepo = new Map<string, { expiresAt: number; prs: Promise<GitHubPullRequest[]> }>();
 
-	private _isMatchingRemotePredicate = (r: GitRemote) => r.domain === "github.com";
+	private _isMatchingRemotePredicate = (r: GitRemoteLike) => r.domain === "github.com";
 	getIsMatchingRemotePredicate() {
 		return this._isMatchingRemotePredicate;
 	}

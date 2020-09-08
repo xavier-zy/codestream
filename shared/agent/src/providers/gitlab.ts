@@ -5,7 +5,7 @@ import * as paths from "path";
 import * as qs from "querystring";
 import { URI } from "vscode-uri";
 import { SessionContainer } from "../container";
-import { GitRemote } from "../git/models/remote";
+import { GitRemoteLike } from "../git/models/remote";
 import { GitRepository } from "../git/models/repository";
 import { Logger } from "../logger";
 import { Markerish, MarkerLocationManager } from "../managers/markerLocationManager";
@@ -374,7 +374,7 @@ export class GitLabProvider extends ThirdPartyIssueProviderBase<CSGitLabProvider
 		{ expiresAt: number; comments: Promise<PullRequestComment[]> }
 	>();
 
-	private _isMatchingRemotePredicate = (r: GitRemote) => r.domain === "gitlab.com";
+	private _isMatchingRemotePredicate = (r: GitRemoteLike) => r.domain === "gitlab.com";
 	getIsMatchingRemotePredicate() {
 		return this._isMatchingRemotePredicate;
 	}

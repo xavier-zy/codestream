@@ -434,7 +434,11 @@ export class ThirdPartyProviderRegistry {
 			const providers = getRegisteredProviders();
 			for (const provider of providers.filter(_ => {
 				const provider = _ as ThirdPartyIssueProvider & ThirdPartyProviderSupportsPullRequests;
-				return provider.supportsPullRequests != undefined && provider.supportsPullRequests();
+				try {
+					return provider.supportsPullRequests != undefined && provider.supportsPullRequests();
+				} catch {
+					return false;
+				}
 			})) {
 				const thirdPartyIssueProvider = provider as ThirdPartyIssueProvider &
 					ThirdPartyProviderSupportsPullRequests;

@@ -118,7 +118,7 @@ export const ModifiedRepos = (props: {
 					<div style={{ margin: "0 -20px 0 -20px", padding: "5px 0 10px 0" }}>
 						<div className="related-label" style={{ paddingLeft: "40px", paddingTop: "5px" }}>
 							Modified Files (vs.{" "}
-							<InlineMenu items={[{ label: "-" }]}>
+							<InlineMenu items={[]}>
 								<span className="monospace no-transform">
 									{repo.startCommit ? repo.startCommit.substr(0, 8) : "HEAD"}
 								</span>

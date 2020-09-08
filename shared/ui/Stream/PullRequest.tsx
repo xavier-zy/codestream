@@ -466,7 +466,7 @@ export const PullRequest = () => {
 	const iAmRequested = useMemo(() => {
 		if (pr) {
 			return pr.reviewRequests.nodes.find(
-				request => request.requestedReviewer.login === pr.viewer.login
+				request => request.requestedReviewer && request.requestedReviewer.login === pr.viewer.login
 			);
 		}
 		return false;

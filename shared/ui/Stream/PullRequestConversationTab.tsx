@@ -334,10 +334,12 @@ export const PullRequestConversationTab = (props: {
 	// these are reviews that have been requested (though not started)
 	pr.reviewRequests &&
 		pr.reviewRequests.nodes.reduce((map, obj) => {
-			map[obj.requestedReviewer.id] = {
-				...obj.requestedReviewer,
-				isPending: true
-			};
+			if (obj && obj.requestedReviewer) {
+				map[obj.requestedReviewer.id] = {
+					...obj.requestedReviewer,
+					isPending: true
+				};
+			}
 			return map;
 		}, reviewsHash);
 

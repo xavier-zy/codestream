@@ -1265,7 +1265,12 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 		isOpen?: boolean;
 		force?: boolean;
 	}): Promise<GetMyPullRequestsResponse[] | undefined> {
-		const cacheKey = [request.owner, request.repo, request.isOpen].join("-");
+		const cacheKey = [
+			request.owner,
+			request.repo,
+			request.isOpen,
+			JSON.stringify(request.queries || "")
+		].join("-");
 		if (!request.force) {
 			const cached = this._getMyPullRequestsCache.get(cacheKey);
 			if (cached) {
@@ -1280,7 +1285,6 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 		}
 		const repoQuery =
 			request && request.owner && request.repo ? `repo:${request.owner}/${request.repo} ` : "";
-		const isOpenQuery = request && request.isOpen === true ? "is:open " : "";
 
 		const queries = request.queries;
 		const buildQuery = (query: string) => `query Search {
@@ -1345,7 +1349,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 
 		// see: https://docs.github.com/en/github/searching-for-information-on-github/searching-issues-and-pull-requests
 		const items = await Promise.all(
-			queries.map(_ => this.client.request<any>(buildQuery(`${repoQuery}${isOpenQuery}${_}`)))
+			queries.map(_ => this.client.request<any>(buildQuery(`${repoQuery}${_}`)))
 		).catch(ex => {
 			Logger.error(ex);
 			throw new Error(ex.response ? JSON.stringify(ex.response) : ex.message);
@@ -1356,6 +1360,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 			if (item && item.search && item.search.edges) {
 				response[index] = item.search.edges
 					.map((_: any) => _.node)
+					.filter((_: any) => _.id)
 					.map((pr: { createdAt: string }) => ({
 						...pr,
 						providerId: this.providerConfig?.id,

@@ -4,6 +4,16 @@ import styled from "styled-components";
 import { CSText } from "./CSText";
 import Icon from "@codestream/webview/Stream/Icon";
 
+export const ButtonRow = styled.div`
+	text-align: right;
+	margin-top: 10px;
+	button {
+		margin: 10px 0 0 10px;
+		// white-space: nowrap;
+		// width: 16em;
+	}
+`;
+
 const Box = styled.div<{ narrow?: boolean }>`
 	background: var(--base-background-color);
 	border: 1px solid var(--base-border-color);

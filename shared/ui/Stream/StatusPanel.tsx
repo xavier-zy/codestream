@@ -43,11 +43,13 @@ import { WebviewPanels } from "../ipc/webview.protocol.common";
 import { ModifiedRepos } from "./ModifiedRepos";
 import Tooltip from "./Tooltip";
 import { OpenReviews } from "./OpenReviews";
+import { OpenPullRequests } from "./OpenPullRequests";
 import { Modal } from "./Modal";
 import { OpenUrlRequestType } from "@codestream/protocols/webview";
 import { isFeatureEnabled } from "../store/apiVersioning/reducer";
 import { GitTimeline, BranchLineDown, BranchCurve, BranchLineAcross, GitBranch } from "./Flow";
 import KeystrokeDispatcher from "../utilities/keystroke-dispatcher";
+import { ButtonRow } from "../src/components/Dialog";
 
 const StyledCheckbox = styled(Checkbox)`
 	color: var(--text-color-subtle);
@@ -103,16 +105,6 @@ const CardTitle = styled.span`
 			padding-right: 0;
 			margin-left: 0;
 		}
-	}
-`;
-
-export const ButtonRow = styled.div`
-	text-align: right;
-	margin-top: 10px;
-	button {
-		margin: 10px 0 0 10px;
-		// white-space: nowrap;
-		// width: 16em;
 	}
 `;
 
@@ -219,6 +211,7 @@ export const RoundedLink = styled.a`
 	}
 	.octicon-minus-circle,
 	.octicon-gear,
+	.octicon-pull-request,
 	.octicon-arrow-right {
 		margin-top: -1px;
 	}
@@ -1011,6 +1004,7 @@ export const StatusPanel = () => {
 			<ScrollBox>
 				<div className="channel-list vscroll">
 					<OpenReviews openRepos={openRepos} />
+					<OpenPullRequests openRepos={openRepos} />
 					<StatusSection>
 						<RoundedLink
 							onClick={() => {

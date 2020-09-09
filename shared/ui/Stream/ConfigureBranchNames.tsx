@@ -5,10 +5,7 @@ import { HostApi } from "../webview-api";
 import styled from "styled-components";
 import { Button } from "../src/components/Button";
 import { UpdateTeamSettingsRequestType } from "@codestream/protocols/agent";
-import Menu from "./Menu";
-import { ButtonRow } from "./StatusPanel";
-import { Card } from "../src/components/Card";
-import { Dialog } from "../src/components/Dialog";
+import { Dialog, ButtonRow } from "../src/components/Dialog";
 
 const Root = styled.div`
 	h3 {

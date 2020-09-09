@@ -15,7 +15,7 @@ import {
 import { Headshot, PRHeadshot } from "../src/components/Headshot";
 import MessageInput from "./MessageInput";
 import { CSMe } from "@codestream/protocols/api";
-import { ButtonRow } from "./StatusPanel";
+import { ButtonRow } from "../src/components/Dialog";
 import { Button } from "../src/components/Button";
 import { removeFromMyPullRequests } from "../store/providerPullRequests/actions";
 

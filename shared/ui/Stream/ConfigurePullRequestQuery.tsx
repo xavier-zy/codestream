@@ -1,0 +1,171 @@
+import React from "react";
+import { useDispatch } from "react-redux";
+import { Row } from "./CrossPostIssueControls/IssueDropdown";
+import { PRHeadshot } from "../src/components/Headshot";
+import Tooltip from "./Tooltip";
+import { HostApi } from "../webview-api";
+import { GetMyPullRequestsResponse } from "@codestream/protocols/agent";
+import { Button } from "../src/components/Button";
+import { getMyPullRequests } from "../store/providerPullRequests/actions";
+import Tag from "./Tag";
+import { Modal } from "./Modal";
+import { Dialog, ButtonRow } from "../src/components/Dialog";
+import { Link } from "./Link";
+import { Checkbox } from "../src/components/Checkbox";
+import { PullRequestTooltip } from "./OpenPullRequests";
+import styled from "styled-components";
+import { PullRequestQuery } from "../protocols/agent/api.protocol.models";
+
+const PRTestResults = styled.div`
+	margin: 20px -20px 0 -20px;
+	padding-top: 20px;
+	border-top: 1px solid var(--base-border-color);
+	i {
+		display: block;
+		text-align: center;
+	}
+`;
+
+// FIXME hard-coded github*com
+const EMPTY_QUERY: PullRequestQuery = {
+	providerId: "github*com",
+	name: "",
+	query: "",
+	hidden: false
+};
+interface Props {
+	query?: PullRequestQuery;
+	openReposOnly: boolean;
+	save: Function;
+	onClose: Function;
+}
+
+export function ConfigurePullRequestQuery(props: Props) {
+	const dispatch = useDispatch();
+
+	const { query = EMPTY_QUERY } = props;
+	const [nameField, setNameField] = React.useState(query.name);
+	const [queryField, setQueryField] = React.useState(query.query);
+	const [testPRSummaries, setTestPRSummaries] = React.useState<
+		GetMyPullRequestsResponse[] | undefined
+	>(undefined);
+	const [isLoading, setIsLoading] = React.useState(false);
+
+	const fetchTestPRs = async query => {
+		setIsLoading(true);
+		setTestPRSummaries(undefined);
+		try {
+			// FIXME hardcoded github
+			const response: any = await dispatch(
+				getMyPullRequests("github*com", [query], props.openReposOnly, { force: true }, true)
+			);
+			console.warn("RESPONSE IS: ", response);
+			if (response && response.length) {
+				HostApi.instance.track("PR Test List Rendered", {
+					"PR Count": response.length
+				});
+				setTestPRSummaries(response[0]);
+			}
+		} catch (ex) {
+			if (ex && ex.indexOf('"message":"Bad credentials"') > -1) {
+				// show message about re-authing?
+			}
+		} finally {
+			setIsLoading(false);
+		}
+	};
+
+	const title = query.query ? "Edit Pull Request Query" : "New Pull Request Query";
+	return (
+		<Modal translucent>
+			<Dialog title={title} narrow onClose={() => props.onClose()}>
+				<form className="standard-form">
+					<fieldset className="form-body">
+						The variable @me can be used to specify the logged in user within a search.{" "}
+						<Link href="https://docs.github.com/en/github/searching-for-information-on-github/searching-issues-and-pull-requests">
+							Search syntax
+						</Link>
+						.
+						<div id="controls">
+							<div style={{ margin: "20px 0" }}>
+								<input
+									autoFocus
+									placeholder="Label"
+									name="query-name"
+									value={nameField}
+									className="input-text control"
+									type="text"
+									onChange={e => {
+										setNameField(e.target.value);
+									}}
+								/>
+								<div style={{ height: "10px" }} />
+								<input
+									placeholder="Query"
+									name="query"
+									value={queryField}
+									className="input-text control"
+									type="text"
+									onChange={e => {
+										setQueryField(e.target.value);
+									}}
+								/>
+								<div style={{ height: "10px" }} />
+							</div>
+						</div>
+						<ButtonRow>
+							<Button
+								isLoading={isLoading}
+								disabled={queryField.length === 0}
+								variant="secondary"
+								onClick={() => fetchTestPRs(queryField)}
+							>
+								Test Query
+							</Button>
+							<Button
+								disabled={queryField.length === 0}
+								onClick={() => props.save(nameField, queryField)}
+							>
+								Save Query
+							</Button>
+						</ButtonRow>
+					</fieldset>
+					{testPRSummaries !== undefined && (
+						<PRTestResults>
+							{testPRSummaries.length === 0 && <i>No PRs match this query</i>}
+							{testPRSummaries.map(pr => {
+								return (
+									<Tooltip
+										key={"pr-tt-" + pr.id}
+										title={<PullRequestTooltip pr={pr} />}
+										delay={1}
+										placement="top"
+									>
+										<Row key={"pr-" + pr.id}>
+											<div>
+												<PRHeadshot person={pr.author} />
+											</div>
+											<div>
+												<span>
+													{pr.title} #{pr.number}
+												</span>
+												{pr.labels && pr.labels.nodes.length > 0 && (
+													<span className="cs-tag-container">
+														{pr.labels.nodes.map((_, index) => (
+															<Tag key={index} tag={{ label: _.name, color: `#${_.color}` }} />
+														))}
+													</span>
+												)}
+												<span className="subtle">{pr.bodyText || pr.body}</span>
+											</div>
+										</Row>
+									</Tooltip>
+								);
+							})}
+						</PRTestResults>
+					)}
+				</form>
+			</Dialog>
+		</Modal>
+	);
+}

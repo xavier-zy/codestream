@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="a438e04a-ccbc-4fdb-9aef-429418e3308d" name="Default Changelist" comment="" />
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="ProjectId" id="1gy2BP5wWiph8Qm0HoO6sJAXQeF" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">
+    <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="settings.editor.selected.configurable" value="preferences.pluginManager" />
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="a438e04a-ccbc-4fdb-9aef-429418e3308d" name="Default Changelist" comment="" />
+      <created>1599072375792</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1599072375792</updated>
+    </task>
+    <servers />
+  </component>
+  <component name="WindowStateProjectService">
+    <state x="330" y="322" key="IDE.errors.dialog" timestamp="1599098503325">
+      <screen x="0" y="23" width="1440" height="877" />
+    </state>
+    <state x="587" y="506" key="IDE.errors.dialog/-1440.94.1440.877/0.23.2560.1417@0.23.2560.1417" timestamp="1599072685618" />
+    <state x="330" y="322" key="IDE.errors.dialog/0.23.1440.877@0.23.1440.877" timestamp="1599098503325" />
+    <state x="221" y="100" key="SettingsEditor" timestamp="1599098315022">
+      <screen x="0" y="23" width="1440" height="877" />
+    </state>
+    <state x="221" y="100" key="SettingsEditor/0.23.1440.877@0.23.1440.877" timestamp="1599098315022" />
+  </component>
+</project>

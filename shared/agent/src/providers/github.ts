@@ -117,7 +117,10 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 
 			this._client = new GraphQLClient(this.graphQlBaseUrl, {
 				headers: {
-					Authorization: `Bearer ${this.accessToken}`
+					Authorization: `Bearer ${this.accessToken}`,
+					// Add `Accept` header To access PullRequest.mergeStateStatus and PullRequest.canBeRebased schema members
+					// https://docs.github.com/en/graphql/overview/schema-previews#merge-info-preview
+					Accept: "application/vnd.github.merge-info-preview+json"
 				}
 			});
 		}
@@ -2604,6 +2607,8 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 					mergeable
 					merged
 					mergedAt
+					canBeRebased
+					mergeStateStatus
 					title
 					url
 					updatedAt

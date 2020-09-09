@@ -984,6 +984,21 @@ export const PRResolveConflictsRow = styled.div`
 	}
 `;
 
+export const PRResolveConflicts = styled.div`
+	padding: "5px 0";
+	${PRResolveConflictsRow} {
+		padding-bottom: 10px;
+		margin-bottom: 10px;
+		border-bottom: 1px solid;
+		border-color: var(--base-border-color);
+	}
+	${PRResolveConflictsRow}:last-child {
+		padding-bottom: 0px;
+		margin-bottom: 0px;
+		border: none;
+	}
+`;
+
 export const PRHeadshots = styled.div`
 	margin-bottom: -5px;
 	${PRHeadshot} {

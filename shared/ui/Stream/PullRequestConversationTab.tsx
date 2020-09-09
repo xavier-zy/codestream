@@ -39,7 +39,8 @@ import {
 	PRCopyableTerminal,
 	PRCloneURLWrapper,
 	PRResolveConflictsRow,
-	PRHeadshots
+	PRHeadshots,
+	PRResolveConflicts
 } from "./PullRequestComponents";
 import { PullRequestTimelineItems, GHOST } from "./PullRequestTimelineItems";
 import { DropdownButton } from "./Review/DropdownButton";
@@ -813,22 +814,56 @@ export const PullRequestConversationTab = (props: {
 								</Button>
 							</PRResolveConflictsRow>
 						</PRCommentCard>
-					) : pr.reviewDecision === "REVIEW_REQUIRED" ? (
+					) : pr.mergeStateStatus === "BLOCKED" ? (
 						<PRCommentCard>
 							<PRStatusHeadshot className="gray-background">
 								<Icon name="git-merge" />
 							</PRStatusHeadshot>
-							<div style={{ padding: "5px 0" }}>
-								<PRResolveConflictsRow>
-									<PRIconButton className="red-background">
-										<Icon name="x" />
-									</PRIconButton>
-									<div className="middle">
-										<h1>Review Required</h1>
-										Reviews are required by reviewers with write access.
-									</div>
-								</PRResolveConflictsRow>
-							</div>
+							<PRResolveConflicts>
+								{pr.reviewDecision === "REVIEW_REQUIRED" ? (
+									<>
+										<PRResolveConflictsRow>
+											<PRIconButton className="red-background">
+												<Icon name="x" />
+											</PRIconButton>
+											<div className="middle">
+												<h1>Review Required</h1>
+												Reviews are required by reviewers with write access.
+											</div>
+										</PRResolveConflictsRow>
+										<PRResolveConflictsRow>
+											<PRIconButton className="red-background">
+												<Icon name="x" />
+											</PRIconButton>
+											<div className="middle">
+												<h1>Merging is blocked</h1>
+											</div>
+										</PRResolveConflictsRow>
+									</>
+								) : ghRepo.viewerPermission === "READ" ? (
+									<PRResolveConflictsRow>
+										<PRIconButton className="red-background">
+											<Icon name="x" />
+										</PRIconButton>
+										<div className="middle">
+											<h1>Merging is blocked</h1>
+											The base branch restricts merging to authorized users.{" "}
+											<Link href="https://docs.github.com/en/github/administering-a-repository/about-protected-branches">
+												Learn more about protected branches.
+											</Link>
+										</div>
+									</PRResolveConflictsRow>
+								) : (
+									<PRResolveConflictsRow>
+										<PRIconButton className="red-background">
+											<Icon name="x" />
+										</PRIconButton>
+										<div className="middle">
+											<h1>Merging is blocked</h1>
+										</div>
+									</PRResolveConflictsRow>
+								)}
+							</PRResolveConflicts>
 						</PRCommentCard>
 					) : !pr.merged && pr.mergeable === "MERGEABLE" && pr.state !== "CLOSED" ? (
 						<PRCommentCard className="green-border dark-header">
@@ -848,97 +883,83 @@ export const PullRequestConversationTab = (props: {
 										{mergeMethod === "REBASE" ? (
 											<>
 												<h1>This branch has no conflicts with the base branch when rebasing</h1>
-												{ghRepo.viewerPermission === "READ" ? (
-													<p>
-														Only those with write access to this repository can merge pull requests.
-													</p>
-												) : (
-													<p>Rebase and merge can be performed automatically.</p>
-												)}
+												<p>Rebase and merge can be performed automatically.</p>
 											</>
 										) : (
 											<>
 												<h1>This branch has no conflicts with the base branch</h1>
-												{ghRepo.viewerPermission === "READ" ? (
-													<p>
-														Only those with write access to this repository can merge pull requests.
-													</p>
-												) : (
-													<p>Merging can be performed automatically.</p>
-												)}
+												<p>Merging can be performed automatically.</p>
 											</>
 										)}
 									</div>
 								</div>
 							</PRCommentHeader>
-							{ghRepo.viewerPermission !== "READ" && (
-								<div style={{ padding: "5px 0" }}>
-									<PRButtonRow className="align-left">
-										<DropdownButton
-											items={[
-												{
-													key: "MERGE",
-													label: "Create a merge commit",
-													subtext: (
-														<span>
-															All commits from this branch will be added to
-															<br />
-															the base branch via a merge commit.
-															{!ghRepo.mergeCommitAllowed && (
-																<>
-																	<br />
-																	<small>Not enabled for this repository</small>
-																</>
-															)}
-														</span>
-													),
-													disabled: !ghRepo.mergeCommitAllowed,
-													onSelect: () => setMergeMethod("MERGE"),
-													action: () => mergePullRequest({ mergeMethod: "MERGE" })
-												},
-												{
-													key: "SQUASH",
-													label: "Squash and merge",
-													subtext: (
-														<span>
-															The commits from this branch will be combined
-															<br />
-															into one commit in the base branch.
-														</span>
-													),
-													disabled: !ghRepo.squashMergeAllowed,
-													onSelect: () => setMergeMethod("SQUASH"),
-													action: () => mergePullRequest({ mergeMethod: "SQUASH" })
-												},
-												{
-													key: "REBASE",
-													label: "Rebase and merge",
-													subtext: (
-														<span>
-															The commits from this branch will be rebased
-															<br />
-															and added to the base branch.
-														</span>
-													),
-													disabled: !ghRepo.rebaseMergeAllowed,
-													onSelect: () => setMergeMethod("REBASE"),
-													action: () => mergePullRequest({ mergeMethod: "REBASE" })
-												}
-											]}
-											selectedKey={derivedState.defaultMergeMethod}
-											variant="success"
-											splitDropdown
-										/>
-									</PRButtonRow>
-								</div>
-							)}
+							<div style={{ padding: "5px 0" }}>
+								<PRButtonRow className="align-left">
+									<DropdownButton
+										items={[
+											{
+												key: "MERGE",
+												label: "Create a merge commit",
+												subtext: (
+													<span>
+														All commits from this branch will be added to
+														<br />
+														the base branch via a merge commit.
+														{!ghRepo.mergeCommitAllowed && (
+															<>
+																<br />
+																<small>Not enabled for this repository</small>
+															</>
+														)}
+													</span>
+												),
+												disabled: !ghRepo.mergeCommitAllowed,
+												onSelect: () => setMergeMethod("MERGE"),
+												action: () => mergePullRequest({ mergeMethod: "MERGE" })
+											},
+											{
+												key: "SQUASH",
+												label: "Squash and merge",
+												subtext: (
+													<span>
+														The commits from this branch will be combined
+														<br />
+														into one commit in the base branch.
+													</span>
+												),
+												disabled: !ghRepo.squashMergeAllowed,
+												onSelect: () => setMergeMethod("SQUASH"),
+												action: () => mergePullRequest({ mergeMethod: "SQUASH" })
+											},
+											{
+												key: "REBASE",
+												label: "Rebase and merge",
+												subtext: (
+													<span>
+														The commits from this branch will be rebased
+														<br />
+														and added to the base branch.
+													</span>
+												),
+												disabled: !ghRepo.rebaseMergeAllowed,
+												onSelect: () => setMergeMethod("REBASE"),
+												action: () => mergePullRequest({ mergeMethod: "REBASE" })
+											}
+										]}
+										selectedKey={derivedState.defaultMergeMethod}
+										variant="success"
+										splitDropdown
+									/>
+								</PRButtonRow>
+							</div>
 						</PRCommentCard>
 					) : !pr.merged && pr.mergeable === "UNKNOWN" ? (
 						<PRCommentCard>
 							<PRStatusHeadshot className="gray-background">
 								<Icon name="git-merge" />
 							</PRStatusHeadshot>
-							<div style={{ padding: "5px 0" }}>
+							<PRResolveConflicts>
 								<PRResolveConflictsRow>
 									<PRIconButton className="gray-background">
 										<Icon name="alert" />
@@ -965,7 +986,7 @@ export const PullRequestConversationTab = (props: {
 										</Button>
 									)}
 								</PRResolveConflictsRow>
-							</div>
+							</PRResolveConflicts>
 						</PRCommentCard>
 					) : !pr.merged && pr.mergeable === "CONFLICTING" ? (
 						<PRCommentCard>
@@ -976,7 +997,7 @@ export const PullRequestConversationTab = (props: {
 								pr={pr}
 								opinionatedReviews={Object.values(opinionatedReviewsHash)}
 							/>
-							<div style={{ padding: "5px 0" }}>
+							<PRResolveConflicts>
 								<PRResolveConflictsRow>
 									<PRIconButton className="gray-background">
 										<Icon name="alert" />
@@ -1070,7 +1091,7 @@ export const PullRequestConversationTab = (props: {
 										/>
 									</div>
 								)}
-							</div>
+							</PRResolveConflicts>
 						</PRCommentCard>
 					) : !pr.merged && pr.mergeable !== "CONFLICTING" && pr.state === "CLOSED" ? (
 						<PRCommentCard>

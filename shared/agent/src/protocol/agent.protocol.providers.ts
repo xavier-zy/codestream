@@ -488,6 +488,8 @@ export interface FetchThirdPartyPullRequestPullRequest {
 	mergeable: string;
 	merged: boolean;
 	mergedAt: string;
+	canBeRebased: string;
+	mergeStateStatus: string;
 	title: string;
 	url: string;
 	repoUrl: string;

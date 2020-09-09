@@ -159,6 +159,11 @@ export const EmailConfirmation = (connect() as any)((props: Props) => {
 											onChange={value => {
 												setError(undefined);
 												let newDigit: string;
+												if (value.match(/^\d\d\d\d\d\d$/)) {
+													setValues(value.split(""));
+													onSubmit();
+													return;
+												}
 												// probably a backspace
 												if (value === "") newDigit = value;
 												// don't change the value

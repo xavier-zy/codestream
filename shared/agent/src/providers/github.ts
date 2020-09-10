@@ -1265,12 +1265,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 		isOpen?: boolean;
 		force?: boolean;
 	}): Promise<GetMyPullRequestsResponse[] | undefined> {
-		const cacheKey = [
-			request.owner,
-			request.repo,
-			request.isOpen,
-			JSON.stringify(request.queries || "")
-		].join("-");
+		const cacheKey = JSON.stringify({ ...request, providerId: this.providerConfig.id });
 		if (!request.force) {
 			const cached = this._getMyPullRequestsCache.get(cacheKey);
 			if (cached) {
@@ -1283,8 +1278,38 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 			Logger.debug(`github getMyPullRequests removed from cache, key=${cacheKey}`);
 			this._getMyPullRequestsCache.delete(cacheKey);
 		}
-		const repoQuery =
+		let repoQuery =
 			request && request.owner && request.repo ? `repo:${request.owner}/${request.repo} ` : "";
+		if (request.isOpen) {
+			try {
+				const { scm, providerRegistry } = SessionContainer.instance();
+				const reposResponse = await scm.getRepos({ inEditorOnly: true, includeProviders: true });
+				const repos = [];
+				if (reposResponse?.repositories) {
+					for (const repo of reposResponse.repositories) {
+						if (repo.remotes) {
+							for (const remote of repo.remotes) {
+								const urlToTest = `anything://${remote.domain}/${remote.path}`;
+								const results = await providerRegistry.queryThirdParty({ url: urlToTest });
+								if (results && results.providerId === this.providerConfig.id) {
+									const ownerData = this.getOwnerFromRemote(urlToTest);
+									if (ownerData) {
+										repos.push(`${ownerData.owner}/${ownerData.name}`);
+									}
+								}
+							}
+						}
+					}
+				}
+				if (repos.length) {
+					repoQuery = repos.map(_ => `repo:${_}`).join(" ") + " ";
+				} else {
+					return [];
+				}
+			} catch (ex) {
+				Logger.error(ex);
+			}
+		}
 
 		const queries = request.queries;
 		const buildQuery = (query: string) => `query Search {

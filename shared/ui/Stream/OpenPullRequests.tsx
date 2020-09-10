@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useCallback, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import * as userSelectors from "../store/users/reducer";
 import * as providerSelectors from "../store/providers/reducer";
@@ -31,6 +31,7 @@ import { confirmPopup } from "./Confirm";
 import { ConfigurePullRequestQuery } from "./ConfigurePullRequestQuery";
 import { DEFAULT_QUERIES } from "../store/preferences/reducer";
 import { ConfigurePullRequestQuerySettings } from "./ConfigurePullRequestQuerySettings";
+import { usePrevious } from "../utilities/hooks";
 
 const PRSummaryName = styled.div`
 	padding: 2px 20px;
@@ -187,54 +188,69 @@ export function OpenPullRequests(props: Props) {
 		{ providerId: string; index: number } | undefined
 	>(undefined);
 	const [configureQuerySettings, setConfigureQuerySettings] = React.useState(false);
-
+	const previousConfigureQuerySettings = usePrevious(configureQuerySettings);
 	const setQueries = (providerId, queries) => {
 		console.warn("SETTING QUERIES: ", queries);
 		dispatch(setUserPreference(["pullRequestQueries", providerId], [...queries]));
 		// dispatch(setUserPreference(["pullRequestQueries"], null));
 	};
 
-	const fetchPRs = async (theQueries, options?: { force?: boolean }) => {
-		setIsLoadingPRs(true);
-		try {
-			const newGroups = {};
-			console.warn("Loading the PRs...", theQueries);
-			for (const connectedProvider of derivedState.PRConnectedProviders) {
-				const queryStrings = (theQueries[connectedProvider.id] || []).map(_ => _.query);
-				console.warn("Loading the PRs... in the loop", queryStrings);
-				try {
-					const response: any = await dispatch(
-						getMyPullRequests(
-							connectedProvider.id,
-							queryStrings,
-							derivedState.openReposOnly,
-							options,
-							true
-						)
-					);
-					if (response && response.length) {
-						let count = 0;
-						response.forEach(group => (count += group.length));
-						HostApi.instance.track("PR List Rendered", {
-							"PR Count": count
-						});
-						console.warn("GOT SOME PULLS BACK: ", response);
-						newGroups[connectedProvider.id] = response;
-					}
-				} catch (ex) {
-					console.error(ex);
-				}
-			}
-			console.warn("SETTING TO: ", newGroups);
-			setPullRequestGroups(newGroups);
-		} catch (ex) {
-			if (ex && ex.indexOf('"message":"Bad credentials"') > -1) {
-				// show message about re-authing?
-			}
-		} finally {
-			setIsLoadingPRs(false);
+	useEffect(() => {
+		// if previously we were editing... and now we're not fetch the PRs...
+		if (previousConfigureQuerySettings && !configureQuerySettings) {
+			fetchPRs(derivedState.queries, { force: true });
 		}
-	};
+	});
+
+	const fetchPRs = useCallback(
+		async (theQueries, options?: { force?: boolean }) => {
+			setIsLoadingPRs(true);
+			try {
+				const newGroups = {};
+				console.warn("Loading the PRs...", theQueries);
+				for (const connectedProvider of derivedState.PRConnectedProviders) {
+					const queryStrings = (theQueries[connectedProvider.id] || []).map(_ => _.query);
+					console.warn("Loading the PRs... in the loop", queryStrings);
+					try {
+						const response: any = await dispatch(
+							getMyPullRequests(
+								connectedProvider.id,
+								queryStrings,
+								derivedState.openReposOnly,
+								options,
+								true
+							)
+						);
+						if (response && response.length) {
+							let count = 0;
+							response.forEach(group => (count += group.length));
+							HostApi.instance.track("PR List Rendered", {
+								"PR Count": count
+							});
+							console.warn("GOT SOME PULLS BACK: ", response);
+							newGroups[connectedProvider.id] = response;
+						}
+					} catch (ex) {
+						console.error(ex);
+					}
+				}
+				console.warn("SETTING TO: ", newGroups);
+				setPullRequestGroups(newGroups);
+			} catch (ex) {
+				if (ex && ex.indexOf('"message":"Bad credentials"') > -1) {
+					// show message about re-authing?
+				}
+			} finally {
+				setIsLoadingPRs(false);
+			}
+		},
+		[
+			editingQuery,
+			configureQuerySettings,
+			derivedState.PRConnectedProviders,
+			derivedState.openReposOnly
+		]
+	);
 
 	useMemo(() => {
 		if (derivedState.isPRSupportedCodeHostConnected) {

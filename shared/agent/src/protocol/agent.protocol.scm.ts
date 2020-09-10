@@ -168,6 +168,10 @@ export interface ReposScm {
 	 * only returned if includeProviders is set
 	 */
 	providerGuess?: string;
+	/**
+	 * this has a subset of what GitRemote has
+	 */
+	remotes?: { repoPath: string; path: string; domain: string }[];
 }
 
 export interface GetReposScmRequest {

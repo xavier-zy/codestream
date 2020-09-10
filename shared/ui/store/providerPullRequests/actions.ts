@@ -171,6 +171,7 @@ export const getMyPullRequests = (
 			providerId: providerId,
 			params: {
 				queries,
+				isOpen: openReposOnly,
 				force: force || (options && options.force)
 			}
 		});

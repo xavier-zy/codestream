@@ -134,7 +134,8 @@ interface ConnectedProps {
 		[service: string]: {};
 	};
 	currentUser: CSUser;
-	skipPostCreationModal: boolean;
+	skipPostCreationModal?: boolean;
+	skipEmailingAuthors?: boolean;
 	selectedStreams: {};
 	showChannels: string;
 	textEditorUri?: string;
@@ -532,7 +533,7 @@ class CodemarkForm extends React.Component<Props, State> {
 					// else offer to send the person an email
 					unregisteredAuthors.push(author);
 					// @ts-ignore
-					emailAuthors[author.email] = true;
+					emailAuthors[author.email] = !this.props.skipEmailingAuthors;
 				}
 			});
 		}
@@ -1920,6 +1921,7 @@ class CodemarkForm extends React.Component<Props, State> {
 	toggleEmail = (email: string) => {
 		const { emailAuthors } = this.state;
 
+		this.props.setUserPreference(["skipEmailingAuthors"], emailAuthors[email]);
 		this.setState({ emailAuthors: { ...emailAuthors, [email]: !emailAuthors[email] } });
 	};
 
@@ -2314,6 +2316,7 @@ const mapStateToProps = (state: CodeStreamState): ConnectedProps => {
 	}));
 
 	const skipPostCreationModal = preferences ? preferences.skipPostCreationModal : false;
+	const skipEmailingAuthors = preferences ? preferences.skipEmailingAuthors : false;
 
 	const team = teams[context.currentTeamId];
 	const adminIds = team.adminIds || [];
@@ -2345,6 +2348,7 @@ const mapStateToProps = (state: CodeStreamState): ConnectedProps => {
 		teamProvider: getCurrentTeamProvider(state),
 		currentUser: user,
 		skipPostCreationModal,
+		skipEmailingAuthors,
 		selectedStreams: preferences.selectedStreams || EMPTY_OBJECT,
 		showChannels: context.channelFilter,
 		textEditorUri: editorContext.textEditorUri,

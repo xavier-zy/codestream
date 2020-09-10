@@ -637,6 +637,8 @@ export interface CSMePreferences {
 	notificationDelivery?: CSNotificationDeliveryPreference;
 	skipWallToWallBanner?: boolean;
 	skipGitEmailCheck?: boolean;
+	skipEmailingAuthors?: boolean;
+	skipPostCreationModal?: boolean;
 	pullRequestFilesChangedMode?: "files" | "hunks";
 	[key: string]: any;
 }

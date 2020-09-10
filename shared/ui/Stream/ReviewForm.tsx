@@ -124,7 +124,7 @@ interface ConnectedProps {
 		[service: string]: {};
 	};
 	currentUser: CSUser;
-	skipPostCreationModal: boolean;
+	skipPostCreationModal?: boolean;
 	teamTagsArray: any;
 	textEditorUri?: string;
 	createPostAndReview?: Function;

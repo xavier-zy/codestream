@@ -1,6 +1,7 @@
 import React, { useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import * as userSelectors from "../store/users/reducer";
+import * as providerSelectors from "../store/providers/reducer";
 import { CodeStreamState } from "../store";
 import { Row } from "./CrossPostIssueControls/IssueDropdown";
 import Icon from "./Icon";
@@ -14,7 +15,8 @@ import { HostApi } from "../webview-api";
 import {
 	ReposScm,
 	GetMyPullRequestsResponse,
-	ExecuteThirdPartyRequestUntypedType
+	ExecuteThirdPartyRequestUntypedType,
+	QueryThirdPartyRequestType
 } from "@codestream/protocols/agent";
 import { OpenUrlRequestType } from "@codestream/protocols/webview";
 import { Button } from "../src/components/Button";
@@ -27,7 +29,7 @@ import { connectProvider, setUserPreference } from "./actions";
 import { PROVIDER_MAPPINGS } from "./CrossPostIssueControls/types";
 import { confirmPopup } from "./Confirm";
 import { ConfigurePullRequestQuery } from "./ConfigurePullRequestQuery";
-import { getSavedPullRequestQueries } from "../store/preferences/reducer";
+import { DEFAULT_QUERIES } from "../store/preferences/reducer";
 import { ConfigurePullRequestQuerySettings } from "./ConfigurePullRequestQuerySettings";
 
 const PRSummaryName = styled.div`
@@ -148,24 +150,26 @@ export function OpenPullRequests(props: Props) {
 			return { ...repo, name: state.repos[id] ? state.repos[id].name : "" };
 		});
 
-		console.warn("REPOS ARE: ", repos);
-		const queries = getSavedPullRequestQueries(state, "github*com");
+		const queries = preferences.pullRequestQueries || DEFAULT_QUERIES;
 
 		// FIXME hardcoded github
-		const isPRSupportedCodeHostConnected = isConnected(state, { name: "github" });
 		const hasPRSupportedRepos = repos.filter(r => r.providerGuess === "github").length > 0;
 
+		const prSupportedProviders = providerSelectors.getSupportedPullRequestHosts(state);
+		const prConnectedProviders = prSupportedProviders.filter(_ => isConnected(state, { id: _.id }));
+
+		console.warn("PREFS: ", preferences);
 		return {
 			queries,
 			teamTagsHash: userSelectors.getTeamTagsHash(state),
 			repos,
 			currentUserId,
-			isPRSupportedCodeHostConnected,
+			isPRSupportedCodeHostConnected: prConnectedProviders.length > 0,
 			hasPRSupportedRepos,
-			// FIXME hardcoded github
-			PRSupportedProviders: [state.providers["github*com"]],
 			openReposOnly: !preferences.pullRequestQueryShowAllRepos,
-			showLabels: !preferences.pullRequestQueryHideLabels
+			showLabels: !preferences.pullRequestQueryHideLabels,
+			PRSupportedProviders: prSupportedProviders,
+			PRConnectedProviders: prConnectedProviders
 		};
 	});
 
@@ -174,35 +178,55 @@ export function OpenPullRequests(props: Props) {
 	const [loadFromUrlQuery, setLoadFromUrlQuery] = React.useState("");
 	const [loadFromUrlOpen, setLoadFromUrlOpen] = React.useState(false);
 
-	const [pullRequestGroups, setPullRequestGroups] = React.useState<any[]>([]);
+	const [pullRequestGroups, setPullRequestGroups] = React.useState<{
+		[providerId: string]: GetMyPullRequestsResponse[][];
+	}>({});
 	const [isLoadingPRs, setIsLoadingPRs] = React.useState(false);
 	const [isLoadingPRGroup, setIsLoadingPRGroup] = React.useState<number | undefined>(undefined);
-	const [configureQuery, setConfigureQuery] = React.useState<number | undefined>(undefined);
+	const [editingQuery, setEditingQuery] = React.useState<
+		{ providerId: string; index: number } | undefined
+	>(undefined);
 	const [configureQuerySettings, setConfigureQuerySettings] = React.useState(false);
 
-	const setQueries = queries => {
+	const setQueries = (providerId, queries) => {
 		console.warn("SETTING QUERIES: ", queries);
-		dispatch(setUserPreference(["pullRequestQueries"], [...queries]));
-		// dispatch(setUserPreference(["pullRequestQueries"], ""));
+		dispatch(setUserPreference(["pullRequestQueries", providerId], [...queries]));
+		// dispatch(setUserPreference(["pullRequestQueries"], null));
 	};
 
-	const fetchPRs = async (options?: { force?: boolean }) => {
+	const fetchPRs = async (theQueries, options?: { force?: boolean }) => {
 		setIsLoadingPRs(true);
 		try {
-			const queryStrings = queries.map(_ => _.query);
-			// FIXME hardcoded github
-			const response: any = await dispatch(
-				getMyPullRequests("github*com", queryStrings, derivedState.openReposOnly, options, true)
-			);
-			if (response && response.length) {
-				let count = 0;
-				response.forEach(group => (count += group.length));
-				HostApi.instance.track("PR List Rendered", {
-					"PR Count": count
-				});
-				console.warn("PULLS: ", response);
-				setPullRequestGroups(response);
+			const newGroups = {};
+			console.warn("Loading the PRs...", theQueries);
+			for (const connectedProvider of derivedState.PRConnectedProviders) {
+				const queryStrings = (theQueries[connectedProvider.id] || []).map(_ => _.query);
+				console.warn("Loading the PRs... in the loop", queryStrings);
+				try {
+					const response: any = await dispatch(
+						getMyPullRequests(
+							connectedProvider.id,
+							queryStrings,
+							derivedState.openReposOnly,
+							options,
+							true
+						)
+					);
+					if (response && response.length) {
+						let count = 0;
+						response.forEach(group => (count += group.length));
+						HostApi.instance.track("PR List Rendered", {
+							"PR Count": count
+						});
+						console.warn("GOT SOME PULLS BACK: ", response);
+						newGroups[connectedProvider.id] = response;
+					}
+				} catch (ex) {
+					console.error(ex);
+				}
 			}
+			console.warn("SETTING TO: ", newGroups);
+			setPullRequestGroups(newGroups);
 		} catch (ex) {
 			if (ex && ex.indexOf('"message":"Bad credentials"') > -1) {
 				// show message about re-authing?
@@ -214,30 +238,25 @@ export function OpenPullRequests(props: Props) {
 
 	useMemo(() => {
 		if (derivedState.isPRSupportedCodeHostConnected) {
-			fetchPRs();
+			fetchPRs(queries);
 		}
 	}, [derivedState.isPRSupportedCodeHostConnected]);
 
-	const addQuery = () => editQuery(queries.length);
-	const editQuery = index => setConfigureQuery(index);
-	const reloadQuery = async index => {
+	const addQuery = () => editQuery("", -1);
+	const editQuery = (providerId: string, index: number) => {
+		setEditingQuery({ providerId, index });
+	};
+	const reloadQuery = async (providerId, index) => {
 		setIsLoadingPRGroup(index);
-		// FIXME hardcoded github
 		try {
-			const q = queries[index];
+			const q = queries[providerId][index];
 			const response: any = await dispatch(
-				getMyPullRequests(
-					"github*com",
-					[q.query],
-					derivedState.openReposOnly,
-					{ force: true },
-					true
-				)
+				getMyPullRequests(providerId, [q.query], derivedState.openReposOnly, { force: true }, true)
 			);
 			if (response && response.length) {
-				const groups = [...pullRequestGroups];
-				groups[index] = response[0];
-				setPullRequestGroups(groups);
+				const newGroups = { ...pullRequestGroups };
+				newGroups[providerId][index] = response[0];
+				setPullRequestGroups(newGroups);
 			}
 		} catch (ex) {
 			if (ex && ex.indexOf('"message":"Bad credentials"') > -1) {
@@ -248,7 +267,7 @@ export function OpenPullRequests(props: Props) {
 		}
 	};
 
-	const deleteQuery = index => {
+	const deleteQuery = (providerId, index) => {
 		confirmPopup({
 			title: "Are you sure?",
 			message: "Do you want to delete this query?" + index,
@@ -259,51 +278,70 @@ export function OpenPullRequests(props: Props) {
 					label: "Delete Query",
 					className: "delete",
 					action: async () => {
-						setQueries([...queries.splice(index, 1)]);
-						setPullRequestGroups([...pullRequestGroups.splice(index, 1)]);
+						console.warn("DELETING INDEX: ", index);
+						console.warn("OLD VALUE IS: ", queries[providerId]);
+						const newQueries = [...queries[providerId]];
+						newQueries.splice(index, 1);
+						console.warn("NEW VALUE IS: ", newQueries);
+						setQueries(providerId, newQueries);
+						const newGroups = [...pullRequestGroups[providerId]];
+						newGroups.splice(index, 1);
+						setPullRequestGroups({ ...pullRequestGroups, providerId: newGroups });
 					}
 				}
 			]
 		});
 	};
-	const toggleQueryHidden = index => {
-		const newQueries = [...queries];
+	const toggleQueryHidden = (providerId, index) => {
+		const newQueries = [...queries[providerId]];
 		newQueries[index].hidden = !newQueries[index].hidden;
-		setQueries(newQueries);
+		setQueries(providerId, newQueries);
 	};
 
-	const save = (name: string, query: string) => {
+	const save = (providerId: string, name: string, query: string) => {
 		// FIXME hard-coded github
 		const newQuery = {
-			providerId: "github*com",
+			providerId,
 			name,
 			query,
 			hidden: false
 		};
-		if (configureQuery !== undefined) {
+		let newQueries = [...queries[providerId]];
+		if (editingQuery && editingQuery.index !== undefined && editingQuery.index > -1) {
 			// it's an edit
-			const newQueries = [...queries];
-			newQueries[configureQuery] = newQuery;
-			setQueries(newQueries);
+			newQueries[editingQuery.index] = newQuery;
 		} else {
 			// it's new
-			setQueries([...queries, newQuery]);
+			newQueries = [...newQueries, newQuery];
 		}
-		// fetchPRs({ force: true });
-		setConfigureQuery(undefined);
+		setQueries(providerId, newQueries);
+		setEditingQuery(undefined);
+		fetchPRs({ ...queries, [providerId]: newQueries }, { force: true });
 	};
 
 	const goPR = async (url: string) => {
 		HostApi.instance
-			.send(ExecuteThirdPartyRequestUntypedType, {
-				method: "getPullRequestIdFromUrl",
-				providerId: "github*com",
-				params: { url }
+			.send(QueryThirdPartyRequestType, {
+				url: url
 			})
-			.then((id: any) => {
-				if (id) {
-					dispatch(setCurrentReview(""));
-					dispatch(setCurrentPullRequest(id));
+			.then((providerInfo: any) => {
+				if (providerInfo && providerInfo.providerId) {
+					HostApi.instance
+						.send(ExecuteThirdPartyRequestUntypedType, {
+							method: "getPullRequestIdFromUrl",
+							providerId: providerInfo.providerId,
+							params: { url }
+						})
+						.then(id => {
+							if (id) {
+								dispatch(setCurrentReview(""));
+								dispatch(setCurrentPullRequest(providerInfo.providerId, id as string));
+							} else {
+								HostApi.instance.send(OpenUrlRequestType, {
+									url
+								});
+							}
+						});
 				} else {
 					HostApi.instance.send(OpenUrlRequestType, {
 						url
@@ -321,12 +359,17 @@ export function OpenPullRequests(props: Props) {
 		return null;
 	return (
 		<>
-			{configureQuery !== undefined && (
+			{editingQuery && (
 				<ConfigurePullRequestQuery
-					query={queries[configureQuery]}
+					query={
+						editingQuery.providerId
+							? queries[editingQuery.providerId][editingQuery.index]
+							: undefined
+					}
 					save={save}
-					onClose={() => setConfigureQuery(undefined)}
+					onClose={() => setEditingQuery(undefined)}
 					openReposOnly={derivedState.openReposOnly}
+					prConnectedProviders={derivedState.PRConnectedProviders}
 				/>
 			)}
 			{configureQuerySettings && (
@@ -343,7 +386,7 @@ export function OpenPullRequests(props: Props) {
 							<Icon name="plus" />
 							<span className="wide-text">&nbsp;Add Query</span>
 						</RoundedLink>
-						<RoundedLink onClick={() => fetchPRs({ force: true })}>
+						<RoundedLink onClick={() => fetchPRs(queries, { force: true })}>
 							<Icon name="refresh" className={`spinnable ${isLoadingPRs ? "spin" : ""}`} />
 							<span className="wide-text">&nbsp;Refresh</span>
 						</RoundedLink>
@@ -366,118 +409,126 @@ export function OpenPullRequests(props: Props) {
 							})}
 						</ConnectToCodeHost>
 					)}
-					{queries.map((query, index) => {
-						const prGroup = pullRequestGroups[index];
-						return (
-							<PRSummaryGroup>
-								<PRSummaryName onClick={() => toggleQueryHidden(index)}>
-									{isLoadingPRs || index === isLoadingPRGroup ? (
-										<Icon name="sync" className="spin" />
-									) : (
-										<Icon
-											name={query.hidden ? "chevron-right" : "chevron-down"}
-											className="chevron"
-										/>
-									)}
-									<span>{query.name}</span>
-									<div className="actions" onClick={e => e.stopPropagation()}>
-										<Icon
-											title="Reload Query"
-											delay={0.5}
-											placement="bottom"
-											name="refresh"
-											className="clickable"
-											onClick={() => reloadQuery(index)}
-										/>
-										<Icon
-											title="Edit Query"
-											delay={0.5}
-											placement="bottom"
-											name="pencil"
-											className="clickable"
-											onClick={() => editQuery(index)}
-										/>
-										<Icon
-											title="Delete Query"
-											delay={0.5}
-											placement="bottom"
-											name="x"
-											className="clickable"
-											onClick={() => deleteQuery(index)}
-										/>
-									</div>
-								</PRSummaryName>
-								{!query.hidden &&
-									prGroup &&
-									prGroup.map(pr => {
-										const selected = derivedState.repos.find(repo => {
+					{derivedState.PRConnectedProviders.map(connectedProvider => {
+						const providerId = connectedProvider.id;
+						const providerQueries = queries[providerId] || [];
+						return providerQueries.map((query, index) => {
+							const providerGroups = pullRequestGroups[providerId];
+							const prGroup = providerGroups && providerGroups[index];
+							return (
+								<PRSummaryGroup key={index}>
+									<PRSummaryName onClick={() => toggleQueryHidden(providerId, index)}>
+										{isLoadingPRs || index === isLoadingPRGroup ? (
+											<Icon name="sync" className="spin" />
+										) : (
+											<Icon
+												name={query.hidden ? "chevron-right" : "chevron-down"}
+												className="chevron"
+											/>
+										)}
+										<span>{query.name}</span>
+										<div className="actions" onClick={e => e.stopPropagation()}>
+											<Icon
+												title="Reload Query"
+												delay={0.5}
+												placement="bottom"
+												name="refresh"
+												className="clickable"
+												onClick={() => reloadQuery(providerId, index)}
+											/>
+											<Icon
+												title="Edit Query"
+												delay={0.5}
+												placement="bottom"
+												name="pencil"
+												className="clickable"
+												onClick={() => editQuery(providerId, index)}
+											/>
+											<Icon
+												title="Delete Query"
+												delay={0.5}
+												placement="bottom"
+												name="x"
+												className="clickable"
+												onClick={() => deleteQuery(providerId, index)}
+											/>
+										</div>
+									</PRSummaryName>
+									{!query.hidden &&
+										prGroup &&
+										prGroup.map((pr, index) => {
+											const selected = derivedState.repos.find(repo => {
+												return (
+													repo.currentBranch === pr.headRefName &&
+													repo.name === pr.headRepository.name
+												);
+											});
 											return (
-												repo.currentBranch === pr.headRefName &&
-												repo.name === pr.headRepository.name
-											);
-										});
-										return (
-											<Tooltip
-												key={"pr-tt-" + pr.id}
-												title={<PullRequestTooltip pr={pr} />}
-												delay={1}
-												placement="top"
-											>
-												<Row
-													key={"pr-" + pr.id}
-													className={selected ? "selected" : ""}
-													onClick={() => dispatch(setCurrentPullRequest(pr.id))}
+												<Tooltip
+													key={"pr-tt-" + pr.id + index}
+													title={<PullRequestTooltip pr={pr} />}
+													delay={1}
+													placement="top"
 												>
-													<div>
-														{selected && <Icon name="arrow-right" className="selected-icon" />}
-														<PRHeadshot person={pr.author} />
-													</div>
-													<div>
-														<span>
-															{pr.title} #{pr.number}
-														</span>
-														{pr.labels && pr.labels.nodes.length > 0 && derivedState.showLabels && (
-															<span className="cs-tag-container">
-																{pr.labels.nodes.map((_, index) => (
-																	<Tag key={index} tag={{ label: _.name, color: `#${_.color}` }} />
-																))}
+													<Row
+														key={"pr-" + pr.id}
+														className={selected ? "selected" : ""}
+														onClick={() => dispatch(setCurrentPullRequest(pr.providerId, pr.id))}
+													>
+														<div>
+															{selected && <Icon name="arrow-right" className="selected-icon" />}
+															<PRHeadshot person={pr.author} />
+														</div>
+														<div>
+															<span>
+																{pr.title} #{pr.number}
 															</span>
-														)}
-														<span className="subtle">{pr.bodyText || pr.body}</span>
-													</div>
-													<div className="icons">
-														<span
-															onClick={e => {
-																e.preventDefault();
-																e.stopPropagation();
-																HostApi.instance.send(OpenUrlRequestType, {
-																	url: pr.url
-																});
-															}}
-														>
+															{pr.labels && pr.labels.nodes.length > 0 && derivedState.showLabels && (
+																<span className="cs-tag-container">
+																	{pr.labels.nodes.map((_, index) => (
+																		<Tag
+																			key={index}
+																			tag={{ label: _.name, color: `#${_.color}` }}
+																		/>
+																	))}
+																</span>
+															)}
+															<span className="subtle">{pr.bodyText || pr.body}</span>
+														</div>
+														<div className="icons">
+															<span
+																onClick={e => {
+																	e.preventDefault();
+																	e.stopPropagation();
+																	HostApi.instance.send(OpenUrlRequestType, {
+																		url: pr.url
+																	});
+																}}
+															>
+																<Icon
+																	name="globe"
+																	className="clickable"
+																	title="View on GitHub"
+																	placement="bottomLeft"
+																	delay={1}
+																/>
+															</span>
 															<Icon
-																name="globe"
+																name="review"
 																className="clickable"
-																title="View on GitHub"
+																title="Review Changes"
 																placement="bottomLeft"
 																delay={1}
 															/>
-														</span>
-														<Icon
-															name="review"
-															className="clickable"
-															title="Review Changes"
-															placement="bottomLeft"
-															delay={1}
-														/>
-														<Timestamp time={pr.createdAt} relative abbreviated />
-													</div>
-												</Row>
-											</Tooltip>
-										);
-									})}
-							</PRSummaryGroup>
-						);
+															<Timestamp time={pr.createdAt} relative abbreviated />
+														</div>
+													</Row>
+												</Tooltip>
+											);
+										})}
+								</PRSummaryGroup>
+							);
+						});
 					})}
 					<Row
 						key="load"

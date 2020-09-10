@@ -4,7 +4,7 @@ import { Row } from "./CrossPostIssueControls/IssueDropdown";
 import { PRHeadshot } from "../src/components/Headshot";
 import Tooltip from "./Tooltip";
 import { HostApi } from "../webview-api";
-import { GetMyPullRequestsResponse } from "@codestream/protocols/agent";
+import { GetMyPullRequestsResponse, ThirdPartyProviderConfig } from "@codestream/protocols/agent";
 import { Button } from "../src/components/Button";
 import { getMyPullRequests } from "../store/providerPullRequests/actions";
 import Tag from "./Tag";
@@ -26,9 +26,8 @@ const PRTestResults = styled.div`
 	}
 `;
 
-// FIXME hard-coded github*com
 const EMPTY_QUERY: PullRequestQuery = {
-	providerId: "github*com",
+	providerId: "",
 	name: "",
 	query: "",
 	hidden: false
@@ -38,12 +37,20 @@ interface Props {
 	openReposOnly: boolean;
 	save: Function;
 	onClose: Function;
+	prConnectedProviders: ThirdPartyProviderConfig[];
 }
 
 export function ConfigurePullRequestQuery(props: Props) {
 	const dispatch = useDispatch();
 
+	const defaultProviderId = React.useMemo(() => {
+		if (props.query && props.query.providerId) return props.query.providerId;
+		if (props.prConnectedProviders[0]) return props.prConnectedProviders[0].id;
+		return "";
+	}, [props]);
+
 	const { query = EMPTY_QUERY } = props;
+	const [providerIdField, setProviderIdField] = React.useState(defaultProviderId);
 	const [nameField, setNameField] = React.useState(query.name);
 	const [queryField, setQueryField] = React.useState(query.query);
 	const [testPRSummaries, setTestPRSummaries] = React.useState<
@@ -57,7 +64,7 @@ export function ConfigurePullRequestQuery(props: Props) {
 		try {
 			// FIXME hardcoded github
 			const response: any = await dispatch(
-				getMyPullRequests("github*com", [query], props.openReposOnly, { force: true }, true)
+				getMyPullRequests(providerIdField, [query], props.openReposOnly, { force: true }, true)
 			);
 			console.warn("RESPONSE IS: ", response);
 			if (response && response.length) {
@@ -88,6 +95,9 @@ export function ConfigurePullRequestQuery(props: Props) {
 						.
 						<div id="controls">
 							<div style={{ margin: "20px 0" }}>
+								{!query.providerId && props.prConnectedProviders.length > 1 && (
+									<label>PR Provider: </label>
+								)}
 								<input
 									autoFocus
 									placeholder="Label"
@@ -124,7 +134,7 @@ export function ConfigurePullRequestQuery(props: Props) {
 							</Button>
 							<Button
 								disabled={queryField.length === 0}
-								onClick={() => props.save(nameField, queryField)}
+								onClick={() => props.save(providerIdField, nameField, queryField)}
 							>
 								Save Query
 							</Button>

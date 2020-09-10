@@ -633,6 +633,7 @@ export interface GetMyPullRequestsRequest {
 
 export interface GetMyPullRequestsResponse {
 	id: string;
+	providerId: string;
 	url: string;
 	title: string;
 	createdAt: number;

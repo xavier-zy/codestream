@@ -200,7 +200,7 @@ export function OpenPullRequests(props: Props) {
 		if (previousConfigureQuerySettings && !configureQuerySettings) {
 			fetchPRs(derivedState.queries, { force: true });
 		}
-	});
+	}, [derivedState.openReposOnly, derivedState.showLabels]);
 
 	const fetchPRs = useCallback(
 		async (theQueries, options?: { force?: boolean }) => {

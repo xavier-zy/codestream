@@ -1960,7 +1960,7 @@ class ReviewForm extends React.Component<Props, State> {
 									key="title-text"
 									type="text"
 									name="title"
-									className="input-text control clearable"
+									className="input-text control"
 									tabIndex={0}
 									value={this.state.title}
 									onChange={e => this.setState({ title: e.target.value, titleTouched: true })}

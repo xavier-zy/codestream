@@ -330,6 +330,7 @@ export interface CheckPullRequestPreconditionsResponse {
 	pullRequestProvider?: { defaultBranch?: string; isConnected: boolean };
 	branch?: string;
 	branches?: string[];
+	remoteBranches?: string[];
 	warning?: {
 		message?: string;
 		type?: "ALREADY_HAS_PULL_REQUEST" | string;

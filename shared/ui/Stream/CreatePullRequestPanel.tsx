@@ -185,6 +185,7 @@ export const CreatePullRequestPanel = props => {
 
 	const [reviewBranch, setReviewBranch] = useState("");
 	const [branches, setBranches] = useState([] as string[]);
+	const [remoteBranches, setRemoteBranches] = useState([] as string[]);
 	const [requiresUpstream, setRequiresUpstream] = useState(false);
 	const [origins, setOrigins] = useState([] as string[]);
 
@@ -254,6 +255,7 @@ export const CreatePullRequestPanel = props => {
 			if (result && result.success) {
 				setReviewBranch(result.branch!);
 				setBranches(result.branches!);
+				setRemoteBranches(result.remoteBranches!);
 				if (result.pullRequestProvider && result.pullRequestProvider.defaultBranch) {
 					setPrBranch(result.pullRequestProvider.defaultBranch!);
 				}
@@ -499,7 +501,7 @@ export const CreatePullRequestPanel = props => {
 	// }, [prBranch, reviewBranch]);
 
 	const renderBaseBranchesDropdown = () => {
-		const items = branches!.map(_ => {
+		const items = remoteBranches!.map(_ => {
 			return {
 				label: _,
 				key: _,

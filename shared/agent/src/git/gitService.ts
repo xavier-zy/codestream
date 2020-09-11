@@ -800,15 +800,20 @@ export class GitService implements IGitService, Disposable {
 	}
 
 	async getBranches(
-		repoPath: string
+		repoPath: string,
+		remote?: boolean
 	): Promise<{ current: string; branches: string[] } | undefined> {
 		try {
-			const data = await git({ cwd: repoPath }, "branch");
+			const options = ["branch"];
+			if (remote) options.push("-r");
+			const data = await git({ cwd: repoPath }, ...options);
 			if (!data) return undefined;
 			const branches = data
 				.split("\n")
 				.map(b => b.substr(2).trim())
-				.filter(b => b.length > 0);
+				.filter(b => b.length > 0)
+				.filter(b => !b.startsWith("HEAD ->"))
+				.map(b => (remote ? b.replace(/^origin\//, "") : b));
 			const current = data.split("\n").find(b => b.startsWith("* "));
 			return { branches, current: current ? current.substr(2).trim() : "" };
 		} catch (ex) {

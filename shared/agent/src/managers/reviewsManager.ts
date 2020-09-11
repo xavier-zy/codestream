@@ -674,6 +674,7 @@ export class ReviewsManager extends CachedEntityManagerBase<CSReview> {
 
 			const headRefName = request.headRefName || (review && review.reviewChangesets[0].branch);
 			const branches = await git.getBranches(repo!.path);
+			const remoteBranches = await git.getBranches(repo!.path, true);
 			const user = await this.session.api.getMe();
 			remotes = await repo!.getRemotes();
 			let remoteUrl = "";
@@ -798,6 +799,7 @@ export class ReviewsManager extends CachedEntityManagerBase<CSReview> {
 				},
 				branch: headRefName,
 				branches: branches!.branches,
+				remoteBranches: remoteBranches!.branches,
 				warning: warning
 			};
 		} catch (ex) {

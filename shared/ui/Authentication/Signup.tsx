@@ -129,8 +129,8 @@ export const Signup = (props: Props) => {
 			password === "" ||
 			!passwordValidity ||
 			fullName === "" ||
-			!fullNameValidity ||
-			(!wasInvited && (companyName === "" || !companyNameValidity))
+			!fullNameValidity
+			// (!wasInvited && (companyName === "" || !companyNameValidity))
 		)
 			return;
 		setIsLoading(true);
@@ -268,8 +268,43 @@ export const Signup = (props: Props) => {
 
 	return (
 		<div className="onboarding-page">
+			{derivedState.supportsIntegrations && (
+				<form className="standard-form">
+					<fieldset className="form-body" style={{ paddingTop: 0, paddingBottom: 0 }}>
+						<div id="controls">
+							<div className="outline-box">
+								<Button className="row-button no-top-margin" onClick={onClickGithubSignup}>
+									<Icon name="mark-github" />
+									<div className="copy">Sign Up with GitHub</div>
+									<Icon name="chevron-right" />
+								</Button>
+								<Button className="row-button no-top-margin" onClick={onClickGitlabSignup}>
+									<Icon name="gitlab" />
+									<div className="copy">Sign Up with GitLab</div>
+									<Icon name="chevron-right" />
+								</Button>
+								<Button className="row-button no-top-margin" onClick={onClickBitbucketSignup}>
+									<Icon name="bitbucket" />
+									<div className="copy">Sign Up with Bitbucket</div>
+									<Icon name="chevron-right" />
+								</Button>
+								{derivedState.oktaEnabled && (
+									<Button className="row-button no-top-margin" onClick={onClickOktaSignup}>
+										<Icon name="okta" />
+										<div className="copy">Sign Up with Okta</div>
+										<Icon name="chevron-right" />
+									</Button>
+								)}
+							</div>
+						</div>
+					</fieldset>
+				</form>
+			)}
+			{derivedState.supportsIntegrations && (
+				<div style={{ textAlign: "center", paddingBottom: "20px" }}>~ or ~</div>
+			)}
 			<form className="standard-form" onSubmit={onSubmit}>
-				<fieldset className="form-body">
+				<fieldset className="form-body" style={{ paddingTop: 0, paddingBottom: 0 }}>
 					<div className="outline-box">
 						<h2>Create an Account</h2>
 						<div className="spacer" />
@@ -312,7 +347,6 @@ export const Signup = (props: Props) => {
 									onChange={setEmail}
 									onValidityChanged={onValidityChanged}
 									validate={isEmailValid}
-									autoFocus
 									required
 								/>
 								{!emailValidity && (
@@ -367,7 +401,7 @@ export const Signup = (props: Props) => {
 								/>
 								{!fullNameValidity && <small className="explainer error-message">Required</small>}
 							</div>
-							{!wasInvited && (
+							{false && !wasInvited && (
 								<div className="control-group">
 									<label>
 										<FormattedMessage id="signUp.companyName.label" />
@@ -399,43 +433,6 @@ export const Signup = (props: Props) => {
 					</div>
 				</fieldset>
 			</form>
-			{derivedState.supportsIntegrations && (
-				<form className="standard-form">
-					<fieldset className="form-body" style={{ paddingTop: 0 }}>
-						<div id="controls">
-							<div className="outline-box">
-								<Button className="row-button no-top-margin" onClick={onClickGithubSignup}>
-									<Icon name="mark-github" />
-									<div className="copy">Sign Up with GitHub</div>
-									<Icon name="chevron-right" />
-								</Button>
-								<Button className="row-button no-top-margin" onClick={onClickGitlabSignup}>
-									<Icon name="gitlab" />
-									<div className="copy">Sign Up with GitLab</div>
-									<Icon name="chevron-right" />
-								</Button>
-								<Button className="row-button no-top-margin" onClick={onClickBitbucketSignup}>
-									<Icon name="bitbucket" />
-									<div className="copy">Sign Up with Bitbucket</div>
-									<Icon name="chevron-right" />
-								</Button>
-								{derivedState.oktaEnabled && (
-									<Button className="row-button no-top-margin" onClick={onClickOktaSignup}>
-										<Icon name="okta" />
-										<div className="copy">Sign Up with Okta</div>
-										<Icon name="chevron-right" />
-									</Button>
-								)}
-								<div style={{ height: "15px" }} />
-								<CSText muted as="span">
-									If you use a self-managed git server, sign up with CodeStream{" "}
-									{derivedState.oktaEnabled ? "or Okta " : ""}above.
-								</CSText>
-							</div>
-						</div>
-					</fieldset>
-				</form>
-			)}
 			<div style={{ textAlign: "center" }}>
 				<small className="fine-print">
 					<FormattedMessage id="signUp.legal.start" />{" "}

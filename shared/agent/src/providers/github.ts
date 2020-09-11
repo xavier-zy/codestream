@@ -24,6 +24,7 @@ import {
 	FetchThirdPartyPullRequestCommitsRequest,
 	FetchThirdPartyPullRequestCommitsResponse,
 	FetchThirdPartyPullRequestFilesResponse,
+	FetchThirdPartyPullRequestPullRequest,
 	FetchThirdPartyPullRequestRequest,
 	FetchThirdPartyPullRequestResponse,
 	GetMyPullRequestsResponse,
@@ -37,7 +38,7 @@ import {
 	ThirdPartyProviderCard,
 	ThirdPartyProviderConfig
 } from "../protocol/agent.protocol";
-import { CodemarkType, CSGitHubProviderInfo, CSReferenceLocation } from "../protocol/api.protocol";
+import { CodemarkType, CSGitHubProviderInfo, CSReferenceLocation, CSRepository } from "../protocol/api.protocol";
 import { Arrays, Functions, log, lspProvider, Strings } from "../system";
 import {
 	getOpenedRepos,
@@ -223,10 +224,39 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 			return { cards: [] };
 		}
 	}
+
+	@log()
+	private async _getPullRequestRepo(
+		pullRequest: FetchThirdPartyPullRequestPullRequest
+	): Promise<CSRepository | undefined> {
+		let currentRepo: CSRepository | undefined = undefined;
+		const { repos } = SessionContainer.instance();
+
+		const repoName = pullRequest.repository.name.toLowerCase();
+		const repoUrl = pullRequest.repository.url.toLowerCase();
+		const allRepos = await repos.get();
+
+		let matchingRepos = allRepos.repos.filter(_ => _.name && _.name.toLowerCase() === repoName);
+		if (matchingRepos.length !== 1) {
+			matchingRepos = matchingRepos.filter(_ =>
+				_.remotes.some(r => repoUrl.indexOf(r.normalizedUrl.toLowerCase()) > -1)
+			);
+			if (matchingRepos.length === 1) {
+				currentRepo = matchingRepos[0];
+			} else {
+				console.warn(`Could not find repo for repoName=${repoName} repoUrl=${repoUrl}`);
+			}
+		} else {
+			currentRepo = matchingRepos[0];
+		}
+		return currentRepo;
+	}
+
 	@log()
 	async getPullRequest(
 		request: FetchThirdPartyPullRequestRequest
 	): Promise<FetchThirdPartyPullRequestResponse> {
+		const { scm: scmManager } = SessionContainer.instance();
 		await this.ensureConnected();
 		let response = {} as FetchThirdPartyPullRequestResponse;
 		let repoOwner: string;
@@ -262,6 +292,19 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 			} while (timelineQueryResponse.repository.pullRequest.timelineItems.pageInfo.hasNextPage);
 		} catch (ex) {
 			Logger.error(ex);
+		}
+		if (response?.repository?.pullRequest) {
+			const prRepo = await this._getPullRequestRepo(response.repository.pullRequest);
+
+			if (prRepo?.id) {
+				const prForkPointSha = await scmManager.getForkPointRequestType({
+					repoId: prRepo.id,
+					baseSha: response.repository.pullRequest.baseRefOid,
+					headSha: response.repository.pullRequest.headRefOid
+				});
+
+				response.repository.pullRequest.forkPointSha = prForkPointSha?.sha;
+			}
 		}
 		if (response?.repository?.pullRequest?.timelineItems != null) {
 			response.repository.pullRequest.timelineItems.nodes = allTimelineItems;

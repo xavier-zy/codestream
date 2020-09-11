@@ -372,6 +372,7 @@ export interface FetchThirdPartyPullRequestPullRequest {
 	bodyHTML: string;
 	baseRefName: string;
 	baseRefOid: string;
+	forkPointSha?: string;
 	author: {
 		login: string;
 		avatarUrl: string;

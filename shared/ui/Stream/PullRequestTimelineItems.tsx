@@ -1,3 +1,5 @@
+import { CompareLocalFilesRequestType } from "@codestream/protocols/webview";
+import { getProviderPullRequestRepo } from "@codestream/webview/store/providerPullRequests/reducer";
 import {
 	PRComment,
 	PRCommentCard,
@@ -17,7 +19,7 @@ import {
 	PRButtonRow,
 	PRCodeCommentPatch
 } from "./PullRequestComponents";
-import React, { PropsWithChildren, useState } from "react";
+import React, { PropsWithChildren, useCallback, useState } from "react";
 import { PRHeadshot, Headshot } from "../src/components/Headshot";
 import Timestamp from "./Timestamp";
 import Icon from "./Icon";
@@ -220,7 +222,10 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 
 	const derivedState = useSelector((state: CodeStreamState) => {
 		const currentUser = state.users[state.session.userId!] as CSMe;
-		return { currentUser };
+		return {
+			currentUser,
+			currentRepo: getProviderPullRequestRepo(state)
+		};
 	});
 
 	const timelineNodes = pr.timelineItems.nodes;
@@ -512,13 +517,47 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 													});
 											};
 
+											const goDiff = async filePath => {
+												const request = {
+													baseBranch: pr.baseRefName,
+													baseSha: pr.forkPointSha || "",
+													headBranch: props.pr.headRefName,
+													headSha: props.pr.headRefOid,
+													filePath,
+													repoId: derivedState.currentRepo!.id!,
+													context: {
+														pullRequest: {
+															providerId: pr.providerId,
+															id: pr.id
+														}
+													}
+												};
+
+												try {
+													await HostApi.instance.send(CompareLocalFilesRequestType, request);
+												} catch (err) {}
+											};
+
 											return (
 												<PRThreadedCommentCard key={commentIndex}>
 													<PRCodeComment>
 														<div className="row-with-icon-actions monospace ellipsis-left-container no-hover">
 															<Icon name="file" />
 															<span className="file-info ellipsis-left">
-																<bdi dir="ltr">{comment.path}</bdi>
+																<bdi
+																	dir="ltr"
+																	className={pr.forkPointSha ? "link" : ""}
+																	onClick={
+																		pr.forkPointSha
+																			? async e => {
+																					e.preventDefault();
+																					goDiff(comment.path);
+																			  }
+																			: undefined
+																	}
+																>
+																	{comment.path}
+																</bdi>
 															</span>
 														</div>
 														<PRCodeCommentPatch>

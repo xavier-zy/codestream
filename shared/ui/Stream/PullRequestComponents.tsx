@@ -841,6 +841,9 @@ export const PRCodeComment = styled.div`
 		vertical-align: 2px;
 		margin-right: 5px;
 	}
+	bdi.link {
+		cursor: pointer;
+	}
 `;
 
 export const PRCodeCommentReply = styled.div`

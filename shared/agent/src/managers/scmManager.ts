@@ -9,7 +9,10 @@ import {
 	CodeStreamDiffUriData,
 	FetchForkPointRequestType,
 	FetchForkPointRequest,
-	FetchForkPointResponse
+	FetchForkPointResponse,
+	GetLatestCommitScmRequest,
+	GetLatestCommitScmRequestType,
+	GetLatestCommitScmResponse
 } from "../protocol/agent.protocol";
 import {
 	BlameAuthor,
@@ -1180,6 +1183,22 @@ export class ScmManager {
 			scm: committers,
 			error: gitError
 		};
+	}
+
+	@lspHandler(GetLatestCommitScmRequestType)
+	async getLatestCommit(request: GetLatestCommitScmRequest): Promise<GetLatestCommitScmResponse> {
+		const { git, repositoryMappings } = SessionContainer.instance();
+
+		const repo = await git.getRepositoryById(request.repoId);
+		let repoPath = "";
+		if (repo) {
+			repoPath = repo.path;
+		} else {
+			repoPath = (await repositoryMappings.getByRepoId(request.repoId)) || "";
+		}
+
+		const commit = await git.getCommit(repoPath, request.branch);
+		return { shortMessage: commit ? commit.shortMessage : "" };
 	}
 
 	@log()

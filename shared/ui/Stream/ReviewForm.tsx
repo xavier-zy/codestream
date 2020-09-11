@@ -637,7 +637,7 @@ class ReviewForm extends React.Component<Props, State> {
 		}
 	}
 
-	setTitleBaseOnBranch = () => {
+	setTitleBasedOnBranch = () => {
 		const { repoStatus } = this.state;
 		if (repoStatus && repoStatus.scm && repoStatus.scm.branch) {
 			const branch = repoStatus.scm.branch;
@@ -2001,7 +2001,7 @@ class ReviewForm extends React.Component<Props, State> {
 										title="Use Branch Name"
 										name="git-branch"
 										className="clickable"
-										onClick={() => this.setTitleBaseOnBranch()}
+										onClick={() => this.setTitleBasedOnBranch()}
 									/>
 								</div>
 							</div>

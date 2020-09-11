@@ -379,3 +379,19 @@ export const FetchForkPointRequestType = new RequestType<
 	void,
 	void
 >("codestream/scm/forkPoint");
+
+export interface GetLatestCommitScmRequest {
+	repoId: string;
+	branch: string;
+}
+
+export interface GetLatestCommitScmResponse {
+	shortMessage: string;
+}
+
+export const GetLatestCommitScmRequestType = new RequestType<
+	GetLatestCommitScmRequest,
+	GetLatestCommitScmResponse,
+	void,
+	void
+>("codestream/scm/latestCommit");

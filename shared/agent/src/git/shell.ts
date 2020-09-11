@@ -1,5 +1,5 @@
 "use strict";
-import { execFile } from "child_process";
+import { ChildProcess, execFile } from "child_process";
 import * as fs from "fs";
 import * as path from "path";
 import { Logger } from "../logger";
@@ -160,8 +160,56 @@ export function runCommand(command: string, args: any[], options: CommandOptions
 			}
 		);
 
+		ignoreClosedInputStream(proc);
+
 		if (stdin) {
 			proc.stdin.end(stdin, stdinEncoding || "utf8");
 		}
 	});
+}
+
+/**
+ * Borrowed from https://github.com/desktop/dugite/commit/e5e11d73324a76d1336607fa7cf30b441f257b6e
+ *
+ * Prevent errors originating from the stdin stream related
+ * to the child process closing the pipe from bubbling up and
+ * causing an unhandled exception when no error handler is
+ * attached to the input stream.
+ *
+ * The common scenario where this happens is if the consumer
+ * is writing data to the stdin stream of a child process and
+ * the child process for one reason or another decides to either
+ * terminate or simply close its standard input. Imagine this
+ * scenario
+ *
+ *  cat /dev/zero | head -c 1
+ *
+ * The 'head' command would close its standard input (by terminating)
+ * the moment it has read one byte. In the case of Git this could
+ * happen if you for example pass badly formed input to apply-patch.
+ */
+function ignoreClosedInputStream(process: ChildProcess) {
+	process.stdin.on("error", err => {
+		const errWithCode = err as ErrorWithCode;
+
+		// Is the error one that we'd expect from the input stream being
+		// closed, i.e. EPIPE on macOS and EOF on Windows?
+		if (errWithCode.code !== "EPIPE" && errWithCode.code !== "EOF") {
+			// Nope, this is something else. Are there any other error listeners
+			// attached than us? If not we'll have to mimic the behavior of
+			// EventEmitter.
+			//
+			// See https://nodejs.org/api/errors.html#errors_error_propagation_and_interception
+			//
+			// "For all EventEmitter objects, if an 'error' event handler is not
+			//  provided, the error will be thrown"
+			if (process.stdin.listeners("error").length > 1) {
+				throw err;
+			}
+		}
+	});
+}
+
+interface ErrorWithCode extends Error {
+	code: string | number | undefined;
 }

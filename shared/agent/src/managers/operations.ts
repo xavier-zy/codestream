@@ -13,6 +13,10 @@ export function isCompleteObject(obj: object): boolean {
 	return true;
 }
 
+function isTrueObject(value: any): boolean {
+	return typeof value === "object" && !(value instanceof Array);
+} 
+
 // take a hash, and replace any `.` or `$` characters in the keys with unicode equivalent,
 // also escaping the `\` character ... this avoid problems with saving to mongo, which forbids
 // these characters
@@ -82,7 +86,7 @@ export function handle(property: any, object: any, data: any, recurse: any, appl
 		if (object[topField] === undefined) {
 			object[topField] = {};
 		}
-		if (typeof object[topField] === "object") {
+		if (isTrueObject(object[topField])) {
 			recurse(object[topField], { [subField]: data[property] });
 		}
 	} else {

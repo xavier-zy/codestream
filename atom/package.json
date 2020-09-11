@@ -7,7 +7,7 @@
 		"chat",
 		"collaboration",
 		"review",
-		"documentation",
+		"github",
 		"slack"
 	],
 	"activationHooks": [

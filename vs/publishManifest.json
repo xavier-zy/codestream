@@ -3,7 +3,7 @@
     "categories": [ "coding", "documentation" ],
     "identity": {
         "internalName": "codestream-vs",
-        "tags": [ "chat", "collaboration", "documentation", "review", "slack" ]
+        "tags": [ "chat", "collaboration", "github", "review", "slack" ]
     },
     "overview": "README.md",
     "priceCategory": "free",

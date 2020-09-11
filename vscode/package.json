@@ -31,7 +31,7 @@
         "chat",
         "collaboration",
         "review",
-        "documentation",
+        "github",
         "slack"
     ],
     "contributes": {

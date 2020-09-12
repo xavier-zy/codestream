@@ -299,14 +299,14 @@ export class SimpleFilterSearchPanel extends Component<Props, State> {
 		);
 	};
 
-	hasTag = (result, tagFilter) => {
+	hasTags = (result, tagsFilter) => {
 		const { teamTagsArray } = this.props;
-		if (tagFilter === "all") return true;
 
-		let resultTags = result.tags || [];
-		return resultTags.find(resultTagId => {
-			const teamTag = teamTagsArray.find(tag => tag.id === resultTagId);
-			return teamTag && (teamTag.label === tagFilter || teamTag.color === tagFilter);
+		return tagsFilter.every(tagFilter => {
+			return (result.tags || []).find(resultTagId => {
+				const teamTag = teamTagsArray.find(tag => tag.id === resultTagId);
+				return teamTag && (teamTag.label === tagFilter || teamTag.color === tagFilter);
+			});
 		});
 	};
 
@@ -370,15 +370,15 @@ export class SimpleFilterSearchPanel extends Component<Props, State> {
 			filters.assignee = match[1] === "me" ? me : match[1].toLowerCase();
 			text = text.replace(/\s*reviewer:@\S+/, " ");
 		}
-		match = text.match(/\btag:\"(.*?)\"(\s|$)/);
-		if (match) {
-			filters.tag = match[1];
+		while ((match = text.match(/\btag:\"(.*?)\"(\s|$)/))) {
+			if (!filters.tags) filters.tags = [];
+			filters.tags.push(match[1]);
 			text = text.replace(/\s*tag:\"(.*?)\"\s*/, " ");
 		}
-		match = text.match(/\btag:(\S+)(\s|$)/);
-		if (match) {
-			filters.tag = match[1];
-			text = text.replace(/\s*tag:(\S+)\s*/, " ");
+		while ((match = text.match(/\btag:(\S+)(\s|$)/))) {
+			if (!filters.tags) filters.tags = [];
+			filters.tags.push(match[1]);
+			text = text.replace(/\s*tag:(\S+)\s*/g, " ");
 		}
 		if (text.match(/\bno:tag\b/)) {
 			filters.noTag = true;
@@ -503,7 +503,7 @@ export class SimpleFilterSearchPanel extends Component<Props, State> {
 			if (filters.impacts && !impactedUsernames.includes(filters.impacts)) return null;
 			if (filters.assignee && !assigneeUsernames.includes(filters.assignee)) return null;
 			if (filters.status && itemStatus !== filters.status) return null;
-			if (filters.tag && !this.hasTag(item, filters.tag)) return null;
+			if (filters.tags && !this.hasTags(item, filters.tags)) return null;
 			if (filters.type === "review" && itemType !== filters.type) return null;
 			if (filters.type === "issue" && itemType !== filters.type) return null;
 			if (filters.type === "comment" && itemType !== filters.type) return null;

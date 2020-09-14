@@ -237,9 +237,10 @@ export function OpenPullRequests(props: Props) {
 				console.warn("SETTING TO: ", newGroups);
 				setPullRequestGroups(newGroups);
 			} catch (ex) {
-				if (ex && ex.indexOf('"message":"Bad credentials"') > -1) {
-					// show message about re-authing?
-				}
+				console.error(ex);
+				// if (ex && ex.indexOf('"message":"Bad credentials"') > -1) {
+				// 	// show message about re-authing?
+				// }
 			} finally {
 				setIsLoadingPRs(false);
 			}
@@ -275,9 +276,10 @@ export function OpenPullRequests(props: Props) {
 				setPullRequestGroups(newGroups);
 			}
 		} catch (ex) {
-			if (ex && ex.indexOf('"message":"Bad credentials"') > -1) {
-				// show message about re-authing?
-			}
+			console.error(ex);
+			//if (ex && ex.indexOf('"message":"Bad credentials"') > -1) {
+			// show message about re-authing?
+			//}
 		} finally {
 			setIsLoadingPRGroup(undefined);
 		}

@@ -1,4 +1,5 @@
 "use strict";
+import { Agent as HttpsAgent } from "https";
 import fetch, { RequestInit, Response } from "node-fetch";
 import { URI } from "vscode-uri";
 import { MessageType } from "../api/apiProvider";
@@ -189,11 +190,23 @@ export abstract class ThirdPartyProviderBase<
 	private _readyPromise: Promise<void> | undefined;
 	protected _ensuringConnection: Promise<void> | undefined;
 	protected _providerInfo: TProviderInfo | undefined;
+	protected _httpsAgent: HttpsAgent | undefined;
 
 	constructor(
 		public readonly session: CodeStreamSession,
 		protected readonly providerConfig: ThirdPartyProviderConfig
-	) {}
+	) {
+		// only for on-prem installations ... if strictSSL is disabled for CodeStream,
+		// assume OK to have it disabled for third-party on-prem providers as well ...
+		// kind of insecure, but easier than other options ... so in this case (and
+		// this case only), establish our own HTTPS agent
+		if (providerConfig.forEnterprise && session.disableStrictSSL) {
+			Logger.log(`${providerConfig.name} provider will use a custom HTTPS agent with strictSSL disabled`);
+			this._httpsAgent = new HttpsAgent({
+				rejectUnauthorized: false
+			});
+		}
+	}
 
 	abstract get displayName(): string;
 	abstract get name(): string;
@@ -458,20 +471,12 @@ export abstract class ThirdPartyProviderBase<
 		let method;
 		let absoluteUrl;
 		try {
-			if (init !== undefined) {
-				if (init === undefined) {
-					init = {};
-				}
+			if (init === undefined) {
+				init = {};
 			}
-
-			// TODO: Get this to work with proxies
-			// if (this._proxyAgent !== undefined) {
-			// 	if (init === undefined) {
-			// 		init = {};
-			// 	}
-
-			// 	init.agent = this._proxyAgent;
-			// }
+			if (this._httpsAgent) {
+				init.agent = this._httpsAgent;
+			}
 
 			method = (init && init.method) || "GET";
 			absoluteUrl = options.absoluteUrl ? url : `${this.baseUrl}${url}`;

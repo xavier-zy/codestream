@@ -119,7 +119,7 @@ export type CSLocationArray = [number, number, number, number, CSLocationMeta | 
 export interface CSReferenceLocation {
 	commitHash?: string;
 	location: CSLocationArray;
-	flags: {
+	flags?: {
 		canonical?: boolean;
 		uncommitted?: boolean;
 		backtracked?: boolean;

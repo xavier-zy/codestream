@@ -61,8 +61,8 @@ function newGetLocationsResult(): GetLocationsResult {
 }
 
 function compareReferenceLocations(a: CSReferenceLocation, b: CSReferenceLocation): number {
-	const aIsCanonical = Number(!!a.flags.canonical);
-	const bIsCanonical = Number(!!b.flags.canonical);
+	const aIsCanonical = Number(!!a.flags?.canonical);
+	const bIsCanonical = Number(!!b.flags?.canonical);
 
 	return bIsCanonical - aIsCanonical;
 }
@@ -246,7 +246,7 @@ export class MarkerLocationManager extends ManagerBase<CSMarkerLocations> {
 			for (const id in futureReferences) {
 				const referenceLocation = futureReferences[id];
 				const referenceText =
-					referenceLocation.flags.diff != undefined
+					referenceLocation.flags?.diff != undefined
 						? applyPatch(currentCommitText, referenceLocation.flags.diff)
 						: currentCommitText;
 
@@ -345,8 +345,8 @@ export class MarkerLocationManager extends ManagerBase<CSMarkerLocations> {
 			if (
 				canonicalLocation &&
 				!canonicalLocation.commitHash &&
-				(canonicalLocation.flags.baseCommit === fileCurrentCommit ||
-					canonicalLocation.flags.baseCommit === repoCurrentCommit)
+				(canonicalLocation.flags?.baseCommit === fileCurrentCommit ||
+					canonicalLocation.flags?.baseCommit === repoCurrentCommit)
 			) {
 				Logger.log(`MARKERS: ${id}: future reference`);
 				result.futureReferences[id] = canonicalLocation;
@@ -463,7 +463,7 @@ export class MarkerLocationManager extends ManagerBase<CSMarkerLocations> {
 			for (const referenceLocation of missingMarker.referenceLocations) {
 				const referenceCommitHash = referenceLocation.commitHash;
 				if (referenceCommitHash == null) {
-					const { baseCommit, diff: diffToCanonicalContents } = referenceLocation.flags;
+					const { baseCommit, diff: diffToCanonicalContents } = referenceLocation.flags || {};
 					if (baseCommit && diffToCanonicalContents) {
 						const baseContents = await git.getFileContentForRevision(filePath, baseCommit);
 						if (!baseContents) continue;
@@ -487,7 +487,7 @@ export class MarkerLocationManager extends ManagerBase<CSMarkerLocations> {
 
 						const meta = calculatedLocation.meta || (calculatedLocation.meta = {});
 						meta.isAncestor = await git.isAncestor(repoRoot!, commitHash, baseCommit);
-						if (referenceLocation.flags.canonical) {
+						if (referenceLocation.flags?.canonical) {
 							meta.isDescendant = await git.isAncestor(repoRoot!, baseCommit, commitHash);
 							Logger.log(
 								`MARKERS: saving location calculated from canonical reference for missing marker ${missingMarker.id}`
@@ -516,7 +516,7 @@ export class MarkerLocationManager extends ManagerBase<CSMarkerLocations> {
 					if (diff) {
 						const isAncestor = await git.isAncestor(repoRoot!, commitHash, referenceCommitHash);
 						const isDescendant =
-							referenceLocation.flags.canonical &&
+							referenceLocation.flags?.canonical &&
 							(await git.isAncestor(repoRoot!, referenceCommitHash, commitHash));
 						diffsByCommitHash.set(referenceCommitHash, { diff, isAncestor, isDescendant });
 						if (!locationsByCommitHash.has(referenceCommitHash)) {

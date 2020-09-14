@@ -259,7 +259,7 @@ export class DocumentMarkerManager {
 			if (!marker.postId) continue; // permalinks
 			const post = await posts.getById(marker.postId);
 			if (review.postId !== post.parentPostId) continue;
-			const canonicalLocation = marker.referenceLocations.find(l => l.flags.canonical);
+			const canonicalLocation = marker.referenceLocations.find(l => l.flags?.canonical);
 			if (canonicalLocation == null) continue;
 
 			const codemark = await codemarks.getEnrichedCodemarkById(marker.codemarkId);

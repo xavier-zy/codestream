@@ -26,6 +26,7 @@ import {
 	CodemarkStatus,
 	FileStatus
 } from "@codestream/protocols/api";
+import { debounce as _debounce } from "lodash-es";
 import React, { ReactElement } from "react";
 import { connect } from "react-redux";
 import cx from "classnames";
@@ -484,6 +485,18 @@ class ReviewForm extends React.Component<Props, State> {
 
 			this._disposableDidChangeDataNotification &&
 				this._disposableDidChangeDataNotification.dispose();
+			const self = this;
+			const _debouncedHandleRepoChange = _debounce(() => {
+				// if there is an error getting git info,
+				// don't bother attempting since it's an error
+
+				self.setState({ isReloadingScm: true });
+				// handle the repo change, but don't pass the textEditorUri
+				// as we don't want to switch the repo the form is pointing
+				// to in these cases
+				self.handleRepoChange();
+			}, 100);
+
 			this._disposableDidChangeDataNotification = HostApi.instance.on(
 				DidChangeDataNotificationType,
 				(e: any) => {
@@ -507,14 +520,7 @@ class ReviewForm extends React.Component<Props, State> {
 					}
 
 					if (update && !this.state.scmError) {
-						// if there is an error getting git info,
-						// don't bother attempting since it's an error
-
-						this.setState({ isReloadingScm: true });
-						// handle the repo change, but don't pass the textEditorUri
-						// as we don't want to switch the repo the form is pointing
-						// to in these cases
-						this.handleRepoChange();
+						_debouncedHandleRepoChange();
 					}
 				}
 			);
@@ -2264,16 +2270,19 @@ const mapStateToProps = (state: CodeStreamState, props): ConnectedProps => {
 	};
 };
 
-const ConnectedReviewForm = connect(mapStateToProps, {
-	openPanel,
-	openModal,
-	closePanel,
-	createPostAndReview,
-	editReview,
-	setUserPreference,
-	setCurrentReview,
-	setCodemarkStatus,
-	setNewPostEntry
-})(ReviewForm);
+const ConnectedReviewForm = connect(
+	mapStateToProps,
+	{
+		openPanel,
+		openModal,
+		closePanel,
+		createPostAndReview,
+		editReview,
+		setUserPreference,
+		setCurrentReview,
+		setCodemarkStatus,
+		setNewPostEntry
+	}
+)(ReviewForm);
 
 export { ConnectedReviewForm as ReviewForm };

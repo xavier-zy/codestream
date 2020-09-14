@@ -210,7 +210,8 @@ export function OpenPullRequests(props: Props) {
 				const newGroups = {};
 				console.warn("Loading the PRs...", theQueries);
 				for (const connectedProvider of derivedState.PRConnectedProviders) {
-					const queryStrings = (theQueries[connectedProvider.id] || []).map(_ => _.query);
+					const queriesByProvider = theQueries[connectedProvider.id] || [];
+					const queryStrings = Object.values(queriesByProvider).map(_ => _.query);
 					console.warn("Loading the PRs... in the loop", queryStrings);
 					try {
 						const response: any = await dispatch(

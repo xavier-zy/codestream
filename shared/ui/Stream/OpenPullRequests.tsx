@@ -32,6 +32,7 @@ import { ConfigurePullRequestQuery } from "./ConfigurePullRequestQuery";
 import { DEFAULT_QUERIES } from "../store/preferences/reducer";
 import { ConfigurePullRequestQuerySettings } from "./ConfigurePullRequestQuerySettings";
 import { usePrevious } from "../utilities/hooks";
+import { PullRequestQuery } from "@codestream/protocols/api";
 
 const PRSummaryName = styled.div`
 	padding: 2px 20px;
@@ -429,8 +430,8 @@ export function OpenPullRequests(props: Props) {
 					)}
 					{derivedState.PRConnectedProviders.map(connectedProvider => {
 						const providerId = connectedProvider.id;
-						const providerQueries = queries[providerId] || [];
-						return providerQueries.map((query, index) => {
+						const providerQueries: PullRequestQuery[] = queries[providerId] || [];
+						return Object.values(providerQueries).map((query: PullRequestQuery, index) => {
 							const providerGroups = pullRequestGroups[providerId];
 							const prGroup = providerGroups && providerGroups[index];
 							return (

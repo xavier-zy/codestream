@@ -301,6 +301,7 @@ export class SimpleFilterSearchPanel extends Component<Props, State> {
 
 	hasTags = (result, tagsFilter) => {
 		const { teamTagsArray } = this.props;
+		console.warn("TAGS FILTER: ", tagsFilter);
 
 		return tagsFilter.every(tagFilter => {
 			return (result.tags || []).find(resultTagId => {
@@ -378,7 +379,7 @@ export class SimpleFilterSearchPanel extends Component<Props, State> {
 		while ((match = text.match(/\btag:(\S+)(\s|$)/))) {
 			if (!filters.tags) filters.tags = [];
 			filters.tags.push(match[1]);
-			text = text.replace(/\s*tag:(\S+)\s*/g, " ");
+			text = text.replace(/\s*tag:(\S+)\s*/, " ");
 		}
 		if (text.match(/\bno:tag\b/)) {
 			filters.noTag = true;

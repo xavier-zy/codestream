@@ -57,5 +57,14 @@ namespace CodeStream.VisualStudio.Core.Extensions {
 
 			return token;
 		}
+
+		public static T ToObjectSafe<T>(this JToken token) {
+			try {
+				return token.ToObject<T>();
+			}
+			catch {
+				return default(T);
+			}
+		}
 	}
 }

@@ -287,7 +287,7 @@ namespace CodeStream.VisualStudio {
 									case EditorHighlightRangeRequestType.MethodName: {
 											using (var scope = _browserService.CreateScope(message)) {
 												bool result = false;
-												var @params = message.Params.ToObject<EditorHighlightRangeRequest>();
+												var @params = message.Params.ToObjectSafe<EditorHighlightRangeRequest>();
 												if (@params != null) {
 													var activeTextView = _editorService.GetActiveTextEditorFromUri(@params.Uri.ToUri());
 													if (activeTextView != null) {

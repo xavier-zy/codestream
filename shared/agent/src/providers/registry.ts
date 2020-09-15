@@ -409,8 +409,11 @@ export class ThirdPartyProviderRegistry {
 		}
 		let result = undefined;
 		try {
-			// const pullRequestProvider = this.getPullRequestProvider(provider);
-			// await pullRequestProvider.ensureConnected();
+			try {
+				await provider.ensureConnected();
+			} catch (err) {
+				Logger.error(err, `ensureConnected failed for ${request.providerId}`);
+			}
 			const response = (provider as any)[request.method](request.params);
 			result = await response;
 		} catch (ex) {

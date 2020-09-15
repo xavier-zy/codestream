@@ -469,6 +469,7 @@ export class SimpleInlineCodemarks extends Component<Props, State> {
 		const { documentMarkers, showHidden } = this.props;
 
 		this.hiddenCodemarks = {};
+		const seenCodemarks = {};
 		return (
 			<div style={{ height: "100%", paddingTop: "55px" }}>
 				<ScrollBox>
@@ -488,6 +489,10 @@ export class SimpleInlineCodemarks extends Component<Props, State> {
 							.map(docMarker => {
 								const { codemark } = docMarker;
 
+								if (codemark) {
+									if (seenCodemarks[codemark.id]) return null;
+									seenCodemarks[codemark.id] = true;
+								}
 								// const hidden =
 								// 	!showHidden &&
 								// 	((codemark && (!codemark.pinned || codemark.status === "closed")) ||

@@ -28,7 +28,9 @@ namespace CodeStream.VisualStudio.UI.SuggestedActions {
 
 		public ISuggestedActionsSource CreateSuggestedActionsSource(ITextView textView, ITextBuffer textBuffer) {
 			if (textBuffer == null || textView == null) return null;
-			if (!TextDocumentExtensions.TryGetTextDocument(_textDocumentFactoryService, textBuffer, out IVirtualTextDocument virtualTextDocument)) return null;
+			var wpfTextView = textView as IWpfTextView;
+			if (wpfTextView == null) return null;
+			if (!TextDocumentExtensions.TryGetTextDocument(_textDocumentFactoryService, wpfTextView, out IVirtualTextDocument virtualTextDocument)) return null;
 
 			return new CodemarkSuggestedActionsSource((IComponentModel)_serviceProvider.GetService(typeof(SComponentModel)),
 				textView, textBuffer, virtualTextDocument);

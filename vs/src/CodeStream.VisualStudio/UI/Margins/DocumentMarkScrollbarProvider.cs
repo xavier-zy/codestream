@@ -47,7 +47,7 @@ namespace CodeStream.VisualStudio.UI.Margins {
 
 				if (!wpfTextViewHost.TextView.HasValidMarginRoles()) return null;
 				if (!TextDocumentExtensions.TryGetTextDocument(TextDocumentFactoryService,
-					wpfTextViewHost.TextView.TextBuffer, out var textDocument)) return null;
+					wpfTextViewHost.TextView, out var textDocument)) return null;
 
 				using (Log.CriticalOperation($"{nameof(DocumentMarkScrollbarProvider)} {nameof(CreateMargin)}", LogEventLevel.Debug)) {
 					TextViewMargin = new DocumentMarkScrollbar(

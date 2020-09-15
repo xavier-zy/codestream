@@ -225,7 +225,6 @@ namespace CodeStream.VisualStudio.Services {
 			await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
 
 			_browserView = new WPFBrowserView(browser);
-			_browserView.InputBindings.Add(new InputBinding(new StartWorkCommand(_serviceProvider.GetService<ISessionService>()), new KeyChordGesture(ModifierKeys.Shift | ModifierKeys.Control, Key.OemQuestion, Key.W)));
 
 #if DEBUG
 			Log.Debug(GetDevToolsUrl());

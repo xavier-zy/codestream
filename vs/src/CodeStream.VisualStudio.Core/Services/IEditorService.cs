@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 using CodeStream.VisualStudio.Core.Models;
-using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Editor;
 
 namespace CodeStream.VisualStudio.Core.Services {
@@ -13,7 +12,6 @@ namespace CodeStream.VisualStudio.Core.Services {
 		ActiveTextEditorSelection GetActiveTextEditorSelection();
 		ActiveTextEditor GetActiveTextEditor();
 		ActiveTextEditor GetActiveTextEditorFromUri(Uri uri);
-		ActiveTextEditor GetActiveTextEditor(ITextDocumentFactoryService textDocumentFactoryService,
-			IWpfTextView wpfTextView);
+		ActiveTextEditor CreateActiveTextEditor(IVirtualTextDocument textDocument, IWpfTextView wpfTextView);
 	}
 }

@@ -3,6 +3,7 @@ using CodeStream.VisualStudio.Core.Logging;
 using CodeStream.VisualStudio.Core.Managers;
 using CodeStream.VisualStudio.Core.Models;
 using CodeStream.VisualStudio.Core.Services;
+using CodeStream.VisualStudio.Core.UI;
 using CodeStream.VisualStudio.Core.UI.Extensions;
 using Microsoft;
 using Microsoft.VisualStudio.ComponentModelHost;
@@ -38,12 +39,9 @@ namespace CodeStream.VisualStudio.Services {
 			}
 		}
 
-		public ActiveTextEditor GetActiveTextEditor(ITextDocumentFactoryService textDocumentFactoryService, IWpfTextView wpfTextView) {
+		public ActiveTextEditor CreateActiveTextEditor(IVirtualTextDocument textDocument, IWpfTextView wpfTextView) {
 			try {
-				if (textDocumentFactoryService == null || wpfTextView == null) return null;
-				if (!TextDocumentExtensions.TryGetTextDocument(textDocumentFactoryService, wpfTextView.TextBuffer, out var textDocument)) {
-					return null;
-				}
+				if (textDocument == null || wpfTextView == null) return null;			 
 
 				return new ActiveTextEditor(wpfTextView,
 					textDocument.FileName,
@@ -56,24 +54,24 @@ namespace CodeStream.VisualStudio.Services {
 			return null;
 		}
 
-		private ActiveTextEditor GetActiveTextEditorCore(IWpfTextView wpfTextView) {
+		private ActiveTextEditor CreateActiveTextEditor(IWpfTextView wpfTextView) {
 			try {
 				if (wpfTextView == null) {
 					Log.Verbose($"{nameof(wpfTextView)} is null");
 					return null;
 				}
+				if (!wpfTextView.Properties.TryGetProperty(PropertyNames.TextViewDocument, out IVirtualTextDocument virtualTextDocument)) return null;
 
-				if (!TextDocumentExtensions.TryGetTextDocument(_componentModel.GetService<ITextDocumentFactoryService>(), wpfTextView.TextBuffer, out IVirtualTextDocument virtualTextDocument)) {
-					return null;
-				}
-
+				var activeTextEditor = CreateActiveTextEditor(virtualTextDocument, wpfTextView);
+				if (activeTextEditor == null) return null;
+			 
 				return new ActiveTextEditor(wpfTextView,
 					virtualTextDocument.FileName,
 					virtualTextDocument.Uri,
 					wpfTextView.TextSnapshot.LineCount);
 			}
 			catch (Exception ex) {
-				Log.Error(ex, nameof(GetActiveTextEditor));
+				Log.Error(ex, nameof(CreateActiveTextEditor));
 			}
 			return null;
 		}
@@ -84,7 +82,7 @@ namespace CodeStream.VisualStudio.Services {
 		/// <returns></returns>
 		public ActiveTextEditor GetActiveTextEditor() {
 			try {
-				return GetActiveTextEditorCore(GetActiveWpfTextView());
+				return CreateActiveTextEditor(GetActiveWpfTextView());
 			}
 			catch (Exception ex) {
 				Log.Error(ex, nameof(GetActiveTextEditor));
@@ -101,7 +99,7 @@ namespace CodeStream.VisualStudio.Services {
 			try {
 				var textViewCache = _componentModel.GetService<IWpfTextViewCache>();
 				if (textViewCache.TryGetValue(VirtualTextDocument.FromUri(uri), out IWpfTextView wpfTextView) && wpfTextView != null) {
-					return GetActiveTextEditorCore(wpfTextView);
+					return CreateActiveTextEditor(wpfTextView);
 				}
 			}
 			catch (Exception ex) {
@@ -235,7 +233,7 @@ namespace CodeStream.VisualStudio.Services {
 			try {
 				var wpfTextView = GetActiveWpfTextView(textView);
 				if (wpfTextView == null) return null;
-				if (!TextDocumentExtensions.TryGetTextDocument(_componentModel.GetService<ITextDocumentFactoryService>(), wpfTextView.TextBuffer, out var textDocument)) return null;
+				if (!TextDocumentExtensions.TryGetTextDocument(_componentModel.GetService<ITextDocumentFactoryService>(), wpfTextView, out var textDocument)) return null;
 
 				return ToActiveTextEditor(wpfTextView, textDocument);
 			}
@@ -293,7 +291,7 @@ namespace CodeStream.VisualStudio.Services {
 				if (wpfTextView == null) return null;
 
 				if (!TextDocumentExtensions.TryGetTextDocument(_componentModel.GetService<ITextDocumentFactoryService>(),
-					wpfTextView.TextBuffer, out var textDocument)) return null;
+					wpfTextView, out var textDocument)) return null;
 
 				return new ActiveTextEditorSelection(textDocument.Uri, range);
 			}

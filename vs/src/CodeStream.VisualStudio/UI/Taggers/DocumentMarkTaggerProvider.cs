@@ -27,7 +27,9 @@ namespace CodeStream.VisualStudio.UI.Taggers {
 			var wpfTextView = textView as IWpfTextView;
 			if (wpfTextView == null || textView.TextBuffer != buffer) return null;
 			if (!wpfTextView.HasValidTaggerRoles()) return null;
-			if (!TextDocumentExtensions.TryGetTextDocument(TextDocumentFactoryService, textView.TextBuffer, out var textDocument)) return null;
+			var x = textView.BufferGraph.GetTextBuffers(_ => true);
+
+			if (!TextDocumentExtensions.TryGetTextDocument(TextDocumentFactoryService, wpfTextView, out var textDocument)) return null;
 
 			var sessionService = (Package.GetGlobalService(typeof(SComponentModel)) as IComponentModel)?.GetService<ISessionService>();
 			if (sessionService == null) {

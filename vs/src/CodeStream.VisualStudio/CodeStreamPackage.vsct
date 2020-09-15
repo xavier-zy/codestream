@@ -39,7 +39,7 @@
 			<Group guid="guidWebViewPackageCmdSet" id="ToolbarGroup" priority="0x0600">
 				<Parent guid="guidWebViewPackageCmdSet" id="Toolbar" />
 			</Group>
-			<!-- this pseudo group creates a separator between teh buttons -->
+			<!-- this pseudo group creates a separator between the buttons -->
 			<Group guid="guidWebViewPackageCmdSet" id="ToolbarGroup100" priority="0x0500">
 				<Parent guid="guidWebViewPackageCmdSet" id="Toolbar" />
 			</Group>

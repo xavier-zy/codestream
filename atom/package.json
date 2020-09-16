@@ -1,8 +1,8 @@
 {
 	"name": "codestream",
 	"main": "./dist/codestream",
-	"version": "8.3.8",
-	"description": "Discuss code easily. Streamline Code Reviews. Improve code quality. Works w/ Slack, Teams, Jira, Trello, git, and more.",
+	"version": "9.0.0",
+	"description": "GitHub pull requests and code reviews in your IDE. Eliminate context-switching between tools. Also integrates with GitLab, Bitbucket, Slack, Teams, Jira, Trello and more.",
 	"keywords": [
 		"chat",
 		"collaboration",

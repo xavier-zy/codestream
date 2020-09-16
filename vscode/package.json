@@ -1,8 +1,8 @@
 {
     "name": "codestream",
-    "displayName": "CodeStream: Code Review & Discussion",
-    "description": "Discuss code easily. Streamline Code Reviews. Improve code quality. Works w/ Slack, Teams, GitHub, GitLab, Bitbucket, Jira, Trello and more.",
-    "version": "8.3.8",
+    "displayName": "CodeStream: GitHub, GitLab, Bitbucket PRs and Code Review",
+    "description": "GitHub pull requests and code reviews in your IDE. Eliminate context-switching between tools. Also integrates with GitLab, Bitbucket, Slack, Teams, Jira, Trello and more.",
+    "version": "9.0.0",
     "author": "CodeStream",
     "publisher": "CodeStream",
     "license": "UNLICENSED",

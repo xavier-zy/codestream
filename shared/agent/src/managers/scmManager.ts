@@ -826,6 +826,7 @@ export class ScmManager {
 		let gitError;
 		let repoPath;
 		let repoId;
+		let ignored;
 		if (uri.scheme === "file") {
 			const { git } = SessionContainer.instance();
 
@@ -856,6 +857,8 @@ export class ScmManager {
 				Logger.error(ex, cc);
 				debugger;
 			}
+		} else if (uri.scheme === "codestream-diff") {
+			ignored = true;
 		}
 
 		return {
@@ -871,7 +874,8 @@ export class ScmManager {
 							branch
 					  }
 					: undefined,
-			error: gitError
+			error: gitError,
+			ignored: ignored
 		};
 	}
 
@@ -1049,6 +1053,7 @@ export class ScmManager {
 		let gitError;
 		let repoPath;
 		let repoId;
+		let ignored;
 		if (uri.scheme === "file") {
 			const { git } = SessionContainer.instance();
 
@@ -1110,6 +1115,8 @@ export class ScmManager {
 				Logger.error(ex, cc);
 				debugger;
 			}
+		} else if (uri.scheme === "codestream-diff") {
+			ignored = true;
 		}
 
 		return {
@@ -1128,7 +1135,8 @@ export class ScmManager {
 							branch
 					  }
 					: undefined,
-			error: gitError
+			error: gitError,
+			ignored: ignored
 		};
 	}
 

@@ -423,9 +423,7 @@ export class SimpleInlineCodemarks extends Component<Props, State> {
 			if (isInitialRender) {
 				this.setState({ isLoading: false });
 			}
-			if (renderErrorCallback !== undefined) {
-				renderErrorCallback("InvalidUri");
-			}
+			// used to log InvalidUri here, but it's not terribly useful and mostly noise
 			return;
 		}
 

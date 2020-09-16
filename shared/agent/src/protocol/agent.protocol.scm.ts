@@ -216,6 +216,10 @@ export interface GetFileScmInfoResponse {
 		branch?: string;
 	};
 	error?: string;
+	/**
+	 * set if the uri is not of a file scheme
+	 */
+	ignored?: boolean;
 }
 export const GetFileScmInfoRequestType = new RequestType<
 	GetFileScmInfoRequest,
@@ -266,6 +270,10 @@ export interface GetRangeScmInfoResponse {
 			pullRequestReviewId?: string;
 		};
 	};
+	/**
+	 * set if the uri is not of a file scheme
+	 */
+	ignored?: boolean;
 }
 export const GetRangeScmInfoRequestType = new RequestType<
 	GetRangeScmInfoRequest,

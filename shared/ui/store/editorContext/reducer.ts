@@ -145,6 +145,7 @@ export enum ScmError {
 }
 
 export const getFileScmError = (scmInfo: GetFileScmInfoResponse | GetRangeScmInfoResponse) => {
+	if (scmInfo.ignored) return undefined;
 	if (scmInfo.scm == null) {
 		if (scmInfo.error == null) return ScmError.NoRepo;
 

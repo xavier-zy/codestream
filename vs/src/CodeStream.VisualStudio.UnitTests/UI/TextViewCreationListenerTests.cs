@@ -15,6 +15,7 @@ using System.Collections.ObjectModel;
 using System.Reactive.Subjects;
 using CodeStream.VisualStudio.UI;
 using CodeStream.VisualStudio.UI.Margins;
+using Microsoft.VisualStudio.Text.Projection;
 
 namespace CodeStream.VisualStudio.UnitTests.UI {
 	[TestClass]
@@ -35,6 +36,7 @@ namespace CodeStream.VisualStudio.UnitTests.UI {
 			var pc = new PropertyCollection();
 			wpfTextViewMock.Setup(_ => _.Properties).Returns(pc);
 			wpfTextViewMock.Setup(_ => _.Caret).Returns(new Mock<ITextCaret>().Object);
+			wpfTextViewMock.Setup(_ => _.BufferGraph).Returns(new Mock<IBufferGraph>().Object);
 
 			var textDocumentFactoryServiceMock = new Mock<ITextDocumentFactoryService>();
 			var textDocument = new Mock<ITextDocument>();
@@ -85,7 +87,8 @@ namespace CodeStream.VisualStudio.UnitTests.UI {
 				TextViewCache = new WpfTextViewCache(),
 				EventAggregator = eventAggregator.Object,
 				CodeStreamAgentServiceFactory = codeStreamAgentService.Object,
-				SessionService= new Mock<ISessionService>().Object
+				SessionService= new Mock<ISessionService>().Object,
+			
 			};
 
 			((IWpfTextViewConnectionListener)listener).SubjectBuffersConnected(wpfTextViewMock.Object, reason, bufferCollection);

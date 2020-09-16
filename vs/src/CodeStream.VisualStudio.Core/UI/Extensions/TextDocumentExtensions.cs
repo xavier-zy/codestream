@@ -35,16 +35,23 @@ namespace CodeStream.VisualStudio.Core.UI.Extensions {
 					return textDocument != null;
 				}
 				// get all the buffers and try to find one that is attached to a document
-				var subjectBuffers = textView.BufferGraph.GetTextBuffers(_ => true);
-				if (subjectBuffers.Count == 1 && subjectBuffers[0] == textView.TextBuffer) {
+				var subjectBuffers = textView?.BufferGraph.GetTextBuffers(_ => true);
+				if (subjectBuffers == null) {
 					if (!TryGetTextDocument(textDocumentFactoryService, textView.TextBuffer, out textDocument)) {
 						return false;
 					}
 				}
 				else {
-					foreach (var buffer in subjectBuffers) {
-						if (TryGetTextDocument(textDocumentFactoryService, buffer, out textDocument)) {
-							break;
+					if (subjectBuffers.Count == 1 && subjectBuffers[0] == textView.TextBuffer) {
+						if (!TryGetTextDocument(textDocumentFactoryService, textView.TextBuffer, out textDocument)) {
+							return false;
+						}
+					}
+					else {
+						foreach (var buffer in subjectBuffers) {
+							if (TryGetTextDocument(textDocumentFactoryService, buffer, out textDocument)) {
+								break;
+							}
 						}
 					}
 				}

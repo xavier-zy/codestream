@@ -35,7 +35,6 @@ const NOW = new Date().getTime(); // a rough timestamp so we know when the file 
 export const PullRequestFilesChanged = (props: {
 	pr: FetchThirdPartyPullRequestPullRequest;
 	filesChanged: any[];
-	withTelemetry?: boolean;
 }) => {
 	const { pr, filesChanged } = props;
 	// const dispatch = useDispatch<Dispatch>();
@@ -172,11 +171,9 @@ export const PullRequestFilesChanged = (props: {
 
 				visitFile(visitedKey, index);
 
-				if (props.withTelemetry && pr.id) {
-					HostApi.instance.track("Review Diff Viewed", {
-						"PR ID": pr.id
-					});
-				}
+				HostApi.instance.track("PR Diff Viewed", {
+					Host: props.pr.providerId
+				});
 			})(i);
 		},
 		[repoId, visitedFiles, forkPointSha]
@@ -223,11 +220,9 @@ export const PullRequestFilesChanged = (props: {
 			setErrorMessage("Could not open file");
 		}
 
-		if (props.withTelemetry && pr.id) {
-			HostApi.instance.track("PR File Viewed", {
-				"PR ID": pr.id
-			});
-		}
+		HostApi.instance.track("PR File Viewed", {
+			Host: props.pr.providerId
+		});
 	};
 
 	const latest = visitedFiles[key] ? visitedFiles[key]._latest : 0;

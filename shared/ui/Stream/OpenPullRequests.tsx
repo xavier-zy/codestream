@@ -206,6 +206,7 @@ export function OpenPullRequests(props: Props) {
 	const fetchPRs = useCallback(
 		async (theQueries, options?: { force?: boolean }) => {
 			setIsLoadingPRs(true);
+			let count: number | undefined = undefined;
 			try {
 				const newGroups = {};
 				console.warn("Loading the PRs...", theQueries);
@@ -224,11 +225,9 @@ export function OpenPullRequests(props: Props) {
 							)
 						);
 						if (response && response.length) {
-							let count = 0;
+							count = 0;
 							response.forEach(group => (count += group.length));
-							HostApi.instance.track("PR List Rendered", {
-								"PR Count": count
-							});
+
 							console.warn("GOT SOME PULLS BACK: ", response);
 							newGroups[connectedProvider.id] = response;
 						}
@@ -245,6 +244,14 @@ export function OpenPullRequests(props: Props) {
 				// }
 			} finally {
 				setIsLoadingPRs(false);
+
+				HostApi.instance.track("PR List Rendered", {
+					"List State": count === undefined ? "No Auth" : count > 0 ? "PRs Listed" : "No PRs",
+					"PR Count": count,
+					Host: derivedState.PRConnectedProviders
+						? derivedState.PRConnectedProviders.map(_ => _.id)[0]
+						: undefined
+				});
 			}
 		},
 		[

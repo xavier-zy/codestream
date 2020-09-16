@@ -398,7 +398,11 @@ export const PullRequest = () => {
 			dispatch(bootstrapReviews());
 		}
 		getOpenRepos();
-		initialFetch();
+		initialFetch().then(_ => {
+			HostApi.instance.track("PR Details Viewed", {
+				Host: derivedState.currentPullRequestProviderId
+			});
+		});
 	});
 
 	const _getPullRequestLastUpdated = async (providerId: string, pullRequestId: string) => {
@@ -753,12 +757,7 @@ export const PullRequest = () => {
 							)}
 							{activeTab === 2 && <PullRequestCommitsTab pr={pr} ghRepo={ghRepo} fetch={fetch} />}
 							{activeTab === 4 && (
-								<PullRequestFilesChangedTab
-									key="files-changed"
-									pr={pr}
-									ghRepo={ghRepo}
-									fetch={fetch}
-								/>
+								<PullRequestFilesChangedTab key="files-changed" pr={pr} fetch={fetch} />
 							)}
 						</div>
 					</ScrollBox>

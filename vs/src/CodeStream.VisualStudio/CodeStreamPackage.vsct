@@ -258,6 +258,10 @@
 			<!-- The parent of the group will be the code window context menu -->
 			<Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_CODEWIN"/>
 		</CommandPlacement>
+		<CommandPlacement guid="guidWebViewPackageCodeWindowContextMenuCmdSet" id="CodeWindowContextSubMenuGroup" priority="0x0110">
+			<!-- The parent of the group will be the code window context menu -->
+			<Parent guid="guidHtmlCtxMenu" id="IDM_HTMLCTXMENU"/>
+		</CommandPlacement>
 		<CommandPlacement guid="guidWebViewPackageCodeWindowContextMenuCmdSet" id="CodeWindowContextSubMenu" priority="0x0110">
 			<Parent guid="guidWebViewPackageCodeWindowContextMenuCmdSet" id="CodeWindowContextSubMenuGroup"/>
 		</CommandPlacement>
@@ -311,6 +315,11 @@
 			<IDSymbol name="WebViewDevToolsCommandId" value="0x0600" />
 		</GuidSymbol>
 
+		<!-- https://social.msdn.microsoft.com/Forums/vstudio/en-US/7c5eb211-3985-426c-a3a2-9da4473dbaf4/my-context-menu-item-made-by-menu-command-in-visual-studio-package-is-not-shown-in-cshtml-files?forum=vsx -->
+		<GuidSymbol name="guidHtmlCtxMenu" value="{78F03954-2FB8-4087-8CE7-59D71710B3BB}">
+			<IDSymbol name="IDM_HTMLCTXMENU" value="1" />
+		</GuidSymbol>
+		
 		<GuidSymbol name="guidWebViewPackageCodeWindowContextMenuCmdSet" value="{0f33235e-3a5c-42bc-b519-d888652f972c}">
 			<IDSymbol name="CodeWindowContextSubMenuGroup" value="0x9000" />
 			<IDSymbol name="CodeWindowContextCommandGroup" value="0x9001" />

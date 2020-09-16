@@ -10,5 +10,5 @@
     "private": false,
     "qna": false,
     "repo": "https://github.com/TeamCodeStream/CodeStream",
-    "tags": ["chat", "collaboration", "comment", "live", "slack"]
+    "tags": ["chat", "collaboration", "github", "review", "slack"]
 }

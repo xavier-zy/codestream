@@ -782,10 +782,16 @@ export class ReviewsManager extends CachedEntityManagerBase<CSReview> {
 				remoteBranch = branchRemote;
 			}
 
+			const pullRequestTemplate =
+				(await xfs.readText(path.join(repo.path, "pull_request_template.md"))) ||
+				(await xfs.readText(path.join(repo.path, "docs/pull_request_template.md"))) ||
+				(await xfs.readText(path.join(repo.path, ".github/pull_request_template.md")));
+
 			return {
 				success: success,
 				remoteUrl: remoteUrl,
 				providerId: providerId,
+				pullRequestTemplate,
 				remotes: remotes,
 				origins: originNames,
 				remoteBranch: remoteBranch,

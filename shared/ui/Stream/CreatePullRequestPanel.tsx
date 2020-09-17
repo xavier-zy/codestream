@@ -39,6 +39,7 @@ import Headshot from "./Headshot";
 import { EMPTY_STATUS } from "./StatusPanel";
 import Tooltip from "./Tooltip";
 import { clearMyPullRequests } from "../store/providerPullRequests/actions";
+import { css } from "react-select/src/components/SingleValue";
 
 // base branch dropdown: show only pushed branches
 // base branch dropdown: try to default to fork point branch
@@ -195,6 +196,9 @@ export const CreatePullRequestPanel = props => {
 	const [prBranch, setPrBranch] = useState("");
 	const [prTitle, setPrTitle] = useState("");
 	const [prText, setPrText] = useState("");
+	const [prTextTouched, setPrTextTouched] = useState(false);
+	const [numLines, setNumLines] = useState(8);
+
 	const [prRemoteUrl, setPrRemoteUrl] = useState("");
 	const [prProviderId, setPrProviderId] = useState("");
 	const [prProviderIconName, setPrProviderIconName] = useState("");
@@ -264,7 +268,13 @@ export const CreatePullRequestPanel = props => {
 
 				setPrRemoteUrl(result.remoteUrl!);
 				setPrTitle(result.review!.title!);
-				setPrText(result.review!.text!);
+
+				const template = result.pullRequestTemplate || "";
+				setNumLines(template.split("\n").length);
+				let newText = result.pullRequestTemplate || "";
+				if (result.review && result.review.text) newText += result.review.text;
+				if (!prTextTouched) setPrText(newText);
+
 				setPrProviderId(result.providerId!);
 
 				setCurrentStep(3);
@@ -991,9 +1001,12 @@ export const CreatePullRequestPanel = props => {
 												<textarea
 													className="input-text"
 													name="description"
-													rows={5}
+													rows={numLines > 20 ? 20 : numLines}
 													value={prText}
-													onChange={e => setPrText(e.target.value)}
+													onChange={e => {
+														setPrTextTouched(true);
+														setPrText(e.target.value);
+													}}
 													placeholder={`${prLabel.Pullrequest}  description (optional)`}
 													style={{ resize: "vertical" }}
 												/>

@@ -104,6 +104,14 @@ export const PullRequestFilesChangedTab = (props: {
 		});
 	});
 
+	useEffect(() => {
+		if (derivedState.pullRequestFilesChangedMode === "hunks") {
+			HostApi.instance.track("PR Diff Hunks Viewed", {
+				Host: pr.providerId
+			});
+		}
+	}, [derivedState.pullRequestFilesChangedMode]);
+
 	if (isLoading)
 		return (
 			<div style={{ marginTop: "100px" }}>

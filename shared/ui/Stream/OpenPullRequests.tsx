@@ -500,7 +500,13 @@ export function OpenPullRequests(props: Props) {
 													<Row
 														key={"pr-" + pr.id}
 														className={selected ? "selected" : ""}
-														onClick={() => dispatch(setCurrentPullRequest(pr.providerId, pr.id))}
+														onClick={() => {
+															dispatch(setCurrentPullRequest(pr.providerId, pr.id));
+
+															HostApi.instance.track("PR Clicked", {
+																Host: pr.providerId
+															});
+														}}
 													>
 														<div>
 															{selected && <Icon name="arrow-right" className="selected-icon" />}

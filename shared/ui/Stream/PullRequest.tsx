@@ -191,11 +191,6 @@ export const PullRequest = () => {
 			)
 		)) as any;
 		_assignState(response);
-		if (response) {
-			HostApi.instance.track("PR Clicked", {
-				Host: derivedState.currentPullRequestProviderId
-			});
-		}
 	};
 
 	/**

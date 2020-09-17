@@ -89,7 +89,8 @@ export const PullRequestTooltip = (props: { pr: GetMyPullRequestsResponse }) => 
 	return (
 		<div>
 			<div style={{ maxWidth: "400px", padding: "10px" }}>
-				{pr.headRepository.nameWithOwner} <Timestamp time={pr.createdAt} relative />
+				{pr.headRepository && pr.headRepository.nameWithOwner}{" "}
+				<Timestamp time={pr.createdAt} relative />
 				<div style={{ marginTop: "10px" }}>
 					<div style={{ display: "flex" }}>
 						<Icon
@@ -103,7 +104,7 @@ export const PullRequestTooltip = (props: { pr: GetMyPullRequestsResponse }) => 
 								<span className="subtle">#{pr.number}</span>
 							</span>
 							<div className="subtle" style={{ margin: "2px 0 10px 0", fontSize: "larger" }}>
-								{pr.bodyText.substr(0, 300)}
+								{(pr.bodyText || "").substr(0, 300)}
 							</div>
 							<div className="monospace" style={{ fontSize: "smaller" }}>
 								<PRBranch>{pr.baseRefName}&nbsp;</PRBranch>
@@ -487,6 +488,7 @@ export function OpenPullRequests(props: Props) {
 											const selected = derivedState.repos.find(repo => {
 												return (
 													repo.currentBranch === pr.headRefName &&
+													pr.headRepository &&
 													repo.name === pr.headRepository.name
 												);
 											});

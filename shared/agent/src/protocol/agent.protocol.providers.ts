@@ -643,7 +643,7 @@ export interface GetMyPullRequestsResponse {
 	createdAt: number;
 	baseRefName: string;
 	headRefName: string;
-	headRepository: {
+	headRepository?: {
 		name: string;
 		nameWithOwner: string;
 	};

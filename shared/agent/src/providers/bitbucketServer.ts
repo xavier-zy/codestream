@@ -315,7 +315,17 @@ export class BitbucketServerProvider extends ThirdPartyIssueProviderBase<CSBitbu
 		// HACKitude yeah, sorry
 		const uri = URI.parse(remote);
 		const split = uri.path.split("/");
-		if (split[1] === "scm") {
+		// BBS seems to default to "scm" as the first part aka /scm/foo/bar.git
+		// but there's a product called "Kantega SSO Enterprise" which utilizes https+sso for checkouts,
+		//
+
+		// https://kantega-sso.atlassian.net/wiki/spaces/KSE/pages/1802357/FAQ+-+Frequently+Asked+Questions
+		// Does Kerberos single sign-on work with Bitbucket clients?
+		// Yes, single sign-on using Kerberos can be configured also for Git clients.
+		// There is an option to enable Kerberos on the common /scm/* path and an alternative path.
+		// Enabling this will allow Git clients to clone from the alternate,
+		// Kerberos-enabled path /kerberos-scm/*
+		if (split[1] === "scm" || split[1] === "kerberos-scm") {
 			const owner = split[2];
 			const name = split[3].replace(".git", "");
 			return {

@@ -594,7 +594,7 @@ export class ReviewsManager extends CachedEntityManagerBase<CSReview> {
 			return {
 				success: false,
 				error: {
-					message: ex.message,
+					message: typeof ex === "string" ? ex : ex.message,
 					type: "UNKNOWN"
 				}
 			};
@@ -812,7 +812,7 @@ export class ReviewsManager extends CachedEntityManagerBase<CSReview> {
 			return {
 				success: false,
 				error: {
-					message: ex.message,
+					message: typeof ex === "string" ? ex : ex.message,
 					type: "UNKNOWN"
 				}
 			};
@@ -950,7 +950,7 @@ export class ReviewsManager extends CachedEntityManagerBase<CSReview> {
 			return {
 				success: false,
 				error: {
-					message: ex.message,
+					message: typeof ex === "string" ? ex : ex.message,
 					type: "UNKNOWN"
 				}
 			};

@@ -312,8 +312,9 @@ export const CreatePullRequestPanel = props => {
 					});
 				}
 			}
-		} catch (ex) {
-			logError(`Unexpected error during pull request precondition check: ${ex.message}`, {
+		} catch (error) {
+			const errorMessage = typeof error === "string" ? error : error.message;
+			logError(`Unexpected error during pull request precondition check: ${errorMessage}`, {
 				reviewId: derivedState.reviewId
 			});
 			setUnexpectedError(true);
@@ -505,6 +506,14 @@ export const CreatePullRequestPanel = props => {
 					setFormState({ type: "", message: "", url: "", id: "" });
 				}
 				setLoadingBranchInfo(false);
+			})
+			.catch(error => {
+				setPreconditionError({
+					type: "UNKNOWN",
+					message: typeof error === "string" ? error : error.message,
+					url: "",
+					id: ""
+				});
 			});
 	};
 
@@ -891,7 +900,7 @@ export const CreatePullRequestPanel = props => {
 			<CancelButton onClick={props.closePanel} />
 			<span className="plane-container">
 				<div className="codemark-form-container">
-					<form className="codemark-form standard-form vscroll" id="code-comment-form">
+					<div className="codemark-form standard-form vscroll" id="code-comment-form">
 						<fieldset className="form-body">
 							<div id="controls">
 								{/*
@@ -1118,7 +1127,7 @@ export const CreatePullRequestPanel = props => {
 								</Step4>
 							</div>
 						</fieldset>
-					</form>
+					</div>
 					{!loading && !loadingBranchInfo && preconditionError.type && preconditionErrorMessages()}
 				</div>
 			</span>

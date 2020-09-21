@@ -43,11 +43,15 @@
             <category>Other</category>
         </intentionAction>
         <intentionAction>
+            <className>com.codestream.actions.StartWork</className>
+            <category>Other</category>
+        </intentionAction>
+        <intentionAction>
             <className>com.codestream.actions.CreateReview</className>
             <category>Other</category>
         </intentionAction>
         <intentionAction>
-            <className>com.codestream.actions.StartWork</className>
+            <className>com.codestream.actions.NewPullRequest</className>
             <category>Other</category>
         </intentionAction>
 
@@ -88,10 +92,10 @@
             </action>
             <action id="CodeStream.GetPermalink" class="com.codestream.actions.GetPermalink" text="Get _Permalink"
                     description="Get permalink" icon="/images/marker-permalink.svg">
-                <keyboard-shortcut keymap="$default" first-keystroke="control shift SLASH" second-keystroke="P"/>
-                <keyboard-shortcut keymap="Mac OS X" first-keystroke="control SLASH" second-keystroke="P"
+                <keyboard-shortcut keymap="$default" first-keystroke="control shift SLASH" second-keystroke="L"/>
+                <keyboard-shortcut keymap="Mac OS X" first-keystroke="control SLASH" second-keystroke="L"
                                    replace-all="true"/>
-                <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="control SLASH" second-keystroke="P"
+                <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="control SLASH" second-keystroke="L"
                                    replace-all="true"/>
             </action>
             <action id="CodeStream.CreateReview" class="com.codestream.actions.CreateReview" text="Request a Code _Review"
@@ -110,7 +114,14 @@
                 <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="control SLASH" second-keystroke="W"
                                    replace-all="true"/>
             </action>
-
+            <action id="CodeStream.NewPullRequest" class="com.codestream.actions.NewPullRequest" text="New _Pull/Merge Request"
+                    description="Start work" icon="/images/pull-request.svg">
+                <keyboard-shortcut keymap="$default" first-keystroke="control shift SLASH" second-keystroke="P"/>
+                <keyboard-shortcut keymap="Mac OS X" first-keystroke="control SLASH" second-keystroke="P"
+                                   replace-all="true"/>
+                <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="control SLASH" second-keystroke="P"
+                                   replace-all="true"/>
+            </action>
             <action id="CodeStream.ToggleView" class="com.codestream.actions.ToggleView" text="Toggle CodeStream">
                 <keyboard-shortcut keymap="$default" first-keystroke="control shift SLASH"
                                    second-keystroke="control shift SLASH"/>
@@ -119,15 +130,22 @@
                 <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="control SLASH" second-keystroke="control SLASH"
                                    replace-all="true"/>
             </action>
-
         </group>
 
         <action id="CodeStream.CopyPermalink" class="com.codestream.actions.CopyPermalink" text="Copy Permalink"
                 description="Copy Permalink">
-            <keyboard-shortcut keymap="$default" first-keystroke="control shift SLASH" second-keystroke="shift P"/>
-            <keyboard-shortcut keymap="Mac OS X" first-keystroke="control SLASH" second-keystroke="shift P"
+            <keyboard-shortcut keymap="$default" first-keystroke="control shift SLASH" second-keystroke="shift L"/>
+            <keyboard-shortcut keymap="Mac OS X" first-keystroke="control SLASH" second-keystroke="shift L"
                                replace-all="true"/>
-            <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="control SLASH" second-keystroke="shift P"
+            <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="control SLASH" second-keystroke="shift L"
+                               replace-all="true"/>
+        </action>
+        <action id="CodeStream.NewMergeRequest" class="com.codestream.actions.NewPullRequest" text="New Merge Request"
+                description="Start work" icon="/images/pull-request.svg">
+            <keyboard-shortcut keymap="$default" first-keystroke="control shift SLASH" second-keystroke="M"/>
+            <keyboard-shortcut keymap="Mac OS X" first-keystroke="control SLASH" second-keystroke="M"
+                               replace-all="true"/>
+            <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="control SLASH" second-keystroke="M"
                                replace-all="true"/>
         </action>
     </actions>

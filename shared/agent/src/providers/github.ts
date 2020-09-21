@@ -38,7 +38,12 @@ import {
 	ThirdPartyProviderCard,
 	ThirdPartyProviderConfig
 } from "../protocol/agent.protocol";
-import { CodemarkType, CSGitHubProviderInfo, CSReferenceLocation, CSRepository } from "../protocol/api.protocol";
+import {
+	CodemarkType,
+	CSGitHubProviderInfo,
+	CSReferenceLocation,
+	CSRepository
+} from "../protocol/api.protocol";
 import { Arrays, Functions, log, lspProvider, Strings } from "../system";
 import {
 	getOpenedRepos,

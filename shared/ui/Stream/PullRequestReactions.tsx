@@ -8,11 +8,8 @@ import styled from "styled-components";
 import { PRReactions, PRReaction } from "./PullRequestComponents";
 import Tooltip from "./Tooltip";
 import { SmartFormattedList } from "./SmartFormattedList";
-import { HostApi } from "../webview-api";
-import {
-	ExecuteThirdPartyTypedType,
-	FetchThirdPartyPullRequestPullRequest
-} from "@codestream/protocols/agent";
+import { FetchThirdPartyPullRequestPullRequest } from "@codestream/protocols/agent";
+import { api } from "../store/providerPullRequests/actions";
 
 interface Props {
 	pr: FetchThirdPartyPullRequestPullRequest;
@@ -54,15 +51,13 @@ export const PullRequestReactButton = styled((props: Props) => {
 		props.setIsLoadingMessage("Saving Reaction...");
 		setOpen(undefined);
 
-		await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
-			method: "toggleReaction",
-			providerId: props.pr.providerId,
-			params: {
+		await dispatch(
+			api("toggleReaction", {
 				subjectId: props.targetId,
 				content: key,
 				onOff
-			}
-		});
+			})
+		);
 		props.fetch();
 	};
 
@@ -165,18 +160,17 @@ export const PullRequestReactions = (props: ReactionProps) => {
 	const { reactionGroups } = props;
 	if (!reactionGroups) return null;
 
+	const dispatch = useDispatch();
 	const saveReaction = async (key: string, onOff: boolean) => {
 		props.setIsLoadingMessage("Saving Reaction...");
 
-		await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
-			method: "toggleReaction",
-			providerId: props.pr.providerId,
-			params: {
+		await dispatch(
+			api("toggleReaction", {
 				subjectId: props.targetId,
 				content: key,
 				onOff
-			}
-		});
+			})
+		);
 		props.fetch();
 	};
 

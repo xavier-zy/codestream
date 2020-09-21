@@ -9,10 +9,17 @@ import {
 	ExecuteThirdPartyTypedRequest,
 	GetMyPullRequestsRequest,
 	GetMyPullRequestsResponse,
-	FetchThirdPartyPullRequestCommitsType
+	FetchThirdPartyPullRequestCommitsType,
+	QueryThirdPartyRequestType,
+	ExecuteThirdPartyRequestUntypedType
 } from "@codestream/protocols/agent";
 import { CodeStreamState } from "..";
 import { RequestType } from "vscode-languageserver-protocol";
+import {
+	setCurrentPullRequest,
+	setCurrentPullRequestAndBranch,
+	setCurrentReview
+} from "../context/actions";
 
 export const reset = () => action("RESET");
 
@@ -41,6 +48,20 @@ export const _addMyPullRequests = (providerId: string, data: any) =>
 	action(ProviderPullRequestActionsTypes.AddMyPullRequests, {
 		providerId,
 		data
+	});
+
+export const _addPullRequestError = (providerId: string, id: string, error?: { message: string }) =>
+	action(ProviderPullRequestActionsTypes.AddPullRequestError, {
+		providerId,
+		id,
+		error
+	});
+
+export const clearPullRequestError = (providerId: string, id: string) =>
+	action(ProviderPullRequestActionsTypes.ClearPullRequestError, {
+		providerId,
+		id,
+		undefined
 	});
 
 export const getPullRequestConversationsFromProvider = (
@@ -113,13 +134,11 @@ export const getPullRequestFiles = (providerId: string, id: string) => async (
 				return pr.files;
 			}
 		}
-		const response = await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
-			method: "getPullRequestFilesChanged",
-			providerId: providerId,
-			params: {
+		const response = await dispatch(
+			api("getPullRequestFilesChanged", {
 				pullRequestId: id
-			}
-		});
+			})
+		);
 
 		dispatch(_addPullRequestFiles(providerId, id, response));
 		return response;
@@ -235,4 +254,128 @@ export const getPullRequestCommits = (providerId: string, id: string) => async (
 		logError(`failed to get pullRequest commits: ${error}`, { providerId, id });
 	}
 	return undefined;
+};
+
+export const setProviderError = (
+	providerId: string,
+	id: string,
+	error?: { message: string }
+) => async (dispatch, getState: () => CodeStreamState) => {
+	try {
+		dispatch(_addPullRequestError(providerId, id, error));
+	} catch (error) {
+		logError(`failed to setProviderError: ${error}`, { providerId, id });
+	}
+};
+
+export const clearProviderError = (
+	providerId: string,
+	id: string,
+	error?: { message: string }
+) => async (dispatch, getState: () => CodeStreamState) => {
+	try {
+		dispatch(_addPullRequestError(providerId, id, error));
+	} catch (error) {
+		logError(`failed to setProviderError: ${error}`, { providerId, id });
+	}
+};
+
+/**
+ * Provider api
+ *
+ * @param method the method in the agent
+ * @param params the data to send to the provider
+ * @param options optional options
+ */
+export const api = <T = any, R = any>(
+	method:
+		| "addReviewerToPullRequest"
+		| "createCommentReply"
+		| "createPullRequestComment"
+		| "createPullRequestCommentAndClose"
+		| "createPullRequestCommentAndReopen"
+		| "deletePullRequestComment"
+		| "deletePullRequestReview"
+		| "getIssues"
+		| "getLabels"
+		| "getMilestones"
+		| "getPullRequestFilesChanged"
+		| "getPullRequestLastUpdated"
+		| "getProjects"
+		| "getReviewers"
+		| "lockPullRequest"
+		| "mergePullRequest"
+		| "removeReviewerFromPullRequest"
+		| "resolveReviewThread"
+		| "setAssigneeOnPullRequest"
+		| "setIsDraftPullRequest"
+		| "setIssueOnPullRequest"
+		| "setLabelOnPullRequest"
+		| "submitReview"
+		| "toggleReaction"
+		| "toggleMilestoneOnPullRequest"
+		| "toggleProjectOnPullRequest"
+		| "unresolveReviewThread"
+		| "updateIssueComment"
+		| "unlockPullRequest"
+		| "updatePullRequestBody"
+		| "updatePullRequestSubscription"
+		| "updatePullRequestTitle"
+		| "updateReview"
+		| "updateReviewComment",
+	params: any,
+	options?: {
+		updateOnSuccess?: boolean;
+		preventClearError: boolean;
+	}
+) => async (dispatch, getState: () => CodeStreamState) => {
+	let providerId;
+	let pullRequestId;
+	try {
+		const state = getState();
+		const currentPullRequest = state.context.currentPullRequest;
+		if (!currentPullRequest) {
+			dispatch(
+				setProviderError(providerId, pullRequestId, {
+					message: "currentPullRequest not found"
+				})
+			);
+			return;
+		}
+		({ providerId, id: pullRequestId } = currentPullRequest);
+
+		params = params || {};
+		if (!params.pullRequestId) params.pullRequestId = pullRequestId;
+		const response = await HostApi.instance.send(new ExecuteThirdPartyTypedType<T, R>(), {
+			method: method,
+			providerId: providerId,
+			params: params
+		});
+		if (response && (!options || (options && !options.preventClearError))) {
+			dispatch(clearPullRequestError(providerId, pullRequestId));
+		}
+		return response as R;
+	} catch (error) {
+		let errorString = typeof error === "string" ? error : error.message;
+		if (errorString) {
+			const target = "failed with message: ";
+			const targetLength = target.length;
+			const index = errorString.indexOf(target);
+			if (index > -1) {
+				errorString = errorString.substring(index + targetLength);
+				const jsonIndex = errorString.indexOf(`: {\"`);
+				// not the first character
+				if (jsonIndex > 0) {
+					errorString = errorString.substring(0, jsonIndex);
+				}
+			}
+		}
+		dispatch(
+			setProviderError(providerId, pullRequestId, {
+				message: errorString
+			})
+		);
+		logError(error, { providerId, pullRequestId, method, message: errorString });
+		return undefined;
+	}
 };

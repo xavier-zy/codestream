@@ -24,20 +24,16 @@ import { PRHeadshot, Headshot } from "../src/components/Headshot";
 import Timestamp from "./Timestamp";
 import Icon from "./Icon";
 import { MarkdownText } from "./MarkdownText";
-import {
-	FetchThirdPartyPullRequestPullRequest,
-	ExecuteThirdPartyTypedType
-} from "@codestream/protocols/agent";
+import { FetchThirdPartyPullRequestPullRequest } from "@codestream/protocols/agent";
 import Tag from "./Tag";
 import { Link } from "./Link";
 import { PRHeadshotName } from "../src/components/HeadshotName";
 import { PRAuthorBadges } from "./PullRequestConversationTab";
 import * as Path from "path-browserify";
-import MessageInput from "./MessageInput";
 import { Button } from "../src/components/Button";
 import { PullRequestReactButton, PullRequestReactions } from "./PullRequestReactions";
 import { HostApi } from "../webview-api";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { CodeStreamState } from "../store";
 import { CSMe } from "@codestream/protocols/api";
 import { SmartFormattedList } from "./SmartFormattedList";
@@ -47,6 +43,7 @@ import { PullRequestPatch } from "./PullRequestPatch";
 import { PullRequestFinishReview } from "./PullRequestFinishReview";
 import { PullRequestEditingComment } from "./PullRequestEditingComment";
 import { PullRequestReplyComment } from "./PullRequestReplyComment";
+import { api } from "../store/providerPullRequests/actions";
 
 export const GHOST = {
 	login: "ghost",
@@ -72,6 +69,7 @@ interface Props {
 export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 	const { pr, setIsLoadingMessage, fetch } = props;
 	if (!pr || !pr.timelineItems) return null;
+	const dispatch = useDispatch();
 
 	const [isResolving, setIsResolving] = useState(false);
 	const [reviewOption, setReviewOption] = useState("COMMENT");
@@ -82,29 +80,27 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 	const [expandedComments, setExpandedComments] = useState({});
 
 	// const [pendingComment, setPendingComment] = useState("");
-	//const submitReview = async (event?: React.SyntheticEvent) => {
-	// await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
-	// 	method: "submitReview",
-	//  providerId: pr.providerId,
-	// 	params: {
-	// 		pullRequestId: pr.id!,
-	// 		text: reviewOptionText,
-	// 		eventType: reviewOption
-	// 	}
-	// });
-	// props.fetch();
-	//};
+	// const submitReview = async (event?: React.SyntheticEvent) => {
+	// 	await dispatch(api(
+	// 		"submitReview",
+
+	// 		{
+	// 			text: reviewOptionText,
+	// 			eventType: reviewOption
+	// 		}
+	// 	));
+	// 	props.fetch();
+	// };
 
 	// const cancelReview = async (event?: React.SyntheticEvent) => {
-	// 	await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
-	// 		method: "submitReview",
-	//      providerId: pr.providerId,
-	// 		params: {
-	// 			pullRequestId: pr.id!,
+	// 	await dispatch(api(
+	// 		"submitReview",
+
+	// 		{
 	// 			text: reviewOptionText,
 	// 			eventType: "DISMISS"
 	// 		}
-	// 	});
+	// 	));
 
 	// 	props.fetch();
 	// };
@@ -144,8 +140,8 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 			const value = pendingComments[id];
 			if (value == null) return;
 
-			await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
-				method:
+			await dispatch(
+				api(
 					type === "REVIEW_COMMENT"
 						? "updateReviewComment"
 						: type === "ISSUE"
@@ -153,13 +149,12 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 						: type === "PR"
 						? "updatePullRequestBody"
 						: "updateReview",
-				providerId: pr.providerId,
-				params: {
-					pullRequestId: pr.id,
-					id,
-					body: value
-				}
-			});
+					{
+						id,
+						body: value
+					}
+				)
+			);
 
 			fetch().then(() => {
 				setPendingComments({
@@ -181,13 +176,11 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 	const handleResolve = async (e, threadId) => {
 		try {
 			setIsResolving(true);
-			await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
-				method: "resolveReviewThread",
-				providerId: pr.providerId,
-				params: {
+			await dispatch(
+				api("resolveReviewThread", {
 					threadId: threadId
-				}
-			});
+				})
+			);
 
 			await props.fetch();
 		} catch (ex) {
@@ -200,13 +193,11 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 	const handleUnresolve = async (e, threadId) => {
 		try {
 			setIsResolving(true);
-			await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
-				method: "unresolveReviewThread",
-				providerId: pr.providerId,
-				params: {
+			await dispatch(
+				api("unresolveReviewThread", {
 					threadId: threadId
-				}
-			});
+				})
+			);
 
 			await props.fetch();
 		} catch (ex) {

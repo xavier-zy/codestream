@@ -1,4 +1,4 @@
-import React, { useState, useReducer, useMemo } from "react";
+import React, { useState, useReducer, useCallback, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { OpenUrlRequestType } from "@codestream/protocols/webview";
 import { CodeStreamState } from "../store";
@@ -54,7 +54,7 @@ import { setUserPreference } from "./actions";
 import copy from "copy-to-clipboard";
 import { PullRequestBottomComment } from "./PullRequestBottomComment";
 import { reduce as _reduce, groupBy as _groupBy, map as _map } from "lodash-es";
-import { removeFromMyPullRequests } from "../store/providerPullRequests/actions";
+import { api, removeFromMyPullRequests } from "../store/providerPullRequests/actions";
 import { PullRequestReviewStatus } from "./PullRequestReviewStatus";
 import { autoCheckedMergeabilityStatus } from "./PullRequest";
 
@@ -202,35 +202,37 @@ export const PullRequestConversationTab = (props: {
 
 	const setIsDraftPullRequest = async (onOff: boolean) => {
 		setIsLoadingMessage("Updating...");
-		await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, boolean>(), {
-			method: "setIsDraftPullRequest",
-			providerId: pr.providerId,
-			params: {
-				pullRequestId: derivedState.currentPullRequestId!,
+		await dispatch(
+			api("setIsDraftPullRequest", {
 				onOff
-			}
-		});
+			})
+		);
 		fetch();
 	};
 
-	const mergePullRequest = async (options: { mergeMethod: MergeMethod }) => {
-		setIsLoadingMessage("Merging...");
-		dispatch(setUserPreference(["lastPRMergeMethod"], options.mergeMethod));
-		await HostApi.instance.send(
-			new ExecuteThirdPartyTypedType<MergePullRequestRequest, boolean>(),
-			{
-				method: "mergePullRequest",
-				providerId: pr.providerId,
-				params: {
-					pullRequestId: derivedState.currentPullRequestId!,
+	const mergePullRequest = useCallback(
+		async (options: { mergeMethod: MergeMethod }) => {
+			setIsLoadingMessage("Merging...");
+			dispatch(setUserPreference(["lastPRMergeMethod"], options.mergeMethod));
+
+			const response = (await dispatch(
+				api("mergePullRequest", {
 					mergeMethod: options.mergeMethod
-				}
+				})
+			)) as any;
+			if (response) {
+				fetch().then(_ => {
+					dispatch(removeFromMyPullRequests(pr.providerId, derivedState.currentPullRequestId!));
+				});
 			}
-		);
-		fetch().then(_ => {
-			dispatch(removeFromMyPullRequests(pr.providerId, derivedState.currentPullRequestId!));
-		});
-	};
+		},
+		[
+			pr.providerId,
+			derivedState.currentPullRequestId!,
+			derivedState.defaultMergeMethod,
+			mergeMethod
+		]
+	);
 
 	const lockPullRequest = async () => {
 		setIsLoadingLocking(true);
@@ -250,14 +252,11 @@ export const PullRequestConversationTab = (props: {
 				break;
 		}
 
-		await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
-			method: "lockPullRequest",
-			providerId: pr.providerId,
-			params: {
-				pullRequestId: derivedState.currentPullRequestId!,
+		await dispatch(
+			api("lockPullRequest", {
 				lockReason: reason
-			}
-		});
+			})
+		);
 		fetch().then(() => {
 			setIsLocking(false);
 			setIsLoadingLocking(false);
@@ -266,13 +265,7 @@ export const PullRequestConversationTab = (props: {
 
 	const unlockPullRequest = async () => {
 		setIsLoadingLocking(true);
-		await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
-			method: "unlockPullRequest",
-			providerId: pr.providerId,
-			params: {
-				pullRequestId: derivedState.currentPullRequestId!
-			}
-		});
+		await dispatch(api("unlockPullRequest", {}));
 		fetch().then(() => {
 			setIsLocking(false);
 			setIsLoadingLocking(false);
@@ -352,14 +345,12 @@ export const PullRequestConversationTab = (props: {
 	}) as { id: string; login: string; avatarUrl: string; isPending: boolean; state: string }[];
 
 	const fetchAvailableReviewers = async (e?) => {
-		const reviewers = await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
-			method: "getReviewers",
-			providerId: pr.providerId,
-			params: {
+		const reviewers = (await dispatch(
+			api("getReviewers", {
 				owner: ghRepo.repoOwner,
 				repo: ghRepo.repoName
-			}
-		});
+			})
+		)) as any;
 		setAvailableReviewers(reviewers);
 	};
 
@@ -390,38 +381,31 @@ export const PullRequestConversationTab = (props: {
 
 	const removeReviewer = async id => {
 		setIsLoadingMessage("Removing Reviewer...");
-		await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
-			method: "removeReviewerFromPullRequest",
-			providerId: pr.providerId,
-			params: {
-				pullRequestId: pr.id,
+		await dispatch(
+			api("removeReviewerFromPullRequest", {
 				userId: id
-			}
-		});
+			})
+		);
 		fetch();
 	};
 	const addReviewer = async id => {
 		setIsLoadingMessage("Requesting Review...");
-		await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
-			method: "addReviewerToPullRequest",
-			providerId: pr.providerId,
-			params: {
+		await dispatch(
+			api("addReviewerToPullRequest", {
 				pullRequestId: pr.id,
 				userId: id
-			}
-		});
+			})
+		);
 		fetch();
 	};
 
 	const fetchAvailableAssignees = async (e?) => {
-		const assignees = await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
-			method: "getReviewers",
-			providerId: pr.providerId,
-			params: {
+		const assignees = (await dispatch(
+			api("getReviewers", {
 				owner: ghRepo.repoOwner,
 				repo: ghRepo.repoName
-			}
-		});
+			})
+		)) as any;
 		setAvailableAssignees(assignees);
 	};
 
@@ -445,27 +429,22 @@ export const PullRequestConversationTab = (props: {
 
 	const toggleAssignee = async (id: string, onOff: boolean) => {
 		setIsLoadingMessage(onOff ? "Adding Assignee..." : "Removing Assignee...");
-		await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
-			method: "setAssigneeOnPullRequest",
-			providerId: pr.providerId,
-			params: {
-				pullRequestId: derivedState.currentPullRequestId,
+		await dispatch(
+			api("setAssigneeOnPullRequest", {
 				assigneeId: id,
 				onOff
-			}
-		});
+			})
+		);
 		fetch();
 	};
 
 	const fetchAvailableLabels = async (e?) => {
-		const labels = await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
-			method: "getLabels",
-			providerId: pr.providerId,
-			params: {
+		const labels = (await dispatch(
+			api("getLabels", {
 				owner: ghRepo.repoOwner,
 				repo: ghRepo.repoName
-			}
-		});
+			})
+		)) as any;
 		setAvailableLabels(labels);
 	};
 
@@ -497,27 +476,22 @@ export const PullRequestConversationTab = (props: {
 
 	const setLabel = async (id: string, onOff: boolean) => {
 		setIsLoadingMessage(onOff ? "Adding Label..." : "Removing Label...");
-		await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
-			method: "setLabelOnPullRequest",
-			providerId: pr.providerId,
-			params: {
-				pullRequestId: derivedState.currentPullRequestId,
+		await dispatch(
+			api("setLabelOnPullRequest", {
 				labelId: id,
 				onOff
-			}
-		});
+			})
+		);
 		fetch();
 	};
 
 	const fetchAvailableProjects = async (e?) => {
-		const projects = await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
-			method: "getProjects",
-			providerId: pr.providerId,
-			params: {
+		const projects = (await dispatch(
+			api("getProjects", {
 				owner: ghRepo.repoOwner,
 				repo: ghRepo.repoName
-			}
-		});
+			})
+		)) as any;
 		setAvailableProjects(projects);
 	};
 
@@ -548,27 +522,22 @@ export const PullRequestConversationTab = (props: {
 
 	const setProject = async (id: string, onOff: boolean) => {
 		setIsLoadingMessage(onOff ? "Adding to Project..." : "Removing from Project...");
-		await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
-			method: "toggleProjectOnPullRequest",
-			providerId: pr.providerId,
-			params: {
-				pullRequestId: derivedState.currentPullRequestId,
+		await dispatch(
+			api("toggleProjectOnPullRequest", {
 				projectId: id,
 				onOff
-			}
-		});
+			})
+		);
 		fetch();
 	};
 
 	const fetchAvailableMilestones = async (e?) => {
-		const milestones = await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
-			method: "getMilestones",
-			providerId: pr.providerId,
-			params: {
+		const milestones = (await dispatch(
+			api("getMilestones", {
 				owner: ghRepo.repoOwner,
 				repo: ghRepo.repoName
-			}
-		});
+			})
+		)) as any;
 		setAvailableMilestones(milestones);
 	};
 
@@ -604,29 +573,24 @@ export const PullRequestConversationTab = (props: {
 
 	const setMilestone = async (id: string, onOff: boolean) => {
 		setIsLoadingMessage(onOff ? "Adding Milestone..." : "Clearing Milestone...");
-		await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
-			method: "toggleMilestoneOnPullRequest",
-			providerId: pr.providerId,
-			params: {
-				pullRequestId: derivedState.currentPullRequestId,
+		await dispatch(
+			api("toggleMilestoneOnPullRequest", {
 				milestoneId: id,
 				onOff
-			}
-		});
+			})
+		);
 		fetch();
 	};
 
-	const fetchAvailableIssues = async (e?) => {
-		const issues = await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
-			method: "getIssues",
-			providerId: pr.providerId,
-			params: {
-				owner: ghRepo.repoOwner,
-				repo: ghRepo.repoName
-			}
-		});
-		setAvailableIssues(issues);
-	};
+	// const fetchAvailableIssues = async (e?) => {
+	// 	const issues = (await dispatch(
+	// 		api("getIssues", {
+	// 			owner: ghRepo.repoOwner,
+	// 			repo: ghRepo.repoName
+	// 		})
+	// 	)) as any;
+	// 	setAvailableIssues(issues);
+	// };
 
 	// const issueMenuItems = React.useMemo(() => {
 	// 	if (availableIssues && availableIssues.length) {
@@ -651,33 +615,27 @@ export const PullRequestConversationTab = (props: {
 
 	const setIssue = async (id: string, onOff: boolean) => {
 		setIsLoadingMessage(onOff ? "Adding Issue..." : "Removing Issue...");
-		await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
-			method: "setIssueOnPullRequest",
-			providerId: pr.providerId,
-			params: {
+		await dispatch(
+			api("setIssueOnPullRequest", {
 				owner: ghRepo.repoOwner,
 				repo: ghRepo.repoName,
-				pullRequestId: pr.number,
 				issueId: id,
 				onOff
-			}
-		});
+			})
+		);
 		fetch();
 	};
 
 	const toggleSubscription = async () => {
 		const onOff = pr.viewerSubscription === "SUBSCRIBED" ? false : true;
 		setIsLoadingMessage(onOff ? "Subscribing..." : "Unsubscribing...");
-		await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
-			method: "updatePullRequestSubscription",
-			providerId: pr.providerId,
-			params: {
+		await dispatch(
+			api("updatePullRequestSubscription", {
 				owner: ghRepo.repoOwner,
 				repo: ghRepo.repoName,
-				pullRequestId: derivedState.currentPullRequestId,
 				onOff
-			}
-		});
+			})
+		);
 		fetch();
 	};
 

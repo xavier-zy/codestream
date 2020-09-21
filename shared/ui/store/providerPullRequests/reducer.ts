@@ -1,11 +1,16 @@
 import { ActionType, Index } from "../common";
 import * as actions from "./actions";
+import { clearCurrentPullRequest, setCurrentPullRequest } from "../context/actions";
 import { ProviderPullRequestActionsTypes, ProviderPullRequestsState } from "./types";
 import { createSelector } from "reselect";
 import { CodeStreamState } from "..";
 import { CSRepository } from "@codestream/protocols/api";
+import { ContextActionsType } from "../context/types";
 
-type ProviderPullRequestActions = ActionType<typeof actions>;
+type ProviderPullRequestActions =
+	| ActionType<typeof actions>
+	| ActionType<typeof setCurrentPullRequest>
+	| ActionType<typeof clearCurrentPullRequest>;
 
 const initialState: ProviderPullRequestsState = { pullRequests: {}, myPullRequests: {} };
 
@@ -20,6 +25,29 @@ export function reduceProviderPullRequests(
 	action: ProviderPullRequestActions
 ): ProviderPullRequestsState {
 	switch (action.type) {
+		case ContextActionsType.SetCurrentPullRequest: {
+			if (action.payload && action.payload.id && action.payload.providerId) {
+				const newState = createNewObject(state, action);
+				newState[action.payload.providerId][action.payload.id] = {
+					...newState[action.payload.providerId][action.payload.id]
+				};
+				newState[action.payload.providerId][action.payload.id].error = undefined;
+				return {
+					myPullRequests: { ...state.myPullRequests },
+					pullRequests: newState
+				};
+			} else if (action.payload) {
+				const newState = { ...state };
+				if (newState && newState.pullRequests) {
+					for (const prProviders of Object.values(newState.pullRequests)) {
+						for (const pr of Object.values(prProviders)) {
+							pr.error = undefined;
+						}
+					}
+				}
+			}
+			return state;
+		}
 		case ProviderPullRequestActionsTypes.AddMyPullRequests: {
 			const newState = { ...state.myPullRequests };
 			newState[action.payload.providerId] = {
@@ -102,6 +130,28 @@ export function reduceProviderPullRequests(
 				...newState[action.payload.providerId][action.payload.id],
 				conversations: action.payload.pullRequest
 			};
+			return {
+				myPullRequests: { ...state.myPullRequests },
+				pullRequests: newState
+			};
+		}
+		case ProviderPullRequestActionsTypes.ClearPullRequestError: {
+			const newState = createNewObject(state, action);
+			newState[action.payload.providerId][action.payload.id] = {
+				...newState[action.payload.providerId][action.payload.id]
+			};
+			newState[action.payload.providerId][action.payload.id].error = undefined;
+			return {
+				myPullRequests: { ...state.myPullRequests },
+				pullRequests: newState
+			};
+		}
+		case ProviderPullRequestActionsTypes.AddPullRequestError: {
+			const newState = createNewObject(state, action);
+			newState[action.payload.providerId][action.payload.id] = {
+				...newState[action.payload.providerId][action.payload.id]
+			};
+			newState[action.payload.providerId][action.payload.id].error = action.payload.error;
 			return {
 				myPullRequests: { ...state.myPullRequests },
 				pullRequests: newState

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { CodeStreamState } from "../store";
 import styled from "styled-components";
 import { PRButtonRow, PRCodeCommentReply } from "./PullRequestComponents";
@@ -13,6 +13,7 @@ import { CSMe } from "@codestream/protocols/api";
 import { Button } from "../src/components/Button";
 import { confirmPopup } from "./Confirm";
 import { Headshot, PRHeadshot } from "../src/components/Headshot";
+import { api } from "../store/providerPullRequests/actions";
 
 interface Props {
 	pr: FetchThirdPartyPullRequestPullRequest;
@@ -26,6 +27,7 @@ interface Props {
 
 export const PullRequestReplyComment = styled((props: Props) => {
 	const { pr, fetch, setIsLoadingMessage, databaseId } = props;
+	const dispatch = useDispatch();
 	const derivedState = useSelector((state: CodeStreamState) => {
 		const currentUser = state.users[state.session.userId!] as CSMe;
 		return {
@@ -50,15 +52,12 @@ export const PullRequestReplyComment = styled((props: Props) => {
 				"Comment Type": "Review Reply"
 			});
 
-			await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
-				method: "createCommentReply",
-				providerId: pr.providerId,
-				params: {
-					pullRequestId: pr.id,
+			await dispatch(
+				api("createCommentReply", {
 					commentId: databaseId,
 					text: text
-				}
-			});
+				})
+			);
 
 			fetch().then(() => {
 				setText("");

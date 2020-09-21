@@ -14,6 +14,7 @@ import { DropdownButton } from "./Review/DropdownButton";
 import { InlineMenu } from "../src/components/controls/InlineMenu";
 import copy from "copy-to-clipboard";
 import { confirmPopup } from "./Confirm";
+import { api } from "../store/providerPullRequests/actions";
 
 interface CommentMenuProps {
 	pr: any;
@@ -29,7 +30,7 @@ interface CommentMenuProps {
 
 export const PullRequestCommentMenu = (props: CommentMenuProps) => {
 	const { pr, node, setEdit, quote, isPending, fetch, setIsLoadingMessage } = props;
-
+	const dispatch = useDispatch();
 	const deleteComment = () => {
 		confirmPopup({
 			title: "Are you sure?",
@@ -48,24 +49,18 @@ export const PullRequestCommentMenu = (props: CommentMenuProps) => {
 						});
 
 						if (props.nodeType === "REVIEW") {
-							await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
-								method: "deletePullRequestReview",
-								providerId: pr.providerId,
-								params: {
-									pullRequestId: pr.id,
+							await dispatch(
+								api("deletePullRequestReview", {
 									pullRequestReviewId: node.id
-								}
-							});
+								})
+							);
 						} else {
-							await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
-								method: "deletePullRequestComment",
-								providerId: pr.providerId,
-								params: {
-									pullRequestId: pr.id,
+							await dispatch(
+								api("deletePullRequestComment", {
 									type: props.nodeType,
 									id: node.id
-								}
-							});
+								})
+							);
 						}
 						fetch();
 					}

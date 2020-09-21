@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { CodeStreamState } from "../store";
 import styled from "styled-components";
 import { PRButtonRow } from "./PullRequestComponents";
@@ -12,6 +12,7 @@ import MessageInput from "./MessageInput";
 import { CSMe } from "@codestream/protocols/api";
 import { Button } from "../src/components/Button";
 import { confirmPopup } from "./Confirm";
+import { api } from "../store/providerPullRequests/actions";
 
 interface Props {
 	pr: FetchThirdPartyPullRequestPullRequest;
@@ -25,6 +26,7 @@ interface Props {
 }
 
 export const PullRequestEditingComment = styled((props: Props) => {
+	const dispatch = useDispatch();
 	const { pr, fetch, setIsLoadingMessage, type, id, done } = props;
 	const derivedState = useSelector((state: CodeStreamState) => {
 		const currentUser = state.users[state.session.userId!] as CSMe;
@@ -43,8 +45,8 @@ export const PullRequestEditingComment = styled((props: Props) => {
 		try {
 			if (text == "" || text == props.text) return;
 
-			await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
-				method:
+			await dispatch(
+				api(
 					type === "REVIEW_COMMENT"
 						? "updateReviewComment"
 						: type === "ISSUE"
@@ -52,13 +54,13 @@ export const PullRequestEditingComment = styled((props: Props) => {
 						: type === "PR"
 						? "updatePullRequestBody"
 						: "updateReview",
-				providerId: pr.providerId,
-				params: {
-					pullRequestId: pr.id,
-					id,
-					body: text
-				}
-			});
+					{
+						pullRequestId: pr.id,
+						id,
+						body: text
+					}
+				)
+			);
 
 			fetch().then(() => {
 				setText("");

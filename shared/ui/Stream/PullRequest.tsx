@@ -62,9 +62,13 @@ import {
 	getPullRequestConversationsFromProvider,
 	clearPullRequestFiles,
 	getPullRequestConversations,
-	clearPullRequestCommits
+	clearPullRequestCommits,
+	api
 } from "../store/providerPullRequests/actions";
-import { getProviderPullRequestRepo } from "../store/providerPullRequests/reducer";
+import {
+	getCurrentProviderPullRequest,
+	getProviderPullRequestRepo
+} from "../store/providerPullRequests/reducer";
 import { confirmPopup } from "./Confirm";
 
 export const WidthBreakpoint = "630px";
@@ -113,8 +117,10 @@ export const PullRequest = () => {
 	const derivedState = useSelector((state: CodeStreamState) => {
 		const currentUser = state.users[state.session.userId!] as CSMe;
 		const team = state.teams[state.context.currentTeamId];
+		const providerPullRequests = state.providerPullRequests.pullRequests;
+		const currentPullRequest = getCurrentProviderPullRequest(state);
 		return {
-			providerPullRequests: state.providerPullRequests.pullRequests,
+			providerPullRequests: providerPullRequests,
 			reviewsState: state.reviews,
 			reviews: reviewSelectors.getAllReviews(state),
 			currentUser,
@@ -124,6 +130,7 @@ export const PullRequest = () => {
 			currentPullRequestId: state.context.currentPullRequest
 				? state.context.currentPullRequest.id
 				: undefined,
+			currentPullRequest: currentPullRequest,
 			composeCodemarkActive: state.context.composeCodemarkActive,
 			team,
 			textEditorUri: state.editorContext.textEditorUri,
@@ -153,6 +160,40 @@ export const PullRequest = () => {
 	const exit = async () => {
 		await dispatch(clearCurrentPullRequest());
 	};
+
+	const PRError = styled.div`
+		padding: 0px 15px 20px 15px;
+		display: flex;
+		align-items: center;
+		> .icon {
+			flex-grow: 0;
+			flex-shrink: 0;
+			display: inline-block;
+			margin-right: 15px;
+			transform: scale(1.5);
+			color: #ff982d;
+		}
+		> div {
+			color: #ff982d;
+			flex-grow: 10;
+			display: flex;
+			align-items: center;
+			button {
+				margin-left: auto;
+			}
+		}
+		strong {
+			font-weight: normal;
+			color: var(--text-color-highlight);
+		}
+		a {
+			text-decoration: none;
+			color: var(--text-color-highlight);
+			&:hover {
+				color: var(--text-color-info) !important;
+			}
+		}
+	`;
 
 	const _assignState = pr => {
 		if (!pr) return;
@@ -319,14 +360,7 @@ export const PullRequest = () => {
 		setIsLoadingMessage("Saving Title...");
 		setSavingTitle(true);
 
-		await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
-			method: "updatePullRequestTitle",
-			providerId: pr!.providerId,
-			params: {
-				pullRequestId: derivedState.currentPullRequestId!,
-				title
-			}
-		});
+		await dispatch(api("updatePullRequestTitle", { title }));
 		fetch();
 	};
 
@@ -400,23 +434,12 @@ export const PullRequest = () => {
 		});
 	});
 
-	const _getPullRequestLastUpdated = async (providerId: string, pullRequestId: string) => {
-		return HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
-			method: "getPullRequestLastUpdated",
-			providerId: providerId,
-			params: {
-				pullRequestId: pullRequestId
-			}
-		});
-	};
-
 	const _checkMergeabilityStatus = async () => {
 		if (!pr) return undefined;
 		try {
-			const response = await _getPullRequestLastUpdated(
-				pr.providerId,
-				derivedState.currentPullRequestId!
-			);
+			const response = (await dispatch(
+				api("getPullRequestLastUpdated", {}, { preventClearError: true })
+			)) as any;
 			if (pr && response && response.mergeable !== pr.mergeable) {
 				console.log(
 					"getPullRequestLastUpdated is updating (mergeable)",
@@ -456,11 +479,9 @@ export const PullRequest = () => {
 					return;
 				}
 				try {
-					const response = await _getPullRequestLastUpdated(
-						pr.providerId,
-						derivedState.currentPullRequestId!
-					);
-
+					const response = (await dispatch(
+						api("getPullRequestLastUpdated", {}, { preventClearError: true })
+					)) as any;
 					if (pr && response && response.updatedAt !== pr.updatedAt) {
 						console.log(
 							"getPullRequestLastUpdated is updating",
@@ -668,6 +689,14 @@ export const PullRequest = () => {
 							</span>
 						</PRActionButtons>
 					</PRStatus>
+					{derivedState.currentPullRequest &&
+						derivedState.currentPullRequest.error &&
+						derivedState.currentPullRequest.error.message && (
+							<PRError>
+								<Icon name="alert" />
+								<div>{derivedState.currentPullRequest.error.message}</div>
+							</PRError>
+						)}
 					<Tabs style={{ marginTop: 0 }}>
 						<Tab onClick={e => setActiveTab(1)} active={activeTab == 1}>
 							<Icon name="comment" />

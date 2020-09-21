@@ -7,17 +7,16 @@ import { PRComment, PRCommentCard } from "./PullRequestComponents";
 import Tooltip from "./Tooltip";
 import { HostApi } from "../webview-api";
 import {
-	ExecuteThirdPartyTypedType,
 	FetchThirdPartyPullRequestPullRequest,
-	CreatePullRequestCommentRequest,
-	CreatePullRequestCommentAndCloseRequest
+	CreatePullRequestCommentAndCloseRequest,
+	ExecuteThirdPartyTypedType
 } from "@codestream/protocols/agent";
 import { Headshot, PRHeadshot } from "../src/components/Headshot";
 import MessageInput from "./MessageInput";
 import { CSMe } from "@codestream/protocols/api";
 import { ButtonRow } from "../src/components/Dialog";
 import { Button } from "../src/components/Button";
-import { removeFromMyPullRequests } from "../store/providerPullRequests/actions";
+import { api, removeFromMyPullRequests } from "../store/providerPullRequests/actions";
 
 interface Props {
 	pr: FetchThirdPartyPullRequestPullRequest;
@@ -54,16 +53,10 @@ export const PullRequestBottomComment = styled((props: Props) => {
 	const onCommentClick = async (event?: React.SyntheticEvent) => {
 		setIsLoadingComment(true);
 		trackComment("Comment");
-		await HostApi.instance.send(
-			new ExecuteThirdPartyTypedType<CreatePullRequestCommentRequest, any>(),
-			{
-				method: "createPullRequestComment",
-				providerId: pr.providerId,
-				params: {
-					pullRequestId: derivedState.currentPullRequestId!,
-					text: text
-				}
-			}
+		await dispatch(
+			api("createPullRequestComment", {
+				text: text
+			})
 		);
 		setText("");
 		fetch().then(() => setIsLoadingComment(false));
@@ -73,17 +66,9 @@ export const PullRequestBottomComment = styled((props: Props) => {
 		setIsLoadingMessage("Closing...");
 		setIsLoadingCommentAndClose(true);
 		trackComment("Comment and Close");
-		await HostApi.instance.send(
-			new ExecuteThirdPartyTypedType<CreatePullRequestCommentAndCloseRequest, any>(),
-			{
-				method: "createPullRequestCommentAndClose",
-				providerId: pr.providerId,
-				params: {
-					pullRequestId: derivedState.currentPullRequestId!,
-					text: text
-				}
-			}
-		);
+		await api("createPullRequestCommentAndClose", {
+			text: text
+		});
 		setText("");
 		fetch().then(() => {
 			dispatch(removeFromMyPullRequests(pr.providerId, derivedState.currentPullRequestId!));
@@ -95,17 +80,9 @@ export const PullRequestBottomComment = styled((props: Props) => {
 		setIsLoadingMessage("Reopening...");
 		setIsLoadingCommentAndClose(true);
 		trackComment("Comment and Reopen");
-		await HostApi.instance.send(
-			new ExecuteThirdPartyTypedType<CreatePullRequestCommentAndCloseRequest, any>(),
-			{
-				method: "createPullRequestCommentAndReopen",
-				providerId: pr.providerId,
-				params: {
-					pullRequestId: derivedState.currentPullRequestId!,
-					text: text
-				}
-			}
-		);
+		await api("createPullRequestCommentAndReopen", {
+			text: text
+		});
 		setText("");
 		fetch().then(() => setIsLoadingCommentAndClose(false));
 	};

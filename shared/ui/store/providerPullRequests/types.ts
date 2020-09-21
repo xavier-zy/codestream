@@ -9,7 +9,9 @@ export enum ProviderPullRequestActionsTypes {
 	RemoveFromMyPullRequests = "@providerPullRequests/RemoveFromMyPullRequests",
 	ClearMyPullRequests = "@providerPullRequests/ClearMyPullRequests",
 	ClearPullRequestFiles = "@providerPullRequests/ClearFiles",
-	ClearPullRequestCommits = "@providerPullRequests/ClearCommits"
+	ClearPullRequestCommits = "@providerPullRequests/ClearCommits",
+	AddPullRequestError = "@providerPullRequests/AddError",
+	ClearPullRequestError = "@providerPullRequests/ClearError"
 }
 
 /**
@@ -29,5 +31,7 @@ export enum ProviderPullRequestActionsTypes {
  */
 export type ProviderPullRequestsState = {
 	myPullRequests: Index<{ data?: GetMyPullRequestsResponse[] }>;
-	pullRequests: Index<Index<{ conversations: any; files?: any[]; commits?: any[] }>>;
+	pullRequests: Index<
+		Index<{ conversations: any; files?: any[]; commits?: any[]; error?: { message: string } }>
+	>;
 };

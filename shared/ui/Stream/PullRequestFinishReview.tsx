@@ -12,6 +12,7 @@ import { CSMe } from "../protocols/agent/api.protocol.models";
 import { HostApi } from "..";
 import { Button } from "../src/components/Button";
 import Tooltip from "./Tooltip";
+import { api } from "../store/providerPullRequests/actions";
 
 export const PullRequestFinishReview = (props: {
 	pr: FetchThirdPartyPullRequestPullRequest;
@@ -50,29 +51,23 @@ export const PullRequestFinishReview = (props: {
 			Host: pr.providerId,
 			"Review Type": reviewType
 		});
-		await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
-			method: "submitReview",
-			providerId: pr!.providerId,
-			params: {
-				pullRequestId: derivedState.currentPullRequestId!,
+		await dispatch(
+			api("submitReview", {
 				eventType: reviewType,
 				text: reviewText
-			}
-		});
+			})
+		);
 		setFinishReviewOpen && setFinishReviewOpen(false);
 		return fetch();
 	};
 
 	const cancelReview = async (e, id) => {
 		setIsLoadingMessage("Canceling Review...");
-		await HostApi.instance.send(new ExecuteThirdPartyTypedType<any, any>(), {
-			method: "deletePullRequestReview",
-			providerId: pr!.providerId,
-			params: {
-				pullRequestId: derivedState.currentPullRequestId!,
+		await dispatch(
+			api("deletePullRequestReview", {
 				pullRequestReviewId: id
-			}
-		});
+			})
+		);
 		setFinishReviewOpen && setFinishReviewOpen(false);
 		fetch();
 	};

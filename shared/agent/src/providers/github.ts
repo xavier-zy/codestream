@@ -2758,6 +2758,16 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 				  squashMergeAllowed
 				  mergeCommitAllowed
 				  viewerPermission
+				  branchProtectionRules(first:100) {
+				  	nodes {
+				  		requiredApprovingReviewCount
+				  		matchingRefs(first:100) {
+				  			nodes {
+				  				name
+				  			}
+				  		}
+				  	}
+				  }
 				}
 			  }`;
 			const response = (await this.client.request<any>(query, {

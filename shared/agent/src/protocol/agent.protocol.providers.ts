@@ -511,6 +511,19 @@ export interface FetchThirdPartyPullRequestPullRequest {
 	};
 }
 
+interface BranchProtectionRule {
+	requiredApprovingReviewCount: number;
+	matchingRefs: {
+		nodes: {
+			name: string;
+		}[];
+	};
+}
+
+export interface BranchProtectionRules {
+	nodes: BranchProtectionRule[];
+}
+
 export interface FetchThirdPartyPullRequestRepository {
 	id: string;
 	url: string;
@@ -522,6 +535,8 @@ export interface FetchThirdPartyPullRequestRepository {
 	repoName: string;
 	pullRequest: FetchThirdPartyPullRequestPullRequest;
 	providerId: string;
+	viewerPermission: "ADMIN" | "MAINTAIN" | "READ" | "TRIAGE" | "WRITE";
+	branchProtectionRules: BranchProtectionRules;
 }
 
 interface RateLimit {

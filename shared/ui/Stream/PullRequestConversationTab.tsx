@@ -1,4 +1,4 @@
-import React, { useState, useReducer } from "react";
+import React, { useState, useReducer, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { OpenUrlRequestType } from "@codestream/protocols/webview";
 import { CodeStreamState } from "../store";
@@ -681,6 +681,15 @@ export const PullRequestConversationTab = (props: {
 		fetch();
 	};
 
+	const requiredApprovingReviewCount = useMemo(() => {
+		if (ghRepo.branchProtectionRules) {
+			const rules = ghRepo.branchProtectionRules.nodes.find(rule =>
+				rule.matchingRefs.nodes.find(matchingRef => matchingRef.name === pr.baseRefName)
+			);
+			return rules ? rules.requiredApprovingReviewCount : undefined;
+		}
+	}, [ghRepo, pr]);
+
 	// console.warn("ASSI: ", assigneeMenuItems);
 	return (
 		<PRContent>
@@ -819,28 +828,58 @@ export const PullRequestConversationTab = (props: {
 							<PRStatusHeadshot className="gray-background">
 								<Icon name="git-merge" />
 							</PRStatusHeadshot>
-							<PRResolveConflicts>
-								{pr.reviewDecision === "REVIEW_REQUIRED" ? (
-									<>
-										<PRResolveConflictsRow>
-											<PRIconButton className="red-background">
-												<Icon name="x" />
-											</PRIconButton>
-											<div className="middle">
-												<h1>Review Required</h1>
-												Reviews are required by reviewers with write access.
-											</div>
-										</PRResolveConflictsRow>
-										<PRResolveConflictsRow>
-											<PRIconButton className="red-background">
-												<Icon name="x" />
-											</PRIconButton>
-											<div className="middle">
-												<h1>Merging is blocked</h1>
-											</div>
-										</PRResolveConflictsRow>
-									</>
-								) : ghRepo.viewerPermission === "READ" ? (
+							{pr.reviewDecision === "REVIEW_REQUIRED" ? (
+								<PRResolveConflicts>
+									<PRResolveConflictsRow>
+										<PRIconButton className="red-background">
+											<Icon name="x" />
+										</PRIconButton>
+										<div className="middle">
+											<h1>Review Required</h1>
+											{requiredApprovingReviewCount ? (
+												<>
+													At least {requiredApprovingReviewCount} approving review
+													{requiredApprovingReviewCount > 1 ? "s" : ""} are required by reviewers
+													with write access.{" "}
+													<Link href="https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests/about-pull-request-reviews">
+														Learn more.
+													</Link>
+												</>
+											) : (
+												<>Reviews are required by reviewers with write access.</>
+											)}
+										</div>
+									</PRResolveConflictsRow>
+									<PullRequestReviewStatus
+										pr={pr}
+										opinionatedReviews={Object.values(opinionatedReviewsHash)}
+									/>
+									<PRResolveConflictsRow>
+										<PRIconButton className="red-background">
+											<Icon name="x" />
+										</PRIconButton>
+										<div className="middle">
+											<h1>Merging is blocked</h1>
+											{requiredApprovingReviewCount && (
+												<>
+													Merging can be performed automatically with {requiredApprovingReviewCount}{" "}
+													approving review{requiredApprovingReviewCount > 1 ? "s" : ""}.
+												</>
+											)}
+										</div>
+									</PRResolveConflictsRow>
+									{ghRepo.viewerPermission === "ADMIN" && (
+										<Merge
+											ghRepo={ghRepo}
+											action={mergePullRequest}
+											onSelect={setMergeMethod}
+											defaultMergeMethod={derivedState.defaultMergeMethod}
+											mergeText="As an administrator, you may still merge this pull request."
+										/>
+									)}
+								</PRResolveConflicts>
+							) : ghRepo.viewerPermission === "READ" ? (
+								<PRResolveConflicts>
 									<PRResolveConflictsRow>
 										<PRIconButton className="red-background">
 											<Icon name="x" />
@@ -853,7 +892,9 @@ export const PullRequestConversationTab = (props: {
 											</Link>
 										</div>
 									</PRResolveConflictsRow>
-								) : (
+								</PRResolveConflicts>
+							) : (
+								<PRResolveConflicts>
 									<PRResolveConflictsRow>
 										<PRIconButton className="red-background">
 											<Icon name="x" />
@@ -862,8 +903,8 @@ export const PullRequestConversationTab = (props: {
 											<h1>Merging is blocked</h1>
 										</div>
 									</PRResolveConflictsRow>
-								)}
-							</PRResolveConflicts>
+								</PRResolveConflicts>
+							)}
 						</PRCommentCard>
 					) : !pr.merged && pr.mergeable === "MERGEABLE" && pr.state !== "CLOSED" ? (
 						<PRCommentCard className="green-border dark-header">
@@ -907,65 +948,12 @@ export const PullRequestConversationTab = (props: {
 								</div>
 							</PRCommentHeader>
 							{ghRepo.viewerPermission !== "READ" && (
-								<div style={{ padding: "5px 0" }}>
-									<PRButtonRow className="align-left">
-										<DropdownButton
-											items={[
-												{
-													key: "MERGE",
-													label: "Create a merge commit",
-													subtext: (
-														<span>
-															All commits from this branch will be added to
-															<br />
-															the base branch via a merge commit.
-															{!ghRepo.mergeCommitAllowed && (
-																<>
-																	<br />
-																	<small>Not enabled for this repository</small>
-																</>
-															)}
-														</span>
-													),
-													disabled: !ghRepo.mergeCommitAllowed,
-													onSelect: () => setMergeMethod("MERGE"),
-													action: () => mergePullRequest({ mergeMethod: "MERGE" })
-												},
-												{
-													key: "SQUASH",
-													label: "Squash and merge",
-													subtext: (
-														<span>
-															The commits from this branch will be combined
-															<br />
-															into one commit in the base branch.
-														</span>
-													),
-													disabled: !ghRepo.squashMergeAllowed,
-													onSelect: () => setMergeMethod("SQUASH"),
-													action: () => mergePullRequest({ mergeMethod: "SQUASH" })
-												},
-												{
-													key: "REBASE",
-													label: "Rebase and merge",
-													subtext: (
-														<span>
-															The commits from this branch will be rebased
-															<br />
-															and added to the base branch.
-														</span>
-													),
-													disabled: !ghRepo.rebaseMergeAllowed,
-													onSelect: () => setMergeMethod("REBASE"),
-													action: () => mergePullRequest({ mergeMethod: "REBASE" })
-												}
-											]}
-											selectedKey={derivedState.defaultMergeMethod}
-											variant="success"
-											splitDropdown
-										/>
-									</PRButtonRow>
-								</div>
+								<Merge
+									ghRepo={ghRepo}
+									action={mergePullRequest}
+									onSelect={setMergeMethod}
+									defaultMergeMethod={derivedState.defaultMergeMethod}
+								/>
 							)}
 						</PRCommentCard>
 					) : !pr.merged && pr.mergeable === "UNKNOWN" ? (
@@ -1361,6 +1349,78 @@ export const PullRequestConversationTab = (props: {
 				</PRSection>
 			</PRSidebar>
 		</PRContent>
+	);
+};
+
+const Merge = (props: {
+	ghRepo: any;
+	onSelect: Function;
+	action: Function;
+	defaultMergeMethod: string;
+	mergeText?: string;
+}) => {
+	const { ghRepo, onSelect, action, defaultMergeMethod, mergeText } = props;
+	return (
+		<div style={{ padding: "5px 0" }}>
+			{mergeText}
+			<PRButtonRow className="align-left">
+				<DropdownButton
+					items={[
+						{
+							key: "MERGE",
+							label: "Create a merge commit",
+							subtext: (
+								<span>
+									All commits from this branch will be added to
+									<br />
+									the base branch via a merge commit.
+									{!ghRepo.mergeCommitAllowed && (
+										<>
+											<br />
+											<small>Not enabled for this repository</small>
+										</>
+									)}
+								</span>
+							),
+							disabled: !ghRepo.mergeCommitAllowed,
+							onSelect: () => onSelect("MERGE"),
+							action: () => action({ mergeMethod: "MERGE" })
+						},
+						{
+							key: "SQUASH",
+							label: "Squash and merge",
+							subtext: (
+								<span>
+									The commits from this branch will be combined
+									<br />
+									into one commit in the base branch.
+								</span>
+							),
+							disabled: !ghRepo.squashMergeAllowed,
+							onSelect: () => onSelect("SQUASH"),
+							action: () => action({ mergeMethod: "SQUASH" })
+						},
+						{
+							key: "REBASE",
+							label: "Rebase and merge",
+							subtext: (
+								<span>
+									The commits from this branch will be rebased
+									<br />
+									and added to the base branch.
+								</span>
+							),
+							disabled: !ghRepo.rebaseMergeAllowed,
+							onSelect: () => onSelect("REBASE"),
+							action: () => action({ mergeMethod: "REBASE" })
+						}
+					]}
+					selectedKey={defaultMergeMethod}
+					variant="success"
+					splitDropdown
+				/>
+			</PRButtonRow>
+		</div>
 	);
 };
 

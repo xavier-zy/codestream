@@ -301,13 +301,17 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 			const prRepo = await this._getPullRequestRepo(response.repository.pullRequest);
 
 			if (prRepo?.id) {
-				const prForkPointSha = await scmManager.getForkPointRequestType({
-					repoId: prRepo.id,
-					baseSha: response.repository.pullRequest.baseRefOid,
-					headSha: response.repository.pullRequest.headRefOid
-				});
+				try {
+					const prForkPointSha = await scmManager.getForkPointRequestType({
+						repoId: prRepo.id,
+						baseSha: response.repository.pullRequest.baseRefOid,
+						headSha: response.repository.pullRequest.headRefOid
+					});
 
-				response.repository.pullRequest.forkPointSha = prForkPointSha?.sha;
+					response.repository.pullRequest.forkPointSha = prForkPointSha?.sha;
+				} catch (err) {
+					Logger.error(err, `Could not find forkPoint for repoId=${prRepo.id}`);
+				}
 			}
 		}
 		if (response?.repository?.pullRequest?.timelineItems != null) {

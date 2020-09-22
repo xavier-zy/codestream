@@ -417,13 +417,13 @@ class TeamPanel extends React.Component<Props, State> {
 	renderFieldset = inactive => {
 		const { newMemberEmail, newMemberName, isInviting } = this.state;
 
-		if (
-			this.props.companyPlan &&
-			this.props.companyPlan === "FREEPLAN" &&
-			(this.props.companyMemberCount || 0) >= 5
-		) {
-			return this.renderInviteDisabled();
-		}
+		// if (
+		// 	this.props.companyPlan &&
+		// 	this.props.companyPlan === "FREEPLAN" &&
+		// 	(this.props.companyMemberCount || 0) >= 5
+		// ) {
+		// 	return this.renderInviteDisabled();
+		// }
 
 		// if there aren't very many people on the team, we can safely
 		// auto-focus the invitation input. but when there are a lot,

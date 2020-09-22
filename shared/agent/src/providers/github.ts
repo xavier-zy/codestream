@@ -117,19 +117,18 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 	private _client: GraphQLClient | undefined;
 	protected get client(): GraphQLClient {
 		if (this._client === undefined) {
-			if (!this.accessToken) {
-				throw new Error("No GitHub personal access token could be found");
-			}
-
-			this._client = new GraphQLClient(this.graphQlBaseUrl, {
-				headers: {
-					Authorization: `Bearer ${this.accessToken}`,
-					// Add `Accept` header To access PullRequest.mergeStateStatus and PullRequest.canBeRebased schema members
-					// https://docs.github.com/en/graphql/overview/schema-previews#merge-info-preview
-					Accept: "application/vnd.github.merge-info-preview+json"
-				}
-			});
+			this._client = new GraphQLClient(this.graphQlBaseUrl);
 		}
+		if (!this.accessToken) {
+			throw new Error("No GitHub personal access token could be found");
+		}
+		// set accessToken on a per-usage basis... possible for accessToken
+		// to be revoked from the source (github.com) and a stale accessToken
+		// could be cached in the _client instance.
+		this._client.setHeaders({
+			Authorization: `Bearer ${this.accessToken}`,
+			Accept: "application/vnd.github.merge-info-preview+json"
+		});
 		return this._client;
 	}
 

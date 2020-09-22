@@ -121,11 +121,11 @@ export const PullRequestFilesChangedTab = (props: {
 
 	if (!filesChanged || !filesChanged.length) return null;
 
-	const mode = derivedState.pullRequestFilesChangedMode;
+	const mode = "files"; // derivedState.pullRequestFilesChangedMode;
 
 	return (
 		<PRCommitContent>
-			<PRSelectorButtons>
+			{/*			<PRSelectorButtons>
 				<span className={mode == "files" ? "selected" : ""} onClick={() => setMode("files")}>
 					Files
 				</span>
@@ -133,6 +133,7 @@ export const PullRequestFilesChangedTab = (props: {
 					Diff Hunks
 				</span>
 			</PRSelectorButtons>
+		*/}
 			<div style={{ height: "10px" }} />
 			{mode == "files" ? (
 				<PullRequestFilesChanged pr={pr} filesChanged={filesChanged} />

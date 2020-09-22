@@ -1229,7 +1229,7 @@ export class GitService implements IGitService, Disposable {
 		file: string,
 		includeSaved: boolean,
 		includeStaged: boolean,
-		ref: string | undefined
+		ref: string = "HEAD"
 	): Promise<GitAuthor[]> {
 		try {
 			let data: string | undefined;

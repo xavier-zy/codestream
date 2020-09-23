@@ -1,13 +1,13 @@
 # CodeStream
 
-CodeStream is a developer collaboration platform that makes it incredibly easy for development teams, especially remote teams, to discuss and review code in a more natural and contextual way. CodeStream not only makes discussions easier, by allowing them to happen in your IDE, in context, but also preserves the institutional knowledge that is currently being lost in Slack channels and emails. 
+CodeStream is a developer collaboration platform that integrates all of your essential dev tools into Visual Studio.  CodeStream increases developers productivity by eliminating distractions inherent to context-switching and makes it incredibly easy for development teams, especially remote teams, to discuss and review code in a more natural and contextual way.
 
 ### Requirements
 
 - CodeStream requires Visual Studio 2017 or later.
 - Your repository must be managed by Git, or a Git hosting service like GitHub.
 
-# The Code Review Tool Built for Remote Teams
+# Get Feedback on Work-in-Progress with Pre-PR Code Reviews
 
 CodeStream's lightweight code reviews let you request a review on any code regardless of the current state of your repo, without the friction of committing, pushing or issuing a pull request. Your teammates can review your changes right in their IDE, with full file context, and with no need to set aside their current work to switch branches or pull the latest. 
 
@@ -15,9 +15,9 @@ CodeStream's lightweight code reviews let you request a review on any code regar
 
 CodeStream’s code reviews are so easy that you can start doing them throughout the development process instead of waiting until the end. You’re a few days into a sprint and have some work stubbed out? Maybe some work that hasn’t even been committed. Request of a review of your work-in-progress so that you can identify and resolve issues early instead of saving those gotchas for when you need to get the code merged.
 
-# Discuss Code Just Like Commenting on a Google Doc
+# Discuss Any Block of Code, at Any Time
 
-Simply select a block of code and type your question or comment. Teammates can participate in the discussion right from their IDE. 
+Whether it's code someone else wrote years ago, or some code you wrote minutes ago, simply select a block of code and type your question or comment. Teammates can participate in the discussion right from their IDE.
 
 ![CodeStream](https://raw.githubusercontent.com/TeamCodeStream/CodeStream/master/images/animated/DiscussCode-VS.gif)
 

@@ -1,6 +1,6 @@
 # CodeStream
 
-CodeStream is a developer collaboration platform that integrates all of your essential dev tools into VS Code. CodeStream increases developers productivity by eliminating distractions inherent to context-switching and makes it incredibly easy for development teams, especially remote teams, to discuss and review code in a more natural and contextual way.
+CodeStream is a developer collaboration platform that integrates all of your essential dev tools, such as GitHub, GitLab, Bitbucket, Slack, Teams, Jira, Trello and more, into VS Code. CodeStream increases developer productivity by eliminating distractions inherent to context-switching and makes it incredibly easy for development teams, especially remote teams, to discuss and review code in a more natural and contextual way.
 
 ### Requirements
 

@@ -117,10 +117,14 @@ export function EllipsisMenu(props: EllipsisMenuProps) {
 				label: "Your organization is on CodeStream's free Educational Use Plan."
 			},
 			OPENSOURCE: {
-				label: "Your organization is on CodeStream's free Open Source plan."
+				label: "Your organization is on CodeStream's free Open Source Plan."
 			},
 			FREEPLAN: {
-				label: "Your organization is on CodeStream's free Small Team Plan for 5 users or less.",
+				label: "Your organization is on CodeStream's Free Plan.",
+				upgrade: true
+			},
+			UNEXPIRED: {
+				label: "Your organization is on CodeStream's Free Plan.",
 				upgrade: true
 			},
 			"14DAYTRIAL": {

@@ -1030,16 +1030,16 @@ export class CodeStreamSession {
 		};
 
 		if (team != null) {
+			const company = companies.find(c => c.id === team.companyId);
 			props["Company ID"] = team.companyId;
 			props["Team Created Date"] = new Date(team.createdAt!).toISOString();
-			props["Reporting Group"] = team.reportingGroup;
 			props["Team Name"] = team.name;
 			if (team.memberIds != null) {
 				props["Team Size"] = team.memberIds.length;
 			}
-			const company = companies.find(c => c.id === team.companyId);
 			if (company) {
 				props["Plan"] = company.plan;
+				props["Reporting Group"] = company.reportingGroup;
 				props["Company Name"] = company.name;
 				props["company"] = {
 					id: company.id,

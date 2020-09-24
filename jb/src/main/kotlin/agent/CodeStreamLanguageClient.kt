@@ -99,6 +99,9 @@ class CodeStreamLanguageClient(private val project: Project) : LanguageClient {
         project.webViewService?.postNotification("codestream/didChangeServerUrl", json, true)
     }
 
+    @JsonNotification("codestream/didStartLogin")
+    fun didStartLogin(json: JsonElement) {}
+
     @JsonNotification("codestream/didLogin")
     fun didLogin(json: JsonElement) {
         val notification = gson.fromJson<DidLoginNotification>(json)
@@ -108,10 +111,13 @@ class CodeStreamLanguageClient(private val project: Project) : LanguageClient {
     }
 
     @JsonNotification("codestream/didLogout")
-    fun didLogout(json: JsonElement) = GlobalScope.launch {
+    fun didLogout(notification: DidLogoutNotification) = GlobalScope.launch {
         project.authenticationService?.logout()
-        project.agentService?.onDidStart {
-            project.webViewService?.load(true)
+
+        if (notification.reason === LogoutReason.TOKEN) {
+            project.agentService?.onDidStart {
+                project.webViewService?.load(true)
+            }
         }
     }
 
@@ -190,6 +196,19 @@ class DidChangeUnreadsNotification(
 )
 
 class DidLoginNotification(val data: LoginResult)
+
+class DidLogoutNotification(val reason: LogoutReason)
+
+enum class LogoutReason {
+    @SerializedName("token")
+    TOKEN,
+    @SerializedName("unknown")
+    UNKNOWN,
+    @SerializedName("unsupportedVersion")
+    UNSUPPORTED_VERSION,
+    @SerializedName("unsupportedApiVersion")
+    UNSUPPORTED_API_VERSION
+}
 
 class DidChangeApiVersionCompatibilityNotification(
     val compatibility: ApiVersionCompatibility,

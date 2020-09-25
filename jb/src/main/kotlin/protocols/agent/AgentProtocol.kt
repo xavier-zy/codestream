@@ -312,6 +312,24 @@ class GetPostParams(
 
 class GetReviewParams(val reviewId: String)
 
+class getPullRequestFilesChangedParams(val pullRequestId: String)
+
+class getPullRequestFilesParams(
+    val method: String,
+    val providerId: String,
+    val params: getPullRequestFilesChangedParams
+)
+
+class PullRequestFile (
+    val sha: String,
+    val filename: String,
+    val status: String,
+    val additions: Int,
+    val changes: Int,
+    val deletions: Int,
+    val patch: String?
+)
+
 class Marker(
     val id: String,
     val code: String

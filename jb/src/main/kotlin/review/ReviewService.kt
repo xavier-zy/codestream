@@ -154,58 +154,50 @@ class ReviewService(private val project: Project) {
         context: CodeStreamDiffUriContext?
     ) {
         val agent = project.agentService ?: return
+        val key = "$filePath|$repoId"
 
-        val headContents = agent.getFileContentsAtRevision(
-            GetFileContentsAtRevisionParams(
-                repoId,
-                path = filePath,
-                sha = headSha
-            )
-        )
+        if (reviewDiffEditor == null || diffChain == null || key != currentKey) {
+            closeDiff()
+            val filesPath: List<String>
+            if (context?.pullRequest != null) {
+                val prFiles = agent.getPullRequestFiles(context.pullRequest.id, context.pullRequest.providerId)
+                filesPath = prFiles.map { it.filename }
+            } else {
+                filesPath = listOf(filePath)
+            }
 
-        val baseContents = agent.getFileContentsAtRevision(
-            GetFileContentsAtRevisionParams(
-                repoId,
-                path = filePath,
-                sha = baseSha
-            )
-        )
+            currentKey = key
 
-        val leftData = CodeStreamDiffUriData(
-            filePath,
-            repoId,
-            baseBranch,
-            headBranch,
-            baseSha,
-            headSha,
-            "left",
-            context
-        )
+            val producers = filesPath.map{
+                PullRequestProducer(project, repoId, it, headSha, headBranch, baseSha, baseBranch, context)
+            }
 
-        val rightData = CodeStreamDiffUriData(
-            filePath,
-            repoId,
-            baseBranch,
-            headBranch,
-            baseSha,
-            headSha,
-            "right",
-            context
-        )
+            diffChain = PullRequestChain(producers).also { chain ->
+                chain.putUserData(REVIEW_DIFF, true)
+                chain.index = producers.indexOfFirst {
+                    it.filePath == filePath
+                }
+            }
 
-        val leftContent =
-            createRevisionDiffContent(project, leftData, ReviewDiffSide.LEFT, baseContents.content)
-        val rightContent =
-            createRevisionDiffContent(project, rightData, ReviewDiffSide.RIGHT, headContents.content)
-        val title = "$filePath (${baseSha.take(8)}) ⇔ (${headSha.take(8)})"
-        val diffRequest = SimpleDiffRequest(title, leftContent, rightContent, filePath, filePath)
-        diffRequest.putUserData(REVIEW_DIFF, true)
-        val file = SimpleDiffVirtualFile(diffRequest)
+            val registryValue = Registry.get("show.diff.as.editor.tab")
+            val original = registryValue.asBoolean()
+
+            ApplicationManager.getApplication().invokeLater {
+                try {
+                    registryValue.setValue(true)
+                    DiffManagerEx.getInstance().showDiffBuiltin(project, diffChain!!, DiffDialogHints.FRAME)
+                } finally {
+                    registryValue.setValue(original)
+                }
+            }
+        }
+
+        val index = (diffChain!!.requests as List<PullRequestProducer>).indexOfFirst {
+            it.repoId == repoId && it.filePath == filePath
+        }
         ApplicationManager.getApplication().invokeLater {
-            val manager = FileEditorManager.getInstance(project)
-            lastReviewFile?.let { manager.closeFile(it) }
-            lastReviewFile = file
-            manager.openFile(file, true)
+            val processor = reviewDiffEditor?.let { processorField.get(it) as CacheDiffRequestChainProcessor }
+            processor?.setCurrentRequest(index)
         }
     }
 

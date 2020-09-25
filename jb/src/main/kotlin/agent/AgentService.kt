@@ -23,14 +23,18 @@ import com.codestream.protocols.agent.GetUserParams
 import com.codestream.protocols.agent.Ide
 import com.codestream.protocols.agent.InitializationOptions
 import com.codestream.protocols.agent.Post
+import com.codestream.protocols.agent.PullRequestFile
 import com.codestream.protocols.agent.Review
 import com.codestream.protocols.agent.SetServerUrlParams
 import com.codestream.protocols.agent.SetServerUrlResult
 import com.codestream.protocols.agent.Stream
+import com.codestream.protocols.agent.getPullRequestFilesChangedParams
+import com.codestream.protocols.agent.getPullRequestFilesParams
 import com.codestream.settings.ApplicationSettingsService
 import com.codestream.system.Platform
 import com.codestream.system.platform
 import com.github.salomonbrys.kotson.fromJson
+import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.openapi.Disposable
@@ -355,6 +359,15 @@ class AgentService(private val project: Project) : Disposable {
         val json = remoteEndpoint
             .request("codestream/review/contentsLocal", params)
             .await() as JsonObject
+        return gson.fromJson(json)
+    }
+
+    suspend fun getPullRequestFiles(prId: String, providerId: String): List<PullRequestFile> {
+        val json = remoteEndpoint
+            .request(
+                "codestream/provider/generic",
+                getPullRequestFilesParams("getPullRequestFilesChanged", providerId, getPullRequestFilesChangedParams(prId)))
+            .await() as JsonArray
         return gson.fromJson(json)
     }
 

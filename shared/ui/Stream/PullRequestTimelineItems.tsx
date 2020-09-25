@@ -515,13 +515,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 													headBranch: props.pr.headRefName,
 													headSha: props.pr.headRefOid,
 													filePath,
-													repoId: derivedState.currentRepo!.id!,
-													context: {
-														pullRequest: {
-															providerId: pr.providerId,
-															id: pr.id
-														}
-													}
+													repoId: derivedState.currentRepo!.id!
 												};
 
 												try {

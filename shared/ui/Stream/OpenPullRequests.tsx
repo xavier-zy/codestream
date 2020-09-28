@@ -213,7 +213,8 @@ export function OpenPullRequests(props: Props) {
 				const newGroups = {};
 				console.warn("Loading the PRs...", theQueries);
 				for (const connectedProvider of derivedState.PRConnectedProviders) {
-					const queriesByProvider: PullRequestQuery[] = theQueries[connectedProvider.id] || [];
+					const queriesByProvider: PullRequestQuery[] =
+						theQueries[connectedProvider.id] || DEFAULT_QUERIES[connectedProvider.id];
 					const queryStrings = Object.values(queriesByProvider).map(_ => _.query);
 					console.warn("Loading the PRs... in the loop", queryStrings);
 					try {
@@ -335,7 +336,9 @@ export function OpenPullRequests(props: Props) {
 			query,
 			hidden: false
 		};
-		let newQueries = [...queries[providerId]];
+		let queriesByProvider = queries[providerId];
+		let newQueries = queriesByProvider ? [...queriesByProvider] : [];
+
 		if (editingQuery && editingQuery.index !== undefined && editingQuery.index > -1) {
 			// it's an edit
 			newQueries[editingQuery.index] = newQuery;
@@ -442,7 +445,8 @@ export function OpenPullRequests(props: Props) {
 					)}
 					{derivedState.PRConnectedProviders.map(connectedProvider => {
 						const providerId = connectedProvider.id;
-						const providerQueries: PullRequestQuery[] = queries[providerId] || [];
+						const providerQueries: PullRequestQuery[] =
+							queries[providerId] || DEFAULT_QUERIES[connectedProvider.id];
 						return Object.values(providerQueries).map((query: PullRequestQuery, index) => {
 							const providerGroups = pullRequestGroups[providerId];
 							const prGroup = providerGroups && providerGroups[index];

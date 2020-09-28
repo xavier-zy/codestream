@@ -669,6 +669,11 @@ export class GitService implements IGitService, Disposable {
 			cwd = filePath;
 		} else {
 			[cwd] = Strings.splitPath(filePath);
+
+			if (!fs.existsSync(cwd)) {
+				Logger.log(`getRepoRoot: ${cwd} doesn't exist. Returning undefined`);
+				return undefined;
+			}
 		}
 
 		try {

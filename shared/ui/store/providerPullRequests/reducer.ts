@@ -195,26 +195,36 @@ export const getProviderPullRequestRepo = createSelector(
 	getRepos,
 	getCurrentProviderPullRequest,
 	(repos, currentPr) => {
+		let currentRepo: CSRepository | undefined = undefined;
+
 		try {
 			if (!currentPr || !currentPr.conversations) return undefined;
 			const repoName = currentPr.conversations.repository.repoName.toLowerCase();
 			const repoUrl = currentPr.conversations.repository.url.toLowerCase();
-			let currentRepo: CSRepository | undefined = undefined;
-			let matchingRepos = repos.filter(_ => _.name && _.name.toLowerCase() === repoName);
-			if (matchingRepos.length != 1) {
-				matchingRepos = matchingRepos.filter(_ =>
-					_.remotes.some(r => repoUrl.indexOf(r.normalizedUrl.toLowerCase()) > -1)
-				);
-				if (matchingRepos.length === 1) {
-					currentRepo = matchingRepos[0];
-				} else {
-					console.warn(`Could not find repo for repoName=${repoName} repoUrl=${repoUrl}`);
-				}
-			} else {
+
+			let matchingRepos = repos.filter(_ =>
+				_.remotes.some(r => r.normalizedUrl && repoUrl.indexOf(r.normalizedUrl.toLowerCase()) > -1)
+			);
+			if (matchingRepos.length === 1) {
 				currentRepo = matchingRepos[0];
+			} else {
+				let matchingRepos2 = repos.filter(_ => _.name && _.name.toLowerCase() === repoName);
+				if (matchingRepos2.length != 1) {
+					matchingRepos2 = repos.filter(_ =>
+						_.remotes.some(r => repoUrl.indexOf(r.normalizedUrl.toLowerCase()) > -1)
+					);
+					if (matchingRepos2.length === 1) {
+						currentRepo = matchingRepos2[0];
+					} else {
+						console.error(`Could not find repo for repoName=${repoName} repoUrl=${repoUrl}`);
+					}
+				} else {
+					currentRepo = matchingRepos2[0];
+				}
 			}
-			return currentRepo;
-		} catch (error) {}
-		return undefined;
+		} catch (error) {
+			console.error(error);
+		}
+		return currentRepo;
 	}
 );

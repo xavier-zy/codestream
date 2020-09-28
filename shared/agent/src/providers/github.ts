@@ -15,6 +15,7 @@ import { findBestMatchingLine, MAX_RANGE_VALUE } from "../markerLocation/calcula
 import {
 	CreateThirdPartyCardRequest,
 	DocumentMarker,
+	FetchReposResponse,
 	FetchThirdPartyBoardsRequest,
 	FetchThirdPartyBoardsResponse,
 	FetchThirdPartyCardsRequest,
@@ -229,30 +230,37 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 		}
 	}
 
-	@log()
-	private async _getPullRequestRepo(
+	async getPullRequestRepo(
+		allRepos: FetchReposResponse,
 		pullRequest: FetchThirdPartyPullRequestPullRequest
 	): Promise<CSRepository | undefined> {
 		let currentRepo: CSRepository | undefined = undefined;
-		const { repos } = SessionContainer.instance();
+		try {
+			const repoName = pullRequest.repository.name.toLowerCase();
+			const repoUrl = pullRequest.repository.url.toLowerCase();
+			const repos = allRepos.repos;
 
-		const repoName = pullRequest.repository.name.toLowerCase();
-		const repoUrl = pullRequest.repository.url.toLowerCase();
-		const allRepos = await repos.get();
-
-		let matchingRepos = allRepos.repos.filter(_ => _.name && _.name.toLowerCase() === repoName);
-		if (matchingRepos.length !== 1) {
-			matchingRepos = matchingRepos.filter(_ =>
-				_.remotes.some(r => repoUrl.indexOf(r.normalizedUrl.toLowerCase()) > -1)
+			const matchingRepos = repos.filter(_ =>
+				_.remotes.some(r => r.normalizedUrl && repoUrl.indexOf(r.normalizedUrl.toLowerCase()) > -1)
 			);
 			if (matchingRepos.length === 1) {
 				currentRepo = matchingRepos[0];
 			} else {
-				console.warn(`Could not find repo for repoName=${repoName} repoUrl=${repoUrl}`);
+				let matchingRepos2 = repos.filter(_ => _.name && _.name.toLowerCase() === repoName);
+				if (matchingRepos2.length !== 1) {
+					matchingRepos2 = repos.filter(_ =>
+						_.remotes.some(r => repoUrl.indexOf(r.normalizedUrl.toLowerCase()) > -1)
+					);
+					if (matchingRepos2.length === 1) {
+						currentRepo = matchingRepos2[0];
+					} else {
+						console.error(`Could not find repo for repoName=${repoName} repoUrl=${repoUrl}`);
+					}
+				} else {
+					currentRepo = matchingRepos2[0];
+				}
 			}
-		} else {
-			currentRepo = matchingRepos[0];
-		}
+		} catch (error) {}
 		return currentRepo;
 	}
 
@@ -298,7 +306,11 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 			Logger.error(ex);
 		}
 		if (response?.repository?.pullRequest) {
-			const prRepo = await this._getPullRequestRepo(response.repository.pullRequest);
+			const { repos } = SessionContainer.instance();
+			const prRepo = await this.getPullRequestRepo(
+				await repos.get(),
+				response.repository.pullRequest
+			);
 
 			if (prRepo?.id) {
 				try {

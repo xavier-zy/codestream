@@ -33,6 +33,7 @@ import { DEFAULT_QUERIES } from "../store/preferences/reducer";
 import { ConfigurePullRequestQuerySettings } from "./ConfigurePullRequestQuerySettings";
 import { usePrevious } from "../utilities/hooks";
 import { PullRequestQuery } from "@codestream/protocols/api";
+import { configureAndConnectProvider } from "../store/providers/actions";
 
 const PRSummaryName = styled.div`
 	padding: 2px 20px;
@@ -428,7 +429,9 @@ export function OpenPullRequests(props: Props) {
 								const providerDisplay = PROVIDER_MAPPINGS[provider.name];
 								if (providerDisplay) {
 									return (
-										<Button onClick={() => dispatch(connectProvider(provider.id, "Status"))}>
+										<Button
+											onClick={() => dispatch(configureAndConnectProvider(provider.id, "Status"))}
+										>
 											<Icon name={providerDisplay.icon} />
 											Connect to {providerDisplay.displayName} to see your PRs
 										</Button>

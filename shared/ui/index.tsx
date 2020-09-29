@@ -398,14 +398,14 @@ function listenForEvents(store) {
 													store.dispatch(setCurrentPullRequestAndBranch(id));
 												else store.dispatch(setCurrentPullRequest(providerInfo.providerId, id));
 											} else {
-												console.warn("Unable to load PR from: ", route);
+												console.error("Unable to load PR from: ", route);
 											}
 										})
 										.catch(e => {
-											console.warn("Unable to load PR from: ", route);
+											console.error("Unable to load PR from: ", route);
 										});
 								} else {
-									console.warn("Unable to load PR from: ", route);
+									console.error("Unable to load PR from: ", route);
 								}
 							});
 
@@ -454,11 +454,11 @@ function listenForEvents(store) {
 												store.dispatch(openPanel(WebviewPanels.Status));
 											});
 									} else {
-										console.warn("Unable to find issue from: ", route);
+										console.error("Unable to find issue from: ", route);
 									}
 								})
 								.catch(e => {
-									console.warn("Error: Unable to load issue from: ", route);
+									console.error("Error: Unable to load issue from: ", route);
 								});
 						}
 						break;

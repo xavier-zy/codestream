@@ -9,7 +9,7 @@ export function memoize(target: any, key: string, descriptor: any) {
 		fnKey = "value";
 
 		if (fn!.length !== 0) {
-			console.warn("Memoize should only be used in functions with no parameters");
+			console.error("Memoize should only be used in functions with no parameters");
 		}
 	} else if (typeof descriptor.get === "function") {
 		fn = descriptor.get;

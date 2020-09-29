@@ -49,8 +49,8 @@ module.exports = function(env, argv) {
 	);
 
 	const context = path.resolve(__dirname, "src/CodeStream.VisualStudio/UI/WebViews");
-	console.log(`__dirname=${__dirname}`)
-	console.log(`context=${context}`)
+	console.log(`__dirname=${__dirname}`);
+	console.log(`context=${context}`);
 
 	const plugins = [
 		new CleanPlugin(["src/CodeStream.VisualStudio/dist/webview"]),
@@ -87,6 +87,25 @@ module.exports = function(env, argv) {
 
 	if (env.analyzeBundle) {
 		plugins.push(new BundleAnalyzerPlugin());
+	}
+
+	if (env.production) {
+		plugins.push(
+			new TerserPlugin({
+				cache: true,
+				parallel: true,
+				sourceMap: true,
+				terserOptions: {
+					ecma: 8,
+					// Keep the class names otherwise @log won't provide a useful name
+					keep_classnames: true,
+					module: true,
+					compress: {
+						pure_funcs: ["console.warn"]
+					}
+				}
+			})
+		);
 	}
 
 	return {
@@ -182,8 +201,8 @@ module.exports = function(env, argv) {
 				"@codestream/protocols/webview": path.resolve(
 					__dirname,
 					"../shared/ui/ipc/webview.protocol.ts"
-				),			
-				"@codestream/webview": path.resolve(__dirname, "../shared/ui/"),				
+				),
+				"@codestream/webview": path.resolve(__dirname, "../shared/ui/"),
 				react: path.resolve(__dirname, "../shared/ui/node_modules/react"),
 				"react-dom": path.resolve(__dirname, "../shared/ui/node_modules/react-dom"),
 				"vscode-jsonrpc": path.resolve(__dirname, "../shared/ui/vscode-jsonrpc.shim.ts")

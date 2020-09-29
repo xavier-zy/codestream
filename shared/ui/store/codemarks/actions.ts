@@ -225,7 +225,7 @@ export const parseCodeStreamDiffUri = (
 		try {
 			return JSON.parse(atob(decodeURIComponent(m[1]))) as any;
 		} catch (ex) {
-			console.warn(ex);
+			console.error(ex);
 		}
 	}
 

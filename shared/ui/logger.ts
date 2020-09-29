@@ -13,5 +13,6 @@ export function logError(error: string | Error, extra?: object) {
 }
 
 export function logWarning(...items: any[]) {
-	console.warn(...items);
+	// console.warn will get removed with webpack, use console.error
+	console.error(...items);
 }

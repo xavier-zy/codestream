@@ -118,7 +118,7 @@ const makeName = user => {
 const makeDirectMessageStreamName = (memberIds, users) => {
 	const names = memberIds.map(id => makeName(users[id])).filter(Boolean);
 	if (names.length === 0) {
-		console.warn("Cannot create direct message stream name without member names", {
+		console.error("Cannot create direct message stream name without member names", {
 			memberIds,
 			users
 		});
@@ -137,7 +137,7 @@ export const getDMName = (stream, users, currentUserId) => {
 		const withoutMe = (stream.memberIds || []).filter(id => id !== currentUserId);
 		return makeDirectMessageStreamName(withoutMe, users);
 	} else {
-		console.warn("Cannot get a name for a non-dm channel", stream);
+		console.error("Cannot get a name for a non-dm channel", stream);
 		return "NO NAME";
 	}
 };

@@ -84,6 +84,25 @@ function getExtensionConfig(env) {
 		plugins.push(new BundleAnalyzerPlugin());
 	}
 
+	if (env.production) {
+		plugins.push(
+			new TerserPlugin({
+				cache: true,
+				parallel: true,
+				sourceMap: true,
+				terserOptions: {
+					ecma: 8,
+					// Keep the class names otherwise @log won't provide a useful name
+					keep_classnames: true,
+					module: true,
+					compress: {
+						pure_funcs: ["console.warn"]
+					}
+				}
+			})
+		);
+	}
+
 	return {
 		name: "extension",
 		entry: "./lib/codestream.ts",

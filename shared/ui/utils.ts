@@ -345,7 +345,7 @@ export function logDiff<Props, State>(context, prevProps: Props) {
 	console.debug("props", { prevProps, currProps: context.props });
 	Object.keys(prevProps).forEach(key => {
 		if (prevProps[key] !== context.props[key]) {
-			console.warn(`prop ${key} changed from ${prevProps[key]} to ${context.props[key]}`);
+			console.error(`prop ${key} changed from ${prevProps[key]} to ${context.props[key]}`);
 		}
 	});
 	console.groupEnd();

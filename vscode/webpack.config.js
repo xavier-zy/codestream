@@ -11,8 +11,8 @@ const TerserPlugin = require("terser-webpack-plugin");
 const TsconfigPathsPlugin = require("tsconfig-paths-webpack-plugin");
 const CircularDependencyPlugin = require("circular-dependency-plugin");
 const BundleAnalyzerPlugin = require("webpack-bundle-analyzer").BundleAnalyzerPlugin;
-const HtmlWebpackInlineSourcePlugin = require('html-webpack-inline-source-plugin');
-const OptimizeCSSAssetsPlugin = require('optimize-css-assets-webpack-plugin');
+const HtmlWebpackInlineSourcePlugin = require("html-webpack-inline-source-plugin");
+const OptimizeCSSAssetsPlugin = require("optimize-css-assets-webpack-plugin");
 
 module.exports = function(env, argv) {
 	env = env || {};
@@ -213,6 +213,24 @@ function getWebviewConfig(env) {
 
 	if (env.analyzeBundleWebview) {
 		plugins.push(new BundleAnalyzerPlugin());
+	}
+	if (env.production) {
+		plugins.push(
+			new TerserPlugin({
+				cache: true,
+				parallel: true,
+				sourceMap: true,
+				terserOptions: {
+					ecma: 8,
+					// Keep the class names otherwise @log won't provide a useful name
+					keep_classnames: true,
+					module: true,
+					compress: {
+						pure_funcs: ["console.warn"]
+					}
+				}
+			})
+		);
 	}
 
 	return {

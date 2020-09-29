@@ -68,6 +68,7 @@ export const PullRequestFilesChanged = (props: {
 	const [errorMessage, setErrorMessage] = React.useState("");
 	const [loading, setLoading] = React.useState(false);
 	const [isDisabled, setIsDisabled] = React.useState(false);
+	const [isMounted, setIsMounted] = React.useState(false);
 
 	const visitFile = (visitedKey: string, index: number) => {
 		const newVisitedFiles = { ...visitedFiles, [visitedKey]: NOW, _latest: index };
@@ -84,6 +85,22 @@ export const PullRequestFilesChanged = (props: {
 		});
 	};
 
+	const handleForkPointResponse = forkPointResponse => {
+		if (!forkPointResponse || forkPointResponse.error) {
+			setErrorMessage(
+				forkPointResponse &&
+					forkPointResponse.error &&
+					forkPointResponse.error.type === "COMMIT_NOT_FOUND"
+					? "A commit required to perform this review was not found in the local git repository. Fetch all remotes and try again."
+					: "Could not get fork point."
+			);
+
+			setIsDisabled(true);
+		} else if (forkPointResponse.sha) {
+			setForkPointSha(forkPointResponse.sha);
+		}
+	};
+
 	useDidMount(() => {
 		if (derivedState.currentRepo) {
 			(async () => {
@@ -95,25 +112,16 @@ export const PullRequestFilesChanged = (props: {
 						headSha: props.pr.headRefOid
 					});
 
-					if (!forkPointResponse || forkPointResponse.error) {
-						setErrorMessage(
-							forkPointResponse &&
-								forkPointResponse.error &&
-								forkPointResponse.error.type === "COMMIT_NOT_FOUND"
-								? "A commit required to perform this review was not found in the local git repository. Fetch all remotes and try again."
-								: "Could not get fork point."
-						);
-
-						setIsDisabled(true);
-					} else if (forkPointResponse.sha) {
-						setForkPointSha(forkPointResponse.sha);
-					}
+					handleForkPointResponse(forkPointResponse);
 				} catch (ex) {
 					console.error(ex);
 				} finally {
 					setLoading(false);
+					setIsMounted(true);
 				}
 			})();
+		} else {
+			setIsMounted(true);
 		}
 	});
 
@@ -132,13 +140,24 @@ export const PullRequestFilesChanged = (props: {
 	}, [pr, filesChanged, forkPointSha]);
 
 	useEffect(() => {
-		const disposables = [
-			HostApi.instance.on(ShowNextChangedFileNotificationType, nextFile),
-			HostApi.instance.on(ShowPreviousChangedFileNotificationType, prevFile)
-		];
-
-		return () => disposables.forEach(disposable => disposable.dispose());
-	}, [pr, filesChanged, visitedFiles, forkPointSha]);
+		(async () => {
+			if (isMounted && derivedState.currentRepo && props.pr && !forkPointSha) {
+				try {
+					setLoading(true);
+					const forkPointResponse = await HostApi.instance.send(FetchForkPointRequestType, {
+						repoId: derivedState.currentRepo!.id!,
+						baseSha: pr.baseRefOid,
+						headSha: pr.headRefOid
+					});
+					handleForkPointResponse(forkPointResponse);
+				} catch (err) {
+					console.error(err);
+				} finally {
+					setLoading(false);
+				}
+			}
+		})();
+	}, [isMounted, derivedState.currentRepo, pr]);
 
 	const goDiff = useCallback(
 		i => {
@@ -176,20 +195,29 @@ export const PullRequestFilesChanged = (props: {
 				});
 			})(i);
 		},
-		[repoId, visitedFiles, forkPointSha]
+		[derivedState.currentRepo, repoId, visitedFiles, forkPointSha]
 	);
 
-	const nextFile = () => {
+	const nextFile = useCallback(() => {
 		if (!visitedFiles) goDiff(0);
 		else if (visitedFiles._latest == null) goDiff(0);
 		else goDiff(visitedFiles._latest + 1);
-	};
+	}, [visitedFiles, goDiff]);
 
-	const prevFile = () => {
+	const prevFile = useCallback(() => {
 		if (!visitedFiles) goDiff(-1);
 		else if (visitedFiles._latest == null) goDiff(-1);
 		else goDiff(visitedFiles._latest - 1);
-	};
+	}, [visitedFiles, goDiff]);
+
+	useEffect(() => {
+		const disposables = [
+			HostApi.instance.on(ShowNextChangedFileNotificationType, nextFile),
+			HostApi.instance.on(ShowPreviousChangedFileNotificationType, prevFile)
+		];
+
+		return () => disposables.forEach(disposable => disposable.dispose());
+	}, [nextFile, prevFile, pr, filesChanged, visitedFiles, forkPointSha]);
 
 	const openFile = async index => {
 		if (index < 0) index = derivedState.numFiles - 1;
@@ -294,15 +322,23 @@ export const PullRequestFilesChanged = (props: {
 			})
 		);
 		return files;
-	}, [pr, loading, derivedState.matchFile, latest, visitedFiles, forkPointSha]);
+	}, [
+		goDiff,
+		derivedState.currentRepo,
+		pr,
+		loading,
+		derivedState.matchFile,
+		latest,
+		visitedFiles,
+		forkPointSha
+	]);
 
 	if (!derivedState.currentRepo) {
 		return (
 			<div style={{ marginTop: "10px" }}>
 				<Icon name="alert" className="margin-right" />
 				Repo <span className="monospace highlight">{pr.repository.name}</span> not found in your
-				editor. Open it, or{" "}
-				<Link href={pr.repository.url}>clone the repo</Link>.
+				editor. Open it, or <Link href={pr.repository.url}>clone the repo</Link>.
 			</div>
 		);
 	}

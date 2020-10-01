@@ -959,10 +959,10 @@ export class WebviewController implements Disposable {
 				break;
 			}
 			case LocalFilesCloseDiffRequestType.method: {
-				webview.onIpcRequest(LocalFilesCloseDiffRequestType, e, async (_type, params) => {
+				webview.onIpcRequest(LocalFilesCloseDiffRequestType, e, async (_type, params) =>
 					// not supported
-					return emptyObj;
-				});
+					 emptyObj
+				);
 
 				break;
 			}

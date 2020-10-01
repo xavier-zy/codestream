@@ -88,11 +88,11 @@ export * from "./okta";
 
 const PR_QUERIES = [
 	{
-		name: "is waiting on your Review",
+		name: "is waiting on your review",
 		query: `is:pr is:open review-requested:@me`
 	},
 	{
-		name: "is assigned to you",
+		name: "was assigned to you",
 		query: `is:pr is:open assignee:@me`
 	}
 ];

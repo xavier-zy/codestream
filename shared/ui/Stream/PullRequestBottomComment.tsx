@@ -66,9 +66,11 @@ export const PullRequestBottomComment = styled((props: Props) => {
 		setIsLoadingMessage("Closing...");
 		setIsLoadingCommentAndClose(true);
 		trackComment("Comment and Close");
-		await api("createPullRequestCommentAndClose", {
-			text: text
-		});
+		await dispatch(
+			api("createPullRequestCommentAndClose", {
+				text: text
+			})
+		);
 		setText("");
 		fetch().then(() => {
 			dispatch(removeFromMyPullRequests(pr.providerId, derivedState.currentPullRequestId!));
@@ -80,9 +82,11 @@ export const PullRequestBottomComment = styled((props: Props) => {
 		setIsLoadingMessage("Reopening...");
 		setIsLoadingCommentAndClose(true);
 		trackComment("Comment and Reopen");
-		await api("createPullRequestCommentAndReopen", {
-			text: text
-		});
+		await dispatch(
+			api("createPullRequestCommentAndReopen", {
+				text: text
+			})
+		);
 		setText("");
 		fetch().then(() => setIsLoadingCommentAndClose(false));
 	};

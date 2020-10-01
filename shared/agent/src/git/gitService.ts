@@ -243,7 +243,7 @@ export class GitService implements IGitService, Disposable {
 				`${ref}:./${fileRelativePath}`,
 				"--"
 			);
-			return data;
+			return Strings.normalizeFileContents(data);
 		} catch (ex) {
 			const msg = ex && ex.toString();
 			if (

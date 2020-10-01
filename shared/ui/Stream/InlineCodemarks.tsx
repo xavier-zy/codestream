@@ -542,7 +542,7 @@ export class SimpleInlineCodemarks extends Component<Props, State> {
 						<h3>No file open.</h3>
 						<p>
 							Open a source file to to start discussing code with your teammates!{" "}
-							<a href="https://docs.codestream.com/userguide/workflow/discuss-code/">View guide.</a>
+							<a href="https://docs.codestream.com/userguide/workflow/discuss-code/">Learn more.</a>
 						</p>
 					</div>
 				</div>

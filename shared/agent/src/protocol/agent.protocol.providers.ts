@@ -638,7 +638,7 @@ export const QueryThirdPartyRequestType = new RequestType<
 
 export interface GetMyPullRequestsRequest {
 	owner?: string;
-	name?: string;
+	repo?: string;
 	queries: string[];
 	/**
 	 * forces a re-fetch from the provider

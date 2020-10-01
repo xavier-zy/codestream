@@ -87,6 +87,13 @@ object PullRequestNotifications {
     ) : WebViewNotification {
         override fun getMethod() = "webview/pullRequest/new"
     }
+
+    class Show(
+        val providerId: String,
+        val id: String
+    ) : WebViewNotification {
+        override fun getMethod() = "webview/pullRequest/show"
+    }
 }
 
 object StreamNotifications {

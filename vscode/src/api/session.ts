@@ -48,7 +48,8 @@ import {
 	SessionStatusChangedEvent,
 	TextDocumentMarkersChangedEvent,
 	UnreadsChangedEvent,
-	ReviewsChangedEvent
+	ReviewsChangedEvent,
+	PullRequestsChangedEvent
 } from "./sessionEvents";
 import { SessionState } from "./sessionState";
 import { TokenManager } from "./tokenManager";
@@ -129,6 +130,12 @@ export class CodeStreamSession implements Disposable {
 		250,
 		{ maxWait: 1000 }
 	);
+
+	private _onDidChangePullRequests = new EventEmitter<PullRequestsChangedEvent>();
+	get onDidChangePullRequests(): Event<PullRequestsChangedEvent> {
+		return this._onDidChangePullRequests.event;
+	}
+	private fireDidChangePullRequests = createMergableDebouncedEvent(this._onDidChangePullRequests);
 
 	private _agentCapabilities: Capabilities | undefined;
 	get capabilities() {
@@ -231,6 +238,9 @@ export class CodeStreamSession implements Disposable {
 				Container.diffContents.clearLocalContents(e.data.map(_ => _.id));
 				break;
 			}
+			case ChangeDataType.PullRequests:
+				this.fireDidChangePullRequests(new PullRequestsChangedEvent(this, e));
+				break;
 		}
 	}
 

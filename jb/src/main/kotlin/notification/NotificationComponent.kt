@@ -5,8 +5,10 @@ import com.codestream.agentService
 import com.codestream.codeStream
 import com.codestream.protocols.agent.Codemark
 import com.codestream.protocols.agent.Post
+import com.codestream.protocols.agent.PullRequestNotification
 import com.codestream.protocols.agent.Review
 import com.codestream.protocols.webview.CodemarkNotifications
+import com.codestream.protocols.webview.PullRequestNotifications
 import com.codestream.protocols.webview.ReviewNotifications
 import com.codestream.sessionService
 import com.codestream.settingsService
@@ -37,6 +39,41 @@ class NotificationComponent(val project: Project) {
 
     init {
         project.sessionService?.onPostsChanged(this::didChangePosts)
+        project.sessionService?.onPullRequestsChanged(this::didChangePullRequests)
+    }
+
+    private fun didChangePullRequests(pullRequestNotifications: List<PullRequestNotification>) {
+        GlobalScope.launch {
+            pullRequestNotifications.forEach { didChangePullRequest(it) }
+        }
+    }
+
+    private suspend fun didChangePullRequest(pullRequestNotification: PullRequestNotification) {
+        val session = project.sessionService ?: return
+        val userLoggedIn = session.userLoggedIn ?: return
+
+        if (!userLoggedIn.user.wantsToastNotifications()) {
+            return
+        }
+
+        val text = "Pull Request \"${pullRequestNotification.pullRequest.title}\" ${pullRequestNotification.queryName}"
+
+        val notification = notificationGroup.createNotification(
+            null, null, text, NotificationType.INFORMATION
+        )
+
+        notification.addAction(NotificationAction.createSimple("Open") {
+            project.codeStream?.show {
+                project.webViewService?.run {
+                    postNotification(PullRequestNotifications.Show(
+                        pullRequestNotification.pullRequest.providerId,
+                        pullRequestNotification.pullRequest.id
+                    ))
+                    notification.expire()
+                }
+            }
+        })
+        notification.notify(project)
     }
 
     private fun didChangePosts(posts: List<Post>) {

@@ -1,6 +1,6 @@
 "use strict";
 import { NotificationType, TextDocumentIdentifier } from "vscode-languageserver-protocol";
-import { Document } from "./agent.protocol";
+import { Document, GetMyPullRequestsResponse } from "./agent.protocol";
 import { LoginSuccessResponse, TokenLoginRequest } from "./agent.protocol.auth";
 import { CodemarkPlus } from "./agent.protocol.codemarks";
 import { ThirdPartyProviders } from "./agent.protocol.providers";
@@ -51,6 +51,7 @@ export enum ChangeDataType {
 	Markers = "markers",
 	Posts = "posts",
 	Preferences = "preferences",
+	PullRequests = "pullRequests",
 	Repositories = "repos",
 	Reviews = "reviews",
 	Streams = "streams",
@@ -90,6 +91,16 @@ export interface PostsChangedNotification {
 export interface PreferencesChangedNotification {
 	type: ChangeDataType.Preferences;
 	data: CSMePreferences;
+}
+
+export interface PullRequestsChangedData {
+	queryName: string;
+	pullRequest: GetMyPullRequestsResponse;
+}
+
+export interface PullRequestsChangedNotification {
+	type: ChangeDataType.PullRequests;
+	data: PullRequestsChangedData[];
 }
 
 export interface RepositoriesChangedNotification {
@@ -179,6 +190,7 @@ export type DidChangeDataNotification =
 	| MarkersChangedNotification
 	| PostsChangedNotification
 	| PreferencesChangedNotification
+	| PullRequestsChangedNotification
 	| RepositoriesChangedNotification
 	| ReviewsChangedNotification
 	| StreamsChangedNotification

@@ -1,11 +1,14 @@
 "use strict";
+import { differenceWith } from "lodash-es";
 import { CSMe } from "protocol/api.protocol";
 import { URI } from "vscode-uri";
+import { SessionContainer } from "../container";
 import { Logger } from "../logger";
 import {
 	AddEnterpriseProviderRequest,
 	AddEnterpriseProviderRequestType,
 	AddEnterpriseProviderResponse,
+	ChangeDataType,
 	ConfigureThirdPartyProviderRequest,
 	ConfigureThirdPartyProviderRequestType,
 	ConfigureThirdPartyProviderResponse,
@@ -18,6 +21,7 @@ import {
 	CreateThirdPartyPostRequest,
 	CreateThirdPartyPostRequestType,
 	CreateThirdPartyPostResponse,
+	DidChangeDataNotificationType,
 	DisconnectThirdPartyProviderRequest,
 	DisconnectThirdPartyProviderRequestType,
 	DisconnectThirdPartyProviderResponse,
@@ -41,9 +45,10 @@ import {
 	FetchThirdPartyPullRequestCommitsType,
 	FetchThirdPartyPullRequestRequest,
 	FetchThirdPartyPullRequestRequestType,
+	GetMyPullRequestsResponse,
 	MoveThirdPartyCardRequest,
 	MoveThirdPartyCardRequestType,
-	MoveThirdPartyCardResponse,
+	MoveThirdPartyCardResponse, PullRequestsChangedData,
 	QueryThirdPartyRequest,
 	QueryThirdPartyRequestType,
 	RemoveEnterpriseProviderRequest,
@@ -55,7 +60,6 @@ import {
 import { CodeStreamSession } from "../session";
 import { getProvider, getRegisteredProviders, log, lsp, lspHandler } from "../system";
 import {
-	getRemotePaths,
 	ProviderCreatePullRequestRequest,
 	ProviderCreatePullRequestResponse,
 	ProviderGetRepoInfoRequest,
@@ -82,9 +86,114 @@ export * from "./slack";
 export * from "./msteams";
 export * from "./okta";
 
+const PR_QUERIES = [
+	{
+		name: "is waiting on your Review",
+		query: `is:pr is:open review-requested:@me`
+	},
+	{
+		name: "is assigned to you",
+		query: `is:pr is:open assignee:@me`
+	}
+];
+
+interface ProviderPullRequests {
+	providerName: string;
+	queriedPullRequests: GetMyPullRequestsResponse[][];
+}
+
 @lsp
 export class ThirdPartyProviderRegistry {
-	constructor(public readonly session: CodeStreamSession) {}
+	private _lastProvidersPRs: ProviderPullRequests[] | undefined;
+	private _pollingInterval: NodeJS.Timer | undefined;
+
+	constructor(public readonly session: CodeStreamSession) {
+		this._pollingInterval = setInterval(this.pullRequestsStateHandler.bind(this), 60000);
+	}
+
+	private async pullRequestsStateHandler() {
+		const user = await this.session.api.getMe();
+
+		const providers = this.getConnectedProviders(user.user, (p): p is ThirdPartyIssueProvider &
+			ThirdPartyProviderSupportsPullRequests => {
+			const thirdPartyIssueProvider = p as ThirdPartyIssueProvider;
+			const name = thirdPartyIssueProvider.getConfig().name;
+			return name === "github" || name === "github_enterprise";
+		});
+
+		const providersPullRequests: ProviderPullRequests[] = [];
+
+		for (const provider of providers) {
+			const pullRequests = await provider.getMyPullRequests({
+				queries: PR_QUERIES.map(_ => _.query)
+			});
+
+			if (pullRequests) {
+				providersPullRequests.push({
+					providerName: provider.name,
+					queriedPullRequests: pullRequests
+				});
+			}
+		}
+
+		const newProvidersPRs = this.getProvidersPRsDiff(providersPullRequests);
+		this._lastProvidersPRs = providersPullRequests;
+
+		this.fireNewPRsNotifications(newProvidersPRs);
+	}
+
+	private getProvidersPRsDiff = (providersPRs: ProviderPullRequests[]): ProviderPullRequests[] => {
+		const newProvidersPRs: ProviderPullRequests[] = [];
+		if (this._lastProvidersPRs === undefined) {
+			return [];
+		}
+
+		providersPRs.map(providerPRs => {
+			const previousProviderPRs = this._lastProvidersPRs?.find(_ => _.providerName === providerPRs.providerName);
+			if (!previousProviderPRs) {
+				return;
+			}
+
+			const queriedPullRequests: GetMyPullRequestsResponse[][] = [];
+			providerPRs.queriedPullRequests.map((pullRequests: GetMyPullRequestsResponse[], index: number) => {
+				queriedPullRequests.push(
+					differenceWith(
+						pullRequests,
+						previousProviderPRs.queriedPullRequests[index],
+						(value, other) => value.id === other.id
+					)
+				);
+			});
+
+			newProvidersPRs.push({
+				providerName: providerPRs.providerName,
+				queriedPullRequests
+			});
+		});
+
+		return newProvidersPRs;
+	}
+
+	private fireNewPRsNotifications(providersPRs: ProviderPullRequests[]) {
+		const prNotificationMessages: PullRequestsChangedData[] = [];
+
+		providersPRs.map(_ => _.queriedPullRequests.map((pullRequests: GetMyPullRequestsResponse[], queryIndex: number) => {
+				prNotificationMessages.push(
+					...pullRequests.map(pullRequest => ({
+						queryName: PR_QUERIES[queryIndex].name,
+						pullRequest
+					}))
+				);
+			})
+		);
+
+		if (prNotificationMessages.length > 0) {
+			SessionContainer.instance().session.agent.sendNotification(DidChangeDataNotificationType, {
+				type: ChangeDataType.PullRequests,
+				data: prNotificationMessages
+			});
+		}
+	}
 
 	@log()
 	@lspHandler(ConnectThirdPartyProviderRequestType)

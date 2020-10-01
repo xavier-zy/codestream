@@ -29,6 +29,7 @@ import {
 	FetchThirdPartyPullRequestCommitsResponse,
 	FetchThirdPartyPullRequestRequest,
 	FetchThirdPartyPullRequestResponse,
+	GetMyPullRequestsRequest,
 	GetMyPullRequestsResponse,
 	MoveThirdPartyCardRequest,
 	MoveThirdPartyCardResponse,
@@ -102,12 +103,7 @@ export interface ThirdPartyProviderSupportsPullRequests {
 	getPullRequestCommits(
 		request: FetchThirdPartyPullRequestCommitsRequest
 	): Promise<FetchThirdPartyPullRequestCommitsResponse>;
-	getMyPullRequests(request: {
-		owner: string;
-		repo: string;
-		isOpen?: boolean;
-		force?: boolean;
-	}): Promise<GetMyPullRequestsResponse[] | undefined>;
+	getMyPullRequests(request: GetMyPullRequestsRequest): Promise<GetMyPullRequestsResponse[][] | undefined>;
 }
 
 export namespace ThirdPartyIssueProvider {

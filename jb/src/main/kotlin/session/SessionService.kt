@@ -6,6 +6,7 @@ import com.codestream.error.ErrorHandler
 import com.codestream.protocols.agent.CSPreferences
 import com.codestream.protocols.agent.CSUser
 import com.codestream.protocols.agent.Post
+import com.codestream.protocols.agent.PullRequestNotification
 import com.codestream.protocols.agent.Stream
 import com.codestream.protocols.agent.UserLoggedIn
 import com.intellij.openapi.project.Project
@@ -14,6 +15,7 @@ import kotlin.properties.Delegates
 typealias UserLoggedInObserver = (UserLoggedIn?) -> Unit
 typealias IntObserver = (Int) -> Unit
 typealias PostsObserver = (List<Post>) -> Unit
+typealias PullRequestsObserver = (List<PullRequestNotification>) -> Unit
 
 class SessionService(val project: Project) {
 
@@ -36,6 +38,7 @@ class SessionService(val project: Project) {
     private val unreadsObservers = mutableListOf<IntObserver>()
     private val mentionsObservers = mutableListOf<IntObserver>()
     private val postsObservers = mutableListOf<PostsObserver>()
+    private val pullRequestsObservers = mutableListOf<PullRequestsObserver>()
 
     private var _userLoggedIn: UserLoggedIn? by Delegates.observable<UserLoggedIn?>(null) { _, _, new ->
         userLoggedInObservers.forEach { it(new) }
@@ -65,6 +68,10 @@ class SessionService(val project: Project) {
         postsObservers += observer
     }
 
+    fun onPullRequestsChanged(observer: PullRequestsObserver) {
+        pullRequestsObservers += observer
+    }
+
     fun login(userLoggedIn: UserLoggedIn) {
         _userLoggedIn = userLoggedIn
         ErrorHandler.userLoggedIn = userLoggedIn
@@ -86,6 +93,10 @@ class SessionService(val project: Project) {
 
     fun didChangePreferences(preferences: CSPreferences) {
         _userLoggedIn?.user?.preferences = preferences
+    }
+
+    fun didChangePullRequests(pullRequestNotifications: List<PullRequestNotification>) {
+        pullRequestsObservers.forEach { it(pullRequestNotifications) }
     }
 }
 

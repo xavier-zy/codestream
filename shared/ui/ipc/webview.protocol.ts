@@ -32,6 +32,15 @@ export const ShowReviewNotificationType = new NotificationType<ShowReviewNotific
 );
 
 // TODO: This should be a request to the webview -- not a notification
+export interface ShowPullRequestwNotification {
+	providerId: string;
+	id: string;
+}
+export const ShowPullRequestNotificationType = new NotificationType<ShowPullRequestwNotification, void>(
+	`${IpcRoutes.Webview}/pullRequest/show`
+);
+
+// TODO: This should be a request to the webview -- not a notification
 export interface ShowStreamNotification {
 	streamId: string;
 	threadId?: string;

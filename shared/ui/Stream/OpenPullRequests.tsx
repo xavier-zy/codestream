@@ -16,7 +16,9 @@ import {
 	ReposScm,
 	GetMyPullRequestsResponse,
 	ExecuteThirdPartyRequestUntypedType,
-	QueryThirdPartyRequestType
+	QueryThirdPartyRequestType,
+	DidChangeDataNotificationType,
+	ChangeDataType
 } from "@codestream/protocols/agent";
 import { OpenUrlRequestType } from "@codestream/protocols/webview";
 import { Button } from "../src/components/Button";
@@ -197,6 +199,17 @@ export function OpenPullRequests(props: Props) {
 		dispatch(setUserPreference(["pullRequestQueries", providerId], [...queries]));
 		// dispatch(setUserPreference(["pullRequestQueries"], null));
 	};
+
+	useEffect(() => {
+		const disposable = HostApi.instance.on(DidChangeDataNotificationType, (e: any) => {
+			if (e.type === ChangeDataType.PullRequests) {
+				fetchPRs(queries);
+			}
+		});
+		return () => {
+			disposable.dispose();
+		};
+	});
 
 	useEffect(() => {
 		// if previously we were editing... and now we're not fetch the PRs...

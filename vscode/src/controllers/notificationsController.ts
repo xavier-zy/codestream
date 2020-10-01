@@ -1,4 +1,5 @@
 "use strict";
+import { PullRequestsChangedEvent } from "api/sessionEvents";
 import { Disposable, MessageItem, window } from "vscode";
 import { Post, PostsChangedEvent } from "../api/session";
 import { Container } from "../container";
@@ -10,12 +11,37 @@ export class NotificationsController implements Disposable {
 
 	constructor() {
 		this._disposable = Disposable.from(
-			Container.session.onDidChangePosts(this.onSessionPostsReceived, this)
+			Container.session.onDidChangePosts(this.onSessionPostsReceived, this),
+			Container.session.onDidChangePullRequests(this.onSessionPullRequestsReceived, this)
 		);
 	}
 
 	dispose() {
 		this._disposable && this._disposable.dispose();
+	}
+
+	private async onSessionPullRequestsReceived(e: PullRequestsChangedEvent) {
+		const { user } = Container.session;
+
+		if (!user.wantsToastNotifications()) return;
+
+		for (const pullRequestNotification of e.pullRequestNotifications()) {
+			const actions: MessageItem[] = [{ title: "Open" }];
+
+			const result = await window.showInformationMessage(
+				`Pull Request "${pullRequestNotification.pullRequest.title}" ${pullRequestNotification.queryName}`,
+				...actions
+			);
+
+			if (result === actions[0]) {
+				Container.webview.openPullRequest(
+					pullRequestNotification.pullRequest.providerId,
+					pullRequestNotification.pullRequest.id
+				);
+			}
+
+			return;
+		}
 	}
 
 	private async onSessionPostsReceived(e: PostsChangedEvent) {

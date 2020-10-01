@@ -270,6 +270,17 @@ class Review(
     val reviewChangesets: List<ReviewChangeset>
 )
 
+class PullRequest(
+    val title: String,
+    val providerId: String,
+    val id: String
+)
+
+class PullRequestNotification(
+    val queryName: String,
+    val pullRequest: PullRequest
+)
+
 class ReviewChangeset(
     val repoId: String,
     val checkpoint: Int,

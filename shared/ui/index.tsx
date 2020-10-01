@@ -19,7 +19,8 @@ import {
 	ShowStreamNotificationType,
 	WebviewDidInitializeNotificationType,
 	WebviewPanels,
-	HostDidChangeVisibleEditorsNotificationType
+	HostDidChangeVisibleEditorsNotificationType,
+	ShowPullRequestNotificationType
 } from "./ipc/webview.protocol";
 import { createCodeStreamStore } from "./store";
 import { HostApi } from "./webview-api";
@@ -324,6 +325,10 @@ function listenForEvents(store) {
 			await store.dispatch(fetchReview(e.reviewId));
 		}
 		store.dispatch(setCurrentReview(e.reviewId));
+	});
+
+	api.on(ShowPullRequestNotificationType, async e => {
+		store.dispatch(setCurrentPullRequest(e.providerId, e.id));
 	});
 
 	api.on(HostDidReceiveRequestNotificationType, async e => {

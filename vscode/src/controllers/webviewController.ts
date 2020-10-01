@@ -73,7 +73,7 @@ import {
 	WebviewPanels,
 	TraverseDiffsRequestType,
 	CompareLocalFilesRequestType,
-	NewPullRequestNotificationType
+	NewPullRequestNotificationType, ShowPullRequestNotificationType
 } from "@codestream/protocols/webview";
 import { gate } from "system/decorators/gate";
 import {
@@ -413,6 +413,23 @@ export class WebviewController implements Disposable {
 		this._webview!.notify(ShowReviewNotificationType, {
 			reviewId: reviewId,
 			sourceUri: options.sourceUri && options.sourceUri.toString()
+		});
+	}
+
+	@log()
+	async openPullRequest(
+		providerId: string,
+		pullRequestId: string
+	): Promise<void> {
+		if (!this._webview) {
+			// it's possible that the webview is closing...
+			return;
+		}
+
+		// TODO: Change this to be a request vs a notification
+		this._webview!.notify(ShowPullRequestNotificationType, {
+			providerId,
+			id: pullRequestId
 		});
 	}
 

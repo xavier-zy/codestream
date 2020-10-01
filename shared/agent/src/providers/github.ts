@@ -28,6 +28,7 @@ import {
 	FetchThirdPartyPullRequestPullRequest,
 	FetchThirdPartyPullRequestRequest,
 	FetchThirdPartyPullRequestResponse,
+	GetMyPullRequestsRequest,
 	GetMyPullRequestsResponse,
 	GitHubBoard,
 	GitHubCreateCardRequest,
@@ -1277,14 +1278,8 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 	// 	return true;
 	// }
 
-	_getMyPullRequestsCache = new Map<string, GetMyPullRequestsResponse[]>();
-	async getMyPullRequests(request: {
-		owner: string;
-		repo: string;
-		queries: string[];
-		isOpen?: boolean;
-		force?: boolean;
-	}): Promise<GetMyPullRequestsResponse[] | undefined> {
+	_getMyPullRequestsCache = new Map<string, GetMyPullRequestsResponse[][]>();
+	async getMyPullRequests(request: GetMyPullRequestsRequest): Promise<GetMyPullRequestsResponse[][] | undefined> {
 		const cacheKey = JSON.stringify({ ...request, providerId: this.providerConfig.id });
 		if (!request.force) {
 			const cached = this._getMyPullRequestsCache.get(cacheKey);
@@ -1400,7 +1395,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 			throw new Error(ex.response ? JSON.stringify(ex.response) : ex.message);
 		});
 
-		const response: GetMyPullRequestsResponse[] = [];
+		const response: GetMyPullRequestsResponse[][] = [];
 		items.forEach((item, index) => {
 			if (item && item.search && item.search.edges) {
 				response[index] = item.search.edges

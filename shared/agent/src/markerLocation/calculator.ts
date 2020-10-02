@@ -442,10 +442,13 @@ class Calculation {
 				if (!this.findMovedLocation(location)) {
 					location.trimLineChange();
 				}
-			} else if (location.isLineStartDeleted()) {
-				location.trimLineStartChange();
-			} else if (location.isLineEndDeleted()) {
-				location.trimLineEndChange();
+			} else {
+				if (location.isLineStartDeleted()) {
+					location.trimLineStartChange();
+				}
+				if (location.isLineEndDeleted()) {
+					location.trimLineEndChange();
+				}
 			}
 		}
 	}

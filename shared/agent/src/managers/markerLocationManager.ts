@@ -7,7 +7,11 @@ import { getCache } from "../cache";
 import { Container, SessionContainer } from "../container";
 import { GitRepository } from "../git/models/repository";
 import { Logger } from "../logger";
-import { calculateLocation, calculateLocations } from "../markerLocation/calculator";
+import {
+	calculateLocation,
+	calculateLocations,
+	MAX_RANGE_VALUE
+} from "../markerLocation/calculator";
 import { MarkerNotLocatedReason } from "../protocol/agent.protocol";
 import {
 	CSLocationArray,
@@ -64,7 +68,15 @@ function compareReferenceLocations(a: CSReferenceLocation, b: CSReferenceLocatio
 	const aIsCanonical = Number(!!a.flags?.canonical);
 	const bIsCanonical = Number(!!b.flags?.canonical);
 
-	return bIsCanonical - aIsCanonical;
+	const canonicalComparison = bIsCanonical - aIsCanonical;
+	if (canonicalComparison !== 0) {
+		return canonicalComparison;
+	}
+
+	const aIsEntirelyDeleted = Number(!!a.location[4]?.entirelyDeleted);
+	const bIsEntirelyDeleted = Number(!!b.location[4]?.entirelyDeleted);
+
+	return aIsEntirelyDeleted - bIsEntirelyDeleted;
 }
 
 export class MarkerLocationManager extends ManagerBase<CSMarkerLocations> {
@@ -462,6 +474,14 @@ export class MarkerLocationManager extends ManagerBase<CSMarkerLocations> {
 			let canCalculate = false;
 			for (const referenceLocation of missingMarker.referenceLocations) {
 				const referenceCommitHash = referenceLocation.commitHash;
+				if (referenceLocation.location[2] === -1) {
+					// This should never happen, but we have some faulty reference locations
+					// in the database with lineEnd === -1 because the end of the marker range
+					// was deleted but not properly trimmed to the edge of the preserved region.
+					// In this case we pretend it ends at the end of its lineStart.
+					referenceLocation.location[2] = referenceLocation.location[0];
+					referenceLocation.location[3] = MAX_RANGE_VALUE;
+				}
 				if (referenceCommitHash == null) {
 					const { baseCommit, diff: diffToCanonicalContents } = referenceLocation.flags || {};
 					if (baseCommit && diffToCanonicalContents) {

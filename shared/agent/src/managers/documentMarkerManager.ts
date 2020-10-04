@@ -5,16 +5,12 @@ import {
 	ThirdPartyProviderSupportsPullRequests
 } from "providers/provider";
 import { CodeStreamSession } from "session";
-import { findBestMatch } from "string-similarity";
 import { Range, TextDocumentChangeEvent } from "vscode-languageserver";
 import { URI } from "vscode-uri";
 import { Marker, MarkerLocation, Ranges } from "../api/extensions";
 import { Container, SessionContainer } from "../container";
 import { Logger } from "../logger";
-import {
-	findBestMatchingLine,
-	MAX_RANGE_VALUE
-} from "../markerLocation/calculator";
+import { findBestMatchingLine, MAX_RANGE_VALUE } from "../markerLocation/calculator";
 import {
 	CreateDocumentMarkerPermalinkRequest,
 	CreateDocumentMarkerPermalinkRequestType,

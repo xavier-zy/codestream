@@ -8,8 +8,6 @@ import { SessionContainer } from "../container";
 import { GitRemoteLike } from "../git/models/remote";
 import { GitRepository } from "../git/models/repository";
 import { Logger } from "../logger";
-import { Markerish, MarkerLocationManager } from "../managers/markerLocationManager";
-import { MAX_RANGE_VALUE } from "../markerLocation/calculator";
 import {
 	CreateThirdPartyCardRequest,
 	DocumentMarker,
@@ -70,8 +68,24 @@ export class GitLabProvider extends ThirdPartyIssueProviderBase<CSGitLabProvider
 		};
 	}
 
-	protected isPRApiCompatible(): Promise<boolean> {
-		return Promise.resolve(true);
+	protected getPRExternalContent(comment: PullRequestComment) {
+		return {
+			provider: {
+				name: this.displayName,
+				icon: "gitlab"
+			},
+			subhead: `#${comment.pullRequest.id}`,
+			actions: [
+				{
+					label: "Open Note",
+					uri: comment.url
+				},
+				{
+					label: `Open Merge Request #${comment.pullRequest.id}`,
+					uri: comment.pullRequest.url
+				}
+			]
+		};
 	}
 
 	async onConnected() {
@@ -250,123 +264,7 @@ export class GitLabProvider extends ThirdPartyIssueProviderBase<CSGitLabProvider
 		repoId: string | undefined;
 		streamId: string;
 	}): Promise<DocumentMarker[]> {
-		void (await this.ensureConnected());
-
-		const documentMarkers: DocumentMarker[] = [];
-
-		if (!(await this.isPRApiCompatible())) return documentMarkers;
-
-		const { git, session } = SessionContainer.instance();
-
-		const repo = await git.getRepositoryByFilePath(uri.fsPath);
-		if (repo === undefined) return documentMarkers;
-
-		const comments = await this._getCommentsForPath(uri.fsPath, repo);
-		if (comments === undefined) return documentMarkers;
-
-		const commentsById: { [id: string]: PullRequestComment } = Object.create(null);
-		const markersByCommit = new Map<string, Markerish[]>();
-		const trackingBranch = await git.getTrackingBranch(uri);
-
-		let line;
-		let rev;
-		for (const c of comments) {
-			if (
-				c.pullRequest.isOpen &&
-				c.pullRequest.targetBranch !== trackingBranch?.shortName &&
-				c.pullRequest.sourceBranch !== trackingBranch?.shortName
-			) {
-				continue;
-			}
-
-			const outdated = !(await git.isValidReference(repo.path, c.commit));
-
-			rev = outdated ? c.originalCommit! : c.commit;
-
-			let markers = markersByCommit.get(rev);
-			if (markers === undefined) {
-				markers = [];
-				markersByCommit.set(rev, markers);
-			}
-
-			line = outdated ? c.originalLine! : c.line;
-			commentsById[c.id] = c;
-			const referenceLocations: CSReferenceLocation[] = [];
-			if (line >= 0) {
-				referenceLocations.push({
-					commitHash: rev,
-					location: [line, 1, line, MAX_RANGE_VALUE, undefined] as CSLocationArray,
-					flags: {
-						canonical: true
-					}
-				});
-			}
-			markers.push({
-				id: c.id,
-				referenceLocations
-			});
-		}
-
-		const locations = await MarkerLocationManager.computeCurrentLocations(uri, markersByCommit);
-
-		const teamId = session.teamId;
-
-		for (const [id, location] of Object.entries(locations.locations)) {
-			const comment = commentsById[id];
-
-			documentMarkers.push({
-				id: id,
-				codemarkId: undefined,
-				fileUri: uri.toString(),
-				fileStreamId: streamId,
-				// postId: undefined!,
-				// postStreamId: undefined!,
-				repoId: repoId!,
-				teamId: teamId,
-				file: uri.fsPath,
-				// commitHashWhenCreated: revision!,
-				// locationWhenCreated: MarkerLocation.toArray(location),
-				modifiedAt: new Date(comment.createdAt).getTime(),
-				code: "",
-
-				createdAt: new Date(comment.createdAt).getTime(),
-				creatorId: comment.author.id,
-				creatorName: comment.author.nickname,
-				externalContent: {
-					provider: {
-						name: this.displayName,
-						icon: "gitlab"
-					},
-					subhead: `#${comment.pullRequest.id}`,
-					actions: [
-						{
-							label: "Open Note",
-							uri: comment.url
-						},
-						{
-							label: `Open Merge Request #${comment.pullRequest.id}`,
-							uri: comment.pullRequest.url
-						}
-					]
-				},
-				range: {
-					start: {
-						line: location.lineStart - 1,
-						character: location.colStart - 1
-					},
-					end: {
-						line: location.lineEnd - 1,
-						character: location.colEnd - 1
-					}
-				},
-				location: location,
-				summary: comment.text,
-				summaryMarkdown: `\n\n${Strings.escapeMarkdown(comment.text)}`,
-				type: CodemarkType.Comment
-			});
-		}
-
-		return documentMarkers;
+		return super.getPullRequestDocumentMarkersCore({ uri, repoId, streamId });
 	}
 
 	private _commentsByRepoAndPath = new Map<
@@ -509,7 +407,7 @@ export class GitLabProvider extends ThirdPartyIssueProviderBase<CSGitLabProvider
 	}
 
 	@log()
-	private async _getCommentsForPath(
+	protected async getCommentsForPath(
 		filePath: string,
 		repo: GitRepository
 	): Promise<PullRequestComment[] | undefined> {

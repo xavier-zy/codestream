@@ -60,20 +60,22 @@ export type DocumentMarker = CSEntity &
 				fileUri: string;
 				codemark?: undefined;
 				codemarkId?: undefined;
-				externalContent: {
-					provider: {
-						name: string;
-						icon?: string;
-					};
-					externalId?: string;
-					externalType?: string;
-					diffHunk?: string;
-					title?: string;
-					subhead?: string;
-					actions?: { label?: string; icon?: string; uri: string }[];
-				};
+				externalContent: DocumentMarkerExternalContent;
 		  }
 	);
+
+export interface DocumentMarkerExternalContent {
+	provider: {
+		name: string;
+		icon?: string;
+	};
+	externalId?: string;
+	externalType?: string;
+	diffHunk?: string;
+	title?: string;
+	subhead?: string;
+	actions?: { label?: string; icon?: string; uri: string }[];
+}
 
 export enum MarkerNotLocatedReason {
 	MISSING_ORIGINAL_LOCATION = "missing original location",

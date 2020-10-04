@@ -5,12 +5,16 @@ import {
 	ThirdPartyProviderSupportsPullRequests
 } from "providers/provider";
 import { CodeStreamSession } from "session";
+import { findBestMatch } from "string-similarity";
 import { Range, TextDocumentChangeEvent } from "vscode-languageserver";
 import { URI } from "vscode-uri";
 import { Marker, MarkerLocation, Ranges } from "../api/extensions";
 import { Container, SessionContainer } from "../container";
 import { Logger } from "../logger";
-import { calculateLocations } from "../markerLocation/calculator";
+import {
+	findBestMatchingLine,
+	MAX_RANGE_VALUE
+} from "../markerLocation/calculator";
 import {
 	CreateDocumentMarkerPermalinkRequest,
 	CreateDocumentMarkerPermalinkRequestType,
@@ -297,6 +301,7 @@ export class DocumentMarkerManager {
 		const cc = Logger.getCorrelationContext();
 
 		const { codemarks, files, markers, markerLocations, users } = SessionContainer.instance();
+		const { documents } = Container.instance();
 
 		try {
 			const documentUri = URI.parse(documentId.uri);
@@ -362,6 +367,27 @@ export class DocumentMarkerManager {
 								emojiRegex,
 								(s, code) => emojiMap[code] || s
 							);
+						}
+
+						if (!locations[marker.id]) {
+							const doc = documents.get(documentId.uri);
+							const currentBufferText = doc && doc.getText();
+							if (currentBufferText) {
+								const line = await findBestMatchingLine(
+									currentBufferText,
+									marker.code,
+									marker.locationWhenCreated[0]
+								);
+								if (line > 0) {
+									locations[marker.id] = {
+										id: marker.id,
+										lineStart: line,
+										colStart: 0,
+										lineEnd: line,
+										colEnd: MAX_RANGE_VALUE
+									};
+								}
+							}
 						}
 
 						const location = locations[marker.id];

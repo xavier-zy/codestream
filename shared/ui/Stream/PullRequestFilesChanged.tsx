@@ -266,7 +266,9 @@ export const PullRequestFilesChanged = (props: {
 
 				const selected = parsed && parsed.path == f.file;
 				const visited = visitedFiles[visitedKey];
-				if (selected && !visited) {
+				// if component unmounted, we didn't fetch visited files state before
+				// and will override this state, if file is selected
+				if (selected && isMounted && !visited) {
 					visitFile(visitedKey, index);
 				}
 

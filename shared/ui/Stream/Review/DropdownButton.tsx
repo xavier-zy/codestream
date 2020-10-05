@@ -14,6 +14,7 @@ export interface DropdownButtonProps extends ButtonProps {
 		label: any;
 		key?: string;
 		action?: () => void;
+		buttonAction?: () => void;
 		noHover?: boolean;
 		disabled?: boolean;
 		submenu?: any[];
@@ -46,6 +47,9 @@ export function DropdownButton(props: React.PropsWithChildren<DropdownButtonProp
 		selectedItem = items.find(_ => _.key === selectedKey) || items[0];
 		selectedAction = selectedItem.action;
 		items.forEach(item => {
+			if (!item.buttonAction) {
+				item.buttonAction = item.action;
+			}
 			item.checked = item.key === selectedKey;
 			item.action = () => {
 				setSelectedKey(item.key);
@@ -53,10 +57,6 @@ export function DropdownButton(props: React.PropsWithChildren<DropdownButtonProp
 			};
 		});
 	}
-
-	const clickSelected = e => {
-		if (selectedAction) selectedAction(e);
-	};
 
 	return (
 		<Root className={props.className} splitDropdown={props.splitDropdown}>
@@ -67,7 +67,7 @@ export function DropdownButton(props: React.PropsWithChildren<DropdownButtonProp
 						onClick={e => {
 							e.preventDefault();
 							e.stopPropagation();
-							clickSelected(e);
+							selectedItem.buttonAction && selectedItem.buttonAction(e);
 						}}
 						ref={buttonRef}
 					>

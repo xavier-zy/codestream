@@ -27,6 +27,7 @@ import { MetaIcons } from "./Review";
 import { getProviderPullRequestRepo } from "../store/providerPullRequests/reducer";
 import { CompareFilesProps } from "./PullRequestFilesChangedList";
 import { TernarySearchTree } from "../utilities/searchTree";
+import { PRErrorBox } from "./PullRequestComponents";
 
 const Directory = styled.div`
 	cursor: pointer;
@@ -86,7 +87,8 @@ export const PullRequestFilesChanged = (props: Props) => {
 	const { visitedFiles, visitFile, unVisitFile } = props;
 	const [currentRepoRoot, setCurrentRepoRoot] = React.useState("");
 	const [forkPointSha, setForkPointSha] = React.useState("");
-	const [errorMessage, setErrorMessage] = React.useState("");
+	const [errorMessage, setErrorMessage] = React.useState<string | React.ReactNode>("");
+	const [repoErrorMessage, setRepoErrorMessage] = React.useState<string | React.ReactNode>("");
 	const [loading, setLoading] = React.useState(false);
 	const [isDisabled, setIsDisabled] = React.useState(false);
 	const [isMounted, setIsMounted] = React.useState(false);
@@ -96,9 +98,16 @@ export const PullRequestFilesChanged = (props: Props) => {
 			setErrorMessage(
 				forkPointResponse &&
 					forkPointResponse.error &&
-					forkPointResponse.error.type === "COMMIT_NOT_FOUND"
-					? "A commit required to perform this review was not found in the local git repository. Fetch all remotes and try again."
-					: "Could not get fork point."
+					forkPointResponse.error.type === "COMMIT_NOT_FOUND" ? (
+					"A commit required to perform this review was not found in the local git repository. Fetch all remotes and try again."
+				) : pr && forkPointResponse.error.type === "REPO_NOT_FOUND" ? (
+					<>
+						Repo <span className="monospace highlight">{pr.repository.name}</span> not found in your
+						editor. Open it, or <Link href={pr.repository.url}>clone the repo</Link>.
+					</>
+				) : (
+					<span>Could not get fork point.</span>
+				)
 			);
 
 			setIsDisabled(true);
@@ -111,17 +120,17 @@ export const PullRequestFilesChanged = (props: Props) => {
 		if (derivedState.currentRepo) {
 			(async () => {
 				setLoading(true);
+				let forkPointResponse;
 				try {
-					const forkPointResponse = await HostApi.instance.send(FetchForkPointRequestType, {
+					forkPointResponse = await HostApi.instance.send(FetchForkPointRequestType, {
 						repoId: derivedState.currentRepo!.id!,
 						baseSha: props.baseRef,
 						headSha: props.headRef
 					});
-
-					handleForkPointResponse(forkPointResponse);
 				} catch (ex) {
 					console.error(ex);
 				} finally {
+					handleForkPointResponse(forkPointResponse);
 					setLoading(false);
 					setIsMounted(true);
 				}
@@ -272,19 +281,21 @@ export const PullRequestFilesChanged = (props: Props) => {
 					selected={selected}
 					viewMode={props.viewMode}
 					icon={
-						<Icon
-							onClick={
-								visited
-									? async e => {
-											e.preventDefault();
-											e.stopPropagation();
-											unVisitFile(f.file);
-									  }
-									: undefined
-							}
-							name={icon}
-							className={iconClass}
-						/>
+						isDisabled ? null : (
+							<Icon
+								onClick={
+									visited
+										? async e => {
+												e.preventDefault();
+												e.stopPropagation();
+												unVisitFile(f.file);
+										  }
+										: undefined
+								}
+								name={icon}
+								className={iconClass}
+							/>
+						)
 					}
 					noHover={isDisabled || loading}
 					onClick={
@@ -403,15 +414,21 @@ export const PullRequestFilesChanged = (props: Props) => {
 		return [lines, filesInOrder];
 	}, [pr, loading, derivedState.matchFile, visitedFiles, forkPointSha, props.viewMode]);
 
-	if (pr && !derivedState.currentRepo) {
-		return (
-			<div style={{ marginTop: "10px" }}>
-				<Icon name="alert" className="margin-right" />
-				Repo <span className="monospace highlight">{pr.repository.name}</span> not found in your
-				editor. Open it, or <Link href={pr.repository.url}>clone the repo</Link>.
-			</div>
-		);
-	}
+	React.useEffect(() => {
+		if (pr && !derivedState.currentRepo) {
+			setRepoErrorMessage(
+				<span>
+					Repo <span className="monospace highlight">{pr.repository.name}</span> not found in your
+					editor. Open it, or <Link href={pr.repository.url}>clone the repo</Link>.
+					<p style={{ margin: "5px 0 0 0" }}>
+						Diffs can be viewed under <Icon name="diff" /> Diff Hunks view.
+					</p>
+				</span>
+			);
+		} else {
+			setRepoErrorMessage("");
+		}
+	}, [pr, derivedState.currentRepo]);
 
 	const isMacintosh = navigator.appVersion.includes("Macintosh");
 	const nextFileKeyboardShortcut = () => (isMacintosh ? `⌥ F6` : "Alt-F6");
@@ -419,6 +436,17 @@ export const PullRequestFilesChanged = (props: Props) => {
 
 	return (
 		<>
+			{(errorMessage || repoErrorMessage) && (
+				<PRErrorBox>
+					<Icon name="alert" className="alert" />
+					<div className="message">
+						{errorMessage || repoErrorMessage}
+						<p style={{ margin: "5px 0 0 0" }}>
+							Diffs can be viewed under <Icon name="diff" /> Diff Hunks view.
+						</p>
+					</div>
+				</PRErrorBox>
+			)}
 			{changedFiles.length > 0 && (
 				<Meta id="changed-files">
 					<MetaLabel>
@@ -458,12 +486,6 @@ export const PullRequestFilesChanged = (props: Props) => {
 						)}
 					</MetaLabel>
 				</Meta>
-			)}
-			{errorMessage && (
-				<div style={{ margin: "10px 0 10px 0" }}>
-					<Icon name="alert" className="margin-right" />
-					{errorMessage}
-				</div>
 			)}
 			{changedFiles}
 		</>

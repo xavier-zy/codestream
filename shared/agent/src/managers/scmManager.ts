@@ -1292,7 +1292,7 @@ export class ScmManager {
 		const { git } = SessionContainer.instance();
 
 		const repo = await git.getRepositoryById(request.repoId);
-		if (!repo) throw new Error(`Could not load repo with ID ${request.repoId}`);
+		if (!repo) throw new Error(`fetchAllRemotes: Could not load repo with ID ${request.repoId}`);
 
 		await git.fetchAllRemotes(repo.path);
 		return true;
@@ -1313,7 +1313,8 @@ export class ScmManager {
 			repoPath = await repositoryMappings.getByRepoId(request.repoId);
 		}
 
-		if (!repoPath) throw new Error(`Could not load repo with ID ${request.repoId}`);
+		if (!repoPath)
+			throw new Error(`getFileContentsAtRevision: Could not load repo with ID ${request.repoId}`);
 
 		const filePath = paths.join(repoPath, request.path);
 		if (request.fetchAllRemotes) {
@@ -1338,7 +1339,7 @@ export class ScmManager {
 			repoPath = await repositoryMappings.getByRepoId(request.repoId);
 		}
 
-		if (!repoPath) throw new Error(`Could not load repo with ID ${request.repoId}`);
+		if (!repoPath) throw new Error(`diffBranches: Could not load repo with ID ${request.repoId}`);
 
 		const filesChanged = (await git.diffBranches(repoPath, request.baseRef, request.headRef)) || [];
 		return {
@@ -1362,7 +1363,14 @@ export class ScmManager {
 			repoPath = await repositoryMappings.getByRepoId(request.repoId);
 		}
 
-		if (!repoPath) throw new Error(`Could not load repo with ID ${request.repoId}`);
+		if (!repoPath) {
+			return {
+				sha: "",
+				error: {
+					type: "REPO_NOT_FOUND"
+				}
+			};
+		}
 		try {
 			const shas = [request.baseSha, request.headSha];
 			const results = await Promise.all(

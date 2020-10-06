@@ -1025,3 +1025,21 @@ export const PRIAmRequested = styled.div`
 		margin-left: auto;
 	}
 `;
+
+export const PRErrorBox = styled.div`
+	margin: 10px 10px 20px 0;
+	border: 1px solid ${PENDING_BORDER_COLOR};
+	background: ${PENDING_BACKGROUND_COLOR};
+	border-radius: 5px;
+	padding: 10px;
+	display: flex;
+	align-items: center;
+	.icon.alert {
+		display: inline-block;
+		transform: scale(1.5);
+		margin: 0 10px;
+	}
+	.message {
+		margin-left: 10px;
+	}
+`;

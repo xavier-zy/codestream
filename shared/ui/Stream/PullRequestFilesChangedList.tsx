@@ -75,6 +75,7 @@ const PRProgressLine = styled.div`
 	width: 100%;
 	height: 8px;
 	border-radius: 4px;
+	overflow: hidden;
 	background: var(--base-border-color);
 	position: absolute;
 	bottom: 0;
@@ -83,7 +84,6 @@ const PRProgressLine = styled.div`
 
 const PRProgressFill = styled.div`
 	height: 8px;
-	border-radius: 4px 0 0 4px;
 	background: var(--text-color-info);
 	// background: #7aba5d;
 	background-color: #24a100;

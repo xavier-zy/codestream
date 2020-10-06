@@ -39,7 +39,6 @@ import { InlineMenu } from "../src/components/controls/InlineMenu";
 import { withSearchableItems, WithSearchableItemsProps } from "./withSearchableItems";
 import { ReposState } from "../store/repos/types";
 import { getActiveCodemarks } from "../store/codemarks/reducer";
-import { orderBy } from "lodash-es";
 import { CSMarker } from "@codestream/protocols/api";
 
 export enum CodemarkDomainType {
@@ -449,15 +448,13 @@ export class SimpleCodemarksForFile extends Component<Props, State> {
 	};
 
 	render() {
-		const { fileNameToFilterFor = "", codemarkDomain, textEditorUri, count } = this.props;
+		const { fileNameToFilterFor = "", textEditorUri = "", codemarkDomain, count } = this.props;
 		const {
 			showHiddenField,
 			showPRCommentsField,
 			codemarkSortTypeField,
 			wrapCommentsField
 		} = this.state;
-
-		const file = uriToFilePath(textEditorUri || "");
 
 		const domainIcon =
 			codemarkDomain === CodemarkDomainType.File
@@ -469,7 +466,7 @@ export class SimpleCodemarksForFile extends Component<Props, State> {
 				: "team";
 		const subtitle =
 			codemarkDomain === CodemarkDomainType.File
-				? fs.pathBasename(file) || "[no file]"
+				? fs.pathBasename(textEditorUri) || "[no file]"
 				: codemarkDomain === CodemarkDomainType.Directory
 				? fs.pathDirname(fileNameToFilterFor) || "[no file]"
 				: codemarkDomain === CodemarkDomainType.Repo
@@ -479,7 +476,7 @@ export class SimpleCodemarksForFile extends Component<Props, State> {
 		const domainItems = [
 			{
 				label: "Current File",
-				subtle: fs.pathBasename(file),
+				subtle: fs.pathBasename(textEditorUri),
 				key: "file",
 				icon: <Icon name="file" />,
 				action: () => this.switchDomain(CodemarkDomainType.File),

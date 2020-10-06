@@ -70,8 +70,12 @@ export function ConfigurePullRequestQuery(props: Props) {
 	const [isLoading, setIsLoading] = React.useState(false);
 
 	const providerDisplayName = React.useMemo(() => {
-		const { name } = derivedState.providers[providerIdField] || {};
-		return PROVIDER_MAPPINGS[name] ? PROVIDER_MAPPINGS[name].displayName : "";
+		if (derivedState.providers[providerIdField]) {
+			const { name } = derivedState.providers[providerIdField];
+			return PROVIDER_MAPPINGS[name] ? PROVIDER_MAPPINGS[name].displayName : "";
+		} else {
+			return "";
+		}
 	}, [providerIdField]);
 
 	const fetchTestPRs = async query => {

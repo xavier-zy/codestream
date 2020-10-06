@@ -458,7 +458,7 @@ class MarkerActions extends React.Component<Props, State> {
 									</div>
 								</Tooltip>
 							)}
-							{canCompare && (
+							{/* canCompare && (
 								<Tooltip title="Compare current code to original" placement="bottomRight" delay={1}>
 									<div
 										className="codemark-actions-button"
@@ -467,7 +467,7 @@ class MarkerActions extends React.Component<Props, State> {
 										Compare
 									</div>
 								</Tooltip>
-							)}
+							) */}
 							{canOpenRevision && (
 								<a
 									id="open-revision-button"

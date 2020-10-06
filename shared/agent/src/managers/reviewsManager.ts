@@ -23,6 +23,7 @@ import {
 	EndReviewRequest,
 	EndReviewRequestType,
 	EndReviewResponse,
+	FetchReviewCheckpointDiffsResponse,
 	FetchReviewsRequest,
 	FetchReviewsRequestType,
 	FetchReviewsResponse,
@@ -69,6 +70,7 @@ import { log, lsp, lspHandler, Strings } from "../system";
 import { gate } from "../system/decorators/gate";
 import { xfs } from "../xfs";
 import { CachedEntityManagerBase, Id } from "./entityManager";
+import Timer = NodeJS.Timer;
 
 const uriRegexp = /codestream-diff:\/\/(\w+)\/(\w+)\/(\w+)\/(\w+)\/(.+)/;
 
@@ -124,6 +126,12 @@ export class ReviewsManager extends CachedEntityManagerBase<CSReview> {
 		return diffsByRepo[repoId];
 	}
 
+	private diffsCache = new Map<
+		string,
+		{ version: number; responses: FetchReviewCheckpointDiffsResponse }
+	>();
+	private diffsCacheTimeout: Timer | undefined;
+
 	@gate()
 	async getAllDiffs(
 		reviewId: string
@@ -132,7 +140,8 @@ export class ReviewsManager extends CachedEntityManagerBase<CSReview> {
 			string,
 			{ [repoId: string]: { checkpoint: CSReviewCheckpoint; diff: CSReviewDiffs }[] }
 		>();
-		const responses = await this.session.api.fetchReviewCheckpointDiffs({ reviewId });
+		const responses = await this.getReviewCheckpointDiffsResponses(reviewId);
+
 		if (responses && responses.length) {
 			const result: {
 				[repoId: string]: { checkpoint: CSReviewCheckpoint; diff: CSReviewDiffs }[];
@@ -157,6 +166,26 @@ export class ReviewsManager extends CachedEntityManagerBase<CSReview> {
 		}
 
 		return diffsByRepo;
+	}
+
+	private async getReviewCheckpointDiffsResponses(reviewId: string) {
+		let responses;
+		const cached = this.diffsCache.get(reviewId);
+		const { version } = await this.getById(reviewId);
+		if (cached && cached.version === version) {
+			Logger.debug("ReviewsManager.getReviewCheckpointDiffsResponses: cache hit");
+			responses = cached.responses;
+		} else {
+			Logger.debug("ReviewsManager.getReviewCheckpointDiffsResponses: cache miss");
+			responses = await this.session.api.fetchReviewCheckpointDiffs({ reviewId });
+			version && this.diffsCache.set(reviewId, { version, responses });
+		}
+		this.diffsCacheTimeout && clearTimeout(this.diffsCacheTimeout);
+		this.diffsCacheTimeout = setTimeout(() => {
+			Logger.debug("ReviewsManager.getReviewCheckpointDiffsResponses: clearing cache");
+			this.diffsCache.clear();
+		}, 10 * 60 * 1000);
+		return responses;
 	}
 
 	@lspHandler(GetReviewContentsLocalRequestType)
@@ -351,12 +380,14 @@ export class ReviewsManager extends CachedEntityManagerBase<CSReview> {
 			d => d.newFileName === fileInfo.oldFile || d.oldFileName === fileInfo.oldFile
 		);
 		const leftBaseRelativePath =
-			(leftDiff && leftDiff.oldFileName !== "/dev/null" && leftDiff.oldFileName) || fileInfo.oldFile;
+			(leftDiff && leftDiff.oldFileName !== "/dev/null" && leftDiff.oldFileName) ||
+			fileInfo.oldFile;
 		const rightDiff = diff.rightDiffs?.find(
 			d => d.newFileName === fileInfo.file || d.oldFileName === fileInfo.file
 		);
 		const rightBaseRelativePath =
-			(rightDiff && rightDiff.oldFileName !== "/dev/null" && rightDiff.oldFileName) || fileInfo.file;
+			(rightDiff && rightDiff.oldFileName !== "/dev/null" && rightDiff.oldFileName) ||
+			fileInfo.file;
 
 		const repo = await git.getRepositoryById(repoId);
 		if (!repo) {

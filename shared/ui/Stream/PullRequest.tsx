@@ -737,7 +737,7 @@ export const PullRequest = () => {
 										? 0
 										: pr.files.nodes
 												.map(_ => _.additions)
-												.reduce((acc, val) => acc + val)
+												.reduce((acc, val) => acc + val, 0)
 												.toString()
 												.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
 								</span>{" "}
@@ -747,7 +747,7 @@ export const PullRequest = () => {
 										? 0
 										: pr.files.nodes
 												.map(_ => _.deletions)
-												.reduce((acc, val) => acc + val)
+												.reduce((acc, val) => acc + val, 0)
 												.toString()
 												.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
 								</span>

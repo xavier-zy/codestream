@@ -105,6 +105,7 @@ const PRProgressFill = styled.div`
 	position: absolute;
 	bottom: 0;
 	left: 0;
+	transition: width 0.2s;
 `;
 
 const STATUS_MAP = {

@@ -13,7 +13,8 @@ import {
 	PRActionCommentCard,
 	PRCodeComment,
 	PRThreadedCommentCard,
-	PRCodeCommentPatch
+	PRCodeCommentPatch,
+	PRKebabIcon
 } from "./PullRequestComponents";
 import React, { PropsWithChildren, useCallback, useState } from "react";
 import { PRHeadshot, Headshot } from "../src/components/Headshot";
@@ -640,6 +641,60 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 									</div>
 								</PRTimelineItem>
 							</div>
+						);
+					}
+					case "ReferencedEvent": {
+						const commitUrl = pr.url.replace(
+							/\/pull\/\d+$/,
+							`/commit/${item.commit.abbreviatedOid}`
+						);
+						const { author, committer } = item.commit;
+						return (
+							<>
+								<PRTimelineItem key={index} className="tall">
+									<Icon name="cross-reference" className="circled" />
+									<PRTimelineItemBody>
+										<PRHeadshotName key={index} person={item.actor} />
+										added a commit that referenced this pull request
+										<Timestamp time={item.createdAt!} relative />
+										<div style={{ display: "flex", alignItems: "flex-start", marginTop: "10px" }}>
+											<PRHeadshot key={index} size={20} person={author} />
+											{committer && author.name !== committer.name && (
+												<PRHeadshot className="left-pad" size={20} person={committer} />
+											)}
+											<div className="monospace left-pad">
+												<Link href={commitUrl} className="monospace">
+													<MarkdownText
+														excludeParagraphWrap
+														excludeOnlyEmoji
+														text={item.commit.messageHeadline || ""}
+													/>
+												</Link>
+												<PRKebabIcon onClick={() => expandComment(item.commit.abbreviatedOid)}>
+													<Icon name="kebab-horizontal" className="no-flex clickable" />
+												</PRKebabIcon>
+
+												{expandedComments[item.commit.abbreviatedOid] && (
+													<>
+														<br />
+														<br />
+														<MarkdownText
+															excludeParagraphWrap
+															excludeOnlyEmoji
+															text={item.commit.messageBody || ""}
+														/>
+													</>
+												)}
+											</div>
+											<div className="monospace sha">
+												<Link href={commitUrl} className="monospace">
+													{item.commit.abbreviatedOid}
+												</Link>
+											</div>
+										</div>
+									</PRTimelineItemBody>
+								</PRTimelineItem>
+							</>
 						);
 					}
 					case "AssignedEvent": {

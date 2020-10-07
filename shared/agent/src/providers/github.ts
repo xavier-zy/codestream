@@ -2674,6 +2674,21 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 				state
 			  }
 			  oid
+			  abbreviatedOid
+			  author {
+				avatarUrl
+				name
+				user {
+				  login
+				}
+			  }
+			  committer {
+				avatarUrl
+				name
+				user {
+				  login
+				}
+			  }
 			}
 		  }`,
 			`... on RemovedFromProjectEvent {

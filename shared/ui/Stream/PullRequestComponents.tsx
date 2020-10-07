@@ -536,7 +536,7 @@ export const PRTimelineItem = styled.div`
 		margin-left: 5px;
 		margin-right: 0;
 	}
-	.icon {
+	.icon:not(.no-flex) {
 		flex-grow: 0;
 		flex-shrink: 0;
 		margin-right: 10px;
@@ -1106,5 +1106,16 @@ export const PRCodeCommentWrapper = styled.div`
 		${PRHeadshot} {
 			display: none;
 		}
+	}
+`;
+
+export const PRKebabIcon = styled.span`
+	background: var(--base-background-color);
+	padding: 0 5px;
+	display: inline-block;
+	marginleft: 5px;
+	cursor: pointer;
+	&:hover {
+		background: var(--app-background-color-hover);
 	}
 `;

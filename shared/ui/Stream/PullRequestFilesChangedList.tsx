@@ -223,7 +223,8 @@ export const PullRequestFilesChangedList = (props: Props) => {
 
 	const mode = derivedState.pullRequestFilesChangedMode;
 
-	const openFile = async filename => {
+	const openFile = async record => {
+		const { filename, patch } = record;
 		let repoRoot = currentRepoRoot;
 		if (!repoRoot) {
 			const response = await HostApi.instance.send(GetReposScmRequestType, {
@@ -239,9 +240,21 @@ export const PullRequestFilesChangedList = (props: Props) => {
 			}
 		}
 
+		let startLine = 1;
+		if (patch) {
+			// this data looks like this => `@@ -234,3 +234,20 @@`
+			const match = patch.match("@@ (.+) (.+) @@");
+			if (match && match.length >= 2) {
+				try {
+					// the @@ line is actually not the first line... so subtract 1
+					startLine = parseInt(match[2].split(",")[0].replace("+", ""), 10) - 1;
+				} catch {}
+			}
+		}
+
 		const result = await HostApi.instance.send(EditorRevealRangeRequestType, {
 			uri: path.join("file://", repoRoot, filename),
-			range: Range.create(0, 0, 0, 0)
+			range: Range.create(startLine, 0, startLine, 0)
 		});
 
 		if (!result.success) {
@@ -392,11 +405,10 @@ export const PullRequestFilesChangedList = (props: Props) => {
 												className="clickable action"
 												title="Open Local File"
 												placement="bottom"
-												delay={1}
 												onClick={async e => {
 													e.stopPropagation();
 													e.preventDefault();
-													openFile(_.filename);
+													openFile(_);
 												}}
 											/>
 										}

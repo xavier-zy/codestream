@@ -34,7 +34,9 @@ export class NotificationsController implements Disposable {
 				`Pull Request "${pullRequestNotification.pullRequest.title}" ${pullRequestNotification.queryName}`,
 				...actions
 			);
-			Container.agent.telemetry.track("Toast Notification", { Content: "PR" });
+			if (!result) {
+				Container.agent.telemetry.track("Toast Notification", { Content: "PR" });
+			}
 
 			if (result === actions[0]) {
 				Container.webview.openPullRequest(
@@ -132,7 +134,9 @@ export class NotificationsController implements Disposable {
 
 			...actions
 		);
-		Container.agent.telemetry.track("Toast Notification", { Content: toastContentType });
+		if (!result) {
+			Container.agent.telemetry.track("Toast Notification", { Content: toastContentType });
+		}
 
 		if (result === actions[0]) {
 			if (codemark) {

@@ -354,6 +354,10 @@ export class SimpleFilterSearchPanel extends Component<Props, State> {
 			filters.type = "review";
 			text = text.replace(/\s*(is|type):fr\s*/, " ");
 		}
+		if (text.match(/\b(is|type):cr\b/)) {
+			filters.type = "review";
+			text = text.replace(/\s*(is|type):cr\s*/, " ");
+		}
 		match = text.match(/\bauthor:@(\S+)(\s|$)/);
 		if (match) {
 			filters.author = match[1] === "me" ? me : match[1].toLowerCase();

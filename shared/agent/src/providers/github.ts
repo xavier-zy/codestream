@@ -1356,6 +1356,40 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 		return response;
 	}
 
+	async getPendingReview(request: { pullRequestId: string }) {
+		const existingReview = await this.query<any>(
+			`query ExistingReviews($pullRequestId:ID!) {
+				rateLimit {
+					cost
+					resetAt
+					remaining
+					limit
+				}
+				node(id: $pullRequestId) {
+					... on PullRequest {
+						id
+						reviews(last: 100) {
+							nodes {
+								state
+								viewerDidAuthor
+							}
+						}
+					}
+				}
+		 	 }
+		  `,
+			{
+				pullRequestId: request.pullRequestId
+			}
+		);
+
+		return (
+			existingReview?.node?.reviews?.nodes?.find(
+				(_: any) => _.viewerDidAuthor && _.state === "PENDING"
+			) != null
+		);
+	}
+
 	async submitReview(request: { pullRequestId: string; text: string; eventType: string }) {
 		if (!request.eventType) {
 			request.eventType = "COMMENT";
@@ -1370,42 +1404,14 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 			throw new Error("Invalid eventType");
 		}
 
-		const existingReview = await this.query<any>(
-			`query ExistingReviews($pullRequestId:ID!) {
-				rateLimit {
-				cost
-				resetAt
-				remaining
-				limit
-			}
-			node(id: $pullRequestId) {
-			  ... on PullRequest {
-				id
-				reviews(last: 100) {
-				  nodes {
-					state
-					viewerDidAuthor
-				  }
-				}
-			  }
-			}
-		  }
-		  `,
-			{
-				pullRequestId: request.pullRequestId
-			}
-		);
-		if (
-			existingReview?.node?.reviews?.nodes?.length === 0 ||
-			existingReview?.node?.reviews?.nodes?.find((_: any) => _.viewerDidAuthor) == null
-		) {
+		const existingReview = await this.getPendingReview(request);
+		if (!existingReview) {
 			void (await this.mutate<any>(
 				`mutation AddPullRequestReview($pullRequestId:String!) {
-				addPullRequestReview(input: {pullRequestId: $pullRequestId, body: ""}) {
-					clientMutationId
-				}
-			  }
-			  `,
+					addPullRequestReview(input: {pullRequestId: $pullRequestId, body: ""}) {
+						clientMutationId
+					}
+			  	}`,
 				{
 					pullRequestId: request.pullRequestId
 				}

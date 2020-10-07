@@ -486,6 +486,11 @@ export const PRThreadedCommentCard = styled.div`
 		border: 1px solid var(--base-border-color);
 		border-radius: 5px;
 	}
+	@media only screen and (max-width: 630px) {
+		${PRReactions} {
+			margin-left: -5px;
+		}
+	}
 `;
 
 export const PRConversation = styled.div`
@@ -1082,11 +1087,24 @@ export const PRCommentsInPatch = styled.div`
 	${PRCard} {
 		max-width: min(600px, calc(100vw - 80px));
 	}
+	@media only screen and (max-width: 630px) {
+		${PRReactions} {
+			margin-left: -5px;
+		}
+	}
 `;
 export const PRCodeCommentReplyInput = styled.div`
 	margin: 0 0 0 40px;
 	border: 1px solid var(--base-border-color);
 	@media only screen and (max-width: 630px) {
 		margin-left: 0;
+	}
+`;
+
+export const PRCodeCommentWrapper = styled.div`
+	@media only screen and (max-width: 630px) {
+		${PRHeadshot} {
+			display: none;
+		}
 	}
 `;

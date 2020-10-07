@@ -4,6 +4,7 @@ import {
 	PRActionIcons,
 	PRButtonRow,
 	PRCodeCommentBody,
+	PRCodeCommentWrapper,
 	PRThreadedCommentHeader
 } from "./PullRequestComponents";
 import React, { PropsWithChildren, useCallback, useState } from "react";
@@ -154,7 +155,7 @@ export const PullRequestCodeComment = (props: PropsWithChildren<Props>) => {
 		);
 	}
 	return (
-		<>
+		<PRCodeCommentWrapper>
 			<PRCodeCommentBody>
 				{item.isMinimized && !expandedComments[item.id] ? (
 					<PullRequestMinimizedComment
@@ -325,6 +326,6 @@ export const PullRequestCodeComment = (props: PropsWithChildren<Props>) => {
 					)}
 				</>
 			)}
-		</>
+		</PRCodeCommentWrapper>
 	);
 };

@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { CodeStreamState } from "../store";
 import styled from "styled-components";
-import { PRButtonRow, PRCodeCommentReply } from "./PullRequestComponents";
+import { PRButtonRow, PRCodeCommentReply, PRCodeCommentReplyInput } from "./PullRequestComponents";
 import { HostApi } from "../webview-api";
 import {
 	ExecuteThirdPartyTypedType,
@@ -90,14 +90,7 @@ export const PullRequestReplyComment = styled((props: Props) => {
 		<PRCodeCommentReply>
 			<PRHeadshot size={30} person={pr.viewer} />
 
-			<div
-				style={{
-					margin: "0 0 0 40px",
-					border: "1px solid var(--base-border-color)"
-				}}
-				className={open ? "open-comment" : ""}
-				onClick={() => setOpen(true)}
-			>
+			<PRCodeCommentReplyInput className={open ? "open-comment" : ""} onClick={() => setOpen(true)}>
 				<MessageInput
 					multiCompose
 					text={text}
@@ -106,7 +99,7 @@ export const PullRequestReplyComment = styled((props: Props) => {
 					onSubmit={handleComment}
 					__onDidRender={stuff => props.__onDidRender(stuff)}
 				/>
-			</div>
+			</PRCodeCommentReplyInput>
 			{open && (
 				<PRButtonRow>
 					<Button variant="secondary" onClick={handleCancelComment}>

@@ -13,7 +13,6 @@ import {
 	PRActionCommentCard,
 	PRCodeComment,
 	PRThreadedCommentCard,
-	PRButtonRow,
 	PRCodeCommentPatch
 } from "./PullRequestComponents";
 import React, { PropsWithChildren, useCallback, useState } from "react";
@@ -21,7 +20,10 @@ import { PRHeadshot, Headshot } from "../src/components/Headshot";
 import Timestamp from "./Timestamp";
 import Icon from "./Icon";
 import { MarkdownText } from "./MarkdownText";
-import { FetchThirdPartyPullRequestPullRequest } from "@codestream/protocols/agent";
+import {
+	FetchThirdPartyPullRequestPullRequest,
+	GetReposScmRequestType
+} from "@codestream/protocols/agent";
 import Tag from "./Tag";
 import { Link } from "./Link";
 import { PRHeadshotName } from "../src/components/HeadshotName";
@@ -40,6 +42,10 @@ import { PullRequestFinishReview } from "./PullRequestFinishReview";
 import { PullRequestEditingComment } from "./PullRequestEditingComment";
 import { api } from "../store/providerPullRequests/actions";
 import { PullRequestCodeComment } from "./PullRequestCodeComment";
+import * as path from "path-browserify";
+import { Range } from "vscode-languageserver-types";
+import { EditorRevealRangeRequestType } from "@codestream/protocols/webview";
+import Tooltip from "./Tooltip";
 
 export const GHOST = {
 	login: "ghost",
@@ -179,6 +185,8 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 			currentRepo: getProviderPullRequestRepo(state)
 		};
 	});
+
+	const [currentRepoRoot, setCurrentRepoRoot] = React.useState("");
 
 	const timelineNodes = pr.timelineItems.nodes;
 	return (
@@ -442,6 +450,36 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 												}
 											}
 
+											const openFile = async filePath => {
+												let repoRoot = currentRepoRoot;
+												if (!repoRoot) {
+													const response = await HostApi.instance.send(GetReposScmRequestType, {
+														inEditorOnly: false
+													});
+													if (!response.repositories) return;
+													const currentRepoInfo = response.repositories.find(
+														r => r.id === derivedState.currentRepo!.id
+													);
+													if (currentRepoInfo) {
+														setCurrentRepoRoot(currentRepoInfo.path);
+														repoRoot = currentRepoInfo.path;
+													}
+												}
+
+												const result = await HostApi.instance.send(EditorRevealRangeRequestType, {
+													uri: path.join("file://", repoRoot, filePath),
+													range: Range.create(startLine, 0, startLine, 0)
+												});
+
+												// if (!result.success) {
+												// 	setErrorMessage("Could not open file");
+												// }
+
+												HostApi.instance.track("PR File Viewed From Timeline", {
+													Host: props.pr && props.pr.providerId
+												});
+											};
+
 											const goDiff = async filePath => {
 												const request = {
 													baseBranch: pr.baseRefName,
@@ -460,24 +498,53 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 											return (
 												<PRThreadedCommentCard key={commentIndex}>
 													<PRCodeComment>
-														<div className="row-with-icon-actions monospace ellipsis-left-container no-hover">
+														<div className="row-with-icon-actions monospace ellipsis-left-container no-hover with-icon-actions">
 															<Icon name="file" />
 															<span className="file-info ellipsis-left">
-																<bdi
-																	dir="ltr"
-																	className={pr.forkPointSha ? "link" : ""}
-																	onClick={
-																		pr.forkPointSha
-																			? async e => {
-																					e.preventDefault();
-																					goDiff(comment.path);
-																			  }
-																			: undefined
-																	}
-																>
-																	{comment.path}
-																</bdi>
+																<Tooltip title="Open Diff" placement="bottom" delay={1}>
+																	<bdi
+																		dir="ltr"
+																		className={pr.forkPointSha ? "link" : ""}
+																		onClick={
+																			pr.forkPointSha
+																				? async e => {
+																						e.preventDefault();
+																						goDiff(comment.path);
+																				  }
+																				: undefined
+																		}
+																	>
+																		{comment.path}
+																	</bdi>
+																</Tooltip>
 															</span>
+															<div className="actions" style={{ right: 0 }}>
+																<Link
+																	href={pr.url.replace(
+																		/\/pull\/\d+$/,
+																		`/blob/${pr.headRefOid}/${comment.path}`
+																	)}
+																>
+																	<Icon
+																		title="Open File on Remote"
+																		placement="bottom"
+																		name="link-external"
+																		className="clickable margin-right"
+																	/>
+																</Link>
+																<Icon
+																	name="goto-file"
+																	className="clickable"
+																	title="Open Local File"
+																	placement="bottom"
+																	delay={1}
+																	onClick={async e => {
+																		e.stopPropagation();
+																		e.preventDefault();
+																		openFile(comment.path);
+																	}}
+																/>
+															</div>
 														</div>
 														<PRCodeCommentPatch>
 															<PullRequestPatch patch={comment.diffHunk} filename={comment.path} />

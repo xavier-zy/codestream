@@ -105,8 +105,8 @@ export const getPullRequestConversations = (providerId: string, id: string) => a
 		return response;
 	} catch (error) {
 		logError(`failed to get pullRequest conversations: ${error}`, { providerId, id });
+		return { error };
 	}
-	return undefined;
 };
 
 /**

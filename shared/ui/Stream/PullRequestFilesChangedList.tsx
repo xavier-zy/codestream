@@ -12,6 +12,7 @@ import { PullRequestPatch } from "./PullRequestPatch";
 import copy from "copy-to-clipboard";
 import {
 	FetchThirdPartyPullRequestPullRequest,
+	GetReposScmRequestType,
 	ReadTextFileRequestType,
 	WriteTextFileRequestType
 } from "@codestream/protocols/agent";
@@ -21,6 +22,11 @@ import { PullRequestFinishReview } from "./PullRequestFinishReview";
 import { Checkbox } from "../src/components/Checkbox";
 import { HostApi } from "../webview-api";
 import { Link } from "./Link";
+import { getProviderPullRequestRepo } from "../store/providerPullRequests/reducer";
+import { EditorRevealRangeRequestType } from "@codestream/protocols/webview";
+import * as path from "path-browserify";
+import { Range } from "vscode-languageserver-types";
+import Tooltip from "./Tooltip";
 
 export const PRDiffHunks = styled.div`
 	font-family: Menlo, Consolas, "DejaVu Sans Mono", monospace;
@@ -43,6 +49,12 @@ export const PRDiffHunk = styled.div`
 		padding: 10px;
 		background: var(--base-background-color);
 		border-bottom: 1px solid var(--base-border-color);
+		width: 100%;
+		overflow: hidden;
+		.filename-container {
+			overflow: hidden;
+			text-overflow: ellipsis;
+		}
 		&.hidden {
 			border-bottom: none;
 			border-radius: 5px;
@@ -53,6 +65,7 @@ export const PRDiffHunk = styled.div`
 			margin-top: -2px;
 		}
 		.viewed {
+			flex-shrink: 0;
 			margin-left: auto;
 		}
 		a .icon {
@@ -62,13 +75,15 @@ export const PRDiffHunk = styled.div`
 `;
 
 const PRProgress = styled.div`
-	float: right;
+	flex-grow: 1;
+	margin-left: auto;
 	margin-right: 10px;
 	padding-bottom: 12px;
 	position: relative;
 	.icon {
 		margin-left: 10px;
 	}
+	max-width: 150px;
 `;
 
 const PRProgressLine = styled.div`
@@ -119,11 +134,13 @@ export const PullRequestFilesChangedList = (props: Props) => {
 	const dispatch = useDispatch();
 	const derivedState = useSelector((state: CodeStreamState) => {
 		return {
+			currentRepo: getProviderPullRequestRepo(state),
 			pullRequestFilesChangedMode: state.preferences.pullRequestFilesChangedMode || "files"
 		};
 	});
 
 	const [finishReviewOpen, setFinishReviewOpen] = useState(false);
+	const [errorMessage, setErrorMessage] = React.useState<string | React.ReactNode>("");
 
 	const setMode = mode => {
 		dispatch(setUserPreference(["pullRequestFilesChangedMode"], mode));
@@ -179,6 +196,22 @@ export const PullRequestFilesChangedList = (props: Props) => {
 		})();
 	}, [pr, filesChanged]);
 
+	const commentMap = React.useMemo(() => {
+		const map = {} as any;
+		const reviews = pr
+			? pr.timelineItems.nodes.filter(node => node.__typename === "PullRequestReview")
+			: [];
+		reviews.forEach(review => {
+			if (review.comments) {
+				review.comments.nodes.forEach(comment => {
+					if (!map[comment.path]) map[comment.path] = [];
+					map[comment.path].push({ review, comment });
+				});
+			}
+		});
+		return map;
+	}, [pr]);
+
 	if (isLoading || isLoadingVisited)
 		return (
 			<div style={{ marginTop: "100px" }}>
@@ -192,32 +225,52 @@ export const PullRequestFilesChangedList = (props: Props) => {
 
 	const openFile = async filename => {
 		let repoRoot = currentRepoRoot;
-		// if (!repoRoot) {
-		// 	const response = await HostApi.instance.send(GetReposScmRequestType, {
-		// 		inEditorOnly: false
-		// 	});
-		// 	if (!response.repositories) return;
-		// 	const currentRepoInfo = response.repositories.find(
-		// 		r => r.id === derivedState.currentRepo!.id
-		// 	);
-		// 	if (currentRepoInfo) {
-		// 		setCurrentRepoRoot(currentRepoInfo.path);
-		// 		repoRoot = currentRepoInfo.path;
-		// 	}
-		// }
+		if (!repoRoot) {
+			const response = await HostApi.instance.send(GetReposScmRequestType, {
+				inEditorOnly: false
+			});
+			if (!response.repositories) return;
+			const currentRepoInfo = response.repositories.find(
+				r => r.id === derivedState.currentRepo!.id
+			);
+			if (currentRepoInfo) {
+				setCurrentRepoRoot(currentRepoInfo.path);
+				repoRoot = currentRepoInfo.path;
+			}
+		}
 
-		// const result = await HostApi.instance.send(EditorRevealRangeRequestType, {
-		// 	uri: path.join("file://", repoRoot, filename),
-		// 	range: Range.create(0, 0, 0, 0)
-		// });
+		const result = await HostApi.instance.send(EditorRevealRangeRequestType, {
+			uri: path.join("file://", repoRoot, filename),
+			range: Range.create(0, 0, 0, 0)
+		});
 
-		// if (!result.success) {
-		// 	setErrorMessage("Could not open file");
-		// }
+		if (!result.success) {
+			setErrorMessage("Could not open file");
+		}
 
-		// HostApi.instance.track("PR File Viewed", {
-		// 	Host: props.pr && props.pr.providerId
-		// });
+		HostApi.instance.track("PR File Viewed", {
+			Host: props.pr && props.pr.providerId
+		});
+	};
+
+	let insertText: Function;
+	let insertNewline: Function;
+	let focusOnMessageInput: Function;
+
+	const __onDidRender = functions => {
+		insertText = functions.insertTextAtCursor;
+		insertNewline = functions.insertNewlineAtCursor;
+		focusOnMessageInput = functions.focus;
+	};
+
+	const quote = text => {
+		if (!insertText) return;
+		// handleTextInputFocus(comment.databaseId);
+		focusOnMessageInput &&
+			focusOnMessageInput(() => {
+				insertText && insertText(text.replace(/^/gm, "> "));
+				insertNewline && insertNewline();
+			});
 	};
 
 	const totalFiles = filesChanged.length;
@@ -226,49 +279,56 @@ export const PullRequestFilesChangedList = (props: Props) => {
 
 	return (
 		<>
-			<PRSelectorButtons>
-				<span className={mode == "files" ? "selected" : ""} onClick={() => setMode("files")}>
-					<Icon name="list-flat" title="List View" placement="bottom" />
-				</span>
-				<span className={mode == "tree" ? "selected" : ""} onClick={() => setMode("tree")}>
-					<Icon name="list-tree" title="Tree View" placement="bottom" />
-				</span>
-				<span className={mode == "hunks" ? "selected" : ""} onClick={() => setMode("hunks")}>
-					<Icon name="file-diff" title="Diff Hunks" placement="bottom" />
-				</span>
-			</PRSelectorButtons>
-			{pr && !pr.pendingReview && (
-				<PRSubmitReviewButton style={{ marginTop: 0, marginRight: "10px" }}>
-					<Button variant="success" onClick={() => setFinishReviewOpen(!finishReviewOpen)}>
-						Review<span className="wide-text"> changes</span> <Icon name="chevron-down" />
-					</Button>
-					{finishReviewOpen && (
-						<PullRequestFinishReview
-							pr={pr}
-							mode="dropdown"
-							fetch={props.fetch!}
-							setIsLoadingMessage={props.setIsLoadingMessage!}
-							setFinishReviewOpen={setFinishReviewOpen}
+			<div style={{ display: "flex", alignItems: "center" }}>
+				<div style={{ marginRight: "10px", flexGrow: 2 }}>
+					<PRSelectorButtons>
+						<span className={mode == "files" ? "selected" : ""} onClick={() => setMode("files")}>
+							<Icon name="list-flat" title="List View" placement="bottom" />
+						</span>
+						<span className={mode == "tree" ? "selected" : ""} onClick={() => setMode("tree")}>
+							<Icon name="list-tree" title="Tree View" placement="bottom" />
+						</span>
+						<span className={mode == "hunks" ? "selected" : ""} onClick={() => setMode("hunks")}>
+							<Icon name="file-diff" title="Diff Hunks" placement="bottom" />
+						</span>
+					</PRSelectorButtons>
+				</div>
+				<PRProgress style={{ marginLeft: "auto" }}>
+					{totalVisitedFiles} / {totalFiles}{" "}
+					<span className="wide-text">
+						files viewed{" "}
+						<Icon
+							name="info"
+							placement="bottom"
+							title={
+								<div style={{ width: "250px" }}>
+									Marking files as viewed can help keep track of your progress, but will not affect
+									your submitted review
+								</div>
+							}
 						/>
-					)}
-				</PRSubmitReviewButton>
-			)}
-			<PRProgress>
-				{totalVisitedFiles} / {totalFiles} files viewed{" "}
-				<Icon
-					name="info"
-					placement="bottom"
-					title={
-						<div style={{ width: "250px" }}>
-							Marking files as viewed can help keep track of your progress, but will not affect your
-							submitted review
-						</div>
-					}
-				/>
-				<PRProgressLine>
-					{pct > 0 && <PRProgressFill style={{ width: pct + "%" }} />}
-				</PRProgressLine>
-			</PRProgress>
+					</span>
+					<PRProgressLine>
+						{pct > 0 && <PRProgressFill style={{ width: pct + "%" }} />}
+					</PRProgressLine>
+				</PRProgress>
+				{pr && !pr.pendingReview && (
+					<PRSubmitReviewButton style={{ marginTop: 0, marginRight: "10px" }}>
+						<Button variant="success" onClick={() => setFinishReviewOpen(!finishReviewOpen)}>
+							Review<span className="wide-text"> changes</span> <Icon name="chevron-down" />
+						</Button>
+						{finishReviewOpen && (
+							<PullRequestFinishReview
+								pr={pr}
+								mode="dropdown"
+								fetch={props.fetch!}
+								setIsLoadingMessage={props.setIsLoadingMessage!}
+								setFinishReviewOpen={setFinishReviewOpen}
+							/>
+						)}
+					</PRSubmitReviewButton>
+				)}
+			</div>
 			<div style={{ height: "10px" }} />
 			{mode === "files" || mode === "tree" ? (
 				<PullRequestFilesChanged
@@ -285,6 +345,7 @@ export const PullRequestFilesChangedList = (props: Props) => {
 					unVisitFile={unVisitFile}
 					visitedFiles={visitedFiles}
 					toggleDirectory={toggleDirectory}
+					commentMap={commentMap}
 				/>
 			) : (
 				<PRDiffHunks>
@@ -292,6 +353,7 @@ export const PullRequestFilesChangedList = (props: Props) => {
 						const hideKey = "hidden:" + _.filename;
 						const hidden = visitedFiles[hideKey];
 						const visited = visitedFiles[_.filename];
+						const comments = commentMap[_.filename] || [];
 						return (
 							<PRDiffHunk key={index}>
 								<h1 className={hidden ? "hidden" : ""}>
@@ -300,10 +362,10 @@ export const PullRequestFilesChangedList = (props: Props) => {
 										className="toggle clickable"
 										onClick={() => hideFile(_.filename, !hidden)}
 									/>
-									<span>
-										{_.filename}{" "}
+									<span className="filename-container">
+										<span className="filename">{_.filename}</span>{" "}
 										<Icon
-											title="Copy"
+											title="Copy File Path"
 											placement="bottom"
 											name="copy"
 											className="clickable"
@@ -317,47 +379,54 @@ export const PullRequestFilesChangedList = (props: Props) => {
 												)}
 											>
 												<Icon
-													title="Open on Remote"
+													title="Open File on Remote"
 													placement="bottom"
 													name="link-external"
 													className="clickable"
 												/>{" "}
 											</Link>
 										)}
-										{/*
-										<Icon
-											name="goto-file"
-											className="clickable action"
-											title="Open File"
-											placement="bottom"
-											delay={1}
-											onClick={async e => {
-												e.stopPropagation();
-												e.preventDefault();
-												openFile(_.filename);
-											}}
-										/> */}
-									</span>
-									<Checkbox
-										name={"viewed-" + _.filename}
-										className="viewed"
-										checked={visited}
-										onChange={() =>
-											visited ? unVisitFile(_.filename) : visitFile(_.filename, index)
+										{
+											<Icon
+												name="goto-file"
+												className="clickable action"
+												title="Open Local File"
+												placement="bottom"
+												delay={1}
+												onClick={async e => {
+													e.stopPropagation();
+													e.preventDefault();
+													openFile(_.filename);
+												}}
+											/>
 										}
-										noMargin
-									>
-										Viewed
-									</Checkbox>
+									</span>
+									<Tooltip title="Mark as Viewed" placement="bottom" delay={1}>
+										<span className="viewed">
+											<Checkbox
+												name={"viewed-" + _.filename}
+												checked={visited}
+												onChange={() =>
+													visited ? unVisitFile(_.filename) : visitFile(_.filename, index)
+												}
+												noMargin
+											>
+												<span className="wide-text">Viewed</span>
+											</Checkbox>
+										</span>
+									</Tooltip>
 								</h1>
 								{!hidden && (
 									<PullRequestPatch
-										comment
-										fetch={fetch}
 										pr={pr}
 										patch={_.patch}
 										hunks={_.hunks}
 										filename={_.filename}
+										canComment
+										comments={comments}
+										setIsLoadingMessage={props.setIsLoadingMessage}
+										quote={quote}
+										fetch={props.fetch!}
 									/>
 								)}
 							</PRDiffHunk>

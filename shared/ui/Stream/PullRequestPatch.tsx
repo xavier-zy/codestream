@@ -6,6 +6,8 @@ import styled from "styled-components";
 import Icon from "./Icon";
 import { PullRequestInlineComment } from "./PullRequestInlineComment";
 import { FetchThirdPartyPullRequestPullRequest } from "@codestream/protocols/agent";
+import { PullRequestCodeComment } from "./PullRequestCodeComment";
+import { PRComment, PRCommentsInPatch, PRCard } from "./PullRequestComponents";
 
 const Root = styled.div`
 	font-size: 12px;
@@ -110,8 +112,11 @@ export const PullRequestPatch = (props: {
 	filename: string;
 	className?: string;
 	noHeader?: boolean;
-	comment?: boolean;
+	canComment?: boolean;
+	comments?: { comment: any; review: any }[];
 	pr?: FetchThirdPartyPullRequestPullRequest;
+	setIsLoadingMessage?: Function;
+	quote?: Function;
 }) => {
 	const { fetch, patch, filename, hunks } = props;
 
@@ -148,7 +153,7 @@ export const PullRequestPatch = (props: {
 		const string2 = string.slice(0, 1) + " " + string.slice(1);
 		const html = prettyPrintOne(escapeHtml(string2), extension);
 		const pre = <pre className="prettyprint" dangerouslySetInnerHTML={{ __html: html }} />;
-		if (props.comment) {
+		if (props.canComment) {
 			return (
 				<div className="plus-container">
 					<Icon name="plus" className="plus" onClick={() => openComment(index)} />
@@ -165,20 +170,41 @@ export const PullRequestPatch = (props: {
 					{patch.split("\n").map((_, index) => {
 						if (_ === "\\ No newline at end of file") return null;
 
-						const comment =
-							props.pr && commentOpen[index] ? (
+						const commentForm =
+							props.pr && props.fetch && commentOpen[index] ? (
 								<PRInlineComment>
 									<PullRequestInlineComment
 										pr={props.pr}
 										filename={filename}
 										lineOffsetInHunk={index}
-										fetch={fetch!}
+										fetch={props.fetch}
 										setIsLoadingMessage={() => {}}
 										__onDidRender={() => {}}
 										onClose={() => closeComment(index)}
 									/>
 								</PRInlineComment>
 							) : null;
+
+						const commentsOnLine = (props.comments || []).filter(_ => _.comment.position == index);
+						const comments =
+							commentsOnLine.length === 0 ? null : (
+								<PRCommentsInPatch>
+									{commentsOnLine.map(({ comment, review }, index) => (
+										<PRComment key={index} style={{ margin: 0 }}>
+											<PRCard style={{ maxWidth: "600px" }}>
+												<PullRequestCodeComment
+													pr={props.pr!}
+													fetch={props.fetch!}
+													setIsLoadingMessage={props.setIsLoadingMessage!}
+													item={review}
+													comment={comment}
+													author={comment.author}
+												/>
+											</PRCard>
+										</PRComment>
+									))}
+								</PRCommentsInPatch>
+							);
 
 						if (_.indexOf("@@ ") === 0) {
 							const matches = _.match(/@@ \-(\d+).*? \+(\d+)/);
@@ -189,51 +215,55 @@ export const PullRequestPatch = (props: {
 							}
 							if (props.noHeader) return null;
 							return (
-								<>
+								<React.Fragment key={index}>
 									<div className="line header">
 										{renderLineNum("")}
 										{renderLineNum("")}
 										<pre className="prettyprint">{_}</pre>
 									</div>
-									{comment}
-								</>
+									{comments}
+									{commentForm}
+								</React.Fragment>
 							);
 						} else if (_.indexOf("+") === 0) {
 							rightLine++;
 							return (
-								<>
+								<React.Fragment key={index}>
 									<div className="line added">
 										{renderLineNum("")}
 										{renderLineNum(rightLine)}
 										{syntaxHighlight(_, index)}
 									</div>
-									{comment}
-								</>
+									{comments}
+									{commentForm}
+								</React.Fragment>
 							);
 						} else if (_.indexOf("-") === 0) {
 							leftLine++;
 							return (
-								<>
+								<React.Fragment key={index}>
 									<div className="line deleted">
 										{renderLineNum(leftLine)}
 										{renderLineNum("")}
 										{syntaxHighlight(_, index)}
 									</div>
-									{comment}
-								</>
+									{comments}
+									{commentForm}
+								</React.Fragment>
 							);
 						} else {
 							leftLine++;
 							rightLine++;
 							return (
-								<>
+								<React.Fragment key={index}>
 									<div className="line same">
 										{renderLineNum(leftLine)}
 										{renderLineNum(rightLine)}
 										{syntaxHighlight(_, index)}
 									</div>
-									{comment}
-								</>
+									{comments}
+									{commentForm}
+								</React.Fragment>
 							);
 						}
 					})}

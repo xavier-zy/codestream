@@ -44,6 +44,7 @@ export const PullRequestFilesChangedTab = (props: {
 				status: STATUS_MAP[_.status]
 			};
 		});
+		filesChanged.sort((a, b) => a.file.localeCompare(b.file));
 		setFilesChanged(filesChanged);
 		setIsLoading(false);
 	};

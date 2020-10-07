@@ -223,6 +223,9 @@ export const PullRequest = () => {
 				derivedState.currentPullRequestId!
 			)
 		)) as any;
+		if (response.error) {
+			// FIXME do something with it
+		}
 		_assignState(response);
 	};
 

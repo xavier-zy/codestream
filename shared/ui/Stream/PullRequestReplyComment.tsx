@@ -17,7 +17,6 @@ import { api } from "../store/providerPullRequests/actions";
 
 interface Props {
 	pr: FetchThirdPartyPullRequestPullRequest;
-	setIsLoadingMessage: Function;
 	fetch: Function;
 	className?: string;
 	databaseId: string;
@@ -26,17 +25,8 @@ interface Props {
 }
 
 export const PullRequestReplyComment = styled((props: Props) => {
-	const { pr, fetch, setIsLoadingMessage, databaseId } = props;
+	const { pr, fetch, databaseId } = props;
 	const dispatch = useDispatch();
-	const derivedState = useSelector((state: CodeStreamState) => {
-		const currentUser = state.users[state.session.userId!] as CSMe;
-		return {
-			currentUser,
-			currentPullRequestId: state.context.currentPullRequest
-				? state.context.currentPullRequest.id
-				: undefined
-		};
-	});
 
 	const [text, setText] = useState("");
 	const [open, setOpen] = useState(props.isOpen);

@@ -53,6 +53,9 @@ interface Props extends CompareFilesProps {
 		_latest: number;
 		[key: string]: boolean | number;
 	};
+	commentMap: {
+		[path: string]: any;
+	};
 }
 
 export const PullRequestFilesChanged = (props: Props) => {
@@ -275,6 +278,7 @@ export const PullRequestFilesChanged = (props: Props) => {
 		const iconClass = loading ? "file-icon spin" : "file-icon";
 		// i is a temp variable to create the correct scope binding
 		const i = index;
+		const commentCount = (props.commentMap[f.file] || []).length;
 		return (
 			<>
 				<ChangesetFile
@@ -306,6 +310,7 @@ export const PullRequestFilesChanged = (props: Props) => {
 									goDiff(i);
 							  }
 					}
+					badge={commentCount > 0 ? <span className="badge">{commentCount}</span> : undefined}
 					actionIcons={
 						!loading &&
 						!isDisabled && (

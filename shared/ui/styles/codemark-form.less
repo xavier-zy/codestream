@@ -336,6 +336,13 @@
 			right: 0;
 		}
 	}
+	.badge {
+		display: block;
+		margin: 0 10px 0 auto !important;
+		transform: translateX(10px);
+		// using border as a padding here since we
+		// want some space but margin-left has to be auto
+	}
 	&:hover:not(.no-hover) {
 		color: @text-color-highlight;
 		background-color: @app-background-color-hover;

@@ -302,6 +302,15 @@ export const PRCommentCard = styled.div`
 	}
 `;
 
+export const PRCard = styled.div`
+	padding: 15px;
+	margin: 10px;
+	border: 1px solid;
+	border-color: var(--base-border-color);
+	border-radius: 5px;
+	font-family: var(--font-family);
+`;
+
 export const PRActionCommentCard = styled.div`
 	position: relative;
 	border: 1px solid;
@@ -387,7 +396,9 @@ export const PRReaction = styled.div`
 	padding: 5px 15px;
 	border-right: 1px solid var(--base-border-color);
 	cursor: pointer;
+	white-space: nowrap;
 	p {
+		white-space: nowrap;
 		display: inline-block;
 		margin: 0 2px 0 0;
 		padding: 0;
@@ -824,6 +835,7 @@ export const PRCodeCommentPatch = styled.div`
 `;
 
 export const PRCodeCommentBody = styled.div`
+	font-family: var(--font-family);
 	min-height: 30px;
 	margin: 0 0 20px 0;
 	position: relative;
@@ -850,6 +862,7 @@ export const PRCodeComment = styled.div`
 `;
 
 export const PRCodeCommentReply = styled.div`
+	font-family: var(--font-family);
 	position: relative;
 	#input-div {
 		height: 28px !important; // 2px for the border, 30px matches headshot height
@@ -1041,5 +1054,20 @@ export const PRErrorBox = styled.div`
 	}
 	.message {
 		margin-left: 10px;
+	}
+`;
+
+export const PRCommentsInPatch = styled.div`
+	border-top: 1px solid var(--base-border-color);
+	border-bottom: 1px solid var(--base-border-color);
+	${PRReactions} {
+		border: none;
+		margin: -5px 0 15px 35px;
+	}
+	${PRReaction} {
+		padding: 1px 8px;
+		margin: 0 5px 5px;
+		border: 1px solid var(--base-border-color);
+		border-radius: 5px;
 	}
 `;

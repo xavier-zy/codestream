@@ -544,12 +544,35 @@ export class ScmManager {
 		reviewId
 	}: GetRepoScmStatusRequest): Promise<GetRepoScmStatusResponse> {
 		const cc = Logger.getCorrelationContext();
-		const { git, reviews } = SessionContainer.instance();
+		const { git, reviews, repositoryMappings } = SessionContainer.instance();
 
 		const review = await reviews.getById(reviewId!);
 		const uri = URI.parse(documentUri);
-		const repoPath = (await git.getRepoRoot(uri.fsPath)) || "";
-		const repo = await git.getRepositoryByFilePath(repoPath);
+
+		let repoPath = undefined;
+		let repo: GitRepository | undefined = undefined;
+		try {
+			repoPath = await git.getRepoRoot(uri.fsPath);
+			if (repoPath) {
+				repo = await git.getRepositoryByFilePath(repoPath);
+				if (!repo || repo.id !== review.reviewChangesets[0].repoId) {
+					repoPath = undefined;
+					repo = undefined;
+				}
+			}
+		} catch (ignore) {
+			repoPath = undefined;
+			repo = undefined;
+		}
+		if (!repoPath) {
+			repoPath = await repositoryMappings.getByRepoId(review.reviewChangesets[0].repoId);
+		}
+		if (!repoPath) {
+			throw new Error(
+				`Cannot determine repository path. Please open review's repository before amending it.`
+			);
+		}
+		repo = await git.getRepositoryByFilePath(repoPath);
 		if (!repo || !repo.id) throw new Error(`Cannot determine repo at ${repoPath}`);
 		const branch = await git.getCurrentBranch(repoPath);
 		if (!branch) throw new Error(`Cannot determine current branch at ${repoPath}`);
@@ -558,7 +581,7 @@ export class ScmManager {
 
 		const diffs = await reviews.getDiffs(review.id, repo.id);
 
-		const changesets = review.reviewChangesets.filter(cs => cs.repoId === repo.id);
+		const changesets = review.reviewChangesets.filter(cs => cs.repoId === repo!.id);
 
 		const modifiedFiles: GitNumStat[] = [];
 		const newestCommitInACheckpoint = changesets

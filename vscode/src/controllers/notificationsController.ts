@@ -6,6 +6,8 @@ import { Container } from "../container";
 import { CodemarkPlus, ReviewPlus } from "../protocols/agent/agent.protocol";
 import { vslsUrlRegex } from "./liveShareController";
 
+type ToastType = "PR" | "Review" | "Codemark";
+
 export class NotificationsController implements Disposable {
 	private _disposable: Disposable;
 
@@ -32,12 +34,14 @@ export class NotificationsController implements Disposable {
 				`Pull Request "${pullRequestNotification.pullRequest.title}" ${pullRequestNotification.queryName}`,
 				...actions
 			);
+			Container.agent.telemetry.track("Toast Notification", { Content: "PR" });
 
 			if (result === actions[0]) {
 				Container.webview.openPullRequest(
 					pullRequestNotification.pullRequest.providerId,
 					pullRequestNotification.pullRequest.id
 				);
+				Container.agent.telemetry.track("Toast Clicked", { Content: "PR" });
 			}
 
 			return;
@@ -122,16 +126,21 @@ export class NotificationsController implements Disposable {
 		// TODO: Need to better deal with formatted text for notifications
 		const actions: MessageItem[] = [{ title: "Open" }];
 
+		const toastContentType: ToastType = codemark ? "Codemark" : "Review";
 		const result = await window.showInformationMessage(
 			`${sender !== undefined ? sender.name : "Someone"}${colon} ${text}`,
+
 			...actions
 		);
+		Container.agent.telemetry.track("Toast Notification", { Content: toastContentType });
+
 		if (result === actions[0]) {
 			if (codemark) {
 				Container.webview.openCodemark(codemark.id);
 			} else if (review) {
 				Container.webview.openReview(review.id);
 			}
+			Container.agent.telemetry.track("Toast Clicked", { Content: toastContentType });
 		}
 	}
 }

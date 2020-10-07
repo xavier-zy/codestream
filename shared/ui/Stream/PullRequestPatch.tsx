@@ -191,7 +191,7 @@ export const PullRequestPatch = (props: {
 								<PRCommentsInPatch>
 									{commentsOnLine.map(({ comment, review }, index) => (
 										<PRComment key={index} style={{ margin: 0 }}>
-											<PRCard style={{ maxWidth: "600px" }}>
+											<PRCard>
 												<PullRequestCodeComment
 													pr={props.pr!}
 													fetch={props.fetch!}

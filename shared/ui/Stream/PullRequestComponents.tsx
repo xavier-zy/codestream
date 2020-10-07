@@ -598,6 +598,23 @@ export const PRTimelineItemBody = styled.div`
 	}
 `;
 
+export const PRCodeCommentBody = styled.div`
+	font-family: var(--font-family);
+	min-height: 30px;
+	margin: 0 0 20px 0;
+	position: relative;
+	padding-left: 40px;
+	@media only screen and (max-width: 630px) {
+		padding-left: 0;
+		${PRHeadshot}, ${Headshot} {
+			display: none;
+		}
+		${PRReactions} {
+			margin-left: 0;
+		}
+	}
+`;
+
 export const PRContent = styled.div`
 	padding: 0 20px 20px 20px;
 	display: flex;
@@ -834,14 +851,6 @@ export const PRCodeCommentPatch = styled.div`
 	}
 `;
 
-export const PRCodeCommentBody = styled.div`
-	font-family: var(--font-family);
-	min-height: 30px;
-	margin: 0 0 20px 0;
-	position: relative;
-	padding-left: 40px;
-`;
-
 export const PRCodeComment = styled.div`
 	flex-grow: 10;
 	max-width: 100%;
@@ -1069,5 +1078,15 @@ export const PRCommentsInPatch = styled.div`
 		margin: 0 5px 5px;
 		border: 1px solid var(--base-border-color);
 		border-radius: 5px;
+	}
+	${PRCard} {
+		max-width: min(600px, calc(100vw - 80px));
+	}
+`;
+export const PRCodeCommentReplyInput = styled.div`
+	margin: 0 0 0 40px;
+	border: 1px solid var(--base-border-color);
+	@media only screen and (max-width: 630px) {
+		margin-left: 0;
 	}
 `;

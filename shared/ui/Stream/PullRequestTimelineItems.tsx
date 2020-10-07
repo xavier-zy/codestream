@@ -489,6 +489,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 															item={item}
 															comment={comment}
 															author={author}
+															skipResolvedCheck
 														/>
 													</PRCodeComment>
 												</PRThreadedCommentCard>

@@ -43,6 +43,7 @@ interface Props {
 	item: any;
 	comment: any;
 	author: any;
+	skipResolvedCheck?: boolean;
 }
 
 export const PullRequestCodeComment = (props: PropsWithChildren<Props>) => {
@@ -138,7 +139,11 @@ export const PullRequestCodeComment = (props: PropsWithChildren<Props>) => {
 			});
 	};
 
-	if (comment.isResolved && !expandedComments[`resolved-${comment.id}`]) {
+	if (
+		!props.skipResolvedCheck &&
+		comment.isResolved &&
+		!expandedComments[`resolved-${comment.id}`]
+	) {
 		return (
 			<PullRequestMinimizedComment
 				reason={"This conversation was marked as resolved"}

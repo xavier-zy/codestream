@@ -166,7 +166,7 @@
 				<CommandFlag>DynamicVisibility</CommandFlag>
 				<CommandFlag>DefaultInvisible</CommandFlag>
 				<Strings>
-					<ButtonText>Request a Code Review</ButtonText>
+					<ButtonText>Request Feedback</ButtonText>
 					<CanonicalName>CodeStream.RequestCodeReview</CanonicalName>
 					<LocCanonicalName>CodeStream.RequestCodeReview</LocCanonicalName>
 				</Strings>
@@ -222,7 +222,7 @@
 				<CommandFlag>DynamicVisibility</CommandFlag>
 				<CommandFlag>DefaultInvisible</CommandFlag>
 				<Strings>
-					<ButtonText>Request a Code Review</ButtonText>
+					<ButtonText>Request Feedback</ButtonText>
 					<CanonicalName>CodeStream.RequestCodeReviewShortcut</CanonicalName>
 					<LocCanonicalName>CodeStream.RequestCodeReviewShortcut</LocCanonicalName>
 				</Strings>

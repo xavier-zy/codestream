@@ -149,7 +149,7 @@ namespace CodeStream.VisualStudio.UI.SuggestedActions {
 			_textSelection = textSelection;
 		}
 		
-		public string DisplayText { get; } = $"Request a Code Review";
+		public string DisplayText { get; } = $"Request Feedback";
 
 		public bool HasActionSets => false;
 

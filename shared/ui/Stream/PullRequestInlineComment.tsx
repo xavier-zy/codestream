@@ -145,7 +145,7 @@ export const PullRequestInlineComment = styled((props: Props) => {
 										<span>
 											Submit Comment
 											<span className="keybinding extra-pad">
-												{navigator.appVersion.includes("Macintosh") ? "⌘" : "Alt"} ENTER
+												{navigator.appVersion.includes("Macintosh") ? "⌘" : "Ctrl"} ENTER
 											</span>
 										</span>
 									}

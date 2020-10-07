@@ -1859,7 +1859,7 @@ class ReviewForm extends React.Component<Props, State> {
 			coAuthorLabels[email] = label.join(", ");
 		});
 
-		const modifier = navigator.appVersion.includes("Macintosh") ? "⌘" : "Alt";
+		const modifier = navigator.appVersion.includes("Macintosh") ? "⌘" : "Ctrl";
 
 		const submitTip = (
 			<span>

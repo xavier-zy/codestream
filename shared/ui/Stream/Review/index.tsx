@@ -1069,7 +1069,7 @@ const ReplyInput = (props: { reviewId: string; parentPostId: string; streamId: s
 							<span>
 								Submit Comment
 								<span className="keybinding extra-pad">
-									{navigator.appVersion.includes("Macintosh") ? "⌘" : "Alt"} ENTER
+									{navigator.appVersion.includes("Macintosh") ? "⌘" : "Ctrl"} ENTER
 								</span>
 							</span>
 						}

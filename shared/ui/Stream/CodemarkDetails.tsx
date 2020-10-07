@@ -126,7 +126,7 @@ export class CodemarkDetails extends React.Component<Props, State> {
 	render() {
 		const { codemark, capabilities, author, currentUserId } = this.props;
 
-		const modifier = navigator.appVersion.includes("Macintosh") ? "⌘" : "Alt";
+		const modifier = navigator.appVersion.includes("Macintosh") ? "⌘" : "Ctrl";
 
 		const submitTip = (
 			<span>

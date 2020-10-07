@@ -2018,7 +2018,7 @@ class CodemarkForm extends React.Component<Props, State> {
 				? "Bookmark Name (optional)"
 				: "Title (optional)";
 
-		const modifier = navigator.appVersion.includes("Macintosh") ? "⌘" : "Alt";
+		const modifier = navigator.appVersion.includes("Macintosh") ? "⌘" : "Ctrl";
 
 		const submitTip =
 			commentType === "link" ? (

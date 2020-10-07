@@ -206,7 +206,7 @@ export function GlobalNav() {
 									<h1>Activity Feed</h1>
 									Latest comments, issues,
 									<br />
-									code reviews and replies.
+									feedback requests and replies.
 									<Link
 										className="learn-more"
 										href="http://docs.codestream.com/userguide/features/activity-feed/"
@@ -235,7 +235,7 @@ export function GlobalNav() {
 							title={
 								<TipTitle>
 									<h1>Filter &amp; Search</h1>
-									Search code comments, code reviews,
+									Search code comments, feedback requests,
 									<br />
 									and codestream content.
 									<Link

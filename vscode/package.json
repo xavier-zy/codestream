@@ -51,12 +51,12 @@
             },
             {
                 "view": "scmTreeDataProvider",
-                "contents": "[Request a Code Review](command:codestream.newReview)",
+                "contents": "[Request Feedback](command:codestream.newReview)",
                 "when": "codestream:status == signedIn"
             },
             {
                 "view": "scmTreeDataProvider",
-                "contents": "Request a code review to get feedback on your work-in-progress, or final code review.",
+                "contents": "Request feedback on your work-in-progress, or final code review.",
                 "when": "codestream:status == signedIn"
             }
         ],
@@ -222,7 +222,7 @@
             },
             {
                 "command": "codestream.newReview",
-                "title": "Request a Code Review",
+                "title": "Request Feedback",
                 "category": "CodeStream"
             },
             {
@@ -246,7 +246,7 @@
             },
             {
                 "command": "codestream.scmNewReview",
-                "title": "Request a Code Review",
+                "title": "Request Feedback",
                 "icon": {
                     "light": "assets/images/light/review.svg",
                     "dark": "assets/images/dark/review.svg"

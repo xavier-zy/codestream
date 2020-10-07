@@ -156,7 +156,7 @@ export class ScmTreeDataProvider implements vscode.TreeDataProvider<ReviewTreeNo
 				{
 					id: "CreatedByMe",
 					type: "CreatedByMe",
-					label: "My Code Reviews",
+					label: "My Feedback Requests",
 					hasReviews: createdByMe.length > 0
 				}
 			]);

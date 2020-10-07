@@ -152,11 +152,9 @@ export const STEPS = [
 	},
 	{
 		id: "createReview",
-		// title: "Ask for feedback",
-		// subtext: "on your work-in-progress, or request a formal code review.",
-		title: "Request a Code Review",
+		title: "Request Feedback",
 		subtext: "to get feedback on your work-in-progress, or final code review.",
-		done: "Requested a Code Review",
+		done: "Requested Feedback",
 		pulse: "global-nav-plus-label",
 		video: "https://www.youtube.com/watch?v=2AyqT4z5Omc",
 		panel: WebviewPanels.NewReview,

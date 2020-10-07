@@ -773,8 +773,8 @@ export const CreatePullRequestPanel = props => {
 			case "HAS_LOCAL_COMMITS": {
 				messageElement = (
 					<span>
-						A PR can't be created because the code review includes local commits. Push your changes
-						and then <Link onClick={onClickTryAgain}>try again</Link>
+						A PR can't be created because the feedback request includes local commits. Push your
+						changes and then <Link onClick={onClickTryAgain}>try again</Link>
 					</span>
 				);
 				break;
@@ -782,8 +782,8 @@ export const CreatePullRequestPanel = props => {
 			case "HAS_LOCAL_MODIFICATIONS": {
 				messageElement = (
 					<span>
-						A PR can't be created because the code review includes uncommitted changes. Commit and
-						push your changes and then <Link onClick={onClickTryAgain}>try again</Link>.
+						A PR can't be created because the feedback request includes uncommitted changes. Commit
+						and push your changes and then <Link onClick={onClickTryAgain}>try again</Link>.
 					</span>
 				);
 				break;

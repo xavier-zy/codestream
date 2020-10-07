@@ -81,7 +81,7 @@ export class CodeStreamCodeActionProvider implements CodeActionProvider, Disposa
 				arguments: [args]
 			},
 			{
-				title: "Request a Code Review",
+				title: "Request Feedback",
 				command: "codestream.newReview",
 				arguments: [args]
 			},

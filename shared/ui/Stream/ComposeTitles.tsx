@@ -42,9 +42,7 @@ const ComposeTitles = {
 				<span className="keybinding extra-pad">{modifier}</span>
 				<span className="keybinding">r</span>
 			</span>
-			<span className="function">
-				Request a Code Review <sup style={{ color: "var(--text-color-highlight)" }}>NEW</sup>
-			</span>{" "}
+			<span className="function">Request Feedback</span>{" "}
 		</span>
 	),
 	pullRequest: (
@@ -53,9 +51,7 @@ const ComposeTitles = {
 				<span className="keybinding extra-pad">{modifier}</span>
 				<span className="keybinding">p</span>
 			</span>
-			<span className="function">
-				Open a Pull Request <sup style={{ color: "var(--text-color-highlight)" }}>NEW</sup>
-			</span>{" "}
+			<span className="function">Open a Pull Request</span>{" "}
 		</span>
 	),
 	work: (
@@ -64,9 +60,7 @@ const ComposeTitles = {
 				<span className="keybinding extra-pad">{modifier}</span>
 				<span className="keybinding">w</span>
 			</span>
-			<span className="function">
-				Start Work <sup style={{ color: "var(--text-color-highlight)" }}>NEW</sup>
-			</span>{" "}
+			<span className="function">Start Work</span>{" "}
 		</span>
 	),
 	about: (

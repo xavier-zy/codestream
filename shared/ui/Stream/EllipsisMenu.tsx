@@ -229,7 +229,7 @@ export function EllipsisMenu(props: EllipsisMenuProps) {
 					]
 				},
 				{
-					label: "Code Review Settings...",
+					label: "Feedback Request Settings...",
 					key: "review-settings",
 					action: () => dispatch(openModal(WebviewModals.ReviewSettings)),
 					disabled: !derivedState.multipleReviewersApprove

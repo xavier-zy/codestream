@@ -350,9 +350,9 @@ export class SimpleFilterSearchPanel extends Component<Props, State> {
 			filters.type = "comment";
 			text = text.replace(/\s*(is|type):comment\s*/, " ");
 		}
-		if (text.match(/\b(is|type):cr\b/)) {
+		if (text.match(/\b(is|type):fr\b/)) {
 			filters.type = "review";
-			text = text.replace(/\s*(is|type):cr\s*/, " ");
+			text = text.replace(/\s*(is|type):fr\s*/, " ");
 		}
 		match = text.match(/\bauthor:@(\S+)(\s|$)/);
 		if (match) {
@@ -765,7 +765,7 @@ export class SimpleFilterSearchPanel extends Component<Props, State> {
 
 		const filterItems = [
 			{
-				label: "Open Issues and Code Reviews",
+				label: "Open Issues and Feedback Requests",
 				key: "open",
 				action: () => this.props.setQuery("is:open"),
 				lightningOnly: true
@@ -776,9 +776,9 @@ export class SimpleFilterSearchPanel extends Component<Props, State> {
 				action: () => this.props.setQuery("is:issue author:@me")
 			},
 			{
-				label: "Your Code Reviews",
+				label: "Your Feedback Requests",
 				key: "reviews",
-				action: () => this.props.setQuery("is:cr author:@me "),
+				action: () => this.props.setQuery("is:fr author:@me "),
 				lightningOnly: true
 			},
 			{
@@ -864,7 +864,7 @@ export class SimpleFilterSearchPanel extends Component<Props, State> {
 								className="input-text control"
 								type="text"
 								onChange={e => this.props.setQuery(e.target.value)}
-								placeholder="Search comments, issues and code reviews"
+								placeholder="Search comments, issues and feedback requests"
 								autoFocus
 							/>
 						</div>
@@ -949,9 +949,9 @@ export class SimpleFilterSearchPanel extends Component<Props, State> {
 				<div className="getting-started">
 					<div>
 						<p>
-							Code Reviews are the building blocks of your team’s process.{" "}
+							Feedback Requests are the building blocks of your team’s process.{" "}
 							<a href="https://docs.codestream.com/userguide/workflow/review-code/">
-								Learn more about how to use code review.
+								Learn more about how to use feedback requests.
 							</a>
 						</p>
 					</div>

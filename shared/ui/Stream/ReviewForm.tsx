@@ -1944,7 +1944,7 @@ class ReviewForm extends React.Component<Props, State> {
 								<div style={{ marginTop: "-1px" }}>
 									<b>{currentUser.username}</b>
 									<span className="subhead">
-										is {isEditing ? "editing" : "requesting"} a code review
+										is {isEditing ? "editing" : "requesting"} feedback
 										{repoMenuItems.length > 0 && <> in </>}
 									</span>
 									{repoMenuItems.length === 1 && repoName && (
@@ -2025,7 +2025,7 @@ class ReviewForm extends React.Component<Props, State> {
 								</div>
 								<div style={{ marginTop: "-1px" }}>
 									<b>{currentUser.username}</b>
-									<span className="subhead">is amending the code review</span>
+									<span className="subhead">is amending the feedback request</span>
 								</div>
 							</div>
 							{this.renderMessageInput()}

@@ -13,7 +13,6 @@ import {
 import { URI } from "vscode-uri";
 import { SessionContainer } from "../container";
 import { Logger, TraceLevel } from "../logger";
-import { MarkersManager } from "../managers/markersManager";
 import { MatchReposRequest, RepoMap } from "../protocol/agent.protocol.repos";
 import { CSRepository } from "../protocol/api.protocol";
 import { CodeStreamSession } from "../session";
@@ -188,28 +187,25 @@ export class GitRepositories {
 
 			// for all repositories without a CodeStream repo ID, ask the server for matches,
 			// and create new CodeStream repos for any we have found that aren't known to the team
-			const apiCapabilities = await this.session.api.getApiCapabilities();
-			if (apiCapabilities["repoCommitMatching"]) {
-				const unassignedRepositories = allAddedRepositories.filter(repo => !repo.id);
-				if (unassignedRepositories.length > 0) {
-					const orderedUnassignedRepos: GitRepository[] = [];
-					const repoInfo: MatchReposRequest = { repos: [] };
-					const { git } = SessionContainer.instance();
-					await Promise.all(
-						unassignedRepositories.map(async repo => {
-							const remotes = (await repo.getRemotes()).map(r => r.normalizedUrl);
-							const knownCommitHashes = await git.getKnownCommitHashes(repo.path);
-							orderedUnassignedRepos.push(repo);
-							repoInfo.repos.push({ remotes, knownCommitHashes });
-						})
+			const unassignedRepositories = allAddedRepositories.filter(repo => !repo.id);
+			if (unassignedRepositories.length > 0) {
+				const orderedUnassignedRepos: GitRepository[] = [];
+				const repoInfo: MatchReposRequest = { repos: [] };
+				const { git } = SessionContainer.instance();
+				await Promise.all(
+					unassignedRepositories.map(async repo => {
+						const remotes = (await repo.getRemotes()).map(r => r.normalizedUrl);
+						const knownCommitHashes = await git.getKnownCommitHashes(repo.path);
+						orderedUnassignedRepos.push(repo);
+						repoInfo.repos.push({ remotes, knownCommitHashes });
+					})
+				);
+				const repoMatches = await this.session.api.matchRepos(repoInfo);
+				for (let i = 0; i < repoMatches.repos.length; i++) {
+					Logger.debug(
+						`onWorkspaceFoldersChanged: Git repo ${orderedUnassignedRepos[i].path} matched to ${repoMatches.repos[i].id}:${repoMatches.repos[i].name}`
 					);
-					const repoMatches = await this.session.api.matchRepos(repoInfo);
-					for (let i = 0; i < repoMatches.repos.length; i++) {
-						Logger.debug(
-							`onWorkspaceFoldersChanged: Git repo ${orderedUnassignedRepos[i].path} matched to ${repoMatches.repos[i].id}:${repoMatches.repos[i].name}`
-						);
-						orderedUnassignedRepos[i].setKnownRepository(repoMatches.repos[i]);
-					}
+					orderedUnassignedRepos[i].setKnownRepository(repoMatches.repos[i]);
 				}
 			}
 

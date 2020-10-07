@@ -1,6 +1,7 @@
 "use strict";
 import { createPatch, ParsedDiff, parsePatch } from "diff";
 import * as fs from "fs";
+import { memoize } from "lodash-es";
 import * as path from "path";
 import { CommitsChangedData, WorkspaceChangedData } from "protocol/agent.protocol";
 import { Disposable, Event } from "vscode-languageserver";
@@ -91,9 +92,17 @@ export interface IGitService extends Disposable {
 
 export class GitService implements IGitService, Disposable {
 	private _disposable: Disposable | undefined;
+	private readonly _memoizedGetDefaultBranch: (
+		repoPath: string,
+		remote: string
+	) => Promise<string | undefined>;
 	private readonly _repositories: GitRepositories;
 
 	constructor(public readonly session: CodeStreamSession) {
+		this._memoizedGetDefaultBranch = memoize(
+			this._getDefaultBranch,
+			(repoPath, remote) => `${repoPath}|${remote}`
+		);
 		this._repositories = new GitRepositories(this, session);
 	}
 
@@ -258,7 +267,10 @@ export class GitService implements IGitService, Disposable {
 		}
 	}
 
-	async getDefaultBranch(repoPath: string, remote: string): Promise<string | undefined> {
+	getDefaultBranch(repoPath: string, remote: string): Promise<string | undefined> {
+		return this._memoizedGetDefaultBranch(repoPath, remote);
+	}
+	private async _getDefaultBranch(repoPath: string, remote: string): Promise<string | undefined> {
 		try {
 			Logger.debug("IN GDB: " + remote);
 			const data = await git(

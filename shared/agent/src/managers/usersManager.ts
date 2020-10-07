@@ -60,14 +60,6 @@ export class UsersManager extends CachedEntityManagerBase<CSUser> {
 		this.cache.reset(response.users);
 	}
 
-	getById(id: Id, options?: { avoidCachingOnFetch?: boolean }): Promise<CSUser> {
-		return super.getById(this.session.api.convertUserIdToCodeStreamUserId(id), options);
-	}
-
-	getByIdFromCache(id: Id): Promise<CSUser | undefined> {
-		return super.getByIdFromCache(this.session.api.convertUserIdToCodeStreamUserId(id));
-	}
-
 	async getByEmails(
 		emails: string[],
 		options: { ignoreCase?: boolean } = { ignoreCase: true }

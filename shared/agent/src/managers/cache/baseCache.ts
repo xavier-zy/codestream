@@ -97,7 +97,7 @@ export class BaseCache<T> {
 	})
 	async get(
 		criteria: KeyValue<T>[],
-		options: { fromCacheOnly?: boolean; avoidCachingOnFetch?: boolean } = {}
+		options: { fromCacheOnly?: boolean } = {}
 	): Promise<T | undefined> {
 		const cc = Logger.getCorrelationContext();
 
@@ -117,9 +117,7 @@ export class BaseCache<T> {
 			if (options.fromCacheOnly !== true) {
 				const fetch = index.fetchFn as UniqueFetchFn<T>;
 				entity = await fetch(criteria);
-				if (!options.avoidCachingOnFetch) {
-					this.set(entity);
-				}
+				this.set(entity);
 			}
 		}
 

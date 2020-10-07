@@ -102,11 +102,11 @@ export class AzureDevOpsProvider extends ThirdPartyIssueProviderBase<CSAzureDevO
 				{ query: wiql },
 				{ "Content-Type": "application/json" }
 			)) as any;
-			Logger.log("GOT A REPSONSE OF : ", JSON.stringify(body, null, 4));
+			Logger.debug("GOT A RESPONSE OF : ", JSON.stringify(body, null, 4));
 			if (body && body.workItems) {
 				// @ts-ignore
 				cards = body.workItems.map(workItem => {
-					Logger.log("AZURE ITEM: ", JSON.stringify(workItem, null, 4));
+					Logger.debug("AZURE ITEM: ", JSON.stringify(workItem, null, 4));
 					return {
 						id: workItem.ID,
 						url: workItem.html_url,

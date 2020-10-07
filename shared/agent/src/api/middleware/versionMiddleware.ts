@@ -1,5 +1,6 @@
 "use strict";
 import { Disposable, Emitter, Event } from "vscode-languageserver";
+import { Logger } from "../../logger";
 import { ApiVersionCompatibility, VersionCompatibility } from "../../protocol/agent.protocol";
 import { CSApiCapabilities, CSApiCapability } from "../../protocol/api.protocol.models";
 import { log, Versions } from "../../system";
@@ -70,9 +71,11 @@ export class VersionMiddlewareManager implements Disposable {
 		});
 	}
 
-	@log()
 	async setApiVersion(version: string) {
 		if (version === this._apiVersion) return;
+		Logger.log(
+			`VersionMiddlewareManager: API version changed from ${this._apiVersion} to ${version}`
+		);
 
 		this._apiVersion = version;
 

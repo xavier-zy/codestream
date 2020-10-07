@@ -17,6 +17,8 @@ class ModuleListenerImpl(project: Project) : ModuleListener {
         val existingFolders = project.workspaceFolders
         val roots = (module.moduleContentScope as? ModuleWithDependenciesScope)?.roots ?: return
         val folders = roots.map { WorkspaceFolder(it.uri) }.filter { !existingFolders.contains(it)  }
+        if (folders.isEmpty()) return
+
         project.agentService?.let {
             it.onDidStart {
                 it.agent.workspaceService.didChangeWorkspaceFolders(

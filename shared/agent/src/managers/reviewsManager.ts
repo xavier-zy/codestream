@@ -1073,8 +1073,8 @@ export class ReviewsManager extends CachedEntityManagerBase<CSReview> {
 		this.cache.reset(response.reviews);
 	}
 
-	async getById(id: Id, options?: { avoidCachingOnFetch?: boolean }): Promise<CSReview> {
-		const review = await super.getById(id, options);
+	async getById(id: Id): Promise<CSReview> {
+		const review = await super.getById(id);
 		this.polyfillCheckpoints(review);
 		return review;
 	}

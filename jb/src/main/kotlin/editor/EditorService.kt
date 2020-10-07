@@ -107,11 +107,6 @@ class EditorService(val project: Project) {
                     document.addDocumentListener(DocumentSynchronizer())
                 }
             }
-            ApplicationManager.getApplication().invokeLater {
-                GlobalScope.launch {
-                    editor.renderMarkers(getDocumentMarkers(editor.document))
-                }
-            }
         }
     }
 
@@ -194,11 +189,14 @@ class EditorService(val project: Project) {
         }
     }
 
-    fun updateMarkers(document: Document) = GlobalScope.launch {
+    fun updateMarkers(document: Document) = ApplicationManager.getApplication().invokeLater {
         val editors = EditorFactory.getInstance().getEditors(document, project)
-        val markers = getDocumentMarkers(document)
-        for (editor in editors) {
-            editor.renderMarkers(markers)
+        val visibleEditors = editors.filter { !it.scrollingModel.visibleArea.isEmpty }
+        if (visibleEditors.isEmpty()) return@invokeLater
+
+        GlobalScope.launch {
+            val markers = getDocumentMarkers(document)
+            visibleEditors.forEach { it.renderMarkers(markers) }
         }
     }
 

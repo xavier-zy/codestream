@@ -16,6 +16,11 @@ class VisibleAreaListenerImpl(val project: Project) : VisibleAreaListener {
     private var lastVisibleRanges: List<Range>? = null
 
     override fun visibleAreaChanged(e: VisibleAreaEvent) {
+        if (e.oldRectangle == null || e.oldRectangle.isEmpty && !e.newRectangle.isEmpty) {
+            project.editorService?.updateMarkers(e.editor.document)
+        }
+        if (e.newRectangle.isEmpty) return
+
         val editorService = project.editorService ?: return
         if (e.editor != editorService.activeEditor) return
 

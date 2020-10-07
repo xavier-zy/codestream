@@ -22,8 +22,8 @@ export abstract class EntityManagerBase<T extends CSEntity> extends ManagerBase<
 		super(session);
 	}
 
-	getById(id: Id, options?: { avoidCachingOnFetch?: boolean }): Promise<T> {
-		return this.cache.getById(id, options);
+	getById(id: Id): Promise<T> {
+		return this.cache.getById(id);
 	}
 
 	getByIdFromCache(id: Id): Promise<T | undefined> {
@@ -70,6 +70,14 @@ export abstract class CachedEntityManagerBase<T extends CSEntity> extends Entity
 	async getAllCached(): Promise<T[]> {
 		await this.ensureCached();
 		return this.cache.getAll();
+	}
+
+	async getById(id: Id): Promise<T> {
+		if (!this._cached) {
+			await this.ensureCached();
+		}
+
+		return super.getById(id);
 	}
 
 	async getByIdFromCache(id: Id): Promise<T | undefined> {

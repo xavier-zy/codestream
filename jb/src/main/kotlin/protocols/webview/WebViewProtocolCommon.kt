@@ -1,6 +1,7 @@
 package com.codestream.protocols.webview
 
 import com.google.gson.JsonElement
+import com.google.gson.annotations.SerializedName
 import org.eclipse.lsp4j.Position
 import org.eclipse.lsp4j.Range
 
@@ -53,3 +54,20 @@ class EditorInformation(
     val lineCount: Number?,
     val languageId: String? = null
 )
+
+class Sidebar(
+    val location: SidebarLocation
+)
+
+enum class SidebarLocation {
+    @SerializedName("left")
+    LEFT,
+    @SerializedName("right")
+    RIGHT,
+    @SerializedName("top")
+    TOP,
+    @SerializedName("bottom")
+    BOTTOM,
+    @SerializedName("floating")
+    FLOATING
+}

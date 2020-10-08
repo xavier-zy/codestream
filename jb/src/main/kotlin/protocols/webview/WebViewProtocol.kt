@@ -30,6 +30,10 @@ object EditorNotifications {
     class DidChangeActive(val editor: EditorInformation?) : WebViewNotification {
         override fun getMethod() = "webview/editor/didChangeActive"
     }
+
+    class DidChangeLayout(val sidebar: Sidebar): WebViewNotification {
+        override fun getMethod() = "webview/editor/didChangeLayout"
+    }
 }
 
 object CodemarkNotifications {

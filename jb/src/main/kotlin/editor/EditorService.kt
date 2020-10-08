@@ -59,6 +59,7 @@ import kotlinx.coroutines.launch
 import org.eclipse.lsp4j.DidChangeTextDocumentParams
 import org.eclipse.lsp4j.DidCloseTextDocumentParams
 import org.eclipse.lsp4j.DidOpenTextDocumentParams
+import org.eclipse.lsp4j.DidSaveTextDocumentParams
 import org.eclipse.lsp4j.Position
 import org.eclipse.lsp4j.Range
 import org.eclipse.lsp4j.TextDocumentContentChangeEvent
@@ -127,6 +128,20 @@ class EditorService(val project: Project) {
                             DidCloseTextDocumentParams(it)
                         )
                     }
+                }
+            }
+        }
+    }
+
+    fun save(document: Document) {
+        val agentService = project.agentService ?: return
+
+        agentService.onDidStart {
+            synchronized(managedDocuments) {
+                if (managedDocuments.contains(document)) {
+                    agentService.agent.textDocumentService.didSave(
+                        DidSaveTextDocumentParams(document.textDocumentIdentifier)
+                    )
                 }
             }
         }

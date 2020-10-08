@@ -2,6 +2,7 @@ package com.codestream
 
 import com.codestream.agent.ModuleListenerImpl
 import com.codestream.editor.EditorFactoryListenerImpl
+import com.codestream.editor.FileDocumentManagerListenerImpl
 import com.codestream.editor.FileEditorManagerListenerImpl
 import com.codestream.protocols.webview.EditorNotifications
 import com.codestream.protocols.webview.FocusNotifications
@@ -10,6 +11,7 @@ import com.codestream.protocols.webview.SidebarLocation
 import com.codestream.settings.ApplicationSettingsService
 import com.codestream.system.CodeStreamDiffURLStreamHandler
 import com.codestream.workaround.ToolWindowManagerWorkaround
+import com.intellij.AppTopics
 import com.intellij.ProjectTopics
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -115,6 +117,10 @@ class CodeStreamComponent(val project: Project) : Disposable {
                         updateSidebar()
                     }
                 }
+            )
+            it.subscribe(
+                AppTopics.FILE_DOCUMENT_SYNC,
+                FileDocumentManagerListenerImpl(project)
             )
         }
     }

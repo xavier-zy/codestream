@@ -7,6 +7,7 @@ import com.codestream.protocols.agent.Codemark
 import com.codestream.protocols.agent.Post
 import com.codestream.protocols.agent.PullRequestNotification
 import com.codestream.protocols.agent.Review
+import com.codestream.protocols.agent.TelemetryParams
 import com.codestream.protocols.webview.CodemarkNotifications
 import com.codestream.protocols.webview.PullRequestNotifications
 import com.codestream.protocols.webview.ReviewNotifications
@@ -82,10 +83,12 @@ class NotificationComponent(val project: Project) {
                         pullRequestNotification.pullRequest.id
                     ))
                     notification.expire()
+                    telemetry(TelemetryEvent.TOAST_CLICKED, "PR")
                 }
             }
         })
         notification.notify(project)
+        telemetry(TelemetryEvent.TOAST_NOTIFICATION, "PR")
     }
 
     private fun didChangePosts(posts: List<Post>) {
@@ -150,6 +153,12 @@ class NotificationComponent(val project: Project) {
             post.text
         }
 
+        val telemetryContent = when {
+            codemark != null -> "Codemark"
+            review != null -> "Review"
+            else -> "Unknown"
+        }
+
         val notification = notificationGroup.createNotification(
             null, sender, text, NotificationType.INFORMATION
         )
@@ -162,10 +171,22 @@ class NotificationComponent(val project: Project) {
                         postNotification(ReviewNotifications.Show(review.id))
                     }
                     notification.expire()
+                    telemetry(TelemetryEvent.TOAST_CLICKED, telemetryContent)
                 }
             }
         })
         notification.notify(project)
+        telemetry(TelemetryEvent.TOAST_NOTIFICATION, telemetryContent)
+    }
+
+    private enum class TelemetryEvent(val value: String) {
+        TOAST_NOTIFICATION("Toast Notification"),
+        TOAST_CLICKED("Toast Clicked")
+    }
+
+    private fun telemetry(event: TelemetryEvent, content: String) {
+        val params = TelemetryParams(event.value, mapOf("Content" to content))
+        project.agentService?.agent?.telemetry(params)
     }
 }
 

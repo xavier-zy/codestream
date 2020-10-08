@@ -24,6 +24,8 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 
 const val CODESTREAM_NOTIFICATION_GROUP_ID = "CodeStream"
+const val CODESTREAM_PRIORITY_NOTIFICATION_GROUP_ID = "CodeStream priority"
+
 private val icon = IconLoader.getIcon("/images/codestream-unread.svg")
 private val notificationGroup =
     NotificationGroup(
@@ -33,6 +35,16 @@ private val notificationGroup =
         CODESTREAM_TOOL_WINDOW_ID,
         icon
     )
+
+private val priorityNotificationGroup =
+    NotificationGroup(
+        CODESTREAM_PRIORITY_NOTIFICATION_GROUP_ID,
+        NotificationDisplayType.STICKY_BALLOON,
+        false,
+        CODESTREAM_TOOL_WINDOW_ID,
+        icon
+    )
+
 
 class NotificationComponent(val project: Project) {
     private val logger = Logger.getInstance(NotificationComponent::class.java)
@@ -48,7 +60,7 @@ class NotificationComponent(val project: Project) {
         }
     }
 
-    private suspend fun didChangePullRequest(pullRequestNotification: PullRequestNotification) {
+    private fun didChangePullRequest(pullRequestNotification: PullRequestNotification) {
         val session = project.sessionService ?: return
         val userLoggedIn = session.userLoggedIn ?: return
 
@@ -58,7 +70,7 @@ class NotificationComponent(val project: Project) {
 
         val text = "Pull Request \"${pullRequestNotification.pullRequest.title}\" ${pullRequestNotification.queryName}"
 
-        val notification = notificationGroup.createNotification(
+        val notification = priorityNotificationGroup.createNotification(
             null, null, text, NotificationType.INFORMATION
         )
 

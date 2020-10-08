@@ -260,6 +260,8 @@ export const CreateCodemarkIcons = (props: Props) => {
 			icons.reverse();
 			right = "0px";
 		}
+		const shownIcons = icons.filter(_ => _.isVisible());
+		const width = `${shownIcons.length * 40}px`;
 
 		return (
 			<div
@@ -272,25 +274,23 @@ export const CreateCodemarkIcons = (props: Props) => {
 					onebutton: props.onebutton
 				})}
 				key={lineNum0}
-				style={{ top: top, right: right }}
+				style={{ top: top, right: right, width: width }}
 			>
 				{(hover || open) && (
 					<>
-						{icons
-							.filter(_ => _.isVisible())
-							.map(icon => {
-								return (
-									<Icon
-										key={icon.key}
-										onClick={e => handleClickPlus(e, icon.codemarkType, lineNum0)}
-										name={icon.key}
-										title={icon.title}
-										placement="bottomLeft"
-										align={{ offset: [-3, 10] }}
-										delay={1}
-									/>
-								);
-							})}
+						{shownIcons.map(icon => {
+							return (
+								<Icon
+									key={icon.key}
+									onClick={e => handleClickPlus(e, icon.codemarkType, lineNum0)}
+									name={icon.key}
+									title={icon.title}
+									placement="bottomLeft"
+									align={{ offset: [-3, 10] }}
+									delay={1}
+								/>
+							);
+						})}
 					</>
 				)}
 			</div>

@@ -89,8 +89,8 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 		return remotePaths;
 	}
 
-	private _githubUserId: string | undefined;
 	private _knownRepos = new Map<string, GitHubRepo>();
+	_pullRequestCache: Map<string, FetchThirdPartyPullRequestResponse> = new Map();
 
 	get displayName() {
 		return "GitHub";
@@ -146,7 +146,6 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 	}
 
 	async onConnected() {
-		this._githubUserId = await this.getMemberId();
 		this._knownRepos = new Map<string, GitHubRepo>();
 	}
 
@@ -503,6 +502,16 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 	): Promise<FetchThirdPartyPullRequestResponse> {
 		const { scm: scmManager } = SessionContainer.instance();
 		await this.ensureConnected();
+
+		if (request.force) {
+			this._pullRequestCache.delete(request.pullRequestId);
+		} else {
+			const cached = this._pullRequestCache.get(request.pullRequestId);
+			if (cached) {
+				return cached;
+			}
+		}
+
 		let response = {} as FetchThirdPartyPullRequestResponse;
 		let repoOwner: string;
 		let repoName: string;
@@ -573,6 +582,8 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 
 		response.repository.pullRequest.providerId = this.providerConfig.id;
 		response.repository.providerId = this.providerConfig.id;
+
+		this._pullRequestCache.set(request.pullRequestId, response);
 		return response;
 	}
 
@@ -595,12 +606,6 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 	@log()
 	async moveCard(request: MoveThirdPartyCardRequest): Promise<MoveThirdPartyCardResponse> {
 		return { success: false };
-	}
-
-	private async getMemberId() {
-		const userResponse = await this.restGet<{ id: string; [key: string]: any }>(`/user`);
-
-		return userResponse.body.id;
 	}
 
 	private nextPage(response: Response): string | undefined {

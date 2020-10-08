@@ -345,6 +345,10 @@ export interface FetchThirdPartyPullRequestRequest {
 	 * in the GitHub world, this is `codestream` in https://github.com/TeamCodeStream/codestream
 	 */
 	repo?: string;
+	/**
+	 * if true, clear this PR from the cache and re-fetch from the provider
+	 */
+	force?: boolean;
 }
 
 export interface FetchThirdPartyPullRequestFilesResponse {

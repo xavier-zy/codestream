@@ -71,7 +71,8 @@ export const getPullRequestConversationsFromProvider = (
 	try {
 		const response = await HostApi.instance.send(FetchThirdPartyPullRequestRequestType, {
 			providerId: providerId,
-			pullRequestId: id
+			pullRequestId: id,
+			force: true
 		});
 		dispatch(_addPullRequestConversations(providerId, id, response));
 		return response as FetchThirdPartyPullRequestResponse;

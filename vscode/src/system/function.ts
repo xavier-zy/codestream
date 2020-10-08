@@ -1,5 +1,5 @@
 "use strict";
-import { debounce as _debounce } from "lodash-es";
+import { debounce as _debounce, uniqBy as _uniqBy } from "lodash-es";
 import uuidv4 from "uuid/v4";
 import { CancellationToken } from "vscode";
 
@@ -320,5 +320,9 @@ export namespace Functions {
 			.replace(/\+/g, "-") // Replace + with - (see RFC 4648, sec. 5)
 			.replace(/\//g, "_") // Replace / with _ (see RFC 4648, sec. 5)
 			.substring(0, 22); // Drop '==' padding;
+	}
+
+	export function uniqueBy(array: any[], iteratee: any) {
+		return _uniqBy(array, iteratee);
 	}
 }

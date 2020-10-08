@@ -51,7 +51,7 @@ class CreateReview : AnAction(), IntentionAction, LowPriorityAction, Iconable {
 
     override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?) = true
 
-    override fun getText() = "Request a code review"
+    override fun getText() = "Request feedback"
 
     override fun getIcon(flags: Int) = IconLoader.getIcon("/images/review.svg")
 }

@@ -196,7 +196,8 @@ export const PullRequestPatch = (props: {
 										<PRComment key={index} style={{ margin: 0 }}>
 											<PRCard>
 												<PullRequestCodeComment
-													pr={props.pr!}
+													pr={props.pr!} 
+													mode={props.mode}
 													fetch={props.fetch!}
 													setIsLoadingMessage={props.setIsLoadingMessage!}
 													item={review}

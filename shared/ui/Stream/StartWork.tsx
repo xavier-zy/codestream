@@ -10,7 +10,7 @@ import { setUserStatus, setUserPreference, connectProvider } from "./actions";
 import { setCurrentCodemark, setStartWorkCard } from "../store/context/actions";
 import { CSMe, FileStatus } from "@codestream/protocols/api";
 import { InlineMenu } from "../src/components/controls/InlineMenu";
-import { useDidMount } from "../utilities/hooks";
+import { useDidMount, useRect } from "../utilities/hooks";
 import {
 	GetBranchesRequestType,
 	CreateBranchRequestType,
@@ -284,6 +284,29 @@ const BranchDiagram = styled.div`
 		top: 72px;
 		left: 110px;
 	}
+	@media only screen and (max-width: 430px) {
+		height: auto;
+		overflow: visible;
+		padding-bottom: 10px;
+		${GitTimeline},
+		${GitBranch},
+		${BranchLineDown},
+		${BranchLineAcross},
+		${BranchCurve} {
+			display: none;
+		}
+		.base-branch {
+			position: relative;
+			padding-bottom: 5px;
+			top: 0;
+			left: 0;
+		}
+		.local-branch {
+			position: relative;
+			top: 0;
+			left: 0;
+		}
+	}	
 }
 `;
 

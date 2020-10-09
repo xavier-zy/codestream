@@ -37,6 +37,7 @@ interface Props {
 	paneState: PaneState;
 }
 
+let hasRenderedOnce = false;
 const EMPTY_HASH = {};
 const EMPTY_ARRAY = [];
 export const WorkInProgress = React.memo((props: Props) => {
@@ -53,8 +54,13 @@ export const WorkInProgress = React.memo((props: Props) => {
 
 		let linesAdded = 0;
 		let linesRemoved = 0;
+		let repoCount = 0;
 		(modifiedRepos[state.context.currentTeamId] || EMPTY_ARRAY).forEach(repo => {
-			(repo.modifiedFiles || EMPTY_ARRAY)
+			const files = repo.modifiedFiles || EMPTY_ARRAY;
+			if (files.length) {
+				repoCount++;
+			}
+			files
 				// .filter(f => f.status !== FileStatus.untracked)
 				.forEach(f => {
 					linesAdded += f.linesAdded;
@@ -63,6 +69,7 @@ export const WorkInProgress = React.memo((props: Props) => {
 		});
 
 		return {
+			repoCount,
 			linesAdded,
 			linesRemoved,
 			teamId: state.context.currentTeamId,
@@ -136,6 +143,14 @@ export const WorkInProgress = React.memo((props: Props) => {
 		else getScmInfoSummary();
 
 		startPolling();
+
+		if (!hasRenderedOnce) {
+			if (derivedState.linesAdded > 0 || derivedState.linesRemoved > 0) {
+				HostApi.instance.track("WIP Rendered", {
+					"Repo Count": derivedState.repoCount
+				});
+			}
+		}
 		return () => {
 			disposable.dispose();
 		};

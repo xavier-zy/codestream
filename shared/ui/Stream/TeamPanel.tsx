@@ -221,9 +221,6 @@ class TeamPanel extends React.Component<Props, State> {
 
 	componentDidMount() {
 		this._mounted = true;
-		if (this.props.webviewFocused)
-			HostApi.instance.track("Page Viewed", { "Page Name": "Team Tab" });
-
 		this.getSuggestedInvitees();
 	}
 

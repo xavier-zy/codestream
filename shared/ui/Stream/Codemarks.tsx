@@ -21,6 +21,7 @@ import {
 } from "../store/editorContext/reducer";
 import { setCurrentCodemark, openPanel } from "../store/context/actions";
 import { sortBy as _sortBy } from "lodash-es";
+import { setNewPostEntry } from "@codestream/webview/store/context/actions";
 import { setEditorContext } from "../store/editorContext/actions";
 import { CodeStreamState } from "../store";
 import Codemark from "./Codemark";
@@ -99,6 +100,7 @@ interface DispatchProps {
 	setUserPreference: any;
 	setUserPreferences: Function;
 	openPanel: (...args: Parameters<typeof openPanel>) => ReturnType<typeof openPanel>;
+	setNewPostEntry: Function;
 }
 
 interface Props extends ConnectedProps, DispatchProps, InheritedProps, WithSearchableItemsProps {}
@@ -607,7 +609,10 @@ export class SimpleCodemarksForFile extends Component<Props, State> {
 					isLoading={this.state.isLoading}
 				>
 					<Icon
-						onClick={() => this.props.openPanel(WebviewPanels.NewComment)}
+						onClick={() => {
+							this.props.setNewPostEntry("Codemarks Section");
+							this.props.openPanel(WebviewPanels.NewComment);
+						}}
 						name="comment"
 						title="Add Comment"
 						placement="bottom"
@@ -615,7 +620,10 @@ export class SimpleCodemarksForFile extends Component<Props, State> {
 						tabIndex={1}
 					/>
 					<Icon
-						onClick={() => this.props.openPanel(WebviewPanels.NewIssue)}
+						onClick={() => {
+							this.props.setNewPostEntry("Codemarks Section");
+							this.props.openPanel(WebviewPanels.NewIssue);
+						}}
 						name="issue"
 						title="Create Issue"
 						placement="bottom"
@@ -787,6 +795,7 @@ export default withSearchableItems(
 		openPanel,
 		setCurrentCodemark,
 		setEditorContext,
+		setNewPostEntry,
 		setUserPreference,
 		setUserPreferences
 	})(SimpleCodemarksForFile)

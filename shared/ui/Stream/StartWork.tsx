@@ -534,28 +534,7 @@ export const StartWork = (props: Props) => {
 	};
 
 	useDidMount(() => {
-		getBranches().then(_ => {
-			try {
-				if (_.openRepos !== undefined && derivedState.modifiedReposByTeam) {
-					const onlyOpenRepos = _.openRepos.filter(_ => _.id).map(_ => _.id!);
-					const openReposWithModifiedFiles = derivedState.modifiedReposByTeam
-						.map(repo => {
-							if (repo.repoId && !onlyOpenRepos.includes(repo.repoId)) return undefined;
-							return repo.modifiedFiles.filter(f => f.status !== FileStatus.untracked).length === 0
-								? undefined
-								: repo;
-						})
-						.filter(Boolean);
-					if (openReposWithModifiedFiles && openReposWithModifiedFiles.length) {
-						HostApi.instance.track("WIP Rendered", {
-							"Repo Count": openReposWithModifiedFiles.length
-						});
-					}
-				}
-			} catch (err) {
-				console.warn(err);
-			}
-		});
+		getBranches();
 		if (card.moveCardOptions && card.moveCardOptions.length) {
 			const index = card.moveCardOptions.findIndex(option =>
 				option.to ? option.to.id === card.idList : option.id === card.idList
@@ -564,8 +543,6 @@ export const StartWork = (props: Props) => {
 			if (next) setMoveCardDestination(next);
 			else setMoveCardDestination(card.moveCardOptions[0]);
 		}
-		if (derivedState.webviewFocused)
-			HostApi.instance.track("Page Viewed", { "Page Name": "Status Tab" });
 
 		const disposable = HostApi.instance.on(DidChangeDataNotificationType, async (e: any) => {
 			if (e.type === ChangeDataType.Workspace) {

@@ -90,6 +90,7 @@ export const Sidebar = React.memo(function Sidebar() {
 	const { sidebarPanes } = derivedState;
 	const [openRepos, setOpenRepos] = useState<ReposScm[]>(EMPTY_ARRAY);
 	const [dragCombinedHeight, setDragCombinedHeight] = useState<number | undefined>(undefined);
+	const [previousSizes, setPreviousSizes] = useState(EMPTY_HASH);
 	const [sizes, setSizes] = useState(EMPTY_HASH);
 	const [firstIndex, setFirstIndex] = useState<number | undefined>(undefined);
 	const [secondIndex, setSecondIndex] = useState<number | undefined>(undefined);
@@ -110,6 +111,10 @@ export const Sidebar = React.memo(function Sidebar() {
 
 	useDidMount(() => {
 		fetchOpenRepos();
+		HostApi.instance.track("Sidebar Rendered", {
+			Width: window.innerWidth,
+			Height: window.innerHeight
+		});
 	});
 
 	// https://usehooks.com/useWindowSize/
@@ -120,6 +125,10 @@ export const Sidebar = React.memo(function Sidebar() {
 			setWindowSize({
 				width: window.innerWidth,
 				height: window.innerHeight
+			});
+			HostApi.instance.track("Sidebar Resized", {
+				Width: window.innerWidth,
+				Height: window.innerHeight
 			});
 		}
 
@@ -258,6 +267,7 @@ export const Sidebar = React.memo(function Sidebar() {
 			const firstId = positions[firstIndex].id;
 			const secondId = positions[secondIndex].id;
 			const newSizes = { ...sizes, [firstId]: firstSize, [secondId]: secondSize };
+			setPreviousSizes({ ...sizes });
 			setSizes(newSizes);
 		}
 	};
@@ -269,6 +279,21 @@ export const Sidebar = React.memo(function Sidebar() {
 		dispatch(setUserPreference(["sidebarPanes", firstId, "size"], sizes[firstId]));
 		const secondId = positions[secondIndex].id;
 		dispatch(setUserPreference(["sidebarPanes", secondId, "size"], sizes[secondId]));
+		const currentSize = sizes[secondId];
+
+		let adjustment;
+		if (currentSize) {
+			const previousSize = previousSizes[secondId] || 0;
+			if (currentSize > previousSize) {
+				adjustment = "Taller";
+			} else if (currentSize < previousSize) {
+				adjustment = "Shorter";
+			}
+		}
+		HostApi.instance.track("Sidebar Adjusted", {
+			Section: secondId,
+			Adjustment: adjustment
+		});
 	};
 
 	const handleDragHeader = (e: any, id: WebviewPanels) => {

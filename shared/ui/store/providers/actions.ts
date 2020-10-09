@@ -82,7 +82,8 @@ export type ViewLocation =
 	| "Integrations Panel"
 	| "Status"
 	| "Sidebar"
-	| "Create Pull Request Panel";
+	| "Create Pull Request Panel"
+	| "Issues Section";
 
 export const sendIssueProviderConnected = (
 	providerId: string,

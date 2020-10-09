@@ -432,6 +432,7 @@ export const PullRequestFilesChangedList = (props: Props) => {
 								{!hidden && (
 									<PullRequestPatch
 										pr={pr}
+										mode={mode}
 										patch={_.patch}
 										hunks={_.hunks}
 										filename={_.filename}

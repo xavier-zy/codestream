@@ -17,6 +17,7 @@ import { api } from "../store/providerPullRequests/actions";
 
 interface Props {
 	pr: FetchThirdPartyPullRequestPullRequest;
+	mode?: string;
 	fetch: Function;
 	className?: string;
 	databaseId: string;
@@ -39,7 +40,15 @@ export const PullRequestReplyComment = styled((props: Props) => {
 
 			HostApi.instance.track("PR Comment Added", {
 				Host: pr.providerId,
-				"Comment Type": "Review Reply"
+				"Comment Type": "Single Reply",
+				"Diff View":
+					props.mode === "files"
+						? "List View"
+						: props.mode === "hunks"
+						? "Diff Hunks"
+						: props.mode === "tree"
+						? "Tree View"
+						: "Unknown"
 			});
 
 			await dispatch(

@@ -1,7 +1,12 @@
 import React, { useEffect } from "react";
 import { connect, useDispatch, useSelector } from "react-redux";
 import { connectProvider, getUserProviderInfo } from "../../store/providers/actions";
-import { openPanel, setIssueProvider, setCurrentCodemark } from "../../store/context/actions";
+import {
+	openPanel,
+	setIssueProvider,
+	setCurrentCodemark,
+	setNewPostEntry
+} from "../../store/context/actions";
 import Icon from "../Icon";
 import Menu from "../Menu";
 import { ProviderDisplay, PROVIDER_MAPPINGS } from "./types";
@@ -296,13 +301,13 @@ class IssueDropdown extends React.Component<Props, State> {
 						},
 						action: () => {
 							this.setState({ isLoading: true, loadingProvider: providerInfo });
-							this.props.connectProvider(providerInfo.provider.id, "Status");
+							this.props.connectProvider(providerInfo.provider.id, "Issues Section");
 						}
 					}
 				});
 			} else {
 				this.setState({ isLoading: true, loadingProvider: providerInfo });
-				const ret = await this.props.connectProvider(providerInfo.provider.id, "Status");
+				const ret = await this.props.connectProvider(providerInfo.provider.id, "Issues Section");
 				if (ret && ret.alreadyConnected) this.setState({ isLoading: false });
 			}
 		}
@@ -1000,7 +1005,10 @@ export const IssueList = React.memo((props: React.PropsWithChildren<IssueListPro
 				)}
 				<Icon
 					name="plus"
-					onClick={() => dispatch(openPanel(WebviewPanels.NewIssue))}
+					onClick={() => {
+						dispatch(setNewPostEntry("Issues Section"));
+						dispatch(openPanel(WebviewPanels.NewIssue));
+					}}
 					title={"New " + cardLabel}
 					placement="bottom"
 					delay={1}

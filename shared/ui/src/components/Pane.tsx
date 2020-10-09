@@ -13,6 +13,7 @@ import {
 import Draggable from "react-draggable";
 import { DragHeaderContext } from "@codestream/webview/Stream/Sidebar";
 import cx from "classnames";
+import { HostApi } from "@codestream/webview/webview-api";
 
 export enum PaneState {
 	Open = "open",
@@ -173,12 +174,23 @@ export const PaneHeader = React.memo((props: PropsWithChildren<PaneHeaderProps>)
 			e.target.classList.contains("pane-header") ||
 			e.target.classList.contains("label") ||
 			e.target.closest(".expander")
-		)
+		) {
 			dispatch(setPaneCollapsed(props.id, !derivedState.collapsed));
+
+			HostApi.instance.track("Sidebar Adjusted", {
+				Section: props.id,
+				Adjustment: !derivedState.collapsed ? "Collapsed" : "Expanded"
+			});
+		}
 	};
 
 	const maximize = () => {
 		dispatch(setPaneMaximized(props.id, !derivedState.maximized));
+
+		HostApi.instance.track("Sidebar Adjusted", {
+			Section: props.id,
+			Adjustment: !derivedState.maximized ? "Maximized" : "Minimized"
+		});
 	};
 
 	const header = (

@@ -304,6 +304,12 @@ export function EllipsisMenu(props: EllipsisMenuProps) {
 					checked: !settings.removed,
 					action: () => {
 						dispatch(setUserPreference(["sidebarPanes", id, "removed"], !settings.removed));
+						if (!settings.removed) {
+							HostApi.instance.track("Sidebar Adjusted", {
+								Section: id,
+								Adjustment: "Hidden"
+							});
+						}
 					}
 				};
 			})

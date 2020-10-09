@@ -128,6 +128,7 @@ interface Props {
 	paneState: PaneState;
 }
 
+let hasRenderedOnce = false;
 const e: ThirdPartyProviderConfig[] = [];
 export const OpenPullRequests = React.memo((props: Props) => {
 	const dispatch = useDispatch();
@@ -245,13 +246,16 @@ export const OpenPullRequests = React.memo((props: Props) => {
 			} finally {
 				setIsLoadingPRs(false);
 
-				HostApi.instance.track("PR List Rendered", {
-					"List State": count === undefined ? "No Auth" : count > 0 ? "PRs Listed" : "No PRs",
-					"PR Count": count,
-					Host: derivedState.PRConnectedProviders
-						? derivedState.PRConnectedProviders.map(_ => _.id)[0]
-						: undefined
-				});
+				if (!hasRenderedOnce) {
+					HostApi.instance.track("PR List Rendered", {
+						"List State": count === undefined ? "No Auth" : count > 0 ? "PRs Listed" : "No PRs",
+						"PR Count": count,
+						Host: derivedState.PRConnectedProviders
+							? derivedState.PRConnectedProviders.map(_ => _.id)[0]
+							: undefined
+					});
+					hasRenderedOnce = true;
+				}
 			}
 		},
 		[

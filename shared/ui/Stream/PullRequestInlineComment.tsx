@@ -14,6 +14,7 @@ import { CSMe } from "@codestream/protocols/api";
 
 interface Props {
 	pr: FetchThirdPartyPullRequestPullRequest;
+	mode?: string;
 	filename: string;
 	lineOffsetInHunk: number;
 	setIsLoadingMessage: Function;
@@ -43,7 +44,15 @@ export const PullRequestInlineComment = styled((props: Props) => {
 	const trackComment = type => {
 		HostApi.instance.track("PR Comment Added", {
 			Host: pr.providerId,
-			"Comment Type": type
+			"Comment Type": type,
+			"Diff View":
+				props.mode === "files"
+					? "List View"
+					: props.mode === "hunks"
+					? "Diff Hunks"
+					: props.mode === "tree"
+					? "Tree View"
+					: "Unknown"
 		});
 	};
 

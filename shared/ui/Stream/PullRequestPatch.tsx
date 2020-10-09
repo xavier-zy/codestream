@@ -108,6 +108,7 @@ export interface Hunk {
 
 export const PullRequestPatch = (props: {
 	patch?: string;
+	mode?: string;
 	hunks?: Hunk[];
 	fetch?: Function;
 	filename: string;
@@ -176,6 +177,7 @@ export const PullRequestPatch = (props: {
 								<PRInlineComment>
 									<PullRequestInlineComment
 										pr={props.pr}
+										mode={props.mode}
 										filename={filename}
 										lineOffsetInHunk={index}
 										fetch={props.fetch}

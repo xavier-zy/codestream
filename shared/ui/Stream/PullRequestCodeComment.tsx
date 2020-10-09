@@ -39,6 +39,7 @@ const ReviewIcons = {
 
 interface Props {
 	pr: FetchThirdPartyPullRequestPullRequest;
+	mode?: string;
 	setIsLoadingMessage: Function;
 	fetch: Function;
 	item: any;
@@ -296,6 +297,7 @@ export const PullRequestCodeComment = (props: PropsWithChildren<Props>) => {
 				<>
 					<PullRequestReplyComment
 						pr={pr}
+						mode={props.mode}
 						fetch={props.fetch}
 						databaseId={comment.databaseId}
 						isOpen={openComments[comment.databaseId]}

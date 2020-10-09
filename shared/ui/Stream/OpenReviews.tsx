@@ -68,7 +68,7 @@ export const OpenReviews = React.memo(function OpenReviews(props: Props) {
 			>
 				<Icon
 					onClick={() => {
-						dispatch(setNewPostEntry("Status"));
+						dispatch(setNewPostEntry("Feedback Requests Section"));
 						dispatch(openPanel(WebviewPanels.NewReview));
 					}}
 					name="plus"

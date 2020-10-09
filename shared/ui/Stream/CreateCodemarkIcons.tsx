@@ -195,11 +195,14 @@ export const CreateCodemarkIcons = (props: Props) => {
 		}
 
 		dispatch(setComposeCodemarkActive(type));
-		dispatch(
-			setNewPostEntry(
-				postEntry || derivedState.activePanelName || `unknown: ${derivedState.activePanel}`
-			)
-		);
+		let postEntryName = postEntry || derivedState.activePanelName;
+		if (!postEntryName && derivedState.activePanel === "sidebar") {
+			postEntryName = "Hover Icons";
+		}
+		if (!postEntryName) {
+			postEntryName = `unknown: ${derivedState.activePanel}`;
+		}
+		dispatch(setNewPostEntry(postEntryName));
 		dispatch(setCurrentCodemark());
 	};
 	const mapLine0ToVisibleRange = fromLineNum0 => {

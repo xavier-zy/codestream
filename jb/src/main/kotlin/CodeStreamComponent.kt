@@ -2,16 +2,15 @@ package com.codestream
 
 import com.codestream.agent.ModuleListenerImpl
 import com.codestream.editor.EditorFactoryListenerImpl
-import com.codestream.editor.FileDocumentManagerListenerImpl
 import com.codestream.editor.FileEditorManagerListenerImpl
 import com.codestream.protocols.webview.EditorNotifications
+import com.codestream.editor.VirtualFileListenerImpl
 import com.codestream.protocols.webview.FocusNotifications
 import com.codestream.protocols.webview.Sidebar
 import com.codestream.protocols.webview.SidebarLocation
 import com.codestream.settings.ApplicationSettingsService
 import com.codestream.system.CodeStreamDiffURLStreamHandler
 import com.codestream.workaround.ToolWindowManagerWorkaround
-import com.intellij.AppTopics
 import com.intellij.ProjectTopics
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -21,6 +20,7 @@ import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.IconLoader
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowType
@@ -53,6 +53,7 @@ class CodeStreamComponent(val project: Project) : Disposable {
         CodeStreamDiffURLStreamHandler
         initDebugMonitors()
         initEditorFactoryListener()
+        initVirtualFileListener()
         initMessageBusSubscriptions()
         showToolWindowOnFirstRun()
         ApplicationManager.getApplication().invokeLater {
@@ -80,6 +81,13 @@ class CodeStreamComponent(val project: Project) : Disposable {
         if (project.isDisposed) return
         EditorFactory.getInstance().addEditorFactoryListener(
             EditorFactoryListenerImpl(project), this
+        )
+    }
+
+    private fun initVirtualFileListener() {
+        if (project.isDisposed) return
+        VirtualFileManager.getInstance().addVirtualFileListener(
+            VirtualFileListenerImpl(project), this
         )
     }
 
@@ -117,10 +125,6 @@ class CodeStreamComponent(val project: Project) : Disposable {
                         updateSidebar()
                     }
                 }
-            )
-            it.subscribe(
-                AppTopics.FILE_DOCUMENT_SYNC,
-                FileDocumentManagerListenerImpl(project)
             )
         }
     }

@@ -136,13 +136,11 @@ class EditorService(val project: Project) {
     fun save(document: Document) {
         val agentService = project.agentService ?: return
 
-        agentService.onDidStart {
-            synchronized(managedDocuments) {
-                if (managedDocuments.contains(document)) {
-                    agentService.agent.textDocumentService.didSave(
-                        DidSaveTextDocumentParams(document.textDocumentIdentifier)
-                    )
-                }
+        synchronized(managedDocuments) {
+            if (managedDocuments.contains(document)) {
+                agentService.agent.textDocumentService.didSave(
+                    DidSaveTextDocumentParams(document.textDocumentIdentifier)
+                )
             }
         }
     }

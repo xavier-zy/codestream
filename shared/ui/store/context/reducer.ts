@@ -126,7 +126,8 @@ export function reduceContext(
 					action.payload.providerId && action.payload.id
 						? {
 								providerId: action.payload.providerId,
-								id: action.payload.id
+								id: action.payload.id,
+								commentId: action.payload.commentId
 						  }
 						: undefined,
 				pullRequestCheckoutBranch: false

@@ -146,6 +146,7 @@ export namespace ThirdPartyPostProvider {
 
 export interface ThirdPartyProvider {
 	readonly name: string;
+	readonly icon: string;
 	connect(): Promise<void>;
 	configure(data: { [key: string]: any }): Promise<void>;
 	disconnect(request: ThirdPartyDisconnect): Promise<void>;
@@ -214,6 +215,9 @@ export abstract class ThirdPartyProviderBase<
 	abstract get displayName(): string;
 	abstract get name(): string;
 	abstract get headers(): { [key: string]: string };
+	get icon() {
+		return this.name;
+	}
 
 	get accessToken() {
 		return this._providerInfo && this._providerInfo.accessToken;

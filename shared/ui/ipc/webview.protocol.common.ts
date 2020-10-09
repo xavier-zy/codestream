@@ -113,6 +113,7 @@ export interface WebviewContext {
 		| {
 				providerId: string;
 				id: string;
+				commentId?: string;
 		  }
 		| undefined;
 	profileUserId?: string;

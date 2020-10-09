@@ -124,13 +124,14 @@ export const setCurrentReview = (reviewId?: string) =>
 export const setCreatePullRequest = (reviewId?: string) =>
 	action(ContextActionsType.SetCreatePullRequest, { reviewId });
 
-export const setCurrentPullRequest = (providerId: string, id: string) =>
-	action(ContextActionsType.SetCurrentPullRequest, { providerId, id });
+export const setCurrentPullRequest = (providerId: string, id: string, commentId?: string) =>
+	action(ContextActionsType.SetCurrentPullRequest, { providerId, id, commentId });
 
 export const clearCurrentPullRequest = () =>
 	action(ContextActionsType.SetCurrentPullRequest, {
 		providerId: "",
-		id: ""
+		id: "",
+		commentId: ""
 	});
 
 export const setStartWorkCard = (card: any) =>

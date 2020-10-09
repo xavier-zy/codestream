@@ -72,7 +72,8 @@ export class GitLabProvider extends ThirdPartyIssueProviderBase<CSGitLabProvider
 		return {
 			provider: {
 				name: this.displayName,
-				icon: "gitlab"
+				icon: "gitlab",
+				id: this.providerConfig.id
 			},
 			subhead: `#${comment.pullRequest.id}`,
 			actions: [

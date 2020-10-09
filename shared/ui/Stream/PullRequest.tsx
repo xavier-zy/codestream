@@ -63,6 +63,8 @@ import {
 	getProviderPullRequestRepo
 } from "../store/providerPullRequests/reducer";
 import { confirmPopup } from "./Confirm";
+import { Modal } from "./Modal";
+import { PullRequestFileComments } from "./PullRequestFileComments";
 
 export const WidthBreakpoint = "630px";
 
@@ -122,6 +124,9 @@ export const PullRequest = () => {
 				: undefined,
 			currentPullRequestId: state.context.currentPullRequest
 				? state.context.currentPullRequest.id
+				: undefined,
+			currentPullRequestCommentId: state.context.currentPullRequest
+				? state.context.currentPullRequest.commentId
 				: undefined,
 			currentPullRequest: currentPullRequest,
 			composeCodemarkActive: state.context.composeCodemarkActive,
@@ -372,6 +377,10 @@ export const PullRequest = () => {
 			});
 			setOpenRepos(repos);
 		}
+	};
+
+	const closeFileComments = () => {
+		if (pr) dispatch(setCurrentPullRequest(pr.providerId, pr.id));
 	};
 
 	const linkHijacker = (e: any) => {
@@ -782,6 +791,17 @@ export const PullRequest = () => {
 							)}
 						</div>
 					</ScrollBox>
+				)}
+				{!derivedState.composeCodemarkActive && derivedState.currentPullRequestCommentId && (
+					<Modal translucent onClose={closeFileComments}>
+						<PullRequestFileComments
+							pr={pr}
+							fetch={fetch}
+							setIsLoadingMessage={setIsLoadingMessage}
+							commentId={derivedState.currentPullRequestCommentId}
+							quote={() => {}}
+						/>
+					</Modal>
 				)}
 			</Root>
 		);

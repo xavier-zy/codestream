@@ -92,8 +92,9 @@ const Root = styled.div`
 `;
 
 export const PRInlineComment = styled.div`
-	max-width: calc(100vw - 50px);
-	padding: 0 20px;
+	// max-width: calc(100vw - 50px);
+	border-top: 1px solid var(--base-border-color);
+	border-bottom: 1px solid var(--base-border-color);
 `;
 
 export interface Hunk {

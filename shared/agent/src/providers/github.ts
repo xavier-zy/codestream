@@ -100,6 +100,10 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 		return "github";
 	}
 
+	get icon() {
+		return "mark-github";
+	}
+
 	get headers() {
 		return {
 			Authorization: `token ${this.accessToken}`,
@@ -112,7 +116,8 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 		return {
 			provider: {
 				name: this.displayName,
-				icon: "mark-github"
+				icon: "mark-github",
+				id: this.providerConfig.id
 			},
 			subhead: `#${comment.pullRequest.id}`,
 			externalId: comment.pullRequest.externalId,

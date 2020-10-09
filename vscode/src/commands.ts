@@ -69,6 +69,14 @@ export interface OpenCodemarkCommandArgs {
 	sourceUri?: Uri;
 }
 
+export interface OpenPullRequestCommandArgs {
+	providerId: string;
+	pullRequestId: string;
+	// optionally open to a particular comment
+	commentId?: string;
+	sourceUri?: Uri;
+}
+
 export interface OpenReviewCommandArgs {
 	reviewId: string;
 	onlyWhenVisible?: boolean;
@@ -460,6 +468,17 @@ export class Commands implements Disposable {
 
 		const { codemarkId: _codemarkId, ...options } = args;
 		return Container.webview.openCodemark(args.codemarkId, options);
+	}
+
+	@command("openPullRequest", { showErrorMessage: "Unable to open pull request" })
+	async openPullRequest(args: OpenPullRequestCommandArgs): Promise<void> {
+		if (args === undefined) return;
+
+		Container.agent.telemetry.track("PullRequest Clicked", {
+			"PullRequest Location": "Source File"
+		});
+
+		return Container.webview.openPullRequest(args.providerId, args.pullRequestId, args.commentId);
 	}
 
 	@command("openReview", { showErrorMessage: "Unable to open review" })

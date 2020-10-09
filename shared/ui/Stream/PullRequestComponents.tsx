@@ -304,11 +304,12 @@ export const PRCommentCard = styled.div`
 
 export const PRCard = styled.div`
 	padding: 15px;
-	margin: 10px;
+	margin: 15px;
 	border: 1px solid;
 	border-color: var(--base-border-color);
 	border-radius: 5px;
 	font-family: var(--font-family);
+	background: var(--base-background-color);
 `;
 
 export const PRActionCommentCard = styled.div`

@@ -335,7 +335,7 @@ function listenForEvents(store) {
 	});
 
 	api.on(ShowPullRequestNotificationType, async e => {
-		store.dispatch(setCurrentPullRequest(e.providerId, e.id));
+		store.dispatch(setCurrentPullRequest(e.providerId, e.id, e.commentId));
 	});
 
 	api.on(HostDidReceiveRequestNotificationType, async e => {

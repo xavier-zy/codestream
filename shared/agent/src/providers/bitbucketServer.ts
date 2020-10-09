@@ -158,7 +158,8 @@ export class BitbucketServerProvider extends ThirdPartyIssueProviderBase<CSBitbu
 		return {
 			provider: {
 				name: this.displayName,
-				icon: this.name
+				icon: this.name,
+				id: this.providerConfig.id
 			},
 			subhead: `#${comment.pullRequest.id}`,
 			actions: [

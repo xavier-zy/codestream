@@ -2,6 +2,7 @@
 import * as path from "path";
 import {
 	ThirdPartyIssueProvider,
+	ThirdPartyProvider,
 	ThirdPartyProviderSupportsPullRequests
 } from "providers/provider";
 import { CodeStreamSession } from "session";
@@ -12,6 +13,7 @@ import { Container, SessionContainer } from "../container";
 import { Logger } from "../logger";
 import { findBestMatchingLine, MAX_RANGE_VALUE } from "../markerLocation/calculator";
 import {
+	CodeStreamDiffUriData,
 	CreateDocumentMarkerPermalinkRequest,
 	CreateDocumentMarkerPermalinkRequestType,
 	CreateDocumentMarkerPermalinkResponse,
@@ -20,6 +22,7 @@ import {
 	FetchDocumentMarkersRequest,
 	FetchDocumentMarkersRequestType,
 	FetchDocumentMarkersResponse,
+	FetchMarkersRequestType,
 	GetDocumentFromKeyBindingRequest,
 	GetDocumentFromKeyBindingRequestType,
 	GetDocumentFromKeyBindingResponse,
@@ -33,6 +36,7 @@ import {
 	CodemarkStatus,
 	CodemarkType,
 	CSCodemark,
+	CSLocationArray,
 	CSMarker,
 	CSMe,
 	CSUser
@@ -222,17 +226,129 @@ export class DocumentMarkerManager {
 	@log()
 	@lspHandler(FetchDocumentMarkersRequestType)
 	async get(request: FetchDocumentMarkersRequest): Promise<FetchDocumentMarkersResponse> {
-		if (request.textDocument.uri.startsWith("codestream-diff://")) {
-			if (csUri.Uris.isCodeStreamDiffUri(request.textDocument.uri)) {
+		const uri = request.textDocument.uri;
+		if (uri.startsWith("codestream-diff://")) {
+			if (csUri.Uris.isCodeStreamDiffUri(uri)) {
+				return this.getDocumentMarkersForPullRequestDiff(request);
 				return emptyResponse;
 			}
-			return this.getDocumentMarkersForDiff(request);
+			return this.getDocumentMarkersForReviewDiff(request);
 		} else {
 			return this.getDocumentMarkersForRegularFile(request);
 		}
 	}
 
-	private async getDocumentMarkersForDiff({
+	private async getDocumentMarkersForPullRequestDiff({
+		textDocument: documentId,
+		filters: filters
+	}: FetchDocumentMarkersRequest) {
+		const { codemarks, users, posts, providerRegistry } = SessionContainer.instance();
+		const uri = documentId.uri;
+
+		const cc = Logger.getCorrelationContext();
+		const parsedUri = csUri.Uris.fromCodeStreamDiffUri<CodeStreamDiffUriData>(uri);
+		if (!parsedUri) throw new Error(`Could not parse uri ${uri}`);
+		let providerId;
+		let pullRequestId;
+		if (parsedUri.context && parsedUri.context.pullRequest) {
+			providerId = parsedUri.context.pullRequest.providerId;
+			if (!providerRegistry.providerSupportsPullRequests(providerId)) {
+				Logger.log(cc, `UnsupportedProvider ${providerId}`);
+				return emptyResponse;
+			}
+			pullRequestId = parsedUri.context.pullRequest.id;
+		} else {
+			Logger.log(cc, `missing context for uri ${uri}`);
+			return emptyResponse;
+		}
+
+		const result = await providerRegistry.executeMethod({
+			method: "getPullRequest",
+			providerId,
+			params: {
+				pullRequestId
+			}
+		});
+		const pr = result.repository.pullRequest;
+
+		// Logger.log(cc, `******************************************** pR Diff: ` + parsedUri.path);
+		// Logger.log(cc, "GOT A PR BACK: ", JSON.stringify(pr, null, 4));
+
+		const comments: any[] = [];
+		pr.timelineItems.nodes
+			.filter((node: any) => node.__typename === "PullRequestReview")
+			.forEach((review: any) => {
+				review.comments &&
+					review.comments.nodes.forEach((comment: any) => {
+						if (comment.path === parsedUri.path) comments.push(comment);
+					});
+			});
+
+		const documentMarkers: DocumentMarker[] = [];
+
+		const provider = providerRegistry
+			.getProviders()
+			.find((provider: ThirdPartyProvider) => provider.getConfig().id === pr.providerId);
+		if (provider) {
+			comments.forEach((comment: any) => {
+				let summary = comment.body || comment.bodyText;
+				if (summary.length !== 0) {
+					summary = summary.replace(emojiRegex, (s: string, code: string) => emojiMap[code] || s);
+				}
+
+				let startLine = 1;
+				if (comment.diffHunk) {
+					// this data looks like this => `@@ -234,3 +234,20 @@`
+					const match = comment.diffHunk.match("@@ (.+) (.+) @@");
+					if (match && match.length >= 2) {
+						try {
+							// the @@ line is actually not the first line... so subtract 1
+							startLine = parseInt(match[2].split(",")[0].replace("+", ""), 10) - 1;
+						} catch {}
+					}
+				} else {
+					return;
+				}
+
+				const gotoLine = startLine + comment.position;
+
+				const location: CSLocationArray = [gotoLine, 0, gotoLine, 0, undefined];
+				documentMarkers.push({
+					createdAt: comment.createdAt,
+					modifiedAt: comment.createdAt,
+					id: comment.id,
+					file: comment.path,
+					repoId: "",
+					creatorId: comment.author.login,
+					teamId: "",
+					fileStreamId: "",
+					creatorAvatar: comment.author ? comment.author.avatarUrl : undefined,
+					code: "",
+					fileUri: documentId.uri,
+					creatorName: comment.author ? comment.author.login : "Unknown",
+					range: MarkerLocation.toRangeFromArray(location),
+					location: MarkerLocation.fromArray(location, comment.id),
+					summary: summary,
+					summaryMarkdown: `\n\n${Strings.escapeMarkdown(summary, { quoted: true })}`,
+					type: CodemarkType.Comment,
+					externalContent: {
+						provider: { name: provider.name, id: pr.providerId, icon: provider.icon },
+						externalId: pr.id,
+						externalChildId: comment.id,
+						externalType: "pr",
+						title: comment.bodyText,
+						subhead: ""
+					}
+				});
+			});
+		}
+		return {
+			markers: documentMarkers,
+			markersNotLocated: []
+		};
+	}
+
+	private async getDocumentMarkersForReviewDiff({
 		textDocument: documentId,
 		filters: filters
 	}: FetchDocumentMarkersRequest) {

@@ -94,7 +94,12 @@ export const PullRequestInlineComment = styled((props: Props) => {
 	};
 
 	return (
-		<PRComment>
+		<PRComment
+			style={{
+				margin: "15px",
+				maxWidth: "min(600px, calc(100vw - 80px))"
+			}}
+		>
 			<PRCommentCard className="no-headshot no-arrow">
 				{pr.locked ? (
 					<>

@@ -90,7 +90,7 @@ export const PullRequestFilesChangedTab = (props: {
 
 	if (!filesChanged || !filesChanged.length) return null;
 	return (
-		<div style={{ position: "relative", margin: "0 0 20px 40px" }}>
+		<div style={{ position: "relative", margin: "0 0 20px 20px" }}>
 			<PullRequestFilesChangedList
 				pr={pr}
 				filesChanged={filesChanged}

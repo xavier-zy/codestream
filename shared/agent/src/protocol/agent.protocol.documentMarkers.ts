@@ -66,10 +66,12 @@ export type DocumentMarker = CSEntity &
 
 export interface DocumentMarkerExternalContent {
 	provider: {
+		id: string;
 		name: string;
 		icon?: string;
 	};
 	externalId?: string;
+	externalChildId?: string;
 	externalType?: string;
 	diffHunk?: string;
 	title?: string;

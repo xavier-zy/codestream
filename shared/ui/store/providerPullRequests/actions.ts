@@ -282,7 +282,7 @@ export const openPullRequestByUrl = (
 				dispatch(setCurrentReview(""));
 				if (options && options.checkoutBranch)
 					dispatch(setCurrentPullRequestAndBranch(id as string));
-				dispatch(setCurrentPullRequest(providerInfo.providerId, id as string));
+				dispatch(setCurrentPullRequest(providerInfo.providerId, id as string, ""));
 				handled = true;
 			}
 		}

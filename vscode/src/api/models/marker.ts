@@ -85,6 +85,10 @@ export class DocMarker {
 		return this._entity.type || "comment";
 	}
 
+	get externalContent() {
+		return this._entity.externalContent;
+	}
+
 	private _dateFormatter?: Dates.IDateFormatter;
 
 	formatDate(format?: string | null) {

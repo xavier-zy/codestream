@@ -1,7 +1,7 @@
 import React, { PropsWithChildren } from "react";
 import styled from "styled-components";
 import Icon from "@codestream/webview/Stream/Icon";
-import ScrollBox from "@codestream/webview/Stream/ScrollBox";
+import ScrollBox from "../../Stream/ScrollBox";
 import { shallowEqual, useDispatch, useSelector } from "react-redux";
 import { CodeStreamState } from "@codestream/webview/store";
 import { WebviewPanels } from "@codestream/protocols/webview";

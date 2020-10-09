@@ -98,7 +98,7 @@
                 <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="control SLASH" second-keystroke="L"
                                    replace-all="true"/>
             </action>
-            <action id="CodeStream.CreateReview" class="com.codestream.actions.CreateReview" text="Request a Code _Review"
+            <action id="CodeStream.CreateReview" class="com.codestream.actions.CreateReview" text="_Request Feedback"
                     description="Request feedback" icon="/images/review.svg">
                 <keyboard-shortcut keymap="$default" first-keystroke="control shift SLASH" second-keystroke="R"/>
                 <keyboard-shortcut keymap="Mac OS X" first-keystroke="control SLASH" second-keystroke="R"

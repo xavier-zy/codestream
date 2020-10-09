@@ -21,6 +21,9 @@ import cx from "classnames";
 import { getConnectedSupportedPullRequestHosts } from "../store/providers/reducer";
 import { getPreferences } from "../store/users/reducer";
 import { getRepos } from "../store/repos/reducer";
+import { Loading } from "../Container/Loading";
+
+const PADDING_TOP = 20;
 
 const Root = styled.div`
 	height: 100%;
@@ -29,7 +32,7 @@ const Root = styled.div`
 `;
 
 const Panels = styled.div`
-	padding-top: 40px;
+	padding-top: ${PADDING_TOP}px;
 	height: 100%;
 `;
 
@@ -180,8 +183,8 @@ export const Sidebar = React.memo(function Sidebar() {
 	})();
 
 	const positions = (() => {
-		const availableHeight = windowSize.height - 40 - COLLAPSED_SIZE * numCollapsed;
-		let accumulator = 40;
+		const availableHeight = windowSize.height - PADDING_TOP - COLLAPSED_SIZE * numCollapsed;
+		let accumulator = PADDING_TOP;
 		return panes.map(p => {
 			const size = sizes[p.id] || p.size || 1;
 			const height = p.removed
@@ -205,10 +208,10 @@ export const Sidebar = React.memo(function Sidebar() {
 		if (maximizedPane) return [];
 
 		// don't worry about using the dynamic version of collapsed because
-		// if one pane is maximized, you can't drag. subtract 40 for the header padding,
+		// if one pane is maximized, you can't drag. subtract PADDING_TOP for the header padding,
 		// and COLLAPSED_SIZE for each collapsed pane
-		const availableHeight = windowSize.height - 40 - COLLAPSED_SIZE * numCollapsed;
-		let accumulator = 40;
+		const availableHeight = windowSize.height - PADDING_TOP - COLLAPSED_SIZE * numCollapsed;
+		let accumulator = PADDING_TOP;
 		const firstExpanded = panes.findIndex(p => !p.collapsed);
 		const lastExpanded = findLastIndex(panes, p => !p.collapsed);
 		return panes.map((p, index) => {

@@ -231,7 +231,7 @@
 		nav.inline {
 			position: fixed;
 			z-index: 1;
-			top: 5px;
+			top: 0px;
 			right: 10px;
 			background: var(--app-background-color);
 			background: var(--sidebar-background);
@@ -250,7 +250,7 @@
 
 				> span {
 					display: inline-block;
-					padding: 5px 5px;
+					padding: 0 5px;
 					color: @text-color-subtle;
 					transition: transform 0.1s;
 				}
@@ -267,7 +267,8 @@
 				}
 				&.active {
 					background: var(--button-background-color);
-					color: var(--button-foreground-color);
+					// color: var(--button-foreground-color);
+					background: var(--panel-tool-background-color);
 					z-index: 50;
 					box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
 				}

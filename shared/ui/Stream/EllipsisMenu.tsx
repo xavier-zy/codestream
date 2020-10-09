@@ -422,7 +422,7 @@ export function EllipsisMenu(props: EllipsisMenuProps) {
 			items={menuItems}
 			target={props.menuTarget}
 			action={props.closeMenu}
-			align="dropdownRight"
+			align="bottomRight"
 		/>
 	);
 }

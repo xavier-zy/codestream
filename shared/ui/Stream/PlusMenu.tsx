@@ -131,7 +131,7 @@ export function PlusMenu(props: PlusMenuProps) {
 			items={menuItems}
 			target={props.menuTarget}
 			action={props.closeMenu}
-			align="dropdownRight"
+			align="bottomRight"
 		/>
 	);
 }

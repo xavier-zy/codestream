@@ -74,14 +74,10 @@ import {
 	TraverseDiffsRequestType,
 	CompareLocalFilesRequestType,
 	NewPullRequestNotificationType,
-<<<<<<< HEAD
 	ShowPullRequestNotificationType,
 	WebviewPanels,
 	SidebarLocation,
 	HostDidChangeLayoutNotificationType
-=======
-	ShowPullRequestNotificationType
->>>>>>> show PR comments as glyphs
 } from "@codestream/protocols/webview";
 import { gate } from "system/decorators/gate";
 import {

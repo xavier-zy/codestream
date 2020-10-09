@@ -973,7 +973,13 @@ export const IssueList = React.memo((props: React.PropsWithChildren<IssueListPro
 	return (
 		<>
 			{startWorkCard && (
-				<StartWork card={startWorkCard} onClose={() => setStartWorkCard(undefined)} />
+				<StartWork
+					card={startWorkCard}
+					onClose={() => {
+						setStartWorkCard(undefined);
+						setReload(reload + 1);
+					}}
+				/>
 			)}
 			{renderCustomFilter()}
 			<PaneHeader

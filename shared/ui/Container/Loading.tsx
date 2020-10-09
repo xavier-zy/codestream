@@ -1,5 +1,6 @@
 import { AnyObject, noop } from "../utils";
 import React, { useState, useEffect } from "react";
+import Icon from "../Stream/Icon";
 
 interface Props {
 	style?: AnyObject;
@@ -12,7 +13,7 @@ export function Loading(props: Props) {
 		if (!shouldShowRings) {
 			const id = setTimeout(() => {
 				setShouldShowRings(true);
-			}, 1000);
+			}, 100);
 
 			return () => clearTimeout(id);
 		}

@@ -432,9 +432,6 @@ export const PullRequestFilesChanged = (props: Props) => {
 				<span>
 					Repo <span className="monospace highlight">{pr.repository.name}</span> not found in your
 					editor. Open it, or <Link href={pr.repository.url}>clone the repo</Link>.
-					<p style={{ margin: "5px 0 0 0" }}>
-						Changes can be viewed under <Icon name="diff" /> Diff Hunks view.
-					</p>
 				</span>
 			);
 		} else {

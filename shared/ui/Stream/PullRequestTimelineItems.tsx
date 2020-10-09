@@ -618,7 +618,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 									)}
 
 									<PRTimelineItemBody>
-										<div className="monospace left-pad">
+										<div className="monospace left-pad break-word">
 											<Link
 												href={`${pr.url}/commits/${item.commit.abbreviatedOid}`}
 												className="monospace"

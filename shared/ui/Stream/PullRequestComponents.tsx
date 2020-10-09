@@ -593,6 +593,9 @@ export const PRTimelineItem = styled.div`
 	.left-pad {
 		padding-left: 5px;
 	}
+	.break-word {
+		word-break: break-word;
+	}
 `;
 
 export const PRTimelineItemBody = styled.div`

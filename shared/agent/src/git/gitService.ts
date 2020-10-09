@@ -309,7 +309,8 @@ export class GitService implements IGitService, Disposable {
 		initialCommitHash: string,
 		finalCommitHash: string,
 		filePath: string,
-		fetchIfCommitNotFound: boolean = false
+		fetchIfCommitNotFound: boolean = false,
+		conetxtLines: number = 3
 	): Promise<ParsedDiff | undefined> {
 		const [dir, filename] = Strings.splitPath(filePath);
 		let data;
@@ -318,6 +319,7 @@ export class GitService implements IGitService, Disposable {
 				{ cwd: dir },
 				"diff",
 				"--no-ext-diff",
+				`-U${conetxtLines}`,
 				initialCommitHash,
 				finalCommitHash,
 				"--",

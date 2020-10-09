@@ -9,7 +9,9 @@ import {
 	ThirdPartyProviderConfig,
 	CrossPostIssueValues,
 	GetReviewRequestType,
-	BlameAuthor
+	BlameAuthor,
+	GetShaDiffsRangesRequestType,
+	GetShaDiffsRangesResponse
 } from "@codestream/protocols/agent";
 import {
 	CodemarkType,
@@ -207,6 +209,8 @@ interface State {
 	emailAuthors: { [email: string]: boolean };
 	currentPullRequestId?: string;
 	isProviderReview?: boolean;
+	isInsidePrChangeSet: boolean;
+	changedPrLines: GetShaDiffsRangesResponse[];
 }
 
 function merge(defaults: Partial<State>, codemark: CSCodemark): State {
@@ -260,7 +264,9 @@ class CodemarkForm extends React.Component<Props, State> {
 			scmError: "",
 			unregisteredAuthors: [],
 			emailAuthors: {},
-			isReviewLoading: false
+			isReviewLoading: false,
+			isInsidePrChangeSet: false,
+			changedPrLines: []
 		};
 
 		const state = props.editingCodemark
@@ -328,8 +334,13 @@ class CodemarkForm extends React.Component<Props, State> {
 		return null;
 	}
 
-	componentDidMount() {
-		const { multiLocation, dontAutoSelectLine } = this.props;
+	async componentDidMount() {
+		const {
+			multiLocation,
+			dontAutoSelectLine,
+			textEditorUriHasPullRequestContext,
+			textEditorUriContext
+		} = this.props;
 		const { codeBlocks } = this.state;
 
 		if (codeBlocks.length === 1) {
@@ -356,6 +367,17 @@ class CodemarkForm extends React.Component<Props, State> {
 			}
 		}
 		// if (!multiLocation) this.focus();
+
+		if (textEditorUriHasPullRequestContext) {
+			const changedPrLines = await HostApi.instance.send(GetShaDiffsRangesRequestType, {
+				repoId: textEditorUriContext.repoId,
+				filePath: textEditorUriContext.path,
+				baseSha: textEditorUriContext.leftSha,
+				headSha: textEditorUriContext.rightSha
+			});
+
+			this.setState({ changedPrLines });
+		}
 	}
 
 	rangesAreEqual(range1?: Range, range2?: Range) {
@@ -451,6 +473,7 @@ class CodemarkForm extends React.Component<Props, State> {
 		} else {
 			this.setState({ codeBlocks: newCodeBlocks, addingLocation: false }, () => {
 				this.handleScmChange();
+				this.handlePrIntersection();
 				if (callback) callback();
 			});
 		}
@@ -497,6 +520,48 @@ class CodemarkForm extends React.Component<Props, State> {
 		const { textEditorSelection, textEditorUri } = this.props;
 		if (textEditorSelection) {
 			this.getScmInfoForSelection(textEditorUri!, forceAsLine(textEditorSelection));
+		}
+	};
+
+	handlePrIntersection = () => {
+		const { changedPrLines, codeBlocks } = this.state;
+		const { textEditorUriHasPullRequestContext, textEditorUriContext } = this.props;
+
+		if (textEditorUriHasPullRequestContext) {
+			const isInsidePrChangeSet = changedPrLines.some(changedPrLine => {
+				return codeBlocks.some(codeBlock => {
+					const codeBlockStart = codeBlock.range.start.line + 1;
+					const codeBlockEnd = codeBlock.range.end.line + 1;
+
+					if (!codeBlock.scm) {
+						return false;
+					}
+
+					let prRange;
+					switch (codeBlock.scm.branch) {
+						case textEditorUriContext.baseBranch:
+							prRange = changedPrLine.baseLinesChanged;
+							break;
+						case textEditorUriContext.headBranch:
+							prRange = changedPrLine.headLinesChanged;
+							break;
+						default:
+							return false;
+					}
+
+					if (prRange.start > prRange.end) {
+						return false;
+					}
+
+					return (
+						(prRange.start <= codeBlockStart && codeBlockStart <= prRange.end) ||
+						(prRange.start <= codeBlockEnd && codeBlockEnd <= prRange.end) ||
+						(codeBlockStart <= prRange.start && prRange.end <= codeBlockEnd)
+					);
+				});
+			});
+
+			this.setState({ isInsidePrChangeSet });
 		}
 	};
 
@@ -976,10 +1041,15 @@ class CodemarkForm extends React.Component<Props, State> {
 		if (event) event.stopPropagation();
 		let newCodeBlocks = [...this.state.codeBlocks];
 		newCodeBlocks.splice(index, 1);
-		this.setState({
-			locationMenuOpen: "closed",
-			codeBlocks: newCodeBlocks
-		});
+		this.setState(
+			{
+				locationMenuOpen: "closed",
+				codeBlocks: newCodeBlocks
+			},
+			() => {
+				this.handlePrIntersection();
+			}
+		);
 		this.addLocation();
 		this.focus();
 	};
@@ -2300,7 +2370,7 @@ class CodemarkForm extends React.Component<Props, State> {
 										: "Submit"}
 								</Button>
 							</Tooltip>
-							{this.props.textEditorUriHasPullRequestContext && (
+							{this.props.textEditorUriHasPullRequestContext && this.state.isInsidePrChangeSet && (
 								<Button
 									key="submit-review"
 									loading={this.state.isReviewLoading}
@@ -2442,10 +2512,13 @@ const mapStateToProps = (state: CodeStreamState): ConnectedProps => {
 	};
 };
 
-const ConnectedCodemarkForm = connect(mapStateToProps, {
-	openPanel,
-	openModal,
-	setUserPreference
-})(CodemarkForm);
+const ConnectedCodemarkForm = connect(
+	mapStateToProps,
+	{
+		openPanel,
+		openModal,
+		setUserPreference
+	}
+)(CodemarkForm);
 
 export { ConnectedCodemarkForm as CodemarkForm };

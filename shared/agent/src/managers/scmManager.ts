@@ -21,7 +21,10 @@ import {
 	CommitAndPushResponse,
 	GetRangeRequest,
 	GetRangeRequestType,
-	GetRangeResponse
+	GetRangeResponse,
+	GetShaDiffsRangesRequestType,
+	GetShaDiffsRangesResponse,
+	GetShaDiffsRangesRequest
 } from "../protocol/agent.protocol";
 import {
 	BlameAuthor,
@@ -1191,6 +1194,42 @@ export class ScmManager {
 		// Normalize to /n line endings
 		const content = document.getText(range).replace(/\r\n/g, "\n");
 		return { sha1: Strings.sha1(content) };
+	}
+
+	@lspHandler(GetShaDiffsRangesRequestType)
+	async GetShaDiffsRanges(request: GetShaDiffsRangesRequest): Promise<GetShaDiffsRangesResponse[]> {
+		const { git, repositoryMappings } = SessionContainer.instance();
+
+		const repo = await git.getRepositoryById(request.repoId);
+		let repoPath;
+		if (repo) {
+			repoPath = repo.path;
+		} else {
+			repoPath = await repositoryMappings.getByRepoId(request.repoId);
+		}
+
+		if (!repoPath) throw new Error(`Could not load repo with ID ${request.repoId}`);
+
+		const diff = await git.getDiffBetweenCommits(
+			request.baseSha,
+			request.headSha,
+			paths.join(repoPath, request.filePath),
+			false,
+			0
+		);
+
+		return diff?.hunks.map(hunk =>
+			({
+				baseLinesChanged: {
+					start: hunk.oldStart,
+					end: hunk.oldStart + hunk.oldLines - 1
+				},
+				headLinesChanged:  {
+					start: hunk.newStart,
+					end: hunk.newStart + hunk.newLines - 1
+				}
+			})
+		) || [] ;
 	}
 
 	@lspHandler(GetRangeRequestType)

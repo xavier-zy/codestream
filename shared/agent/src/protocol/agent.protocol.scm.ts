@@ -296,6 +296,30 @@ export const GetRangeSha1RequestType = new RequestType<
 	void
 >("codestream/scm/range/sha1");
 
+export interface GetShaDiffsRangesRequest {
+	repoId: string;
+	filePath: string;
+	baseSha: string;
+	headSha: string;
+}
+
+interface linesChanged {
+	start: number;
+	end: number;
+}
+
+export interface GetShaDiffsRangesResponse {
+	baseLinesChanged: linesChanged;
+	headLinesChanged: linesChanged;
+}
+
+export const GetShaDiffsRangesRequestType = new RequestType<
+	GetShaDiffsRangesRequest,
+	GetShaDiffsRangesResponse[],
+	void,
+	void
+>("codestream/scm/sha1/ranges");
+
 export interface GetRangeRequest {
 	uri: string;
 	range: Range;

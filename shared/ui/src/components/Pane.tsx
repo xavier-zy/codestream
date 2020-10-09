@@ -361,10 +361,12 @@ const PaneHeaderRoot = styled.div`
 	}
 `;
 
-interface PaneBodyProps {}
+interface PaneBodyProps {
+	className?: string;
+}
 export function PaneBody(props: PropsWithChildren<PaneBodyProps>) {
 	return (
-		<ScrollBox>
+		<ScrollBox className={props.className}>
 			<div className="vscroll">{props.children}</div>
 		</ScrollBox>
 	);

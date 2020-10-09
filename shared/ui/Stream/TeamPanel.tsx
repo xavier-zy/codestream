@@ -79,6 +79,19 @@ export const UL = styled.ul`
 	li.muted {
 		opacity: 0.5;
 	}
+	.status {
+		overflow: hidden;
+		whitespace: nowrap;
+		padding-left: 68px;
+	}
+	@media only screen and (max-width: 430px) {
+		.wide-text {
+			display: none;
+		}
+		.status {
+			padding-left: 58px;
+		}
+	}
 `;
 
 const MapRow = styled.div`
@@ -88,13 +101,18 @@ const MapRow = styled.div`
 		width: calc(50% - 10px);
 		flex-grow: 1;
 		padding: 3px 10px;
+		overflow: hidden;
+		text-overflow: ellipsis;
 	}
 `;
 
 const StyledUserStatus = styled(UserStatus)`
-	padding: 3px 20px 3px 68px;
+	padding: 3px 0 3px 68px;
 	&:hover {
 		background: var(--app-background-color-hover);
+	}
+	@media only screen and (max-width: 430px) {
+		padding: 3px 0 3px 58px;
 	}
 `;
 
@@ -413,16 +431,15 @@ class TeamPanel extends React.Component<Props, State> {
 		switch (invitingEmails[user.email]) {
 			case 1:
 				return (
-					<span className="float-right" style={{ verticalAlign: "2px" }}>
+					<span style={{ verticalAlign: "2px" }}>
 						<Icon className="spin smaller" name="sync" />
 					</span>
 				);
 			case 2:
-				return <span className="float-right">email sent</span>;
+				return <span>email sent</span>;
 			default:
 				return (
 					<a
-						className="float-right"
 						onClick={event => {
 							event.preventDefault();
 							this.onClickReinvite(user, linkText);
@@ -547,11 +564,7 @@ class TeamPanel extends React.Component<Props, State> {
 				</div>
 			);
 			return (
-				<li
-					key={repoId}
-					className="status row-with-icon-actions"
-					style={{ overflow: "hidden", whiteSpace: "nowrap", paddingLeft: "68px" }}
-				>
+				<li key={repoId} className="status row-with-icon-actions">
 					<Tooltip title={title} placement="bottomRight" delay={1}>
 						<div style={{ overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}>
 							<Icon name="repo" />
@@ -670,7 +683,7 @@ class TeamPanel extends React.Component<Props, State> {
 */}
 				</PaneHeader>
 				{this.props.paneState !== PaneState.Collapsed && (
-					<PaneBody>
+					<PaneBody className="team-pane-body">
 						<PaneNode>
 							<PaneNodeName id="team/teammates" title="Current Members" />
 							{!this.props.hiddenPaneNodes["team/teammates"] && (
@@ -681,7 +694,7 @@ class TeamPanel extends React.Component<Props, State> {
 												{this.renderAdminUser(user)}
 												<ProfileLink id={user.id}>
 													<Headshot person={user} />
-													<b>{user.fullName}</b>{" "}
+													<b className="wide-text">{user.fullName} </b>
 													<CSText as="span" muted>
 														@{user.username}{" "}
 													</CSText>
@@ -745,42 +758,33 @@ class TeamPanel extends React.Component<Props, State> {
 												<li key={user.email}>
 													<div className="committer-email">
 														{user.email}
-														{this.props.isCurrentUserAdmin && (
-															<div className="float-right">
-																<a onClick={e => this.kick(user)} className="float-right">
-																	remove
+														<div className="float-right">
+															{this.props.isCurrentUserAdmin && (
+																<>
+																	<a onClick={e => this.kick(user)}>remove</a>
+																	<span style={{ padding: "0 5px" }}>&middot;</span>
+																</>
+															)}
+															{!this.props.emailSupported && (
+																<>
+																	<a onClick={e => copy(user.inviteCode)}>copy code</a>
+																	<span style={{ padding: "0 5px" }}>&middot;</span>
+																</>
+															)}
+															{this.props.emailSupported ? (
+																<Tooltip
+																	title={title}
+																	placement="topRight"
+																	align={{ offset: [35, -5] }}
+																>
+																	{this.renderEmailUser(user)}
+																</Tooltip>
+															) : (
+																<a href={`mailto:${user.email}?Subject=${subject}&body=${body}`}>
+																	email
 																</a>
-																<span className="float-right" style={{ padding: "0 5px" }}>
-																	&middot;
-																</span>
-															</div>
-														)}
-														{!this.props.emailSupported && (
-															<div className="float-right">
-																<a onClick={e => copy(user.inviteCode)} className="float-right">
-																	copy code
-																</a>
-																<span className="float-right" style={{ padding: "0 5px" }}>
-																	&middot;
-																</span>
-															</div>
-														)}
-														{this.props.emailSupported ? (
-															<Tooltip
-																title={title}
-																placement="topRight"
-																align={{ offset: [35, -5] }}
-															>
-																{this.renderEmailUser(user)}
-															</Tooltip>
-														) : (
-															<a
-																className="float-right"
-																href={`mailto:${user.email}?Subject=${subject}&body=${body}`}
-															>
-																email
-															</a>
-														)}
+															)}
+														</div>
 													</div>
 													{!this.props.emailSupported && (
 														<div>
@@ -812,13 +816,11 @@ class TeamPanel extends React.Component<Props, State> {
 													<CSText as="span" muted>
 														{user.email}
 													</CSText>
-													<a onClick={e => this.removeSuggestion(user)} className="float-right">
-														remove
-													</a>
-													<span className="float-right" style={{ padding: "0 5px" }}>
-														&middot;
-													</span>
-													{this.renderEmailUser(user, "invite")}
+													<div className="float-right">
+														<a onClick={e => this.removeSuggestion(user)}>remove</a>
+														<span style={{ padding: "0 5px" }}>&middot;</span>
+														{this.renderEmailUser(user, "invite")}
+													</div>
 												</div>
 											</li>
 										))}

@@ -133,10 +133,10 @@ export const PullRequestFinishReview = (props: {
 			</RadioGroup>
 			<ButtonRow>
 				<Button isLoading={submittingReview} onClick={submitReview}>
-					Submit review
+					Submit<span className="wide-text"> review</span>
 				</Button>
 				<Button variant="secondary" onClick={e => cancelReview(e, pr.pendingReview.id)}>
-					Cancel review
+					Cancel<span className="wide-text"> review</span>
 				</Button>
 				<div className="subtle" style={{ margin: "10px 0 0 10px" }}>
 					{pendingCommentCount} pending comment{pendingCommentCount == 1 ? "" : "s"}

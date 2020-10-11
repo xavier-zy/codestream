@@ -2298,17 +2298,7 @@ class CodemarkForm extends React.Component<Props, State> {
 					{commentType !== "link" && this.renderSharingControls()}
 					{this.props.currentReviewId && this.renderRequireChange()}
 					{true && (
-						<div
-							key="buttons"
-							className="button-group"
-							style={{
-								marginLeft: "10px",
-								marginTop: "10px",
-								float: "right",
-								width: "auto",
-								marginRight: 0
-							}}
-						>
+						<div key="buttons" className="button-group float-wrap">
 							<CancelButton
 								toolTip={cancelTip}
 								onClick={this.cancelCodemarkCompose}
@@ -2512,13 +2502,10 @@ const mapStateToProps = (state: CodeStreamState): ConnectedProps => {
 	};
 };
 
-const ConnectedCodemarkForm = connect(
-	mapStateToProps,
-	{
-		openPanel,
-		openModal,
-		setUserPreference
-	}
-)(CodemarkForm);
+const ConnectedCodemarkForm = connect(mapStateToProps, {
+	openPanel,
+	openModal,
+	setUserPreference
+})(CodemarkForm);
 
 export { ConnectedCodemarkForm as CodemarkForm };

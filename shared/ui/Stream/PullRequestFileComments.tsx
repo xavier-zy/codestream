@@ -10,6 +10,7 @@ import copy from "copy-to-clipboard";
 import { FileStatus } from "@codestream/protocols/api";
 import { CodeStreamState } from "../store";
 import styled from "styled-components";
+import { Modal } from "./Modal";
 
 const Root = styled.div`
 	background: var(--app-background-color);
@@ -29,6 +30,7 @@ interface Props {
 	setIsLoadingMessage: Function;
 	commentId: string;
 	quote: Function;
+	onClose: Function;
 }
 
 export const PullRequestFileComments = (props: PropsWithChildren<Props>) => {
@@ -88,51 +90,56 @@ export const PullRequestFileComments = (props: PropsWithChildren<Props>) => {
 			review.comments.nodes.forEach(comment => {
 				if (!map[comment.path]) map[comment.path] = [];
 				map[comment.path].push({ review, comment });
-				if (comment.id === props.commentId) setFilename(comment.path);
+				if (comment.id === props.commentId || comment.threadId === props.commentId)
+					setFilename(comment.path);
 			});
 		});
 		return map;
 	}, [pr]);
 
+	if (!filename) return null;
+
 	return (
-		<Root>
-			<PRDiffHunk>
-				<h1>
-					<span className="filename-container">
-						<span className="filename">{filename}</span>{" "}
-						<Icon
-							title="Copy File Path"
-							placement="bottom"
-							name="copy"
-							className="clickable"
-							onClick={e => copy(filename)}
-						/>{" "}
-						{pr && (
-							<Link href={pr.url.replace(/\/pull\/\d+$/, `/blob/${pr.headRefOid}/${filename}`)}>
-								<Icon
-									title="Open File on Remote"
-									placement="bottom"
-									name="link-external"
-									className="clickable"
-								/>
-							</Link>
-						)}
-					</span>
-				</h1>
-				{fileInfo && (
-					<PullRequestPatch
-						pr={pr}
-						patch={fileInfo.patch}
-						hunks={fileInfo.hunks}
-						filename={filename}
-						canComment
-						comments={commentMap[filename]}
-						setIsLoadingMessage={props.setIsLoadingMessage}
-						quote={quote}
-						fetch={props.fetch!}
-					/>
-				)}
-			</PRDiffHunk>
-		</Root>
+		<Modal translucent onClose={() => props.onClose()}>
+			<Root>
+				<PRDiffHunk>
+					<h1>
+						<span className="filename-container">
+							<span className="filename">{filename}</span>{" "}
+							<Icon
+								title="Copy File Path"
+								placement="bottom"
+								name="copy"
+								className="clickable"
+								onClick={e => copy(filename)}
+							/>{" "}
+							{pr && (
+								<Link href={pr.url.replace(/\/pull\/\d+$/, `/blob/${pr.headRefOid}/${filename}`)}>
+									<Icon
+										title="Open File on Remote"
+										placement="bottom"
+										name="link-external"
+										className="clickable"
+									/>
+								</Link>
+							)}
+						</span>
+					</h1>
+					{fileInfo && (
+						<PullRequestPatch
+							pr={pr}
+							patch={fileInfo.patch}
+							hunks={fileInfo.hunks}
+							filename={filename}
+							canComment
+							comments={commentMap[filename]}
+							setIsLoadingMessage={props.setIsLoadingMessage}
+							quote={quote}
+							fetch={props.fetch!}
+						/>
+					)}
+				</PRDiffHunk>
+			</Root>
+		</Modal>
 	);
 };

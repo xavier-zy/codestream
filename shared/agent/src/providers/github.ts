@@ -121,6 +121,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 			},
 			subhead: `#${comment.pullRequest.id}`,
 			externalId: comment.pullRequest.externalId,
+			externalChildId: comment.id,
 			externalType: "PullRequest",
 			title: comment.pullRequest.title,
 			diffHunk: comment.diffHunk,

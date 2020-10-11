@@ -1669,7 +1669,11 @@ export class Codemark extends React.Component<Props, State> {
 									<span
 										style={{ marginRight: "10px" }}
 										onClick={() =>
-											this.props.setCurrentPullRequest(providerId!, externalContent.externalId!)
+											this.props.setCurrentPullRequest(
+												providerId!,
+												externalContent.externalId!,
+												externalContent.externalChildId
+											)
 										}
 									>
 										<Icon name="pull-request" className="margin-right" />
@@ -1773,7 +1777,11 @@ export class Codemark extends React.Component<Props, State> {
 						preserveFocus: true
 					});
 					if (providerId && externalContent.externalId) {
-						this.props.setCurrentPullRequest(providerId!, externalContent.externalId);
+						this.props.setCurrentPullRequest(
+							providerId!,
+							externalContent.externalId,
+							externalContent.externalChildId
+						);
 					}
 				}}
 				onMouseEnter={this.handleMouseEnterCodemark}
@@ -1792,6 +1800,7 @@ export class Codemark extends React.Component<Props, State> {
 								</span>
 							)}
 						</div>
+						{/*
 						<div className="actions">
 							{((marker.externalContent!.actions || emptyArray).length > 0 ||
 								externalContent.diffHunk ||
@@ -1856,7 +1865,7 @@ export class Codemark extends React.Component<Props, State> {
 									))}
 								</>
 							)}
-						</div>
+											</div> */}
 					</div>
 				</div>
 			</div>

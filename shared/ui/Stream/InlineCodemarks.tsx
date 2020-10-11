@@ -733,6 +733,7 @@ export class SimpleInlineCodemarks extends Component<Props, State> {
 		// console.log("HEIGHT IS: ", height);
 		const numVisibleRanges = textEditorVisibleRanges.length;
 		let numAbove = 0,
+			numVisible = 0,
 			numBelow = 0;
 		// create a map from start-lines to the codemarks that start on that line
 		// and while we're at it, count the number of non-filtered-out codemarks
@@ -753,7 +754,9 @@ export class SimpleInlineCodemarks extends Component<Props, State> {
 				this.hiddenCodemarks[docMarker.id] = true;
 			} else {
 				if (startLine < firstVisibleLine) numAbove++;
-				if (startLine > lastVisibleLine) numBelow++;
+				else if (startLine > lastVisibleLine) numBelow++;
+				// this is an approximation
+				else if (startLine > firstVisibleLine - 10) numVisible++;
 			}
 		});
 
@@ -799,6 +802,17 @@ export class SimpleInlineCodemarks extends Component<Props, State> {
 									</span>
 									<Icon name="arrow-down" />
 								</ViewSelectorButton>
+							)}
+							{numVisible === 0 && (
+								<div key="no-codemarks-visible" className="no-codemarks-container">
+									<div className="no-codemarks" style={{ opacity: 0.5 }}>
+										<h3>No comments visible.</h3>
+										<p>
+											This view shows codemarks side-by-side with your code, similar to Google Docs.
+											Click the X above to return to the home screen.
+										</p>
+									</div>
+								</div>
 							)}
 							{textEditorVisibleRanges.map((lineRange, rangeIndex) => {
 								const realFirstLine = lineRange.start.line;

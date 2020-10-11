@@ -380,6 +380,8 @@ export const PullRequest = () => {
 	};
 
 	const closeFileComments = () => {
+		// note we're passing no value for the 3rd argument, which clears
+		// the commentId
 		if (pr) dispatch(setCurrentPullRequest(pr.providerId, pr.id));
 	};
 
@@ -793,15 +795,14 @@ export const PullRequest = () => {
 					</ScrollBox>
 				)}
 				{!derivedState.composeCodemarkActive && derivedState.currentPullRequestCommentId && (
-					<Modal translucent onClose={closeFileComments}>
-						<PullRequestFileComments
-							pr={pr}
-							fetch={fetch}
-							setIsLoadingMessage={setIsLoadingMessage}
-							commentId={derivedState.currentPullRequestCommentId}
-							quote={() => {}}
-						/>
-					</Modal>
+					<PullRequestFileComments
+						pr={pr}
+						fetch={fetch}
+						setIsLoadingMessage={setIsLoadingMessage}
+						commentId={derivedState.currentPullRequestCommentId}
+						quote={() => {}}
+						onClose={closeFileComments}
+					/>
 				)}
 			</Root>
 		);

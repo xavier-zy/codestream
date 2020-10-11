@@ -1043,7 +1043,7 @@ export const IssueList = React.memo((props: React.PropsWithChildren<IssueListPro
 									selected={"selectedLabel"}
 									labels={{ selectedLabel }}
 									items={[{ label: "-" }, ...menuItems.filters]}
-									align="bottomLeft"
+									align="center"
 									dontCloseOnSelect
 								/>
 							) : (
@@ -1055,7 +1055,7 @@ export const IssueList = React.memo((props: React.PropsWithChildren<IssueListPro
 								selected={"providersLabel"}
 								labels={{ providersLabel }}
 								items={[{ label: "-" }, ...menuItems.services]}
-								align="bottomLeft"
+								align="center"
 								dontCloseOnSelect
 							/>
 						</div>

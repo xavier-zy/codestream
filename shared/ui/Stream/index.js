@@ -80,6 +80,7 @@ import { FlowPanel, VideoLink } from "./Flow";
 import { PRInfoModal } from "./SpatialView/PRInfoModal";
 import { GlobalNav } from "./GlobalNav";
 import { CheckEmailVsGit } from "./CheckEmailVsGit";
+import { EnjoyingCodeStream } from "./EnjoyingCodeStream";
 
 const EMAIL_MATCH_REGEX = new RegExp(
 	"[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*",
@@ -283,6 +284,7 @@ export class SimpleStream extends PureComponent {
 				<OfflineBanner />
 				<ModalRoot />
 				<CheckEmailVsGit />
+				{/*<EnjoyingCodeStream />*/}
 				{this.state.propsForPrePRProviderInfoModal && (
 					<PrePRProviderInfoModal {...this.state.propsForPrePRProviderInfoModal} />
 				)}

@@ -183,10 +183,9 @@ export default class Menu extends Component {
 				const parentLI = $submenu.closest("li");
 				const parentUL = $submenu.closest("ul");
 				const parentRect = parentLI.getBoundingClientRect();
-				const rect = $submenu.getBoundingClientRect();
+				const rect = $submenu.children[0].getBoundingClientRect();
 
 				const submenuTop = parentLI.offsetTop - parentUL.scrollTop - 6;
-				$submenu.style.top = submenuTop + "px";
 
 				if (index === 0) {
 					// the first submenu is relative to the viewport
@@ -210,6 +209,7 @@ export default class Menu extends Component {
 							$submenu.style.right = 20 + parentRectRightEdge - window.innerWidth + "px";
 							$submenu.style.top = parentLI.offsetTop + 16 + "px";
 							// $submenu.style.borderBottom = "1px solid green";
+							console.warn("************* CHANING TOP");
 						}
 					}
 				} else {
@@ -243,9 +243,12 @@ export default class Menu extends Component {
 						}
 					}
 				}
-				const bottomOfSubmenu = submenuTop + $submenu.offsetHeight + 40;
+				const bottomOfSubmenu = parentRect.top + rect.height;
 				if (bottomOfSubmenu > window.innerHeight) {
-					$submenu.style.top = "-10px";
+					const tooFar = window.innerHeight - bottomOfSubmenu;
+					$submenu.style.top = `${submenuTop + tooFar}px`;
+				} else {
+					$submenu.style.top = submenuTop + "px";
 				}
 			}
 		});

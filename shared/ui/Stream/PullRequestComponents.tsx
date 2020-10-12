@@ -507,6 +507,10 @@ export const PRConversation = styled.div`
 		width: 2px;
 		background: var(--base-border-color);
 	}
+
+	time {
+		white-space: nowrap;
+	}
 `;
 
 export const PRTimelineItem = styled.div`
@@ -745,6 +749,7 @@ export const PRCommentHeader = styled.div`
 	border-bottom: 1px solid var(--base-border-color);
 	background: var(--base-background-color);
 	display: flex;
+	flex-wrap: wrap;
 	align-items: top;
 	border-radius: 4px 4px 0 0;
 `;
@@ -755,6 +760,7 @@ export const PRCommentBody = styled.div`
 
 export const PRThreadedCommentHeader = styled.div`
 	display: flex;
+	flex-wrap: wrap;
 	align-items: top;
 	margin-bottom: 8px;
 	// padding: 10px 15px 10px 15px;

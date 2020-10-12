@@ -954,7 +954,7 @@ export class SimpleFilterSearchPanel extends Component<Props, State> {
 					<div>
 						<p>
 							Feedback Requests are the building blocks of your team’s process.{" "}
-							<a href="https://docs.codestream.com/userguide/workflow/review-code/">
+							<a href="https://docs.codestream.com/userguide/workflow/feedback-requests/">
 								Learn more about how to use feedback requests.
 							</a>
 						</p>

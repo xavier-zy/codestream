@@ -2,7 +2,7 @@
 import { differenceWith } from "lodash-es";
 import { CSMe } from "protocol/api.protocol";
 import { URI } from "vscode-uri";
-import { SessionContainer } from "../container";
+import { Container, SessionContainer } from "../container";
 import { Logger } from "../logger";
 import {
 	AddEnterpriseProviderRequest,
@@ -120,10 +120,18 @@ export class ThirdPartyProviderRegistry {
 			const name = thirdPartyIssueProvider.getConfig().name;
 			return name === "github" || name === "github_enterprise";
 		});
-
 		const providersPullRequests: ProviderPullRequests[] = [];
 
 		for (const provider of providers) {
+			if (provider.name === "github") {
+				Container.instance().errorReporter.reportBreadcrumb({
+					message: "In pullRequestsStateHandler, GitHub is a provider",
+					data: {
+						isConnected: provider.isConnected(user.user)
+					}
+				});
+			}
+
 			const pullRequests = await provider.getMyPullRequests({
 				queries: PR_QUERIES.map(_ => _.query)
 			});

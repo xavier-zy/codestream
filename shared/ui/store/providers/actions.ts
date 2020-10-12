@@ -7,6 +7,7 @@ import {
 	AddEnterpriseProviderRequestType,
 	DisconnectThirdPartyProviderRequestType,
 	RemoveEnterpriseProviderRequestType,
+	ReportBreadcrumbRequestType,
 	TelemetryRequestType
 } from "@codestream/protocols/agent";
 import { CSMe } from "@codestream/protocols/api";
@@ -59,11 +60,21 @@ export const connectProvider = (providerId: string, connectionLocation: ViewLoca
 		if (provider.hasIssues) {
 			dispatch(setIssueProvider(providerId));
 		}
+		if (name === "github") {
+			HostApi.instance.send(ReportBreadcrumbRequestType, {
+				message: 'Attempted to connect to GitHub, but was already connected'
+			});
+		}
 		return { alreadyConnected: true };
 	}
 	try {
 		const api = HostApi.instance;
 		await api.send(ConnectThirdPartyProviderRequestType, { providerId });
+		if (name === "github") {
+			HostApi.instance.send(ReportBreadcrumbRequestType, {
+				message: 'Sent connect request for GitHub'
+			});
+		}
 		if (provider.hasIssues) {
 			dispatch(sendIssueProviderConnected(providerId, connectionLocation));
 			dispatch(setIssueProvider(providerId));

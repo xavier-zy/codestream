@@ -6,6 +6,7 @@ import {
 	BootstrapRequestType,
 	TokenLoginRequestType,
 	OtcLoginRequestType,
+	ReportBreadcrumbRequestType,
 	TokenLoginRequest
 } from "@codestream/protocols/agent";
 import { CodeStreamState } from "../store";
@@ -178,7 +179,11 @@ export const completeSignup = (
 		"Signup Type": extra.createdTeam ? "Organic" : "Viral",
 		"Auth Provider": providerName
 	});
-
+	if (providerName === "GitHub") {
+		HostApi.instance.send(ReportBreadcrumbRequestType, {
+			message: 'Completed sign-up to GitHub'
+		});
+	}
 	dispatch(onLogin(response));
 };
 
@@ -249,6 +254,11 @@ export const validateSignup = (provider: string, authInfo?: SSOAuthInfo) => asyn
 			HostApi.instance.track("Slack Chat Enabled");
 			const result = await dispatch(onLogin(response));
 			dispatch(setContext({ chatProviderAccess: "permissive" }));
+			if (provider && provider.toLowerCase() === "github") {
+				HostApi.instance.send(ReportBreadcrumbRequestType, {
+					message: 'Completed sign-in to GitHub'
+				});
+			}
 			return result;
 		}
 	}

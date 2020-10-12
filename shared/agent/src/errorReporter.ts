@@ -20,7 +20,8 @@ export class ErrorReporter {
 			Sentry.init({
 				dsn: "https://7c34949981cc45848fc4e3548363bb17@sentry.io/1314159",
 				release: session.versionInfo.extension.versionFormatted,
-				environment: session.environment
+				environment: session.environment,
+				maxBreadcrumbs: 500
 			});
 
 			Sentry.configureScope(scope => {

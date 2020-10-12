@@ -499,7 +499,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 											return (
 												<PRThreadedCommentCard key={commentIndex}>
 													<PRCodeComment>
-														<div className="row-with-icon-actions monospace ellipsis-left-container no-hover with-icon-actions">
+														<div className="row-with-icon-actions monospace ellipsis-left-container no-hover with-action-icons">
 															<Icon name="file" />
 															<span className="file-info ellipsis-left">
 																<Tooltip title="Open Diff" placement="bottom" delay={1}>

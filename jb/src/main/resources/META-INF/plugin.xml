@@ -43,10 +43,6 @@
             <category>Other</category>
         </intentionAction>
         <intentionAction>
-            <className>com.codestream.actions.StartWork</className>
-            <category>Other</category>
-        </intentionAction>
-        <intentionAction>
             <className>com.codestream.actions.CreateReview</className>
             <category>Other</category>
         </intentionAction>
@@ -106,16 +102,8 @@
                 <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="control SLASH" second-keystroke="R"
                                    replace-all="true"/>
             </action>
-            <action id="CodeStream.StartWork" class="com.codestream.actions.StartWork" text="Start _Work"
-                    description="Start work" icon="/images/startwork.svg">
-                <keyboard-shortcut keymap="$default" first-keystroke="control shift SLASH" second-keystroke="W"/>
-                <keyboard-shortcut keymap="Mac OS X" first-keystroke="control SLASH" second-keystroke="W"
-                                   replace-all="true"/>
-                <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="control SLASH" second-keystroke="W"
-                                   replace-all="true"/>
-            </action>
             <action id="CodeStream.NewPullRequest" class="com.codestream.actions.NewPullRequest" text="New _Pull/Merge Request"
-                    description="Start work" icon="/images/pull-request.svg">
+                    description="New Pull/Merge Request" icon="/images/pull-request.svg">
                 <keyboard-shortcut keymap="$default" first-keystroke="control shift SLASH" second-keystroke="P"/>
                 <keyboard-shortcut keymap="Mac OS X" first-keystroke="control SLASH" second-keystroke="P"
                                    replace-all="true"/>
@@ -141,11 +129,19 @@
                                replace-all="true"/>
         </action>
         <action id="CodeStream.NewMergeRequest" class="com.codestream.actions.NewPullRequest" text="New Merge Request"
-                description="Start work" icon="/images/pull-request.svg">
+                description="New Merge Request" icon="/images/pull-request.svg">
             <keyboard-shortcut keymap="$default" first-keystroke="control shift SLASH" second-keystroke="M"/>
             <keyboard-shortcut keymap="Mac OS X" first-keystroke="control SLASH" second-keystroke="M"
                                replace-all="true"/>
             <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="control SLASH" second-keystroke="M"
+                               replace-all="true"/>
+        </action>
+        <action id="CodeStream.StartWork" class="com.codestream.actions.StartWork" text="Start _Work"
+                description="Start work" icon="/images/startwork.svg">
+            <keyboard-shortcut keymap="$default" first-keystroke="control shift SLASH" second-keystroke="W"/>
+            <keyboard-shortcut keymap="Mac OS X" first-keystroke="control SLASH" second-keystroke="W"
+                               replace-all="true"/>
+            <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="control SLASH" second-keystroke="W"
                                replace-all="true"/>
         </action>
     </actions>

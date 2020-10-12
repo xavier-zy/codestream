@@ -91,10 +91,10 @@ export const CheckEmailVsGit = () => {
 		return (
 			<Modal translucent>
 				<Dialog title="Git Email Check" onClose={close}>
-					<p>
+					<p style={{ wordBreak: "break-word" }}>
 						You are signed in as <b className="highlight">{currentUser.email}</b>
 					</p>
-					<p>
+					<p style={{ wordBreak: "break-word" }}>
 						Is <b className="highlight">{scmEmail}</b> also you?
 					</p>
 					<ButtonRow>

@@ -19,6 +19,7 @@ import { CreateCodemarkIcons } from "./CreateCodemarkIcons";
 import { PanelHeader } from "../src/components/PanelHeader";
 import ScrollBox from "./ScrollBox";
 import { isFeatureEnabled } from "../store/apiVersioning/reducer";
+import { getSidebarLocation } from "../store/editorContext/reducer";
 
 const Step = styled.div`
 	position: relative;
@@ -215,7 +216,8 @@ export function GettingStarted(props: GettingStartedProps) {
 		return {
 			todo: STEPS.filter(step => !step.isComplete(user, state)),
 			completed: STEPS.filter(step => step.isComplete(user, state)),
-			kickstartEnabled: false //isFeatureEnabled(state, "kickstart")
+			kickstartEnabled: false, //isFeatureEnabled(state, "kickstart")
+			sidebarLocation: getSidebarLocation(state)
 		};
 	}, shallowEqual);
 
@@ -260,7 +262,10 @@ export function GettingStarted(props: GettingStartedProps) {
 			<ScrollBox>
 				<div className="vscroll">
 					<Root>
-						<ComposeArea id="compose-gutter" />
+						<ComposeArea
+							side={derivedState.sidebarLocation === "right" ? "right" : "left"}
+							id="compose-gutter"
+						/>
 						{derivedState.kickstartEnabled ? (
 							<Tabs>
 								<Tab onClick={handleClickTab} active={active === "0"} id="0">

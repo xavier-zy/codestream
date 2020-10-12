@@ -344,7 +344,7 @@ export const CreateCodemarkIcons = (props: Props) => {
 			return renderIconRow(iconsOnLine0, top, false, false);
 		// suppress compose icon, editor selections is 1 when just cursor is in file
 		else return renderIconRow(iconsOnLine0, top, false, true);
-	} else if (derivedState.currentPullRequestId || derivedState.currentReviewId) {
+	} else if (false && (derivedState.currentPullRequestId || derivedState.currentReviewId)) {
 		// const heightPerLine = (window.innerHeight - 22) / (numLinesVisible + 2);
 		return (
 			<>

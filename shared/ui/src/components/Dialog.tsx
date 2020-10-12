@@ -8,10 +8,11 @@ import { Modal } from "@codestream/webview/Stream/Modal";
 export const ButtonRow = styled.div`
 	text-align: right;
 	margin-top: 10px;
+	flex-wrap: wrap;
+	justify-content: flex-end;
+	white-space: normal; // required for wrap
 	button {
 		margin: 10px 0 0 10px;
-		// white-space: nowrap;
-		// width: 16em;
 	}
 `;
 

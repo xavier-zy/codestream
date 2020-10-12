@@ -16,10 +16,10 @@ export const PRHeader = styled.div`
 		margin-left: 5px;
 		vertical-align: 3px;
 		font-size: 12px;
-		display: none;
+		visibility: hidden;
 	}
 	&:hover .open-external {
-		display: inline-block;
+		visibility: visible;
 	}
 	${Tabs} {
 		margin: 10px -15px 0 -20px;

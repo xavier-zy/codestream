@@ -142,35 +142,33 @@ export const PullRequestInlineComment = styled((props: Props) => {
 							/>
 						</div>
 						<ButtonRow>
-							<div style={{ textAlign: "right", flexGrow: 1 }}>
-								<Button onClick={() => props.onClose()} variant="secondary">
-									Cancel
-								</Button>
+							<Button onClick={() => props.onClose()} variant="secondary">
+								Cancel
+							</Button>
 
-								<Button
-									isLoading={isLoadingSingleComment}
-									onClick={addSingleComment}
-									disabled={(pr && pr.pendingReview != null) || !text}
-								>
-									Add single comment
-								</Button>
-								<Tooltip
-									title={
-										<span>
-											Submit Comment
-											<span className="keybinding extra-pad">
-												{navigator.appVersion.includes("Macintosh") ? "⌘" : "Ctrl"} ENTER
-											</span>
+							<Button
+								isLoading={isLoadingSingleComment}
+								onClick={addSingleComment}
+								disabled={(pr && pr.pendingReview != null) || !text}
+							>
+								Add single comment
+							</Button>
+							<Tooltip
+								title={
+									<span>
+										Submit Comment
+										<span className="keybinding extra-pad">
+											{navigator.appVersion.includes("Macintosh") ? "⌘" : "Ctrl"} ENTER
 										</span>
-									}
-									placement="bottomRight"
-									delay={1}
-								>
-									<Button isLoading={isLoadingStartReview} onClick={startReview} disabled={!text}>
-										{pr.pendingReview ? "Add to review" : "Start a review"}
-									</Button>
-								</Tooltip>
-							</div>
+									</span>
+								}
+								placement="bottomRight"
+								delay={1}
+							>
+								<Button isLoading={isLoadingStartReview} onClick={startReview} disabled={!text}>
+									{pr.pendingReview ? "Add to review" : "Start a review"}
+								</Button>
+							</Tooltip>
 						</ButtonRow>
 					</>
 				)}

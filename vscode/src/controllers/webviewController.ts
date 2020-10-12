@@ -428,9 +428,10 @@ export class WebviewController implements Disposable {
 		pullRequestId: string,
 		commentId?: string
 	): Promise<void> {
-		if (!this._webview) {
-			// it's possible that the webview is closing...
-			return;
+		if (this.visible) {
+			await this._webview!.show();
+		} else {
+			await this.show();
 		}
 
 		// TODO: Change this to be a request vs a notification

@@ -458,6 +458,9 @@ export class SimpleCodemarksForFile extends Component<Props, State> {
 			wrapCommentsField
 		} = this.state;
 
+		const isDiff = textEditorUri.startsWith("codestream-diff://");
+		const isFile = textEditorUri.startsWith("file://");
+
 		const domainIcon =
 			codemarkDomain === CodemarkDomainType.File
 				? "file"
@@ -468,9 +471,11 @@ export class SimpleCodemarksForFile extends Component<Props, State> {
 				: "team";
 		const subtitle =
 			codemarkDomain === CodemarkDomainType.File
-				? fs.pathBasename(textEditorUri) || "[no file]"
+				? (fs.pathBasename(textEditorUri) || "[no file]") + (isDiff ? " [diff]" : "")
 				: codemarkDomain === CodemarkDomainType.Directory
-				? fs.pathDirname(fileNameToFilterFor) || "[no file]"
+				? isFile
+					? fs.pathDirname(fileNameToFilterFor) || "[no file]"
+					: "[no file]"
 				: codemarkDomain === CodemarkDomainType.Repo
 				? this.props.repoName || "[repository]"
 				: this.props.teamName;
@@ -478,7 +483,7 @@ export class SimpleCodemarksForFile extends Component<Props, State> {
 		const domainItems = [
 			{
 				label: "Current File",
-				subtle: fs.pathBasename(textEditorUri),
+				subtle: fs.pathBasename(textEditorUri) + (isDiff ? " [diff]" : ""),
 				key: "file",
 				icon: <Icon name="file" />,
 				action: () => this.switchDomain(CodemarkDomainType.File),
@@ -486,7 +491,7 @@ export class SimpleCodemarksForFile extends Component<Props, State> {
 			},
 			{
 				label: "Current Directory",
-				subtle: fs.pathDirname(fileNameToFilterFor),
+				subtle: isFile ? fs.pathDirname(fileNameToFilterFor) : "",
 				key: "directory",
 				icon: <Icon name="directory" />,
 				action: () => this.switchDomain(CodemarkDomainType.Directory),
@@ -494,7 +499,7 @@ export class SimpleCodemarksForFile extends Component<Props, State> {
 			},
 			{
 				label: "Current Repository",
-				subtle: this.props.repoName || "[repository]",
+				subtle: this.props.repoName || "",
 				key: "repo",
 				icon: <Icon name="repo" />,
 				action: () => this.switchDomain(CodemarkDomainType.Repo),

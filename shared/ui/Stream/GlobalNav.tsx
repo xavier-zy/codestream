@@ -235,9 +235,9 @@ export function GlobalNav() {
 							title={
 								<TipTitle>
 									<h1>Filter &amp; Search</h1>
-									Search code comments, feedback requests,
+									Search code comments, feedback
 									<br />
-									and codestream content.
+									requests, and codestream content.
 									<Link
 										className="learn-more"
 										href="http://docs.codestream.com/userguide/features/filter-and-search/"

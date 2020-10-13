@@ -7,5 +7,6 @@ import com.intellij.openapi.wm.ToolWindowFactory
 
 class CodeStreamToolWindowFactory : ToolWindowFactory, DumbAware {
     override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
+        toolWindow.title = "CodeStream"
     }
 }

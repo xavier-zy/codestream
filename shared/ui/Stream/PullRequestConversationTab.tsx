@@ -5,6 +5,7 @@ import { CodeStreamState } from "../store";
 import { Button } from "../src/components/Button";
 import { CSMe } from "@codestream/protocols/api";
 import { isFeatureEnabled } from "../store/apiVersioning/reducer";
+import { getCurrentProviderPullRequest } from "../store/providerPullRequests/reducer";
 import Icon from "./Icon";
 import Timestamp from "./Timestamp";
 import Tooltip from "./Tooltip";
@@ -24,6 +25,7 @@ import {
 	PRComment,
 	PRCommentCard,
 	PRCommentHeader,
+	PRError,
 	PRStatusHeadshot,
 	PRIconButton,
 	PRFoot,
@@ -141,14 +143,13 @@ let insertNewline;
 let focusOnMessageInput;
 
 export const PullRequestConversationTab = (props: {
-	pr: FetchThirdPartyPullRequestPullRequest;
 	setIsLoadingMessage: Function;
 	fetch: Function;
 	ghRepo: any;
 	checkMergeabilityStatus: Function;
 	autoCheckedMergeability: autoCheckedMergeabilityStatus;
 }) => {
-	const { pr, ghRepo, fetch, setIsLoadingMessage } = props;
+	const { ghRepo, fetch, setIsLoadingMessage } = props;
 	const dispatch = useDispatch();
 	const derivedState = useSelector((state: CodeStreamState) => {
 		const currentUser = state.users[state.session.userId!] as CSMe;
@@ -156,6 +157,7 @@ export const PullRequestConversationTab = (props: {
 		const blameMap = team.settings ? team.settings.blameMap : EMPTY_HASH;
 		const skipGitEmailCheck = state.preferences.skipGitEmailCheck;
 		const addBlameMapEnabled = isFeatureEnabled(state, "addBlameMap");
+		const currentPullRequest = getCurrentProviderPullRequest(state);
 		const { preferences } = state;
 
 		return {
@@ -165,11 +167,14 @@ export const PullRequestConversationTab = (props: {
 				? state.context.currentPullRequest.id
 				: undefined,
 			blameMap,
+			currentPullRequest: currentPullRequest,
+			pr: currentPullRequest.conversations.repository.pullRequest,
 			team,
 			skipGitEmailCheck,
 			addBlameMapEnabled
 		};
 	});
+	const { pr } = derivedState;
 
 	const [availableLabels, setAvailableLabels] = useState(EMPTY_ARRAY);
 	const [availableReviewers, setAvailableReviewers] = useState(EMPTY_ARRAY);
@@ -345,6 +350,9 @@ export const PullRequestConversationTab = (props: {
 	}) as { id: string; login: string; avatarUrl: string; isPending: boolean; state: string }[];
 
 	const fetchAvailableReviewers = async (e?) => {
+		if (availableReviewers === undefined) {
+			setAvailableReviewers(EMPTY_ARRAY);
+		}
 		const reviewers = (await dispatch(
 			api("getReviewers", {
 				owner: ghRepo.repoOwner,
@@ -355,6 +363,24 @@ export const PullRequestConversationTab = (props: {
 	};
 
 	const reviewerMenuItems = React.useMemo(() => {
+		if (
+			availableReviewers === undefined &&
+			derivedState.currentPullRequest &&
+			derivedState.currentPullRequest.error &&
+			derivedState.currentPullRequest.error.message
+		) {
+			return [
+				{
+					label: (
+						<PRError>
+							<Icon name="alert" />
+							<div>{derivedState.currentPullRequest.error.message}</div>
+						</PRError>
+					),
+					noHover: true
+				}
+			];
+		}
 		const reviewerIds = reviewers.map(_ => _.id);
 		if (availableReviewers && availableReviewers.length) {
 			const menuItems = availableReviewers.map((_: any) => ({
@@ -400,6 +426,9 @@ export const PullRequestConversationTab = (props: {
 	};
 
 	const fetchAvailableAssignees = async (e?) => {
+		if (availableAssignees === undefined) {
+			setAvailableAssignees(EMPTY_ARRAY);
+		}
 		const assignees = (await dispatch(
 			api("getReviewers", {
 				owner: ghRepo.repoOwner,
@@ -410,6 +439,24 @@ export const PullRequestConversationTab = (props: {
 	};
 
 	const assigneeMenuItems = React.useMemo(() => {
+		if (
+			availableAssignees === undefined &&
+			derivedState.currentPullRequest &&
+			derivedState.currentPullRequest.error &&
+			derivedState.currentPullRequest.error.message
+		) {
+			return [
+				{
+					label: (
+						<PRError>
+							<Icon name="alert" />
+							<div>{derivedState.currentPullRequest.error.message}</div>
+						</PRError>
+					),
+					noHover: true
+				}
+			];
+		}
 		const assigneeIds = pr.assignees.nodes.map(_ => _.login);
 		if (availableAssignees && availableAssignees.length) {
 			const menuItems = (availableAssignees || []).map((_: any) => ({

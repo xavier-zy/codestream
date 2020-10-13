@@ -774,7 +774,6 @@ export const PullRequest = () => {
 						<div className="channel-list vscroll" style={{ paddingTop: "10px" }}>
 							{activeTab === 1 && (
 								<PullRequestConversationTab
-									pr={pr}
 									ghRepo={ghRepo}
 									fetch={fetch}
 									autoCheckedMergeability={autoCheckedMergeability}

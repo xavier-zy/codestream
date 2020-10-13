@@ -1127,3 +1127,42 @@ export const PRKebabIcon = styled.span`
 		background: var(--app-background-color-hover);
 	}
 `;
+
+export const PRError = styled.div`
+	padding: 15px 15px 10px 15px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	button {
+		white-space: nowrap;
+	}
+	> .icon {
+		flex-grow: 0;
+		flex-shrink: 0;
+		display: inline-block;
+		margin-right: 15px;
+		transform: scale(1.5);
+	}
+	> div {
+		flex-grow: 10;
+		display: flex;
+		align-items: center;
+		button {
+			margin-left: auto;
+		}
+	}
+	strong {
+		font-weight: normal;
+		color: var(--text-color-highlight);
+	}
+	a {
+		text-decoration: none;
+		color: var(--text-color-highlight);
+		&:hover {
+			color: var(--text-color-info) !important;
+		}
+	}
+	.spacer {
+		// height: 10px;
+	}
+`;

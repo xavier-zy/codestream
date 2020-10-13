@@ -293,8 +293,8 @@ export const PullRequestFilesChangedList = (props: Props) => {
 
 	return (
 		<>
-			<div style={{ display: "flex", alignItems: "center" }}>
-				<div style={{ marginRight: "10px", flexGrow: 2 }}>
+			<div style={{ display: "flex", alignItems: "center", flexWrap: "wrap" }}>
+				<div style={{ margin: "0 10px 10px 0", flexGrow: 2 }}>
 					<PRSelectorButtons>
 						<span className={mode == "files" ? "selected" : ""} onClick={() => setMode("files")}>
 							<Icon name="list-flat" title="List View" placement="bottom" />
@@ -307,7 +307,7 @@ export const PullRequestFilesChangedList = (props: Props) => {
 						</span>
 					</PRSelectorButtons>
 				</div>
-				<PRProgress style={{ marginLeft: "auto" }}>
+				<PRProgress style={{ margin: "0 10px 10px auto", minWidth: "30px" }}>
 					{totalVisitedFiles} / {totalFiles}{" "}
 					<span className="wide-text">
 						files viewed{" "}
@@ -327,7 +327,7 @@ export const PullRequestFilesChangedList = (props: Props) => {
 					</PRProgressLine>
 				</PRProgress>
 				{pr && !pr.pendingReview && (
-					<PRSubmitReviewButton style={{ marginTop: 0, marginRight: "10px" }}>
+					<PRSubmitReviewButton style={{ margin: "0 10px 10px auto", flexGrow: 0 }}>
 						<Button variant="success" onClick={() => setFinishReviewOpen(!finishReviewOpen)}>
 							Review<span className="wide-text"> changes</span> <Icon name="chevron-down" />
 						</Button>
@@ -343,7 +343,6 @@ export const PullRequestFilesChangedList = (props: Props) => {
 					</PRSubmitReviewButton>
 				)}
 			</div>
-			<div style={{ height: "10px" }} />
 			{mode === "files" || mode === "tree" ? (
 				<PullRequestFilesChanged
 					pr={pr}

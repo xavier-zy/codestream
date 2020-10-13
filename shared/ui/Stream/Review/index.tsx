@@ -1057,7 +1057,7 @@ const ReplyInput = (props: { reviewId: string; parentPostId: string; streamId: s
 				onChange={setText}
 				onSubmit={submit}
 			/>
-			<div style={{ display: "flex" }}>
+			<div style={{ display: "flex", flexWrap: "wrap" }}>
 				<div style={{ opacity: 0.7, paddingTop: "10px" }}>
 					<Checkbox name="change-request" checked={isChangeRequest} onChange={setIsChangeRequest}>
 						Change Request (require for approval)

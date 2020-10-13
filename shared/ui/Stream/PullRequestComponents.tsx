@@ -109,7 +109,7 @@ export const PRSelectorButtons = styled.div`
 	overflow: hidden;
 	> span {
 		display: inline-block;
-		padding: 5px 10px;
+		padding: 5px;
 		&.selected,
 		&:hover {
 			background: var(--base-background-color);
@@ -787,12 +787,10 @@ export const PRStatusIcon = styled.div`
 
 export const ButtonRow = styled.div`
 	display: flex;
+	flex-wrap: wrap;
 	align-items: center;
-	button + button {
-		margin-left: 10px;
-	}
 	button {
-		margin-top: 10px;
+		margin: 10px 10px 0 0;
 	}
 `;
 

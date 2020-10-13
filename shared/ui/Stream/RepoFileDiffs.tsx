@@ -151,7 +151,7 @@ export const RepoFileDiffs = (props: { onlyRepos?: (string | undefined)[] }) => 
 							delay={1}
 							placement="bottom"
 							onClick={() => {
-								dispatch(setNewPostEntry("Status"));
+								dispatch(setNewPostEntry("WIP Section"));
 								dispatch(openPanel(WebviewPanels.NewReview));
 							}}
 						/>
@@ -161,7 +161,7 @@ export const RepoFileDiffs = (props: { onlyRepos?: (string | undefined)[] }) => 
 							placement="bottom"
 							delay={1}
 							onClick={() => {
-								dispatch(setNewPostEntry("Status"));
+								dispatch(setNewPostEntry("WIP Section"));
 								dispatch(openPanel(WebviewPanels.NewPullRequest));
 							}}
 						/>

@@ -126,10 +126,6 @@ export const Sidebar = React.memo(function Sidebar() {
 				width: window.innerWidth,
 				height: window.innerHeight
 			});
-			HostApi.instance.track("Sidebar Resized", {
-				Width: window.innerWidth,
-				Height: window.innerHeight
-			});
 		}
 
 		// Add event listener
@@ -272,7 +268,7 @@ export const Sidebar = React.memo(function Sidebar() {
 		}
 	};
 
-	const handleStop = (e: any, index: number) => {
+	const handleStop = React.useCallback(() => {
 		setDragging(false);
 		if (firstIndex === undefined || secondIndex === undefined) return;
 		const firstId = positions[firstIndex].id;
@@ -294,7 +290,7 @@ export const Sidebar = React.memo(function Sidebar() {
 			Section: secondId,
 			Adjustment: adjustment
 		});
-	};
+	}, [firstIndex, secondIndex, positions, sizes, previousSizes]);
 
 	const handleDragHeader = (e: any, id: WebviewPanels) => {
 		setHeaderDragY(e.clientY);
@@ -370,7 +366,7 @@ export const Sidebar = React.memo(function Sidebar() {
 							scale={1}
 							onStart={e => handleStart(e, index)}
 							onDrag={e => handleDrag(e, index)}
-							onStop={e => handleStop(e, index)}
+							onStop={e => handleStop()}
 						>
 							<ResizeHandle />
 						</Draggable>

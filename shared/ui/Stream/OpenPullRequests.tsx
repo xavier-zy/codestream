@@ -470,6 +470,60 @@ export const OpenPullRequests = React.memo((props: Props) => {
 									</IntegrationButtons>
 								</>
 							)}
+							{derivedState.isPRSupportedCodeHostConnected && (
+								<>
+									<Row
+										key="load"
+										className={loadFromUrlOpen ? "no-hover" : ""}
+										onClick={() => {
+											setLoadFromUrlOpen(true);
+											document.getElementById("pr-search-input")!.focus();
+										}}
+									>
+										<div style={{ paddingRight: 0 }}>
+											<Icon name="chevron-right-thin" style={{ margin: "0 2px 0 -2px" }} />
+										</div>
+										<div>
+											<input
+												id="pr-search-input"
+												placeholder="Load PR from URL"
+												type="text"
+												style={{ background: "transparent", width: "100%" }}
+												value={loadFromUrlQuery}
+												onChange={e => setLoadFromUrlQuery(e.target.value)}
+												onKeyDown={e => {
+													if (e.key == "Escape") {
+														setLoadFromUrlQuery("");
+													}
+													if (e.key == "Enter") {
+														goPR(loadFromUrlQuery);
+													}
+												}}
+												onBlur={e => setLoadFromUrlOpen(false)}
+											/>
+										</div>
+										{(loadFromUrlQuery || loadFromUrlOpen) && (
+											<div className="go-pr">
+												<Button
+													className="go-pr"
+													size="compact"
+													onClick={() => goPR(loadFromUrlQuery)}
+												>
+													Go
+												</Button>
+											</div>
+										)}
+									</Row>
+									{prError && (
+										<Row id="error-row" key="pr-error" className={"no-hover wrap"}>
+											<div>
+												<Icon name="alert" />
+											</div>
+											<div title={prError}>{prError}</div>
+										</Row>
+									)}
+								</>
+							)}
 							{derivedState.PRConnectedProviders.map(connectedProvider => {
 								const providerId = connectedProvider.id;
 								const providerQueries: PullRequestQuery[] =
@@ -599,61 +653,6 @@ export const OpenPullRequests = React.memo((props: Props) => {
 									);
 								});
 							})}
-
-							{derivedState.isPRSupportedCodeHostConnected && (
-								<>
-									<Row
-										key="load"
-										className={loadFromUrlOpen ? "no-hover" : ""}
-										onClick={() => {
-											setLoadFromUrlOpen(true);
-											document.getElementById("pr-search-input")!.focus();
-										}}
-									>
-										<div>
-											<Icon name="link" />
-										</div>
-										<div>
-											<input
-												id="pr-search-input"
-												placeholder="Load PR from URL"
-												type="text"
-												style={{ background: "transparent", width: "100%" }}
-												value={loadFromUrlQuery}
-												onChange={e => setLoadFromUrlQuery(e.target.value)}
-												onKeyDown={e => {
-													if (e.key == "Escape") {
-														setLoadFromUrlQuery("");
-													}
-													if (e.key == "Enter") {
-														goPR(loadFromUrlQuery);
-													}
-												}}
-												onBlur={e => setLoadFromUrlOpen(false)}
-											/>
-										</div>
-										{(loadFromUrlQuery || loadFromUrlOpen) && (
-											<div className="go-pr">
-												<Button
-													className="go-pr"
-													size="compact"
-													onClick={() => goPR(loadFromUrlQuery)}
-												>
-													Go
-												</Button>
-											</div>
-										)}
-									</Row>
-									{prError && (
-										<Row id="error-row" key="pr-error" className={"no-hover wrap"}>
-											<div>
-												<Icon name="alert" />
-											</div>
-											<div title={prError}>{prError}</div>
-										</Row>
-									)}
-								</>
-							)}
 						</PaneBody>
 					)}
 				</>

@@ -10,6 +10,7 @@ import { UpdateTeamSettingsRequestType } from "@codestream/protocols/agent";
 import { getTeamSetting } from "../store/teams/reducer";
 import ScrollBox from "./ScrollBox";
 import { Dialog } from "../src/components/Dialog";
+import { Link } from "./Link";
 
 export const ReviewSettings = () => {
 	const dispatch = useDispatch();
@@ -98,9 +99,9 @@ export const ReviewSettings = () => {
 							<p>&nbsp;</p>
 
 							<p>
-								<a href="https://docs.codestream.com/userguide/features/managing-the-team/#code-review-assignment--approval">
+								<Link href="https://docs.codestream.com/userguide/features/managing-the-team/#code-review-assignment--approval">
 									Learn more about Code Review Assignment
-								</a>
+								</Link>
 							</p>
 						</div>
 					</fieldset>

@@ -731,6 +731,7 @@ const BaseReview = (props: BaseReviewProps) => {
 						className="color-warning"
 						style={{
 							display: "flex",
+							flexWrap: "wrap",
 							padding: "10px 0",
 							whiteSpace: "normal",
 							alignItems: "flex-start"

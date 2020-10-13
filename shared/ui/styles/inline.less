@@ -252,10 +252,12 @@
 		z-index: 1;
 	}
 	.icon {
-		width: 35px;
-		height: 35px;
+		width: 34px;
+		height: 34px;
 		text-align: center;
-		padding-top: 8px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
 		border-radius: 50%;
 		// border: 1px solid @base-border-color;
 		// background: @base-background-color;
@@ -263,7 +265,6 @@
 		background: var(--button-background-color);
 		color: var(--button-foreground-color);
 		cursor: pointer;
-		display: inline-block;
 		transition: transform 0.1s;
 		&:hover {
 			// color: @text-color-info;

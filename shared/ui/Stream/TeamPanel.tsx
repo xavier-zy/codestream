@@ -656,7 +656,7 @@ class TeamPanel extends React.Component<Props, State> {
 						collisions.nav.length > 0 ? (
 							<Icon
 								name="alert"
-								className="nav-conflict"
+								className="nav-conflict toggle-target"
 								title={"Possible Merge Conflict w/" + collisions.nav.join(", ")}
 								placement="top"
 							/>

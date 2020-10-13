@@ -173,6 +173,7 @@ export const PaneHeader = React.memo((props: PropsWithChildren<PaneHeaderProps>)
 		if (
 			e.target.classList.contains("pane-header") ||
 			e.target.classList.contains("label") ||
+			e.target.classList.contains("toggle-target") ||
 			e.target.closest(".expander")
 		) {
 			dispatch(setPaneCollapsed(props.id, !derivedState.collapsed));
@@ -203,7 +204,9 @@ export const PaneHeader = React.memo((props: PropsWithChildren<PaneHeaderProps>)
 			<div className="label">
 				<Icon name={derivedState.stateIcon} className="expander" />
 				{props.title}
-				{props.count && props.count > 0 ? <span className="subtle"> ({props.count})</span> : null}
+				{props.count && props.count > 0 ? (
+					<span className="subtle toggle-target"> ({props.count})</span>
+				) : null}
 				{!derivedState.collapsed && props.subtitle ? (
 					<span className="subtle"> {props.subtitle}</span>
 				) : null}

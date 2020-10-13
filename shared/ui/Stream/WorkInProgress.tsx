@@ -176,7 +176,7 @@ export const WorkInProgress = React.memo((props: Props) => {
 							info: !invisible
 						})}
 						onClick={toggleInvisible}
-						placement="bottom"
+						placement="bottomRight"
 						trigger={["hover"]}
 						delay={1}
 						loading={loadingStatus}

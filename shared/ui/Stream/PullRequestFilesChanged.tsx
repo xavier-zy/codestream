@@ -434,6 +434,7 @@ export const PullRequestFilesChanged = (props: Props) => {
 					editor. Open it, or <Link href={pr.repository.url}>clone the repo</Link>.
 				</span>
 			);
+			setIsDisabled(true);
 		} else {
 			setRepoErrorMessage("");
 		}

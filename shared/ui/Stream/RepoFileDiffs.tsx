@@ -136,6 +136,7 @@ export const RepoFileDiffs = (props: { onlyRepos?: (string | undefined)[] }) => 
 							</>
 						}
 					>
+						{/*
 						<Icon
 							name="git-commit-vertical"
 							title="Commit &amp; Push"
@@ -143,6 +144,7 @@ export const RepoFileDiffs = (props: { onlyRepos?: (string | undefined)[] }) => 
 							placement="bottom"
 							onClick={() => setCommittingToRepo(repo)}
 						/>
+						*/}
 						<Icon
 							name="review"
 							title="Request Feedback"

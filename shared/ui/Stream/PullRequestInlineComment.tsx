@@ -1,6 +1,5 @@
 import React, { useState } from "react";
-import { useSelector, useDispatch } from "react-redux";
-import { CodeStreamState } from "../store";
+import { useDispatch } from "react-redux";
 import styled from "styled-components";
 import { PRComment, PRCommentCard } from "./PullRequestComponents";
 import Tooltip from "./Tooltip";
@@ -10,12 +9,12 @@ import MessageInput from "./MessageInput";
 import { ButtonRow } from "../src/components/Dialog";
 import { Button } from "../src/components/Button";
 import { api, removeFromMyPullRequests } from "../store/providerPullRequests/actions";
-import { CSMe } from "@codestream/protocols/api";
 
 interface Props {
 	pr: FetchThirdPartyPullRequestPullRequest;
 	mode?: string;
 	filename: string;
+	lineNumber: number;
 	lineOffsetInHunk: number;
 	setIsLoadingMessage: Function;
 	fetch: Function;
@@ -26,16 +25,7 @@ interface Props {
 
 export const PullRequestInlineComment = styled((props: Props) => {
 	const dispatch = useDispatch();
-	const { pr, filename, fetch, lineOffsetInHunk, setIsLoadingMessage } = props;
-	const derivedState = useSelector((state: CodeStreamState) => {
-		const currentUser = state.users[state.session.userId!] as CSMe;
-		return {
-			currentUser,
-			currentPullRequestId: state.context.currentPullRequest
-				? state.context.currentPullRequest.id
-				: undefined
-		};
-	});
+	const { pr, filename, fetch, lineNumber, lineOffsetInHunk, setIsLoadingMessage } = props;
 
 	const [text, setText] = useState("");
 	const [isLoadingSingleComment, setIsLoadingSingleComment] = useState(false);
@@ -63,8 +53,7 @@ export const PullRequestInlineComment = styled((props: Props) => {
 		await dispatch(
 			api("createPullRequestInlineComment", {
 				filePath: filename,
-				// uses real line numbers instead of index
-				startLine: lineOffsetInHunk + 1,
+				startLine: lineNumber,
 				text: text,
 				rightSha: pr.headRefOid
 			})
@@ -84,7 +73,7 @@ export const PullRequestInlineComment = styled((props: Props) => {
 		await dispatch(
 			api("createPullRequestInlineReviewComment", {
 				filePath: filename,
-				startLine: lineOffsetInHunk,
+				position: lineOffsetInHunk,
 				text: text
 			})
 		);

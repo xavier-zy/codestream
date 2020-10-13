@@ -78,7 +78,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 	) {
 		super(session, providerConfig);
 		Container.instance().errorReporter.reportBreadcrumb({
-			message: 'Constructing GitHub'
+			message: "Constructing GitHub"
 		});
 	}
 
@@ -1476,7 +1476,9 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 		Container.instance().errorReporter.reportBreadcrumb({
 			message: "Getting my GitHub pull requests...",
 			data: {
-				accessToken: this._providerInfo?.accessToken ? this._providerInfo?.accessToken.length : "NONE"
+				accessToken: this._providerInfo?.accessToken
+					? this._providerInfo?.accessToken.length
+					: "NONE"
 			}
 		});
 		// const cacheKey = JSON.stringify({ ...request, providerId: this.providerConfig.id });
@@ -2125,13 +2127,13 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 		pullRequestId: string;
 		text: string;
 		filePath: string;
-		startLine: number;
+		position: number;
 	}) {
 		const result = await this.createPullRequestReviewComment({
 			pullRequestId: request.pullRequestId,
 			text: request.text || "",
 			filePath: request.filePath,
-			position: request.startLine
+			position: request.position
 		});
 		return result;
 	}

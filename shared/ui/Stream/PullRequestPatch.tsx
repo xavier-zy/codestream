@@ -179,6 +179,7 @@ export const PullRequestPatch = (props: {
 										pr={props.pr}
 										mode={props.mode}
 										filename={filename}
+										lineNumber={rightLine + 1}
 										lineOffsetInHunk={index}
 										fetch={props.fetch}
 										setIsLoadingMessage={() => {}}
@@ -196,7 +197,7 @@ export const PullRequestPatch = (props: {
 										<PRComment key={index} style={{ margin: 0 }}>
 											<PRCard>
 												<PullRequestCodeComment
-													pr={props.pr!} 
+													pr={props.pr!}
 													mode={props.mode}
 													fetch={props.fetch!}
 													setIsLoadingMessage={props.setIsLoadingMessage!}

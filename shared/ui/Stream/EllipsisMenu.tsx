@@ -422,13 +422,6 @@ export function EllipsisMenu(props: EllipsisMenuProps) {
 	menuItems.push({ label: text, action: "", noHover: true, disabled: true });
 
 	return (
-		<Menu
-			title={<HeadshotName id={derivedState.currentUserId} className="no-padding" />}
-			noCloseIcon
-			items={menuItems}
-			target={props.menuTarget}
-			action={props.closeMenu}
-			align="bottomRight"
-		/>
+		<Menu items={menuItems} target={props.menuTarget} action={props.closeMenu} align="bottomLeft" />
 	);
 }

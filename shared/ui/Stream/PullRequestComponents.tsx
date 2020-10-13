@@ -157,6 +157,7 @@ export const PRStatusButton = styled(Button)`
 
 export const PRStatusMessage = styled.div`
 	flex-grow: 10;
+	word-break: break-word;
 `;
 
 export const PRAuthor = styled.span`

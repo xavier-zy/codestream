@@ -230,19 +230,31 @@
 
 		nav.inline {
 			position: fixed;
+			width: 100%;
 			z-index: 1;
 			top: 0px;
-			right: 8px;
+			left: 0;
+			// right: 8px;
 			background: var(--app-background-color);
 			background: var(--sidebar-background);
+			border-bottom: 1px solid var(--base-border-color);
+			display: flex;
+			padding: 0 9px 5px 20px;
 			.icon {
 				display: inline-block;
 				// vertical-align: 2px;
 				width: 16px;
 			}
+			label:nth-child(1) {
+				flex-grow: 10;
+			}
+			label:nth-child(2) {
+				margin-left: auto;
+			}
 			label {
+				flex-grow: 0;
 				user-select: none;
-				text-align: center;
+				text-align: left;
 				display: inline-block;
 				cursor: pointer;
 				margin: 0 0 0 0;

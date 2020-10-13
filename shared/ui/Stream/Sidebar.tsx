@@ -23,7 +23,7 @@ import { getPreferences } from "../store/users/reducer";
 import { getRepos } from "../store/repos/reducer";
 import { Loading } from "../Container/Loading";
 
-const PADDING_TOP = 20;
+const PADDING_TOP = 25;
 
 const Root = styled.div`
 	height: 100%;

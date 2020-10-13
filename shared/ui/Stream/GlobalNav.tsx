@@ -24,6 +24,7 @@ import {
 	LocalFilesCloseDiffRequestType,
 	ReviewCloseDiffRequestType
 } from "@codestream/protocols/webview";
+import { HeadshotName } from "../src/components/HeadshotName";
 
 const sum = (total, num) => total + Math.round(num);
 
@@ -37,6 +38,7 @@ export function GlobalNav() {
 
 		return {
 			status,
+			currentUserId: state.session.userId,
 			activePanel: state.context.panelStack[0],
 			totalUnread: Object.values(umis.unreads).reduce(sum, 0),
 			totalMentions: Object.values(umis.mentions).reduce(sum, 0),
@@ -113,6 +115,21 @@ export function GlobalNav() {
 		else {
 			return (
 				<nav className="inline" id="global-nav">
+					<label
+						onClick={toggleEllipsisMenu}
+						className={cx({ active: false && ellipsisMenuOpen })}
+						id="global-nav-more-label"
+					>
+						<HeadshotName id={derivedState.currentUserId} size={16} className="no-padding" />
+						<Icon name="chevron-down" className="smaller" style={{ verticalAlign: "-2px" }} />
+						{ellipsisMenuOpen && (
+							<EllipsisMenu
+								closeMenu={() => setEllipsisMenuOpen(undefined)}
+								menuTarget={ellipsisMenuOpen}
+							/>
+						)}
+					</label>
+
 					<label
 						className={cx({ active: plusMenuOpen })}
 						onClick={togglePlusMenu}
@@ -215,7 +232,7 @@ export function GlobalNav() {
 									</Link>
 								</TipTitle>
 							}
-							placement="bottom"
+							placement="bottomRight"
 						>
 							<span>
 								<Icon name="activity" />
@@ -255,7 +272,7 @@ export function GlobalNav() {
 						onClick={e => go(WebviewPanels.Flow)}
 						id="global-nav-file-label"
 					>
-						<Tooltip delay={1} trigger={["hover"]} title="Help &amp; Info" placement="bottom">
+						<Tooltip delay={1} trigger={["hover"]} title="Help &amp; Info" placement="bottomRight">
 							<span>
 								<Icon name="question" />
 							</span>
@@ -292,7 +309,7 @@ export function GlobalNav() {
 							</span>
 						</Tooltip>
 						</label>*/}
-					<label
+					{/*<label
 						onClick={toggleEllipsisMenu}
 						className={cx({ active: ellipsisMenuOpen })}
 						id="global-nav-more-label"
@@ -312,7 +329,7 @@ export function GlobalNav() {
 								menuTarget={ellipsisMenuOpen}
 							/>
 						)}
-					</label>
+						</label>*/}
 				</nav>
 			);
 		}

@@ -328,7 +328,7 @@ class EditorService(val project: Project) {
                 null,
                 HighlighterTargetArea.EXACT_RANGE
             ).also {
-                if (showGutterIcons && marker.codemark != null) {
+                if (showGutterIcons && (marker.codemark != null || marker.externalContent != null)) {
                     it.gutterIconRenderer = GutterIconRendererImpl(this, marker)
                 }
                 it.isThinErrorStripeMark = true

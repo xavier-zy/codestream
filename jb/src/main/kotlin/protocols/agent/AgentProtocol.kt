@@ -133,10 +133,19 @@ class DocumentMarker(
     val id: String,
     val codemark: Codemark?,
     val type: String?,
-//    creatorName: string;
     val range: Range,
-    val summary: String
-//    summaryMarkdown: string;
+    val summary: String,
+    val externalContent: DocumentMarkerExternalContent?
+)
+
+class DocumentMarkerExternalContent(
+    val provider: DocumentMarkerExternalContentProvider?,
+    val externalId: String,
+    val externalChildId: String?
+)
+
+class DocumentMarkerExternalContentProvider(
+    val id: String
 )
 
 class CreatePermalinkParams(

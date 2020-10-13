@@ -629,10 +629,12 @@ export class Codemark extends React.Component<Props, State> {
 					fileUri: uri,
 					range: info.range
 				};
-				const position = { line: info.range.start.line, character: 0 };
-				const range = { start: position, end: position, cursor: position };
-				this._sendSelectRequest({ uri, selection: range });
-				this._sendHighlightRequest({ uri, range, highlight: true });
+				if (info.range) {
+					const position = { line: info.range.start.line, character: 0 };
+					const range = { start: position, end: position, cursor: position };
+					this._sendSelectRequest({ uri, selection: range });
+					this._sendHighlightRequest({ uri, range, highlight: true });
+				}
 			}
 		});
 	};
@@ -662,7 +664,7 @@ export class Codemark extends React.Component<Props, State> {
 
 		if (markerId && codemark && codemark.markers) {
 			getDocumentFromMarker(markerId).then(info => {
-				if (info) {
+				if (info && info.range) {
 					this._markersToHighlight[markerId] = {
 						fileUri: info.textDocument.uri,
 						range: info.range
@@ -676,7 +678,10 @@ export class Codemark extends React.Component<Props, State> {
 		if (marker) {
 			this._isHighlightedInTextEditor = highlight;
 			// @ts-ignore
-			this._sendHighlightRequest({ uri: marker.fileUri, range: marker.range, highlight });
+			if (marker.range) {
+				// @ts-ignore
+				this._sendHighlightRequest({ uri: marker.fileUri, range: marker.range, highlight });
+			}
 		} else {
 			for (let { fileUri: uri, range } of Object.values(this._markersToHighlight)) {
 				this._isHighlightedInTextEditor = highlight;

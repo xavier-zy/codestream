@@ -177,11 +177,11 @@ export class SimpleCodemarksForFile extends Component<Props, State> {
 	componentDidUpdate(prevProps: Props) {
 		this._updateEmitter.emit();
 		const { codemarkDomain, textEditorUri, documentMarkers } = this.props;
-		if (codemarkDomain !== CodemarkDomainType.Team) {
-			if (String(textEditorUri).length > 0 && prevProps.textEditorUri !== textEditorUri) {
-				this.onFileChanged(false, this.onFileChangedError);
-			}
+		// if (codemarkDomain !== CodemarkDomainType.Team) {
+		if (String(textEditorUri).length > 0 && prevProps.textEditorUri !== textEditorUri) {
+			this.onFileChanged(false, this.onFileChangedError);
 		}
+		// }
 		if (
 			documentMarkers &&
 			prevProps.documentMarkers &&

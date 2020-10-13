@@ -105,7 +105,7 @@ export function ConfigurePullRequestQuery(props: Props) {
 	return (
 		<Modal translucent>
 			<Dialog title={title} narrow onClose={() => props.onClose()}>
-				<form className="standard-form">
+				<div className="standard-form">
 					<fieldset className="form-body">
 						The variable @me can be used to specify the logged in user within a search.{" "}
 						<Link href="https://docs.github.com/en/github/searching-for-information-on-github/searching-issues-and-pull-requests">
@@ -219,7 +219,7 @@ export function ConfigurePullRequestQuery(props: Props) {
 							})}
 						</PRTestResults>
 					)}
-				</form>
+				</div>
 			</Dialog>
 		</Modal>
 	);

@@ -921,17 +921,19 @@ export const CreatePullRequestPanel = props => {
 			setFilesChanged([]);
 		} else if (response && response.filesChanged) {
 			const { patches, data } = response.filesChanged;
-			const filesChanged = patches.map(_ => {
-				return {
-					..._,
-					linesAdded: _.additions,
-					linesRemoved: _.deletions,
-					file: _.newFileName,
-					filename: _.newFileName,
-					hunks: _.hunks,
-					sha: _.sha
-				};
-			});
+			const filesChanged = patches
+				.map(_ => {
+					return {
+						..._,
+						linesAdded: _.additions,
+						linesRemoved: _.deletions,
+						file: _.newFileName,
+						filename: _.newFileName,
+						hunks: _.hunks,
+						sha: _.sha
+					};
+				})
+				.filter(_ => _.filename);
 			setFilesChanged(filesChanged);
 		}
 		setIsLoadingDiffs(false);

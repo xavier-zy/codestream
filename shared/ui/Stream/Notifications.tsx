@@ -8,6 +8,7 @@ import { HostApi } from "../webview-api";
 import { CSNotificationDeliveryPreference } from "@codestream/protocols/api";
 import Icon from "./Icon";
 import { Dialog } from "../src/components/Dialog";
+import { Link } from "./Link";
 
 export const Notifications = props => {
 	const dispatch = useDispatch();
@@ -95,9 +96,9 @@ export const Notifications = props => {
 						<p>&nbsp;</p>
 
 						<p>
-							<a href="https://docs.codestream.com/userguide/features/notifications/">
+							<Link href="https://docs.codestream.com/userguide/features/notifications/">
 								Learn more about CodeStream Notifications
-							</a>
+							</Link>
 						</p>
 					</div>
 				</fieldset>

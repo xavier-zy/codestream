@@ -166,10 +166,17 @@ export const PullRequestPatch = (props: {
 	};
 
 	if (patch) {
+		const patchLength = patch.split("\n").length;
+		const patchShowContextLines = 4;
 		return (
 			<Root className={(props.className || "") + " pr-patch"}>
 				<div style={{ position: "relative" }}>
 					{patch.split("\n").map((_, index) => {
+						const shouldSkipLine =
+							patchLength > patchShowContextLines * 2 + 2 &&
+							index > patchShowContextLines &&
+							index < patchLength - patchShowContextLines;
+
 						if (_ === "\\ No newline at end of file") return null;
 
 						const commentForm =
@@ -211,6 +218,10 @@ export const PullRequestPatch = (props: {
 								</PRCommentsInPatch>
 							);
 
+						if (shouldSkipLine && index === patchLength - patchShowContextLines - 1) {
+							return <>...</>;
+						}
+
 						if (_.indexOf("@@ ") === 0) {
 							const matches = _.match(/@@ \-(\d+).*? \+(\d+)/);
 							if (matches) {
@@ -232,7 +243,9 @@ export const PullRequestPatch = (props: {
 							);
 						} else if (_.indexOf("+") === 0) {
 							rightLine++;
-							return (
+							return shouldSkipLine ? (
+								undefined
+							) : (
 								<React.Fragment key={index}>
 									<div className="line added">
 										{renderLineNum("")}
@@ -245,7 +258,9 @@ export const PullRequestPatch = (props: {
 							);
 						} else if (_.indexOf("-") === 0) {
 							leftLine++;
-							return (
+							return shouldSkipLine ? (
+								undefined
+							) : (
 								<React.Fragment key={index}>
 									<div className="line deleted">
 										{renderLineNum(leftLine)}
@@ -259,7 +274,9 @@ export const PullRequestPatch = (props: {
 						} else {
 							leftLine++;
 							rightLine++;
-							return (
+							return shouldSkipLine ? (
+								undefined
+							) : (
 								<React.Fragment key={index}>
 									<div className="line same">
 										{renderLineNum(leftLine)}

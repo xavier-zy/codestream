@@ -400,16 +400,16 @@ export function EllipsisMenu(props: EllipsisMenuProps) {
 		{ label: "-" }
 	);
 
-	if (
-		derivedState.currentUserEmail &&
-		derivedState.currentUserEmail.indexOf("@codestream.com") > -1
-	) {
-		menuItems[menuItems.length - 2].submenu.push({
-			label: "Tester",
-			key: "tester",
-			action: () => dispatch(openPanel(WebviewPanels.Tester))
-		});
-	}
+	// if (
+	// 	derivedState.currentUserEmail &&
+	// 	derivedState.currentUserEmail.indexOf("@codestream.com") > -1
+	// ) {
+	// 	menuItems[menuItems.length - 2].submenu.push({
+	// 		label: "Tester",
+	// 		key: "tester",
+	// 		action: () => dispatch(openPanel(WebviewPanels.Tester))
+	// 	});
+	// }
 
 	// menuItems.push({ label: "Sign Out", action: "signout" });
 

@@ -73,7 +73,9 @@ class PullRequestProducer(
             val rightContent =
                 createRevisionDiffContent(project, rightData, ReviewDiffSide.RIGHT, headContents.content)
             val title = "$filePath (${baseSha.take(8)}) ⇔ (${headSha.take(8)})"
-            request = SimpleDiffRequest(title, leftContent, rightContent, filePath, filePath)
+            request = SimpleDiffRequest(title, leftContent, rightContent, filePath, filePath).also {
+                it.putUserData(REVIEW_DIFF, true)
+            }
         }
 
         return request ?: ErrorDiffRequest("Something went wrong")

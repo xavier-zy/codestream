@@ -9,6 +9,7 @@ interface MenuItem {
 	key?: string;
 	default?: boolean;
 	checked?: boolean;
+	subtle?: string;
 }
 
 export interface InlineMenuProps {

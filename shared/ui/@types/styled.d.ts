@@ -20,5 +20,6 @@ declare module "styled-components" {
 			grey2: string;
 			white: string;
 		};
+		breakpoint?: string;
 	}
 }

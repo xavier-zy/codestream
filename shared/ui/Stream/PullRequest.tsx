@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { CodeStreamState } from "../store";
-import styled from "styled-components";
+import styled, { ThemeProvider } from "styled-components";
 import { CSMe } from "@codestream/protocols/api";
 import { CreateCodemarkIcons } from "./CreateCodemarkIcons";
 import ScrollBox from "./ScrollBox";
@@ -65,11 +65,12 @@ import {
 import { confirmPopup } from "./Confirm";
 import { Modal } from "./Modal";
 import { PullRequestFileComments } from "./PullRequestFileComments";
-
-export const WidthBreakpoint = "630px";
+import { InlineMenu } from "../src/components/controls/InlineMenu";
+import { getPreferences } from "../store/users/reducer";
+import { setUserPreference } from "./actions";
 
 const Root = styled.div`
-	@media only screen and (max-width: ${WidthBreakpoint}) {
+	@media only screen and (max-width: ${props => props.theme.breakpoint}) {
 		.wide-text {
 			display: none;
 		}
@@ -115,6 +116,7 @@ export const PullRequest = () => {
 		const providerPullRequests = state.providerPullRequests.pullRequests;
 		const currentPullRequest = getCurrentProviderPullRequest(state);
 		return {
+			viewPreference: getPreferences(state).pullRequestView || "auto",
 			providerPullRequests: providerPullRequests,
 			reviewsState: state.reviews,
 			reviews: reviewSelectors.getAllReviews(state),
@@ -522,6 +524,16 @@ export const PullRequest = () => {
 		return false;
 	}, [pr]);
 
+	const breakpoints = {
+		auto: "630px",
+		"side-by-side": "10px",
+		vertical: "100000px"
+	};
+	const addViewPreferencesToTheme = theme => ({
+		...theme,
+		breakpoint: breakpoints[derivedState.viewPreference]
+	});
+
 	console.warn("PR: ", pr);
 	// console.warn("REPO: ", ghRepo);
 	if (!pr) {
@@ -537,273 +549,315 @@ export const PullRequest = () => {
 		// console.log(pr.files);
 		// console.log(pr.commits);
 		return (
-			<Root className="panel full-height">
-				<CreateCodemarkIcons narrow onebutton />
-				{isLoadingMessage && <FloatingLoadingMessage>{isLoadingMessage}</FloatingLoadingMessage>}
-				<PRHeader>
-					{iAmRequested && activeTab == 1 && (
-						<PRIAmRequested>
-							<div>
-								<b>{pr.author.login}</b> requested your review on this pull request.
-							</div>
-							<Button
-								variant="success"
-								size="compact"
-								onClick={() => {
-									setActiveTab(4);
-								}}
-							>
-								Add your review
-							</Button>
-						</PRIAmRequested>
-					)}
-					<PRTitle className={editingTitle ? "editing" : ""}>
-						{editingTitle ? (
-							<PREditTitle>
-								<input
-									id="title-input"
-									name="title"
-									value={title}
-									className="input-text control"
-									autoFocus
-									type="text"
-									onChange={e => setTitle(e.target.value)}
-									placeholder=""
-								/>
-								<Button onClick={saveTitle} isLoading={savingTitle}>
-									Save
-								</Button>
+			<ThemeProvider theme={addViewPreferencesToTheme}>
+				<Root className="panel full-height">
+					<CreateCodemarkIcons narrow onebutton />
+					{isLoadingMessage && <FloatingLoadingMessage>{isLoadingMessage}</FloatingLoadingMessage>}
+					<PRHeader>
+						{iAmRequested && activeTab == 1 && (
+							<PRIAmRequested>
+								<div>
+									<b>{pr.author.login}</b> requested your review on this pull request.
+								</div>
 								<Button
-									variant="secondary"
+									variant="success"
+									size="compact"
 									onClick={() => {
-										setTitle("");
-										setSavingTitle(false);
-										setEditingTitle(false);
+										setActiveTab(4);
 									}}
 								>
-									Cancel
+									Add your review
 								</Button>
-							</PREditTitle>
-						) : (
-							<>
-								{title || pr.title}{" "}
-								<Tooltip title="Open on GitHub" placement="top">
-									<span>
-										<Link href={pr.url}>
-											#{pr.number}
-											<Icon name="link-external" className="open-external" />
-										</Link>
-									</span>
-								</Tooltip>
-							</>
+							</PRIAmRequested>
 						)}
-					</PRTitle>
-					<PRStatus>
-						<PRStatusButton
-							disabled
-							fullOpacity
-							variant={
-								pr.isDraft
-									? "neutral"
-									: pr.state === "OPEN"
-									? "success"
-									: pr.state === "MERGED"
-									? "merged"
-									: pr.state === "CLOSED"
-									? "destructive"
-									: "primary"
-							}
-						>
-							<Icon name={statusIcon} />
-							{pr.isDraft ? "Draft" : pr.state ? pr.state.toLowerCase() : ""}
-						</PRStatusButton>
-						<PRStatusMessage>
-							<PRAuthor>{pr.author.login}</PRAuthor>
-							<PRAction>
-								{action} {pr.commits && pr.commits.totalCount} commits into{" "}
-								<Link href={`${pr.repoUrl}/tree/${pr.baseRefName}`}>
-									<PRBranch>
-										{pr.repository.name}:{pr.baseRefName}
-									</PRBranch>
-								</Link>
-								{" from "}
-								<Link href={`${pr.repoUrl}/tree/${pr.headRefName}`}>
-									<PRBranch>{pr.headRefName}</PRBranch>
-								</Link>{" "}
-								<Icon
-									title="Copy"
-									placement="bottom"
-									name="copy"
-									className="clickable"
-									onClick={e => copy(pr.baseRefName)}
-								/>
-							</PRAction>
-							<Timestamp time={pr.createdAt} relative />
-						</PRStatusMessage>
-						<PRActionButtons>
-							{pr.viewerCanUpdate && (
+						<PRTitle className={editingTitle ? "editing" : ""}>
+							{editingTitle ? (
+								<PREditTitle>
+									<input
+										id="title-input"
+										name="title"
+										value={title}
+										className="input-text control"
+										autoFocus
+										type="text"
+										onChange={e => setTitle(e.target.value)}
+										placeholder=""
+									/>
+									<Button onClick={saveTitle} isLoading={savingTitle}>
+										Save
+									</Button>
+									<Button
+										variant="secondary"
+										onClick={() => {
+											setTitle("");
+											setSavingTitle(false);
+											setEditingTitle(false);
+										}}
+									>
+										Cancel
+									</Button>
+								</PREditTitle>
+							) : (
+								<>
+									{title || pr.title}{" "}
+									<Tooltip title="Open on GitHub" placement="top">
+										<span>
+											<Link href={pr.url}>
+												#{pr.number}
+												<Icon name="link-external" className="open-external" />
+											</Link>
+										</span>
+									</Tooltip>
+								</>
+							)}
+						</PRTitle>
+						<PRStatus>
+							<PRStatusButton
+								disabled
+								fullOpacity
+								variant={
+									pr.isDraft
+										? "neutral"
+										: pr.state === "OPEN"
+										? "success"
+										: pr.state === "MERGED"
+										? "merged"
+										: pr.state === "CLOSED"
+										? "destructive"
+										: "primary"
+								}
+							>
+								<Icon name={statusIcon} />
+								{pr.isDraft ? "Draft" : pr.state ? pr.state.toLowerCase() : ""}
+							</PRStatusButton>
+							<PRStatusMessage>
+								<PRAuthor>{pr.author.login}</PRAuthor>
+								<PRAction>
+									{action} {pr.commits && pr.commits.totalCount} commits into{" "}
+									<Link href={`${pr.repoUrl}/tree/${pr.baseRefName}`}>
+										<PRBranch>
+											{pr.repository.name}:{pr.baseRefName}
+										</PRBranch>
+									</Link>
+									{" from "}
+									<Link href={`${pr.repoUrl}/tree/${pr.headRefName}`}>
+										<PRBranch>{pr.headRefName}</PRBranch>
+									</Link>{" "}
+									<Icon
+										title="Copy"
+										placement="bottom"
+										name="copy"
+										className="clickable"
+										onClick={e => copy(pr.baseRefName)}
+									/>
+								</PRAction>
+								<Timestamp time={pr.createdAt} relative />
+							</PRStatusMessage>
+							<PRActionButtons>
+								{pr.viewerCanUpdate && (
+									<span>
+										<Icon
+											title="Edit Title"
+											trigger={["hover"]}
+											delay={1}
+											onClick={() => {
+												setTitle(pr.title);
+												setEditingTitle(true);
+											}}
+											placement="bottom"
+											name="pencil"
+										/>
+									</span>
+								)}
+								{isLoadingBranch ? (
+									<Icon name="sync" className="spin" />
+								) : (
+									<span className={cantCheckoutReason ? "disabled" : ""}>
+										<Icon
+											title={
+												<>
+													Checkout Branch
+													{cantCheckoutReason && (
+														<div className="subtle smaller" style={{ maxWidth: "200px" }}>
+															Disabled: {cantCheckoutReason}
+														</div>
+													)}
+												</>
+											}
+											trigger={["hover"]}
+											delay={1}
+											onClick={checkout}
+											placement="bottom"
+											name="git-branch"
+										/>
+									</span>
+								)}
+								<InlineMenu
+									title="View Settings"
+									noChevronDown
+									noFocusOnSelect
+									items={[
+										{ label: "-" },
+										{
+											key: "auto",
+											label: "Auto",
+											subtle: " (based on width)",
+											checked: derivedState.viewPreference === "auto",
+											action: () => dispatch(setUserPreference(["pullRequestView"], "auto"))
+										},
+										{
+											key: "vertical",
+											label: "Vertical",
+											subtle: " (best for narrow)",
+											checked: derivedState.viewPreference === "vertical",
+											action: () => dispatch(setUserPreference(["pullRequestView"], "vertical"))
+										},
+										{
+											key: "side-by-side",
+											label: "Side-by-side",
+											subtle: " (best for wide)",
+											checked: derivedState.viewPreference === "side-by-side",
+											action: () => dispatch(setUserPreference(["pullRequestView"], "side-by-side"))
+										}
+									]}
+								>
+									<span>
+										<Icon
+											title="View Settings"
+											trigger={["hover"]}
+											delay={1}
+											placement="bottom"
+											className={`${isLoadingPR ? "spin" : ""}`}
+											name="gear"
+										/>
+									</span>
+								</InlineMenu>
 								<span>
 									<Icon
-										title="Edit Title"
+										title="Reload"
 										trigger={["hover"]}
 										delay={1}
-										onClick={() => {
-											setTitle(pr.title);
-											setEditingTitle(true);
-										}}
+										onClick={() => reload("Reloading...")}
 										placement="bottom"
-										name="pencil"
+										className={`${isLoadingPR ? "spin" : ""}`}
+										name="refresh"
 									/>
 								</span>
+							</PRActionButtons>
+						</PRStatus>
+						{derivedState.currentPullRequest &&
+							derivedState.currentPullRequest.error &&
+							derivedState.currentPullRequest.error.message && (
+								<PRError>
+									<Icon name="alert" />
+									<div>{derivedState.currentPullRequest.error.message}</div>
+								</PRError>
 							)}
-							{isLoadingBranch ? (
-								<Icon name="sync" className="spin" />
-							) : (
-								<span className={cantCheckoutReason ? "disabled" : ""}>
-									<Icon
-										title={
-											<>
-												Checkout Branch
-												{cantCheckoutReason && (
-													<div className="subtle smaller" style={{ maxWidth: "200px" }}>
-														Disabled: {cantCheckoutReason}
-													</div>
-												)}
-											</>
-										}
-										trigger={["hover"]}
-										delay={1}
-										onClick={checkout}
-										placement="bottom"
-										name="repo"
-									/>
-								</span>
-							)}
-							<span>
-								<Icon
-									title="Reload"
-									trigger={["hover"]}
-									delay={1}
-									onClick={() => reload("Reloading...")}
-									placement="bottom"
-									className={`${isLoadingPR ? "spin" : ""}`}
-									name="refresh"
-								/>
-							</span>
-						</PRActionButtons>
-					</PRStatus>
-					{derivedState.currentPullRequest &&
-						derivedState.currentPullRequest.error &&
-						derivedState.currentPullRequest.error.message && (
-							<PRError>
-								<Icon name="alert" />
-								<div>{derivedState.currentPullRequest.error.message}</div>
-							</PRError>
-						)}
-					<Tabs style={{ marginTop: 0 }}>
-						<Tab onClick={e => setActiveTab(1)} active={activeTab == 1}>
-							<Icon name="comment" />
-							<span className="wide-text">Conversation</span>
-							<PRBadge>{numComments}</PRBadge>
-						</Tab>
-						<Tab onClick={e => setActiveTab(2)} active={activeTab == 2}>
-							<Icon name="git-commit" />
-							<span className="wide-text">Commits</span>
-							<PRBadge>{pr.commits.totalCount}</PRBadge>
-						</Tab>
-						{/*
+						<Tabs style={{ marginTop: 0 }}>
+							<Tab onClick={e => setActiveTab(1)} active={activeTab == 1}>
+								<Icon name="comment" />
+								<span className="wide-text">Conversation</span>
+								<PRBadge>{numComments}</PRBadge>
+							</Tab>
+							<Tab onClick={e => setActiveTab(2)} active={activeTab == 2}>
+								<Icon name="git-commit" />
+								<span className="wide-text">Commits</span>
+								<PRBadge>{pr.commits.totalCount}</PRBadge>
+							</Tab>
+							{/*
 		<Tab onClick={e => setActiveTab(3)} active={activeTab == 3}>
 			<Icon name="check" />
 			<span className="wide-text">Checks</span>
 			<PRBadge>{pr.numChecks}</PRBadge>
 		</Tab>
 		 */}
-						<Tab onClick={e => setActiveTab(4)} active={activeTab == 4}>
-							<Icon name="plus-minus" />
-							<span className="wide-text">Files Changed</span>
-							<PRBadge>{pr.files.totalCount}</PRBadge>
-						</Tab>
+							<Tab onClick={e => setActiveTab(4)} active={activeTab == 4}>
+								<Icon name="plus-minus" />
+								<span className="wide-text">Files Changed</span>
+								<PRBadge>{pr.files.totalCount}</PRBadge>
+							</Tab>
 
-						{pr.pendingReview ? (
-							<PRSubmitReviewButton>
-								<Button variant="success" onClick={() => setFinishReviewOpen(!finishReviewOpen)}>
-									Finish<span className="wide-text"> review</span>
-									<PRBadge>
-										{pr.pendingReview.comments ? pr.pendingReview.comments.totalCount : 0}
-									</PRBadge>
-									<Icon name="chevron-down" />
-								</Button>
-								{finishReviewOpen && (
-									<PullRequestFinishReview
-										pr={pr}
-										mode="dropdown"
+							{pr.pendingReview ? (
+								<PRSubmitReviewButton>
+									<Button variant="success" onClick={() => setFinishReviewOpen(!finishReviewOpen)}>
+										Finish<span className="wide-text"> review</span>
+										<PRBadge>
+											{pr.pendingReview.comments ? pr.pendingReview.comments.totalCount : 0}
+										</PRBadge>
+										<Icon name="chevron-down" />
+									</Button>
+									{finishReviewOpen && (
+										<PullRequestFinishReview
+											pr={pr}
+											mode="dropdown"
+											fetch={fetch}
+											setIsLoadingMessage={setIsLoadingMessage}
+											setFinishReviewOpen={setFinishReviewOpen}
+										/>
+									)}
+								</PRSubmitReviewButton>
+							) : (
+								<PRPlusMinus>
+									<span className="added">
+										+
+										{!pr.files
+											? 0
+											: pr.files.nodes
+													.map(_ => _.additions)
+													.reduce((acc, val) => acc + val, 0)
+													.toString()
+													.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
+									</span>{" "}
+									<span className="deleted">
+										-
+										{!pr.files
+											? 0
+											: pr.files.nodes
+													.map(_ => _.deletions)
+													.reduce((acc, val) => acc + val, 0)
+													.toString()
+													.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
+									</span>
+								</PRPlusMinus>
+							)}
+						</Tabs>
+					</PRHeader>
+					{!derivedState.composeCodemarkActive && (
+						<ScrollBox>
+							<div className="channel-list vscroll" style={{ paddingTop: "10px" }}>
+								{activeTab === 1 && (
+									<PullRequestConversationTab
+										ghRepo={ghRepo}
 										fetch={fetch}
+										autoCheckedMergeability={autoCheckedMergeability}
+										checkMergeabilityStatus={checkMergeabilityStatus}
 										setIsLoadingMessage={setIsLoadingMessage}
-										setFinishReviewOpen={setFinishReviewOpen}
 									/>
 								)}
-							</PRSubmitReviewButton>
-						) : (
-							<PRPlusMinus>
-								<span className="added">
-									+
-									{!pr.files
-										? 0
-										: pr.files.nodes
-												.map(_ => _.additions)
-												.reduce((acc, val) => acc + val, 0)
-												.toString()
-												.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
-								</span>{" "}
-								<span className="deleted">
-									-
-									{!pr.files
-										? 0
-										: pr.files.nodes
-												.map(_ => _.deletions)
-												.reduce((acc, val) => acc + val, 0)
-												.toString()
-												.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
-								</span>
-							</PRPlusMinus>
-						)}
-					</Tabs>
-				</PRHeader>
-				{!derivedState.composeCodemarkActive && (
-					<ScrollBox>
-						<div className="channel-list vscroll" style={{ paddingTop: "10px" }}>
-							{activeTab === 1 && (
-								<PullRequestConversationTab
-									ghRepo={ghRepo}
-									fetch={fetch}
-									autoCheckedMergeability={autoCheckedMergeability}
-									checkMergeabilityStatus={checkMergeabilityStatus}
-									setIsLoadingMessage={setIsLoadingMessage}
-								/>
-							)}
-							{activeTab === 2 && <PullRequestCommitsTab pr={pr} ghRepo={ghRepo} fetch={fetch} />}
-							{activeTab === 4 && (
-								<PullRequestFilesChangedTab
-									key="files-changed"
-									pr={pr}
-									fetch={fetch}
-									setIsLoadingMessage={setIsLoadingMessage}
-								/>
-							)}
-						</div>
-					</ScrollBox>
-				)}
-				{!derivedState.composeCodemarkActive && derivedState.currentPullRequestCommentId && (
-					<PullRequestFileComments
-						pr={pr}
-						fetch={fetch}
-						setIsLoadingMessage={setIsLoadingMessage}
-						commentId={derivedState.currentPullRequestCommentId}
-						quote={() => {}}
-						onClose={closeFileComments}
-					/>
-				)}
-			</Root>
+								{activeTab === 2 && <PullRequestCommitsTab pr={pr} ghRepo={ghRepo} fetch={fetch} />}
+								{activeTab === 4 && (
+									<PullRequestFilesChangedTab
+										key="files-changed"
+										pr={pr}
+										fetch={fetch}
+										setIsLoadingMessage={setIsLoadingMessage}
+									/>
+								)}
+							</div>
+						</ScrollBox>
+					)}
+					{!derivedState.composeCodemarkActive && derivedState.currentPullRequestCommentId && (
+						<PullRequestFileComments
+							pr={pr}
+							fetch={fetch}
+							setIsLoadingMessage={setIsLoadingMessage}
+							commentId={derivedState.currentPullRequestCommentId}
+							quote={() => {}}
+							onClose={closeFileComments}
+						/>
+					)}
+				</Root>
+			</ThemeProvider>
 		);
 	}
 };

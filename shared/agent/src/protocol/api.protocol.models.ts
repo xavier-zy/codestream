@@ -652,6 +652,7 @@ export interface CSMePreferences {
 	pullRequestQueries?: PullRequestQuery[];
 	pullRequestQueryShowAllRepos?: boolean;
 	pullRequestQueryHideLabels?: boolean;
+	pullRequestView?: "auto" | "vertical" | "side-by-side";
 	hiddenPaneNodes?: {
 		[nodeId: string]: boolean;
 	};

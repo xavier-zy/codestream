@@ -4,7 +4,6 @@ import { Headshot, PRHeadshot } from "../src/components/Headshot";
 import { PRHeadshotName } from "../src/components/HeadshotName";
 import { PullRequestReactButton } from "./PullRequestReactions";
 import { TextButton } from "../src/components/controls/InlineMenu";
-import { WidthBreakpoint } from "./PullRequest";
 import { Tabs, Tab } from "../src/components/Tabs";
 
 export const PENDING_BORDER_COLOR = "rgba(249, 197, 19, 0.6)";
@@ -49,6 +48,9 @@ export const PRTitle = styled.div`
 			color: var(--text-color-info);
 			opacity: 1;
 		}
+	}
+	@media only screen and (max-width: 500px) {
+		font-size: 18px;
 	}
 `;
 
@@ -488,7 +490,7 @@ export const PRThreadedCommentCard = styled.div`
 		border: 1px solid var(--base-border-color);
 		border-radius: 5px;
 	}
-	@media only screen and (max-width: 630px) {
+	@media only screen and (max-width: ${props => props.theme.breakpoint}) {
 		${PRReactions} {
 			margin-left: -5px;
 		}
@@ -618,7 +620,7 @@ export const PRCodeCommentBody = styled.div`
 	margin: 0 0 20px 0;
 	position: relative;
 	padding-left: 40px;
-	@media only screen and (max-width: 630px) {
+	@media only screen and (max-width: ${props => props.theme.breakpoint}) {
 		padding-left: 0;
 		${PRHeadshot}, ${Headshot} {
 			display: none;
@@ -637,7 +639,8 @@ export const PRContent = styled.div`
 		flex-grow: 10;
 		max-width: 75vw;
 	}
-	@media only screen and (max-width: 630px) {
+		@media only screen and (max-width: ${props => props.theme.breakpoint}) {
+
 		flex-direction: column;
 		.main-content {
 			order: 2;
@@ -714,7 +717,7 @@ export const PRSidebar = styled.div`
 	flex-grow: 0;
 	display: flex;
 	flex-direction: column;
-	@media only screen and (max-width: 630px) {
+	@media only screen and (max-width: ${props => props.theme.breakpoint}) {
 		flex-direction: row;
 		flex-wrap: wrap;
 		width: auto;
@@ -908,7 +911,7 @@ export const PRStatus = styled.div`
 	align-items: center;
 	margin: 10px 0 20px 0;
 
-	@media only screen and (max-width: 450px) {
+	@media only screen and (max-width: 500px) {
 		flex-wrap: wrap;
 		${PRStatusMessage} {
 			order: 1;
@@ -990,7 +993,7 @@ export const PRCloneURL = styled.div`
 
 export const PRCloneURLWrapper = styled.div`
 	display: flex;
-	@media only screen and (max-width: 630px) {
+	@media only screen and (max-width: ${props => props.theme.breakpoint}) {
 		flex-direction: column;
 		${PRCloneURLButtons} {
 			margin-bottom: 1em;
@@ -1096,7 +1099,7 @@ export const PRCommentsInPatch = styled.div`
 	${PRCard} {
 		max-width: min(600px, calc(100vw - 80px));
 	}
-	@media only screen and (max-width: 630px) {
+	@media only screen and (max-width: ${props => props.theme.breakpoint}) {
 		${PRReactions} {
 			margin-left: -5px;
 		}
@@ -1105,13 +1108,13 @@ export const PRCommentsInPatch = styled.div`
 export const PRCodeCommentReplyInput = styled.div`
 	margin: 0 0 0 40px;
 	border: 1px solid var(--base-border-color);
-	@media only screen and (max-width: 630px) {
+	@media only screen and (max-width: ${props => props.theme.breakpoint}) {
 		margin-left: 0;
 	}
 `;
 
 export const PRCodeCommentWrapper = styled.div`
-	@media only screen and (max-width: 630px) {
+	@media only screen and (max-width: ${props => props.theme.breakpoint}) {
 		${PRHeadshot} {
 			display: none;
 		}

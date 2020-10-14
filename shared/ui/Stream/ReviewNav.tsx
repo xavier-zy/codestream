@@ -402,7 +402,7 @@ export function ReviewNav(props: Props) {
 							</Tooltip>
 						)}
 						{numOpenChangeRequests === 0 && !approvedByMe && (
-							<Tooltip title="Approve Review" placement="bottom">
+							<Tooltip title="Approve Feedback Request" placement="bottom">
 								<Button variant="success" onClick={approve}>
 									<Icon className="narrow-icon" name="thumbsup" />
 									<span className="wide-text">Approve</span>

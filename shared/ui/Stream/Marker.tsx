@@ -234,7 +234,9 @@ function Marker(props: Props) {
 			)}
 			{tab === "diff" && (
 				<PRDiffHunk style={{ marginTop: "5px", borderRadius: 0, borderTop: "none" }}>
-					<PullRequestPatch patch={props.diff} hunks={[]} filename={marker.file} noHeader />
+					<div style={{ background: "rgba(0, 0, 0, 0.1)" }}>
+						<PullRequestPatch patch={props.diff} hunks={[]} filename={marker.file} noHeader />
+					</div>
 				</PRDiffHunk>
 			)}
 		</Root>

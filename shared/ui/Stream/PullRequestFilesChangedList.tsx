@@ -8,7 +8,7 @@ import { PullRequestFilesChanged } from "./PullRequestFilesChanged";
 import { FileStatus } from "@codestream/protocols/api";
 import { LoadingMessage } from "../src/components/LoadingMessage";
 import { setUserPreference } from "./actions";
-import { PullRequestPatch } from "./PullRequestPatch";
+import { PRPatchRoot, PullRequestPatch } from "./PullRequestPatch";
 import copy from "copy-to-clipboard";
 import {
 	FetchThirdPartyPullRequestPullRequest,
@@ -32,12 +32,13 @@ export const PRDiffHunks = styled.div`
 	font-family: Menlo, Consolas, "DejaVu Sans Mono", monospace;
 	white-space: pre;
 	margin-right: 10px;
+	${PRPatchRoot} {
+		border-radius: 0 0 5px 5px;
+	}
 }
 `;
 
 export const PRDiffHunk = styled.div`
-	border: 1px solid var(--base-border-color);
-	border-radius: 5px;
 	margin: 0 0 20px 0;
 	h1 {
 		display: flex;
@@ -48,15 +49,17 @@ export const PRDiffHunk = styled.div`
 		margin: 0;
 		padding: 10px;
 		background: var(--base-background-color);
-		border-bottom: 1px solid var(--base-border-color);
+		border: 1px solid var(--base-border-color);
 		width: 100%;
 		overflow: hidden;
+		position: sticky;
+		top: -14px;
+		z-index: 5;
 		.filename-container {
 			overflow: hidden;
 			text-overflow: ellipsis;
 		}
 		&.hidden {
-			border-bottom: none;
 			border-radius: 5px;
 		}
 		.toggle {

@@ -548,7 +548,11 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 															</div>
 														</div>
 														<PRCodeCommentPatch>
-															<PullRequestPatch patch={comment.diffHunk} filename={comment.path} />
+															<PullRequestPatch
+																patch={comment.diffHunk}
+																filename={comment.path}
+																truncateLargePatches
+															/>
 														</PRCodeCommentPatch>
 														<PullRequestCodeComment
 															pr={pr}

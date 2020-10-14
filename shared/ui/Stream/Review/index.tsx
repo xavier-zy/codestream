@@ -737,22 +737,27 @@ const BaseReview = (props: BaseReviewProps) => {
 						}}
 					>
 						<Icon name="alert" />
-						<div style={{ paddingLeft: "10px" }}>{props.headerError.message}</div>
-						{canLocateRepo && singleRepo && (
-							<LocateRepoButton
-								repoId={singleRepo.id}
-								repoName={singleRepo.repoName}
-								callback={success => {
-									if (
-										success &&
-										props.onRequiresCheckPreconditions &&
-										typeof props.onRequiresCheckPreconditions === "function"
-									) {
-										props.onRequiresCheckPreconditions(success);
-									}
-								}}
-							></LocateRepoButton>
-						)}
+						<div style={{ paddingLeft: "10px" }}>
+							{props.headerError.message}
+							{canLocateRepo && singleRepo && (
+								<>
+									<br />
+									<LocateRepoButton
+										repoId={singleRepo.id}
+										repoName={singleRepo.repoName}
+										callback={success => {
+											if (
+												success &&
+												props.onRequiresCheckPreconditions &&
+												typeof props.onRequiresCheckPreconditions === "function"
+											) {
+												props.onRequiresCheckPreconditions(success);
+											}
+										}}
+									/>
+								</>
+							)}
+						</div>
 					</div>
 				)}
 

@@ -134,9 +134,14 @@ export const PullRequestFilesChangedList = (props: Props) => {
 	const { filesChanged, fetch, isLoading, pr } = props;
 	const dispatch = useDispatch();
 	const derivedState = useSelector((state: CodeStreamState) => {
+		const ideName = state.ide.name && state.ide.name.toUpperCase();
+		const requiresDiffHunkView = ideName === "VS" || ideName === "ATOM";
 		return {
 			currentRepo: getProviderPullRequestRepo(state),
-			pullRequestFilesChangedMode: state.preferences.pullRequestFilesChangedMode || "files"
+			diffSelectorEnabled: !requiresDiffHunkView,
+			pullRequestFilesChangedMode: requiresDiffHunkView
+				? "hunks"
+				: state.preferences.pullRequestFilesChangedMode || "files"
 		};
 	});
 
@@ -290,24 +295,30 @@ export const PullRequestFilesChangedList = (props: Props) => {
 	const totalFiles = filesChanged.length;
 	const totalVisitedFiles = filesChanged.filter(_ => visitedFiles[_.filename]).length;
 	const pct = totalFiles > 0 ? (100 * totalVisitedFiles) / totalFiles : 0;
+	const prProgressMarginStyle = derivedState.diffSelectorEnabled
+		? "0 10px 10px auto"
+		: "0 10px 10px 10px";
 
 	return (
 		<>
 			<div style={{ display: "flex", alignItems: "center", flexWrap: "wrap" }}>
-				<div style={{ margin: "0 10px 10px 0", flexGrow: 2 }}>
-					<PRSelectorButtons>
-						<span className={mode == "files" ? "selected" : ""} onClick={() => setMode("files")}>
-							<Icon name="list-flat" title="List View" placement="bottom" />
-						</span>
-						<span className={mode == "tree" ? "selected" : ""} onClick={() => setMode("tree")}>
-							<Icon name="list-tree" title="Tree View" placement="bottom" />
-						</span>
-						<span className={mode == "hunks" ? "selected" : ""} onClick={() => setMode("hunks")}>
-							<Icon name="file-diff" title="Diff Hunks" placement="bottom" />
-						</span>
-					</PRSelectorButtons>
-				</div>
-				<PRProgress style={{ margin: "0 10px 10px auto", minWidth: "30px" }}>
+				{derivedState.diffSelectorEnabled && (
+					<div style={{ margin: "0 10px 10px 0", flexGrow: 2 }}>
+						<PRSelectorButtons>
+							<span className={mode == "files" ? "selected" : ""} onClick={() => setMode("files")}>
+								<Icon name="list-flat" title="List View" placement="bottom" />
+							</span>
+							<span className={mode == "tree" ? "selected" : ""} onClick={() => setMode("tree")}>
+								<Icon name="list-tree" title="Tree View" placement="bottom" />
+							</span>
+							<span className={mode == "hunks" ? "selected" : ""} onClick={() => setMode("hunks")}>
+								<Icon name="file-diff" title="Diff Hunks" placement="bottom" />
+							</span>
+						</PRSelectorButtons>
+					</div>
+				)}
+
+				<PRProgress style={{ margin: prProgressMarginStyle, minWidth: "30px" }}>
 					{totalVisitedFiles} / {totalFiles}{" "}
 					<span className="wide-text">
 						files viewed{" "}

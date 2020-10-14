@@ -1061,7 +1061,6 @@ class ReviewForm extends React.Component<Props, State> {
 		const __onDidRender = ({ insertTextAtCursor, focus }) => {
 			this.insertTextAtCursor = insertTextAtCursor;
 			this.focusOnMessageInput = focus;
-			if (isAmending) focus();
 		};
 
 		const placeholder = isAmending ? "Describe Changes (optional)" : "Description (Optional)";
@@ -1082,6 +1081,7 @@ class ReviewForm extends React.Component<Props, State> {
 				onSubmit={this.handleClickSubmit}
 				selectedTags={this.state.selectedTags}
 				__onDidRender={__onDidRender}
+				autoFocus={isAmending ? true : false}
 			/>
 		);
 	};
@@ -1120,7 +1120,10 @@ class ReviewForm extends React.Component<Props, State> {
 					}
 
 					return (
-						<div className={cx({ "full-height-codemark-form": !isAmending })}>
+						<div
+							className={cx({ "full-height-codemark-form": !isAmending })}
+							ref={ref => (this._formDiv = ref)}
+						>
 							{!isAmending && <CancelButton onClick={this.confirmCancel} />}
 							<div className={cx({ "review-container": !isAmending })}>
 								<div className="codemark-form-container">{this.renderReviewForm()}</div>
@@ -1933,7 +1936,7 @@ class ReviewForm extends React.Component<Props, State> {
 			repoStatus.scm.commits[0].info;
 
 		return (
-			<form className="standard-form review-form" key="form" ref={ref => (this._formDiv = ref)}>
+			<form className="standard-form review-form" key="form">
 				<fieldset className="form-body">
 					{!isAmending && (
 						<div id="controls" className="control-group" key="controls1">

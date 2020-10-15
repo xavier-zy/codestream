@@ -310,6 +310,7 @@ export interface ApiProvider {
 
 	readonly teamId: string;
 	readonly userId: string;
+	readonly meUser: CSMe | undefined;
 	readonly capabilities: Capabilities;
 	readonly features: CSApiFeatures | undefined;
 	readonly runTimeEnvironment: string | undefined;

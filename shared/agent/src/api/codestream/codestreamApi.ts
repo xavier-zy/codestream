@@ -323,6 +323,10 @@ export class CodeStreamApiProvider implements ApiProvider {
 		return this._runTimeEnvironment;
 	}
 
+	get meUser() {
+		return this._user;
+	}
+
 	setServerUrl(serverUrl: string) {
 		this.baseUrl = serverUrl;
 	}

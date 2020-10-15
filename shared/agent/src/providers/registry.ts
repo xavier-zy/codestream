@@ -48,7 +48,8 @@ import {
 	GetMyPullRequestsResponse,
 	MoveThirdPartyCardRequest,
 	MoveThirdPartyCardRequestType,
-	MoveThirdPartyCardResponse, PullRequestsChangedData,
+	MoveThirdPartyCardResponse,
+	PullRequestsChangedData,
 	QueryThirdPartyRequest,
 	QueryThirdPartyRequestType,
 	RemoveEnterpriseProviderRequest,
@@ -112,9 +113,11 @@ export class ThirdPartyProviderRegistry {
 	}
 
 	private async pullRequestsStateHandler() {
-		const user = await this.session.api.getMe();
+		// TODO FIXME -- should read from something in the usersManager
+		const user = await SessionContainer.instance().session.api.meUser;
+		if (!user) return;
 
-		const providers = this.getConnectedProviders(user.user, (p): p is ThirdPartyIssueProvider &
+		const providers = this.getConnectedProviders(user, (p): p is ThirdPartyIssueProvider &
 			ThirdPartyProviderSupportsPullRequests => {
 			const thirdPartyIssueProvider = p as ThirdPartyIssueProvider;
 			const name = thirdPartyIssueProvider.getConfig().name;
@@ -127,7 +130,7 @@ export class ThirdPartyProviderRegistry {
 				Container.instance().errorReporter.reportBreadcrumb({
 					message: "In pullRequestsStateHandler, GitHub is a provider",
 					data: {
-						isConnected: provider.isConnected(user.user)
+						isConnected: provider.isConnected(user)
 					}
 				});
 			}
@@ -157,21 +160,25 @@ export class ThirdPartyProviderRegistry {
 		}
 
 		providersPRs.map(providerPRs => {
-			const previousProviderPRs = this._lastProvidersPRs?.find(_ => _.providerName === providerPRs.providerName);
+			const previousProviderPRs = this._lastProvidersPRs?.find(
+				_ => _.providerName === providerPRs.providerName
+			);
 			if (!previousProviderPRs) {
 				return;
 			}
 
 			const queriedPullRequests: GetMyPullRequestsResponse[][] = [];
-			providerPRs.queriedPullRequests.map((pullRequests: GetMyPullRequestsResponse[], index: number) => {
-				queriedPullRequests.push(
-					differenceWith(
-						pullRequests,
-						previousProviderPRs.queriedPullRequests[index],
-						(value, other) => value.id === other.id
-					)
-				);
-			});
+			providerPRs.queriedPullRequests.map(
+				(pullRequests: GetMyPullRequestsResponse[], index: number) => {
+					queriedPullRequests.push(
+						differenceWith(
+							pullRequests,
+							previousProviderPRs.queriedPullRequests[index],
+							(value, other) => value.id === other.id
+						)
+					);
+				}
+			);
 
 			newProvidersPRs.push({
 				providerName: providerPRs.providerName,
@@ -180,12 +187,13 @@ export class ThirdPartyProviderRegistry {
 		});
 
 		return newProvidersPRs;
-	}
+	};
 
 	private fireNewPRsNotifications(providersPRs: ProviderPullRequests[]) {
 		const prNotificationMessages: PullRequestsChangedData[] = [];
 
-		providersPRs.map(_ => _.queriedPullRequests.map((pullRequests: GetMyPullRequestsResponse[], queryIndex: number) => {
+		providersPRs.map(_ =>
+			_.queriedPullRequests.map((pullRequests: GetMyPullRequestsResponse[], queryIndex: number) => {
 				prNotificationMessages.push(
 					...pullRequests.map(pullRequest => ({
 						queryName: PR_QUERIES[queryIndex].name,

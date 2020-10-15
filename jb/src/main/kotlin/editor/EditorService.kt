@@ -24,6 +24,8 @@ import com.codestream.protocols.webview.EditorNotifications
 import com.codestream.protocols.webview.EditorSelection
 import com.codestream.protocols.webview.WebViewContext
 import com.codestream.review.ReviewDiffFileSystem
+import com.codestream.review.ReviewDiffSide
+import com.codestream.review.ReviewDiffVirtualFile
 import com.codestream.sessionService
 import com.codestream.settings.ApplicationSettingsService
 import com.codestream.settingsService
@@ -204,7 +206,12 @@ class EditorService(val project: Project) {
 
     fun updateMarkers(document: Document) = ApplicationManager.getApplication().invokeLater {
         val editors = EditorFactory.getInstance().getEditors(document, project)
-        val visibleEditors = editors.filter { !it.scrollingModel.visibleArea.isEmpty }
+        val visibleEditors = editors
+            .filter { !it.scrollingModel.visibleArea.isEmpty }
+            .filter {
+                val reviewFile = it.document.file as? ReviewDiffVirtualFile ?: return@filter true
+                reviewFile.side == ReviewDiffSide.RIGHT
+            }
         if (visibleEditors.isEmpty()) return@invokeLater
 
         GlobalScope.launch {

@@ -77,8 +77,8 @@ class GutterIconAction(val editor: Editor, val marker: DocumentMarker) : AnActio
 }
 
 private enum class TelemetryEvent(val value: String, val properties: Map<String, String>) {
-    CODEMARK_CLICKED("Codemark Clicked", mapOf("Codemark Location" to "Source File", "Comment Location" to "Diff Gutter")),
-    PR_CLICKED("PR Comment Clicked", mapOf("PullRequest Location" to "Source File", "Comment Location" to "Diff Gutter"))
+    CODEMARK_CLICKED("Codemark Clicked", mapOf("Comment Location" to "Diff Gutter")),
+    PR_CLICKED("PR Comment Clicked", mapOf("Comment Location" to "Diff Gutter"))
 }
 
 private fun telemetry(project: Project, event: TelemetryEvent) {

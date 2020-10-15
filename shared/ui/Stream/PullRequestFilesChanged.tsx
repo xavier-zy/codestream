@@ -173,11 +173,11 @@ export const PullRequestFilesChanged = (props: Props) => {
 
 				const request = {
 					baseBranch: props.baseRefName,
-					baseSha: forkPointSha,
+					baseSha: pr ? forkPointSha : props.baseRef,
 					headBranch: props.headRefName,
 					headSha: props.headRef,
 					filePath: f.file,
-					repoId: derivedState.currentRepo!.id!,
+					repoId: pr ? derivedState.currentRepo!.id! : props.repoId!,
 					context: pr
 						? {
 								pullRequest: {

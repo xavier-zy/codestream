@@ -118,6 +118,7 @@ const STATUS_MAP = {
 const NOW = new Date().getTime(); // a rough timestamp so we know when the file was visited
 
 export interface CompareFilesProps {
+	repoId?: string; // passed in if we don't have a current PR
 	repositoryName?: string;
 	baseRef: string;
 	baseRefName: string;
@@ -131,6 +132,7 @@ interface Props extends CompareFilesProps {
 	pr?: FetchThirdPartyPullRequestPullRequest;
 	fetch?: Function;
 	setIsLoadingMessage?: Function;
+	readOnly?: boolean;
 }
 
 export const PullRequestFilesChangedList = (props: Props) => {
@@ -340,6 +342,7 @@ export const PullRequestFilesChangedList = (props: Props) => {
 						{pct > 0 && <PRProgressFill style={{ width: pct + "%" }} />}
 					</PRProgressLine>
 				</PRProgress>
+
 				{pr && !pr.pendingReview && (
 					<PRSubmitReviewButton style={{ margin: "0 10px 10px auto", flexGrow: 0 }}>
 						<Button variant="success" onClick={() => setFinishReviewOpen(!finishReviewOpen)}>
@@ -361,6 +364,7 @@ export const PullRequestFilesChangedList = (props: Props) => {
 				<PullRequestFilesChanged
 					pr={pr}
 					filesChanged={filesChanged}
+					repoId={props.repoId}
 					repositoryName={props.repositoryName}
 					baseRef={props.baseRef}
 					baseRefName={props.baseRefName}
@@ -449,7 +453,7 @@ export const PullRequestFilesChangedList = (props: Props) => {
 										patch={_.patch}
 										hunks={_.hunks}
 										filename={_.filename}
-										canComment
+										canComment={!props.readOnly}
 										comments={comments}
 										setIsLoadingMessage={props.setIsLoadingMessage}
 										quote={quote}

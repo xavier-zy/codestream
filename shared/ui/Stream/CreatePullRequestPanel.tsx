@@ -1154,7 +1154,9 @@ export const CreatePullRequestPanel = props => {
 					<PanelHeader className="no-padding" title="Comparing Changes"></PanelHeader>
 				)}
 				<PullRequestFilesChangedList
+					readOnly
 					isLoading={loadingBranchInfo || isLoadingDiffs}
+					repoId={prRepoId}
 					filesChanged={filesChanged}
 					baseRef={prBranch}
 					headRef={reviewBranch}

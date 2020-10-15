@@ -55,7 +55,7 @@ export const ReviewSettings = () => {
 				<form className="standard-form vscroll">
 					<fieldset className="form-body">
 						<div id="controls">
-							<label>When a review has multiple assigned reviewers</label>
+							<label>When a feedback request has multiple assigned reviewers</label>
 							<RadioGroup
 								name="approval"
 								selectedValue={loadingApproval || derivedState.reviewApproval}
@@ -100,7 +100,7 @@ export const ReviewSettings = () => {
 
 							<p>
 								<Link href="https://docs.codestream.com/userguide/features/managing-the-team/#code-review-assignment--approval">
-									Learn more about Code Review Assignment
+									Learn more about Feedback Request Assignment
 								</Link>
 							</p>
 						</div>

@@ -1167,5 +1167,3 @@ export const CreatePullRequestPanel = props => {
 		</Root>
 	);
 };
-
-//

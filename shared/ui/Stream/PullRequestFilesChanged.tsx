@@ -236,7 +236,7 @@ export const PullRequestFilesChanged = (props: Props) => {
 			});
 			if (!response.repositories) return;
 			const currentRepoInfo = response.repositories.find(
-				r => r.id === derivedState.currentRepo!.id
+				r => r.id === pr ? derivedState.currentRepo!.id : props.repoId!
 			);
 			if (currentRepoInfo) {
 				setCurrentRepoRoot(currentRepoInfo.path);

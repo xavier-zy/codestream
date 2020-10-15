@@ -492,6 +492,8 @@ export class SimpleFilterSearchPanel extends Component<Props, State> {
 		const filters = this.getFilters(query);
 		const { usernameMap } = this.props;
 
+		const q = (filters.text || "").toLocaleLowerCase();
+
 		// sort by most recent first
 		this.props.items.forEach(item => {
 			if (item.deactivated) return null;
@@ -571,7 +573,6 @@ export class SimpleFilterSearchPanel extends Component<Props, State> {
 			if (filters.createdOn && !sameDay(new Date(item.createdAt), filters.createdOn)) return null;
 
 			const title = item.title;
-			const q = filters.text;
 
 			if (
 				q &&

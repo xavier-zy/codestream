@@ -13,7 +13,7 @@
     "analyze": "webpack --env.analyze",
     "build": "npm run agent:build && webpack --env.development",
     "bundle": "npm install --no-save && npm run agent:bundle && npm run agent:pkg && webpack --env.production",
-    "bundle:mac": "npm install --no-save && npm run agent:bundle && npm run agent:pkg:mac && webpack --env.production",
+    "bundle:mac": "npm run agent:bundle && npm run agent:pkg:mac && webpack --env.production",
     "bundle:ci": "npm run clean:ci && npm run bundle",
     "clean": "git clean -Xdf -e !licenses/**/* !node_modules -e !node_modules/**/* -e !codestream*.info",
     "clean:ci": "git clean -xdf -e licenses/**/* && npm run webview:clean:ci && npm run agent:clean:ci",

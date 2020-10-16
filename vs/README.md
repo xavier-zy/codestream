@@ -9,11 +9,11 @@ CodeStream is a developer collaboration platform that integrates all of your ess
 
 # Get Feedback on Work-in-Progress with Pre-PR Code Reviews
 
-CodeStream's lightweight code reviews let you request a review on any code regardless of the current state of your repo, without the friction of committing, pushing or issuing a pull request. Your teammates can review your changes right in their IDE, with full file context, and with no need to set aside their current work to switch branches or pull the latest. 
+CodeStream's lightweight feedback requests let you get feedback on your changes regardless of the current state of your repo, without the friction of committing, pushing or issuing a pull request. Your teammates can review your changes right in their IDE, with full file context, and with no need to set aside their current work to switch branches or pull the latest.
 
 ![Review Changes](https://raw.githubusercontent.com/TeamCodeStream/codestream/develop/images/animated/CodeReviewPerform-VS.gif)
 
-CodeStream’s code reviews are so easy that you can start doing them throughout the development process instead of waiting until the end. You’re a few days into a sprint and have some work stubbed out? Maybe some work that hasn’t even been committed. Request of a review of your work-in-progress so that you can identify and resolve issues early instead of saving those gotchas for when you need to get the code merged.
+CodeStream’s feedback requests are so easy that you can start doing them throughout the development process instead of waiting until the end. You’re a few days into a sprint and have some work stubbed out? Maybe some work that hasn’t even been committed. Get feedback on your work-in-progress so that you can identify and resolve issues early instead of saving those gotchas for when you need to get the code merged.
 
 # Discuss Any Block of Code, at Any Time
 

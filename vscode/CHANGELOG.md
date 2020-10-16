@@ -1,5 +1,11 @@
 # Change Log
 
+## [10.0.1] - 2020-10-16
+
+### Fixed
+
+- Fixes an issue where authentication with your code host would seem to fail if you didn't have a repo from that code host open in your IDE
+
 ## [10.0.0] - 2020-10-15
 
 Note that CodeStream 10.0 requires VS Code version 1.50.
@@ -26,6 +32,7 @@ Note that CodeStream 10.0 requires VS Code version 1.50.
 ### Fixed
 
 - Fixes an issue where the Work in Progress section would not update unless you first visited the Team tab
+- Fixes an issue with search incorrectly being case sensitive
 
 ## [9.1.0] - 2020-10-6
 

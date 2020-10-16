@@ -11,23 +11,23 @@ CodeStream is a developer collaboration platform that integrates all of your ess
 
 Frustrated by having to jump out of your IDE to deal with pull requests? With CodeStream you can create, review and merge pull requests without ever leaving your IDE. All with full source-tree and full file access, your favorite keybindings, and all the code intelligence embedded in VS Code. 
 
-![Pull Request](https://raw.githubusercontent.com/TeamCodeStream/CodeStream/develop/images/animated/PullRequest-VSC.gif)
+![Pull Request](https://raw.githubusercontent.com/TeamCodeStream/codestream-guide/develop/docs/src/assets/images/animated/PullRequest-VSC.gif)
 
 It can take as long as 25 minutes to regain focus once it's lost and context-switching between windows can lead to distraction. CodeStream increases productivity by bringing all your essential development tools right into your editor.
 
 # Get Feedback on Work-in-Progress with Pre-PR Code Reviews
 
-CodeStream's lightweight code reviews let you request a review on any code regardless of the current state of your repo, without the friction of committing, pushing or issuing a pull request. Your teammates can review your changes right in their IDE, with full file context, and with no need to set aside their current work to switch branches or pull the latest. 
+CodeStream's lightweight feedback requests let you get feedback on your changes regardless of the current state of your repo, without the friction of committing, pushing or issuing a pull request. Your teammates can review your changes right in their IDE, with full file context, and with no need to set aside their current work to switch branches or pull the latest. 
 
-![Review Changes](https://raw.githubusercontent.com/TeamCodeStream/CodeStream/master/images/animated/CodeReviewPerform.gif)
+![Review Changes](https://raw.githubusercontent.com/TeamCodeStream/codestream-guide/develop/docs/src/assets/images/animated/FRPerform-VSC.gif)
 
-CodeStream’s code reviews are so easy that you can start doing them throughout the development process instead of waiting until the end. You’re a few days into a sprint and have some work stubbed out? Maybe some work that hasn’t even been committed. Request of a review of your work-in-progress so that you can identify and resolve issues early instead of saving those gotchas for when you need to get the code merged.
+CodeStream’s feedback requests are so easy that you can start doing them throughout the development process instead of waiting until the end. You’re a few days into a sprint and have some work stubbed out? Maybe some work that hasn’t even been committed. Get feedback on your work-in-progress so that you can identify and resolve issues early instead of saving those gotchas for when you need to get the code merged.
 
 # Discuss Any Block of Code, at Any Time
 
 Whether it's code someone else wrote years ago, or some code you wrote minutes ago, simply select a block of code and type your question or comment. Teammates can participate in the discussion right from their IDE. 
 
-![CodeStream](https://raw.githubusercontent.com/TeamCodeStream/CodeStream/master/images/animated/DiscussCode.gif)
+![CodeStream](https://raw.githubusercontent.com/TeamCodeStream/codestream-guide/develop/docs/src/assets/images/animated/DiscussCode1-VSC.gif)
 
 You can optionally share the discussion on Slack or Microsoft Teams so teammates can participate from their chat clients as well.
 
@@ -37,7 +37,7 @@ You can optionally share the discussion on Slack or Microsoft Teams so teammates
 
 CodeStream turns conversation into documentation by capturing all of the discussion about your code, and saving it with your code. Comment and code review threads are automatically repositioned as your code changes, even across branches. All with zero effort on your part.
 
-![Knowledge Base](https://raw.githubusercontent.com/TeamCodeStream/CodeStream/master/images/animated/KnowledgeBase.gif)
+![Knowledge Base](https://raw.githubusercontent.com/TeamCodeStream/codestream-guide/develop/docs/src/assets/images/animated/KnowledgeBase1-VSC.gif)
 
 Previously discussed questions and issues that explain important decisions are now accessible right where you need them, when you need them. Just click on the codemark to expand it and see how something works or why something was done a certain way.
 
@@ -47,7 +47,7 @@ Development is a collaborative activity, yet much of it happens in isolation, wi
 
 As developers write code, whether editing existing files or creating new files, a summary of their changes, including the repo(s), files, and lines changed is exposed to their teammates through CodeStream. The information is displayed contextually, in the IDE, and even warns teammates of potential merge conflicts… before they happen!
 
-![Live View](https://raw.githubusercontent.com/TeamCodeStream/CodeStream/master/images/TeamTab.png)
+![Live View](https://raw.githubusercontent.com/TeamCodeStream/codestream-guide/develop/docs/src/assets/images/MyTeamSection-LiveView.png)
 
 # Frequently Asked Questions
 

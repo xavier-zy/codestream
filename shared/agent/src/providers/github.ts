@@ -83,6 +83,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 	}
 
 	async getRemotePaths(repo: any, _projectsByRemotePath: any) {
+		// TODO don't need this ensureConnected -- doesn't hit api
 		await this.ensureConnected();
 		const remotePaths = await getRemotePaths(
 			repo,

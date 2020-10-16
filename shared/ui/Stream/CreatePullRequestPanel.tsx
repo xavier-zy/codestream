@@ -190,6 +190,7 @@ export const CreatePullRequestPanel = props => {
 	const [propsForPrePRProviderInfoModal, setPropsForPrePRProviderInfoModal] = useState<any>();
 
 	const [prUrl, setPrUrl] = useState("");
+	const [hasMounted, setHasMounted] = useState(false);
 
 	const stopWaiting = useCallback(() => {
 		setIsWaiting(false);
@@ -283,6 +284,10 @@ export const CreatePullRequestPanel = props => {
 				if (result.error.type === "REQUIRES_PROVIDER") {
 					setCurrentStep(1);
 				} else {
+					if (result.error.type === "REQUIRES_PROVIDER_REPO") {
+						setIsWaiting(false);
+						setCurrentStep(1);
+					}
 					setPreconditionError({
 						type: result.error.type || "UNKNOWN",
 						message: result.error.message || "",
@@ -303,6 +308,9 @@ export const CreatePullRequestPanel = props => {
 	};
 
 	useEffect(() => {
+		// prevent this from firing if we haven't mounted yet
+		if (!hasMounted) return;
+
 		fetchPreconditionData();
 	}, [
 		selectedRepo && selectedRepo.id,
@@ -326,7 +334,9 @@ export const CreatePullRequestPanel = props => {
 	}, [prProviderId]);
 
 	useEffect(() => {
-		fetchPreconditionData();
+		fetchPreconditionData().then(_ => {
+			setHasMounted(true);
+		});
 
 		const disposable = HostApi.instance.on(DidChangeDataNotificationType, (e: any) => {
 			if (pauseDataNotifications.current) return;
@@ -726,6 +736,10 @@ export const CreatePullRequestPanel = props => {
 			}
 			case "REPO_NOT_OPEN": {
 				messageElement = <span>Repo not currently open</span>;
+				break;
+			}
+			case "REQUIRES_PROVIDER_REPO": {
+				messageElement = <span>{message}</span>;
 				break;
 			}
 			case "REQUIRES_UPSTREAM": {

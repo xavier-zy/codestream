@@ -340,7 +340,13 @@ export interface CheckPullRequestPreconditionsResponse {
 	};
 	error?: {
 		message?: string;
-		type?: "REPO_NOT_FOUND" | "HAS_LOCAL_COMMITS" | "UNKNOWN" | string;
+		type?:
+			| "REPO_NOT_FOUND"
+			| "HAS_LOCAL_COMMITS"
+			| "REQUIRES_PROVIDER"
+			| "REQUIRES_PROVIDER_REPO"
+			| "UNKNOWN"
+			| string;
 		url?: string;
 		id?: string;
 	};

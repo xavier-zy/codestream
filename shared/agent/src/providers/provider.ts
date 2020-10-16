@@ -146,6 +146,7 @@ export namespace ThirdPartyPostProvider {
 
 export interface ThirdPartyProvider {
 	readonly name: string;
+	readonly displayName: string;
 	readonly icon: string;
 	connect(): Promise<void>;
 	configure(data: { [key: string]: any }): Promise<void>;
@@ -407,7 +408,9 @@ export abstract class ThirdPartyProviderBase<
 			Container.instance().errorReporter.reportBreadcrumb({
 				message: "Got provider info for GitHub",
 				data: {
-					accessToken: this._providerInfo?.accessToken ? this._providerInfo?.accessToken.length : "NONE"
+					accessToken: this._providerInfo?.accessToken
+						? this._providerInfo?.accessToken.length
+						: "NONE"
 				}
 			});
 		}

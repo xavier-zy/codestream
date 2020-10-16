@@ -793,6 +793,18 @@ export class ReviewsManager extends CachedEntityManagerBase<CSReview> {
 				}
 			}
 			if (!success) {
+				if (connectedProviders && connectedProviders.length) {
+					return {
+						success: false,
+						error: {
+							type: "REQUIRES_PROVIDER_REPO",
+							message: `To create a pull request you'll need to open a ${connectedProviders
+								.map(_ => _.displayName)
+								.join(" or ")} repository`
+						}
+					};
+				}
+
 				// if we couldn't match a provider against a remote or there are multiple
 				// we need the user to choose which provider.
 				return {

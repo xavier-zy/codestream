@@ -1473,6 +1473,8 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 	async getMyPullRequests(
 		request: GetMyPullRequestsRequest
 	): Promise<GetMyPullRequestsResponse[][] | undefined> {
+		void (await this.ensureConnected());
+
 		Container.instance().errorReporter.reportBreadcrumb({
 			message: "Getting my GitHub pull requests...",
 			data: {

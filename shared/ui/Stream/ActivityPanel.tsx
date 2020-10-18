@@ -215,7 +215,7 @@ export const ActivityPanel = () => {
 							</ProfileLink>
 							<div>
 								<b>{person.username}</b>{" "}
-								<span className="verb">requested a review {repoName && <>in {repoName}</>}</span>{" "}
+								<span className="verb">requested feedback {repoName && <>in {repoName}</>}</span>{" "}
 								<Timestamp relative time={record.createdAt} className="no-padding" />
 							</div>
 						</ActivityVerb>

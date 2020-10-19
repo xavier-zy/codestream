@@ -4,7 +4,7 @@ import fetch, { RequestInit, Response } from "node-fetch";
 import { URI } from "vscode-uri";
 import { MessageType } from "../api/apiProvider";
 import { MarkerLocation, User } from "../api/extensions";
-import { Container, SessionContainer } from "../container";
+import { SessionContainer } from "../container";
 import { GitRemote, GitRemoteLike, GitRepository } from "../git/gitService";
 import { Logger } from "../logger";
 import { Markerish, MarkerLocationManager } from "../managers/markerLocationManager";
@@ -221,16 +221,7 @@ export abstract class ThirdPartyProviderBase<
 	}
 
 	get accessToken() {
-		const token = this._providerInfo && this._providerInfo.accessToken;
-		if (this.providerConfig.name === "github") {
-			Container.instance().errorReporter.reportBreadcrumb({
-				message: "Got access token for GitHub",
-				data: {
-					accessToken: token ? token.length : "NONE"
-				}
-			});
-		}
-		return token;
+		return this._providerInfo && this._providerInfo.accessToken;
 	}
 
 	get apiPath() {
@@ -310,11 +301,6 @@ export abstract class ThirdPartyProviderBase<
 	}
 
 	async connect() {
-		if (this.providerConfig.name === "github") {
-			Container.instance().errorReporter.reportBreadcrumb({
-				message: "Connecting to GitHub"
-			});
-		}
 		void this.onConnecting();
 
 		// FIXME - this rather sucks as a way to ensure we have the access token
@@ -326,14 +312,6 @@ export abstract class ThirdPartyProviderBase<
 				if (me == null) return;
 
 				const providerInfo = this.getProviderInfo(me);
-				if (this.providerConfig.name === "github") {
-					Container.instance().errorReporter.reportBreadcrumb({
-						message: "Got provider info for GitHub",
-						data: {
-							accessToken: this.hasAccessToken(providerInfo)
-						}
-					});
-				}
 				if (!this.hasAccessToken(providerInfo)) return;
 				resolve(providerInfo);
 			});
@@ -362,11 +340,6 @@ export abstract class ThirdPartyProviderBase<
 	protected async onDisconnected(request?: ThirdPartyDisconnect) {}
 
 	async ensureConnected(request?: { providerTeamId?: string }) {
-		if (this.providerConfig.name === "github") {
-			Container.instance().errorReporter.reportBreadcrumb({
-				message: "Ensuring connection to GitHub"
-			});
-		}
 		if (this._readyPromise !== undefined) return this._readyPromise;
 
 		if (this._providerInfo !== undefined) {
@@ -404,16 +377,6 @@ export abstract class ThirdPartyProviderBase<
 	private async ensureConnectedCore(request?: { providerTeamId?: string }) {
 		const { user } = await SessionContainer.instance().users.getMe();
 		this._providerInfo = this.getProviderInfo(user);
-		if (this.providerConfig.name === "github") {
-			Container.instance().errorReporter.reportBreadcrumb({
-				message: "Got provider info for GitHub",
-				data: {
-					accessToken: this._providerInfo?.accessToken
-						? this._providerInfo?.accessToken.length
-						: "NONE"
-				}
-			});
-		}
 		if (this._providerInfo === undefined) {
 			throw new Error(`You must authenticate with ${this.displayName} first.`);
 		}
@@ -541,17 +504,6 @@ export abstract class ThirdPartyProviderBase<
 			if (resp !== undefined && !resp.ok) {
 				traceResult = `${this.displayName}: FAILED(${retryCount}x) ${method} ${url}`;
 				const error = await this.handleErrorResponse(resp);
-				Container.instance().errorReporter.reportBreadcrumb({
-					message: "Third-party provider fetch failed",
-					category: "providerFetch",
-					data: {
-						provider: this.providerConfig.name,
-						retryCount,
-						method,
-						url,
-						errorMessage: error.message
-					}
-				});
 				throw error;
 			}
 
@@ -560,16 +512,6 @@ export abstract class ThirdPartyProviderBase<
 				response: resp!
 			};
 		} catch (ex) {
-			Container.instance().errorReporter.reportBreadcrumb({
-				message: "Third-party provider fetch exception",
-				category: "providerFetch",
-				data: {
-					provider: this.providerConfig.name,
-					method,
-					url,
-					errorMessage: ex.message
-				}
-			});
 			throw ex;
 		} finally {
 			Logger.log(

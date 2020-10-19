@@ -381,7 +381,7 @@ interface PaneBodyProps {
 }
 export function PaneBody(props: PropsWithChildren<PaneBodyProps>) {
 	return (
-		<ScrollBox className={props.className}>
+		<ScrollBox>
 			<div className="vscroll">{props.children}</div>
 		</ScrollBox>
 	);

@@ -2,8 +2,6 @@
 
 CodeStream is a developer collaboration platform that integrates all of your essential dev tools, such as GitHub, GitLab, Bitbucket, Slack, Teams, Jira, Trello and more, into Atom.  CodeStream increases developer productivity by eliminating distractions inherent to context-switching and makes it incredibly easy for development teams, especially remote teams, to discuss and review code in a more natural and contextual way.
 
-![CodeStream](https://raw.githubusercontent.com/TeamCodeStream/CodeStream/master/images/CSforAtom.png)
-
 ### Requirements
 
 - CodeStream requires version 1.34 or later of [Atom](https://atom.io/).
@@ -16,11 +14,19 @@ You have two options for installing CodeStream.
 - Search for "CodeStream" in Atom's built-in package manager and install from there.
 - Or, run the command `apm install codestream` in your terminal.
 
+# Create and Review Pull Requests in Atom
+
+Frustrated by having to jump out of your IDE to deal with pull requests? With CodeStream you can create, review and merge pull requests without ever leaving your IDE. All with full source-tree and full file access, your favorite keybindings, and all the code intelligence embedded in VS Code. 
+
+![Pull Request](https://raw.githubusercontent.com/TeamCodeStream/codestream-guide/develop/docs/src/assets/images/animated/PullRequest-Atom.gif)
+
+It can take as long as 25 minutes to regain focus once it's lost and context-switching between windows can lead to distraction. CodeStream increases productivity by bringing all your essential development tools right into your editor.
+
 # Discuss Any Block of Code, at Any Time
 
 Whether it's code someone else wrote years ago, or some code you wrote minutes ago, simply select a block of code and type your question or comment. Teammates can participate in the discussion right from their IDE. 
 
-![CodeStream](https://raw.githubusercontent.com/TeamCodeStream/CodeStream/master/images/animated/DiscussCode-Atom.gif)
+![CodeStream](https://raw.githubusercontent.com/TeamCodeStream/codestream-guide/develop/docs/src/assets/images/animated/DiscussCode1-Atom.gif) 
 
 You can optionally share the discussion on Slack or Microsoft Teams so teammates can participate from their chat clients as well.
 
@@ -30,7 +36,7 @@ You can optionally share the discussion on Slack or Microsoft Teams so teammates
 
 CodeStream turns conversation into documentation by capturing all of the discussion about your code, and saving it with your code. Comment and code review threads are automatically repositioned as your code changes, even across branches. All with zero effort on your part.
 
-![Knowledge Base](https://raw.githubusercontent.com/TeamCodeStream/CodeStream/master/images/animated/KnowledgeBase-Atom.gif)
+![Knowledge Base](https://raw.githubusercontent.com/TeamCodeStream/codestream-guide/develop/docs/src/assets/images/animated/KnowledgeBase1-Atom.gif)
 
 Previously discussed questions and issues that explain important decisions are now accessible right where you need them, when you need them. Just click on the codemark to expand it and see how something works or why something was done a certain way.
 

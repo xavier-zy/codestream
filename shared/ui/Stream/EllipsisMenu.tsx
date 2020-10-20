@@ -16,8 +16,10 @@ import { setProfileUser, openModal } from "../store/context/actions";
 import { confirmPopup } from "./Confirm";
 import { DeleteUserRequestType, UpdateTeamSettingsRequestType } from "@codestream/protocols/agent";
 import { isFeatureEnabled } from "../store/apiVersioning/reducer";
+import { isOnPrem } from "../store/configs/reducer";
 import { setUserPreference } from "./actions";
 import { AVAILABLE_PANES } from "./Sidebar";
+import { Link } from "../Stream/Link";
 
 interface EllipsisMenuProps {
 	menuTarget: any;
@@ -31,6 +33,7 @@ export function EllipsisMenu(props: EllipsisMenuProps) {
 	const derivedState = useSelector((state: CodeStreamState) => {
 		const team = state.teams[state.context.currentTeamId];
 		const user = state.users[state.session.userId!];
+		const onPrem = isOnPrem(state.configs);
 
 		return {
 			sidebarPanePreferences: state.preferences.sidebarPanes || EMPTY_HASH,
@@ -48,7 +51,8 @@ export function EllipsisMenu(props: EllipsisMenuProps) {
 			currentUserEmail: user.email,
 			pluginVersion: state.pluginVersion,
 			xraySetting: team.settings ? team.settings.xray : "",
-			multipleReviewersApprove: isFeatureEnabled(state, "multipleReviewersApprove")
+			multipleReviewersApprove: isFeatureEnabled(state, "multipleReviewersApprove"),
+			isOnPrem: onPrem
 		};
 	});
 
@@ -156,7 +160,8 @@ export function EllipsisMenu(props: EllipsisMenuProps) {
 
 		const details = planDetails[plan];
 		if (!details) return null;
-
+		const upgradeCloud = details.upgrade && !derivedState.isOnPrem;
+		const upgradeOnPrem = details.upgrade && derivedState.isOnPrem;
 		return {
 			label: (
 				<div
@@ -167,11 +172,12 @@ export function EllipsisMenu(props: EllipsisMenuProps) {
 					}}
 				>
 					{details.label + " "}
-					{details.upgrade && <a href="">Upgrade.</a>}
+					{upgradeCloud && <a href="">Upgrade.</a>}
+					{upgradeOnPrem && <>To upgrade, contact <Link href="mailto:sales@codestream.com">sales@codestream.com</Link>.</>}
 				</div>
 			),
-			noHover: !details.upgrade,
-			action: details.upgrade ? goUpgrade : () => {}
+			noHover: !upgradeCloud,
+			action: upgradeCloud ? goUpgrade : () => {}
 		};
 	};
 

@@ -900,12 +900,13 @@ export const CreatePullRequestPanel = props => {
 			const { patches, data } = response.filesChanged;
 			const filesChanged = patches
 				.map(_ => {
+					const fileName = _.newFileName === "/dev/null" ? _.oldFileName : _.newFileName;
 					return {
 						..._,
 						linesAdded: _.additions,
 						linesRemoved: _.deletions,
-						file: _.newFileName,
-						filename: _.newFileName,
+						file: fileName,
+						filename: fileName,
 						hunks: _.hunks,
 						sha: _.sha
 					};

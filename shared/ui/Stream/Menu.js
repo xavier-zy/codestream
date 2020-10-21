@@ -149,7 +149,8 @@ export default class Menu extends Component {
 			} else {
 				// right
 				const left = rect.right - this._div.offsetWidth + 5;
-				this._div.style.left = left + "px";
+				if (left < 10) this._div.style.left = "10px";
+				else this._div.style.left = left + "px";
 			}
 
 			// check to make sure the menu doesn't display

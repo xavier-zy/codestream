@@ -204,6 +204,20 @@ class EditorService(val project: Project) {
         }
     }
 
+    fun updatePullRequestDiffMarkers() {
+        managedEditors
+            .filter {
+                val reviewFile = it.document.file as? ReviewDiffVirtualFile
+                reviewFile?.side == ReviewDiffSide.RIGHT
+            }
+            .forEach {
+                GlobalScope.launch {
+                    val markers = getDocumentMarkers(it.document)
+                    it.renderMarkers(markers)
+                }
+            }
+    }
+
     fun updateMarkers(document: Document) = ApplicationManager.getApplication().invokeLater {
         val editors = EditorFactory.getInstance().getEditors(document, project)
         val visibleEditors = editors

@@ -48,6 +48,11 @@ class CodeStreamLanguageClient(private val project: Project) : LanguageClient {
         project.webViewService?.postNotification("codestream/didChangeDocumentMarkers", notification)
     }
 
+    @JsonNotification("codestream/didChangePullRequestComments")
+    fun didChangePullRequestComments(notification: DidChangePullRequestCommentsNotification) {
+        project.editorService?.updatePullRequestDiffMarkers()
+    }
+
     @JsonNotification("codestream/didChangeData")
     fun didChangeData(json: JsonElement) {
         project.webViewService?.postNotification("codestream/didChangeData", json)
@@ -184,6 +189,12 @@ class CodeStreamLanguageClient(private val project: Project) : LanguageClient {
 
 class DidChangeDocumentMarkersNotification(
     val textDocument: TextDocumentIdentifier
+)
+
+class DidChangePullRequestCommentsNotification(
+    val pullRequestId: String?,
+    val commentId: String?,
+    val filePath: String?
 )
 
 class DidChangeDataNotification(

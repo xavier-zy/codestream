@@ -1,19 +1,16 @@
 "use strict";
 import { GitRemoteLike, GitRepository } from "git/gitService";
 import { GraphQLClient } from "graphql-request";
-import { uniqBy as _uniqBy } from "lodash-es";
 import { Response } from "node-fetch";
 import * as paths from "path";
 import * as qs from "querystring";
 import { CodeStreamSession } from "session";
 import { URI } from "vscode-uri";
-import { MarkerLocation } from "../api/extensions";
 import { Container, SessionContainer } from "../container";
 import { Logger, TraceLevel } from "../logger";
-import { Markerish, MarkerLocationManager } from "../managers/markerLocationManager";
-import { findBestMatchingLine, MAX_RANGE_VALUE } from "../markerLocation/calculator";
 import {
 	CreateThirdPartyCardRequest,
+	DidChangePullRequestCommentsNotificationType,
 	DocumentMarker,
 	FetchReposResponse,
 	FetchThirdPartyBoardsRequest,
@@ -2057,6 +2054,12 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 			`/repos/${ownerData.owner}/${ownerData.name}/pulls/${ownerData.pullRequestNumber}/comments`,
 			payload
 		);
+
+		this._pullRequestCache.delete(request.pullRequestId);
+		this.session.agent.sendNotification(DidChangePullRequestCommentsNotificationType, {
+			pullRequestId: request.pullRequestId
+		});
+
 		return data.body;
 	}
 
@@ -2123,6 +2126,12 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 			startLine: request.startLine
 		});
 
+		this._pullRequestCache.delete(request.pullRequestId);
+		this.session.agent.sendNotification(DidChangePullRequestCommentsNotificationType, {
+			pullRequestId: request.pullRequestId,
+			filePath: request.filePath
+		});
+
 		return result;
 	}
 
@@ -2138,11 +2147,19 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 			filePath: request.filePath,
 			position: request.position
 		});
+
+		this._pullRequestCache.delete(request.pullRequestId);
+		this.session.agent.sendNotification(DidChangePullRequestCommentsNotificationType, {
+			pullRequestId: request.pullRequestId,
+			filePath: request.filePath
+		});
+
 		return result;
 	}
 
 	async deletePullRequestComment(request: {
 		id: string;
+		pullRequestId: string;
 		type: "ISSUE_COMMENT" | "REVIEW_COMMENT";
 	}) {
 		const method =
@@ -2156,6 +2173,13 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 		await this.mutate<any>(query, {
 			id: request.id
 		});
+
+		this._pullRequestCache.delete(request.pullRequestId);
+		this.session.agent.sendNotification(DidChangePullRequestCommentsNotificationType, {
+			pullRequestId: request.pullRequestId,
+			commentId: request.id
+		});
+
 		return true;
 	}
 

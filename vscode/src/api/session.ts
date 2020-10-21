@@ -6,6 +6,7 @@ import {
 	CodeStreamEnvironment,
 	DidChangeDataNotification,
 	DidChangeDocumentMarkersNotification,
+	DidChangePullRequestCommentsNotification,
 	isLoginFailResponse,
 	LoginSuccessResponse,
 	AgentOpenUrlRequest,
@@ -47,6 +48,7 @@ import {
 	SessionChangedEventType,
 	SessionStatusChangedEvent,
 	TextDocumentMarkersChangedEvent,
+	PullRequestCommentsChangedEvent,
 	UnreadsChangedEvent,
 	ReviewsChangedEvent,
 	PullRequestsChangedEvent
@@ -102,6 +104,11 @@ export class CodeStreamSession implements Disposable {
 	private _onDidChangeTextDocumentMarkers = new EventEmitter<TextDocumentMarkersChangedEvent>();
 	get onDidChangeTextDocumentMarkers(): Event<TextDocumentMarkersChangedEvent> {
 		return this._onDidChangeTextDocumentMarkers.event;
+	}
+
+	private _onDidChangePullRequestComments = new EventEmitter<PullRequestCommentsChangedEvent>();
+	get onDidChangePullRequestComments(): Event<PullRequestCommentsChangedEvent> {
+		return this._onDidChangePullRequestComments.event;
 	}
 
 	private _onDidChangePosts = new EventEmitter<PostsChangedEvent>();
@@ -210,6 +217,12 @@ export class CodeStreamSession implements Disposable {
 	private onDocumentMarkersChanged(e: DidChangeDocumentMarkersNotification) {
 		this._onDidChangeTextDocumentMarkers.fire(
 			new TextDocumentMarkersChangedEvent(this, Uri.parse(e.textDocument.uri))
+		);
+	}
+
+	private onPullRequestCommentsChanged(_e: DidChangePullRequestCommentsNotification) {
+		this._onDidChangePullRequestComments.fire(
+			new PullRequestCommentsChangedEvent(this)
 		);
 	}
 
@@ -642,6 +655,7 @@ export class CodeStreamSession implements Disposable {
 
 		this._disposableAuthenticated = Disposable.from(
 			Container.agent.onDidChangeDocumentMarkers(this.onDocumentMarkersChanged, this),
+			Container.agent.onDidChangePullRequestComments(this.onPullRequestCommentsChanged, this),
 			Container.agent.onDidChangeData(this.onDataChanged, this)
 		);
 

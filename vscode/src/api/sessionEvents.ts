@@ -23,6 +23,10 @@ export class TextDocumentMarkersChangedEvent {
 	constructor(public readonly session: CodeStreamSession, public readonly uri: Uri) {}
 }
 
+export class PullRequestCommentsChangedEvent {
+	constructor(public readonly session: CodeStreamSession) {}
+}
+
 export enum SessionChangedEventType {
 	Codemarks = "codemarks",
 	Posts = "posts",

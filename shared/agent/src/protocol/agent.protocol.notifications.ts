@@ -209,13 +209,24 @@ export const DidChangeDataNotificationType = new NotificationType<DidChangeDataN
 
 export interface DidChangeDocumentMarkersNotification {
 	textDocument: TextDocumentIdentifier;
-	reason: "document" | "codemarks";
+	reason: "document" | "codemarks" | "pullRequestComments";
 }
 
 export const DidChangeDocumentMarkersNotificationType = new NotificationType<
 	DidChangeDocumentMarkersNotification,
 	void
 >("codestream/didChangeDocumentMarkers");
+
+export interface DidChangePullRequestCommentsNotification {
+	pullRequestId: string;
+	commentId?: string;
+	filePath?: string;
+}
+
+export const DidChangePullRequestCommentsNotificationType = new NotificationType<
+	DidChangePullRequestCommentsNotification,
+	void
+>("codestream/didChangePullRequestComments");
 
 export enum VersionCompatibility {
 	Compatible = "ok",

@@ -23,6 +23,8 @@ import {
 	DidChangeServerUrlNotificationType,
 	DidChangeDocumentMarkersNotification,
 	DidChangeDocumentMarkersNotificationType,
+	DidChangePullRequestCommentsNotification,
+	DidChangePullRequestCommentsNotificationType,
 	DidChangeVersionCompatibilityNotification,
 	DidChangeVersionCompatibilityNotificationType,
 	DidEncounterMaintenanceModeNotification,
@@ -179,6 +181,11 @@ export class CodeStreamAgentConnection implements Disposable {
 	private _onDidChangeDocumentMarkers = new EventEmitter<DidChangeDocumentMarkersNotification>();
 	get onDidChangeDocumentMarkers(): Event<DidChangeDocumentMarkersNotification> {
 		return this._onDidChangeDocumentMarkers.event;
+	}
+
+	private _onDidChangePullRequestComments = new EventEmitter<DidChangePullRequestCommentsNotification>();
+	get onDidChangePullRequestComments(): Event<DidChangePullRequestCommentsNotification> {
+		return this._onDidChangePullRequestComments.event;
 	}
 
 	private _onDidChangeVersion = new EventEmitter<DidChangeVersionCompatibilityNotification>();
@@ -869,6 +876,14 @@ export class CodeStreamAgentConnection implements Disposable {
 	}
 
 	@log({
+		prefix: (context, _e: DidChangePullRequestCommentsNotification) =>
+			`${context.prefix}`
+	})
+	private onPullRequestCommentsChanged(e: DidChangePullRequestCommentsNotification) {
+		this._onDidChangePullRequestComments.fire(e);
+	}
+
+	@log({
 		prefix: (context, ...messages: DidChangeDataNotification[]) =>
 			`${context.prefix}(${messages.map(m => m.type).join(", ")})`
 	})
@@ -1003,6 +1018,10 @@ export class CodeStreamAgentConnection implements Disposable {
 		this._client.onNotification(
 			DidChangeDocumentMarkersNotificationType,
 			this.onDocumentMarkersChanged.bind(this)
+		);
+		this._client.onNotification(
+			DidChangePullRequestCommentsNotificationType,
+			this.onPullRequestCommentsChanged.bind(this)
 		);
 		this._client.onNotification(
 			DidChangeVersionCompatibilityNotificationType,

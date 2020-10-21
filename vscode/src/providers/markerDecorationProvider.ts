@@ -1,5 +1,6 @@
 "use strict";
 import { CodeStreamDiffUriData } from "@codestream/protocols/agent";
+import { PullRequestCommentsChangedEvent } from "api/sessionEvents";
 import {
 	CancellationToken,
 	ConfigurationChangeEvent,
@@ -209,6 +210,7 @@ export class CodemarkDecorationProvider implements HoverProvider, Disposable {
 		const subscriptions: Disposable[] = [
 			...Object.values(decorationTypes),
 			Container.session.onDidChangeTextDocumentMarkers(this.onMarkersChanged, this),
+			Container.session.onDidChangePullRequestComments(this.onPullRequestCommentsChanged, this),
 			Container.session.onDidChangeSessionStatus(this.onSessionStatusChanged, this),
 			window.onDidChangeVisibleTextEditors(this.onEditorVisibilityChanged, this),
 			workspace.onDidCloseTextDocument(this.onDocumentClosed, this)
@@ -243,6 +245,14 @@ export class CodemarkDecorationProvider implements HoverProvider, Disposable {
 		if (editor === undefined) return;
 
 		this.apply(editor);
+	}
+
+	private onPullRequestCommentsChanged(_e: PullRequestCommentsChangedEvent) {
+		const editors = this.getApplicableVisibleEditors();
+		const diffEditors = editors.filter(e => e.document.uri.scheme === "codestream-diff");
+		for (const editor of diffEditors) {
+			this.apply(editor, true);
+		}
 	}
 
 	async apply(editor: TextEditor | undefined, force: boolean = false) {
@@ -293,7 +303,7 @@ export class CodemarkDecorationProvider implements HoverProvider, Disposable {
 	}
 
 	async provideDecorations(
-		editor: TextEditor /* , token: CancellationToken */
+		editor: TextEditor
 	): Promise<{ [key: string]: (DecorationOptions | Range)[] }> {
 		const markers = await this.getMarkers(editor.document.uri);
 		// Logger.warn(`GOT SOME MARKERS: ${JSON.stringify(markers, null, 4)}`);

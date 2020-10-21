@@ -14,6 +14,10 @@ You have two options for installing CodeStream.
 - Search for "CodeStream" in Atom's built-in package manager and install from there.
 - Or, run the command `apm install codestream` in your terminal.
 
+### Guided Installation Option
+
+Help us improve CodeStream for first-time users by participating in a 20-minute zoom call: screen-share your installation experience while we guide you along the way and demonstrate CodeStream's capabilities. If you work on a team with at least 10 developers [please schedule a time here](https://app.hubspot.com/meetings/claudio13/a-codestream-specialist-supports-your-onboarding-live).
+
 # Create and Review Pull Requests in Atom
 
 Frustrated by having to jump out of your IDE to deal with pull requests? With CodeStream you can create, review and merge pull requests without ever leaving your IDE. All with full source-tree and full file access, your favorite keybindings, and all the code intelligence embedded in VS Code. 
@@ -61,9 +65,5 @@ You won’t need to provide CodeStream with any Git (or GitHub, Bitbucket, etc.)
 # Help & Feedback
 
 Check out our [user guide](https://docs.codestream.com/userguide/) for more information on getting started with CodeStream. Please follow [@teamcodestream](http://twitter.com/teamcodestream) for product updates and to share feedback and questions. You can also email us at support@codestream.com.
-
-# Onboarding Focus Group
-
-Help us improve CodeStream for first-time users by participating in a 20-minute zoom call: screen-share your installation experience while we guide you along the way and demonstrate CodeStream's capabilities. If you work on a team with at least 10 developers [please schedule a time here](https://app.hubspot.com/meetings/claudio13/a-codestream-specialist-supports-your-onboarding-live).
 
 [![CodeStream Logo](https://alt-images.codestream.com/codestream_logo_atommarketplace.png)](https://codestream.com?utm_source=atommarket&utm_medium=banner&utm_campaign=codestream)

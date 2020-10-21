@@ -7,6 +7,10 @@ CodeStream is a developer collaboration platform that integrates all of your ess
 - CodeStream requires Visual Studio 2017 or later.
 - Your repository must be managed by Git, or a Git hosting service like GitHub.
 
+### Guided Installation Option
+
+Help us improve CodeStream for first-time users by participating in a 20-minute zoom call: screen-share your installation experience while we guide you along the way and demonstrate CodeStream's capabilities. If you work on a team with at least 10 developers [please schedule a time here](https://app.hubspot.com/meetings/claudio13/a-codestream-specialist-supports-your-onboarding-live).
+
 # Get Feedback on Work-in-Progress with Pre-PR Code Reviews
 
 CodeStream's lightweight feedback requests let you get feedback on your changes regardless of the current state of your repo, without the friction of committing, pushing or issuing a pull request. Your teammates can review your changes right in their IDE, with full file context, and with no need to set aside their current work to switch branches or pull the latest.
@@ -54,10 +58,6 @@ You won’t need to provide CodeStream with any Git (or GitHub, Bitbucket, etc.)
 # Help & Feedback
 
 Check out our [user guide](https://docs.codestream.com/userguide/) for more information on getting started with CodeStream. Please follow [@teamcodestream](http://twitter.com/teamcodestream) for product updates and to share feedback and questions. You can also email us at support@codestream.com.
-
-# Onboarding Focus Group
-
-Help us improve CodeStream for first-time users by participating in a 20-minute zoom call: screen-share your installation experience while we guide you along the way and demonstrate CodeStream's capabilities. If you work on a team with at least 10 developers [please schedule a time here](https://app.hubspot.com/meetings/claudio13/a-codestream-specialist-supports-your-onboarding-live).
 
 <p align="center">
   <br />

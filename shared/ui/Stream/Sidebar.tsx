@@ -4,6 +4,7 @@ import { CodeStreamState } from "../store";
 import styled from "styled-components";
 import { OpenReviews } from "./OpenReviews";
 import { ReposScm, GetReposScmRequestType } from "../protocols/agent/agent.protocol.scm";
+import { HostDidChangeWorkspaceFoldersNotificationType } from "../ipc/host.protocol.notifications";
 import { useDidMount } from "../utilities/hooks";
 import { HostApi } from "..";
 import { OpenPullRequests } from "./OpenPullRequests";
@@ -133,8 +134,16 @@ export const Sidebar = React.memo(function Sidebar() {
 		// Call handler right away so state gets updated with initial window size
 		handleResize();
 
-		// Remove event listener on cleanup
-		return () => window.removeEventListener("resize", handleResize);
+		const disposable = HostApi.instance.on(HostDidChangeWorkspaceFoldersNotificationType, () => {
+			fetchOpenRepos();
+		});
+
+		return () => {
+			// Remove event listener on cleanup
+			window.removeEventListener("resize", handleResize);
+
+			disposable.dispose();
+		};
 	}, []); // Empty array ensures that effect is only run on mount
 
 	const showPullRequests = useMemo(() => {

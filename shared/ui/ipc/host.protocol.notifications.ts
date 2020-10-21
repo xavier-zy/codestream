@@ -111,3 +111,8 @@ export const HostDidReceiveRequestNotificationType = new NotificationType<
 	HostDidDidReceiveRequestNotification,
 	void
 >(`${IpcRoutes.Webview}/request/parse`);
+
+export interface HostDidChangeWorkspaceFoldersNotification {}
+export const HostDidChangeWorkspaceFoldersNotificationType = new NotificationType<HostDidChangeWorkspaceFoldersNotification, void>(
+	"${IpcRoutes.Webview}/didChangeWorkspaceFolders"
+);

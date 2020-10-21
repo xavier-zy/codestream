@@ -38,6 +38,7 @@ import {
 	HostDidChangeVisibleEditorsNotificationType,
 	HostDidLogoutNotificationType,
 	HostDidReceiveRequestNotificationType,
+	HostDidChangeWorkspaceFoldersNotificationType,
 	InsertTextRequestType,
 	IpcRoutes,
 	isIpcRequestMessage,
@@ -142,6 +143,7 @@ export class WebviewController implements Disposable {
 			this.session.onDidChangeSessionStatus(this.onSessionStatusChanged, this),
 			window.onDidChangeActiveTextEditor(this.onActiveEditorChanged, this),
 			window.onDidChangeVisibleTextEditors(this.onVisibleEditorsChanged, this),
+			workspace.onDidChangeWorkspaceFolders(this.onWorkspaceFoldersChanged, this),
 			Container.agent.onDidEncounterMaintenanceMode(e => {
 				if (this._webview) this._webview.notify(DidEncounterMaintenanceModeNotificationType, e);
 			})
@@ -239,6 +241,12 @@ export class WebviewController implements Disposable {
 		if (this._lastEditor !== undefined && e.includes(this._lastEditor)) return;
 
 		this.setLastEditor(Editor.getActiveOrVisible(undefined, this._lastEditor));
+	}
+
+	private onWorkspaceFoldersChanged() {
+		if (this._webview) {
+			this._webview.notify(HostDidChangeWorkspaceFoldersNotificationType, {});
+		}
 	}
 
 	get activeStreamThread() {

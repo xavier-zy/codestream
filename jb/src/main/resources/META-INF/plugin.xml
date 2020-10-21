@@ -67,7 +67,7 @@
         <action id="CodeStream.SignOut" class="com.codestream.actions.SignOut" text="CodeStream: Sign out"/>
         <action id="CodeStream.ReloadWebview" class="com.codestream.actions.ReloadWebview" text="CodeStream: Reload webview"/>
 
-        <group id="com.codestream.Actions" popup="true" text="CodeStream" icon="/images/codestream-color.svg">
+        <group id="com.codestream.Actions" popup="true" text="CodeStream" icon="/images/codestream-color.svg" class="com.codestream.actions.CodeStreamActionGroup">
             <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="EditorPopupMenu2"/>
             <action id="CodeStream.AddComment" class="com.codestream.actions.AddComment" text="Add _Comment"
                     description="Add comment" icon="/images/marker-comment.svg">

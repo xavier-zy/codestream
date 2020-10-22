@@ -249,7 +249,7 @@ export const CreatePullRequestPanel = props => {
 				setPrTitle(result.review!.title!);
 
 				const template = result.pullRequestTemplate || "";
-				setNumLines(template.split("\n").length);
+				setNumLines(Math.max(template.split("\n").length, 8));
 				let newText = result.pullRequestTemplate || "";
 				if (result.review && result.review.text) newText += result.review.text;
 				if (!prTextTouched) setPrText(newText);

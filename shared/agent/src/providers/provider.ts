@@ -928,6 +928,12 @@ export interface ProviderGetRepoInfoResponse {
 	error?: { message?: string; type: string };
 }
 
+export interface ProviderGetForkedReposResponse {
+	parent?: any;
+	forks?: any[];
+	error?: { message?: string; type: string };
+}
+
 export interface ProviderCreatePullRequestRequest {
 	providerId: string;
 	remote: string;

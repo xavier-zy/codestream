@@ -52,6 +52,7 @@ import {
 	getRemotePaths,
 	ProviderCreatePullRequestRequest,
 	ProviderCreatePullRequestResponse,
+	ProviderGetForkedReposResponse,
 	ProviderGetRepoInfoResponse,
 	PullRequestComment,
 	REFRESH_TIMEOUT,
@@ -772,6 +773,96 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 				id: response.repository.id,
 				defaultBranch: response.repository.defaultBranchRef.name,
 				pullRequests: response.repository.pullRequests.nodes
+			};
+		} catch (ex) {
+			Logger.error(ex, "GitHub: getRepoInfo", {
+				remote: request.remote
+			});
+			let errorMessage =
+				ex.response && ex.response.errors ? ex.response.errors[0].message : "Unknown GitHub error";
+			errorMessage = `GitHub: ${errorMessage}`;
+			return {
+				error: {
+					type: "PROVIDER",
+					message: errorMessage
+				}
+			};
+		}
+	}
+
+	async getForkedRepos(request: { remote: string }): Promise<ProviderGetForkedReposResponse> {
+		try {
+			const { owner, name } = this.getOwnerFromRemote(request.remote);
+
+			const response = await this.query<any>(
+				`query getForkedRepos($owner:String!, $name:String!) {
+					rateLimit {
+						cost
+						resetAt
+						remaining
+						limit
+					}
+					repository(owner:$owner, name:$name) {
+				   		id
+						name
+						nameWithOwner
+						defaultBranchRef {
+							name
+						}
+						refs(first: 100, refPrefix: "refs/heads/") {
+						   nodes {
+							 name
+							 target {
+							   ... on Commit {
+								 oid
+								 committedDate
+							   }
+							 }
+						   }
+						}
+					    forks(first: 50, orderBy: {field: CREATED_AT, direction: DESC}) {
+							totalCount
+							pageInfo {
+								startCursor
+								endCursor
+								hasNextPage
+							}
+							nodes {
+								id
+								name
+								nameWithOwner
+								defaultBranchRef {
+									name
+								}
+								refs(first: 100, refPrefix: "refs/heads/") {
+									nodes {
+									  name
+									  target {
+										... on Commit {
+										  oid
+										  committedDate
+										}
+									  }
+									}
+								}
+							}
+						}
+				  	}
+				}
+			  `,
+				{
+					owner: owner,
+					name: name
+				}
+			);
+			const forks = response.repository.forks.nodes.sort((a: any, b: any) => {
+				if (b.nameWithOwner < a.nameWithOwner) return 1;
+				if (a.nameWithOwner < b.nameWithOwner) return -1;
+				return 0;
+			});
+			return {
+				parent: response.repository,
+				forks
 			};
 		} catch (ex) {
 			Logger.error(ex, "GitHub: getRepoInfo", {

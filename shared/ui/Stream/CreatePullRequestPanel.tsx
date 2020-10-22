@@ -21,7 +21,11 @@ import {
 	ReposScm,
 	CheckPullRequestPreconditionsResponse,
 	GetLatestCommitScmRequestType,
-	DiffBranchesRequestType
+	DiffBranchesRequestType,
+	ExecuteThirdPartyTypedType,
+	ExecuteThirdPartyTypedRequest,
+	GetMyPullRequestsResponse,
+	ExecuteThirdPartyRequestUntypedType
 } from "@codestream/protocols/agent";
 import { connectProvider } from "./actions";
 import { isConnected, getPRLabel } from "../store/providers/reducer";
@@ -43,13 +47,14 @@ import { PanelHeader } from "../src/components/PanelHeader";
 import { CSMe } from "@codestream/protocols/api";
 import { EMPTY_STATUS } from "./StartWork";
 import Tooltip from "./Tooltip";
-import { clearMyPullRequests } from "../store/providerPullRequests/actions";
+import { api, clearMyPullRequests } from "../store/providerPullRequests/actions";
 import { css } from "react-select/src/components/SingleValue";
 import { InlineMenu } from "../src/components/controls/InlineMenu";
 import { PRDiffHunks, PRDiffHunk } from "./PullRequestFilesChangedList";
 import { PullRequestPatch } from "./PullRequestPatch";
 import { PullRequestFilesChangedList } from "./PullRequestFilesChangedList";
 import { PRError } from "./PullRequestComponents";
+import { RequestType } from "vscode-languageserver-protocol";
 
 export const ButtonRow = styled.div`
 	text-align: right;
@@ -197,6 +202,12 @@ export const CreatePullRequestPanel = props => {
 
 	const [prUrl, setPrUrl] = useState("");
 	const [hasMounted, setHasMounted] = useState(false);
+
+	const [acrossForks, setAcrossForks] = useState(false);
+	const [forkedRepos, setForkedRepos] = useState<any[]>([]);
+	const [parentRepo, setParentRepo] = useState<any>(undefined);
+	const [baseForkedRepo, setBaseForkedRepo] = useState<any>(undefined);
+	const [headForkedRepo, setHeadForkedRepo] = useState<any>(undefined);
 
 	const stopWaiting = useCallback(() => {
 		setIsWaiting(false);
@@ -445,7 +456,14 @@ export const CreatePullRequestPanel = props => {
 	};
 
 	const checkPullRequestBranchPreconditions = async (localPrBranch, localReviewBranch) => {
-		if (localPrBranch === localReviewBranch) {
+		if (acrossForks) {
+			if (baseForkedRepo.id === headForkedRepo.id && localPrBranch === localReviewBranch) {
+				setPreconditionError({ type: "BRANCHES_MUST_NOT_MATCH", message: "", url: "", id: "" });
+				setFormState({ type: "", message: "", url: "", id: "" });
+				setFilesChanged([]);
+				return;
+			}
+		} else if (localPrBranch === localReviewBranch) {
 			setPreconditionError({ type: "BRANCHES_MUST_NOT_MATCH", message: "", url: "", id: "" });
 			setFormState({ type: "", message: "", url: "", id: "" });
 			setFilesChanged([]);
@@ -522,11 +540,66 @@ export const CreatePullRequestPanel = props => {
 			});
 	};
 
-	// useEffect(() => {
-	// checkPullRequestBranchPreconditions();
-	// }, [prBranch, reviewBranch]);
+	const fetchRepositoryForks = async () => {
+		if (!prProviderId || !prRemoteUrl) return;
+
+		const response = (await HostApi.instance.send(ExecuteThirdPartyRequestUntypedType, {
+			method: "getForkedRepos",
+			providerId: prProviderId,
+			params: { remote: prRemoteUrl }
+		})) as any;
+
+		console.warn("GOT RESPONSE: ", response);
+		if (response) {
+			const forks = response.forks || [];
+			setForkedRepos(forks);
+			setParentRepo(response.parent);
+			setBaseForkedRepo(response.parent);
+			setHeadForkedRepo(response.parent);
+		}
+	};
+
+	useEffect(() => {
+		fetchRepositoryForks();
+	}, [prProviderId, prRemoteUrl]);
+
+	// 			.then((result: GetForkedRepositoriesResponse) => {
+	// 			setPreconditionError({ type: "", message: "", url: "", id: "" });
+	// 			setFormState({ type: "", message: "", url: "", id: "" });
+	// 			if (result && result.error) {
+	// 				setPreconditionError({
+	// 					type: result.error.type || "UNKNOWN",
+	// 					message: result.error.message || "",
+	// 					url: result.error.url || "",
+	// 					id: result.error.id || ""
+	// 				});
+	// 			} else if (result && result.warning) {
+	// 				setPreconditionError({
+	// 					type: result.warning.type || "UNKNOWN",
+	// 					message: result.warning.message || "Unknown error.",
+	// 					url: result.warning.url || "",
+	// 					id: result.warning.id || ""
+	// 				});
+	// 			} else {
+	// 				setFormState({ type: "", message: "", url: "", id: "" });
+	// 			}
+	// 			setForkedRepos(result.repositories);
+	// 			// fetchFilesChanged(repoId, localPrBranch, localReviewBranch);
+	// 			setLoadingBranchInfo(false);
+	// 		})
+	// 		.catch(error => {
+	// 			setPreconditionError({
+	// 				type: "UNKNOWN",
+	// 				message: typeof error === "string" ? error : error.message,
+	// 				url: "",
+	// 				id: ""
+	// 			});
+	// 		});
+	// };
 
 	const renderBaseBranchesDropdown = () => {
+		if (acrossForks) return renderBaseBranchesAcrossForksDropdown();
+
 		const items = remoteBranches!.map(_ => {
 			return {
 				label: _,
@@ -547,7 +620,28 @@ export const CreatePullRequestPanel = props => {
 		);
 	};
 
+	const renderBaseBranchesAcrossForksDropdown = () => {
+		if (!baseForkedRepo || !baseForkedRepo.refs) return;
+		const items = baseForkedRepo.refs.nodes.map(_ => {
+			return {
+				label: _.name,
+				key: _.name,
+				action: () => setPrBranch(_.name)
+			};
+		});
+		if (items.length === 0) return null;
+		return (
+			<span>
+				<DropdownButton variant="secondary" items={items}>
+					<span className="subtle">base:</span> <strong>{prBranch}</strong>
+				</DropdownButton>
+			</span>
+		);
+	};
+
 	const renderCompareBranchesDropdown = () => {
+		if (acrossForks) return renderCompareBranchesAcrossForksDropdown();
+
 		const items = branches!.map(_ => {
 			return {
 				label: _,
@@ -566,7 +660,26 @@ export const CreatePullRequestPanel = props => {
 		);
 	};
 
-	const renderReposDropdown = () => {
+	const renderCompareBranchesAcrossForksDropdown = () => {
+		if (!headForkedRepo || !headForkedRepo.refs) return null;
+		const items = headForkedRepo.refs.nodes.map(_ => {
+			return {
+				label: _.name,
+				key: _.name,
+				action: () => setReviewBranch(_.name)
+			};
+		});
+		if (items.length === 0) return null;
+		return (
+			<DropdownButton variant="secondary" items={items}>
+				<span className="subtle">compare:</span> <strong>{reviewBranch}</strong>
+			</DropdownButton>
+		);
+	};
+
+	const renderBaseReposDropdown = () => {
+		if (acrossForks) return renderBaseReposAcrossForksDropdown();
+
 		const items = openRepos!.map(_ => {
 			const repoName = _.id && derivedState.repos[_.id] ? derivedState.repos[_.id].name : _.path;
 			return {
@@ -597,6 +710,58 @@ export const CreatePullRequestPanel = props => {
 		} else {
 			return null;
 		}
+	};
+
+	const renderBaseReposAcrossForksDropdown = () => {
+		const items = forkedRepos.map(repo => {
+			const repoName = repo.nameWithOwner;
+			return {
+				label: repoName,
+				key: repo.id,
+				action: () => setBaseForkedRepo(repo)
+			};
+		});
+		if (parentRepo) {
+			items.unshift({
+				label: parentRepo.nameWithOwner,
+				key: parentRepo.id,
+				action: () => setBaseForkedRepo(parentRepo)
+			});
+		}
+		if (items.length === 0) return null;
+		return (
+			<span>
+				<DropdownButton variant="secondary" items={items}>
+					<span className="subtle">base repo:</span> <strong>{baseForkedRepo.nameWithOwner}</strong>
+				</DropdownButton>
+			</span>
+		);
+	};
+
+	const renderCompareReposAcrossForksDropdown = () => {
+		const items = forkedRepos.map(repo => {
+			const repoName = repo.nameWithOwner;
+			return {
+				label: repoName,
+				key: repo.id,
+				action: () => setHeadForkedRepo(repo)
+			};
+		});
+		if (parentRepo) {
+			items.unshift({
+				label: parentRepo.nameWithOwner,
+				key: parentRepo.id,
+				action: () => setHeadForkedRepo(parentRepo)
+			});
+		}
+		if (items.length === 0) return null;
+		return (
+			<span>
+				<DropdownButton variant="secondary" items={items}>
+					<span className="subtle">head repo:</span> <strong>{headForkedRepo.nameWithOwner}</strong>
+				</DropdownButton>
+			</span>
+		);
 	};
 
 	const renderDisplayHost = host => {
@@ -945,6 +1110,14 @@ export const CreatePullRequestPanel = props => {
 		<Root className="full-height-codemark-form">
 			<PanelHeader title={`Open a ${prLabel.PullRequest}`}>
 				{reviewId ? "" : `Choose two branches to start a new ${prLabel.pullrequest}.`}
+				{!reviewId &&
+					(derivedState.isConnectedToGitHub || derivedState.isConnectedToGitHubEnterprise) && (
+						<>
+							{" "}
+							If you need to, you can also{" "}
+							<a onClick={() => setAcrossForks(!acrossForks)}>compare across forks</a>.
+						</>
+					)}
 			</PanelHeader>
 			<CancelButton onClick={props.closePanel} />
 			<span className="plane-container">
@@ -982,18 +1155,25 @@ export const CreatePullRequestPanel = props => {
 									)}
 									<div className="control-group">
 										<PRCompare>
-											{openRepos.length > 0 && !reviewId && (
+											{acrossForks && <Icon name="git-compare" />}
+											{(acrossForks || openRepos.length > 0) && !reviewId && (
 												<PRDropdown>
-													<Icon name="repo" />
-													{renderReposDropdown()}
+													{!acrossForks && <Icon name="repo" />}
+													{renderBaseReposDropdown()}
 												</PRDropdown>
 											)}
 											<PRDropdown>
-												<Icon name="git-compare" />
+												{!acrossForks && <Icon name="git-compare" />}
 												{renderBaseBranchesDropdown()}
 											</PRDropdown>
+											{acrossForks && (
+												<PRDropdown>
+													<Icon name="arrow-left" />
+													{renderCompareReposAcrossForksDropdown()}
+												</PRDropdown>
+											)}
 											<PRDropdown>
-												<Icon name="arrow-left" />
+												{!acrossForks && <Icon name="arrow-left" />}
 												{renderCompareBranchesDropdown()}
 											</PRDropdown>
 										</PRCompare>

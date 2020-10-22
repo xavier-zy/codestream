@@ -101,6 +101,8 @@ import {
 	MuteStreamRequest,
 	OpenStreamRequest,
 	PinReplyToCodemarkRequest,
+	ProviderTokenRequest,
+	ProviderTokenRequestType,
 	ReactToPostRequest,
 	RemoveEnterpriseProviderHostRequest,
 	RenameStreamRequest,
@@ -2002,6 +2004,20 @@ export class CodeStreamApiProvider implements ApiProvider {
 		}
 	}
 
+	@lspHandler(ProviderTokenRequestType)
+	async setProviderToken(request: ProviderTokenRequest) {
+		await this.post(
+			`/no-auth/provider-token/${request.provider}`,
+			{
+				token: request.token,
+				data: request.data,
+				invite_code: request.inviteCode,
+				no_signup: request.noSignup,
+				signup_token: request.signupToken
+			}
+		);
+	}
+
 	private delete<R extends object>(url: string, token?: string): Promise<R> {
 		let resp = undefined;
 		if (resp === undefined) {
@@ -2361,6 +2377,8 @@ export class CodeStreamApiProvider implements ApiProvider {
 				response.error = {
 					message: resp.status.toString() + resp.statusText
 				};
+			} else {
+				response.capabilities = (await resp.json()).capabilities;
 			}
 		} catch (err) {
 			Logger.log(`Error connecting to the API server: ${err.message}`);

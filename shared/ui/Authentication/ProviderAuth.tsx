@@ -5,7 +5,7 @@ import { goToSignup, SupportedSSOProvider } from "../store/context/actions";
 import { useInterval, useRetryingCallback, useTimeout } from "../utilities/hooks";
 import { DispatchProp } from "../store/common";
 import { inMillis } from "../utils";
-import { SignupType, startSSOSignin, validateSignup } from "./actions";
+import { SignupType, startIDESignin, startSSOSignin, validateSignup } from "./actions";
 import { capitalize } from "@codestream/webview/utils";
 import { LoginResult } from "@codestream/protocols/api";
 
@@ -17,6 +17,8 @@ interface Props extends DispatchProp {
 	provider: SupportedSSOProvider;
 	hostUrl?: string;
 	fromSignup?: boolean;
+	useIDEAuth?: boolean;
+	gotError?: boolean;
 }
 
 export const ProviderAuth = (connect(undefined) as any)((props: Props) => {
@@ -36,19 +38,34 @@ export const ProviderAuth = (connect(undefined) as any)((props: Props) => {
 
 	const onClickTryAgain = (event: React.SyntheticEvent) => {
 		event.preventDefault();
-		props.dispatch(
-			startSSOSignin(
-				props.provider,
-				props.type !== undefined
-					? {
+		if (props.provider === "github" && props.useIDEAuth) {
+			props.dispatch(
+				startIDESignin(
+					props.provider,
+					props.type !== undefined 
+						? {
 							type: props.type,
 							inviteCode: props.inviteCode,
-							hostUrl: props.hostUrl,
-							fromSignup: props.fromSignup
-					  }
-					: undefined
-			)
-		);
+							fromSignup: props.fromSignup,
+							useIDEAuth: true
+						} : undefined
+				)
+			);
+		} else {
+			props.dispatch(
+				startSSOSignin(
+					props.provider,
+					props.type !== undefined
+						? {
+								type: props.type,
+								inviteCode: props.inviteCode,
+								hostUrl: props.hostUrl,
+								fromSignup: props.fromSignup
+						}
+						: undefined
+				)
+			);
+		}
 		setIsWaiting(true);
 	};
 
@@ -87,13 +104,13 @@ export const ProviderAuth = (connect(undefined) as any)((props: Props) => {
 						</p>
 						<br />
 						<div>
-							{isWaiting ? (
+							{isWaiting && !props.gotError ? (
 								<strong>
 									Waiting for {providerCapitalized} authentication <LoadingEllipsis />
 								</strong>
 							) : (
 								<strong>
-									Login timed out. Please <Link onClick={onClickTryAgain}>try again</Link>
+									{props.gotError ? "Login failed" : "Login timed out"}. Please <Link onClick={onClickTryAgain}>try again</Link>
 								</strong>
 							)}
 						</div>

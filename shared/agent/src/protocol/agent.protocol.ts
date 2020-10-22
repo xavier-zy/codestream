@@ -147,6 +147,9 @@ export interface VerifyConnectivityResponse {
 		message: string;
 		details?: string;
 	};
+	capabilities?: {
+		[key: string]: any;
+	}
 }
 
 export const VerifyConnectivityRequestType = new RequestType<

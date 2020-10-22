@@ -447,6 +447,7 @@ export interface CSGitHubProviderInfo {
 	hosts: { [host: string]: CSGitHubProviderInfo };
 	data?: {
 		baseUrl?: string;
+		[key: string]: any;
 	};
 }
 

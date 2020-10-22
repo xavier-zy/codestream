@@ -14,6 +14,7 @@ import { CodeStreamState } from "../index";
 import { CSMe } from "@codestream/protocols/api";
 import { onLogin, PasswordLoginParams } from "@codestream/webview/Authentication/actions";
 import { logError } from "@codestream/webview/logger";
+// import { DisconnectFromIDEProviderRequestType } from "../../ipc/host.protocol";
 
 export { reset };
 
@@ -25,8 +26,15 @@ export const setMaintenanceMode = (
 	meta?: PasswordLoginParams | TokenLoginRequest
 ) => action(SessionActionType.SetMaintenanceMode, value, meta);
 
-export const logout = () => async dispatch => {
+export const logout = () => async (dispatch, getState: () => CodeStreamState) => {
+	const { users, session, ide } = getState();
+
 	dispatch(setBootstrapped(false));
+	/*
+	if (ide.name === "VSC") {
+		await HostApi.instance.send(DisconnectFromIDEProviderRequestType, { provider: "github" });
+	}
+	*/
 	await HostApi.instance.send(LogoutRequestType, {});
 	dispatch(reset());
 	dispatch(setBootstrapped(true));

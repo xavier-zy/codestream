@@ -191,10 +191,12 @@ export class HostApi extends EventEmitter {
 
 	send<RT extends RequestType<any, any, any, any>>(
 		type: RT,
-		params: RequestParamsOf<RT>
+		params: RequestParamsOf<RT>,
+		options?: { alternateReject?: (error) => {} }
 	): Promise<RequestResponseOf<RT>> {
 		const id = this.nextId();
 		return new Promise((resolve, reject) => {
+			reject = (options && options.alternateReject) || reject;
 			this._pendingRequests.set(id, { resolve, reject, method: type.method });
 
 			const payload = {

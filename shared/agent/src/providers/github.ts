@@ -13,6 +13,7 @@ import {
 	CreateThirdPartyCardRequest,
 	DidChangePullRequestCommentsNotificationType,
 	DocumentMarker,
+	EnterpriseConfigurationData,
 	FetchReposResponse,
 	FetchThirdPartyBoardsRequest,
 	FetchThirdPartyBoardsResponse,
@@ -38,6 +39,7 @@ import {
 	ThirdPartyProviderCard,
 	ThirdPartyProviderConfig
 } from "../protocol/agent.protocol";
+
 import {
 	CodemarkType,
 	CSGitHubProviderInfo,
@@ -374,6 +376,16 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 		}
 
 		return response;
+	}
+
+	@log()
+	async configure(request: EnterpriseConfigurationData) {
+		await this.session.api.setThirdPartyProviderToken({
+			providerId: this.providerConfig.id,
+			token: request.token,
+			data: request.data
+		});
+		this.session.updateProviders();
 	}
 
 	@log()

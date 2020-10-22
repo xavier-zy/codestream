@@ -25,6 +25,8 @@ import {
 	ApplyMarkerRequestType,
 	BootstrapInHostRequestType,
 	CompareMarkerRequestType,
+	ConnectToIDEProviderRequestType,
+	DisconnectFromIDEProviderRequestType,
 	EditorContext,
 	EditorHighlightRangeRequestType,
 	EditorRevealRangeRequestType,
@@ -82,6 +84,7 @@ import {
 } from "@codestream/protocols/webview";
 import { gate } from "system/decorators/gate";
 import {
+	authentication,
 	commands,
 	ConfigurationChangeEvent,
 	ConfigurationTarget,
@@ -135,6 +138,7 @@ export class WebviewController implements Disposable {
 	private _versionCompatibility: VersionCompatibility | undefined;
 	private _apiVersionCompatibility: ApiVersionCompatibility | undefined;
 	private _missingCapabilities: CSApiCapabilities | undefined;
+	private _providerSessionIds: { [key: string]: string } = {};
 
 	private readonly _notifyActiveEditorChangedDebounced: (e: TextEditor | undefined) => void;
 
@@ -1053,6 +1057,26 @@ export class WebviewController implements Disposable {
 				});
 				break;
 			}
+			case ConnectToIDEProviderRequestType.method: {
+				webview.onIpcRequest(ConnectToIDEProviderRequestType, e, async (_type, _params) => {
+					if (_params.provider === "github") {
+						return await this.connectToGitHub();
+					} else {
+						throw new Error(`unsupported IDE provider: ${_params.provider}`);
+					}
+				});
+				break;
+			}
+			case DisconnectFromIDEProviderRequestType.method: {
+				webview.onIpcRequest(DisconnectFromIDEProviderRequestType, e, async (_type, _params) => {
+					if (_params.provider === "github") {
+						await this.disconnectFromGitHub();
+					} else {
+						throw new Error(`unsupported IDE provider: ${_params.provider}`);
+					}
+				});
+				break;
+			}
 			default: {
 				debugger;
 				throw new Error(`Unhandled webview request: ${e.method}`);
@@ -1233,5 +1257,20 @@ export class WebviewController implements Disposable {
 				Container.markerDecorations.resume();
 			}
 		} catch {}
+	}
+
+	private async connectToGitHub () {
+		const session = await authentication.getSession("github", ["read:user", "user:email", "repo"], { createIfNone: true });
+		Logger.log(`Connected to GitHub session ${  session.id}`);
+		this._providerSessionIds.github = session.id;
+		return { accessToken: session.accessToken, sessionId: session.id };
+	}
+
+	private async disconnectFromGitHub () {
+		if (this._providerSessionIds.github) {
+			Logger.log(`Disconnected from GitHub session ${this._providerSessionIds.github}`);
+			// await authentication.logout("github", this._providerSessionIds.github);
+			delete this._providerSessionIds.github;
+		}
 	}
 }

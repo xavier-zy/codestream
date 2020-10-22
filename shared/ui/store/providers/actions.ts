@@ -9,7 +9,8 @@ import {
 	RemoveEnterpriseProviderRequestType,
 	TelemetryRequestType
 } from "@codestream/protocols/agent";
-import { CSMe } from "@codestream/protocols/api";
+import { ConnectToIDEProviderRequestType, DisconnectFromIDEProviderRequestType } from "../../ipc/host.protocol";
+import { CSGitHubProviderInfo, CSMe } from "@codestream/protocols/api";
 import { logError } from "../../logger";
 import { setIssueProvider, openPanel } from "../context/actions";
 import { deleteForProvider } from "../activeIntegrations/actions";
@@ -46,7 +47,7 @@ export const connectProvider = (providerId: string, connectionLocation: ViewLoca
 	dispatch,
 	getState
 ) => {
-	const { context, users, session, providers } = getState();
+	const { context, users, session, providers, ide, capabilities } = getState();
 	const provider = providers[providerId];
 	if (!provider) return;
 	const user = users[session.userId];
@@ -63,7 +64,15 @@ export const connectProvider = (providerId: string, connectionLocation: ViewLoca
 	}
 	try {
 		const api = HostApi.instance;
-		await api.send(ConnectThirdPartyProviderRequestType, { providerId });
+		if (ide.name === "VSC" && name === "github" && capabilities.vsCodeGithubSignin) {
+			const result = await api.send(ConnectToIDEProviderRequestType, { provider: name });
+			dispatch(configureProvider(
+				providerId, { token: result.accessToken, data: { sessionId: result.sessionId } }, true)
+			);
+			return {};
+		} else {
+			await api.send(ConnectThirdPartyProviderRequestType, { providerId });
+		}
 		if (provider.hasIssues) {
 			dispatch(sendIssueProviderConnected(providerId, connectionLocation));
 			dispatch(setIssueProvider(providerId));
@@ -178,11 +187,14 @@ export const disconnectProvider = (
 	providerTeamId?: string
 ) => async (dispatch, getState) => {
 	try {
-		const { providers } = getState();
+		const { context, providers, users, session, ide } = getState();
 		const provider = providers[providerId];
 		if (!provider) return;
 		const api = HostApi.instance;
 		await api.send(DisconnectThirdPartyProviderRequestType, { providerId, providerTeamId });
+		if (ide.name === "VSC" && provider === "github") {
+			await api.send(DisconnectFromIDEProviderRequestType, { provider });
+		}
 		api.send(TelemetryRequestType, {
 			eventName: "Issue Service Connected",
 			properties: {

@@ -3,7 +3,7 @@ import { FormattedMessage } from "react-intl";
 import { connect } from "react-redux";
 import Icon from "../Stream/Icon";
 import Button from "../Stream/Button";
-import { authenticate, startSSOSignin } from "./actions";
+import { authenticate, startSSOSignin, startIDESignin } from "./actions";
 import { CodeStreamState } from "../store";
 import { goToNewUserEntry, goToForgotPassword, goToOktaConfig } from "../store/context/actions";
 import { isOnPrem, supportsIntegrations } from "../store/configs/reducer";
@@ -20,6 +20,8 @@ interface ConnectedProps {
 	initialEmail?: string;
 	supportsIntegrations?: boolean;
 	oktaEnabled?: boolean;
+	isInVSCode?: boolean;
+	supportsVSCodeGithubSignin?: boolean;
 }
 
 interface DispatchProps {
@@ -32,6 +34,7 @@ interface DispatchProps {
 	) => ReturnType<ReturnType<typeof startSSOSignin>>;
 	goToForgotPassword: typeof goToForgotPassword;
 	goToOktaConfig: typeof goToOktaConfig;
+	startIDESignin: typeof startIDESignin;
 }
 
 interface Props extends ConnectedProps, DispatchProps {}
@@ -167,7 +170,11 @@ class Login extends React.Component<Props, State> {
 
 	handleClickGithubLogin = event => {
 		event.preventDefault();
-		this.props.startSSOSignin("github");
+		if (this.props.isInVSCode && this.props.supportsVSCodeGithubSignin) {
+			this.props.startIDESignin("github");
+		} else {
+			this.props.startSSOSignin("github");
+		}
 	};
 
 	handleClickGitlabLogin = event => {
@@ -313,10 +320,12 @@ const ConnectedLogin = connect<ConnectedProps, any, any, CodeStreamState>(
 		return {
 			initialEmail: props.email !== undefined ? props.email : state.configs.email,
 			supportsIntegrations: supportsIntegrations(state.configs),
-			oktaEnabled: isOnPrem(state.configs)
+			oktaEnabled: isOnPrem(state.configs),
+			isInVSCode: state.ide.name === 'VSC',
+			supportsVSCodeGithubSignin: state.capabilities.vsCodeGithubSignin
 		};
 	},
-	{ authenticate, goToNewUserEntry, startSSOSignin, goToForgotPassword, goToOktaConfig }
+	{ authenticate, goToNewUserEntry, startSSOSignin, startIDESignin, goToForgotPassword, goToOktaConfig }
 )(Login);
 
 export { ConnectedLogin as Login };

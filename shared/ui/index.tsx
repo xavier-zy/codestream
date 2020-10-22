@@ -81,6 +81,7 @@ import { updateModifiedRepos } from "./store/users/actions";
 import { logWarning } from "./logger";
 import { fetchReview } from "./store/reviews/actions";
 import { openPullRequestByUrl } from "./store/providerPullRequests/actions";
+import { updateCapabilities } from "./store/capabilities/actions";
 
 export { HostApi };
 
@@ -106,11 +107,14 @@ export async function initialize(selector: string) {
 
 	HostApi.instance.notify(WebviewDidInitializeNotificationType, {});
 
-	HostApi.instance.send(VerifyConnectivityRequestType, void {}).then(resp => {
-		if (resp.error) {
-			store.dispatch(errorOccurred(resp.error.message, resp.error.details));
-		}
-	});
+	// verify we can connect to the server, if successful, as a side effect,
+	// we get the api server's capabilities
+	const resp = await HostApi.instance.send(VerifyConnectivityRequestType, void {});
+	if (resp.error) {
+		store.dispatch(errorOccurred(resp.error.message, resp.error.details));
+	} else if (resp.capabilities) {
+		store.dispatch(updateCapabilities(resp.capabilities));
+	}
 }
 
 // TODO: type up the store state

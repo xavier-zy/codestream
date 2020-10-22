@@ -328,8 +328,11 @@ export interface RemoveEnterpriseProviderHostRequest {
 
 export interface EnterpriseConfigurationData {
 	host?: string;
-	baseUrl: string;
+	baseUrl?: string;
 	token: string;
+	data?: {
+		[key: string]: any;
+	};
 }
 
 export interface FetchThirdPartyPullRequestRequest {
@@ -702,3 +705,21 @@ export interface ExecuteThirdPartyTypedRequest<T> {
 	providerId: string;
 	params?: T;
 }
+
+export interface ProviderTokenRequest {
+	provider: string;
+	token: string;
+	inviteCode?: string;
+	noSignup?: boolean;
+	signupToken?: string;
+	data?: {
+		[key: string]: any;
+	};
+}
+
+export const ProviderTokenRequestType = new RequestType<
+	ProviderTokenRequest,
+	void,
+	void,
+	void
+>("codestream/provider/token");

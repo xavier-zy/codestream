@@ -207,3 +207,29 @@ export const LocalFilesCloseDiffRequestType = new RequestType<
 	void,
 	void
 >(`${IpcRoutes.Host}/files/closeDiff`);
+export interface ConnectToIDEProviderRequest {
+	provider: string;
+}
+
+export interface ConnectToIDEProviderResponse {
+	accessToken: string;
+	sessionId: string;
+}
+
+export const ConnectToIDEProviderRequestType = new RequestType<
+	ConnectToIDEProviderRequest,
+	ConnectToIDEProviderResponse,
+	void,
+	void
+>(`${IpcRoutes.Host}/connect/vscode-provider`);
+
+export interface DisconnectFromIDEProviderRequest {
+	provider: string;
+}
+
+export const DisconnectFromIDEProviderRequestType = new RequestType<
+	DisconnectFromIDEProviderRequest,
+	void,
+	void,
+	void
+>(`${IpcRoutes.Host}/disconnect/github`);

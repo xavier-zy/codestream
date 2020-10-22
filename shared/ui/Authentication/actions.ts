@@ -6,7 +6,9 @@ import {
 	BootstrapRequestType,
 	TokenLoginRequestType,
 	OtcLoginRequestType,
-	TokenLoginRequest
+	TokenLoginRequest,
+	ProviderTokenRequest,
+	ProviderTokenRequestType
 } from "@codestream/protocols/agent";
 import { CodeStreamState } from "../store";
 import { HostApi } from "../webview-api";
@@ -21,7 +23,7 @@ import {
 	goToSetPassword
 } from "../store/context/actions";
 import { GetActiveEditorContextRequestType } from "../ipc/host.protocol.editor";
-import { BootstrapInHostRequestType, OpenUrlRequestType } from "../ipc/host.protocol";
+import { BootstrapInHostRequestType, ConnectToIDEProviderRequestType, OpenUrlRequestType } from "../ipc/host.protocol";
 import { bootstrap } from "../store/actions";
 import { logError } from "../logger";
 import { ChatProviderAccess } from "../store/context/types";
@@ -39,6 +41,8 @@ export interface SSOAuthInfo {
 	type?: SignupType;
 	inviteCode?: string;
 	hostUrl?: string;
+	useIDEAuth?: boolean;
+	gotError?: boolean;
 }
 
 const ProviderNames = {
@@ -82,6 +86,45 @@ export const startSSOSignin = (
 		return dispatch(goToSSOAuth(provider, { ...(info || emptyObject), mode: access }));
 	} catch (error) {
 		logError(`Unable to start ${provider} sign in: ${error}`);
+	}
+};
+
+export const startIDESignin = (
+	provider: SupportedSSOProvider,
+	info?: SSOAuthInfo
+) => async (dispatch, getState: () => CodeStreamState) => {
+	try {
+		const { session } = getState();
+		const result = await HostApi.instance.send(ConnectToIDEProviderRequestType, { provider });
+		const request: ProviderTokenRequest = {
+			provider,
+			token: result.accessToken,
+			inviteCode: info && info.inviteCode,
+			noSignup: !info || !info.fromSignup,
+			data: {
+				sessionId: result.sessionId
+			}
+		};
+		if (session.otc) {
+			request.signupToken = session.otc;
+		}
+		info = info || {};
+		info.useIDEAuth = true;
+		try {
+			const fail = () => {
+				info!.gotError = true;
+				return dispatch(goToSSOAuth(provider, { ...(info || emptyObject) }));
+			};
+			HostApi.instance.send(ProviderTokenRequestType, request, { alternateReject: fail });
+			return dispatch(goToSSOAuth(provider, { ...(info || emptyObject) }));
+		}
+		catch (tokenError) {
+			info.gotError = true;
+			return dispatch(goToSSOAuth(provider, { ...(info || emptyObject) }));
+		} 
+	}
+	catch (error) {
+		logError (`Unable to start VSCode ${provider} sign in: ${error}`);
 	}
 };
 

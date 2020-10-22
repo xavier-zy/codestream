@@ -16,7 +16,7 @@ import { TextInput } from "./TextInput";
 import { LoginResult } from "@codestream/protocols/api";
 import { RegisterUserRequestType, GetUserInfoRequestType } from "@codestream/protocols/agent";
 import { HostApi } from "../webview-api";
-import { completeSignup, startSSOSignin, SignupType } from "./actions";
+import { completeSignup, startIDESignin, startSSOSignin, SignupType } from "./actions";
 import { logError } from "../logger";
 import { useDispatch, useSelector } from "react-redux";
 import { CSText } from "../src/components/CSText";
@@ -47,10 +47,11 @@ interface Props {
 export const Signup = (props: Props) => {
 	const dispatch = useDispatch();
 	const derivedState = useSelector((state: CodeStreamState) => {
-		const { serverUrl } = state.configs;
 		return {
 			supportsIntegrations: supportsIntegrations(state.configs),
-			oktaEnabled: isOnPrem(state.configs)
+			oktaEnabled: isOnPrem(state.configs),
+			isInVSCode: state.ide.name === "VSC",
+			supportsVSCodeGithubSignin: state.capabilities.vsCodeGithubSignin
 		};
 	});
 	const [email, setEmail] = useState(props.email || "");
@@ -224,7 +225,11 @@ export const Signup = (props: Props) => {
 			const info = props.inviteCode
 				? { type: SignupType.JoinTeam, inviteCode: props.inviteCode }
 				: { type: SignupType.CreateTeam };
-			return dispatch(startSSOSignin("github", { ...info, fromSignup: true }));
+			if (derivedState.isInVSCode && derivedState.supportsVSCodeGithubSignin) {
+				return dispatch(startIDESignin("github", { ...info, fromSignup: true }));
+			} else {
+				return dispatch(startSSOSignin("github", { ...info, fromSignup: true }));
+			}
 		},
 		[props.type]
 	);

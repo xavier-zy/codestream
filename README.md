@@ -1,3 +1,5 @@
+![Visual Studio Marketplace Downloads](https://img.shields.io/visual-studio-marketplace/d/CodeStream.codestream?label=vscode%20downloads) ![Visual Studio Marketplace Rating](https://img.shields.io/visual-studio-marketplace/r/CodeStream.codestream?label=vscode%20rating) ![JetBrains IntelliJ plugins](https://img.shields.io/jetbrains/plugin/d/12206-codestream-github-gitlab-bitbucket-prs-and-code-review?label=jetbrains%20downloads) ![JetBrains IntelliJ Plugins](https://img.shields.io/jetbrains/plugin/r/rating/12206-codestream-github-gitlab-bitbucket-prs-and-code-review?label=jetbrains%20rating) ![GitHub issues](https://img.shields.io/github/issues/TeamCodeStream/codestream) ![GitHub pull requests](https://img.shields.io/github/issues-pr/TeamCodeStream/codestream) ![Twitter Follow](https://img.shields.io/twitter/follow/teamcodestream?style=social) ![Twitter URL](https://img.shields.io/twitter/url?style=social&url=https%3A%2F%2Fcodestream.com)
+
 # CodeStream
 
 CodeStream helps dev teams discuss, review, and understand code. Discussing code is now as simple as commenting on a Google Doc — select the code and type your question.

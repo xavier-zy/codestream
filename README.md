@@ -16,7 +16,9 @@ Support for more IDEs is on the way.
 
 # New in CodeStream 10
 
-CodeStream now supports 
+CodeStream now supports creating, managing and performing code reviews on Pull Requests inside your editor.
+
+![Pull Request](https://raw.githubusercontent.com/TeamCodeStream/codestream-guide/develop/docs/src/assets/images/animated/PullRequest-VSC.gif)
 
 # Develop CodeStream
 Interesting in CodeStream development? Check the development guides for [VS Code](vscode/docs/dev.md), [Jetbrains](jb/docs/dev.md), [Visual Studio](vs/docs/dev.md) or [Atom](atom/docs/dev.md).

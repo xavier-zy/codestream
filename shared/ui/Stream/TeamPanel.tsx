@@ -128,7 +128,6 @@ interface Props extends ConnectedProps {
 interface ConnectedProps {
 	webviewFocused: boolean;
 	teamId: string;
-	companyId: string;
 	invite: Function;
 	invited: any[];
 	teamName: string;
@@ -344,26 +343,27 @@ class TeamPanel extends React.Component<Props, State> {
 		);
 	};
 
-	renderInviteDisabled = () => {
-		const upgradeLink = `${this.props.serverUrl}/web/subscription/upgrade/${this.props.companyId}`;
-		return (
-			<div style={{ padding: "30px", textAlign: "center" }}>
-				{this.props.isOnPrem && (
-					<>
-						Contact <a href="mailto:sales@codestream.com">sales@codestream.com</a> to upgrade your
-						plan if you'd like to invite more teammates.
-					</>
-				)}
-				{!this.props.isOnPrem && (
-					<>
-						<a href={upgradeLink}>Upgrade your plan</a> if you'd like to invite more teammates.
-					</>
-				)}
-				<br />
-				<br />
-			</div>
-		);
-	};
+	// no longer used
+	// renderInviteDisabled = () => {
+	// 	const upgradeLink = `${this.props.serverUrl}/web/subscription/upgrade/${this.props.companyId}`;
+	// 	return (
+	// 		<div style={{ padding: "30px", textAlign: "center" }}>
+	// 			{this.props.isOnPrem && (
+	// 				<>
+	// 					Contact <a href="mailto:sales@codestream.com">sales@codestream.com</a> to upgrade your
+	// 					plan if you'd like to invite more teammates.
+	// 				</>
+	// 			)}
+	// 			{!this.props.isOnPrem && (
+	// 				<>
+	// 					<a href={upgradeLink}>Upgrade your plan</a> if you'd like to invite more teammates.
+	// 				</>
+	// 			)}
+	// 			<br />
+	// 			<br />
+	// 		</div>
+	// 	);
+	// };
 
 	// Post URL to{" "}
 	// <select style={{ width: "auto" }}>
@@ -997,7 +997,6 @@ const mapStateToProps = state => {
 
 	return {
 		teamId: team.id,
-		companyId: company.id,
 		teamName: team.name,
 		xraySetting,
 		reviewApproval,

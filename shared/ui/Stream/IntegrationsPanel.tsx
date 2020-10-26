@@ -57,6 +57,9 @@ const IntegrationGroups = styled.div`
 		font-weight: 400;
 		padding: 0 0 0 20px;
 	}
+	p {
+		padding: 0 20px;
+	}
 `;
 
 export const IntegrationButtons = styled.div<{ noBorder?: boolean }>`
@@ -285,11 +288,13 @@ export const IntegrationsPanel = () => {
 				{Object.keys(derivedState.providers).length === 0 && (
 					<>
 						<h2>HTTPS Required</h2>
-						CodeStream integrations require a secure connection to your CodeStream server. Please
-						contact your on-prem CodeStream administrator.
-						<br />
-						<br />
-						<Button onClick={() => dispatch(closePanel())}>OK</Button>
+						<p>
+							CodeStream integrations require a secure connection to your CodeStream server. Please
+							contact your on-prem CodeStream administrator.
+						</p>
+						<div style={{ textAlign: "center", marginBottom: "20px" }}>
+							<Button onClick={() => dispatch(closePanel())}>OK</Button>
+						</div>
 					</>
 				)}
 				{Object.keys(derivedState.providers).length > 0 && (

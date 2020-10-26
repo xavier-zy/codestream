@@ -385,8 +385,7 @@ export const StartWork = (props: Props) => {
 			webviewFocused: state.context.hasFocus,
 			textEditorUri: state.editorContext.textEditorUri,
 			branchMaxLength: settings.branchMaxLength || 40,
-			branchTicketTemplate: settings.branchTicketTemplate || "feature/ticket-{id}-{title}",
-			branchDescriptionTemplate: settings.branchDescriptionTemplate || "feature/{title}",
+			branchTicketTemplate: settings.branchTicketTemplate || "feature/{title}",
 			createBranch: Object.keys(workPrefs).includes("createBranch") ? workPrefs.createBranch : true,
 			moveCard: Object.keys(workPrefs).includes("moveCard") ? workPrefs.moveCard : true,
 			updateSlack: isConnectedToSlack ? updateSlack : false,
@@ -560,40 +559,19 @@ export const StartWork = (props: Props) => {
 	const showCreateBranchCheckbox = React.useMemo(() => {
 		return label && branches && branches.length > 0;
 	}, [label, branches]);
-	const showSelectRepo = React.useMemo(() => {
-		return !(branches && branches.length > 0);
-	}, [branches]);
 	const showUpdateSlackCheckbox = React.useMemo(() => {
 		return label && derivedState.shareToSlackSupported;
 	}, [label, derivedState.shareToSlackSupported]);
 
-	// console.warn("CARD IS: ", card);
-	// console.warn("LABEL IS: ", label);
-	// console.warn("BRANCHES ARE: ", branches);
-	// console.warn("SCBC: ", showCreateBranchCheckbox);
 	const newBranch = React.useMemo(() => {
 		if (customBranchName) return customBranchName;
 		return replaceTicketTokens(derivedState.branchTicketTemplate, card, label);
-		// else return replaceDescriptionTokens(derivedState.branchDescriptionTemplate, label);
-	}, [
-		label,
-		card,
-		customBranchName,
-		derivedState.branchTicketTemplate,
-		derivedState.branchDescriptionTemplate
-	]);
+	}, [label, card, customBranchName, derivedState.branchTicketTemplate]);
 
 	const branch = React.useMemo(() => {
 		if (customBranchName) return customBranchName;
 		return replaceTicketTokens(derivedState.branchTicketTemplate, card, label);
-		// else return replaceDescriptionTokens(derivedState.branchDescriptionTemplate, label);
-	}, [
-		label,
-		card,
-		customBranchName,
-		derivedState.branchTicketTemplate,
-		derivedState.branchDescriptionTemplate
-	]);
+	}, [label, card, customBranchName, derivedState.branchTicketTemplate]);
 
 	const save = async () => {
 		setLoading(true);

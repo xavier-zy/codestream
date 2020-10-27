@@ -1,10 +1,10 @@
 package com.codestream.actions
 
 import com.codestream.webViewService
-import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.project.DumbAwareAction
 
-class ReloadWebview : AnAction() {
+class ReloadWebview : DumbAwareAction() {
     override fun actionPerformed(e: AnActionEvent) {
         e.project?.webViewService?.load()
     }

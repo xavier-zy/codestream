@@ -6,17 +6,17 @@ import com.codestream.protocols.webview.WorkNotifications
 import com.codestream.webViewService
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.LowPriorityAction
-import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.Iconable
 import com.intellij.psi.PsiFile
 import java.awt.event.KeyEvent
 
-class StartWork : AnAction(), IntentionAction, LowPriorityAction, Iconable {
+class StartWork : DumbAwareAction(), IntentionAction, LowPriorityAction, Iconable {
     private fun execute(project: Project, source: String) {
         project.codeStream?.show {
             val editor = FileEditorManager.getInstance(project).selectedTextEditor

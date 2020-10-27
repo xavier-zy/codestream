@@ -8,10 +8,10 @@ import com.codestream.protocols.agent.PermalinkPrivacy
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
-import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.ide.CopyPasteManager
+import com.intellij.openapi.project.DumbAwareAction
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import java.awt.datatransfer.StringSelection
@@ -23,7 +23,7 @@ private val PERMALINK_COPIED = Notification(
     NotificationType.INFORMATION
 )
 
-class CopyPermalink : AnAction() {
+class CopyPermalink : DumbAwareAction() {
     override fun actionPerformed(e: AnActionEvent) {
         val project = e.project ?: return
         val editor = FileEditorManager.getInstance(project).selectedTextEditor ?: return

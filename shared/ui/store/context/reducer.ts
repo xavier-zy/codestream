@@ -23,6 +23,7 @@ const initialState: ContextState = {
 	isRepositioning: false,
 	issueProvider: undefined,
 	threadId: undefined,
+	currentRepo: undefined,
 
 	panelStack: [WebviewPanels.LandingRedirect],
 	// panelStack: [WebviewPanels.CodemarksForFile],
@@ -117,6 +118,17 @@ export function reduceContext(
 			return { ...state, codemarksWrapComments: action.payload };
 		case ContextActionsType.SetCurrentReview:
 			return { ...state, currentReviewId: action.payload.reviewId };
+		case ContextActionsType.SetCurrentRepo:
+			return {
+				...state,
+				currentRepo:
+					action.payload.id && action.payload.path
+						? {
+								id: action.payload.id,
+								path: action.payload.path
+						  }
+						: undefined
+			};
 		case ContextActionsType.SetCreatePullRequest:
 			return { ...state, createPullRequestReviewId: action.payload.reviewId };
 		case ContextActionsType.SetCurrentPullRequest:

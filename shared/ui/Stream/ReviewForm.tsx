@@ -30,6 +30,7 @@ import { debounce as _debounce } from "lodash-es";
 import React, { ReactElement } from "react";
 import { connect } from "react-redux";
 import cx from "classnames";
+import * as path from "path-browserify";
 import { getStreamForId, getStreamForTeam } from "../store/streams/reducer";
 import {
 	mapFilter,
@@ -84,7 +85,11 @@ import {
 } from "@codestream/protocols/webview";
 import { Checkbox } from "../src/components/Checkbox";
 import { getAllByCommit, teamReviewCount } from "../store/reviews/reducer";
-import { setCurrentReview, setNewPostEntry } from "@codestream/webview/store/context/actions";
+import {
+	setCurrentRepo,
+	setCurrentReview,
+	setNewPostEntry
+} from "@codestream/webview/store/context/actions";
 import styled from "styled-components";
 import { DropdownButton } from "./Review/DropdownButton";
 import { getTeamSetting } from "../store/teams/reducer";
@@ -111,6 +116,7 @@ interface Props extends ConnectedProps {
 	closePanel: Function;
 	setUserPreference: Function;
 	setCurrentReview: Function;
+	setCurrentRepo: Function;
 	setCodemarkStatus: Function;
 	setNewPostEntry: Function;
 }
@@ -151,6 +157,7 @@ interface ConnectedProps {
 	isCurrentUserAdmin: boolean;
 	statusLabel: string;
 	statusIcon: string;
+	currentRepoPath?: string;
 }
 
 interface State {
@@ -403,7 +410,7 @@ class ReviewForm extends React.Component<Props, State> {
 	}
 
 	componentDidMount() {
-		const { isEditing, isAmending, textEditorUri } = this.props;
+		const { isEditing, isAmending, textEditorUri, currentRepoPath } = this.props;
 		if (isEditing && !isAmending) return;
 
 		this.setState({ mountedTimestamp: new Date().getTime() });
@@ -415,7 +422,9 @@ class ReviewForm extends React.Component<Props, State> {
 
 		if (isAmending) this.getScmInfoForRepo();
 		else {
-			this.getScmInfoForURI(textEditorUri, () => {
+			const currentRepoUri = currentRepoPath ? path.join("file://", currentRepoPath) : undefined;
+			this.getScmInfoForURI(currentRepoUri || textEditorUri, () => {
+				this.props.setCurrentRepo();
 				HostApi.instance.send(TelemetryRequestType, {
 					eventName: "Review Form Opened",
 					properties: {
@@ -2270,20 +2279,25 @@ const mapStateToProps = (state: CodeStreamState, props): ConnectedProps => {
 		blameMap,
 		isCurrentUserAdmin,
 		statusLabel,
-		statusIcon
+		statusIcon,
+		currentRepoPath: context.currentRepo && context.currentRepo.path
 	};
 };
 
-const ConnectedReviewForm = connect(mapStateToProps, {
-	openPanel,
-	openModal,
-	closePanel,
-	createPostAndReview,
-	editReview,
-	setUserPreference,
-	setCurrentReview,
-	setCodemarkStatus,
-	setNewPostEntry
-})(ReviewForm);
+const ConnectedReviewForm = connect(
+	mapStateToProps,
+	{
+		openPanel,
+		openModal,
+		closePanel,
+		createPostAndReview,
+		editReview,
+		setUserPreference,
+		setCurrentReview,
+		setCurrentRepo,
+		setCodemarkStatus,
+		setNewPostEntry
+	}
+)(ReviewForm);
 
 export { ConnectedReviewForm as ReviewForm };

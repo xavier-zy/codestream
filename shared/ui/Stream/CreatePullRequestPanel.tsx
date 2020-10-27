@@ -28,7 +28,12 @@ import { isConnected, getPRLabel } from "../store/providers/reducer";
 import { CodeStreamState } from "../store";
 import { inMillis } from "../utils";
 import { useInterval, useTimeout } from "../utilities/hooks";
-import { setCurrentReview, openPanel, setCurrentPullRequest } from "../store/context/actions";
+import {
+	setCurrentReview,
+	openPanel,
+	setCurrentPullRequest,
+	setCurrentRepo
+} from "../store/context/actions";
 import { PROVIDER_MAPPINGS } from "./CrossPostIssueControls/types";
 import { PrePRProviderInfoModal } from "./PrePRProviderInfoModal";
 import Icon from "./Icon";
@@ -107,7 +112,7 @@ const Step4 = props => (props.step !== 4 ? null : <div>{props.children}</div>);
 export const CreatePullRequestPanel = props => {
 	const dispatch = useDispatch();
 	const derivedState = useSelector((state: CodeStreamState) => {
-		const { providers } = state;
+		const { providers, context } = state;
 		const codeHostProviders = Object.keys(providers).filter(id =>
 			[
 				"github",
@@ -128,14 +133,15 @@ export const CreatePullRequestPanel = props => {
 			userStatus: status,
 			providers: providers,
 			codeHostProviders: codeHostProviders,
-			reviewId: state.context.createPullRequestReviewId,
+			reviewId: context.createPullRequestReviewId,
 			isConnectedToGitHub: isConnected(state, { name: "github" }),
 			isConnectedToGitLab: isConnected(state, { name: "gitlab" }),
 			isConnectedToGitHubEnterprise: isConnected(state, { name: "github_enterprise" }),
 			isConnectedToGitLabEnterprise: isConnected(state, { name: "gitlab_enterprise" }),
 			isConnectedToBitbucket: isConnected(state, { name: "bitbucket" }),
 			isConnectedToBitbucketServer: isConnected(state, { name: "bitbucket_server" }),
-			prLabel: getPRLabel(state)
+			prLabel: getPRLabel(state),
+			currentRepo: context.currentRepo
 		};
 	});
 	const { userStatus, reviewId, prLabel } = derivedState;
@@ -218,13 +224,22 @@ export const CreatePullRequestPanel = props => {
 				});
 
 				if (response && response.repositories) {
+					let panelRepo = selectedRepo || response.repositories[0];
+					if (derivedState.currentRepo && derivedState.currentRepo.id) {
+						const currentRepoId = derivedState.currentRepo.id;
+						const currentRepo = response.repositories.find(_ => _.id === currentRepoId);
+						panelRepo = currentRepo ? currentRepo : panelRepo;
+						dispatch(setCurrentRepo());
+					}
 					setOpenRepos(response.repositories);
-					if (!selectedRepo) setSelectedRepo(response.repositories[0]);
-					args.repoId = (selectedRepo || response.repositories[0]).id || "";
+					if (!selectedRepo) {
+						setSelectedRepo(panelRepo);
+					}
+					args.repoId = panelRepo.id || "";
 					setPrRepoId(args.repoId);
 
 					let branchInfo = await HostApi.instance.send(GetBranchesRequestType, {
-						uri: (selectedRepo || response.repositories[0]).folder.uri
+						uri: panelRepo.folder.uri
 					});
 					if (branchInfo && branchInfo.scm && branchInfo.scm.current) {
 						args.headRefName = branchInfo.scm.current;

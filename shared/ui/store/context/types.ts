@@ -31,6 +31,7 @@ export enum ContextActionsType {
 	SetComposeCodemarkActive = "@context/SetComposeCodemarkActive",
 	RepositionCodemark = "@context/RepositionCodemark",
 	SetCurrentReview = "@context/SetCurrentReview",
+	SetCurrentRepo = "@context/SetCurrentRepo",
 	SetCreatePullRequest = "@context/SetCreatePullRequest",
 	SetCurrentPullRequest = "@context/SetCurrentPullRequest",
 	SetCurrentPullRequestAndBranch = "@context/SetCurrentPullRequestAndBranch",

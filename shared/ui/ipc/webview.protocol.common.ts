@@ -106,6 +106,10 @@ export interface WebviewContext {
 	currentTeamId: string;
 	currentStreamId?: string;
 	threadId?: string;
+	currentRepo?: {
+		id: string;
+		path: string;
+	};
 	currentCodemarkId?: string;
 	currentReviewId?: string;
 	createPullRequestReviewId?: string;

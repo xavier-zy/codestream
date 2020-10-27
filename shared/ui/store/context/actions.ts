@@ -121,6 +121,9 @@ export const setCurrentStream = (streamId?: string, threadId?: string) => (dispa
 export const setCurrentReview = (reviewId?: string) =>
 	action(ContextActionsType.SetCurrentReview, { reviewId });
 
+export const setCurrentRepo = (id?: string, path?: string) =>
+	action(ContextActionsType.SetCurrentRepo, { id, path });
+
 export const setCreatePullRequest = (reviewId?: string) =>
 	action(ContextActionsType.SetCreatePullRequest, { reviewId });
 

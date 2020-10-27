@@ -260,6 +260,8 @@ export const getConnectedSupportedPullRequestHosts = createSelector(
 	(users: UsersState, currentTeamId: string, session: SessionState, providers: ProvidersState) => {
 		return Object.values(providers)
 			.filter(_ => _.id === "github*com" || _.id === "github/enterprise")
-			.filter(_ => isConnectedSelectorFriendly(users, currentTeamId, session, providers, _));
+			.filter(_ =>
+				isConnectedSelectorFriendly(users, currentTeamId, session, providers, { id: _.id })
+			);
 	}
 );

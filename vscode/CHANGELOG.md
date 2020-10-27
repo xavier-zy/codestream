@@ -1,5 +1,11 @@
 # Change Log
 
+## [10.0.2] - 2020-10-27
+
+### Fixed
+
+- Fixes an issue viewing pull requests with GitHub Enterprise
+
 ## [10.0.1] - 2020-10-16
 
 ### Fixed
@@ -196,7 +202,7 @@ Note that CodeStream 10.0 requires VS Code version 1.50.
 ### Fixed
 
 - Fixes an issue where you weren't able to adjust notification settings if your on-prem installation didn't have outbound email configured
-- Fixes an issue where illegal characters weren't being stripped out of the name when creating a branch 
+- Fixes an issue where illegal characters weren't being stripped out of the name when creating a branch
 
 ## [8.1.3] - 2020-7-16
 
@@ -298,9 +304,9 @@ Note that CodeStream 10.0 requires VS Code version 1.50.
 ### Added
 
 - Adds the ability to create a pull request on GitHub or GitLab (cloud or on-prem) once a code review has been approved
-- Adds a more granular Help submenu 
+- Adds a more granular Help submenu
 - If your CodeStream email doesn't match your git email, you can now map your git email to your CodeStream email
-- Code ownership can also be reassigned as part of assigning reviewers in a code review 
+- Code ownership can also be reassigned as part of assigning reviewers in a code review
 
 ## [7.4.1] - 2020-6-9
 
@@ -597,7 +603,7 @@ Note that CodeStream 10.0 requires VS Code version 1.50.
 
 ### Added
 
-- Adds the ability to do [shift-left code reviews](https://github.com/TeamCodeStream/CodeStream/wiki/Code-Review-(BETA)). Currently in beta for VS Code. Contact us at support@codestream.com to participate.
+- Adds the ability to do [shift-left code reviews](<https://github.com/TeamCodeStream/CodeStream/wiki/Code-Review-(BETA)>). Currently in beta for VS Code. Contact us at support@codestream.com to participate.
 - Adds the ability to create an issue not connected to a block of code via the + menu in the global nav
 
 ### Changed

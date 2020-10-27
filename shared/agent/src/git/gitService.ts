@@ -913,6 +913,7 @@ export class GitService implements IGitService, Disposable {
 			.trim()
 			.split("\n")
 			.filter(b => !b.startsWith("*"))
+			.map(b => b.startsWith("+") ? b.substring(1) : b)
 			.map(b => "refs/heads/" + b.trim());
 		// .join(" ");
 

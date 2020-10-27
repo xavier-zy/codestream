@@ -218,14 +218,24 @@ function CodemarkForCodemark(props: PropsWithCodemark) {
 					editingCodemark={codemark}
 					commentType={codemark.type}
 					onSubmit={async (attributes: NewCodemarkAttributes) => {
-						const { text, assignees, title, relatedCodemarkIds, tags } = attributes;
+						const {
+							text,
+							assignees,
+							title,
+							relatedCodemarkIds,
+							tags,
+							codeBlocks,
+							deleteMarkerLocations
+						} = attributes;
 						await dispatch(
-							editCodemark(props.codemark.id, {
+							editCodemark(props.codemark, {
 								text,
 								title,
 								assignees,
 								relatedCodemarkIds,
-								tags
+								tags,
+								codeBlocks,
+								deleteMarkerLocations
 							})
 						);
 						setIsEditing(false);

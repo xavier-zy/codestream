@@ -118,7 +118,7 @@ const makeName = user => {
 const makeDirectMessageStreamName = (memberIds, users) => {
 	const names = memberIds.map(id => makeName(users[id])).filter(Boolean);
 	if (names.length === 0) {
-		console.error("Cannot create direct message stream name without member names", {
+		console.error("Cannot construct direct message stream name without member names", {
 			memberIds,
 			users
 		});

@@ -215,7 +215,7 @@ export const Reply = (props: ReplyProps) => {
 		setIsLoading(true);
 
 		if (codemark) {
-			await dispatch(editCodemark(codemark.id, { text: replaceHtml(newReplyText)! }));
+			await dispatch(editCodemark(codemark, { text: replaceHtml(newReplyText)! }));
 		} else {
 			await dispatch(
 				editPost(

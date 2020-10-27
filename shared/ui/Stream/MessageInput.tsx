@@ -1101,16 +1101,15 @@ export class MessageInput extends React.Component<Props, State> {
 
 	renderExitPreview = () => {
 		return (
-			<div
-				className="codemark-actions-button"
-				style={{ margin: "2px 0" }}
+			<Button
+				className="control-button codemark-actions-button"
 				onClick={e => {
 					this.setIsPreviewing(false);
 					this.focus();
 				}}
 			>
 				Exit Preview
-			</div>
+			</Button>
 		);
 	};
 

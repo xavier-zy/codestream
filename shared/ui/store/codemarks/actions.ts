@@ -3,13 +3,19 @@ import { action } from "../common";
 import { CodemarksActionsTypes } from "./types";
 import { HostApi } from "@codestream/webview/webview-api";
 import {
+	AddMarkerRequest,
+	AddMarkerRequestType,
 	UpdateCodemarkRequestType,
 	DeleteCodemarkRequestType,
 	GetRangeScmInfoResponse,
 	CrossPostIssueValues,
 	CreateShareableCodemarkRequestType,
 	CreateThirdPartyPostRequestType,
-	CreatePassthroughCodemarkResponse
+	CreatePassthroughCodemarkResponse,
+	DeleteMarkerRequestType,
+	CodemarkPlus,
+	MoveMarkerRequest,
+	MoveMarkerRequestType
 } from "@codestream/protocols/agent";
 import { logError } from "@codestream/webview/logger";
 import { addStreams } from "../streams/actions";
@@ -18,7 +24,6 @@ import { getConnectedProviders } from "../providers/reducer";
 import { CodeStreamState } from "..";
 import { capitalize } from "@codestream/webview/utils";
 import { isObject } from "lodash-es";
-import { URI } from "vscode-uri";
 import { getPullRequestConversationsFromProvider } from "../providerPullRequests/actions";
 
 export const reset = () => action("RESET");
@@ -41,6 +46,10 @@ export interface BaseNewCodemarkAttributes {
 	crossPostIssueValues?: CrossPostIssueValues;
 	tags: string[];
 	relatedCodemarkIds: string[];
+	/** for removing markers */
+	deleteMarkerLocations?: {
+		[index: number]: boolean;
+	};
 }
 
 export interface SharingNewCodemarkAttributes extends BaseNewCodemarkAttributes {
@@ -169,20 +178,69 @@ export const deleteCodemark = (codemarkId: string) => async dispatch => {
 
 type EditableAttributes = Partial<
 	Pick<CSCodemark, "tags" | "text" | "title" | "assignees" | "relatedCodemarkIds">
->;
+> & {
+	deleteMarkerLocations?: {
+		[index: number]: boolean;
+	};
+	codeBlocks?: GetRangeScmInfoResponse[];
+};
 
 export const editCodemark = (
-	codemarkId: string,
+	codemark: CodemarkPlus,
 	attributes: EditableAttributes
 ) => async dispatch => {
 	try {
+		const { markers = [] } = codemark;
+		const { deleteMarkerLocations = {}, codeBlocks } = attributes;
+
+		if (Object.keys(deleteMarkerLocations).length > 0) {
+			const toDelete: { markerId: string }[] = [];
+
+			Object.keys(deleteMarkerLocations).forEach(index => {
+				if (markers[index]) toDelete.push({ markerId: markers[index].id });
+			});
+
+			await Promise.all(toDelete.map(args => HostApi.instance.send(DeleteMarkerRequestType, args)));
+		}
+
+		if (codeBlocks) {
+			const toAdd: AddMarkerRequest[] = [];
+			const toMove: MoveMarkerRequest[] = [];
+
+			codeBlocks.forEach((codeBlock, index) => {
+				if (!codeBlock || deleteMarkerLocations[index]) return;
+
+				if (index >= markers.length && codeBlock.scm) {
+					toAdd.push({
+						codemarkId: codemark.id,
+						code: codeBlock.contents,
+						documentId: { uri: codeBlock.uri },
+						range: codeBlock.range,
+						source: codeBlock.scm
+					});
+				} else if (markers[index] && codeBlock.scm) {
+					toMove.push({
+						markerId: markers[index].id,
+						code: codeBlock.contents,
+						range: codeBlock.range,
+						documentId: { uri: codeBlock.uri },
+						source: codeBlock.scm
+					});
+				}
+			});
+
+			await Promise.all(toAdd.map(args => HostApi.instance.send(AddMarkerRequestType, args)));
+			await Promise.all(toMove.map(args => HostApi.instance.send(MoveMarkerRequestType, args)));
+		}
+
 		const response = await HostApi.instance.send(UpdateCodemarkRequestType, {
-			codemarkId,
+			codemarkId: codemark.id,
 			...attributes
 		});
+
 		dispatch(updateCodemarks([response.codemark]));
 	} catch (error) {
-		logError(`failed to update codemark: ${error}`, { codemarkId });
+		logError(`failed to update codemark: ${error}`, { codemarkId: codemark.id });
 	}
 };
 

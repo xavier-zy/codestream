@@ -306,13 +306,23 @@ export class Codemark extends React.Component<Props, State> {
 	};
 
 	editCodemark = async (attributes: NewCodemarkAttributes) => {
-		const { text, assignees, title, relatedCodemarkIds, tags } = attributes;
-		this.props.editCodemark(this.props.codemark!.id, {
+		const {
+			text,
+			assignees,
+			title,
+			relatedCodemarkIds,
+			tags,
+			codeBlocks,
+			deleteMarkerLocations
+		} = attributes;
+		this.props.editCodemark(this.props.codemark!, {
 			text,
 			title,
 			assignees,
 			relatedCodemarkIds,
-			tags
+			tags,
+			codeBlocks,
+			deleteMarkerLocations
 		});
 		this.setState({ isEditing: false });
 	};

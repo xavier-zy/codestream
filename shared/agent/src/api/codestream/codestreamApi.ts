@@ -17,8 +17,11 @@ import { isDirective, resolve, safeDecode, safeEncode } from "../../managers/ope
 import {
 	AddBlameMapRequest,
 	AddBlameMapRequestType,
+	AddMarkerResponse,
 	AgentOpenUrlRequestType,
 	ChangeDataType,
+	DeleteMarkerRequest,
+	DeleteMarkerResponse,
 	DidChangeDataNotificationType,
 	ReportingMessageType,
 	UpdateInvisibleRequest
@@ -136,6 +139,8 @@ import {
 	VerifyConnectivityResponse
 } from "../../protocol/agent.protocol";
 import {
+	CSAddMarkerRequest,
+	CSAddMarkerResponse,
 	CSAddProviderHostRequest,
 	CSAddProviderHostResponse,
 	CSAddReferenceLocationRequest,
@@ -967,6 +972,23 @@ export class CodeStreamApiProvider implements ApiProvider {
 			request.newMarker,
 			this._token
 		);
+	}
+
+	@log()
+	addMarker(request: {
+		codemarkId: string;
+		newMarker: CreateMarkerRequest;
+	}): Promise<AddMarkerResponse> {
+		return this.put<CSAddMarkerRequest, CSAddMarkerResponse>(
+			`/codemarks/${request.codemarkId}/add-markers`,
+			{ markers: [request.newMarker] },
+			this._token
+		);
+	}
+
+	@log()
+	deleteMarker(request: DeleteMarkerRequest): Promise<DeleteMarkerResponse> {
+		return this.delete<{}>(`/markers/${request.markerId}`, this._token);
 	}
 
 	@log()

@@ -4,6 +4,7 @@ import {
 	AccessToken,
 	AddEnterpriseProviderHostRequest,
 	AddEnterpriseProviderHostResponse,
+	AddMarkerResponse,
 	AddReferenceLocationRequest,
 	AddReferenceLocationResponse,
 	ArchiveStreamRequest,
@@ -30,6 +31,8 @@ import {
 	CreateRepoResponse,
 	DeleteCodemarkRequest,
 	DeleteCodemarkResponse,
+	DeleteMarkerRequest,
+	DeleteMarkerResponse,
 	DeletePostRequest,
 	DeletePostResponse,
 	DeleteReviewRequest,
@@ -366,6 +369,11 @@ export interface ApiProvider {
 		oldMarkerId: string;
 		newMarker: CreateMarkerRequest;
 	}): Promise<MoveMarkerResponse>;
+	addMarker(request: {
+		codemarkId: string;
+		newMarker: CreateMarkerRequest;
+	}): Promise<AddMarkerResponse>;
+	deleteMarker(request: DeleteMarkerRequest): Promise<DeleteMarkerResponse>;
 
 	createExternalPost(request: CreateExternalPostRequest): Promise<CreatePostResponse>;
 	createPost(request: CreatePostRequest): Promise<CreatePostResponse>;

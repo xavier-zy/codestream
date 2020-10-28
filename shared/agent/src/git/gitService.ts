@@ -96,6 +96,9 @@ export class GitService implements IGitService, Disposable {
 		repoPath: string,
 		remote: string
 	) => Promise<string | undefined>;
+	private readonly _memoizedGetKnownCommitHashes: (filePath: string) => Promise<string[]>;
+	private readonly _memoizedGetRepoRemotes: (repoPath: string) => Promise<GitRemote[]>;
+
 	private readonly _repositories: GitRepositories;
 
 	constructor(public readonly session: CodeStreamSession) {
@@ -103,6 +106,8 @@ export class GitService implements IGitService, Disposable {
 			this._getDefaultBranch,
 			(repoPath, remote) => `${repoPath}|${remote}`
 		);
+		this._memoizedGetKnownCommitHashes = memoize(this._getKnownCommitHashes);
+		this._memoizedGetRepoRemotes = memoize(this._getRepoRemotes);
 		this._repositories = new GitRepositories(this, session);
 	}
 
@@ -659,40 +664,23 @@ export class GitService implements IGitService, Disposable {
 		return push || fetch;
 	}
 
-	async getRepoRemotes(repoUri: URI): Promise<GitRemote[]>;
-	async getRepoRemotes(repoPath: string): Promise<GitRemote[]>;
+	getRepoRemotes(repoUri: URI): Promise<GitRemote[]>;
+	getRepoRemotes(repoPath: string): Promise<GitRemote[]>;
 	@log({
 		exit: (result: GitRemote[]) =>
 			`returned [${result.length !== 0 ? result.map(r => r.uri.toString(true)).join(", ") : ""}]`
 	})
-	async getRepoRemotes(repoUriOrPath: URI | string): Promise<GitRemote[]> {
+	getRepoRemotes(repoUriOrPath: URI | string): Promise<GitRemote[]> {
 		const repoPath = typeof repoUriOrPath === "string" ? repoUriOrPath : repoUriOrPath.fsPath;
-
+		return this._memoizedGetRepoRemotes(repoPath);
+	}
+	private async _getRepoRemotes(repoPath: string) {
 		try {
 			const data = await git({ cwd: repoPath }, "remote", "-v");
 			return GitRemoteParser.parse(data, repoPath);
 		} catch {
 			return [];
 		}
-	}
-
-	async repoHasRemote(repoPath: string, remoteUrl: string): Promise<boolean> {
-		let data;
-		try {
-			data = await git({ cwd: repoPath }, "remote", "-v");
-			if (!data) return false;
-		} catch {
-			return false;
-		}
-
-		const remotes = GitRemoteParser.parse(data, repoPath);
-		for (const r of remotes) {
-			if (r.normalizedUrl === remoteUrl) {
-				return true;
-			}
-		}
-
-		return false;
 	}
 
 	async getRepoRoot(uri: URI): Promise<string | undefined>;
@@ -913,7 +901,7 @@ export class GitService implements IGitService, Disposable {
 			.trim()
 			.split("\n")
 			.filter(b => !b.startsWith("*"))
-			.map(b => b.startsWith("+") ? b.substring(1) : b)
+			.map(b => (b.startsWith("+") ? b.substring(1) : b))
 			.map(b => "refs/heads/" + b.trim());
 		// .join(" ");
 
@@ -1456,7 +1444,10 @@ export class GitService implements IGitService, Disposable {
 		}
 	}
 
-	async getKnownCommitHashes(filePath: string): Promise<string[]> {
+	getKnownCommitHashes(filePath: string): Promise<string[]> {
+		return this._memoizedGetKnownCommitHashes(filePath);
+	}
+	private async _getKnownCommitHashes(filePath: string): Promise<string[]> {
 		const commitHistory = await this.getRepoCommitHistory(filePath);
 		const firstLastCommits =
 			commitHistory.length > 10

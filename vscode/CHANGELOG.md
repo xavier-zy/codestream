@@ -1,5 +1,25 @@
 # Change Log
 
+## [10.0.3] - 2020-10-28
+
+### Added
+
+- Adds a new VS Code-based GitHub authentication flow that is much simpler
+- Adds the ability, in a codemark with multiple code blocks, to intersperse the blocks of code in the codemark text by refencing them with `[#1]`
+
+### Changed
+
+- Changed referece to "requested a review" in activity feed to "requested feedback"
+- Replaces "uprade" link underheadshot menu with sales@codestream.com for on-prem customers
+
+### Fixed
+
+- Addresses [#301](https://github.com/TeamCodeStream/CodeStream/issues/301) &mdash; Creating Feedback Request fails
+- Fixes an issue where, after adding a code comment in a pull request, the icon in the diff gutter would not appear immediately
+- Fixes an issue where creating a pull request or feedback request from the WIP section didn't default to the correct repo
+- Fixes an issue with "/dev/null" entries appearing in list of files when creating a pull request
+- Fixes an issue with the Pull Requests section not immediately appearing if you open a GitHub or GitHub Enterprise repository
+
 ## [10.0.2] - 2020-10-27
 
 ### Fixed

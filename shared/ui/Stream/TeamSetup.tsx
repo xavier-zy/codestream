@@ -216,7 +216,7 @@ export function TeamSetup(props: Props) {
 						<h3>Live View</h3>
 						<p className="explainer">
 							Share local coding changes with teammates
-							<Link href="https://docs.codestream.com/userguide/features/team-live-view/">
+							<Link href="https://docs.codestream.com/userguide/features/myteam-section/">
 								<Icon name="info" className="clickable" title="More info" />
 							</Link>
 						</p>
@@ -248,7 +248,7 @@ export function TeamSetup(props: Props) {
 						</h3>
 						<p className="explainer">
 							Streamline membership and integration options for your teammates
-							<Link href="https://docs.codestream.com/userguide/features/team-live-view/">
+							<Link href="https://docs.codestream.com/userguide/features/myteam-section/">
 								<Icon name="info" className="clickable" title="More info" />
 							</Link>
 						</p>

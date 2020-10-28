@@ -228,7 +228,7 @@ export function EllipsisMenu(props: EllipsisMenuProps) {
 							label: "What is Live View?",
 							action: () => {
 								HostApi.instance.send(OpenUrlRequestType, {
-									url: "https://docs.codestream.com/userguide/features/team-live-view/"
+									url: "https://docs.codestream.com/userguide/features/myteam-section/"
 								});
 							}
 						}

@@ -294,7 +294,7 @@ export function GlobalNav() {
 									from your teammates.
 									<Link
 										className="learn-more"
-										href="http://docs.codestream.com/userguide/features/team-live-view/"
+										href="http://docs.codestream.com/userguide/features/myteam-section/"
 									>
 										learn more
 									</Link>

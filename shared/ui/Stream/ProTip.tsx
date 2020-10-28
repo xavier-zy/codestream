@@ -36,7 +36,7 @@ const tips = [
 	// <span>Set keybindings for codemarks to jump to different code locations</span>,
 	<span>
 		Share your work-in-progress as you develop.{" "}
-		<a href="http://docs.codestream.com/userguide/features/team-live-view/">See how.</a>
+		<a href="http://docs.codestream.com/userguide/features/myteam-section/">See how.</a>
 	</span>,
 	<span>Create a saved query by typing a search term and clicking the bookmark icon</span>,
 	<span>

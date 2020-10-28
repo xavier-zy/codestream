@@ -9,8 +9,9 @@
 
 ### Changed
 
-- Changed referece to "requested a review" in activity feed to "requested feedback"
-- Replaces "uprade" link underheadshot menu with sales@codestream.com for on-prem customers
+- Changed reference to "requested a review" in activity feed to "requested feedback"
+- Replaces "upgrade" link under headshot menu with sales@codestream.com for on-prem customers
+- Improve performance and reduce memory usage by caching some expensive git operations
 
 ### Fixed
 

@@ -1304,12 +1304,16 @@ export class GitService implements IGitService, Disposable {
 			} catch {}
 			if (!data) return [];
 			const patch = parsePatch(data)[0];
+			// if hunk start line equal 0 means that the file was just created
+			const isNewFile =  patch.hunks.some(hunk => hunk.oldStart === 0);
+			if (isNewFile) return [];
 			try {
 				const options = ["blame"];
 				if (ref && ref.length) options.push(ref);
 				patch.hunks.forEach(hunk => {
-					const oldEnd = hunk.oldStart + hunk.oldLines;
-					options.push(`-L${hunk.oldStart},${oldEnd}`);
+						// -1 cuz we should take into account hunk.oldStart line
+						const oldEnd = hunk.oldStart + hunk.oldLines - 1;
+						options.push(`-L${hunk.oldStart},${Math.max(hunk.oldStart, oldEnd)}`);
 				});
 				options.push("--root", "--incremental", "-w");
 				options.push("--");

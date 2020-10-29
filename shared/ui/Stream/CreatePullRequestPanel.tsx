@@ -234,7 +234,7 @@ export const CreatePullRequestPanel = props => {
 					inEditorOnly: true
 				});
 
-				if (response && response.repositories) {
+				if (response && response.repositories && response.repositories.length) {
 					let panelRepo = selectedRepo || response.repositories[0];
 					if (derivedState.currentRepo && derivedState.currentRepo.id) {
 						const currentRepoId = derivedState.currentRepo.id;

@@ -1,4 +1,6 @@
 "use strict";
+import * as Http from "http";
+import * as Https from "https";
 import { OAuth } from "oauth";
 import * as qs from "querystring";
 import { Container } from "../container";
@@ -31,11 +33,20 @@ export type jsonCallback = (
 	result?: { [key: string]: any }
 ) => any;
 
-// HACK: the oauth node module library doesn't allow us to specify Content-Type
-// when calling the get() function to fetch a resource (stuuuuuupid...) ... so
-// create an extension of the class, calling an internal function (BAD) to do
-// the dirty work
+// HACK: override some private methods of the oauth node module library,
+// eventually, this should all go away once Jira Server supports Personal Access Tokens
 class OAuthExtended extends OAuth {
+
+	_agent: Https.Agent | Http.Agent | undefined;
+
+	setAgent (agent: Https.Agent | Http.Agent) {
+		this._agent = agent;
+	}
+
+	// HACK: the oauth node module library doesn't allow us to specify Content-Type
+	// when calling the get() function to fetch a resource (stuuuuuupid...) ... so
+	// create an extension of the class, calling an internal function (BAD) to do
+	// the dirty work
 	fetchJson(
 		method: string,
 		url: string,
@@ -65,6 +76,29 @@ class OAuthExtended extends OAuth {
 				return callback(undefined, json);
 			}
 		);
+	}
+
+	// HACK: the oauth node module doesn't allow for a custom agent through which to pass its http(s) requests,
+	// we need this to set the rejectUnauthorized option to false, when the customer has a self-signed certificate
+	// on their Jira Server instance
+	_createClient(
+		port: number,
+		hostname: string,
+		method: string,
+		path: string,
+		headers: { [key: string]: any },
+		sslEnabled: boolean
+	) {
+		const options = {
+			host: hostname,
+			port: port,
+			path: path,
+			method: method,
+			headers: headers,
+			agent: this._agent
+		};
+		const httpModel = sslEnabled ? Https : Http;
+		return httpModel.request(options);
 	}
 }
 
@@ -127,6 +161,9 @@ export class JiraServerProvider extends ThirdPartyIssueProviderBase<CSJiraServer
 				null,
 				"RSA-SHA1"
 			);
+			if (this._httpsAgent) {
+				this.oauth.setAgent(this._httpsAgent);
+			}
 		}
 	}
 

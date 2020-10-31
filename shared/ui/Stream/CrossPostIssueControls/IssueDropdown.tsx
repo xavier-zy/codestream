@@ -40,6 +40,7 @@ import { ButtonRow } from "@codestream/webview/src/components/Dialog";
 import { Dialog } from "@codestream/webview/src/components/Dialog";
 import { PaneHeader, PaneBody, PaneState } from "@codestream/webview/src/components/Pane";
 import { StartWork } from "../StartWork";
+import { mapFilter } from "@codestream/webview/utils";
 
 interface ProviderInfo {
 	provider: ThirdPartyProviderConfig;
@@ -153,28 +154,30 @@ class IssueDropdown extends React.Component<Props, State> {
 			return null;
 		}
 
-		const selectedProviderId = providerInfo && providerInfo.provider.id;
-		const knownIssueProviderOptions = knownIssueProviders
-			.map(providerId => {
+		const knownIssueProviderOptions = mapFilter(knownIssueProviders,
+			providerId => {
 				const issueProvider = this.props.providers![providerId];
 				const providerDisplay = PROVIDER_MAPPINGS[issueProvider.name];
 				const displayName = issueProvider.isEnterprise
 					? `${providerDisplay.displayName} - ${issueProvider.host}`
 					: providerDisplay.displayName;
-				const supported = providerDisplay.supportsStartWork;
-				return {
-					providerIcon: <Icon name={providerDisplay.icon || "blank"} />,
-					checked: this.providerIsConnected(providerId) && !this.providerIsDisabled(providerId),
-					value: providerId,
-					label: displayName + (supported ? "" : " (soon!)"),
-					disabled: !supported,
-					key: providerId,
-					action: () => this.selectIssueProvider(providerId)
-				};
-			})
-			.sort((a, b) =>
-				a.disabled === b.disabled ? a.label.localeCompare(b.label) : a.disabled ? 1 : -1
-			);
+				if (providerDisplay.supportsStartWork) {
+					return {
+						providerIcon: <Icon name={providerDisplay.icon || "blank"} />,
+						checked: this.providerIsConnected(providerId) && !this.providerIsDisabled(providerId),
+						value: providerId,
+						label: displayName,
+						key: providerId,
+						action: () => this.selectIssueProvider(providerId)
+					};
+				} else {
+					return null;
+				}
+			}
+		)
+		.sort((a, b) =>
+			a.label.localeCompare(b.label)
+		);
 		// const index = knownIssueProviderOptions.findIndex(i => i.disabled);
 		// @ts-ignore
 		// knownIssueProviderOptions.splice(index, 0, { label: "-" });

@@ -206,7 +206,7 @@ export class Logger {
 	}
 
 	static sanitize(key: string, value: any) {
-		return /(apikey|password|secret|token)/i.test(key) ? `<${key}>` : value;
+		return /(apikey|password|secret|token|privatekey)/i.test(key) ? `<${key}>` : value;
 	}
 
 	static toLoggable(p: any, sanitize: (key: string, value: any) => any = this.sanitize) {

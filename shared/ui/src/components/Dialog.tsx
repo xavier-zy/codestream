@@ -1,5 +1,8 @@
-import { PropsWithChildren } from "react";
 import React from "react";
+import { PropsWithChildren } from "react";
+import Tooltip from "@codestream/webview/Stream/Tooltip";
+import { useDidMount } from "@codestream/webview/utilities/hooks";
+import KeystrokeDispatcher from "@codestream/webview/utilities/keystroke-dispatcher";
 import styled from "styled-components";
 import { CSText } from "./CSText";
 import Icon from "@codestream/webview/Stream/Icon";
@@ -79,7 +82,7 @@ interface Props {
 	noPadding?: boolean;
 	narrow?: boolean;
 	wide?: boolean;
-	onClose?(event: React.SyntheticEvent): any;
+	onClose?(event: React.SyntheticEvent | KeyboardEvent): any;
 	onMaximize?(event?: React.SyntheticEvent): any;
 	onMinimize?(event?: React.SyntheticEvent): any;
 	maximizable?: boolean;
@@ -88,6 +91,29 @@ interface Props {
 
 export function Dialog(props: PropsWithChildren<Props>) {
 	const [expanded, setExpanded] = React.useState(false);
+	const disposables: { dispose(): void }[] = [];
+
+	useDidMount(() => {
+		if (props.onClose) {
+			disposables.push(
+				KeystrokeDispatcher.withLevel(),
+				KeystrokeDispatcher.onKeyDown(
+					"Escape",
+					(event: KeyboardEvent) => {
+						if (props.onClose) {
+							event.stopPropagation();
+							props.onClose(event);
+						}
+					},
+					{ source: "Dialog.tsx", level: -1 }
+				)
+			);
+		}
+
+		return () => {
+			disposables && disposables.forEach(_ => _.dispose());
+		};
+	});
 	return expanded ? (
 		<Modal noPadding>
 			{props.title && (
@@ -106,9 +132,19 @@ export function Dialog(props: PropsWithChildren<Props>) {
 				/>
 			</Expand>
 			{props.onClose && (
-				<Close className="close">
-					<Icon className="clickable" name="x" onClick={props.onClose} />
-				</Close>
+				<Tooltip
+					placement="left"
+					overlayStyle={{ zIndex: "3000" }}
+					title={
+						<span>
+							Close <span className="keybinding">ESC</span>
+						</span>
+					}
+				>
+					<Close className="close">
+						<Icon className="clickable" name="x" onClick={props.onClose} />
+					</Close>
+				</Tooltip>
 			)}
 			<div className="expanded">{props.children}</div>
 		</Modal>
@@ -139,9 +175,19 @@ export function Dialog(props: PropsWithChildren<Props>) {
 					</Expand>
 				)}
 				{props.onClose && (
-					<Close className="close">
-						<Icon className="clickable" name="x" onClick={props.onClose} />
-					</Close>
+					<Tooltip
+						placement="left"
+						overlayStyle={{ zIndex: "3000" }}
+						title={
+							<span>
+								Close <span className="keybinding">ESC</span>
+							</span>
+						}
+					>
+						<Close className="close">
+							<Icon className="clickable" name="x" onClick={props.onClose} />
+						</Close>
+					</Tooltip>
 				)}
 				{props.children}
 			</Box>

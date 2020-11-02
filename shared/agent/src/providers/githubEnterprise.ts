@@ -98,10 +98,11 @@ export class GitHubEnterpriseProvider extends GitHubProvider {
 			const title = `#${createPullRequestResponse.body.number} ${createPullRequestResponse.body.title}`;
 			return {
 				url: createPullRequestResponse.body.html_url,
+				id: createPullRequestResponse.body.node_id,
 				title: title
 			};
 		} catch (ex) {
-			Logger.error(ex, `${this.displayName}: getRepoInfo`, {
+			Logger.error(ex, `${this.displayName}: createPullRequest`, {
 				remote: request.remote,
 				head: request.headRefName,
 				base: request.baseRefName
@@ -319,6 +320,7 @@ interface GitHubEnterpriseCreatePullRequestRequest {
 
 interface GitHubEnterpriseCreatePullRequestResponse {
 	html_url: string;
+	node_id: string | undefined;
 	number: number;
 	title: string;
 }

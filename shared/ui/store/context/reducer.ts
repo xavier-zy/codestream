@@ -26,7 +26,7 @@ const initialState: ContextState = {
 	currentRepo: undefined,
 
 	panelStack: [WebviewPanels.LandingRedirect],
-	// panelStack: [WebviewPanels.CodemarksForFile],
+
 	activeModal: undefined,
 
 	hasFocus: true, // we assume we start with the focus when codestream initializes
@@ -82,8 +82,7 @@ export function reduceContext(
 		case ContextActionsType.OpenPanel:
 			return { ...state, panelStack: [action.payload, ...state.panelStack].slice(0, 10) };
 		case ContextActionsType.ClosePanel: {
-			if (state.panelStack.length === 1)
-				return { ...state, panelStack: [WebviewPanels.CodemarksForFile] };
+			if (state.panelStack.length === 1) return { ...state, panelStack: [WebviewPanels.Sidebar] };
 			const [, ...panelStack] = state.panelStack;
 			return { ...state, panelStack };
 		}

@@ -144,6 +144,7 @@ export const PullRequest = () => {
 	const [ghRepo, setGhRepo] = useState<any>(EMPTY_HASH);
 	const [isLoadingPR, setIsLoadingPR] = useState(false);
 	const [isLoadingMessage, setIsLoadingMessage] = useState("");
+	const [generalError, setGeneralError] = useState("");
 	const [isLoadingBranch, setIsLoadingBranch] = useState(false);
 	const [pr, setPr] = useState<FetchThirdPartyPullRequestPullRequest | undefined>();
 	const [openRepos, setOpenRepos] = useState<ReposScmPlusName[]>(EMPTY_ARRAY);
@@ -230,10 +231,15 @@ export const PullRequest = () => {
 				derivedState.currentPullRequestId!
 			)
 		)) as any;
+		setGeneralError("");
 		if (response.error) {
 			// FIXME do something with it
+			setIsLoadingPR(false);
+			setIsLoadingMessage("");
+			setGeneralError(response.error);
+		} else {
+			_assignState(response);
 		}
-		_assignState(response);
 	};
 
 	/**
@@ -537,11 +543,19 @@ export const PullRequest = () => {
 	console.warn("PR: ", pr);
 	// console.warn("REPO: ", ghRepo);
 	if (!pr) {
-		return (
-			<div style={{ display: "flex", height: "100vh", alignItems: "center" }}>
-				<LoadingMessage>Loading Pull Request...</LoadingMessage>
-			</div>
-		);
+		if (generalError) {
+			return (
+				<div style={{ display: "flex", height: "100vh", alignItems: "center" }}>
+					<div style={{ textAlign: "center" }}>Error: {generalError}</div>
+				</div>
+			);
+		} else {
+			return (
+				<div style={{ display: "flex", height: "100vh", alignItems: "center" }}>
+					<LoadingMessage>Loading Pull Request...</LoadingMessage>
+				</div>
+			);
+		}
 	} else {
 		const statusIcon = pr.state === "OPEN" || pr.state === "CLOSED" ? "pull-request" : "git-merge";
 		const action = pr.merged ? "merged " : "wants to merge ";

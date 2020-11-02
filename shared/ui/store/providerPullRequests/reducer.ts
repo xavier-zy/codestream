@@ -60,11 +60,9 @@ export function reduceProviderPullRequests(
 		}
 		case ProviderPullRequestActionsTypes.RemoveFromMyPullRequests: {
 			const newState = { ...state.myPullRequests };
-			// newState[action.payload.providerId] = {
-			// 	data: (newState[action.payload.providerId].data || []).filter(
-			// 		_ => _.id !== action.payload.id
-			// 	)
-			// };
+			newState[action.payload.providerId] = {
+				data: undefined
+			};
 			return {
 				myPullRequests: newState,
 				pullRequests: { ...state.pullRequests }
@@ -164,7 +162,9 @@ export function reduceProviderPullRequests(
 	}
 }
 const getRepos = (state: CodeStreamState) => Object.values(state.repos);
-const getProviderPullRequests = (state: CodeStreamState) => state.providerPullRequests;
+export const getProviderPullRequests = (state: CodeStreamState) => state.providerPullRequests;
+export const getMyPullRequests = (state: CodeStreamState) =>
+	state.providerPullRequests.myPullRequests;
 const currentPullRequest = (state: CodeStreamState) => state.context.currentPullRequest;
 const currentPullRequestId = (state: CodeStreamState) =>
 	state.context.currentPullRequest ? state.context.currentPullRequest.id : undefined;

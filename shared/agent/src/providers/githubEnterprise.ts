@@ -12,6 +12,8 @@ import {
 	ProviderGetRepoInfoResponse,
 	ProviderPullRequestInfo
 } from "./provider";
+import semver from "semver";
+import { GraphQLClient } from "graphql-request";
 
 @lspProvider("github_enterprise")
 export class GitHubEnterpriseProvider extends GitHubProvider {
@@ -160,6 +162,136 @@ export class GitHubEnterpriseProvider extends GitHubProvider {
 			}
 		});
 		this.session.updateProviders();
+	}
+
+	private _atMe: string | undefined;
+	/**
+	 * getMe - gets the username (login) for a GH request
+	 *
+	 * @protected
+	 * @return {*}  {Promise<string>}
+	 * @memberof GitHubEnterpriseProvider
+	 */
+	protected async getMe(): Promise<string> {
+		if (this._atMe) return this._atMe;
+
+		try {
+			const query = await this.query<any>(`
+			query {
+				viewer {
+					login
+				}
+			}`);
+
+			this._atMe = query.viewer.login;
+			return this._atMe!;
+		} catch (ex) {
+			Logger.error(ex);
+			return super.getMe();
+		}
+	}
+
+	protected async client(): Promise<GraphQLClient> {
+		if (this._client === undefined && this.accessToken) {
+			// query for the version
+			await this.getVersion();
+		}
+		return super.client();
+	}
+
+	async query<T = any>(query: string, variables: any = undefined) {
+		const v = await this.getVersion();
+		// we know that in version 2.19.6, @me doesn't work
+		if (v && semver.lt(v, "2.20.0") && query.indexOf("@me") > -1) {
+			query = query.replace(/@me/g, await this.getMe());
+		}
+		return super.query<T>(query, variables);
+	}
+
+	async createPullRequestReviewComment(request: {
+		pullRequestId: string;
+		pullRequestReviewId?: string;
+		text: string;
+		filePath?: string;
+		position?: number;
+	}) {
+		const v = await this.getVersion();
+		if (v && semver.lt(v, "2.20.0")) {
+			let query;
+			if (request.pullRequestReviewId) {
+				query = `mutation AddPullRequestReviewComment($text:String!, $pullRequestId:ID!, $pullRequestReviewId:ID!, $filePath:String, $position:Int) {
+					addPullRequestReviewComment(input: {body:$text, pullRequestId:$pullRequestId, pullRequestReviewId:$pullRequestReviewId, path:$filePath, position:$position}) {
+					  clientMutationId
+					}
+				  }
+				  `;
+			} else {
+				request.pullRequestReviewId = await this.getPullRequestReviewId(request);
+				if (!request.pullRequestReviewId) {
+					const result = await this.addPullRequestReview(request);
+					if (result?.addPullRequestReview?.pullRequestReview?.id) {
+						request.pullRequestReviewId = result.addPullRequestReview.pullRequestReview.id;
+					}
+				}
+				query = `mutation AddPullRequestReviewComment($text:String!, $pullRequestReviewId:ID!, $filePath:String, $position:Int) {
+					addPullRequestReviewComment(input: {body:$text, pullRequestReviewId:$pullRequestReviewId, path:$filePath, position:$position}) {
+					  clientMutationId
+					}
+				  }
+				  `;
+				const response = await this.mutate<any>(query, request);
+				return response;
+			}
+		} else {
+			return super.createPullRequestReviewComment(request);
+		}
+	}
+
+	async submitReview(request: {
+		pullRequestId: string;
+		text: string;
+		eventType: string;
+		// used with old servers
+		pullRequestReviewId?: string;
+	}) {
+		if (!request.eventType) {
+			request.eventType = "COMMENT";
+		}
+		if (
+			request.eventType !== "COMMENT" &&
+			request.eventType !== "APPROVE" &&
+			// for some reason I cannot get DISMISS to work...
+			// request.eventType !== "DISMISS" &&
+			request.eventType !== "REQUEST_CHANGES"
+		) {
+			throw new Error("Invalid eventType");
+		}
+
+		let response;
+		const v = await this.getVersion();
+		if (v && semver.lt(v, "2.20.0")) {
+			const existingReview = await this.getPendingReview(request);
+			if (!existingReview) {
+				const result = await this.addPullRequestReview(request);
+				request.pullRequestReviewId = result?.addPullRequestReview?.pullRequestReview?.id;
+			} else {
+				request.pullRequestReviewId = existingReview.pullRequestReviewId;
+			}
+			const query = `mutation SubmitPullRequestReview($pullRequestReviewId:ID!, $body:String) {
+			submitPullRequestReview(input: {event: ${request.eventType}, body: $body, pullRequestReviewId: $pullRequestReviewId}){
+			  clientMutationId
+			}
+		  }
+		  `;
+			response = await this.mutate<any>(query, {
+				pullRequestReviewId: request.pullRequestReviewId,
+				body: request.text
+			});
+		} else {
+			response = super.submitReview(request);
+		}
+
+		return response;
 	}
 }
 

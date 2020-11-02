@@ -416,7 +416,7 @@ export interface FetchThirdPartyPullRequestPullRequest {
 	};
 	number: number;
 	state: string;
-	isDraft: boolean;
+	isDraft?: boolean;
 	reviewRequests: {
 		nodes: {
 			requestedReviewer: {
@@ -677,7 +677,7 @@ export interface GetMyPullRequestsResponse {
 	bodyText: string;
 	number: number;
 	state: string;
-	isDraft: boolean;
+	isDraft?: boolean;
 	updatedAt: string;
 	lastEditedAt: string;
 	labels: { nodes: { color: string; description: string; name: string; id: string }[] };

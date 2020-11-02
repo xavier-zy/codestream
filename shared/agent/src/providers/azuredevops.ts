@@ -83,6 +83,9 @@ export class AzureDevOpsProvider extends ThirdPartyIssueProviderBase<CSAzureDevO
 					singleAssignee: true
 				};
 			});
+			boards.sort((a, b) => {
+				return a.name.localeCompare(b.name);
+			});
 		} catch (err) {
 			Logger.error(err);
 			debugger;
@@ -109,7 +112,6 @@ export class AzureDevOpsProvider extends ThirdPartyIssueProviderBase<CSAzureDevO
 				{ query: wiql },
 				{ "Content-Type": "application/json" }
 			)) as { body: { workItems: AzureDevOpsWorkItem[] } };
-			Logger.debug("GOT A RESPONSE OF : ", JSON.stringify(body, null, 4));
 			if (body && body.workItems) {
 				const ids = body.workItems.map(workItem => workItem.id);
 				const response = (await this.get(
@@ -120,7 +122,6 @@ export class AzureDevOpsProvider extends ThirdPartyIssueProviderBase<CSAzureDevO
 				)) as { body: { count: number, value: AzureDevOpsWorkItem[] } };
 				if (response.body && response.body.value) {
 					cards = response.body.value.map(workItem => {
-						Logger.debug("AZURE ITEM: ", JSON.stringify(workItem, null, 4));
 						return {
 							id: workItem.id.toString(),
 							tokenId: workItem.id.toString(),
@@ -224,6 +225,9 @@ export class AzureDevOpsProvider extends ThirdPartyIssueProviderBase<CSAzureDevO
 			Logger.error(ex);
 			debugger;
 		}
+		users.sort((a, b) => {
+			return a.displayName.localeCompare(b.displayName);
+		});
 		return { users };
 	}
 

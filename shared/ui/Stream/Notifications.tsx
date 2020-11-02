@@ -60,8 +60,8 @@ export const Notifications = props => {
 					)}
 					<p className="explainer">
 						{derivedState.hasDesktopNotifications
-							? "Follow codemarks and reviews to receive desktop and email notifications."
-							: "Follow codemarks and reviews to receive email notifications."}
+							? "Follow codemarks and feedback requests to receive desktop and email notifications."
+							: "Follow codemarks and feedback requests to receive email notifications."}
 					</p>
 					<div id="controls">
 						<RadioGroup
@@ -70,12 +70,12 @@ export const Notifications = props => {
 							onChange={handleChange}
 							loading={loading}
 						>
-							<Radio value="all">Automatically follow all new codemarks and reviews</Radio>
+							<Radio value="all">Automatically follow all new codemarks and feedback requests</Radio>
 							<Radio value="involveMe">
-								Follow codemarks and reviews I have created, I have been mentioned in, or I have
+								Follow codemarks and feedback requests I have created, I have been mentioned in, or I have
 								replied to
 							</Radio>
-							<Radio value="off">Don't automatically follow any codemarks or reviews</Radio>
+							<Radio value="off">Don't automatically follow any codemarks or feedback requests</Radio>
 						</RadioGroup>
 						{derivedState.hasDesktopNotifications && derivedState.notificationDeliverySupported && (
 							<div style={{ marginTop: "20px" }}>

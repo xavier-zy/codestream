@@ -28,7 +28,7 @@ class NewCodemarkGutterIconManager(val editor: Editor) : EditorMouseMotionListen
 
     override fun mouseMoved(e: EditorMouseEvent) {
         if (e.area == EditorMouseEventArea.LINE_MARKERS_AREA) {
-            val line = editor.yToVisualLine(e.mouseEvent.point.y)
+            val line = editor.xyToLogicalPosition(e.mouseEvent.point).line
             if (line != lastHighlightedLine && !editor.selectionModel.hasSelection() && line < editor.document.lineCount) {
                 disableCurrentRenderer()
                 enableRenderer(line)

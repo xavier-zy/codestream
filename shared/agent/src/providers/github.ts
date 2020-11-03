@@ -136,6 +136,15 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 		return `${this.baseUrl}/graphql`;
 	}
 
+	/**
+	 * The version of the GitHub api... note this is only set for enterprise
+	 *
+	 * @protected
+	 * @type {(string | undefined)}
+	 * @memberof GitHubProvider
+	 */
+	protected _version: string | undefined;
+
 	protected _client: GraphQLClient | undefined;
 	protected async client(): Promise<GraphQLClient> {
 		if (this._client === undefined) {
@@ -152,12 +161,15 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 			Authorization: `Bearer ${this.accessToken}`,
 			Accept: "application/vnd.github.merge-info-preview+json"
 		});
+
 		return this._client;
 	}
 
 	async onConnected() {
 		this._knownRepos = new Map<string, GitHubRepo>();
 	}
+
+	async ensureInitialized() {}
 
 	_queryLogger: {
 		restApi: {
@@ -173,48 +185,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 		restApi: { fns: {} }
 	};
 
-	private _version: string | undefined;
-	protected async getVersion(): Promise<string> {
-		try {
-			if (this._version == null) {
-				const response = await this.get<{ installed_version: string }>("/meta");
-				this._version = response.body.installed_version;
-				Logger.log(
-					`${this.providerConfig.name} - ${this.providerConfig.id} version=${this._version}`
-				);
-			}
-
-			return this._version;
-		} catch (ex) {
-			Logger.error(ex);
-			return "0.0.0";
-		}
-	}
-
 	async query<T = any>(query: string, variables: any = undefined) {
-		const v = await this.getVersion();
-
-		query = query.replace(
-			/\[([\s\S]+?)\:([>=<]+)(\d+\.\d+\.\d+)\]/g,
-			(substring: string, ...args: any[]) => {
-				if (v) {
-					const comparer = args[1];
-					if (comparer === "<") {
-						return semver.lt(v, args[2]) ? args[0] : "";
-					} else if (comparer === ">") {
-						return semver.gt(v, args[2]) ? args[0] : "";
-					} else if (comparer === ">=") {
-						return semver.gte(v, args[2]) ? args[0] : "";
-					} else if (comparer === "<=") {
-						return semver.lte(v, args[2]) ? args[0] : "";
-					} else {
-						return "";
-					}
-				}
-				return args[0];
-			}
-		);
-
 		const response = await (await this.client()).request<any>(query, variables);
 
 		try {
@@ -1634,6 +1605,39 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 	// 	return true;
 	// }
 
+	/**
+	 * Returns a string only if it satisfies the current version (GHE only)
+	 *
+	 * @param {string} query
+	 * @return {*}  {string}
+	 * @memberof GitHubProvider
+	 */
+	_transform(query: string): string {
+		if (!query) return "";
+		const v = this._version;
+		query = query.replace(
+			/\[([\s\S]+?)\:([>=<]+)(\d+\.\d+\.\d+)\]/g,
+			(substring: string, ...args: any[]) => {
+				if (v) {
+					const comparer = args[1];
+					if (comparer === "<") {
+						return semver.lt(v, args[2]) ? args[0] : "";
+					} else if (comparer === ">") {
+						return semver.gt(v, args[2]) ? args[0] : "";
+					} else if (comparer === ">=") {
+						return semver.gte(v, args[2]) ? args[0] : "";
+					} else if (comparer === "<=") {
+						return semver.lte(v, args[2]) ? args[0] : "";
+					} else {
+						return "";
+					}
+				}
+				return args[0];
+			}
+		);
+		return query;
+	}
+
 	// _getMyPullRequestsCache = new Map<string, GetMyPullRequestsResponse[][]>();
 	async getMyPullRequests(
 		request: GetMyPullRequestsRequest
@@ -1721,15 +1725,15 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 						nameWithOwner
 					}
 					author {
-					  login
-					  avatarUrl(size: 20)
-					  url
+						login
+						avatarUrl(size: 20)
+						url
 					}
 					body
 					bodyText
 					number
 					state
-					[isDraft:>=2.21.0]
+					${this._transform(`[isDraft:>=2.21.0]`)}
 					updatedAt
 					lastEditedAt
 					id
@@ -1739,12 +1743,12 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 					}
 					labels(first: 10) {
 						nodes {
-						  color
-						  description
-						  name
-						  id
+							color
+							description
+							name
+							id
 						}
-					  }
+					}
 				  }
 			  }
 			}
@@ -2216,9 +2220,8 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 	}) {
 		// https://github.community/t/feature-commit-comments-for-a-pull-request/13986/9
 		const ownerData = await this.getRepoOwnerFromPullRequestId(request.pullRequestId);
-		const v = await this.getVersion();
 		let payload;
-		if (v && semver.lt(v, "2.20.0")) {
+		if (this._version && semver.lt(this._version, "2.20.0")) {
 			// old servers dont have line/start_line
 			// https://docs.github.com/en/enterprise-server@2.19/rest/reference/pulls#create-a-review-comment-for-a-pull-request-alternative
 			payload = {
@@ -2622,13 +2625,13 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 			// 	`... on ConnectedEvent {
 			// 	__typename
 			//   }`,
-			`[... on ConvertToDraftEvent {
+			this._transform(`[... on ConvertToDraftEvent {
 				__typename
 				actor {
 				  login
 				  avatarUrl
 				}
-			  }:>2.20.0]`,
+			  }:>2.20.0]`),
 			// 	`... on ConvertedNoteToIssueEvent {
 			// 	__typename
 			// 	id
@@ -3118,10 +3121,12 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 					createdAt
 					activeLockReason
 					includesCreatedEdit
+					${this._transform(`
 					[isDraft:>2.20.0]
+					[reviewDecision:>2.20.0]
+					`)}
 					locked
 					resourcePath
-					[reviewDecision:>2.20.0]
 					viewerSubscription
 					viewerDidAuthor
 					viewerCanUpdate

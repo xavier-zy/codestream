@@ -530,6 +530,11 @@ export class ThirdPartyProviderRegistry {
 			} catch (err) {
 				Logger.error(err, `ensureConnected failed for ${request.providerId}`);
 			}
+			try {
+				await provider.ensureInitialized();
+			} catch (err) {
+				Logger.error(err, `ensureInitialized failed for ${request.providerId}`);
+			}
 			const response = (provider as any)[request.method](request.params);
 			result = await response;
 		} catch (ex) {

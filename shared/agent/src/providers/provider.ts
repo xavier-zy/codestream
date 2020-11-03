@@ -156,6 +156,14 @@ export interface ThirdPartyProvider {
 	getConfig(): ThirdPartyProviderConfig;
 	isConnected(me: CSMe): boolean;
 	ensureConnected(request?: { providerTeamId?: string }): Promise<void>;
+
+	/**
+	 * Do any kind of pre-fetching work, like getting an API version number
+	 *
+	 * @return {*}  {Promise<void>}
+	 * @memberof ThirdPartyProvider
+	 */
+	ensureInitialized(): Promise<void>;
 }
 
 export interface ThirdPartyIssueProvider extends ThirdPartyProvider {
@@ -212,6 +220,8 @@ export abstract class ThirdPartyProviderBase<
 			});
 		}
 	}
+
+	async ensureInitialized() {}
 
 	abstract get displayName(): string;
 	abstract get name(): string;

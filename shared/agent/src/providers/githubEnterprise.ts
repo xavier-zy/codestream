@@ -50,6 +50,26 @@ export class GitHubEnterpriseProvider extends GitHubProvider {
 		return `${this.baseUrl.replace(`/${GitHubEnterpriseProvider.ApiVersionString}`, "")}/graphql`;
 	}
 
+	async ensureInitialized() {
+		await this.getVersion();
+	}
+
+	protected async getVersion(): Promise<string> {
+		try {
+			if (this._version == null) {
+				const response = await this.get<{ installed_version: string }>("/meta");
+				this._version = response.body.installed_version;
+				Logger.log(
+					`${this.providerConfig.name} - ${this.providerConfig.id} version=${this._version}`
+				);
+			}
+		} catch (ex) {
+			Logger.error(ex);
+			this._version = "0.0.0";
+		}
+		return this._version;
+	}
+
 	getIsMatchingRemotePredicate() {
 		const baseUrl = this._providerInfo?.data?.baseUrl || this.getConfig().host;
 		const configDomain = baseUrl ? URI.parse(baseUrl).authority : "";

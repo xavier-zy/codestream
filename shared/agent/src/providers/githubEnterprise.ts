@@ -8,6 +8,7 @@ import { Logger } from "../logger";
 import { EnterpriseConfigurationData } from "../protocol/agent.protocol.providers";
 import { log, lspProvider } from "../system";
 import { GitHubProvider } from "./github";
+import { Container } from "../container";
 import {
 	ProviderCreatePullRequestRequest,
 	ProviderCreatePullRequestResponse,
@@ -60,8 +61,14 @@ export class GitHubEnterpriseProvider extends GitHubProvider {
 				const response = await this.get<{ installed_version: string }>("/meta");
 				this._version = response.body.installed_version;
 				Logger.log(
-					`${this.providerConfig.name} - ${this.providerConfig.id} version=${this._version}`
+					`GitHubEnterprise getVersion - ${this.providerConfig.id} version=${this._version}`
 				);
+				Container.instance().errorReporter.reportBreadcrumb({
+					message: `GitHubEnterprise getVersion`,
+					data: {
+						version: this._version
+					}
+				});
 			}
 		} catch (ex) {
 			Logger.error(ex);

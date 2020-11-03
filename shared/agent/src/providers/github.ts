@@ -6,7 +6,7 @@ import * as paths from "path";
 import * as qs from "querystring";
 import { CodeStreamSession } from "session";
 import { URI } from "vscode-uri";
-import { Container, SessionContainer } from "../container";
+import { SessionContainer } from "../container";
 import { Logger, TraceLevel } from "../logger";
 import {
 	CreateThirdPartyCardRequest,
@@ -40,12 +40,7 @@ import {
 } from "../protocol/agent.protocol";
 
 import semver from "semver";
-import {
-	CodemarkType,
-	CSGitHubProviderInfo,
-	CSReferenceLocation,
-	CSRepository
-} from "../protocol/api.protocol";
+import { CSGitHubProviderInfo, CSRepository } from "../protocol/api.protocol";
 import { Arrays, Functions, log, lspProvider, Strings } from "../system";
 import {
 	getOpenedRepos,
@@ -60,7 +55,6 @@ import {
 	ThirdPartyProviderSupportsIssues,
 	ThirdPartyProviderSupportsPullRequests
 } from "./provider";
-import { GitHubEnterpriseProvider } from "./registry";
 
 interface GitHubRepo {
 	id: string;
@@ -185,7 +179,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 		restApi: { fns: {} }
 	};
 
-	async query<T = any>(query: string, variables: any = undefined) {
+	async query(query: string, variables: any = undefined) {
 		const response = await (await this.client()).request<any>(query, variables);
 
 		try {
@@ -1913,7 +1907,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 		// const issue = issueInfo.repository.issue;
 		// issue.viewer = issueInfo.viewer;
 		// translate to our card shape
-		const { repository, viewer } = issueInfo;
+		const { repository } = issueInfo;
 		const { issue } = repository;
 		const card = {
 			id: issue.id,
@@ -1996,9 +1990,6 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 				}
 			  }`;
 
-		const response = await this.mutate<any>(query, {
-			pullRequestId: request.pullRequestId
-		});
 		return true;
 	}
 
@@ -2300,10 +2291,6 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 				}
 			  }`;
 
-		const response = await this.mutate<any>(query, {
-			subjectId: request.pullRequestId,
-			body: request.text
-		});
 		return true;
 	}
 

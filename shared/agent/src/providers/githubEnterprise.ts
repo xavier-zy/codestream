@@ -208,8 +208,9 @@ export class GitHubEnterpriseProvider extends GitHubProvider {
 			return this._atMe!;
 		} catch (ex) {
 			Logger.error(ex);
-			return super.getMe();
 		}
+		this._atMe = await super.getMe();
+		return this._atMe;
 	}
 
 	protected async client(): Promise<GraphQLClient> {

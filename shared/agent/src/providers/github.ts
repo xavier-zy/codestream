@@ -1989,6 +1989,9 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 				  clientMutationId
 				}
 			  }`;
+		const response = await this.mutate<any>(query, {
+			pullRequestId: request.pullRequestId
+		});
 
 		return true;
 	}
@@ -2290,6 +2293,11 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 				  clientMutationId
 				}
 			  }`;
+
+		const response = await this.mutate<any>(query, {
+				subjectId: request.pullRequestId,
+				body: request.text
+		});
 
 		return true;
 	}

@@ -668,6 +668,7 @@ export default connect(
 		setCurrentReview,
 		setCurrentPullRequest,
 		setCurrentStream,
+		setCurrentCodemark,
 		editCodemark,
 		setNewPostEntry
 	}

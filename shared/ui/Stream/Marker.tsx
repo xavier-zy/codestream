@@ -39,27 +39,12 @@ const Tabs = styled.div`
 	display: flex;
 	align-items: flex-end;
 	width: 100%;
-	margin-bottom: -6px;
+	margin-bottom: -5px;
 	z-index: 50;
 	margin-top: 5px;
 	${Gear} {
 		padding-bottom: 5px;
 	}
-`;
-
-const Tab = styled.div<{ selected?: boolean }>`
-	border: ${props =>
-		props.selected ? "1px solid var(--base-border-color)" : "1px solid transparent"};
-	color: ${props => (props.selected ? "var(--text-color-highlight)" : "var(--text-color-subtle)")};
-	background: ${props => (props.selected ? "rgba(0, 0, 0, 0.1)" : "none")};
-	border-bottom: ${props =>
-		props.selected ? "1px solid transparent" : "1px solid var(--base-border-color)"};
-	padding: 5px 10px;
-	&:hover {
-		color: var(--text-color-highlight);
-	}
-	z-index: 50;
-	cursor: pointer;
 `;
 
 const Root = styled.div<{ hasDiff?: boolean }>`
@@ -69,9 +54,43 @@ const Root = styled.div<{ hasDiff?: boolean }>`
 		border-top: ${props =>
 			props.hasDiff ? "none !important" : "1px solid var(--base-border-color)"};
 	}
-	&:hover pre.code {
-		background: rgba(0, 0, 0, 0.2);
+	.outline-code {
+		background: var(--base-background-color);
+		.vscode-dark & {
+			background: rgba(0, 0, 0, 0.1);
+		}
 	}
+	&:hover pre.code,
+	&:hover .outline-code {
+		background: rgba(0, 0, 0, 0.05) !important;
+		.vscode-dark & {
+			background: rgba(0, 0, 0, 0.2) !important;
+		}
+	}
+`;
+
+const Tab = styled.div<{ selected?: boolean }>`
+	border: ${props =>
+		props.selected ? "1px solid var(--base-border-color)" : "1px solid transparent"};
+	color: ${props => (props.selected ? "var(--text-color-highlight)" : "var(--text-color-subtle)")};
+	background: ${props => (props.selected ? "var(--base-background-color)" : "none")};
+	${Root}:hover & {
+		background: ${props => (props.selected ? "rgba(0, 0, 0, 0.05)" : "none")};
+	}
+	.vscode-dark & {
+		background: ${props => (props.selected ? "rgba(0, 0, 0, 0.1)" : "none")};
+	}
+	.vscode-dark ${Root}:hover & {
+		background: ${props => (props.selected ? "rgba(0, 0, 0, 0.2)" : "none")};
+	}
+	border-bottom: ${props =>
+		props.selected ? "1px solid transparent" : "1px solid var(--base-border-color)"};
+	padding: 5px 10px;
+	&:hover {
+		color: var(--text-color-highlight);
+	}
+	z-index: 50;
+	cursor: pointer;
 `;
 
 interface Props {
@@ -236,7 +255,7 @@ function Marker(props: Props) {
 			)}
 			{tab === "diff" && (
 				<PRDiffHunk style={{ marginTop: "5px", borderRadius: 0, borderTop: "none" }}>
-					<div style={{ background: "rgba(0, 0, 0, 0.1)" }}>
+					<div className="outline-code">
 						<PullRequestPatch patch={props.diff} hunks={[]} filename={marker.file} noHeader />
 					</div>
 				</PRDiffHunk>

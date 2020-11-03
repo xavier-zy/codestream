@@ -45,7 +45,7 @@ import {
 	UpdateCodemarkRequestType,
 	UpdateCodemarkResponse
 } from "../protocol/agent.protocol";
-import { CSCodemark } from "../protocol/api.protocol";
+import { CSCodemark, CSMarker } from "../protocol/api.protocol";
 import { log, lsp, lspHandler, Strings } from "../system";
 import { CachedEntityManagerBase, Id } from "./entityManager";
 
@@ -252,18 +252,43 @@ export class CodemarksManager extends CachedEntityManagerBase<CSCodemark> {
 	async enrichCodemark(codemark: CSCodemark): Promise<CodemarkPlus> {
 		const { markers: markersManager } = SessionContainer.instance();
 
-		const markers = [];
+		const markerObjects: { [key: string]: CSMarker } = {};
+		const markers: CSMarker[] = [];
+		const markersInOrder: CSMarker[] = [];
 		if (codemark.markerIds != null && codemark.markerIds.length !== 0) {
 			for (const markerId of codemark.markerIds) {
 				try {
-					const marker = await markersManager.getById(markerId);
-					if (marker.supersededByMarkerId == null) {
-						markers.push(marker);
-					}
+					markerObjects[markerId] = await markersManager.getById(markerId);
+					markersInOrder.push(markerObjects[markerId]);
 				} catch (err) {
 					// https://trello.com/c/ti6neIz1/2969-activity-feed-loads-forever-if-restart-jb-while-on-the-feed
 					Logger.warn(err.message);
 				}
+			}
+
+			const addMarkerAfterCheckingForSuperseded = (marker: CSMarker) => {
+				if (marker.supersededByMarkerId) {
+					// check to see if the marker has been superseded by another.
+					// if so, grab it from the markerObjects and push it at the location
+					// of the "retired" marker, then delete it from the hash so that
+					// it doesn't get inserted at its original location
+					const supersededMarker = markerObjects[marker.supersededByMarkerId];
+					if (supersededMarker) {
+						addMarkerAfterCheckingForSuperseded(supersededMarker);
+						delete markerObjects[marker.supersededByMarkerId];
+					}
+					// if there's no supersededMarker in markerObjects, that's kind of
+					// an error condition -- the ID is pointing to a marker that for
+					// whatever reason doesn't exist, so we do nothing in this case.
+				} else {
+					// if there's no supersededMarkerId, then it's just a regular
+					// marker and add it to the array in the normal position
+					markers.push(marker);
+				}
+			};
+
+			for (const markerId of codemark.markerIds) {
+				if (markerObjects[markerId]) addMarkerAfterCheckingForSuperseded(markerObjects[markerId]);
 			}
 		}
 

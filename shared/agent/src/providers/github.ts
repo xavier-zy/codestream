@@ -1729,7 +1729,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 					bodyText
 					number
 					state
-					[isDraft:>=2.20.0]
+					[isDraft:>=2.21.0]
 					updatedAt
 					lastEditedAt
 					id
@@ -2206,6 +2206,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 		let payload;
 		if (v && semver.lt(v, "2.20.0")) {
 			// old servers dont have line/start_line
+			// https://docs.github.com/en/enterprise-server@2.19/rest/reference/pulls#create-a-review-comment-for-a-pull-request-alternative
 			payload = {
 				body: request.text,
 				commit_id: request.sha,
@@ -2213,6 +2214,8 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 				position: request.position!
 			} as any;
 		} else {
+			// enterprise 2.20.X and beyon allows this
+			// https://docs.github.com/en/enterprise-server@2.20/rest/reference/pulls#create-a-review-comment-for-a-pull-request
 			payload = {
 				body: request.text,
 				commit_id: request.sha,
@@ -2226,7 +2229,6 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 				payload.line = request.startLine;
 			}
 		}
-
 		const data = await this.restPost<any, any>(
 			`/repos/${ownerData.owner}/${ownerData.name}/pulls/${ownerData.pullRequestNumber}/comments`,
 			payload
@@ -2612,7 +2614,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 				  login
 				  avatarUrl
 				}
-			  }:>=2.20.0]`,
+			  }:>2.20.0]`,
 			// 	`... on ConvertedNoteToIssueEvent {
 			// 	__typename
 			// 	id
@@ -3102,10 +3104,10 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 					createdAt
 					activeLockReason
 					includesCreatedEdit
-					[isDraft:>=2.20.0]
+					[isDraft:>2.20.0]
 					locked
 					resourcePath
-					[reviewDecision:>=2.20.0]
+					[reviewDecision:>2.20.0]
 					viewerSubscription
 					viewerDidAuthor
 					viewerCanUpdate

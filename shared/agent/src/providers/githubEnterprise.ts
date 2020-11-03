@@ -1,6 +1,8 @@
 "use strict";
 
 import { GitRemoteLike } from "git/gitService";
+import { GraphQLClient } from "graphql-request";
+import semver from "semver";
 import { URI } from "vscode-uri";
 import { Logger } from "../logger";
 import { EnterpriseConfigurationData } from "../protocol/agent.protocol.providers";
@@ -12,8 +14,6 @@ import {
 	ProviderGetRepoInfoResponse,
 	ProviderPullRequestInfo
 } from "./provider";
-import semver from "semver";
-import { GraphQLClient } from "graphql-request";
 
 @lspProvider("github_enterprise")
 export class GitHubEnterpriseProvider extends GitHubProvider {
@@ -203,7 +203,7 @@ export class GitHubEnterpriseProvider extends GitHubProvider {
 	async query<T = any>(query: string, variables: any = undefined) {
 		const v = await this.getVersion();
 		// we know that in version 2.19.6, @me doesn't work
-		if (v && semver.lt(v, "2.20.0") && query.indexOf("@me") > -1) {
+		if (v && semver.lt(v, "2.21.0") && query.indexOf("@me") > -1) {
 			query = query.replace(/@me/g, await this.getMe());
 		}
 		return super.query<T>(query, variables);
@@ -217,7 +217,9 @@ export class GitHubEnterpriseProvider extends GitHubProvider {
 		position?: number;
 	}) {
 		const v = await this.getVersion();
-		if (v && semver.lt(v, "2.20.0")) {
+		if (v && semver.lt(v, "2.21.0")) {
+			// https://docs.github.com/en/enterprise-server@2.19/graphql/reference/input-objects#addpullrequestreviewcommentinput
+			// https://docs.github.com/en/enterprise-server@2.20/graphql/reference/input-objects#addpullrequestreviewcommentinput
 			let query;
 			if (request.pullRequestReviewId) {
 				query = `mutation AddPullRequestReviewComment($text:String!, $pullRequestId:ID!, $pullRequestReviewId:ID!, $filePath:String, $position:Int) {
@@ -270,7 +272,9 @@ export class GitHubEnterpriseProvider extends GitHubProvider {
 
 		let response;
 		const v = await this.getVersion();
-		if (v && semver.lt(v, "2.20.0")) {
+		if (v && semver.lt(v, "2.21.0")) {
+			// https://docs.github.com/en/enterprise-server@2.19/graphql/reference/input-objects#submitpullrequestreviewinput
+			// https://docs.github.com/en/enterprise-server@2.20/graphql/reference/input-objects#submitpullrequestreviewinput
 			const existingReview = await this.getPendingReview(request);
 			if (!existingReview) {
 				const result = await this.addPullRequestReview(request);
@@ -289,6 +293,7 @@ export class GitHubEnterpriseProvider extends GitHubProvider {
 				body: request.text
 			});
 		} else {
+			// > 2.21.X works as the latest
 			response = super.submitReview(request);
 		}
 

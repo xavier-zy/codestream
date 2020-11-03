@@ -2295,8 +2295,8 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 			  }`;
 
 		const response = await this.mutate<any>(query, {
-				subjectId: request.pullRequestId,
-				body: request.text
+			subjectId: request.pullRequestId,
+			body: request.text
 		});
 
 		return true;
@@ -3497,7 +3497,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 		// TODO: Need to page if there are more than 100 review threads
 		try {
 			const query = `query pr($owner:String!, $repo:String!) {
-				repository(name: $repo, owner: $owner${cursor ? `after: $cursor` : ""}) {
+				repository(name: $repo, owner: $owner${cursor ? `, after: $cursor` : ""}) {
 					pullRequests(states: [OPEN, MERGED], first: 100, orderBy: { field: UPDATED_AT, direction: DESC }) {
 						totalCount
 						pageInfo {

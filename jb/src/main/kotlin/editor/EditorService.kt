@@ -52,6 +52,7 @@ import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.KeyWithDefaultValue
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import kotlinx.coroutines.CompletableDeferred
@@ -70,6 +71,8 @@ import org.eclipse.lsp4j.TextDocumentSyncKind
 import org.eclipse.lsp4j.VersionedTextDocumentIdentifier
 import java.io.File
 import java.net.URI
+
+val CODESTREAM_HIGHLIGHTER = KeyWithDefaultValue.create("CODESTREAM_HIGHLIGHTER", false)
 
 class EditorService(val project: Project) {
 
@@ -97,6 +100,7 @@ class EditorService(val project: Project) {
         rangeHighlighters[editor] = mutableSetOf()
         editor.selectionModel.addSelectionListener(SelectionListenerImpl(project))
         editor.scrollingModel.addVisibleAreaListener(VisibleAreaListenerImpl(project))
+        NewCodemarkGutterIconManager(editor)
 
         val document = editor.document
         agentService.onDidStart {
@@ -355,6 +359,7 @@ class EditorService(val project: Project) {
                 it.isThinErrorStripeMark = true
                 it.errorStripeMarkColor = marker.codemark?.color() ?: blue
                 it.errorStripeTooltip = marker.summary
+                it.putUserData(CODESTREAM_HIGHLIGHTER, true)
             }
         }
     }

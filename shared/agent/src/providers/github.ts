@@ -1242,6 +1242,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 			// 	isDraft: request.isDraft
 			// });
 			// return response;
+			return undefined;
 		}
 	}
 

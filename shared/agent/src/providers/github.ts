@@ -179,7 +179,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 		restApi: { fns: {} }
 	};
 
-	async query(query: string, variables: any = undefined) {
+	async query<T = any>(query: string, variables: any = undefined) {
 		const response = await (await this.client()).request<any>(query, variables);
 
 		try {

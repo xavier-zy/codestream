@@ -935,8 +935,12 @@ export class PostsManager extends EntityManagerBase<CSPost> {
 			const startingHunk = diff.hunks.find(
 				_ => startLine >= _.newStart && startLine <= _.newStart + _.newLines
 			);
-			const endingHunk = diff.hunks.find(_ => endLine <= _.newStart + _.newLines);
-			if (!startingHunk || !endingHunk) {
+			const endingHunk = diff.hunks.find(
+				_ => endLine >= _.newStart && endLine <= _.newStart + _.newLines
+			);
+
+			// only fall in here if we don't have a start OR we dont have both
+			if (!startingHunk || (!startingHunk && !endingHunk)) {
 				// if we couldn't find a hunk, we're going to go down the path of using
 				// a "code fence" aka ``` for showing the code comment
 				Logger.warn(
@@ -1024,17 +1028,28 @@ export class PostsManager extends EntityManagerBase<CSPost> {
 				let lineWithMetadata;
 				if (startLine === endLine) {
 					// is a single line if startLine === endLine
+					// we don't care about the endHunk here (though it will === startingHunk)
 					offset = startLine - startingHunk.newStart;
 					lineWithMetadata = (startingHunk as any).linesWithMetadata.find(
 						(b: any) => b.index === offset
 					);
 				} else {
-					// it is a range
-					offset = endLine - endingHunk.newStart;
-					lineWithMetadata = (endingHunk as any).linesWithMetadata.find(
-						(b: any) => b.index === offset
-					);
+					if (endingHunk && startingHunk === endingHunk) {
+						// it is a range within the same hunk
+						offset = endLine - endingHunk.newStart;
+						lineWithMetadata = (endingHunk as any).linesWithMetadata.find(
+							(b: any) => b.index === offset
+						);
+					} else {
+						// couldn't get an end hunk. since we can't create comments
+						// across hunks, use the starting hunk
+						offset = startLine - startingHunk.newStart;
+						lineWithMetadata = (startingHunk as any).linesWithMetadata.find(
+							(b: any) => b.index === offset
+						);
+					}
 				}
+
 				if (lineWithMetadata) {
 					result = await providerRegistry.executeMethod({
 						method: "createPullRequestReviewComment",
@@ -1051,6 +1066,13 @@ export class PostsManager extends EntityManagerBase<CSPost> {
 					throw new Error("Failed to create review comment");
 				}
 			} else {
+				let calculatedEndLine;
+				const startingHunkEnd = startingHunk.newStart + startingHunk.newLines;
+				if (endLine >= startingHunkEnd) {
+					calculatedEndLine = startingHunkEnd - 1;
+				} else {
+					calculatedEndLine = endingHunk ? endLine : undefined;
+				}
 				// is a single comment against a commit
 				result = await providerRegistry.executeMethod({
 					method: "createCommitComment",
@@ -1061,7 +1083,7 @@ export class PostsManager extends EntityManagerBase<CSPost> {
 						text: request.attributes.text || "",
 						path: parsedUri.path,
 						startLine: startLine,
-						endLine: endingHunk ? endLine : undefined
+						endLine: calculatedEndLine
 					}
 				});
 			}

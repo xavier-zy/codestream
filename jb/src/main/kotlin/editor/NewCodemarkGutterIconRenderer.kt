@@ -37,37 +37,39 @@ class NewCodemarkGutterIconRenderer(val editor: Editor, var line: Int, val onSta
     }
 
     override fun getClickAction(): AnAction {
-        return object : DumbAwareAction() {
-            override fun actionPerformed(e: AnActionEvent) {
-                ApplicationManager.getApplication().invokeLater {
-                    val project = editor.project
-                    if (!editor.selectionModel.hasSelection()) {
-                        val startOffset = editor.document.getLineStartOffset(line)
-                        val endOffset = editor.document.getLineEndOffset(line)
-                        editor.selectionModel.setSelection(startOffset, endOffset)
-                    }
-                    project?.codeStream?.show {
-                        project.webViewService?.postNotification(
-                            CodemarkNotifications.New(
-                                editor.document.uri,
-                                editor.selectionOrCurrentLine,
-                                CodemarkType.COMMENT,
-                                "Gutter"
-                            )
-                        )
-                    }
-                }
-            }
-        }
+        return NewCodemarkGutterIconRendererClickAction(editor, line)
     }
 
     override fun getDraggableObject(): GutterDraggableObject {
         onStartDrag()
-        return NewCodemarkGuterIconDraggableObject(editor, this.line, onStopDrag)
+        return NewCodemarkGutterIconRendererDraggableObject(editor, this.line, onStopDrag)
     }
 }
 
-class NewCodemarkGuterIconDraggableObject(private val editor: Editor, private val originalLine: Int, private val onStopDrag: () -> Unit) : GutterDraggableObject {
+class NewCodemarkGutterIconRendererClickAction(val editor: Editor, val line: Int) : DumbAwareAction() {
+    override fun actionPerformed(e: AnActionEvent) {
+        ApplicationManager.getApplication().invokeLater {
+            val project = editor.project
+            if (!editor.selectionModel.hasSelection()) {
+                val startOffset = editor.document.getLineStartOffset(line)
+                val endOffset = editor.document.getLineEndOffset(line)
+                editor.selectionModel.setSelection(startOffset, endOffset)
+            }
+            project?.codeStream?.show {
+                project.webViewService?.postNotification(
+                    CodemarkNotifications.New(
+                        editor.document.uri,
+                        editor.selectionOrCurrentLine,
+                        CodemarkType.COMMENT,
+                        "Gutter"
+                    )
+                )
+            }
+        }
+    }
+}
+
+class NewCodemarkGutterIconRendererDraggableObject(private val editor: Editor, private val originalLine: Int, private val onStopDrag: () -> Unit) : GutterDraggableObject {
 
     override fun copy(line: Int, file: VirtualFile?, actionId: Int): Boolean {
         val project = editor.project
@@ -90,12 +92,10 @@ class NewCodemarkGuterIconDraggableObject(private val editor: Editor, private va
     override fun getCursor(line: Int, actionId: Int): Cursor {
         ApplicationManager.getApplication().invokeLater {
             if (line < originalLine) {
-                println("$originalLine -> $line -  backwards")
                 val startOffset = editor.document.getLineStartOffset(line)
                 val endOffset = editor.document.getLineEndOffset(originalLine)
                 editor.selectionModel.setSelection(startOffset, endOffset)
             } else {
-                println("$originalLine -> $line -  forward")
                 val startOffset = editor.document.getLineStartOffset(originalLine)
                 val endOffset = editor.document.getLineEndOffset(line)
                 editor.selectionModel.setSelection(startOffset, endOffset)

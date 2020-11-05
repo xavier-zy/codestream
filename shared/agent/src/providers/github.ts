@@ -2996,6 +2996,14 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 			  login
 			  avatarUrl
 			}
+			createdAt
+			requestedReviewer {
+				... on User {
+					id
+					login
+					avatarUrl
+				}
+			}
 		  }`,
 			// 	`... on SubscribedEvent {
 			// 	__typename

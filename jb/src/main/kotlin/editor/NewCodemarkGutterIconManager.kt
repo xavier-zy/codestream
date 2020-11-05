@@ -24,7 +24,12 @@ class NewCodemarkGutterIconManager(val editor: Editor) : EditorMouseMotionListen
     private var lastHighlightedLine: Int? = null
     private val lineHighlighters = mutableMapOf<Int, RangeHighlighter>()
     private var isDragging = false
-    private val renderer = NewCodemarkGutterIconRenderer(editor, 1, { isDragging = true }, { isDragging = false })
+    private val renderer = NewCodemarkGutterIconRenderer(
+        editor,
+        1,
+        { disableCurrentRenderer() },
+        { isDragging = true },
+        { isDragging = false })
 
     override fun mouseMoved(e: EditorMouseEvent) {
         if (e.area == EditorMouseEventArea.LINE_MARKERS_AREA) {

@@ -21,7 +21,13 @@ import javax.swing.Icon
 
 val ICON = IconLoader.getIcon("/images/add-comment.svg")
 
-class NewCodemarkGutterIconRenderer(val editor: Editor, var line: Int, val onStartDrag: () -> Unit, val onStopDrag: () -> Unit): GutterIconRenderer() {
+class NewCodemarkGutterIconRenderer(
+    val editor: Editor,
+    var line: Int,
+    val onClick: () -> Unit,
+    val onStartDrag: () -> Unit,
+    val onStopDrag: () -> Unit
+) : GutterIconRenderer() {
 
     override fun getIcon(): Icon {
         return ICON
@@ -37,7 +43,7 @@ class NewCodemarkGutterIconRenderer(val editor: Editor, var line: Int, val onSta
     }
 
     override fun getClickAction(): AnAction {
-        return NewCodemarkGutterIconRendererClickAction(editor, line)
+        return NewCodemarkGutterIconRendererClickAction(editor, line, onClick)
     }
 
     override fun getDraggableObject(): GutterDraggableObject {
@@ -46,7 +52,8 @@ class NewCodemarkGutterIconRenderer(val editor: Editor, var line: Int, val onSta
     }
 }
 
-class NewCodemarkGutterIconRendererClickAction(val editor: Editor, val line: Int) : DumbAwareAction() {
+class NewCodemarkGutterIconRendererClickAction(val editor: Editor, val line: Int, val onClick: () -> Unit) :
+    DumbAwareAction() {
     override fun actionPerformed(e: AnActionEvent) {
         ApplicationManager.getApplication().invokeLater {
             val project = editor.project
@@ -64,12 +71,17 @@ class NewCodemarkGutterIconRendererClickAction(val editor: Editor, val line: Int
                         "Gutter"
                     )
                 )
+                onClick()
             }
         }
     }
 }
 
-class NewCodemarkGutterIconRendererDraggableObject(private val editor: Editor, private val originalLine: Int, private val onStopDrag: () -> Unit) : GutterDraggableObject {
+class NewCodemarkGutterIconRendererDraggableObject(
+    private val editor: Editor,
+    private val originalLine: Int,
+    private val onStopDrag: () -> Unit
+) : GutterDraggableObject {
 
     override fun copy(line: Int, file: VirtualFile?, actionId: Int): Boolean {
         val project = editor.project

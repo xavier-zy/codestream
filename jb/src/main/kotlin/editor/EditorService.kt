@@ -95,6 +95,9 @@ class EditorService(val project: Project) {
     private var codeStreamVisible = project.codeStream?.isVisible ?: false
 
     fun add(editor: Editor) {
+        val reviewFile = editor.document.file as? ReviewDiffVirtualFile
+        if (reviewFile?.side == ReviewDiffSide.LEFT) return
+
         val agentService = project.agentService ?: return
         managedEditors.add(editor)
         rangeHighlighters[editor] = mutableSetOf()

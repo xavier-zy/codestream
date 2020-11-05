@@ -19,7 +19,7 @@ import java.awt.Cursor
 import java.awt.dnd.DragSource
 import javax.swing.Icon
 
-val ICON = IconLoader.getIcon("/images/codestream-color.svg")
+val ICON = IconLoader.getIcon("/images/add-comment.svg")
 
 class NewCodemarkGutterIconRenderer(val editor: Editor, var line: Int, val onStartDrag: () -> Unit, val onStopDrag: () -> Unit): GutterIconRenderer() {
 

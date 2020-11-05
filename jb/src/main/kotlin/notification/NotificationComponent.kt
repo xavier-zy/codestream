@@ -165,10 +165,10 @@ class NotificationComponent(val project: Project) {
         notification.addAction(NotificationAction.createSimple("Open") {
             project.codeStream?.show {
                 project.webViewService?.run {
-                    if (codemark != null) {
+                    if (review != null) {
+                        postNotification(ReviewNotifications.Show(review.id, codemark?.id))
+                    } else if (codemark != null) {
                         postNotification(CodemarkNotifications.Show(codemark.id))
-                    } else if (review != null) {
-                        postNotification(ReviewNotifications.Show(review.id))
                     }
                     notification.expire()
                     telemetry(TelemetryEvent.TOAST_CLICKED, telemetryContent)

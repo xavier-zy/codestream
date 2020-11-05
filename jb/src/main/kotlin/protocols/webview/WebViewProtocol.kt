@@ -59,6 +59,7 @@ object CodemarkNotifications {
 object ReviewNotifications {
     class Show(
         val reviewId: String,
+        val codemarkId: String? = null,
         val sourceUri: String? = null,
         val simulated: Boolean? = null
     ) : WebViewNotification {

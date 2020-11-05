@@ -37,7 +37,7 @@ interface AzureDevOpsWorkItem {
 		"System.ChangedDate": string;
 		"System.Description": string;
 		"System.TeamProject": string;
-	}
+	};
 }
 
 @lspProvider("azuredevops")
@@ -119,7 +119,7 @@ export class AzureDevOpsProvider extends ThirdPartyIssueProviderBase<CSAzureDevO
 						ids: ids.join(","),
 						"api-version": "5.0"
 					})}`
-				)) as { body: { count: number, value: AzureDevOpsWorkItem[] } };
+				)) as { body: { count: number; value: AzureDevOpsWorkItem[] } };
 				if (response.body && response.body.value) {
 					cards = response.body.value.map(workItem => {
 						return {

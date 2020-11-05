@@ -1,4 +1,5 @@
 import { applyPatch, createPatch, parsePatch } from "diff";
+import { GitRemote, GitRepository } from "git/gitService";
 import * as paths from "path";
 import { TextDocument } from "vscode-languageserver-types";
 import { URI } from "vscode-uri";
@@ -7,24 +8,24 @@ import { GitNumStat } from "../git/models/numstat";
 import { Logger } from "../logger";
 import {
 	CodeStreamDiffUriData,
-	FetchForkPointRequestType,
+	CommitAndPushRequest,
+	CommitAndPushRequestType,
+	CommitAndPushResponse,
+	DiffBranchesRequest,
+	DiffBranchesRequestType,
+	DiffBranchesResponse,
 	FetchForkPointRequest,
+	FetchForkPointRequestType,
 	FetchForkPointResponse,
 	GetLatestCommitScmRequest,
 	GetLatestCommitScmRequestType,
 	GetLatestCommitScmResponse,
-	DiffBranchesRequestType,
-	DiffBranchesRequest,
-	DiffBranchesResponse,
-	CommitAndPushRequestType,
-	CommitAndPushRequest,
-	CommitAndPushResponse,
 	GetRangeRequest,
 	GetRangeRequestType,
 	GetRangeResponse,
+	GetShaDiffsRangesRequest,
 	GetShaDiffsRangesRequestType,
-	GetShaDiffsRangesResponse,
-	GetShaDiffsRangesRequest
+	GetShaDiffsRangesResponse
 } from "../protocol/agent.protocol";
 import {
 	BlameAuthor,
@@ -76,7 +77,6 @@ import { xfs } from "../xfs";
 import { Container, SessionContainer } from "./../container";
 import { IgnoreFilesHelper } from "./ignoreFilesManager";
 import { ReviewsManager } from "./reviewsManager";
-import { GitRepository, GitRemote } from "git/gitService";
 
 @lsp
 export class ScmManager {
@@ -1218,18 +1218,18 @@ export class ScmManager {
 			0
 		);
 
-		return diff?.hunks.map(hunk =>
-			({
+		return (
+			diff?.hunks.map(hunk => ({
 				baseLinesChanged: {
 					start: hunk.oldStart,
 					end: hunk.oldStart + hunk.oldLines - 1
 				},
-				headLinesChanged:  {
+				headLinesChanged: {
 					start: hunk.newStart,
 					end: hunk.newStart + hunk.newLines - 1
 				}
-			})
-		) || [] ;
+			})) || []
+		);
 	}
 
 	@lspHandler(GetRangeRequestType)

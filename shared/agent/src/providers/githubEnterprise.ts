@@ -4,11 +4,11 @@ import { GitRemoteLike } from "git/gitService";
 import { GraphQLClient } from "graphql-request";
 import semver from "semver";
 import { URI } from "vscode-uri";
+import { Container } from "../container";
 import { Logger } from "../logger";
 import { EnterpriseConfigurationData } from "../protocol/agent.protocol.providers";
 import { log, lspProvider } from "../system";
 import { GitHubProvider } from "./github";
-import { Container } from "../container";
 import {
 	ProviderCreatePullRequestRequest,
 	ProviderCreatePullRequestResponse,

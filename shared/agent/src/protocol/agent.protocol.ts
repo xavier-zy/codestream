@@ -149,7 +149,7 @@ export interface VerifyConnectivityResponse {
 	};
 	capabilities?: {
 		[key: string]: any;
-	}
+	};
 }
 
 export const VerifyConnectivityRequestType = new RequestType<
@@ -204,9 +204,12 @@ export interface ReportBreadcrumbRequest {
 	data?: object;
 }
 
-export const ReportBreadcrumbRequestType = new RequestType<ReportBreadcrumbRequest, void, void, void>(
-	"codestream/reporting/breadcrumb"
-);
+export const ReportBreadcrumbRequestType = new RequestType<
+	ReportBreadcrumbRequest,
+	void,
+	void,
+	void
+>("codestream/reporting/breadcrumb");
 
 /**
  * @param eventName The name of the telemetry event you want to track, eg: "Page Viewed"

@@ -5,7 +5,10 @@ import { isFeatureEnabled } from "../store/apiVersioning/reducer";
 import { RadioGroup, Radio } from "../src/components/RadioGroup";
 import { setUserPreference, closeModal } from "./actions";
 import { HostApi } from "../webview-api";
-import { CSNotificationDeliveryPreference } from "@codestream/protocols/api";
+import {
+	CSNotificationDeliveryPreference,
+	CSNotificationPreference
+} from "@codestream/protocols/api";
 import Icon from "./Icon";
 import { Dialog } from "../src/components/Dialog";
 import { Link } from "./Link";
@@ -17,8 +20,9 @@ export const Notifications = props => {
 		const notificationDeliverySupported = isFeatureEnabled(state, "notificationDeliveryPreference");
 		const emailSupported = isFeatureEnabled(state, "emailSupport");
 		return {
-			notificationPreference: state.preferences.notifications || "involveMe",
-			notificationDeliveryPreference: state.preferences.notificationDelivery || "both",
+			notificationPreference: state.preferences.notifications || CSNotificationPreference.InvolveMe,
+			notificationDeliveryPreference:
+				state.preferences.notificationDelivery || CSNotificationDeliveryPreference.All,
 			hasDesktopNotifications,
 			notificationDeliverySupported,
 			emailSupported
@@ -70,12 +74,16 @@ export const Notifications = props => {
 							onChange={handleChange}
 							loading={loading}
 						>
-							<Radio value="all">Automatically follow all new codemarks and feedback requests</Radio>
-							<Radio value="involveMe">
-								Follow codemarks and feedback requests I have created, I have been mentioned in, or I have
-								replied to
+							<Radio value="all">
+								Automatically follow all new codemarks and feedback requests
 							</Radio>
-							<Radio value="off">Don't automatically follow any codemarks or feedback requests</Radio>
+							<Radio value="involveMe">
+								Follow codemarks and feedback requests I have created, I have been mentioned in, or
+								I have replied to
+							</Radio>
+							<Radio value="off">
+								Don't automatically follow any codemarks or feedback requests
+							</Radio>
 						</RadioGroup>
 						{derivedState.hasDesktopNotifications && derivedState.notificationDeliverySupported && (
 							<div style={{ marginTop: "20px" }}>

@@ -549,7 +549,7 @@ export const CreatePullRequestPanel = props => {
 			params: { remote: prRemoteUrl }
 		})) as any;
 
-		console.warn("GOT RESPONSE: ", response);
+		// console.warn("GOT RESPONSE: ", response);
 		if (response) {
 			const forks = response.forks || [];
 			setForkedRepos(forks);
@@ -1110,14 +1110,14 @@ export const CreatePullRequestPanel = props => {
 		<Root className="full-height-codemark-form">
 			<PanelHeader title={`Open a ${prLabel.PullRequest}`}>
 				{reviewId ? "" : `Choose two branches to start a new ${prLabel.pullrequest}.`}
-				{!reviewId &&
+				{/*!reviewId &&
 					(derivedState.isConnectedToGitHub || derivedState.isConnectedToGitHubEnterprise) && (
 						<>
 							{" "}
 							If you need to, you can also{" "}
 							<a onClick={() => setAcrossForks(!acrossForks)}>compare across forks</a>.
 						</>
-					)}
+					) */}
 			</PanelHeader>
 			<CancelButton onClick={props.closePanel} />
 			<span className="plane-container">

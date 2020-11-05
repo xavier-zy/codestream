@@ -60,6 +60,10 @@ class CodeStreamComponent(val project: Project) : Disposable {
             initWindowFocusListener()
             initUnreadsListener()
         }
+        project.agentService?.onDidStart {
+            val webViewService = project.webViewService ?: return@onDidStart
+            webViewService.load()
+        }
     }
 
     private fun initWindowFocusListener() {

@@ -49,9 +49,7 @@ class WebViewService(val project: Project) : Disposable {
         }
     }
 
-    val webView: BrowserView by lazy {
-        BrowserView.newInstance(browser)
-    }
+    val webView = BrowserView.newInstance(browser)
 
     fun onDidInitialize(cb: () -> Unit) {
         if (router.initialization.isDone) cb()

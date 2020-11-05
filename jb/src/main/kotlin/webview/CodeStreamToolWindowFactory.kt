@@ -20,7 +20,6 @@ class CodeStreamToolWindowFactory : ToolWindowFactory, DumbAware {
 
         project.agentService?.onDidStart {
             val webViewService = project.webViewService ?: return@onDidStart
-            webViewService.load()
             ApplicationManager.getApplication().invokeLater {
                 csPanel.remove(loadingLabel)
                 csPanel.add(webViewService.webView)

@@ -11,6 +11,12 @@ CodeStream is a developer collaboration platform that integrates all of your ess
 
 Help us improve CodeStream for first-time users by participating in a 20-minute zoom call: screen-share while we guide you along the way and demonstrate CodeStream's capabilities. If you work on a team with at least 10 developers [please schedule a time here](https://app.hubspot.com/meetings/claudio13/a-codestream-specialist-supports-your-onboarding-live).
 
+# Create and Review GitHub Pull Requests in Visual Studio
+
+Create, review and merge pull requests inside Visual Studio, with full source-tree and full file access, your favorite keybindings, built-in diff too, and code intelligence.
+
+![Pull Request](https://raw.githubusercontent.com/TeamCodeStream/codestream-guide/develop/docs/src/assets/images/PullRequest-VS.png)
+
 # Get Feedback on Work-in-Progress with Pre-PR Code Reviews
 
 CodeStream's lightweight feedback requests let you get feedback on your changes regardless of the current state of your repo, without the friction of committing, pushing or issuing a pull request. Your teammates can review your changes right in their IDE, with full file context, and with no need to set aside their current work to switch branches or pull the latest.

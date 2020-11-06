@@ -3,8 +3,8 @@ package com.codestream
 import com.codestream.agent.ModuleListenerImpl
 import com.codestream.editor.EditorFactoryListenerImpl
 import com.codestream.editor.FileEditorManagerListenerImpl
-import com.codestream.protocols.webview.EditorNotifications
 import com.codestream.editor.VirtualFileListenerImpl
+import com.codestream.protocols.webview.EditorNotifications
 import com.codestream.protocols.webview.FocusNotifications
 import com.codestream.protocols.webview.Sidebar
 import com.codestream.protocols.webview.SidebarLocation
@@ -23,6 +23,7 @@ import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowAnchor
+import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ToolWindowType
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
@@ -30,7 +31,6 @@ import com.intellij.util.ui.UIUtil
 import java.awt.KeyboardFocusManager
 import java.awt.event.WindowEvent
 import java.awt.event.WindowFocusListener
-import javax.swing.JLabel
 import kotlin.properties.Delegates
 
 const val CODESTREAM_TOOL_WINDOW_ID = "CodeStream"
@@ -113,6 +113,14 @@ class CodeStreamComponent(val project: Project) : Disposable {
                         isVisible = toolWindow?.isVisible ?: false
                         updateWebViewFocus()
                         updateSidebar()
+                        toolWindow?.component?.repaint()
+                    }
+
+                    override fun toolWindowRegistered(id: String) {
+                        if (id == CODESTREAM_TOOL_WINDOW_ID) {
+                            val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(CODESTREAM_TOOL_WINDOW_ID)
+                            toolWindow?.contentManager // trigger content (webview) initialization
+                        }
                     }
                 }
             )

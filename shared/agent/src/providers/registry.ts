@@ -639,4 +639,27 @@ export class ThirdPartyProviderRegistry {
 			return false;
 		}
 	}
+
+	/**
+	 * Given a user, return if there are any providers connected
+	 * that support PullRequest creation
+	 *
+	 * @param user
+	 */
+	async getConnectedPullRequestProviders(user: CSMe) {
+		const connectedProviders = this.getConnectedProviders(user, (p): p is ThirdPartyProvider &
+			ThirdPartyProviderSupportsPullRequests => {
+			const thirdPartyProvider = p as ThirdPartyProvider;
+			const name = thirdPartyProvider.getConfig().name;
+			return (
+				name === "github" ||
+				name === "gitlab" ||
+				name === "github_enterprise" ||
+				name === "gitlab_enterprise" ||
+				name === "bitbucket" ||
+				name === "bitbucket_server"
+			);
+		});
+		return connectedProviders;
+	}
 }

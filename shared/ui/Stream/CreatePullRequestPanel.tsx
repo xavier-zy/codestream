@@ -231,11 +231,15 @@ export const CreatePullRequestPanel = props => {
 				// if we're not creating a PR from a review, then get the current
 				// repo and branch from the editor
 				const response = await HostApi.instance.send(GetReposScmRequestType, {
-					inEditorOnly: true
+					inEditorOnly: true,
+					includeConnectedProviders: true
 				});
 
 				if (response && response.repositories && response.repositories.length) {
-					let panelRepo = selectedRepo || response.repositories[0];
+					let panelRepo =
+						selectedRepo ||
+						response.repositories.find(_ => _.providerId) ||
+						response.repositories[0];
 					if (derivedState.currentRepo && derivedState.currentRepo.id) {
 						const currentRepoId = derivedState.currentRepo.id;
 						const currentRepo = response.repositories.find(_ => _.id === currentRepoId);
@@ -484,11 +488,13 @@ export const CreatePullRequestPanel = props => {
 				repoId = selectedRepo.id;
 			} else {
 				const response = await HostApi.instance.send(GetReposScmRequestType, {
-					inEditorOnly: true
+					inEditorOnly: true,
+					includeConnectedProviders: true
 				});
 
 				if (response && response.repositories) {
-					repoId = response.repositories[0].id || "";
+					const providerRepo = response.repositories.find(_ => _.providerId);
+					repoId = providerRepo ? providerRepo.id || "" : response.repositories[0].id || "";
 				}
 			}
 		}

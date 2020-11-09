@@ -4,6 +4,7 @@ import * as paths from "path";
 import { TextDocument } from "vscode-languageserver-types";
 import { URI } from "vscode-uri";
 import { Ranges } from "../api/extensions";
+import { GitRepositoryExtensions } from "../extensions";
 import { GitNumStat } from "../git/models/numstat";
 import { Logger } from "../logger";
 import {
@@ -70,7 +71,7 @@ import {
 	SwitchBranchRequestType,
 	SwitchBranchResponse
 } from "../protocol/agent.protocol";
-import { FileStatus } from "../protocol/api.protocol.models";
+import { CSMe, FileStatus } from "../protocol/api.protocol.models";
 import { FileSystem, Iterables, log, lsp, lspHandler, Strings } from "../system";
 import * as csUri from "../system/uri";
 import { xfs } from "../xfs";
@@ -145,6 +146,7 @@ export class ScmManager {
 		let repositories: GitRepository[] = [];
 		let branches: (string | undefined)[] = [];
 		let remotes: GitRemote[][] = [];
+		let user: CSMe | undefined = undefined;
 		try {
 			const { git } = SessionContainer.instance();
 			repositories = Array.from(await git.getRepositories());
@@ -157,37 +159,34 @@ export class ScmManager {
 			if (request && request.includeProviders) {
 				remotes = await Promise.all(repositories.map(repo => repo.getRemotes()));
 			}
+			if (request && request.includeConnectedProviders) {
+				user = await SessionContainer.instance().session.api.meUser;
+			}
 		} catch (ex) {
 			gitError = ex.toString();
 			Logger.error(ex, cc);
 			debugger;
 		}
-		return {
-			repositories: repositories
-				? repositories.map((_, index) => {
-						return {
-							id: _.id,
-							path: _.path,
-							folder: _.folder,
-							root: _.root,
-							currentBranch: branches[index],
-							remotes: remotes[index],
-							providerGuess:
-								// FIXME -- not sure how to map remotes to github enterprise, gitlab onprem, etc.
-								remotes[index]
-									? remotes[index].find(remote => remote.domain.includes("github"))
-										? "github"
-										: remotes[index].find(remote => remote.domain.includes("gitlab"))
-										? "gitlab"
-										: remotes[index].find(remote => remote.domain.includes("bitbucket"))
-										? "bitbucket"
-										: ""
-									: undefined
-						};
-				  })
-				: undefined,
+
+		const response: GetReposScmResponse = {
 			error: gitError
 		};
+
+		if (request && request.includeConnectedProviders) {
+			response.repositories = await Promise.all(
+				repositories.map(async (repo, index) => {
+					const repoScm = GitRepositoryExtensions.toRepoScm(repo, branches[index], remotes[index]);
+					repoScm.providerId = (await repo.getPullRequestProvider(user))?.providerId;
+					return repoScm;
+				})
+			);
+		} else {
+			response.repositories = repositories.map((repo, index) =>
+				GitRepositoryExtensions.toRepoScm(repo, branches[index], remotes[index])
+			);
+		}
+
+		return response;
 	}
 
 	@lspHandler(GetRepoScmStatusesRequestType)

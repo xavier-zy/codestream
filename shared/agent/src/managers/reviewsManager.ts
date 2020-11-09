@@ -556,64 +556,59 @@ export class ReviewsManager extends CachedEntityManagerBase<CSReview> {
 			}
 
 			const { providerRegistry } = SessionContainer.instance();
-			const user = await this.session.api.getMe();
+			const user = await SessionContainer.instance().session.api.meUser;
+			if (!user) {
+				Logger.warn("Could not find CSMe user");
+				return {
+					success: false
+				};
+			}
 
 			const remotes = await repo!.getRemotes();
 			let remoteUrl = "";
 			let providerId = "";
 
-			const providers = providerRegistry.getConnectedProviders(
-				user.user,
-				(p): p is ThirdPartyIssueProvider & ThirdPartyProviderSupportsPullRequests => {
-					const thirdPartyIssueProvider = p as ThirdPartyIssueProvider;
-					const name = thirdPartyIssueProvider.getConfig().name;
-					return (
-						name === "github" ||
-						name === "gitlab" ||
-						name === "github_enterprise" ||
-						name === "gitlab_enterprise" ||
-						name === "bitbucket" ||
-						name === "bitbucket_server"
-					);
-				}
-			);
-
+			const connectedProviders = await providerRegistry.getConnectedPullRequestProviders(user);
 			const _projectsByRemotePath = new Map(remotes.map(obj => [obj.path, obj]));
-			for (const provider of providers) {
+			for (const provider of connectedProviders) {
 				const id = provider.getConfig().id;
 				if (id !== request.providerId) continue;
 				providerId = id;
 
-				const remotePaths = await getRemotePaths(
-					repo,
-					provider.getIsMatchingRemotePredicate(),
-					_projectsByRemotePath
-				);
-				if (remotePaths && remotePaths.length) {
-					// just need any url here...
-					remoteUrl = "https://example.com/" + remotePaths[0];
-					const providerRepoInfo = await providerRegistry.getRepoInfo({
-						providerId: providerId,
-						remote: remoteUrl
-					});
-					if (providerRepoInfo) {
-						if (providerRepoInfo.pullRequests && request.baseRefName && request.headRefName) {
-							const existingPullRequest = providerRepoInfo.pullRequests.find(
-								(_: any) =>
-									_.baseRefName === request.baseRefName && _.headRefName === request.headRefName
-							);
-							if (existingPullRequest) {
-								return {
-									success: false,
-									error: {
-										type: "ALREADY_HAS_PULL_REQUEST",
-										url: existingPullRequest.url
-									}
-								};
+				const providerRepo = await repo.getPullRequestProvider(user, connectedProviders);
+
+				if (providerRepo?.provider) {
+					const remotePaths = await getRemotePaths(
+						repo,
+						provider.getIsMatchingRemotePredicate(),
+						_projectsByRemotePath
+					);
+					if (remotePaths && remotePaths.length) {
+						// just need any url here...
+						remoteUrl = "https://example.com/" + remotePaths[0];
+						const providerRepoInfo = await providerRegistry.getRepoInfo({
+							providerId: providerId,
+							remote: remoteUrl
+						});
+						if (providerRepoInfo) {
+							if (providerRepoInfo.pullRequests && request.baseRefName && request.headRefName) {
+								const existingPullRequest = providerRepoInfo.pullRequests.find(
+									(_: any) =>
+										_.baseRefName === request.baseRefName && _.headRefName === request.headRefName
+								);
+								if (existingPullRequest) {
+									return {
+										success: false,
+										error: {
+											type: "ALREADY_HAS_PULL_REQUEST",
+											url: existingPullRequest.url
+										}
+									};
+								}
 							}
+							// break out of providers loop
+							break;
 						}
-						// break out of providers loop
-						break;
 					}
 				}
 			}
@@ -634,35 +629,6 @@ export class ReviewsManager extends CachedEntityManagerBase<CSReview> {
 		}
 	}
 
-	private async isProviderConnected(
-		providerId: string,
-		provider: ThirdPartyProvider,
-		user: CSMe,
-		teamId: string
-	) {
-		if (!user || !user.providerInfo) return false;
-		const teamProviderInfo = user.providerInfo[teamId];
-
-		if (teamProviderInfo && providerId === "bitbucket*org") {
-			const bitbucket = teamProviderInfo["bitbucket"] as CSBitbucketProviderInfo;
-			// require old apps reconnect to get the PR write scope
-			if (
-				bitbucket &&
-				bitbucket.data &&
-				bitbucket.data.scopes &&
-				bitbucket.data.scopes.indexOf("pullrequest:write") === -1
-			) {
-				await provider.disconnect({});
-				return false;
-			}
-		} else {
-			const userProviderId = user.providerInfo[provider.name];
-			if (userProviderId) return true;
-			if (!teamProviderInfo || !teamProviderInfo[provider.name]) return false;
-		}
-		return true;
-	}
-
 	@lspHandler(CheckPullRequestPreconditionsRequestType)
 	async checkPullRequestPreconditions(
 		request: CheckPullRequestPreconditionsRequest
@@ -672,6 +638,8 @@ export class ReviewsManager extends CachedEntityManagerBase<CSReview> {
 		let remotes: GitRemote[] | undefined;
 		let repo: any;
 		let review: CSReview | undefined = undefined;
+		let isProviderConnected = false;
+
 		try {
 			if (request.reviewId) {
 				review = await this.getById(request.reviewId);
@@ -706,105 +674,76 @@ export class ReviewsManager extends CachedEntityManagerBase<CSReview> {
 			}
 
 			const headRefName = request.headRefName || (review && review.reviewChangesets[0].branch);
-			const branches = await git.getBranches(repo!.path);
-			const remoteBranches = await git.getBranches(repo!.path, true);
-			const user = await this.session.api.getMe();
-			remotes = await repo!.getRemotes();
-			let remoteUrl = "";
-			let providerId = "";
-			let providerRepoDefaultBranch: string | undefined = "";
-			let isProviderConnected = false;
 
-			const connectedProviders = providerRegistry.getConnectedProviders(
-				user.user,
-				(p): p is ThirdPartyProvider & ThirdPartyProviderSupportsPullRequests => {
-					const thirdPartyProvider = p as ThirdPartyProvider;
-					const name = thirdPartyProvider.getConfig().name;
-					return (
-						name === "github" ||
-						name === "gitlab" ||
-						name === "github_enterprise" ||
-						name === "gitlab_enterprise" ||
-						name === "bitbucket" ||
-						name === "bitbucket_server"
-					);
-				}
-			);
 			let success = false;
-			let foundOne = false;
-			const projectsByRemotePath = new Map((remotes || []).map(obj => [obj.path, obj]));
-			for (const provider of connectedProviders) {
-				const remotePaths = await provider.getRemotePaths(repo, projectsByRemotePath);
-				if (remotePaths && remotePaths.length) {
-					if (foundOne) {
-						// if we've already found one matching remote,
-						// and there's another that matches... stop processing
-						// we will have to let the user choose which provider
-						// they want to connect to
-						providerId = "";
-						isProviderConnected = false;
-						remoteUrl = "";
-						success = false;
-						break;
-					}
-					providerId = provider.getConfig().id;
-					isProviderConnected = await this.isProviderConnected(
-						providerId,
-						provider,
-						user.user,
-						session.teamId
-					);
-					if (!isProviderConnected) {
-						break;
-					}
-					// just need any url here...
-					remoteUrl = "https://example.com/" + remotePaths[0];
-					const providerRepoInfo = await providerRegistry.getRepoInfo({
-						providerId: providerId,
-						remote: remoteUrl
-					});
-					if (providerRepoInfo) {
-						if (providerRepoInfo.error) {
-							return {
-								success: false,
-								error: providerRepoInfo.error
-							};
-						}
+			let remoteUrl;
+			let providerId;
 
-						providerRepoDefaultBranch = providerRepoInfo.defaultBranch;
-						const baseRefName = request.baseRefName || providerRepoDefaultBranch;
-						if (providerRepoInfo.pullRequests) {
-							if (baseRefName && headRefName) {
-								const existingPullRequest = providerRepoInfo.pullRequests.find(
-									(_: any) => _.baseRefName === baseRefName && _.headRefName === headRefName
-								);
-								if (existingPullRequest) {
-									warning = {
-										type: "ALREADY_HAS_PULL_REQUEST",
-										url: existingPullRequest.url,
-										id: existingPullRequest.id
-									};
-								}
+			const user = await SessionContainer.instance().session.api.meUser;
+			if (!user) {
+				Logger.warn("Could not find CSMe user");
+				return {
+					success: false
+				};
+			}
+
+			const connectedProviders = await providerRegistry.getConnectedPullRequestProviders(user);
+			const providerRepo = await repo.getPullRequestProvider(user, connectedProviders);
+			let providerRepoDefaultBranch: string | undefined = "";
+
+			if (providerRepo?.provider) {
+				remoteUrl = "https://example.com/" + providerRepo.remotePaths[0];
+				const providerRepoInfo = await providerRegistry.getRepoInfo({
+					providerId: providerRepo.providerId,
+					remote: remoteUrl
+				});
+				if (providerRepoInfo) {
+					if (providerRepoInfo.error) {
+						return {
+							success: false,
+							error: providerRepoInfo.error
+						};
+					}
+
+					providerRepoDefaultBranch = providerRepoInfo.defaultBranch;
+					const baseRefName = request.baseRefName || providerRepoDefaultBranch;
+					if (providerRepoInfo.pullRequests) {
+						if (baseRefName && headRefName) {
+							const existingPullRequest = providerRepoInfo.pullRequests.find(
+								(_: any) => _.baseRefName === baseRefName && _.headRefName === headRefName
+							);
+							if (existingPullRequest) {
+								warning = {
+									type: "ALREADY_HAS_PULL_REQUEST",
+									url: existingPullRequest.url,
+									id: existingPullRequest.id
+								};
 							}
 						}
-						success = true;
-						foundOne = true;
 					}
+					success = true;
+					providerId = providerRepo.providerId;
+					isProviderConnected = true;
+					remotes = providerRepo.remotes;
 				}
 			}
-			if (!success) {
-				if (connectedProviders && connectedProviders.length) {
-					return {
-						success: false,
-						error: {
-							type: "REQUIRES_PROVIDER_REPO",
-							message: `To create a pull request you'll need to open a ${connectedProviders
-								.map(_ => _.displayName)
-								.join(" or ")} repository`
-						}
-					};
-				}
 
+			if (!success) {
+				const user = await SessionContainer.instance().session.api.meUser;
+				if (user) {
+					const connectedProviders = await providerRegistry.getConnectedPullRequestProviders(user);
+					if (connectedProviders && connectedProviders.length) {
+						return {
+							success: false,
+							error: {
+								type: "REQUIRES_PROVIDER_REPO",
+								message: `To create a pull request you'll need to open a ${connectedProviders
+									.map(_ => _.displayName)
+									.join(" or ")} repository`
+							}
+						};
+					}
+				}
 				// if we couldn't match a provider against a remote or there are multiple
 				// we need the user to choose which provider.
 				return {
@@ -815,6 +754,8 @@ export class ReviewsManager extends CachedEntityManagerBase<CSReview> {
 				};
 			}
 
+			const branches = await git.getBranches(repo.path);
+			const remoteBranches = await git.getBranches(repo.path, true);
 			let originNames;
 			let remoteBranch;
 			const branchRemote = await git.getBranchRemote(repo.path, headRefName!);

@@ -97,7 +97,7 @@ export interface ThirdPartyProviderSupportsPullRequests {
 	): Promise<ProviderCreatePullRequestResponse | undefined>;
 	getRepoInfo(request: ProviderGetRepoInfoRequest): Promise<ProviderGetRepoInfoResponse>;
 	getIsMatchingRemotePredicate(): (remoteLike: GitRemoteLike) => boolean;
-	getRemotePaths(repo: any, _projectsByRemotePath: any): any;
+	getRemotePaths(repo: GitRepository, _projectsByRemotePath: any): any;
 
 	getPullRequest(
 		request: FetchThirdPartyPullRequestRequest

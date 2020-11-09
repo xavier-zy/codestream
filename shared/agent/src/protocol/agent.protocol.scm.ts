@@ -172,6 +172,11 @@ export interface ReposScm {
 	 * this has a subset of what GitRemote has
 	 */
 	remotes?: { repoPath: string; path: string; domain: string }[];
+	/**
+	 * If this repo has a remote that is managed and connected to a provider,
+	 * return the providerId
+	 */
+	providerId?: string;
 }
 
 export interface GetReposScmRequest {
@@ -185,9 +190,13 @@ export interface GetReposScmRequest {
 	 */
 	includeCurrentBranches?: boolean;
 	/**
-	 * Set this flag to also return the provider for each repo
+	 * Set this flag to also return the remotes for each repo as well as a provider guess
 	 */
 	includeProviders?: boolean;
+	/**
+	 * Set this flag to also return the providerId if a repo is connected to one
+	 */
+	includeConnectedProviders?: boolean;
 }
 
 export interface GetReposScmResponse {

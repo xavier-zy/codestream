@@ -160,7 +160,7 @@ export class ScmManager {
 				remotes = await Promise.all(repositories.map(repo => repo.getRemotes()));
 			}
 			if (request && request.includeConnectedProviders) {
-				user = await SessionContainer.instance().session.api.meUser;
+				user = (await SessionContainer.instance().users.getMe()).user;
 			}
 		} catch (ex) {
 			gitError = ex.toString();

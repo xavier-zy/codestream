@@ -679,7 +679,7 @@ export class ReviewsManager extends CachedEntityManagerBase<CSReview> {
 			let remoteUrl;
 			let providerId;
 
-			const user = await SessionContainer.instance().session.api.meUser;
+			const user = (await SessionContainer.instance().users.getMe()).user;
 			if (!user) {
 				Logger.warn("Could not find CSMe user");
 				return {

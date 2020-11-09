@@ -23,7 +23,6 @@ export namespace GitRepositoryExtensions {
 			root: repo.root,
 			currentBranch: currentBranch,
 			remotes: remotes,
-
 			providerGuess:
 				// FIXME -- not sure how to map remotes to github enterprise, gitlab onprem, etc.
 				remotes

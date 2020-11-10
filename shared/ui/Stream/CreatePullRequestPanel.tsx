@@ -118,6 +118,8 @@ export const CreatePullRequestPanel = props => {
 	const dispatch = useDispatch();
 	const derivedState = useSelector((state: CodeStreamState) => {
 		const { providers, context } = state;
+
+		const supportedPullRequestViewProviders = ["github", "github_enterprise"];
 		const codeHostProviders = Object.keys(providers).filter(id =>
 			[
 				"github",
@@ -135,6 +137,7 @@ export const CreatePullRequestPanel = props => {
 		return {
 			repos: state.repos,
 			currentUser,
+			supportedPullRequestViewProviders,
 			userStatus: status,
 			providers: providers,
 			codeHostProviders: codeHostProviders,
@@ -999,7 +1002,11 @@ export const CreatePullRequestPanel = props => {
 							<Button
 								onClick={e => {
 									e.preventDefault();
-									if (id) {
+									if (
+										id &&
+										prProviderId &&
+										derivedState.supportedPullRequestViewProviders.find(_ => _ === prProviderId)
+									) {
 										dispatch(setCurrentPullRequest(prProviderId, id));
 									} else {
 										HostApi.instance.send(OpenUrlRequestType, { url: url! });

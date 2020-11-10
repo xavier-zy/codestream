@@ -272,7 +272,7 @@ export const CreatePullRequestPanel = props => {
 				setPrBranch(newPrBranch);
 
 				setPrRemoteUrl(result.remoteUrl!);
-				setPrTitle(result.review!.title!);
+				if (result.review && result.review.title) changePRTitle(result.review.title);
 
 				const template = result.pullRequestTemplate || "";
 				setNumLines(Math.max(template.split("\n").length, 8));
@@ -375,6 +375,11 @@ export const CreatePullRequestPanel = props => {
 		};
 	}, []);
 
+	const changePRTitle = (title: string) => {
+		setPrTitle(title);
+		setTitleValidity(isTitleValid(title));
+	};
+
 	const isTitleValid = (title: string) => title != null && title !== "";
 
 	const onValidityChanged = useCallback((field: string, validity: boolean) => {
@@ -390,8 +395,7 @@ export const CreatePullRequestPanel = props => {
 	const onSubmit = async (event: React.SyntheticEvent) => {
 		setUnexpectedError(false);
 		pauseDataNotifications.current = true;
-		onValidityChanged("title", isTitleValid(prTitle));
-		if (!titleValidity) return;
+		if (!isTitleValid(prTitle)) return;
 
 		let success = false;
 		setSubmitting(true);
@@ -1068,7 +1072,7 @@ export const CreatePullRequestPanel = props => {
 	}, [selectedRepo, reviewBranch]);
 
 	const setTitleBasedOnBranch = () => {
-		setPrTitle(
+		changePRTitle(
 			reviewBranch.charAt(0).toUpperCase() +
 				reviewBranch
 					.slice(1)
@@ -1216,7 +1220,7 @@ export const CreatePullRequestPanel = props => {
 									{loadingBranchInfo && <LoadingMessage>Loading branch info...</LoadingMessage>}
 									{(!loading && preconditionError.type) || loadingBranchInfo ? null : (
 										<div>
-											{false && !titleValidity && (
+											{!titleValidity && (
 												<small className={cx("explainer", { "error-message": !titleValidity })}>
 													<FormattedMessage id="pullRequest.title" />
 												</small>
@@ -1238,7 +1242,7 @@ export const CreatePullRequestPanel = props => {
 															placement="top"
 															title="Clear Title"
 															className="clickable"
-															onClick={() => setPrTitle("")}
+															onClick={() => changePRTitle("")}
 														/>
 													)}
 													{userStatus.label && (
@@ -1247,7 +1251,7 @@ export const CreatePullRequestPanel = props => {
 															title="Use Current Ticket"
 															name={userStatus.ticketProvider || "ticket"}
 															className="clickable"
-															onClick={() => setPrTitle(userStatus.label)}
+															onClick={() => changePRTitle(userStatus.label)}
 														/>
 													)}
 													{latestCommit && (
@@ -1256,7 +1260,7 @@ export const CreatePullRequestPanel = props => {
 															title="Use Latest Commit Message"
 															name="git-commit-vertical"
 															className="clickable"
-															onClick={() => setPrTitle(latestCommit)}
+															onClick={() => changePRTitle(latestCommit)}
 														/>
 													)}
 													{reviewBranch && (

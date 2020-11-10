@@ -603,14 +603,19 @@ export const CreatePullRequestPanel = props => {
 		const items = remoteBranches!.map(_ => {
 			return {
 				label: _,
+				searchLabel: _,
 				key: _,
 				action: async () => {
 					setPrBranch(_);
 					checkPullRequestBranchPreconditions(_, reviewBranch);
 				}
 			};
-		});
+		}) as any;
 		if (items.length === 0) return undefined;
+		if (items.length >= 10) {
+			items.unshift({ label: "-" });
+			items.unshift({ type: "search", placeholder: "Search...", action: "search" });
+		}
 		return (
 			<span>
 				<DropdownButton variant="secondary" items={items}>
@@ -625,11 +630,16 @@ export const CreatePullRequestPanel = props => {
 		const items = baseForkedRepo.refs.nodes.map(_ => {
 			return {
 				label: _.name,
+				searchLabel: _.name,
 				key: _.name,
 				action: () => setPrBranch(_.name)
 			};
 		});
 		if (items.length === 0) return null;
+		if (items.length >= 10) {
+			items.unshift({ label: "-" });
+			items.unshift({ type: "search", placeholder: "Search...", action: "search" });
+		}
 		return (
 			<span>
 				<DropdownButton variant="secondary" items={items}>
@@ -645,14 +655,19 @@ export const CreatePullRequestPanel = props => {
 		const items = branches!.map(_ => {
 			return {
 				label: _,
+				searchLabel: _,
 				key: _,
 				action: async () => {
 					setReviewBranch(_);
 					checkPullRequestBranchPreconditions(prBranch, _);
 				}
 			};
-		});
+		}) as any;
 		if (items.length === 0) return undefined;
+		if (items.length >= 10) {
+			items.unshift({ label: "-" });
+			items.unshift({ type: "search", placeholder: "Search...", action: "search" });
+		}
 		return (
 			<DropdownButton variant="secondary" items={items}>
 				<span className="subtle">compare:</span> <strong>{reviewBranch}</strong>
@@ -665,11 +680,16 @@ export const CreatePullRequestPanel = props => {
 		const items = headForkedRepo.refs.nodes.map(_ => {
 			return {
 				label: _.name,
+				searchLabel: _.name,
 				key: _.name,
 				action: () => setReviewBranch(_.name)
 			};
 		});
 		if (items.length === 0) return null;
+		if (items.length >= 10) {
+			items.unshift({ label: "-" });
+			items.unshift({ type: "search", placeholder: "Search...", action: "search" });
+		}
 		return (
 			<DropdownButton variant="secondary" items={items}>
 				<span className="subtle">compare:</span> <strong>{reviewBranch}</strong>
@@ -684,15 +704,18 @@ export const CreatePullRequestPanel = props => {
 			const repoName = _.id && derivedState.repos[_.id] ? derivedState.repos[_.id].name : _.path;
 			return {
 				label: repoName,
+				searchLabel: repoName,
 				key: _.folder.uri,
 				action: async () => {
-					// optimistically
-					// setPrBranch(_);
 					setSelectedRepo(_);
 				}
 			};
-		});
+		}) as any;
 		if (items.length === 0) return undefined;
+		if (items.length >= 10) {
+			items.unshift({ label: "-" });
+			items.unshift({ type: "search", placeholder: "Search...", action: "search" });
+		}
 		if (
 			derivedState.repos &&
 			selectedRepo &&
@@ -717,18 +740,24 @@ export const CreatePullRequestPanel = props => {
 			const repoName = repo.nameWithOwner;
 			return {
 				label: repoName,
+				searchLabel: repoName,
 				key: repo.id,
 				action: () => setBaseForkedRepo(repo)
 			};
-		});
+		}) as any;
 		if (parentRepo) {
 			items.unshift({
 				label: parentRepo.nameWithOwner,
+				searchLabel: parentRepo.nameWithOwner,
 				key: parentRepo.id,
 				action: () => setBaseForkedRepo(parentRepo)
 			});
 		}
 		if (items.length === 0) return null;
+		if (items.length >= 10) {
+			items.unshift({ label: "-" });
+			items.unshift({ type: "search", placeholder: "Search...", action: "search" });
+		}
 		return (
 			<span>
 				<DropdownButton variant="secondary" items={items}>
@@ -743,18 +772,24 @@ export const CreatePullRequestPanel = props => {
 			const repoName = repo.nameWithOwner;
 			return {
 				label: repoName,
+				searchLabel: repoName,
 				key: repo.id,
 				action: () => setHeadForkedRepo(repo)
 			};
-		});
+		}) as any;
 		if (parentRepo) {
 			items.unshift({
 				label: parentRepo.nameWithOwner,
+				searchLabel: parentRepo.nameWithOwner,
 				key: parentRepo.id,
 				action: () => setHeadForkedRepo(parentRepo)
 			});
 		}
 		if (items.length === 0) return null;
+		if (items.length >= 10) {
+			items.unshift({ label: "-" });
+			items.unshift({ type: "search", placeholder: "Search...", action: "search" });
+		}
 		return (
 			<span>
 				<DropdownButton variant="secondary" items={items}>
@@ -1295,6 +1330,7 @@ export const CreatePullRequestPanel = props => {
 													</Checkbox>
 												</div>
 											)}
+											<span>hi guys</span>
 											{userStatus && userStatus.label && (
 												<div className="control-group">
 													<Checkbox

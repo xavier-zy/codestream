@@ -1334,7 +1334,6 @@ export const CreatePullRequestPanel = props => {
 													</Checkbox>
 												</div>
 											)}
-											<span>hi guys</span>
 											{userStatus && userStatus.label && (
 												<div className="control-group">
 													<Checkbox

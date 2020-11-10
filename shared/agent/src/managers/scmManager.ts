@@ -1351,8 +1351,9 @@ export class ScmManager {
 			repoPath = await repositoryMappings.getByRepoId(request.repoId);
 		}
 
-		if (!repoPath)
+		if (!repoPath) {
 			throw new Error(`getFileContentsAtRevision: Could not load repo with ID ${request.repoId}`);
+		}
 
 		const filePath = paths.join(repoPath, request.path);
 		if (request.fetchAllRemotes) {

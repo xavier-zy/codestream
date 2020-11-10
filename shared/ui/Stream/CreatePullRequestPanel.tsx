@@ -264,6 +264,7 @@ export const CreatePullRequestPanel = props => {
 			}
 			const result = await HostApi.instance.send(CheckPullRequestPreconditionsRequestType, args);
 			if (result && result.success) {
+				args.repoId = result.repoId!;
 				setBranches(result.branches!);
 				setRemoteBranches(result.remoteBranches!);
 
@@ -537,7 +538,7 @@ export const CreatePullRequestPanel = props => {
 				} else {
 					setFormState({ type: "", message: "", url: "", id: "" });
 				}
-				fetchFilesChanged(repoId, localPrBranch, localReviewBranch);
+				fetchFilesChanged(result.repoId!, localPrBranch, localReviewBranch);
 				setLoadingBranchInfo(false);
 			})
 			.catch(error => {

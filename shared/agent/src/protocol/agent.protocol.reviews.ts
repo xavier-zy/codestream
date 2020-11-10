@@ -322,6 +322,7 @@ export interface CheckPullRequestPreconditionsRequest {
 export interface CheckPullRequestPreconditionsResponse {
 	success: boolean;
 	review?: Pick<CSReview, "title" | "text">;
+	repoId?: string;
 	remoteUrl?: string;
 	remoteBranch?: string;
 	providerId?: string;

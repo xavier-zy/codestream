@@ -775,6 +775,7 @@ export class ReviewsManager extends CachedEntityManagerBase<CSReview> {
 
 			return {
 				success: success,
+				repoId: repo.id,
 				remoteUrl: remoteUrl,
 				providerId: providerId,
 				pullRequestTemplate,

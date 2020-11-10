@@ -339,8 +339,8 @@ export class GitLabProvider extends ThirdPartyIssueProviderBase<CSGitLabProvider
 				`/projects/${encodeURIComponent(`${owner}/${name}`)}/merge_requests`,
 				{
 					title: request.title,
-					source_branch: request.baseRefName,
-					target_branch: request.headRefName,
+					source_branch: request.headRefName,
+					target_branch: request.baseRefName,
 					description: this.createDescription(request)
 				},
 				{
@@ -389,8 +389,8 @@ export class GitLabProvider extends ThirdPartyIssueProviderBase<CSGitLabProvider
 					return {
 						id: _.iid.toString(),
 						url: _.web_url,
-						baseRefName: _.source_branch,
-						headRefName: _.target_branch
+						baseRefName: _.target_branch,
+						headRefName: _.source_branch
 					};
 				})
 			};

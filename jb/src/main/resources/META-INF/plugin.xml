@@ -52,6 +52,7 @@
         </intentionAction>
 
         <jbProtocolCommand implementation="com.codestream.commands.CodeStreamCommand"/>
+        <ignoredFileProvider implementation="com.codestream.vcs.CodeStreamIgnoredFileProvider"/>
     </extensions>
 
     <project-components>

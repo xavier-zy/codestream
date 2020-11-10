@@ -36,7 +36,8 @@ import {
 	setCurrentReview,
 	openPanel,
 	setCurrentPullRequest,
-	setCurrentRepo
+	setCurrentRepo,
+	closeAllPanels
 } from "../store/context/actions";
 import { PROVIDER_MAPPINGS } from "./CrossPostIssueControls/types";
 import { PrePRProviderInfoModal } from "./PrePRProviderInfoModal";
@@ -1007,6 +1008,7 @@ export const CreatePullRequestPanel = props => {
 										prProviderId &&
 										derivedState.supportedPullRequestViewProviders.find(_ => _ === prProviderId)
 									) {
+										dispatch(closeAllPanels());
 										dispatch(setCurrentPullRequest(prProviderId, id));
 									} else {
 										HostApi.instance.send(OpenUrlRequestType, { url: url! });

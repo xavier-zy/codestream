@@ -119,7 +119,7 @@ export const CreatePullRequestPanel = props => {
 	const derivedState = useSelector((state: CodeStreamState) => {
 		const { providers, context } = state;
 
-		const supportedPullRequestViewProviders = ["github", "github_enterprise"];
+		const supportedPullRequestViewProviders = ["github*com", "github/enterprise"];
 		const codeHostProviders = Object.keys(providers).filter(id =>
 			[
 				"github",

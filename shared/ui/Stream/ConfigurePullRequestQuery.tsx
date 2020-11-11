@@ -87,9 +87,6 @@ export function ConfigurePullRequestQuery(props: Props) {
 				getMyPullRequests(providerIdField, [query], props.openReposOnly, { force: true }, true)
 			);
 			if (response && response.length) {
-				HostApi.instance.track("PR Test List Rendered", {
-					"PR Count": response.length
-				});
 				setTestPRSummaries(response[0]);
 			}
 		} catch (ex) {

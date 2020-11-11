@@ -67,19 +67,7 @@ export const PullRequestFilesChangedTab = (props: {
 			);
 			_mapData(data);
 		})();
-
-		HostApi.instance.track("PR Files Changed Tab", {
-			Host: pr.providerId
-		});
 	});
-
-	useEffect(() => {
-		if (derivedState.pullRequestFilesChangedMode === "hunks") {
-			HostApi.instance.track("PR Diff Hunks Viewed", {
-				Host: pr.providerId
-			});
-		}
-	}, [derivedState.pullRequestFilesChangedMode]);
 
 	if (isLoading)
 		return (

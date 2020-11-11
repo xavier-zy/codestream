@@ -44,9 +44,6 @@ export const PullRequestCommentMenu = (props: CommentMenuProps) => {
 					wait: true,
 					action: async () => {
 						setIsLoadingMessage("Deleting Comment...");
-						HostApi.instance.track("PR Comment Deleted", {
-							Host: pr.providerId
-						});
 
 						if (props.nodeType === "REVIEW") {
 							await dispatch(

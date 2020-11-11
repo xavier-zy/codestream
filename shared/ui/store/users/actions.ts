@@ -61,11 +61,8 @@ const _updateModifiedRepos = (modifiedRepos: RepoScmStatus[], teamId: string) =>
 	dispatch,
 	getState: () => CodeStreamState
 ) => {
-	const response = await HostApi.instance.send(SetModifiedReposRequestType, {
+	return HostApi.instance.send(SetModifiedReposRequestType, {
 		modifiedRepos,
 		teamId
 	});
-	if (response && response.user) {
-		dispatch(updateUser(response.user));
-	}
 };

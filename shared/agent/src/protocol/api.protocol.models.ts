@@ -1,7 +1,7 @@
 "use strict";
 
 import { ParsedDiff } from "diff";
-import { RepoScmStatus, ThirdPartyProviders } from "./agent.protocol";
+import { CompactModifiedRepo, RepoScmStatus, ThirdPartyProviders } from "./agent.protocol";
 import { CSReviewCheckpoint } from "./api.protocol";
 
 export interface CSEntity {
@@ -589,6 +589,7 @@ export interface CSUser extends CSEntity {
 	// all of the local changes on disk (i.e. not pushed)
 	modifiedRepos?: { [teamId: string]: RepoScmStatus[] };
 	modifiedReposModifiedAt?: number;
+	compactModifiedRepos?: { [teamId: string]: CompactModifiedRepo[] };
 	status?: CSMeStatus;
 
 	avatar?: {

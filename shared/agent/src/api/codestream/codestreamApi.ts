@@ -4,7 +4,7 @@ import AbortController from "abort-controller";
 import { Agent as HttpAgent } from "http";
 import { Agent as HttpsAgent } from "https";
 import HttpsProxyAgent from "https-proxy-agent";
-import { isEqual } from "lodash-es";
+import { debounce, isEqual } from "lodash-es";
 import fetch, { Headers, RequestInit, Response } from "node-fetch";
 import * as qs from "querystring";
 import { URLSearchParams } from "url";
@@ -24,6 +24,7 @@ import {
 	DeleteMarkerResponse,
 	DidChangeDataNotificationType,
 	ReportingMessageType,
+	RepoScmStatus,
 	UpdateInvisibleRequest
 } from "../../protocol/agent.protocol";
 import {
@@ -34,7 +35,6 @@ import {
 	ArchiveStreamRequest,
 	Capabilities,
 	CloseStreamRequest,
-	CodeStreamEnvironment,
 	CreateChannelStreamRequest,
 	CreateCodemarkPermalinkRequest,
 	CreateCodemarkRequest,
@@ -293,6 +293,7 @@ export class CodeStreamApiProvider implements ApiProvider {
 	private _preferences: CodeStreamPreferences | undefined;
 	private _features: CSApiFeatures | undefined;
 	private _runTimeEnvironment: string | undefined;
+	private _debouncedSetModifiedReposUpdate: (request: SetModifiedReposRequest) => {};
 
 	readonly capabilities: Capabilities = {
 		channelMute: true,
@@ -308,7 +309,11 @@ export class CodeStreamApiProvider implements ApiProvider {
 		private readonly _version: VersionInfo,
 		private readonly _httpsAgent: HttpsAgent | HttpsProxyAgent | HttpAgent | undefined,
 		private readonly _strictSSL: boolean
-	) {}
+	) {
+		this._debouncedSetModifiedReposUpdate = debounce(request => {
+			return this.setModifiedReposDebounced(request);
+		}, 60000, { leading: true });
+	}
 
 	get teamId(): string {
 		return this._teamId!;
@@ -605,7 +610,6 @@ export class CodeStreamApiProvider implements ApiProvider {
 		if (this._subscribedMessageTypes !== undefined && !this._subscribedMessageTypes.has(e.type)) {
 			return;
 		}
-
 		// Resolve any directives in the message data
 		switch (e.type) {
 			case MessageType.Codemarks:
@@ -722,6 +726,7 @@ export class CodeStreamApiProvider implements ApiProvider {
 				};
 
 				const userPreferencesBefore = JSON.stringify(me.preferences);
+	
 				e.data = await SessionContainer.instance().users.resolve(e, {
 					onlyIfNeeded: true
 				});
@@ -853,17 +858,30 @@ export class CodeStreamApiProvider implements ApiProvider {
 	}
 
 	@log()
-	async setModifiedRepos(request: SetModifiedReposRequest) {
-		const update = await this.put<{ [key: string]: any }, any>(
+	async setModifiedReposDebounced(request: SetModifiedReposRequest) {
+		// eventually, when support for compactified modifiedRepos is full (both cloud and on-prem),
+		// we'll eliminate this completely and go only with compactified, below
+		const prunedModifiedRepos = SessionContainer.instance().users.pruneModifiedRepos(request.modifiedRepos);
+		this.put<{ [key: string]: any }, any>(
 			"/users/me",
-			{ modifiedRepos: { [request.teamId]: request.modifiedRepos } },
+			{ modifiedRepos: { [request.teamId]: prunedModifiedRepos } },
 			this._token
 		);
-		const [user] = (await SessionContainer.instance().users.resolve({
-			type: MessageType.Users,
-			data: [update.user]
-		})) as CSMe[];
-		return { user };
+
+		const capabilities = SessionContainer.instance().session.apiCapabilities;
+		if (capabilities.compactModifiedRepos) {
+			const compactModifiedRepos = SessionContainer.instance().users.compactifyModifiedRepos(request.modifiedRepos);
+			this.put<{ [key: string]: any }, any>(
+				"/users/me",
+				{ compactModifiedRepos: { [request.teamId]: compactModifiedRepos } },
+				this._token
+			);
+		}
+	}
+
+	@log()
+	async setModifiedRepos(request: SetModifiedReposRequest) {
+		this._debouncedSetModifiedReposUpdate(request);
 	}
 
 	@log()

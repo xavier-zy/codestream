@@ -168,13 +168,9 @@ export interface SetModifiedReposRequest {
 	teamId: string;
 }
 
-export interface SetModifiedReposResponse {
-	user: CSUser;
-}
-
 export const SetModifiedReposRequestType = new RequestType<
 	SetModifiedReposRequest,
-	SetModifiedReposResponse,
+	void,
 	void,
 	void
 >("codestream/user/setModifiedRepos");
@@ -209,3 +205,13 @@ export interface GetPreferencesResponse {
 export const GetPreferencesRequestType = new RequestType<void, GetPreferencesResponse, void, void>(
 	"codestream/users/me/preferences"
 );
+
+export interface CompactModifiedRepo {
+	repoId: string;
+	repoPath: string;
+	branch: string;
+	localCommits: string[];
+	modifiedFiles: string[];
+	startCommit: string;
+	stompingAuthors: string[];
+}

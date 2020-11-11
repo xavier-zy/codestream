@@ -1,6 +1,7 @@
 "use strict";
 import {
 	BlameAuthor,
+	CompactModifiedRepo,
 	DeleteUserRequest,
 	DeleteUserRequestType,
 	FetchUsersRequest,
@@ -20,9 +21,9 @@ import {
 	InviteUserRequestType,
 	KickUserRequest,
 	KickUserRequestType,
+	RepoScmStatus,
 	SetModifiedReposRequest,
 	SetModifiedReposRequestType,
-	SetModifiedReposResponse,
 	UpdateInvisibleRequest,
 	UpdateInvisibleRequestType,
 	UpdateInvisibleResponse,
@@ -37,7 +38,7 @@ import {
 	UpdateUserRequest,
 	UpdateUserRequestType
 } from "../protocol/agent.protocol";
-import { CSUser } from "../protocol/api.protocol";
+import { CSUser, FileStatus } from "../protocol/api.protocol";
 import { lsp, lspHandler } from "../system";
 import { CachedEntityManagerBase, Id } from "./entityManager";
 
@@ -57,6 +58,9 @@ export class UsersManager extends CachedEntityManagerBase<CSUser> {
 
 	protected async loadCache() {
 		const response = await this.session.api.fetchUsers({});
+		response.users.forEach(user => {
+			this.resolveModifiedRepos(user);
+		});
 		this.cache.reset(response.users);
 	}
 
@@ -131,7 +135,7 @@ export class UsersManager extends CachedEntityManagerBase<CSUser> {
 	}
 
 	@lspHandler(SetModifiedReposRequestType)
-	async setModifiedRepos(request: SetModifiedReposRequest): Promise<SetModifiedReposResponse> {
+	async setModifiedRepos(request: SetModifiedReposRequest): Promise<void> {
 		return this.session.api.setModifiedRepos(request);
 	}
 
@@ -164,5 +168,135 @@ export class UsersManager extends CachedEntityManagerBase<CSUser> {
 
 	protected getEntityName(): string {
 		return "User";
+	}
+
+	protected resolveModifiedRepos(entity: CSUser) {
+		if (entity.compactModifiedRepos) {
+			entity.modifiedRepos = {};
+			Object.keys(entity.compactModifiedRepos).forEach(teamId => {
+				entity.modifiedRepos![teamId] = this.decompactifyModifiedRepos(entity.compactModifiedRepos![teamId]);
+			});
+			delete entity.compactModifiedRepos;
+		}
+	}
+
+	async cacheSet(entity: CSUser, oldEntity?: CSUser): Promise<CSUser | undefined> {
+		this.resolveModifiedRepos(entity);
+		return super.cacheSet(entity, oldEntity);
+	}
+
+	pipeEscape(s: string) {
+		return s.replace(/\\/g, "\\\\").replace(/\|/g, "\\|");
+	}
+
+	pipeUnescape(s: string) {
+		return s.replace(/\\\|/g, "|").replace(/\\\\/g, "\\");
+	}
+
+	compactifyModifiedRepos(modifiedRepos: RepoScmStatus[]) {
+		return modifiedRepos.map(repo => {
+			return {
+				repoId: repo.repoId || "",
+				repoPath: repo.repoPath,
+				branch: repo.branch || "",
+				startCommit: repo.startCommit,
+				modifiedFiles: repo.modifiedFiles.map(file => {
+					return `1|${this.pipeEscape(file.file)}|${file.status}|${file.linesAdded}|${file.linesRemoved}`;
+				}),
+				stompingAuthors: repo.authors.filter(author => author.stomped).map(author => {
+					return `1|${this.pipeEscape(author.email)}|${author.stomped}`;
+				}),
+				localCommits: (repo.commits || []).map(commit => {
+					const info = commit.info as { [key: string]: string };
+					return `1|${commit.sha || ""}|${this.pipeEscape(info.shortMessage || "")}`;
+				})
+			};
+		});
+	}
+
+	decompactifyModifiedRepos(compactModifiedRepos: CompactModifiedRepo[]): RepoScmStatus[] {
+		return compactModifiedRepos.map(repo => {
+			return {
+				repoId: repo.repoId,
+				repoPath: repo.repoPath,
+				branch: repo.branch,
+				startCommit: repo.startCommit,
+				modifiedFiles: repo.modifiedFiles.map(file => {
+					const parts = file.split("|");
+					return {
+						file: this.pipeUnescape(parts[1]),
+						oldFile: "", // unused
+						status: parts[2] as FileStatus,
+						linesAdded: parseInt(parts[3], 10),
+						linesRemoved: parseInt(parts[4], 10)
+					};
+				}),
+				authors: repo.stompingAuthors.map(author => {
+					const parts = author.split("|");
+					return {
+						email: this.pipeUnescape(parts[1]),
+						stomped: parseInt(parts[2], 10),
+						commits: 0 // unused
+					};
+				}),
+				commits: repo.localCommits.map(commit => {
+					const parts = commit.split("|");
+					return {
+						sha: parts[1],
+						localOnly: true,
+						info: {
+							shortMessage: this.pipeUnescape(parts[2])
+						}
+					};
+				}),
+				// these are unused
+				savedFiles: [],
+				stagedFiles: [],
+				remotes: [],
+				totalModifiedLines: 0
+			};
+		});
+	}
+
+	pruneModifiedRepos(modifiedRepos: RepoScmStatus[]): RepoScmStatus[] {
+		return modifiedRepos.map(repo => {
+			return {
+				repoId: repo.repoId || "",
+				repoPath: repo.repoPath,
+				branch: repo.branch || "",
+				startCommit: repo.startCommit,
+				modifiedFiles: repo.modifiedFiles.map(file => {
+					return {
+						file: file.file,
+						oldFile: "",
+						status: file.status,
+						linesAdded: file.linesAdded,
+						linesRemoved: file.linesRemoved
+					};
+				}),
+				authors: repo.authors.filter(author => author.stomped).map(author => {
+					return {
+						email: author.email,
+						stomped: author.stomped,
+						commits: 0 // unused but required
+					};
+				}),
+				commits: (repo.commits || []).filter(commit => commit.localOnly).map(commit => {
+					const info = commit.info as { [key: string]: string };
+					return {
+						sha: commit.sha,
+						localOnly: true,
+						info: {
+							shortMessage: info.shortMessage || ""
+						}
+					};
+				}),
+				// these are unused but required in RepoScmStatus
+				savedFiles: [],
+				stagedFiles: [],
+				remotes: [],
+				totalModifiedLines: 0
+			};
+		});
 	}
 }

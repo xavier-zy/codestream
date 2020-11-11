@@ -494,7 +494,11 @@ export const PullRequest = () => {
 				}
 				try {
 					const response = (await dispatch(
-						api("getPullRequestLastUpdated", {}, { preventClearError: true })
+						api(
+							"getPullRequestLastUpdated",
+							{},
+							{ preventClearError: true, preventErrorReporting: true }
+						)
 					)) as any;
 					if (pr && response && response.updatedAt !== pr.updatedAt) {
 						console.log(

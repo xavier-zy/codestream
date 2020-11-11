@@ -69,6 +69,8 @@ export const getPullRequestConversationsFromProvider = (
 	id: string
 ) => async dispatch => {
 	try {
+		dispatch(clearPullRequestError(providerId, id));
+
 		const response = await HostApi.instance.send(FetchThirdPartyPullRequestRequestType, {
 			providerId: providerId,
 			pullRequestId: id,
@@ -378,6 +380,7 @@ export const api = <T = any, R = any>(
 	options?: {
 		updateOnSuccess?: boolean;
 		preventClearError: boolean;
+		preventErrorReporting?: boolean;
 	}
 ) => async (dispatch, getState: () => CodeStreamState) => {
 	let providerId;
@@ -409,6 +412,20 @@ export const api = <T = any, R = any>(
 	} catch (error) {
 		let errorString = typeof error === "string" ? error : error.message;
 		if (errorString) {
+			if (
+				options &&
+				options.preventErrorReporting &&
+				(errorString.indexOf("ENOTFOUND") > -1 ||
+					errorString.indexOf("ETIMEDOUT") > -1 ||
+					errorString.indexOf("EAI_AGAIN") > -1 ||
+					errorString.indexOf("ECONNRESET") > -1 ||
+					errorString.indexOf("ENETDOWN") > -1)
+			) {
+				// ignores calls where the user might be offline
+				console.error(error);
+				return undefined;
+			}
+
 			const target = "failed with message: ";
 			const targetLength = target.length;
 			const index = errorString.indexOf(target);

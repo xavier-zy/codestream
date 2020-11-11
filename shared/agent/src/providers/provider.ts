@@ -512,7 +512,7 @@ export abstract class ThirdPartyProviderBase<
 			}
 
 			if (resp !== undefined && !resp.ok) {
-				traceResult = `${this.displayName}: FAILED(${retryCount}x) ${method} ${url}`;
+				traceResult = `${this.displayName}: FAILED(${retryCount}x) ${method} ${absoluteUrl}`;
 				const error = await this.handleErrorResponse(resp);
 				throw error;
 			}

@@ -235,12 +235,17 @@ export const PullRequestFilesChanged = (props: Props) => {
 				inEditorOnly: false
 			});
 			if (!response.repositories) return;
-			const currentRepoInfo = response.repositories.find(
-				r => r.id === pr ? derivedState.currentRepo!.id : props.repoId!
-			);
-			if (currentRepoInfo) {
-				setCurrentRepoRoot(currentRepoInfo.path);
-				repoRoot = currentRepoInfo.path;
+			const repoIdToCheck = props.repoId
+				? props.repoId
+				: derivedState.currentRepo
+				? derivedState.currentRepo.id
+				: undefined;
+			if (repoIdToCheck) {
+				const currentRepoInfo = response.repositories.find(r => r.id === repoIdToCheck);
+				if (currentRepoInfo) {
+					setCurrentRepoRoot(currentRepoInfo.path);
+					repoRoot = currentRepoInfo.path;
+				}
 			}
 		}
 

@@ -371,16 +371,47 @@ export class GitLabProvider extends ThirdPartyIssueProviderBase<CSGitLabProvider
 	}
 
 	async getRepoInfo(request: { remote: string }): Promise<ProviderGetRepoInfoResponse> {
+		let owner;
+		let name;
 		try {
-			const { owner, name } = this.getOwnerFromRemote(request.remote);
+			({ owner, name } = this.getOwnerFromRemote(request.remote));
 
-			const projectResponse = await this.get<GitLabProjectInfoResponse>(
-				`/projects/${encodeURIComponent(`${owner}/${name}`)}`
-			);
-
-			const mergeRequestsResponse = await this.get<GitLabMergeRequestInfoResponse[]>(
-				`/projects/${encodeURIComponent(`${owner}/${name}`)}/merge_requests?state=opened`
-			);
+			let projectResponse;
+			try {
+				projectResponse = await this.get<GitLabProjectInfoResponse>(
+					`/projects/${encodeURIComponent(`${owner}/${name}`)}`
+				);
+			} catch (ex) {
+				Logger.error(ex, `${this.displayName}: failed to get projects`, {
+					owner: owner,
+					name: name,
+					hasProviderInfo: this._providerInfo != null
+				});
+				return {
+					error: {
+						type: "PROVIDER",
+						message: ex.message
+					}
+				};
+			}
+			let mergeRequestsResponse;
+			try {
+				mergeRequestsResponse = await this.get<GitLabMergeRequestInfoResponse[]>(
+					`/projects/${encodeURIComponent(`${owner}/${name}`)}/merge_requests?state=opened`
+				);
+			} catch (ex) {
+				Logger.error(ex, `${this.displayName}: failed to get merge_requests`, {
+					owner: owner,
+					name: name,
+					hasProviderInfo: this._providerInfo != null
+				});
+				return {
+					error: {
+						type: "PROVIDER",
+						message: ex.message
+					}
+				};
+			}
 
 			return {
 				id: (projectResponse.body.iid || projectResponse.body.id)!.toString(),
@@ -395,8 +426,10 @@ export class GitLabProvider extends ThirdPartyIssueProviderBase<CSGitLabProvider
 				})
 			};
 		} catch (ex) {
-			Logger.error(ex, `${this.displayName}: getRepoInfo`, {
-				remote: request.remote
+			Logger.error(ex, `${this.displayName}: getRepoInfo failed`, {
+				owner: owner,
+				name: name,
+				hasProviderInfo: this._providerInfo != null
 			});
 
 			return {

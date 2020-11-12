@@ -11,7 +11,9 @@ import {
 	GetMyPullRequestsResponse,
 	FetchThirdPartyPullRequestCommitsType,
 	QueryThirdPartyRequestType,
-	ExecuteThirdPartyRequestUntypedType
+	ExecuteThirdPartyRequestUntypedType,
+	FetchAssignableUsersRequestType,
+	FetchAssignableUsersResponse
 } from "@codestream/protocols/agent";
 import { CodeStreamState } from "..";
 import { RequestType } from "vscode-languageserver-protocol";
@@ -28,6 +30,13 @@ export const _addPullRequestConversations = (providerId: string, id: string, pul
 		providerId,
 		id,
 		pullRequest
+	});
+
+export const _addPullRequestCollaborators = (providerId: string, id: string, collaborators: any) =>
+	action(ProviderPullRequestActionsTypes.AddPullRequestCollaborators, {
+		providerId,
+		id,
+		collaborators
 	});
 
 export const _addPullRequestFiles = (providerId: string, id: string, pullRequestFiles: any) =>
@@ -64,6 +73,42 @@ export const clearPullRequestError = (providerId: string, id: string) =>
 		undefined
 	});
 
+const _getPullRequestConversationsFromProvider = async (providerId: string, id: string) => {
+	const response1 = await HostApi.instance.send(FetchThirdPartyPullRequestRequestType, {
+		providerId: providerId,
+		pullRequestId: id,
+		force: true
+	});
+
+	let response2: FetchAssignableUsersResponse | undefined = undefined;
+	if (
+		response1 &&
+		response1.repository &&
+		response1.repository.repoOwner &&
+		response1.repository.repoName
+	) {
+		response2 = await HostApi.instance.send(FetchAssignableUsersRequestType, {
+			providerId: providerId,
+			boardId: `${response1.repository.repoOwner}/${response1.repository.repoName}`
+		});
+	}
+	return {
+		conversations: response1,
+		collaborators:
+			response2 && response2.users && response2.users.length
+				? response2.users.map(_ => {
+						return {
+							id: _.id,
+							username: _.displayName,
+							avatar: {
+								image: _.avatarUrl
+							}
+						};
+				  })
+				: []
+	};
+};
+
 export const getPullRequestConversationsFromProvider = (
 	providerId: string,
 	id: string
@@ -71,13 +116,11 @@ export const getPullRequestConversationsFromProvider = (
 	try {
 		dispatch(clearPullRequestError(providerId, id));
 
-		const response = await HostApi.instance.send(FetchThirdPartyPullRequestRequestType, {
-			providerId: providerId,
-			pullRequestId: id,
-			force: true
-		});
-		dispatch(_addPullRequestConversations(providerId, id, response));
-		return response as FetchThirdPartyPullRequestResponse;
+		const responses = await _getPullRequestConversationsFromProvider(providerId, id);
+		dispatch(_addPullRequestConversations(providerId, id, responses.conversations));
+		dispatch(_addPullRequestCollaborators(providerId, id, responses.collaborators));
+
+		return responses.conversations as FetchThirdPartyPullRequestResponse;
 	} catch (error) {
 		logError(`failed to refresh pullRequest: ${error}`, { providerId, id });
 	}
@@ -100,12 +143,11 @@ export const getPullRequestConversations = (providerId: string, id: string) => a
 				return pr.conversations;
 			}
 		}
-		const response = await HostApi.instance.send(FetchThirdPartyPullRequestRequestType, {
-			providerId: providerId,
-			pullRequestId: id
-		});
-		dispatch(_addPullRequestConversations(providerId, id, response));
-		return response;
+
+		const responses = await _getPullRequestConversationsFromProvider(providerId, id);
+		dispatch(_addPullRequestConversations(providerId, id, responses.conversations));
+		dispatch(_addPullRequestCollaborators(providerId, id, responses.collaborators));
+		return responses.conversations;
 	} catch (error) {
 		logError(`failed to get pullRequest conversations: ${error}`, { providerId, id });
 		return { error };

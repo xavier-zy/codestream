@@ -47,4 +47,5 @@ export interface GitHubFetchListsResponse {
 export interface GitHubUser {
 	id: string;
 	login: string;
+	avatar_url: string;
 }

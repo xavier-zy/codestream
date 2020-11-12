@@ -30,6 +30,7 @@ import { ServicesState } from "../store/services/types";
 import { getSlashCommands } from "./SlashCommands";
 import { MarkdownText } from "./MarkdownText";
 import { markdownify } from "./Markdowner";
+import { getProviderPullRequestCollaborators } from "../store/providerPullRequests/reducer";
 
 type PopupType = "at-mentions" | "slash-commands" | "channels" | "emojis";
 
@@ -280,11 +281,15 @@ export class MessageInput extends React.Component<Props, State> {
 				const toMatch = `${person.fullName}*${person.username}`.toLowerCase();
 				if (toMatch.indexOf(normalizedPrefix) !== -1) {
 					const you = person.id === this.props.currentUserId ? " (you)" : "";
+					let description = person.fullName || person.email;
+					if (description) {
+						description += you;
+					}
 					itemsToShow.push({
 						id: person.id,
 						headshot: person,
 						identifier: person.username || person.email,
-						description: (person.fullName || person.email) + you
+						description: description
 					});
 				}
 			});
@@ -1260,10 +1265,18 @@ const mapStateToProps = (
 ): ConnectedProps => {
 	const currentTeam = state.teams[state.context.currentTeamId];
 
+	const currentPullRequest = state.context.currentPullRequest;
+	let teammates;
+	if (currentPullRequest) {
+		teammates = getProviderPullRequestCollaborators(state);
+	} else {
+		teammates = getTeamMembers(state);
+	}
+
 	return {
 		currentTeam,
 		currentUserId: state.session.userId!,
-		teammates: getTeamMembers(state),
+		teammates: teammates,
 		codemarks: codemarkSelectors.getTypeFilteredCodemarks(state) || EMPTY_ARRAY,
 		isInVscode: state.ide.name === "VSC",
 		teamTags: Boolean(props.withTags) ? getTeamTagsArray(state) : emptyArray,

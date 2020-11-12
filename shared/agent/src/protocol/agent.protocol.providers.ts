@@ -259,6 +259,7 @@ export interface ThirdPartyProviderUser {
 	id?: string;
 	displayName: string;
 	email?: string;
+	avatarUrl?: string;
 }
 
 export interface FetchAssignableUsersRequest {
@@ -717,9 +718,6 @@ export interface ProviderTokenRequest {
 	};
 }
 
-export const ProviderTokenRequestType = new RequestType<
-	ProviderTokenRequest,
-	void,
-	void,
-	void
->("codestream/provider/token");
+export const ProviderTokenRequestType = new RequestType<ProviderTokenRequest, void, void, void>(
+	"codestream/provider/token"
+);

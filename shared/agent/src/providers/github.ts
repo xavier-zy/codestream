@@ -660,8 +660,23 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 	async getAssignableUsers(request: { boardId: string }) {
 		void (await this.ensureConnected());
 
-		const { body } = await this.restGet<GitHubUser[]>(`/repos/${request.boardId}/collaborators`);
-		return { users: body.map(u => ({ ...u, id: u.id, displayName: u.login })) };
+		try {
+			const { body } = await this.restGet<GitHubUser[]>(`/repos/${request.boardId}/collaborators`);
+			return {
+				users: body.map(u => ({
+					...u,
+					id: u.id,
+					displayName: u.login,
+					avatarUrl: u.avatar_url
+				}))
+			};
+		} catch (ex) {
+			// can't get assignable users for repos you don't have access to
+			Logger.warn(ex);
+		}
+		return {
+			users: []
+		};
 	}
 
 	@log()

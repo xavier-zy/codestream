@@ -5,6 +5,19 @@ import Icon from "./Icon";
 import { ModalContext } from "./Modal";
 import { useDidMount } from "../utilities/hooks";
 
+interface Mention {
+	id: string;
+	headshot?: {
+		email?: string;
+		username?: string;
+		fullName?: string;
+		avatar?: string;
+	};
+	description?: string;
+	help?: string;
+	identifier: string;
+}
+
 // AtMentionsPopup expects an on/off switch determined by the on property
 // on = show the popup, off = hide the popup
 // a people list, which is the possible list of people to at-mention
@@ -12,7 +25,7 @@ import { useDidMount } from "../utilities/hooks";
 // [id, nickname, full name, email, headshot, presence]
 // and a prefix, which is used to filter/match against the list
 export interface AtMentionsPopupProps {
-	items: any[];
+	items: Mention[];
 	handleSelectAtMention(selection: string): void;
 	handleHoverAtMention(selection: string): void;
 	selected?: string;
@@ -112,7 +125,7 @@ export const AtMentionsPopup = (props: React.PropsWithChildren<AtMentionsPopupPr
 										)}
 									</div>
 									<ul className="compact at-mentions-list">
-										{props.items.map((item: any) => {
+										{props.items.map((item: Mention) => {
 											let className = item.id == props.selected ? "hover" : "none";
 											// the handleClickPerson event needs to fire onMouseDown
 											// rather than onclick because there is a handleblur

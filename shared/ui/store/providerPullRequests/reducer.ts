@@ -122,6 +122,17 @@ export function reduceProviderPullRequests(
 				pullRequests: newState
 			};
 		}
+		case ProviderPullRequestActionsTypes.AddPullRequestCollaborators: {
+			const newState = createNewObject(state, action);
+			newState[action.payload.providerId][action.payload.id] = {
+				...newState[action.payload.providerId][action.payload.id],
+				collaborators: action.payload.collaborators
+			};
+			return {
+				myPullRequests: { ...state.myPullRequests },
+				pullRequests: newState
+			};
+		}
 		case ProviderPullRequestActionsTypes.AddPullRequestConversations: {
 			const newState = createNewObject(state, action);
 			newState[action.payload.providerId][action.payload.id] = {
@@ -226,5 +237,12 @@ export const getProviderPullRequestRepo = createSelector(
 			console.error(error);
 		}
 		return currentRepo;
+	}
+);
+
+export const getProviderPullRequestCollaborators = createSelector(
+	getCurrentProviderPullRequest,
+	currentPr => {
+		return currentPr ? currentPr.collaborators : [];
 	}
 );

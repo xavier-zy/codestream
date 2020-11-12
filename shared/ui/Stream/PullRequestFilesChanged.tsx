@@ -248,19 +248,20 @@ export const PullRequestFilesChanged = (props: Props) => {
 				}
 			}
 		}
+		if (repoRoot) {
+			const result = await HostApi.instance.send(EditorRevealRangeRequestType, {
+				uri: path.join("file://", repoRoot, f.file),
+				range: Range.create(0, 0, 0, 0)
+			});
 
-		const result = await HostApi.instance.send(EditorRevealRangeRequestType, {
-			uri: path.join("file://", repoRoot, f.file),
-			range: Range.create(0, 0, 0, 0)
-		});
+			if (!result.success) {
+				setErrorMessage("Could not open file");
+			}
 
-		if (!result.success) {
-			setErrorMessage("Could not open file");
+			HostApi.instance.track("PR File Viewed", {
+				Host: props.pr && props.pr.providerId
+			});
 		}
-
-		HostApi.instance.track("PR File Viewed", {
-			Host: props.pr && props.pr.providerId
-		});
 	};
 
 	const renderFile = (f, index, depth) => {

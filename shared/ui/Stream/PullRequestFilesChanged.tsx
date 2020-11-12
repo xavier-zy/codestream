@@ -256,11 +256,13 @@ export const PullRequestFilesChanged = (props: Props) => {
 
 			if (!result.success) {
 				setErrorMessage("Could not open file");
+			} else {
+				HostApi.instance.track("PR File Viewed", {
+					Host: props.pr && props.pr.providerId
+				});
 			}
-
-			HostApi.instance.track("PR File Viewed", {
-				Host: props.pr && props.pr.providerId
-			});
+		} else {
+			setErrorMessage("Could not find a repo");
 		}
 	};
 

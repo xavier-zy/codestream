@@ -79,6 +79,7 @@ import { HeadshotName } from "../src/components/HeadshotName";
 import { PRCodeCommentPatch } from "./PullRequestComponents";
 import { PullRequestPatch } from "./PullRequestPatch";
 import MarkerActions from "./MarkerActions";
+import { MarkdownText } from "./MarkdownText";
 
 interface State {
 	hover: boolean;
@@ -329,14 +330,15 @@ export class Codemark extends React.Component<Props, State> {
 
 	renderTextReplaceCodeBlocks = (text: string) => {
 		const { codemark, capabilities } = this.props;
-		if (!codemark || !codemark.markers) return this.renderTextLinkified(text);
+		if (!codemark || !codemark.markers)
+			return <MarkdownText text={text} excludeParagraphWrap={true} />;
 
 		const blocks: any[] = [];
 		const groups = text.split(/\[#(\d+)]/);
 		let index = 0;
 		this.skipMarkers = [];
 		while (index < groups.length) {
-			blocks.push(this.renderTextLinkified(groups[index]));
+			blocks.push(<MarkdownText text={groups[index]} excludeParagraphWrap={true} />);
 			if (index + 1 < groups.length) {
 				const markerIndex = parseInt(groups[index + 1], 10);
 				if (markerIndex > 0) {
@@ -364,35 +366,6 @@ export class Codemark extends React.Component<Props, State> {
 			index += 2;
 		}
 		return <>{blocks}</>;
-	};
-
-	renderTextLinkified = (text: string) => {
-		let html;
-		if (text == null || text === "") {
-			html = "";
-		} else {
-			const me = this.props.currentUser.username;
-			html = markdownify(text).replace(/@(\w+)/g, (match: string, name: string) => {
-				if (
-					this.props.usernames.some(
-						n => name.localeCompare(n, undefined, { sensitivity: "accent" }) === 0
-					)
-				) {
-					return `<span class="at-mention${
-						me.localeCompare(name, undefined, { sensitivity: "accent" }) === 0 ? " me" : ""
-					}">${match}</span>`;
-				}
-
-				return match;
-			});
-
-			if (this.props.query) {
-				const matchQueryRegexp = new RegExp(this.props.query, "gi");
-				html = html.replace(matchQueryRegexp, "<u><b>$&</b></u>");
-			}
-		}
-
-		return <span className="title" dangerouslySetInnerHTML={{ __html: html }} />;
 	};
 
 	renderTypeIcon() {
@@ -929,7 +902,7 @@ export class Codemark extends React.Component<Props, State> {
 							{this.renderTypeIcon()}
 						</span>
 						<div className="body" style={{ flexGrow: 10 }}>
-							{this.renderTextLinkified(codemark.title || codemark.text)}
+							<MarkdownText text={codemark.title || codemark.text} excludeParagraphWrap={true} />
 							{renderedTags && <span className="cs-tag-container">{renderedTags}</span>}
 						</div>
 						{codemark.numReplies > 0 && (
@@ -1395,7 +1368,9 @@ export class Codemark extends React.Component<Props, State> {
 		// menuItems.push({ label: "Set Keybinding", action: "set-keybinding", submenu: submenu });
 
 		const description =
-			codemark.title && codemark.text ? this.renderTextLinkified(codemark.text) : null;
+			codemark.title && codemark.text ? (
+				<MarkdownText text={codemark.text} excludeParagraphWrap={true} />
+			) : null;
 
 		// show a striped header if the codemark is selected, or unhidden, and it matches
 		// manual-archive, resolved, or deleted state
@@ -1432,7 +1407,7 @@ export class Codemark extends React.Component<Props, State> {
 		// 			onMouseLeave={this.handleMouseLeaveCodemark}
 		// 			style={{ display: "flex", alignItems: "center" }}
 		// 		>
-		// 			<div>{this.renderTextLinkified(codemark.title || codemark.text)}</div>
+		// 			<div><MarkdownText text={codemark.title || codemark.text} excludeParagraphWrap={true} /></div>
 		// 			<div className="author" style={{ paddingLeft: "10px" }}>
 		// 				<b>{author.username}</b>
 		// 				<Timestamp relative time={codemark.createdAt} />
@@ -1516,7 +1491,10 @@ export class Codemark extends React.Component<Props, State> {
 							{!renderExpandedBody && type === "bookmark" ? (
 								<>
 									<span className={codemark.color}>{this.renderTypeIcon()}</span>
-									{this.renderTextLinkified(codemark.title || codemark.text)}
+									<MarkdownText
+										text={codemark.title || codemark.text}
+										excludeParagraphWrap={true}
+									/>
 									<div className="right">
 										<span onClick={this.handleMenuClick}>
 											{menuOpen && (
@@ -1709,7 +1687,7 @@ export class Codemark extends React.Component<Props, State> {
 								<PullRequestPatch patch={externalContent.diffHunk} filename={marker.file} />
 							</PRCodeCommentPatch>
 						)}
-						{this.renderTextLinkified(marker.summary)}
+						<MarkdownText text={marker.summary} excludeParagraphWrap={true} />
 						{!selected && this.renderPinnedReplies()}
 						{!selected && this.renderDetailIcons(marker)}
 						{((marker.externalContent!.actions || emptyArray).length > 0 ||
@@ -1857,7 +1835,7 @@ export class Codemark extends React.Component<Props, State> {
 							<Icon name={externalContent.provider.icon || "codestream"} className="margin-right" />
 						</span>
 						<div>
-							{this.renderTextLinkified(marker.summary)}
+							<MarkdownText text={marker.summary} excludeParagraphWrap={true} />
 							{lines && (
 								<span style={{ paddingLeft: "15px", opacity: 0.75 }} className="subtle">
 									{lines}
@@ -1960,7 +1938,9 @@ export class Codemark extends React.Component<Props, State> {
 						<div className="pinned-reply">
 							<Icon className="pinned-reply-star" name="star" />{" "}
 							<Headshot size={18} person={this.props.pinnedAuthors[i]} />
-							<div className="pinned-reply-body">{this.renderTextLinkified(post.text)}</div>
+							<div className="pinned-reply-body">
+								<MarkdownText text={post.text} excludeParagraphWrap={true} />
+							</div>
 						</div>
 					);
 				})}

@@ -1088,7 +1088,7 @@ export const CreatePullRequestPanel = props => {
 	}, [selectedRepo, reviewBranch]);
 
 	const setTitleBasedOnBranch = () => {
-		changePRTitle(
+		setPrTitle(
 			reviewBranch.charAt(0).toUpperCase() +
 				reviewBranch
 					.slice(1)

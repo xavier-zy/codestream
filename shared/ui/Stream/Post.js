@@ -39,6 +39,7 @@ import { includes as _includes } from "lodash-es";
 import { ProfileLink } from "../src/components/ProfileLink";
 import EmojiPicker from "./EmojiPicker";
 import { AddReactionIcon, Reactions } from "./Reactions";
+import { MarkdownText } from "./MarkdownText";
 
 class Post extends React.Component {
 	state = {
@@ -531,7 +532,7 @@ class Post extends React.Component {
 		if (title)
 			return (
 				<div className="title">
-					{icon} {this.renderTextLinkified(title)}
+					{icon} <MarkdownText text={title} excludeParagraphWrap={true} />
 					{this.renderCodeBlockFile()}
 				</div>
 			);
@@ -676,7 +677,12 @@ class Post extends React.Component {
 		const { codemark } = this.props;
 		const type = codemark && codemark.type;
 		let matches = (post.text || "").match(/^\/me\s+(.*)/);
-		if (matches) return <span className="emote">{this.renderTextLinkified(matches[1])}</span>;
+		if (matches)
+			return (
+				<span className="emote">
+					<MarkdownText text={matches[1]} excludeParagraphWrap={true} />{" "}
+				</span>
+			);
 		if (type === "question") return <span className="emote">has a question</span>;
 		if (type === "bookmark") return <span className="emote">set a bookmark</span>;
 		if (type === "issue") return <span className="emote">posted an issue</span>;
@@ -688,31 +694,14 @@ class Post extends React.Component {
 		const { codemark, editing } = this.props;
 		if (editing) return this.renderTextEditing(post);
 		else if ((post.text || "").match(/^\/me\s/)) return null;
-		else return [this.renderTextLinkified((codemark && codemark.text) || post.text), <br />]; // unfortunately need to account for legacy slack codemarks that don't have text
-	};
-
-	renderTextLinkified = text => {
-		let html;
-		if (text == null || text === "") {
-			html = "";
-		} else {
-			const me = this.props.currentUserName.toLowerCase();
-			html = markdownify(text).replace(/@(\w+)/g, (match, name) => {
-				const nameNormalized = name.toLowerCase();
-				if (this.props.userNamesNormalized.includes(nameNormalized)) {
-					return `<span class="at-mention${nameNormalized === me ? " me" : ""}">${match}</span>`;
-				}
-
-				return match;
-			});
-
-			if (this.props.q) {
-				const matchQueryRegexp = new RegExp(this.props.q, "g");
-				html = html.replace(matchQueryRegexp, "<u><b>$&</b></u>");
-			}
-		}
-
-		return <span dangerouslySetInnerHTML={{ __html: html }} />;
+		else
+			return [
+				<MarkdownText
+					text={(codemark && codemark.text) || post.text}
+					excludeParagraphWrap={true}
+				/>,
+				<br />
+			]; // unfortunately need to account for legacy slack codemarks that don't have text
 	};
 
 	getEditInputId = () => {

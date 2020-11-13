@@ -1058,42 +1058,16 @@ export class MessageInput extends React.Component<Props, State> {
 		});
 	};
 
-	renderTextLinkified = (text: string) => {
-		let html;
-		if (text == null || text === "") {
-			html = "";
-		} else {
-			const me = this.props.currentUser.username;
-			html = markdownify(text).replace(/@(\w+)/g, (match: string, name: string) => {
-				if (
-					this.props.usernames.some(
-						n => name.localeCompare(n, undefined, { sensitivity: "accent" }) === 0
-					)
-				) {
-					return `<span class="at-mention${
-						me.localeCompare(name, undefined, { sensitivity: "accent" }) === 0 ? " me" : ""
-					}">${match}</span>`;
-				}
-
-				return match;
-			});
-		}
-
-		return <span className="title" dangerouslySetInnerHTML={{ __html: html }} />;
-	};
-
 	renderTextReplaceCodeBlocks = (text: string) => {
 		if (!this.props.renderCodeBlock) return;
 
 		const blocks: any[] = [];
 		const groups = text.split(/\[#(\d+)]/);
-		console.warn("GROUPS: ", groups);
 		let index = 0;
 		while (index < groups.length) {
-			blocks.push(this.renderTextLinkified(groups[index]));
+			blocks.push(<MarkdownText text={groups[index]} excludeParagraphWrap={true} />);
 			if (index + 1 < groups.length) {
 				const markerIndex = parseInt(groups[index + 1], 10);
-				console.warn("RENDERING CB: ", markerIndex);
 				if (markerIndex > 0) {
 					blocks.push(this.props.renderCodeBlock(markerIndex - 1, true));
 				}
@@ -1106,15 +1080,19 @@ export class MessageInput extends React.Component<Props, State> {
 
 	renderExitPreview = () => {
 		return (
-			<Button
-				className="control-button codemark-actions-button"
-				onClick={e => {
-					this.setIsPreviewing(false);
-					this.focus();
-				}}
-			>
-				Exit Preview
-			</Button>
+			<div className="button-group float-wrap">
+				<Button
+					type="submit"
+					className="control-button"
+					style={{ width: "100px" }}
+					onClick={e => {
+						this.setIsPreviewing(false);
+						this.focus();
+					}}
+				>
+					Exit Preview
+				</Button>
+			</div>
 		);
 	};
 

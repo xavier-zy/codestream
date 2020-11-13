@@ -50,6 +50,8 @@ class NewCodemarkGutterIconRenderer(
         onStartDrag()
         return NewCodemarkGutterIconRendererDraggableObject(editor, this.line, onStopDrag)
     }
+
+    override fun getAlignment() = Alignment.LEFT
 }
 
 class NewCodemarkGutterIconRendererClickAction(val editor: Editor, val line: Int, val onClick: () -> Unit) :

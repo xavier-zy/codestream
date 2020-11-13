@@ -37,6 +37,8 @@ class GutterIconRendererImpl(val editor: Editor, val marker: DocumentMarker) : G
         return IconLoader.getIcon("/images/marker-$type-$color.svg")
     }
 
+    override fun getAlignment() = Alignment.LEFT
+
     override fun equals(other: Any?): Boolean {
         val otherRenderer = other as? GutterIconRendererImpl ?: return false
         return id == otherRenderer.id

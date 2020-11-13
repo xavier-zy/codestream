@@ -37,6 +37,7 @@ data class ApplicationSettingsServiceState(
     var team: String? = null,
     var showFeedbackSmiley: Boolean = true,
     var showMarkers: Boolean = true,
+    var showNewCodemarkGutterIconOnHover: Boolean = true,
     var autoHideMarkers: Boolean = false,
     var proxySupport: ProxySupport = ProxySupport.ON,
     var proxyStrictSSL: Boolean = true,
@@ -66,6 +67,7 @@ class ApplicationSettingsService : PersistentStateComponent<ApplicationSettingsS
     val team get() = state.team
     val autoHideMarkers get() = state.autoHideMarkers
     val showMarkers get() = state.showMarkers
+    val showNewCodemarkGutterIconOnHover get() = state.showNewCodemarkGutterIconOnHover
     var serverUrl
         get() = state.serverUrl
         set(value) { state.serverUrl = value }

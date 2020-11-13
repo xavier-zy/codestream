@@ -1,7 +1,10 @@
 package com.codestream.settings
 
+import com.codestream.agentService
+import com.codestream.protocols.agent.TelemetryParams
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.options.SearchableConfigurable
+import com.intellij.openapi.project.ProjectManager
 import javax.swing.JComponent
 
 class CodeStreamConfigurable : SearchableConfigurable {
@@ -24,6 +27,12 @@ class CodeStreamConfigurable : SearchableConfigurable {
         val state = settingsService.state
         val gui = _gui
         gui?.let {
+            val showNewCodemarkGutterIconOnHover = gui.showNewCodemarkGutterIconOnHover.isSelected
+            if (state.showNewCodemarkGutterIconOnHover != showNewCodemarkGutterIconOnHover) {
+                val params = TelemetryParams("Hover Compose Setting Changed", mapOf("Enabled" to showNewCodemarkGutterIconOnHover))
+                ProjectManager.getInstance().openProjects.firstOrNull()?.agentService?.agent?.telemetry(params)
+            }
+
             state.autoSignIn = gui.autoSignIn.isSelected
             state.serverUrl = if (gui.serverUrl.text.isNullOrEmpty()) gui.serverUrl.text else gui.serverUrl.text.trimEnd('/')
             state.disableStrictSSL = gui.disableStrictSSL.isSelected
@@ -31,6 +40,7 @@ class CodeStreamConfigurable : SearchableConfigurable {
             state.team = gui.team.text
             state.showFeedbackSmiley = gui.showFeedbackSmiley.isSelected
             state.showMarkers = gui.showMarkers.isSelected
+            state.showNewCodemarkGutterIconOnHover = showNewCodemarkGutterIconOnHover
             state.autoHideMarkers = gui.autoHideMarkers.isSelected
             state.proxySupport = gui.proxySupport.selectedItem as ProxySupport
             state.proxyStrictSSL = gui.proxyStrictSSL.isSelected
@@ -51,6 +61,7 @@ class CodeStreamConfigurable : SearchableConfigurable {
                 team.text = it.team
                 showFeedbackSmiley.isSelected = it.showFeedbackSmiley
                 showMarkers.isSelected = it.showMarkers
+                showNewCodemarkGutterIconOnHover.isSelected = it.showNewCodemarkGutterIconOnHover
                 autoHideMarkers.isSelected = it.autoHideMarkers
                 proxySupport.selectedItem = it.proxySupport
                 proxyStrictSSL.isSelected = it.proxyStrictSSL

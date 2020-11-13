@@ -1,13 +1,15 @@
 package com.codestream.editor
 
+import com.codestream.settings.ApplicationSettingsService
+import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.editor.event.EditorMouseEventArea
 import com.intellij.openapi.editor.event.EditorMouseMotionListener
 import com.intellij.openapi.editor.event.SelectionEvent
 import com.intellij.openapi.editor.event.SelectionListener
+import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.MarkupModelEx
-import com.intellij.openapi.editor.ex.RangeHighlighterEx
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.editor.markup.HighlighterLayer
 import com.intellij.openapi.editor.markup.RangeHighlighter
@@ -17,8 +19,12 @@ import kotlin.math.min
 class NewCodemarkGutterIconManager(val editor: Editor) : EditorMouseMotionListener, SelectionListener {
 
     init {
-        editor.addEditorMouseMotionListener(this)
         editor.selectionModel.addSelectionListener(this)
+        val appSettings = ServiceManager.getService(ApplicationSettingsService::class.java)
+        if (appSettings.showNewCodemarkGutterIconOnHover) {
+            editor.addEditorMouseMotionListener(this)
+            (editor as EditorEx).gutterComponentEx.setInitialIconAreaWidth(20)
+        }
     }
 
     private var lastHighlightedLine: Int? = null
@@ -81,7 +87,7 @@ class NewCodemarkGutterIconManager(val editor: Editor) : EditorMouseMotionListen
 
     private fun RangeHighlighter.updateRenderer(renderer: GutterIconRenderer?) {
         this.gutterIconRenderer = renderer
-        (editor.markupModel as? MarkupModelEx)?.fireAttributesChanged(this as RangeHighlighterEx, false, false)
+        // (editor.markupModel as? MarkupModelEx)?.fireAttributesChanged(this as RangeHighlighterEx, false, false)
     }
 }
 

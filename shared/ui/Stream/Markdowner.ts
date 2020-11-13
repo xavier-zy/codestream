@@ -98,7 +98,6 @@ export function useMarkdownifyToHtml() {
 			.map(username => escapeRegExp(username))
 			.join("|");
 		const usernameRegExp = new RegExp(`@(${escapedUsernames})\\b`, "gi");
-		console.warn("UNR: ", `@(${escapedUsernames})`);
 		return { currentUsername: currentUser.username, usernameRegExp, escapedUsernames };
 	}, shallowEqual);
 

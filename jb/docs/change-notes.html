@@ -1,3 +1,27 @@
+<h4 id="10_0_4">10.0.4</h4>
+<h5>Added</h5>
+<ul>
+    <li>Adds a new extension setting to turn off the "+" compose button on hover in the gutter</li>
+    <li>Adds more space around the "+" compose button so that it doesn't interfer with setting a breakpoint</li>
+    <li>Automatically adds the codestream.xml file to your .gitignore</li>
+    <li>Adds the ability to mention GitHub collaborators when commenting on a pull request</li>
+    <li>Adds typeahead search when selecting branches for a new pull request</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+    <li>After creating a pull request, when you then close it you are brought to the CodeStream sidebar instead of back to the Open a Pull Request page</li>
+    <li>Provide more guidance for users trying to sign up/in with GitLab regarding the need to have a public primary email on GitLab</li>
+    <li>The "Work in Progress" section is now more performant, with reduced api requests</li>
+</ul>
+<h5>Fixed</h5>
+<ul>
+    <li>Addresses <a href="https://github.com/TeamCodeStream/CodeStream/issues/322">#322</a> - When creating a pull request on GitLab or Bitbucket, CodeStream would try to open it in the IDE instead of on the appropriate service</li>
+    <li>Addresses <a href="https://github.com/TeamCodeStream/CodeStream/issues/315">#315</a> - Creating a PR on GitLab Self-Managed switches base branch with compare branch</li>
+    <li>Fixes an issue trying to view a pull request in a repo with more than 100 open or merged pull requests</li>
+    <li>Fixes an issue where our polling for updates to a pull request would trigger an error when the user comes back from beign offline</li>
+    <li>Fixes an issue with Open Local File not working from the Files Changed tab in a pull request</li>
+    <li>Fixes an issue that would prevent you from creating a pull request if you had repos from both GitHub and GitHub Entperise open in your IDE</li>
+</ul>
 <h4 id="10_0_3">10.0.3</h4>
 <h5>Added</h5>
 <ul>

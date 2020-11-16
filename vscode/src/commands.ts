@@ -485,8 +485,6 @@ export class Commands implements Disposable {
 	async openReview(args: OpenReviewCommandArgs): Promise<void> {
 		if (args === undefined) return;
 
-		Container.agent.telemetry.track("Review Clicked", { "Review Location": "Source File" });
-
 		const { reviewId: _reviewId, ...options } = args;
 		return Container.webview.openReview(args.reviewId, options);
 	}

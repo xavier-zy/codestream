@@ -14,6 +14,7 @@ import org.eclipse.lsp4j.WorkspaceFoldersChangeEvent
 class ModuleListenerImpl(project: Project) : ModuleListener {
 
     override fun moduleAdded(project: Project, module: Module) {
+        if (module.isDisposed || project.isDisposed) return
         val existingFolders = project.workspaceFolders
         val roots = (module.moduleContentScope as? ModuleWithDependenciesScope)?.roots ?: return
         val folders = roots.map { WorkspaceFolder(it.uri) }.filter { !existingFolders.contains(it)  }
@@ -35,6 +36,7 @@ class ModuleListenerImpl(project: Project) : ModuleListener {
     }
 
     override fun moduleRemoved(project: Project, module: Module) {
+        if (module.isDisposed || project.isDisposed) return
         val roots = (module.moduleContentScope as? ModuleWithDependenciesScope)?.roots ?: return
         val folders = roots.map { WorkspaceFolder(it.uri) }
         project.agentService?.let {

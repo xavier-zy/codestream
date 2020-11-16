@@ -93,7 +93,8 @@ import {
 	AgentOpenUrlRequestType,
 	FetchReviewsRequestType,
 	GetFileContentsAtRevisionRequestType,
-	GetFileContentsAtRevisionResponse
+	GetFileContentsAtRevisionResponse,
+	AgentInitializedNotificationType
 } from "@codestream/protocols/agent";
 import {
 	ChannelServiceType,
@@ -161,6 +162,11 @@ export class CodeStreamAgentConnection implements Disposable {
 		return this._onDidRequireRestart.event;
 	}
 
+	private _onDidRestart = new EventEmitter<void>();
+	get onDidRestart(): Event<void> {
+		return this._onDidRestart.event;
+	}
+
 	private _onDidChangeConnectionStatus = new EventEmitter<DidChangeConnectionStatusNotification>();
 	get onDidChangeConnectionStatus(): Event<DidChangeConnectionStatusNotification> {
 		return this._onDidChangeConnectionStatus.event;
@@ -201,6 +207,11 @@ export class CodeStreamAgentConnection implements Disposable {
 	private _onOpenUrl = new EventEmitter<AgentOpenUrlRequest>();
 	get onOpenUrl(): Event<AgentOpenUrlRequest> {
 		return this._onOpenUrl.event;
+	}
+
+	private _onAgentInitialized = new EventEmitter<void>();
+	get onAgentInitialized(): Event<void> {
+		return this._onAgentInitialized.event;
 	}
 
 	private _client: LanguageClient | undefined;
@@ -252,7 +263,29 @@ export class CodeStreamAgentConnection implements Disposable {
 						);
 					}
 
-					if (this._restartCount < 3) return CloseAction.Restart;
+					if (this._restartCount < 3) {
+						// when we return CloseAction.Restart here, the VSC language client initiates a restart
+						// of the agent ... we'll let the session know that this is happening, and when the
+						// agent is ready, start listening to messages again ... to do this, we need to set
+						// all the message handlers again, the setTimeout with timeout of 0 ensures the language
+						// client code has really initiated the restart sequence
+						this._onDidRestart.fire();
+						setTimeout(async () => {
+							Logger.log("Waiting for VSC language client to be ready...");
+							await this._client!.onReady();
+							Logger.log("VSC language client is ready, setting message handlers...");
+							this._restartCount = 0;
+							try {
+								this.setHandlers();
+							}
+							catch (e) {
+								const msg = e instanceof Error ? e.message : JSON.stringify(e);
+								Logger.log(`Error setting handlers after restart: ${msg}`);
+								throw e;
+							}
+						}, 0);
+						return CloseAction.Restart;
+					}
 
 					// If we are still waiting on ready just cancel it
 					if (this._clientReadyCancellation !== undefined) {
@@ -1010,6 +1043,14 @@ export class CodeStreamAgentConnection implements Disposable {
 		this._clientReadyCancellation.dispose();
 		this._clientReadyCancellation = undefined;
 
+		this.setHandlers();
+
+		this._onDidStart.fire();
+		return this._client.initializeResult! as AgentInitializeResult;
+	}
+
+	private setHandlers () {
+		if (!this._client) return;
 		this._client.onNotification(DidChangeDataNotificationType, this.onDataChanged.bind(this));
 		this._client.onNotification(
 			DidChangeConnectionStatusNotificationType,
@@ -1031,13 +1072,14 @@ export class CodeStreamAgentConnection implements Disposable {
 			DidChangeApiVersionCompatibilityNotificationType,
 			this.onApiVersionCompatibilityChanged.bind(this)
 		);
+
 		this._client.onNotification(DidLoginNotificationType, e => this._onDidLogin.fire(e));
 		this._client.onNotification(DidStartLoginNotificationType, () => this._onDidStartLogin.fire());
 		this._client.onNotification(DidFailLoginNotificationType, () => this._onDidFailLogin.fire());
 		this._client.onNotification(DidLogoutNotificationType, this.onLogout.bind(this));
-		this._client.onNotification(RestartRequiredNotificationType, () =>
-			this._onDidRequireRestart.fire()
-		);
+		this._client.onNotification(RestartRequiredNotificationType, () => {
+			this._onDidRequireRestart.fire();
+		});
 		// this._client.onNotification(DidResetNotificationType, this.onReset.bind(this));
 
 		this._client.onNotification(DidEncounterMaintenanceModeNotificationType, e =>
@@ -1047,9 +1089,10 @@ export class CodeStreamAgentConnection implements Disposable {
 			DidChangeServerUrlNotificationType,
 			this.onServerUrlChanged.bind(this)
 		);
+		this._client.onNotification(AgentInitializedNotificationType, () => {
+			this._onAgentInitialized.fire();
+		});
 		this._client.onRequest(AgentOpenUrlRequestType, e => this._onOpenUrl.fire(e));
-		this._onDidStart.fire();
-		return this._client.initializeResult! as AgentInitializeResult;
 	}
 
 	private async stop(): Promise<void> {

@@ -24,6 +24,7 @@ import {
 import { DocumentManager } from "./documentManager";
 import { Logger } from "./logger";
 import {
+	AgentInitializedNotificationType,
 	BaseAgentOptions,
 	DidChangeDataNotificationType,
 	LogoutReason
@@ -59,6 +60,7 @@ export class CodeStreamAgent implements Disposable {
 			onInitialized?: NotificationHandler<InitializedParams>;
 		} = {}
 	) {
+
 		this._connection.onInitialize(options.onInitialize || this.onInitialize.bind(this));
 		this._connection.onInitialized(options.onInitialized || this.onInitialized.bind(this));
 
@@ -175,6 +177,8 @@ export class CodeStreamAgent implements Disposable {
 			}
 
 			this._disposable = Disposables.from(...subscriptions);
+
+			this.sendNotification(AgentInitializedNotificationType, undefined);
 
 			// this._signedIn = true;
 			// this._onReady.fire(undefined);

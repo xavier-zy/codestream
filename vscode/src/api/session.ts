@@ -192,20 +192,34 @@ export class CodeStreamSession implements Disposable {
 			}),
 			Container.agent.onOpenUrl(async (params: AgentOpenUrlRequest) => {
 				await openUrl(params.url);
+			}),
+			Container.agent.onDidRestart(async () => {
+				Logger.log("Agent restarted unexpectedly, waiting for it to reinitialize...");
+				delete this._loginPromise;
+				const disposable = Container.agent.onAgentInitialized(async () => {
+					Logger.log("Agent reinitialized, initiating auto-signin...");
+					await this.autoSignin();
+					disposable.dispose();
+				});
 			})
 		);
 
 		if (config.autoSignIn) {
 			this.setStatus(SessionStatus.SigningIn);
 			const disposable = Container.agent.onDidStart(async () => {
-				const token = await TokenManager.get(_serverUrl, config.email);
+				await this.autoSignin();
 				disposable.dispose();
-				if (token) {
-					this.login(config.email, token);
-				} else {
-					this.setStatus(SessionStatus.SignedOut);
-				}
 			});
+		}
+	}
+
+	async autoSignin() {
+		const config = Container.config;
+		const token = await TokenManager.get(this._serverUrl, config.email);
+		if (token) {
+			this.login(config.email, token);
+		} else {
+			this.setStatus(SessionStatus.SignedOut);
 		}
 	}
 

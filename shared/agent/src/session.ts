@@ -36,6 +36,7 @@ import { DocumentEventHandler } from "./documentEventHandler";
 import { setGitPath } from "./git/git";
 import { Logger } from "./logger";
 import {
+	AgentInitializedNotificationType,
 	ApiRequestType,
 	ApiVersionCompatibility,
 	BaseAgentOptions,

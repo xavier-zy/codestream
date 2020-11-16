@@ -309,3 +309,7 @@ export const DidChangeServerUrlNotificationType = new NotificationType<
 	DidChangeServerUrlNotification,
 	void
 >("codestream/didChangeServerUrl");
+
+export const AgentInitializedNotificationType = new NotificationType<void, void>(
+	"codestream/agentInitialized"
+);

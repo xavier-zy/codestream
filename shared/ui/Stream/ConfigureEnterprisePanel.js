@@ -18,12 +18,9 @@ export class ConfigureEnterprisePanel extends Component {
 
 	state = this.initialState;
 
-	focusInput() {
-		document.getElementById("configure-provider-initial-input").focus();
-	}
-
 	componentDidMount() {
-		this.focusInput();
+		const el = document.getElementById("configure-provider-initial-input");
+		el && el.focus();
 	}
 
 	componentDidUpdate() {}

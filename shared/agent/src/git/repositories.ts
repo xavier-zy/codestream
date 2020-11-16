@@ -194,7 +194,7 @@ export class GitRepositories {
 				const { git } = SessionContainer.instance();
 				await Promise.all(
 					unassignedRepositories.map(async repo => {
-						const remotes = (await repo.getRemotes()).map(r => r.normalizedUrl);
+						const remotes = (await repo.getWeightedRemotes()).map(r => r.normalizedUrl);
 						const knownCommitHashes = await git.getKnownCommitHashes(repo.path);
 						orderedUnassignedRepos.push(repo);
 						repoInfo.repos.push({ remotes, knownCommitHashes });

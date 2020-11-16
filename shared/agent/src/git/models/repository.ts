@@ -1,4 +1,5 @@
 "use strict";
+import { sortBy } from "lodash-es";
 import { WorkspaceFolder } from "vscode-languageserver";
 import { SessionContainer } from "../../container";
 import { Logger } from "../../logger";
@@ -44,6 +45,16 @@ export class GitRepository {
 
 	getRemotes() {
 		return SessionContainer.instance().git.getRepoRemotes(this.path);
+	}
+
+	/**
+	 * Returns a list of remotes ordered by the weight of the origin name
+	 *
+	 * @return {*}
+	 * @memberof GitRepository
+	 */
+	async getWeightedRemotes() {
+		return sortBy(await this.getRemotes(), _ => [_.remoteWeight]);
 	}
 
 	async getStreams(): Promise<CSFileStream[]> {

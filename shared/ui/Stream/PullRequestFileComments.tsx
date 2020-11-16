@@ -133,6 +133,7 @@ export const PullRequestFileComments = (props: PropsWithChildren<Props>) => {
 							filename={filename}
 							canComment
 							comments={commentMap[filename]}
+							commentId={props.commentId}
 							setIsLoadingMessage={props.setIsLoadingMessage}
 							quote={quote}
 							fetch={props.fetch!}

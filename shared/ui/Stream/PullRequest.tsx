@@ -140,6 +140,17 @@ export const PullRequest = () => {
 		};
 	});
 
+	useEffect(() => {
+		if (!derivedState.currentPullRequestCommentId) return;
+
+		const dataCommentId = document.querySelector(
+			`[data-comment-id="${derivedState.currentPullRequestCommentId}"]`
+		);
+		if (dataCommentId) {
+			dataCommentId.scrollIntoView({ behavior: "smooth", block: "start", inline: "nearest" });
+		}
+	}, [derivedState.currentPullRequestCommentId]);
+
 	const [activeTab, setActiveTab] = useState(1);
 	const [ghRepo, setGhRepo] = useState<any>(EMPTY_HASH);
 	const [isLoadingPR, setIsLoadingPR] = useState(false);

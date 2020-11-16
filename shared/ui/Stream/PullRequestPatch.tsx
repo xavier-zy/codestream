@@ -119,6 +119,7 @@ export const PullRequestPatch = (props: {
 	noHeader?: boolean;
 	canComment?: boolean;
 	comments?: { comment: any; review: any }[];
+	commentId?: string;
 	pr?: FetchThirdPartyPullRequestPullRequest;
 	setIsLoadingMessage?: Function;
 	truncateLargePatches?: boolean;
@@ -206,7 +207,7 @@ export const PullRequestPatch = (props: {
 							commentsOnLine.length === 0 ? null : (
 								<PRCommentsInPatch>
 									{commentsOnLine.map(({ comment, review }, index) => (
-										<PRComment key={index} style={{ margin: 0 }}>
+										<PRComment key={index} style={{ margin: 0 }} data-comment-id={comment.id}>
 											<PRCard>
 												<PullRequestCodeComment
 													pr={props.pr!}

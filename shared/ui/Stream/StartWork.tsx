@@ -385,7 +385,7 @@ export const StartWork = (props: Props) => {
 			webviewFocused: state.context.hasFocus,
 			textEditorUri: state.editorContext.textEditorUri,
 			branchMaxLength: settings.branchMaxLength || 40,
-			branchTicketTemplate: settings.branchTicketTemplate || "feature/ticket-{id}-{title}",
+			branchTicketTemplate: settings.branchTicketTemplate || "feature/{title}",
 			createBranch: Object.keys(workPrefs).includes("createBranch") ? workPrefs.createBranch : true,
 			moveCard: Object.keys(workPrefs).includes("moveCard") ? workPrefs.moveCard : true,
 			updateSlack: isConnectedToSlack ? updateSlack : false,

@@ -1498,6 +1498,13 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 		}
 
 		const response = await this.mutate<any>(query, request);
+
+		this._pullRequestCache.delete(request.pullRequestId);
+		this.session.agent.sendNotification(DidChangePullRequestCommentsNotificationType, {
+			pullRequestId: request.pullRequestId,
+			filePath: request.filePath
+		});
+
 		return response;
 	}
 
@@ -1511,6 +1518,12 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 		const response = await this.mutate<any>(query, {
 			pullRequestReviewId: request.pullRequestReviewId
 		});
+
+		this._pullRequestCache.delete(request.pullRequestId);
+		this.session.agent.sendNotification(DidChangePullRequestCommentsNotificationType, {
+			pullRequestId: request.pullRequestId
+		});
+
 		return response;
 	}
 
@@ -2355,12 +2368,6 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 			text: request.text || "",
 			filePath: request.filePath,
 			position: request.position
-		});
-
-		this._pullRequestCache.delete(request.pullRequestId);
-		this.session.agent.sendNotification(DidChangePullRequestCommentsNotificationType, {
-			pullRequestId: request.pullRequestId,
-			filePath: request.filePath
 		});
 
 		return result;

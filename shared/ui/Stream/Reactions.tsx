@@ -86,7 +86,13 @@ export const AddReactionIcon = styled((props: { post: PostPlus; className?: stri
 					<Icon name="smiley" className="smiley clickable" onClick={handleReactionClick} />
 				</span>
 			</Tooltip>
-			{emojiTarget && <EmojiPicker addEmoji={emoji => react(emoji.id)} target={emojiTarget} />}
+			{emojiTarget && (
+				<EmojiPicker
+					onClick={e => e.stopPropagation()}
+					addEmoji={emoji => react(emoji.id)}
+					target={emojiTarget}
+				/>
+			)}
 		</span>
 	);
 })``;
@@ -151,6 +157,9 @@ export const Reactions = styled((props: { post: PostPlus; className?: string }) 
 	);
 })`
 	padding: 5px 0 0 25px;
+	&.no-pad-left {
+		padding-left: 0;
+	}
 	&:hover {
 		.add-reaction {
 			opacity: 1;

@@ -80,6 +80,7 @@ import { PRCodeCommentPatch } from "./PullRequestComponents";
 import { PullRequestPatch } from "./PullRequestPatch";
 import MarkerActions from "./MarkerActions";
 import { MarkdownText } from "./MarkdownText";
+import { AddReactionIcon, Reactions } from "./Reactions";
 
 interface State {
 	hover: boolean;
@@ -130,6 +131,7 @@ interface ConnectedProps {
 	currentMarkerId?: string;
 	isRepositioning?: boolean;
 	review?: CSReview;
+	post?: CSPost;
 	moveMarkersEnabled: boolean;
 }
 
@@ -1525,6 +1527,7 @@ export class Codemark extends React.Component<Props, State> {
 											</span>
 										)}
 										{this.renderStatus(codemark, menuItems)}
+										{this.props.post && <AddReactionIcon post={this.props.post} />}
 										{/* this.renderKeybinding(codemark) */}
 										{menuOpen && (
 											<Menu items={menuItems} target={menuTarget} action={this.handleSelectMenu} />
@@ -1603,6 +1606,7 @@ export class Codemark extends React.Component<Props, State> {
 										</div>
 									</div>
 								)}
+								{this.props.post && <Reactions className="no-pad-left" post={this.props.post} />}
 								{this.renderExternalLink(codemark)}
 								{this.renderRelatedCodemarks()}
 								{this.renderPinnedRepliesSelected()}
@@ -2029,19 +2033,11 @@ const unknownAuthor = {
 };
 
 const mapStateToProps = (state: CodeStreamState, props: InheritedProps): ConnectedProps => {
-	const {
-		apiVersioning,
-		capabilities,
-		context,
-		editorContext,
-		preferences,
-		users,
-		session,
-		posts
-	} = state;
+	const { capabilities, context, editorContext, preferences, users, session, posts } = state;
 	const { codemark, marker } = props;
 
-	const teamProvider = getCurrentTeamProvider(state);
+	const post =
+		codemark && codemark.postId ? getPost(posts, codemark!.streamId, codemark.postId) : undefined;
 
 	const pinnedReplies = ((codemark && codemark.pinnedReplies) || emptyArray)
 		.map(id => getPost(posts, codemark!.streamId, id))
@@ -2094,6 +2090,7 @@ const mapStateToProps = (state: CodeStreamState, props: InheritedProps): Connect
 			: undefined;
 
 	return {
+		post,
 		review,
 		capabilities: capabilities,
 		editorHasFocus: context.hasFocus,

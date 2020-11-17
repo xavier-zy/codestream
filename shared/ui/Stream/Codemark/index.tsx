@@ -77,6 +77,7 @@ type FromBaseCodemarkProps = Pick<
 	| "renderFooter"
 	| "renderActions"
 	| "noCard"
+	| "post"
 >;
 
 interface PropsWithCodemark extends FromBaseCodemarkProps {
@@ -256,6 +257,7 @@ function CodemarkForCodemark(props: PropsWithCodemark) {
 			<BaseCodemark
 				{...baseProps}
 				codemark={codemark}
+				post={props.post}
 				author={derivedState.author!}
 				isFollowing={derivedState.userIsFollowingCodemark}
 				tags={derivedState.tags}

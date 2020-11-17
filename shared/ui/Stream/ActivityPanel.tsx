@@ -161,9 +161,17 @@ export const ActivityPanel = () => {
 									className={className}
 									collapsed={!isUnread}
 									codemark={codemark}
+									post={post}
 									hoverEffect
 									isUnread={isUnread}
-									onClick={() => {
+									onClick={e => {
+										const target = e.target;
+										if (
+											target &&
+											// @ts-ignore
+											(target.closest(".emoji-mart") || target.closest(".reactions"))
+										)
+											return;
 										HostApi.instance.track("Codemark Clicked", {
 											"Codemark ID": codemark.id,
 											"Codemark Location": "Activity Feed"
@@ -226,7 +234,17 @@ export const ActivityPanel = () => {
 									review={record as CSReview}
 									collapsed
 									hoverEffect
-									onClick={() => dispatch(setCurrentReview(record.id))}
+									onClick={e => {
+										const target = e.target;
+										if (
+											target &&
+											// @ts-ignore
+											(target.closest(".emoji-mart") || target.closest(".reactions"))
+										)
+											return;
+
+										dispatch(setCurrentReview(record.id));
+									}}
 									renderFooter={Footer => (
 										<Footer
 											style={{ borderTop: "none", paddingLeft: 0, paddingRight: 0, marginTop: 0 }}

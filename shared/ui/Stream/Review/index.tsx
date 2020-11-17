@@ -39,7 +39,8 @@ import {
 	CSReview,
 	CSReviewStatus,
 	CodemarkType,
-	CodemarkStatus
+	CodemarkStatus,
+	CSPost
 } from "@codestream/protocols/api";
 import { CodeStreamState } from "@codestream/webview/store";
 import { useSelector, useDispatch, shallowEqual } from "react-redux";
@@ -96,6 +97,8 @@ import { HeadshotName } from "@codestream/webview/src/components/HeadshotName";
 import { LocateRepoButton } from "../LocateRepoButton";
 import { PROVIDER_MAPPINGS } from "../CrossPostIssueControls/types";
 import { isFeatureEnabled } from "@codestream/webview/store/apiVersioning/reducer";
+import { getPost } from "../../store/posts/reducer";
+import { AddReactionIcon, Reactions } from "../Reactions";
 
 interface RepoMetadata {
 	repoName: string;
@@ -115,6 +118,7 @@ interface SimpleError {
 
 export interface BaseReviewProps extends CardProps {
 	review: CSReview;
+	post?: CSPost;
 	repoInfo: RepoMetadata[];
 	repoInfoById: Map<string, RepoMetadata>;
 	headerError?: SimpleError;
@@ -139,6 +143,7 @@ export interface BaseReviewProps extends CardProps {
 
 export interface BaseReviewHeaderProps {
 	review: CSReview;
+	post?: CSPost;
 	collapsed?: boolean;
 	isFollowing?: boolean;
 	reviewers?: CSUser[];
@@ -259,6 +264,7 @@ export const BaseReviewHeader = (props: PropsWithChildren<BaseReviewHeaderProps>
 			<Icon name="review" className="type" />
 			<BigTitle>
 				<HeaderActions>
+					{props.post && <AddReactionIcon post={props.post} className="in-review" />}
 					{props.children || (
 						<BaseReviewMenu
 							review={review}
@@ -713,6 +719,7 @@ const BaseReview = (props: BaseReviewProps) => {
 				{props.collapsed && (
 					<BaseReviewHeader
 						review={review}
+						post={props.post}
 						collapsed={props.collapsed}
 						setIsEditing={props.setIsEditing}
 						setIsAmending={props.setIsAmending}
@@ -768,6 +775,11 @@ const BaseReview = (props: BaseReviewProps) => {
 							<MetaLabel>Description</MetaLabel>
 							<MarkdownText text={props.review.text} />
 						</Meta>
+					)}
+					{props.post && (
+						<div style={{ marginBottom: "10px" }}>
+							<Reactions className="reactions no-pad-left" post={props.post} />
+						</div>
 					)}
 					{!props.collapsed && (hasTags || hasReviewers) && (
 						<MetaRow>
@@ -1134,7 +1146,11 @@ const ReviewForReview = (props: PropsWithReview) => {
 	let disposableDidChangeDataNotification: { dispose(): void };
 	const dispatch = useDispatch();
 	const derivedState = useSelector((state: CodeStreamState) => {
+		const post =
+			review && review.postId ? getPost(state.posts, review!.streamId, review.postId) : undefined;
+
 		return {
+			post,
 			currentTeamId: state.context.currentTeamId,
 			currentUser: state.users[state.session.userId!],
 			author: state.users[props.review.creatorId],
@@ -1288,6 +1304,7 @@ const ReviewForReview = (props: PropsWithReview) => {
 			<BaseReview
 				{...baseProps}
 				review={props.review}
+				post={derivedState.post}
 				repoInfo={repoInfo}
 				repoInfoById={repoInfoById}
 				tags={tags}

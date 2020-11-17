@@ -578,7 +578,8 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 								<Icon name="review" className="circled" />
 								<PRTimelineItemBody>
 									<PRHeadshotName key={index} person={item.actor} />
-									requested a review from <b>{item.requestedReviewer.login}</b>
+									requested a review from{" "}
+									<b>{item.requestedReviewer ? item.requestedReviewer.login : "a team"}</b>
 									<Timestamp time={item.createdAt!} relative />
 								</PRTimelineItemBody>
 							</PRTimelineItem>

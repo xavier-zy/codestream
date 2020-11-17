@@ -14,6 +14,7 @@
 
 ### Fixed
 
+- Fixes an issue that prevented pull request comments from being displayed immediately as icons in the diff gutter
 - Fixes an issue that would prevent you from viewing a pull request that had a team as a reviewer
 - Fixes an issue that would generate an error if you reloaded while configuring an on-prem issue tracking/code hosting service
 

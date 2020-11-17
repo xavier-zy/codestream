@@ -39,8 +39,7 @@ import {
 	GetDocumentFromMarkerRequestType,
 	DidEncounterMaintenanceModeNotificationType,
 	VerifyConnectivityRequestType,
-	ExecuteThirdPartyRequestUntypedType,
-	QueryThirdPartyRequestType
+	ExecuteThirdPartyRequestUntypedType
 } from "@codestream/protocols/agent";
 import { CSApiCapabilities, CodemarkType } from "@codestream/protocols/api";
 import translations from "./translations/en";
@@ -50,7 +49,6 @@ import { getReview } from "./store/reviews/reducer";
 import { fetchCodemarks, openPanel } from "./Stream/actions";
 import { ContextState } from "./store/context/types";
 import { CodemarksState } from "./store/codemarks/types";
-import { ReviewsState } from "./store/reviews/types";
 import { EditorContextState } from "./store/editorContext/types";
 import { updateProviders } from "./store/providers/actions";
 import { apiCapabilitiesUpdated } from "./store/apiVersioning/actions";
@@ -69,15 +67,13 @@ import {
 	setCurrentCodemark,
 	setCurrentReview,
 	setCurrentPullRequest,
-	setCurrentPullRequestAndBranch,
 	setStartWorkCard,
-	clearCurrentPullRequest,
 	closeAllPanels
 } from "./store/context/actions";
 import { URI } from "vscode-uri";
 import { moveCursorToLine } from "./Stream/CodemarkView";
 import { setMaintenanceMode } from "./store/session/actions";
-import { updateModifiedRepos } from "./store/users/actions";
+import { updateModifiedReposDebounced } from "./store/users/actions";
 import { logWarning } from "./logger";
 import { fetchReview } from "./store/reviews/actions";
 import { openPullRequestByUrl } from "./store/providerPullRequests/actions";
@@ -162,7 +158,7 @@ function listenForEvents(store) {
 				store.dispatch(resetDocuments());
 				if (data && (data as any).type === "change") {
 					// need to be careful as updateModifiedRepos triggers git actions
-					store.dispatch(updateModifiedRepos());
+					updateModifiedReposDebounced(store.dispatch);
 				}
 				break;
 			case ChangeDataType.Documents:
@@ -172,7 +168,7 @@ function listenForEvents(store) {
 					store.dispatch(updateDocument((data as any).document));
 				}
 				if ((data as any).reason === "saved") {
-					store.dispatch(updateModifiedRepos());
+					updateModifiedReposDebounced(store.dispatch);
 				}
 				break;
 			case ChangeDataType.Preferences:

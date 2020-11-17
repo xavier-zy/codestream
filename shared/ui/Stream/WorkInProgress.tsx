@@ -12,17 +12,15 @@ import {
 } from "@codestream/protocols/agent";
 import { CodeStreamState } from "../store";
 import Icon from "./Icon";
-import { setNewPostEntry } from "../store/context/actions";
-import { openPanel, setUserStatus } from "./actions";
+import { setUserStatus } from "./actions";
 import { HostApi } from "..";
 import { OpenUrlRequestType } from "../ipc/host.protocol";
-import { CSMe, FileStatus } from "../protocols/agent/api.protocol.models";
-import Tooltip, { TipTitle } from "./Tooltip";
+import { CSMe } from "../protocols/agent/api.protocol.models";
+import { TipTitle } from "./Tooltip";
 import { Row } from "./CrossPostIssueControls/IssueDropdown";
 import { useDidMount } from "../utilities/hooks";
-import { updateModifiedRepos, clearModifiedFiles } from "../store/users/actions";
+import { clearModifiedFiles, updateModifiedReposDebounced } from "../store/users/actions";
 import { RepoFileDiffs } from "./RepoFileDiffs";
-import { Link } from "./Link";
 
 export const EMPTY_STATUS = {
 	label: "",
@@ -119,7 +117,7 @@ export const WorkInProgress = React.memo((props: Props) => {
 	};
 
 	const getScmInfoSummary = async () => {
-		await dispatch(updateModifiedRepos());
+		updateModifiedReposDebounced(dispatch);
 	};
 
 	const clearScmInfoSummary = async () => {

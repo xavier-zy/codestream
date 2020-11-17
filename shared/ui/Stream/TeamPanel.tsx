@@ -11,8 +11,6 @@ import { HostApi } from "../webview-api";
 import { WebviewPanels, WebviewModals } from "@codestream/protocols/webview";
 import {
 	RepoScmStatus,
-	DidChangeDataNotificationType,
-	ChangeDataType,
 	KickUserRequestType,
 	UpdateTeamSettingsRequestType,
 	UpdateTeamAdminRequestType,
@@ -21,8 +19,6 @@ import {
 import { CSUser } from "@codestream/protocols/api";
 import { ChangesetFile } from "./Review/ChangesetFile";
 import Tooltip, { TipTitle } from "./Tooltip";
-import { DocumentData } from "../protocols/agent/agent.protocol.notifications";
-import { updateModifiedRepos, clearModifiedFiles } from "../store/users/actions";
 import { CSText } from "../src/components/CSText";
 import cx from "classnames";
 import Timestamp from "./Timestamp";
@@ -137,8 +133,6 @@ interface ConnectedProps {
 	repos: any;
 	currentUser: CSUser;
 	currentUserInvisible: false;
-	updateModifiedRepos: Function;
-	clearModifiedFiles: Function;
 	currentUserEmail: string;
 	currentUserId: string;
 	xraySetting: string;
@@ -1024,8 +1018,6 @@ const mapStateToProps = state => {
 
 const ConnectedTeamPanel = connect(mapStateToProps, {
 	invite,
-	updateModifiedRepos,
-	clearModifiedFiles,
 	setUserStatus,
 	openPanel,
 	openModal

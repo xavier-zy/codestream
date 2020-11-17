@@ -67,6 +67,13 @@ const _updateModifiedRepos = (modifiedRepos: RepoScmStatus[], teamId: string) =>
 	});
 };
 
-export const updateModifiedReposDebounced = debounce(dispatcher => {
-	dispatcher(updateModifiedRepos());
-}, 5000);
+export const updateModifiedReposDebounced = debounce(
+	dispatcher => {
+		dispatcher(updateModifiedRepos());
+	},
+	5000,
+	{
+		leading: false,
+		trailing: true
+	}
+);

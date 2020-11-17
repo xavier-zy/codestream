@@ -98,6 +98,7 @@ export class GitService implements IGitService, Disposable {
 	) => Promise<string | undefined>;
 	private readonly _memoizedGetKnownCommitHashes: (filePath: string) => Promise<string[]>;
 	private readonly _memoizedGetRepoRemotes: (repoPath: string) => Promise<GitRemote[]>;
+	private readonly _memoizedGetRepoRoot: (filePath: string) => Promise<string | undefined>;
 
 	private readonly _repositories: GitRepositories;
 
@@ -108,6 +109,7 @@ export class GitService implements IGitService, Disposable {
 		);
 		this._memoizedGetKnownCommitHashes = memoize(this._getKnownCommitHashes);
 		this._memoizedGetRepoRemotes = memoize(this._getRepoRemotes);
+		this._memoizedGetRepoRoot = memoize(this._getRepoRoot);
 		this._repositories = new GitRepositories(this, session);
 	}
 
@@ -683,10 +685,14 @@ export class GitService implements IGitService, Disposable {
 		}
 	}
 
-	async getRepoRoot(uri: URI): Promise<string | undefined>;
-	async getRepoRoot(path: string): Promise<string | undefined>;
-	async getRepoRoot(uriOrPath: URI | string): Promise<string | undefined> {
+	getRepoRoot(uri: URI): Promise<string | undefined>;
+	getRepoRoot(path: string): Promise<string | undefined>;
+	getRepoRoot(uriOrPath: URI | string): Promise<string | undefined> {
 		const filePath = typeof uriOrPath === "string" ? uriOrPath : uriOrPath.fsPath;
+		return this._memoizedGetRepoRoot(filePath);
+	}
+
+	private async _getRepoRoot(filePath: string): Promise<string | undefined> {
 		let cwd;
 		if (fs.existsSync(filePath) && fs.lstatSync(filePath).isDirectory()) {
 			cwd = filePath;
@@ -878,84 +884,37 @@ export class GitService implements IGitService, Disposable {
 		}
 	}
 
-	async isCommitsExclusiveOnBranch(repoPath: string, branch: string): Promise<boolean> {
-		const commits = await this.getCommitsExclusiveToBranch(repoPath, branch);
-
-		return !(commits === undefined || commits.size === 0);
-	}
-
-	async getCommitsExclusiveToBranch(
-		repoPath: string,
-		branch: string
-	): Promise<Map<string, GitCommit> | undefined> {
-		// commits for a specific branch
-		// https://stackoverflow.com/questions/14848274/git-log-to-get-commits-only-for-a-specific-branch
-		// git log [BRANCHNAME] --not $(git for-each-ref --format='%(refname)' refs/heads/ | grep -v "refs/heads/[BRANCHNAME]")
-
-		let data: string | undefined;
-		try {
-			data = await git({ cwd: repoPath }, "branch", "--");
-		} catch {}
-		if (!data) return;
-		const otherBranches = data
-			.trim()
-			.split("\n")
-			.filter(b => !b.startsWith("*"))
-			.map(b => (b.startsWith("+") ? b.substring(1) : b))
-			.map(b => "refs/heads/" + b.trim());
-		// .join(" ");
-
-		const data2 = await git(
-			{ cwd: repoPath },
-			"log",
-			branch,
-			`--format='${GitLogParser.defaultFormat}`,
-			"--not",
-			...otherBranches,
-			"--"
-		);
-
-		return GitLogParser.parse(data2.trim(), repoPath);
-	}
-
 	async getCommitsOnBranch(
 		repoPath: string,
 		branch: string,
 		prevEndCommit?: string
 	): Promise<{ sha: string; info: {}; localOnly: boolean }[] | undefined> {
 		try {
-			let commits = await this.getCommitsExclusiveToBranch(repoPath, branch);
-
-			let hasCommitsExclusiveToThisBranch = true;
+			const commitsData = await git(
+				{ cwd: repoPath },
+				"log",
+				branch,
+				"--first-parent",
+				"-n100",
+				`--format='${GitLogParser.defaultFormat}`,
+				"--"
+			);
+			const commits = GitLogParser.parse(commitsData.trim(), repoPath);
 			if (commits === undefined || commits.size === 0) {
-				hasCommitsExclusiveToThisBranch = false;
-				// if we didn't find unique commits on the branch we resort to git log
-				const data3 = await git(
-					{ cwd: repoPath },
-					"log",
-					branch,
-					"--first-parent",
-					"-n100",
-					`--format='${GitLogParser.defaultFormat}`,
-					"--"
-				);
-				commits = GitLogParser.parse(data3.trim(), repoPath);
-				if (commits === undefined || commits.size === 0) {
-					return undefined;
-				}
+				return undefined;
 			}
 
 			let localCommits: string[] | undefined = undefined;
 			try {
 				// https://stackoverflow.com/questions/2016901/viewing-unpushed-git-commits
-				const data3 = await git(
+				const localCommitsData = await git(
 					{ cwd: repoPath, throwRawExceptions: true },
 					"log",
 					"@{push}..",
 					"--format=%H",
 					"--"
 				);
-				localCommits = data3.trim().split("\n");
+				localCommits = localCommitsData.trim().split("\n");
 			} catch (ex) {
 				// Chances are this branch has no remote tracking branch, so we'll consider all commits as localOnly
 				Logger.log(`Unable to identify pushed commits. Reason: ${ex.message}`);
@@ -968,8 +927,8 @@ export class GitService implements IGitService, Disposable {
 					info: val,
 					// !localCommits means that the command to find local commits failed, so we
 					// were not able to find any. for instance, when there is not an up-stream configured
-					localOnly:
-						hasCommitsExclusiveToThisBranch && (!localCommits || localCommits.includes(key))
+					localOnly: localCommits != undefined && localCommits.includes(key)
+					// hasCommitsExclusiveToThisBranch && (!localCommits || localCommits.includes(key))
 				});
 			});
 
@@ -1293,15 +1252,15 @@ export class GitService implements IGitService, Disposable {
 			if (!data) return [];
 			const patch = parsePatch(data)[0];
 			// if hunk start line equal 0 means that the file was just created
-			const isNewFile =  patch.hunks.some(hunk => hunk.oldStart === 0);
+			const isNewFile = patch.hunks.some(hunk => hunk.oldStart === 0);
 			if (isNewFile) return [];
 			try {
 				const options = ["blame"];
 				if (ref && ref.length) options.push(ref);
 				patch.hunks.forEach(hunk => {
-						// -1 cuz we should take into account hunk.oldStart line
-						const oldEnd = hunk.oldStart + hunk.oldLines - 1;
-						options.push(`-L${hunk.oldStart},${Math.max(hunk.oldStart, oldEnd)}`);
+					// -1 cuz we should take into account hunk.oldStart line
+					const oldEnd = hunk.oldStart + hunk.oldLines - 1;
+					options.push(`-L${hunk.oldStart},${Math.max(hunk.oldStart, oldEnd)}`);
 				});
 				options.push("--root", "--incremental", "-w");
 				options.push("--");

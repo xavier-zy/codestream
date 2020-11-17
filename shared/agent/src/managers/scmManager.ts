@@ -199,22 +199,23 @@ export class ScmManager {
 			const openRepos = await this.getRepos(request);
 			const { repositories = [] } = openRepos;
 			// below, only return repos that we know about (aka have repoIds)
+			const repoPaths = repositories.filter(r => r.id).map(repo => repo.path);
+			const uniqueRepoPaths = [...new Set(repoPaths)];
+
 			// @ts-ignore
 			modifiedRepos = (
 				await Promise.all(
-					repositories
-						.filter(r => r.id)
-						.map(repo => {
-							// TODO make a flavor of getRepoStatus that takes a repo
-							const response = this.getRepoStatus({
-								uri: Strings.pathToFileURL(repo.path),
-								startCommit: "local",
-								includeStaged: true,
-								includeSaved: true,
-								currentUserEmail: request.currentUserEmail
-							});
-							return response;
-						})
+					uniqueRepoPaths.map(repoPath => {
+						// TODO make a flavor of getRepoStatus that takes a repo
+						const response = this.getRepoStatus({
+							uri: Strings.pathToFileURL(repoPath),
+							startCommit: "local",
+							includeStaged: true,
+							includeSaved: true,
+							currentUserEmail: request.currentUserEmail
+						});
+						return response;
+					})
 				)
 			)
 				.filter(Boolean)
@@ -392,11 +393,9 @@ export class ScmManager {
 						file = file.substr(1);
 					}
 
-					let hasCommitsExclusiveToBranch = false;
 					branch = await git.getCurrentBranch(uri.fsPath);
 					if (branch) {
 						commits = await git.getCommitsOnBranch(repoPath, branch);
-						hasCommitsExclusiveToBranch = await git.isCommitsExclusiveOnBranch(repoPath, branch);
 					}
 
 					const repo = await git.getRepositoryByFilePath(repoPath);
@@ -430,16 +429,6 @@ export class ScmManager {
 						startCommit = latestPushed?.sha;
 					}
 
-					if (commits && hasCommitsExclusiveToBranch) {
-						commits.forEach(commit => {
-							// @ts-ignore
-							const email = commit.info.email;
-							if (email) {
-								if (!authorMap[email]) authorMap[email] = { commits: 0, stomped: 0 };
-								authorMap[email].commits++;
-							}
-						});
-					}
 					modifiedFiles = await git.getNumStat(repoPath, startCommit, includeSaved, includeStaged);
 					const ignoreFileHelper = await new IgnoreFilesHelper(repoPath).initialize();
 

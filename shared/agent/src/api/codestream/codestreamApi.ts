@@ -312,7 +312,7 @@ export class CodeStreamApiProvider implements ApiProvider {
 	) {
 		this._debouncedSetModifiedReposUpdate = debounce(request => {
 			return this.setModifiedReposDebounced(request);
-		}, 60000, { leading: true });
+		}, 15000, { leading: true });
 	}
 
 	get teamId(): string {

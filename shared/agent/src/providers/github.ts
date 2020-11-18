@@ -2259,7 +2259,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 				position: request.position!
 			} as any;
 		} else {
-			// enterprise 2.20.X and beyon allows this
+			// enterprise 2.20.X and beyond allows this
 			// https://docs.github.com/en/enterprise-server@2.20/rest/reference/pulls#create-a-review-comment-for-a-pull-request
 			payload = {
 				body: request.text,
@@ -2351,12 +2351,6 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 			path: request.filePath,
 			startLine: request.startLine,
 			position: request.position
-		});
-
-		this._pullRequestCache.delete(request.pullRequestId);
-		this.session.agent.sendNotification(DidChangePullRequestCommentsNotificationType, {
-			pullRequestId: request.pullRequestId,
-			filePath: request.filePath
 		});
 
 		return result;

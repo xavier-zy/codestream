@@ -1,6 +1,6 @@
 "use strict";
 import { CodeStreamApiProvider } from "api/codestream/codestreamApi";
-import { ParsedDiff } from "diff";
+import { Hunk, ParsedDiff } from "diff";
 import * as fs from "fs";
 import { groupBy, last, orderBy } from "lodash-es";
 import sizeof from "object-sizeof";
@@ -932,15 +932,15 @@ export class PostsManager extends EntityManagerBase<CSPost> {
 				Logger.warn(errorMessage);
 				throw new Error(errorMessage);
 			}
-			const startingHunk = diff.hunks.find(
+			const startHunk = diff.hunks.find(
 				_ => startLine >= _.newStart && startLine <= _.newStart + _.newLines
 			);
-			const endingHunk = diff.hunks.find(
+			const endHunk = diff.hunks.find(
 				_ => endLine >= _.newStart && endLine <= _.newStart + _.newLines
 			);
 
 			// only fall in here if we don't have a start OR we dont have both
-			if (!startingHunk || (!startingHunk && !endingHunk)) {
+			if (!startHunk || (!startHunk && !endHunk)) {
 				// if we couldn't find a hunk, we're going to go down the path of using
 				// a "code fence" aka ``` for showing the code comment
 				Logger.warn(
@@ -994,62 +994,19 @@ export class PostsManager extends EntityManagerBase<CSPost> {
 				};
 			}
 
+			const { lineWithMetadata } = this.translateLineToPosition(
+				{
+					startLine,
+					startHunk
+				},
+				{
+					endLine,
+					endHunk
+				},
+				diff
+			);
 			let result;
 			if (request.isProviderReview) {
-				// https://stackoverflow.com/questions/41662127/how-to-comment-on-a-specific-line-number-on-a-pr-on-github
-				// according to github:
-				/**
-				 * The position value equals the number of lines down from the first "@@" hunk header in the file you want to add a comment.
-				 * The line just below the "@@" line is position 1, the next line is position 2, and so on.
-				 * The position in the diff continues to increase through lines of whitespace and additional hunks until the beginning of a new file.
-				 *
-				 * see: https://docs.github.com/en/rest/reference/pulls#create-a-review-for-a-pull-request
-				 */
-
-				let i = 0;
-				let relativeLine = 0;
-				for (const h of diff.hunks) {
-					// can't increment for the first hunk
-					if (i !== 0) relativeLine++;
-					const linesWithMetadata = [];
-					let j = 0;
-					for (const line of h.lines) {
-						relativeLine++;
-						linesWithMetadata.push({ line: line, relativeLine: relativeLine, index: j });
-						j++;
-					}
-					(h as any).linesWithMetadata = linesWithMetadata;
-					i++;
-				}
-				// the line the user is asking for minus the start of this hunk
-				// that will give us the index of where it is in the hunk
-				// from there, we fetch the relativeLine which is what github needs
-				let offset: number;
-				let lineWithMetadata;
-				if (startLine === endLine) {
-					// is a single line if startLine === endLine
-					// we don't care about the endHunk here (though it will === startingHunk)
-					offset = startLine - startingHunk.newStart;
-					lineWithMetadata = (startingHunk as any).linesWithMetadata.find(
-						(b: any) => b.index === offset
-					);
-				} else {
-					if (endingHunk && startingHunk === endingHunk) {
-						// it is a range within the same hunk
-						offset = endLine - endingHunk.newStart;
-						lineWithMetadata = (endingHunk as any).linesWithMetadata.find(
-							(b: any) => b.index === offset
-						);
-					} else {
-						// couldn't get an end hunk. since we can't create comments
-						// across hunks, use the starting hunk
-						offset = startLine - startingHunk.newStart;
-						lineWithMetadata = (startingHunk as any).linesWithMetadata.find(
-							(b: any) => b.index === offset
-						);
-					}
-				}
-
 				if (lineWithMetadata) {
 					result = await providerRegistry.executeMethod({
 						method: "createPullRequestReviewComment",
@@ -1067,11 +1024,11 @@ export class PostsManager extends EntityManagerBase<CSPost> {
 				}
 			} else {
 				let calculatedEndLine;
-				const startingHunkEnd = startingHunk.newStart + startingHunk.newLines;
+				const startingHunkEnd = startHunk.newStart + startHunk.newLines;
 				if (endLine >= startingHunkEnd) {
 					calculatedEndLine = startingHunkEnd - 1;
 				} else {
-					calculatedEndLine = endingHunk ? endLine : undefined;
+					calculatedEndLine = endHunk ? endLine : undefined;
 				}
 				// is a single comment against a commit
 				result = await providerRegistry.executeMethod({
@@ -1083,7 +1040,9 @@ export class PostsManager extends EntityManagerBase<CSPost> {
 						text: request.attributes.text || "",
 						path: parsedUri.path,
 						startLine: startLine,
-						endLine: calculatedEndLine
+						endLine: calculatedEndLine,
+						// legacy servers will need this
+						position: lineWithMetadata?.relativeLine
 					}
 				});
 			}
@@ -1198,6 +1157,75 @@ export class PostsManager extends EntityManagerBase<CSPost> {
 				? codemark
 				: await SessionContainer.instance().codemarks.enrichCodemark(codemark)
 		};
+	}
+	/**
+	 * Converts a line number into a diff hunk position
+	 *
+	 * @param {{ startLine: number; startHunk: Hunk }} start
+	 * @param {({ endLine: number; endHunk: Hunk | undefined })} end
+	 * @param {ParsedDiff} diff
+	 * @return {*}
+	 * @memberof PostsManager
+	 */
+	translateLineToPosition(
+		start: { startLine: number; startHunk: Hunk },
+		end: { endLine: number; endHunk: Hunk | undefined },
+		diff: ParsedDiff
+	) {
+		// https://stackoverflow.com/questions/41662127/how-to-comment-on-a-specific-line-number-on-a-pr-on-github
+		// according to github:
+		/**
+		 * The position value equals the number of lines down from the first "@@" hunk header in the file you want to add a comment.
+		 * The line just below the "@@" line is position 1, the next line is position 2, and so on.
+		 * The position in the diff continues to increase through lines of whitespace and additional hunks until the beginning of a new file.
+		 *
+		 * see: https://docs.github.com/en/rest/reference/pulls#create-a-review-for-a-pull-request
+		 */
+
+		let i = 0;
+		let relativeLine = 0;
+		for (const h of diff.hunks) {
+			// can't increment for the first hunk
+			if (i !== 0) relativeLine++;
+			const linesWithMetadata = [];
+			let j = 0;
+			for (const line of h.lines) {
+				relativeLine++;
+				linesWithMetadata.push({ line: line, relativeLine: relativeLine, index: j });
+				j++;
+			}
+			(h as any).linesWithMetadata = linesWithMetadata;
+			i++;
+		}
+
+		const { startLine, startHunk } = start;
+		const { endLine, endHunk } = end;
+		// the line the user is asking for minus the start of this hunk
+		// that will give us the index of where it is in the hunk
+		// from there, we fetch the relativeLine which is what github needs
+		let offset: number;
+		let lineWithMetadata;
+		if (startLine === endLine) {
+			// is a single line if startLine === endLine
+			// we don't care about the endHunk here (though it will === startingHunk)
+			offset = startLine - startHunk.newStart;
+			lineWithMetadata = (startHunk as any).linesWithMetadata.find((b: any) => b.index === offset);
+		} else {
+			if (endHunk && startHunk === endHunk) {
+				// it is a range within the same hunk
+				offset = endLine - endHunk.newStart;
+				lineWithMetadata = (endHunk as any).linesWithMetadata.find((b: any) => b.index === offset);
+			} else {
+				// couldn't get an end hunk. since we can't create comments
+				// across hunks, use the starting hunk
+				offset = startLine - startHunk.newStart;
+				lineWithMetadata = (startHunk as any).linesWithMetadata.find(
+					(b: any) => b.index === offset
+				);
+			}
+		}
+
+		return { lineWithMetadata };
 	}
 
 	// this is what the webview will call to create reviews in the sharing model

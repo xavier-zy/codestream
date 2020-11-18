@@ -6,6 +6,7 @@ import semver from "semver";
 import { URI } from "vscode-uri";
 import { Container } from "../container";
 import { Logger } from "../logger";
+import { DidChangePullRequestCommentsNotificationType } from "../protocol/agent.protocol";
 import { EnterpriseConfigurationData } from "../protocol/agent.protocol.providers";
 import { log, lspProvider } from "../system";
 import { GitHubProvider } from "./github";
@@ -271,6 +272,12 @@ export class GitHubEnterpriseProvider extends GitHubProvider {
 				  }
 				  `;
 				const response = await this.mutate<any>(query, request);
+
+				this._pullRequestCache.delete(request.pullRequestId);
+				this.session.agent.sendNotification(DidChangePullRequestCommentsNotificationType, {
+					pullRequestId: request.pullRequestId,
+					filePath: request.filePath
+				});
 				return response;
 			}
 		} else {

@@ -1882,7 +1882,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 					remaining
 					limit
 				}
-				repository(owner:$owner name:$name) {
+				repository(owner:$owner, name:$name) {
 					pullRequest(number: $pullRequestNumber) {
 						id
 					  }
@@ -1894,7 +1894,12 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 				pullRequestNumber: pullRequestNumber
 			}
 		);
-		return pullRequestInfo.repository.pullRequest.id;
+		try {
+			return pullRequestInfo.repository.pullRequest.id;
+		} catch (ex) {
+			Logger.warn(ex, "Ensure you have the correct scopes");
+			throw ex;
+		}
 	}
 
 	async getIssueIdFromUrl(request: { url: string }) {

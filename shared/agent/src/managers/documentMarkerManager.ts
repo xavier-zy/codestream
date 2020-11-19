@@ -10,6 +10,7 @@ import { Range, TextDocumentChangeEvent } from "vscode-languageserver";
 import { URI } from "vscode-uri";
 import { Marker, MarkerLocation, Ranges } from "../api/extensions";
 import { Container, SessionContainer } from "../container";
+import * as gitUtils from "../git/utils";
 import { Logger } from "../logger";
 import { findBestMatchingLine, MAX_RANGE_VALUE } from "../markerLocation/calculator";
 import {
@@ -22,7 +23,6 @@ import {
 	FetchDocumentMarkersRequest,
 	FetchDocumentMarkersRequestType,
 	FetchDocumentMarkersResponse,
-	FetchMarkersRequestType,
 	GetDocumentFromKeyBindingRequest,
 	GetDocumentFromKeyBindingRequestType,
 	GetDocumentFromKeyBindingResponse,
@@ -242,7 +242,7 @@ export class DocumentMarkerManager {
 		textDocument: documentId,
 		filters: filters
 	}: FetchDocumentMarkersRequest) {
-		const { codemarks, users, posts, providerRegistry } = SessionContainer.instance();
+		const { git, providerRegistry } = SessionContainer.instance();
 		const uri = documentId.uri;
 
 		const cc = Logger.getCorrelationContext();
@@ -270,10 +270,6 @@ export class DocumentMarkerManager {
 			}
 		});
 		const pr = result.repository.pullRequest;
-
-		// Logger.log(cc, `******************************************** pR Diff: ` + parsedUri.path);
-		// Logger.log(cc, "GOT A PR BACK: ", JSON.stringify(pr, null, 4));
-
 		const comments: any[] = [];
 		pr.timelineItems.nodes
 			.filter((node: any) => node.__typename === "PullRequestReview")
@@ -290,53 +286,30 @@ export class DocumentMarkerManager {
 			.getProviders()
 			.find((provider: ThirdPartyProvider) => provider.getConfig().id === pr.providerId);
 		if (provider) {
-			comments.forEach((comment: any) => {
+			const gitRepo = await git.getRepositoryById(parsedUri.repoId);
+			const repoPath = path.join(gitRepo ? gitRepo.path : "", parsedUri.path);
+			const diff = await git.getDiffBetweenCommits(
+				parsedUri.leftSha,
+				parsedUri.rightSha,
+				repoPath,
+				true
+			);
+
+			const diffWithMetadata = gitUtils.translatePositionToLineNumber(diff);
+
+			comments.forEach(async (comment: any) => {
 				let summary = comment.body || comment.bodyText;
 				if (summary.length !== 0) {
 					summary = summary.replace(emojiRegex, (s: string, code: string) => emojiMap[code] || s);
 				}
 
-				let startLine = 1;
 				let gotoLine = 1;
-				if (comment.diffHunk) {
-					// this data looks like this => `@@ -234,3 +234,20 @@`
-					const match = comment.diffHunk.match("@@ (.+) (.+) @@");
-					if (match && match.length >= 2) {
-						try {
-							/* // "vscode:prepublish" is actually line 72
-
-							'@@ -72,15 +72,15 @@\n
-								"vscode:prepublish": "npm run build"\n
-								},\n
-								"devDependencies": {\n
-							-    "@types/glob": "7.1.1",\n
-							+    "@types/glob": "7.1.3",\n
-								"@types/mocha": "7.0.2",\n
-								"@types/natural-compare-lite": "1.4.0",\n
-								"@types/node": "14.0.1",\n
-								"@types/vscode": "1.31.0",\n
-								"glob": "7.1.6",\n
-								"mocha": "7.1.2",\n
-							-    "typescript": "3.9.2",\n
-							-    "vscode-test": "1.3.0"\n
-							+    "typescript": "4.0.3",\n
-							+    "vscode-test": "1.4.0"\n   },\n
-								"dependencies": {\n
-								"natural-compare-lite": "1.4.0"';
-							*/
-
-							// the @@ line is actually not the first line... so subtract 1
-							startLine = parseInt(match[2].split(",")[0].replace("+", ""), 10) - 1;
-							gotoLine = startLine;
-							const hunkLines = comment.diffHunk.split("\n");
-							for (let i = 0; i < hunkLines.length; i++) {
-								// don't increment for line removals aka, lines that start with -
-								if (hunkLines[i][0] === "-") continue;
-								if (i === comment.position) break;
-
-								gotoLine += 1;
-							}
-						} catch {}
+				if (comment.diffHunk && diffWithMetadata) {
+					const lineNumber = gitUtils.getLineNumber(diffWithMetadata, comment.position);
+					if (lineNumber != null) {
+						gotoLine = lineNumber;
+					} else {
+						return;
 					}
 				} else {
 					return;

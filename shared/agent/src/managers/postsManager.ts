@@ -10,6 +10,7 @@ import { URI } from "vscode-uri";
 import { MessageType } from "../api/apiProvider";
 import { Marker, MarkerLocation } from "../api/extensions";
 import { Container, SessionContainer } from "../container";
+import * as gitUtils from "../git/utils";
 import { Logger } from "../logger";
 import {
 	CodeDelimiterStyles,
@@ -994,7 +995,7 @@ export class PostsManager extends EntityManagerBase<CSPost> {
 				};
 			}
 
-			const { lineWithMetadata } = this.translateLineToPosition(
+			const { lineWithMetadata } = gitUtils.translateLineToPosition(
 				{
 					startLine,
 					startHunk
@@ -1157,75 +1158,6 @@ export class PostsManager extends EntityManagerBase<CSPost> {
 				? codemark
 				: await SessionContainer.instance().codemarks.enrichCodemark(codemark)
 		};
-	}
-	/**
-	 * Converts a line number into a diff hunk position
-	 *
-	 * @param {{ startLine: number; startHunk: Hunk }} start
-	 * @param {({ endLine: number; endHunk: Hunk | undefined })} end
-	 * @param {ParsedDiff} diff
-	 * @return {*}
-	 * @memberof PostsManager
-	 */
-	translateLineToPosition(
-		start: { startLine: number; startHunk: Hunk },
-		end: { endLine: number; endHunk: Hunk | undefined },
-		diff: ParsedDiff
-	) {
-		// https://stackoverflow.com/questions/41662127/how-to-comment-on-a-specific-line-number-on-a-pr-on-github
-		// according to github:
-		/**
-		 * The position value equals the number of lines down from the first "@@" hunk header in the file you want to add a comment.
-		 * The line just below the "@@" line is position 1, the next line is position 2, and so on.
-		 * The position in the diff continues to increase through lines of whitespace and additional hunks until the beginning of a new file.
-		 *
-		 * see: https://docs.github.com/en/rest/reference/pulls#create-a-review-for-a-pull-request
-		 */
-
-		let i = 0;
-		let relativeLine = 0;
-		for (const h of diff.hunks) {
-			// can't increment for the first hunk
-			if (i !== 0) relativeLine++;
-			const linesWithMetadata = [];
-			let j = 0;
-			for (const line of h.lines) {
-				relativeLine++;
-				linesWithMetadata.push({ line: line, relativeLine: relativeLine, index: j });
-				j++;
-			}
-			(h as any).linesWithMetadata = linesWithMetadata;
-			i++;
-		}
-
-		const { startLine, startHunk } = start;
-		const { endLine, endHunk } = end;
-		// the line the user is asking for minus the start of this hunk
-		// that will give us the index of where it is in the hunk
-		// from there, we fetch the relativeLine which is what github needs
-		let offset: number;
-		let lineWithMetadata;
-		if (startLine === endLine) {
-			// is a single line if startLine === endLine
-			// we don't care about the endHunk here (though it will === startingHunk)
-			offset = startLine - startHunk.newStart;
-			lineWithMetadata = (startHunk as any).linesWithMetadata.find((b: any) => b.index === offset);
-		} else {
-			if (endHunk && startHunk === endHunk) {
-				// it is a range within the same hunk
-				offset = endLine - endHunk.newStart;
-				lineWithMetadata = (endHunk as any).linesWithMetadata.find((b: any) => b.index === offset);
-			} else {
-				// couldn't get an end hunk. since we can't create comments
-				// across hunks, use the starting hunk
-				offset = startLine - startHunk.newStart;
-				lineWithMetadata = (startHunk as any).linesWithMetadata.find(
-					(b: any) => b.index === offset
-				);
-			}
-		}
-
-		return { lineWithMetadata };
 	}
 
 	// this is what the webview will call to create reviews in the sharing model

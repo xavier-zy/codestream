@@ -53,6 +53,33 @@
 			"outFiles": ["${workspaceFolder}/dist/agent.js"],
 			"smartStep": true,
 			"sourceMaps": true
+		},
+		{
+			"type": "node",
+			"request": "launch",
+			"runtimeExecutable": "node",
+			"name": "Run UnitTests",
+			"program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
+			"args": [
+				"-u",
+				"tdd",
+				"-r",
+				"ts-node/register",
+				"-r",
+				"esm",
+				"--timeout",
+				"999999",
+				"--colors",
+				"--recursive",
+				"test/unit/**/*.spec.ts"
+			],
+
+			"cwd": "${workspaceFolder}/",
+			"console": "integratedTerminal",
+			"internalConsoleOptions": "neverOpen",
+			"env": {
+				"TS_NODE_COMPILER_OPTIONS": "{ \"module\": \"commonjs\", \"types\": [\"node\"] }"
+			}
 		}
 	]
 }

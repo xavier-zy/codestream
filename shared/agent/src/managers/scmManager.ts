@@ -387,7 +387,9 @@ export class ScmManager {
 
 			try {
 				repoPath = (await git.getRepoRoot(uri.fsPath)) || "";
-				if (repoPath !== undefined) {
+				if (repoPath && git.isRebasing(repoPath)) {
+					gitError = `Repository ${repoPath} is rebasing.`;
+				} else if (repoPath !== undefined) {
 					file = Strings.normalizePath(paths.relative(repoPath, uri.fsPath));
 					if (file[0] === "/") {
 						file = file.substr(1);
@@ -574,6 +576,7 @@ export class ScmManager {
 		}
 		repo = await git.getRepositoryByFilePath(repoPath);
 		if (!repo || !repo.id) throw new Error(`Cannot determine repo at ${repoPath}`);
+		if (git.isRebasing(repoPath)) throw new Error(`Repository ${repoPath} is rebasing`);
 		const branch = await git.getCurrentBranch(repoPath);
 		if (!branch) throw new Error(`Cannot determine current branch at ${repoPath}`);
 		const gitRemotes = await git.getRepoRemotes(repoPath);

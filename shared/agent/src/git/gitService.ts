@@ -1468,6 +1468,13 @@ export class GitService implements IGitService, Disposable {
 		}
 	}
 
+	isRebasing(repoPath: string) {
+		return (
+			fs.existsSync(path.join(repoPath, ".git", "rebase-merge")) ||
+			fs.existsSync(path.join(repoPath, ".git", "rebase-apply"))
+		);
+	}
+
 	// mondo useful for prototyping ;)
 	// async run(repoPath: string, command: string) {
 	// 	try {

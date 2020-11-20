@@ -199,10 +199,11 @@ export const PullRequestFilesChangedList = (props: Props) => {
 			})) as any;
 
 			try {
-				setIsLoadingVisited(false);
 				setVisitedFiles(JSON.parse(response.contents || "{}"));
 			} catch (ex) {
 				console.warn("Error parsing JSON data: ", response.contents);
+			} finally {
+				setIsLoadingVisited(false);
 			}
 		})();
 	}, [pr, filesChanged]);

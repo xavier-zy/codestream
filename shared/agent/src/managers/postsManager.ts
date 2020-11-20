@@ -917,9 +917,16 @@ export class PostsManager extends EntityManagerBase<CSPost> {
 
 			// get the git repo, so we can use the repo root
 			const gitRepo = await git.getRepositoryById(parsedUri.repoId);
-			// lines are 1-based on GH
-			const startLine = request.attributes.codeBlocks[0].range.start.line + 1;
-			const endLine = request.attributes.codeBlocks[0].range.end.line + 1;
+			// lines are 1-based on GH, and come in as 0based
+			const range = request.attributes.codeBlocks[0].range;
+			const startLine = range.start.line + 1;
+			const end = range.end;
+			let endLine = end.line + 1;
+			if (endLine === startLine + 1 && end.character === 0) {
+				// treat triple-clicked "single line" PR comments where the cursor
+				// moves to the next line as truly single line comments
+				endLine = startLine;
+			}
 			const repoPath = path.join(gitRepo ? gitRepo.path : "", parsedUri.path);
 			// get the diff hunk between the two shas
 			const diff = await git.getDiffBetweenCommits(

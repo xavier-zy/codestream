@@ -37,16 +37,13 @@ export class ConfigureTokenProviderPanel extends Component {
 
 		// configuring is as good as connecting, since we are letting the user
 		// set the access token
-console.warn('CONFIGURING PROVIDER...');
 		this.props.configureProvider(
 			providerId,
 			{ token },
 			true,
 			this.props.originLocation
 		);
-console.warn('CLOSE THE PANEL...');
 		this.props.closePanel();
-console.warn('PANEL CLOSED');
 	};
 
 	renderError = () => {};

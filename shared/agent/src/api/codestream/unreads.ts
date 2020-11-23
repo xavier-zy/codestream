@@ -106,11 +106,6 @@ export class CodeStreamUnreads {
 
 		Logger.debug(`Unreads.compute:`, "Computing...");
 
-		Container.instance().errorReporter.reportBreadcrumb({
-			message: "Getting unread streams",
-			category: "unreads",
-			data: { lastReads }
-		});
 		const unreadStreams = (await SessionContainer.instance().streams.getUnread()).streams;
 		if (unreadStreams.length !== 0) {
 			const entries = Object.entries(lastReads);

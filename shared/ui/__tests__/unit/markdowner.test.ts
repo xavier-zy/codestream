@@ -23,12 +23,16 @@ describe("markdownify (with options)", () => {
 		["a", "a"],
 		["<p>b</p>", "&lt;p&gt;b&lt;/p&gt;"]
 	])(".markdownify(%j, %j)", (a, expected) => {
-		expect(markdownify(a, { excludeParagraphWrap: true })).toStrictEqual(expected);
+		expect(markdownify(a, { excludeParagraphWrap: true, excludeOnlyEmoji: false })).toStrictEqual(
+			expected
+		);
 	});
 });
 
 describe("markdownify (only emoji)", () => {
 	it("is only emoji", () => {
-		expect(markdownify(":+1:", { excludeParagraphWrap: true })).toContain("only-emoji");
+		expect(markdownify(":+1:", { excludeParagraphWrap: true, excludeOnlyEmoji: false })).toContain(
+			"only-emoji"
+		);
 	});
 });

@@ -67,7 +67,7 @@ export class ClubhouseProvider extends ThirdPartyIssueProviderBase<CSClubhousePr
 
 		try {
 			if (!request.customFilter) {
-				request.customFilter = `is:story owner:${this._clubhouseUserInfo!.mention_name}`;
+				request.customFilter = `is:story owner:${this._clubhouseUserInfo!.mention_name} !is:done`;
 			}
 			const url = `/search?${qs.stringify({ query: request.customFilter })}`;
 			const result = await this.get<any>(url);
@@ -102,7 +102,8 @@ export class ClubhouseProvider extends ThirdPartyIssueProviderBase<CSClubhousePr
 			project_id: data.projectId,
 			name: data.name,
 			description: data.description,
-			owner_ids: (data.assignees! || []).map(a => a.id)
+			owner_ids: (data.assignees! || []).map(a => a.id),
+			story_type: "bug"
 		};
 		const response = await this.post<{}, ClubhouseCreateCardResponse>(
 			`/stories`,

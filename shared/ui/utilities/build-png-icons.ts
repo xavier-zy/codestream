@@ -1,12 +1,12 @@
 /*
-* Here is a sample for running the script:
-*
-* node ./build-png-icons.ts -o "path/to/results" -c "#898F9E"
-*
-* Currently, images generated from this script are saved in this repo: https://github.com/TeamCodeStream/static_content
-* All you have to do is copy + commit your images to that repo.
-* After images are pushed (to master), a publish script will auto-copy them to our bucket in the cloud
-*/
+ * Here is a sample for running the script:
+ *
+ * node ./build-png-icons.ts -o "path/to/results" -c "#898F9E"
+ *
+ * Currently, images generated from this script are saved in this repo: https://github.com/TeamCodeStream/static_content
+ * All you have to do is copy + commit your images to that repo.
+ * After images are pushed (to master), a publish script will auto-copy them to our bucket in the cloud
+ */
 
 const { convert } = require("convert-svg-to-png");
 const icons8 = require("../Stream/icons8-data.json");
@@ -26,13 +26,19 @@ const argv = yargs
 		alias: "c",
 		description: "the color of the icons",
 		type: "string",
-		default: "black"
+		default: "#898F9E"
 	})
 	.option("output-directory", {
 		alias: "o",
 		description: "the color of the icons",
 		type: "string",
 		default: "/tmp/"
+	})
+	.option("name", {
+		alias: "n",
+		description: "if you want a single icon, use its name here",
+		type: "string",
+		default: ""
 	})
 	.help()
 	.alias("help", "h").argv;
@@ -50,7 +56,8 @@ const convertIcon = async icon => {
 };
 
 const convertIcons = async hash => {
-	const array = Object.values(hash);
+	const filter = _ => (argv.name ? _.name === argv.name : true);
+	const array = Object.values(hash).filter(filter);
 	for (let index = 0; index < array.length; index++) {
 		await convertIcon(array[index]);
 	}

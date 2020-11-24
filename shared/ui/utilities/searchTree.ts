@@ -142,7 +142,7 @@ export class PathIterator implements IKeyIterator {
 
 		if (aLen === this._to - this._from) {
 			return 0;
-		} else if (aPos < aLen) {
+		} else if (aPos <= aLen) {
 			return -1;
 		} else {
 			return 1;

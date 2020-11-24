@@ -2373,7 +2373,9 @@ class CodemarkForm extends React.Component<Props, State> {
 											? this.copyPermalink
 											: this.handleClickSubmit
 									}
-									disabled={hasError || !!hasExistingPullRequestReview}
+									disabled={
+										hasError || (this.state.isInsidePrChangeSet && !!hasExistingPullRequestReview)
+									}
 								>
 									{commentType === "link"
 										? this.state.copied
@@ -2393,7 +2395,7 @@ class CodemarkForm extends React.Component<Props, State> {
 								</Button>
 							</Tooltip>
 							{this.props.textEditorUriHasPullRequestContext &&
-								(this.state.isInsidePrChangeSet || !!hasExistingPullRequestReview) && (
+								(this.state.isInsidePrChangeSet && !!hasExistingPullRequestReview) && (
 									<Button
 										key="submit-review"
 										loading={this.state.isReviewLoading}
@@ -2528,10 +2530,13 @@ const mapStateToProps = (state: CodeStreamState): ConnectedProps => {
 	};
 };
 
-const ConnectedCodemarkForm = connect(mapStateToProps, {
-	openPanel,
-	openModal,
-	setUserPreference
-})(CodemarkForm);
+const ConnectedCodemarkForm = connect(
+	mapStateToProps,
+	{
+		openPanel,
+		openModal,
+		setUserPreference
+	}
+)(CodemarkForm);
 
 export { ConnectedCodemarkForm as CodemarkForm };

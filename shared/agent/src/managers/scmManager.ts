@@ -1,10 +1,11 @@
 import { applyPatch, createPatch, parsePatch } from "diff";
-import { GitRemote, GitRepository } from "git/gitService";
 import * as paths from "path";
 import { TextDocument } from "vscode-languageserver-types";
 import { URI } from "vscode-uri";
 import { Ranges } from "../api/extensions";
+import { Container, SessionContainer } from "../container";
 import { GitRepositoryExtensions } from "../extensions";
+import { EMPTY_TREE_SHA, GitRemote, GitRepository } from "../git/gitService";
 import { GitNumStat } from "../git/models/numstat";
 import { Logger } from "../logger";
 import {
@@ -75,7 +76,6 @@ import { CSMe, FileStatus } from "../protocol/api.protocol.models";
 import { FileSystem, Iterables, log, lsp, lspHandler, Strings } from "../system";
 import * as csUri from "../system/uri";
 import { xfs } from "../xfs";
-import { Container, SessionContainer } from "./../container";
 import { IgnoreFilesHelper } from "./ignoreFilesManager";
 import { ReviewsManager } from "./reviewsManager";
 
@@ -429,6 +429,16 @@ export class ScmManager {
 					if (startCommit === "local") {
 						const latestPushed = commits?.find(commit => !commit.localOnly);
 						startCommit = latestPushed?.sha;
+					}
+
+					if (startCommit && startCommit.endsWith("^")) {
+						const childCommit = startCommit.substr(0, startCommit.length - 1);
+						const parentCommit = await git.findAncestor(repoPath, childCommit, 1, () => true);
+						if (parentCommit) {
+							startCommit = parentCommit.ref;
+						} else {
+							startCommit = EMPTY_TREE_SHA;
+						}
 					}
 
 					modifiedFiles = await git.getNumStat(repoPath, startCommit, includeSaved, includeStaged);

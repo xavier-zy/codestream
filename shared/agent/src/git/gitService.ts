@@ -37,6 +37,8 @@ export interface TrackingBranch {
 	shortName?: string;
 }
 
+export const EMPTY_TREE_SHA = "4b825dc642cb6eb9a060e54bf8d69288fbee4904";
+
 export interface IGitService extends Disposable {
 	getFileAuthors(uri: URI, options?: BlameOptions): Promise<GitAuthor[]>;
 	getFileAuthors(path: string, options?: BlameOptions): Promise<GitAuthor[]>;

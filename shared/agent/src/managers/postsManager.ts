@@ -1,6 +1,6 @@
 "use strict";
 import { CodeStreamApiProvider } from "api/codestream/codestreamApi";
-import { Hunk, ParsedDiff } from "diff";
+import { ParsedDiff } from "diff";
 import * as fs from "fs";
 import { groupBy, last, orderBy } from "lodash-es";
 import sizeof from "object-sizeof";
@@ -10,6 +10,7 @@ import { URI } from "vscode-uri";
 import { MessageType } from "../api/apiProvider";
 import { Marker, MarkerLocation } from "../api/extensions";
 import { Container, SessionContainer } from "../container";
+import { EMPTY_TREE_SHA } from "../git/gitService";
 import { GitCommit } from "../git/models/commit";
 import * as gitUtils from "../git/utils";
 import { Logger } from "../logger";
@@ -1448,8 +1449,8 @@ export class PostsManager extends EntityManagerBase<CSPost> {
 				} else {
 					// User might be including the entire commits history. This is a common scenario when somebody
 					// is kicking the tires in a brand new repo with just a initial commit.
-					leftBaseSha = oldestCommitInReview.sha;
-					leftBaseAuthor = (oldestCommitInReview.info as GitCommit).author;
+					leftBaseSha = EMPTY_TREE_SHA;
+					leftBaseAuthor = "Empty Tree";
 				}
 			} else {
 				leftBaseSha = latestCommitSha;
@@ -1466,7 +1467,11 @@ export class PostsManager extends EntityManagerBase<CSPost> {
 					1,
 					() => true
 				);
-				leftContentSha = firstAncestor?.ref;
+				if (firstAncestor) {
+					leftContentSha = firstAncestor.ref;
+				} else {
+					leftContentSha = EMPTY_TREE_SHA;
+				}
 			} else {
 				leftContentSha = latestCommitSha;
 			}
@@ -1509,10 +1514,12 @@ export class PostsManager extends EntityManagerBase<CSPost> {
 			// It means we're amending. There is 1 optimization that need to be done:
 			// 1 - if there's a newer pushed commit, then we could find a newer rightBaseSha
 			rightBaseSha = rightBaseShaForFirstChangesetInThisRepo;
+			rightBaseAuthor = (await git.getCommit(scm.repoPath, rightBaseSha))!.author;
 		} else {
 			rightBaseSha = leftBaseSha;
+			rightBaseAuthor = leftBaseAuthor;
 		}
-		rightBaseAuthor = (await git.getCommit(scm.repoPath, rightBaseSha))!.author;
+
 		rightDiffs = (
 			await git.getDiffs(scm.repoPath, { includeSaved, includeStaged }, rightBaseSha)
 		).filter(removeExcluded);
@@ -1865,7 +1872,7 @@ export class PostsManager extends EntityManagerBase<CSPost> {
 					anchorFormat: "[${text}](${url})"
 				};
 		}
-	}
+	};
 
 	createProviderCard = async (
 		providerCardRequest: {
@@ -2104,7 +2111,7 @@ export class PostsManager extends EntityManagerBase<CSPost> {
 			Logger.error(error, `failed to create a ${attributes.issueProvider.name} card:`);
 			return undefined;
 		}
-	}
+	};
 }
 
 async function resolveCreatePostResponse(response: CreatePostResponse) {

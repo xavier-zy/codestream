@@ -3,7 +3,7 @@ import { applyPatch } from "diff";
 import * as path from "path";
 import { MessageType } from "../api/apiProvider";
 import { Container, SessionContainer } from "../container";
-import { GitRemote, GitRepository } from "../git/gitService";
+import { EMPTY_TREE_SHA, GitRemote, GitRepository } from "../git/gitService";
 import { Logger } from "../logger";
 import {
 	CheckPullRequestBranchPreconditionsRequest,
@@ -489,9 +489,13 @@ export class ReviewsManager extends CachedEntityManagerBase<CSReview> {
 
 			const diffs = diffsByRepo[repoId];
 			for (const d of diffs) {
-				let leftCommit = await git.getCommit(repoPath, d.diff.leftBaseSha);
-				let rightCommit = await git.getCommit(repoPath, d.diff.rightBaseSha);
-				if (leftCommit == null || rightCommit == null) {
+				const { leftBaseSha, rightBaseSha } = d.diff;
+				let leftCommit = await git.getCommit(repoPath, leftBaseSha);
+				let rightCommit = await git.getCommit(repoPath, rightBaseSha);
+				if (
+					(leftBaseSha !== EMPTY_TREE_SHA && leftCommit == null) ||
+					(rightBaseSha !== EMPTY_TREE_SHA && rightCommit == null)
+				) {
 					const didFetch = await git.fetchAllRemotes(repoPath);
 					if (didFetch) {
 						leftCommit = leftCommit || (await git.getCommit(repoPath, d.diff.leftBaseSha));
@@ -510,10 +514,10 @@ export class ReviewsManager extends CachedEntityManagerBase<CSReview> {
 					};
 				}
 
-				if (leftCommit == null) {
+				if (leftBaseSha !== EMPTY_TREE_SHA && leftCommit == null) {
 					return missingCommitError(d.diff.leftBaseSha, d.diff.leftBaseAuthor);
 				}
-				if (rightCommit == null) {
+				if (rightBaseSha !== EMPTY_TREE_SHA && rightCommit == null) {
 					return missingCommitError(d.diff.rightBaseSha, d.diff.rightBaseAuthor);
 				}
 			}

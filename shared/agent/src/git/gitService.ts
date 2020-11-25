@@ -1475,6 +1475,46 @@ export class GitService implements IGitService, Disposable {
 		);
 	}
 
+	async getConfig(repoPath: string, key: string): Promise<string | undefined> {
+		try {
+			const data = await git({ cwd: repoPath }, "config", key);
+			return data.trim();
+		} catch (err) {
+			Logger.warn(err);
+			return undefined;
+		}
+	}
+
+	async findAncestor(
+		repoPath: string,
+		sha: string,
+		limit: number,
+		predicate: (c: GitCommit) => Boolean
+	): Promise<GitCommit | undefined> {
+		const commitsData = await git(
+			{ cwd: repoPath },
+			"log",
+			sha,
+			"--first-parent",
+			`-n${limit}`,
+			"--skip=1",
+			`--format='${GitLogParser.defaultFormat}`,
+			"--"
+		);
+		const commits = GitLogParser.parse(commitsData.trim(), repoPath);
+		if (commits === undefined || commits.size === 0) {
+			return undefined;
+		}
+
+		for (const commit of commits.values()) {
+			if (predicate(commit)) {
+				return commit;
+			}
+		}
+
+		return undefined;
+	}
+
 	// mondo useful for prototyping ;)
 	// async run(repoPath: string, command: string) {
 	// 	try {

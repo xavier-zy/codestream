@@ -10,6 +10,7 @@ import { URI } from "vscode-uri";
 import { MessageType } from "../api/apiProvider";
 import { Marker, MarkerLocation } from "../api/extensions";
 import { Container, SessionContainer } from "../container";
+import { GitCommit } from "../git/models/commit";
 import * as gitUtils from "../git/utils";
 import { Logger } from "../logger";
 import {
@@ -1387,21 +1388,6 @@ export class PostsManager extends EntityManagerBase<CSPost> {
 		if (latestCommitSha == null) {
 			throw new Error("Could not determine HEAD of current branch for review creation");
 		}
-		// if we have a pushed commit on this branch, use the most recent.
-		// otherwise, use the start commit if specified by the user.
-		// otherwise, use the parent of the first commit of this branch (the fork point)
-		// if that doesn't exist, use HEAD
-		const baseSha =
-			pushedCommit && !amendingReviewId
-				? pushedCommit.sha
-				: scm.commits && scm.commits.length > 0
-				? (await git.getParentCommitShas(scm.repoPath, scm.commits[scm.commits.length - 1].sha))[0]
-				: latestCommitSha;
-
-		if (!baseSha) {
-			throw new Error("Could not determine newest pushed commit for review creation");
-		}
-		Logger.log("baseSha is: " + baseSha);
 
 		const newestCommitInReview = commits[0];
 		const oldestCommitInReview = commits[commits.length - 1];
@@ -1410,6 +1396,16 @@ export class PostsManager extends EntityManagerBase<CSPost> {
 		let leftDiffs: ParsedDiff[];
 
 		const newestCommitNotInReview = scm.commits[commits.length];
+		const userEmail = await git.getConfig(scm.repoPath, "user.email");
+		const ancestorSearchStartingSha =
+			oldestCommitInReview != null ? oldestCommitInReview.sha : "HEAD";
+		const ancestorFromAnotherAuthor = await git.findAncestor(
+			scm.repoPath,
+			ancestorSearchStartingSha,
+			100,
+			c => c.email !== userEmail
+		);
+
 		if (leftBaseShaForFirstChangesetInThisRepo != null) {
 			// It means we're amending. There are 2 optimizations that need to be done:
 			// 1 - if there's a newer pushed commit, then we could find a newer leftBaseSha
@@ -1417,6 +1413,13 @@ export class PostsManager extends EntityManagerBase<CSPost> {
 			leftBaseSha = leftBaseShaForFirstChangesetInThisRepo;
 			leftBaseAuthor = (await git.getCommit(scm.repoPath, leftBaseShaForFirstChangesetInThisRepo))!
 				.author;
+
+			const baseSha =
+				scm.commits && scm.commits.length > 0
+					? (
+							await git.getParentCommitShas(scm.repoPath, scm.commits[scm.commits.length - 1].sha)
+					  )[0]
+					: latestCommitSha;
 			leftDiffs = (
 				await git.getDiffs(
 					scm.repoPath,
@@ -1425,35 +1428,57 @@ export class PostsManager extends EntityManagerBase<CSPost> {
 					baseSha // this will be the parent of the first commit in this checkpoint
 				)
 			).filter(removeExcluded);
-		} else if (newestCommitNotInReview == null) {
-			if (oldestCommitInReview != null) {
-				const parent = await git.getCommit(scm.repoPath, oldestCommitInReview.sha + "^");
-				if (!parent) {
-					throw new Error(`Cannot determine the parent of sha ${oldestCommitInReview.sha}`);
+		} else {
+			if (ancestorFromAnotherAuthor) {
+				leftBaseSha = ancestorFromAnotherAuthor.ref;
+				leftBaseAuthor = ancestorFromAnotherAuthor.author;
+			} else if (newestCommitNotInReview) {
+				leftBaseSha = newestCommitNotInReview.sha;
+				leftBaseAuthor = (newestCommitNotInReview.info as GitCommit)!.author;
+			} else if (oldestCommitInReview) {
+				const firstAncestor = await git.findAncestor(
+					scm.repoPath,
+					oldestCommitInReview.sha,
+					1,
+					() => true
+				);
+				if (firstAncestor) {
+					leftBaseSha = firstAncestor.ref;
+					leftBaseAuthor = firstAncestor.author;
+				} else {
+					// User might be including the entire commits history. This is a common scenario when somebody
+					// is kicking the tires in a brand new repo with just a initial commit.
+					leftBaseSha = oldestCommitInReview.sha;
+					leftBaseAuthor = (oldestCommitInReview.info as GitCommit).author;
 				}
-				leftBaseSha = parent!.ref;
-				leftBaseAuthor = parent!.author;
-				leftDiffs = [];
 			} else {
 				leftBaseSha = latestCommitSha;
 				leftBaseAuthor = (await git.getCommit(scm.repoPath, latestCommitSha))!.author;
-				leftDiffs = [];
 			}
-		} else if (newestCommitNotInReview.localOnly) {
-			leftBaseSha = baseSha;
-			leftBaseAuthor = (await git.getCommit(scm.repoPath, baseSha))!.author;
+
+			let leftContentSha;
+			if (newestCommitNotInReview) {
+				leftContentSha = newestCommitNotInReview.sha;
+			} else if (oldestCommitInReview) {
+				const firstAncestor = await git.findAncestor(
+					scm.repoPath,
+					oldestCommitInReview.sha,
+					1,
+					() => true
+				);
+				leftContentSha = firstAncestor?.ref;
+			} else {
+				leftContentSha = latestCommitSha;
+			}
+
 			leftDiffs = (
 				await git.getDiffs(
 					scm.repoPath,
 					{ includeSaved: false, includeStaged: false },
-					baseSha,
-					newestCommitNotInReview.sha
+					leftBaseSha,
+					leftContentSha
 				)
 			).filter(removeExcluded);
-		} else {
-			leftBaseSha = newestCommitNotInReview.sha;
-			leftBaseAuthor = (await git.getCommit(scm.repoPath, newestCommitNotInReview.sha))!.author;
-			leftDiffs = [];
 		}
 
 		const newFileDiffs: ParsedDiff[] = [];
@@ -1484,47 +1509,16 @@ export class PostsManager extends EntityManagerBase<CSPost> {
 			// It means we're amending. There is 1 optimization that need to be done:
 			// 1 - if there's a newer pushed commit, then we could find a newer rightBaseSha
 			rightBaseSha = rightBaseShaForFirstChangesetInThisRepo;
-			rightBaseAuthor = (await git.getCommit(
-				scm.repoPath,
-				rightBaseShaForFirstChangesetInThisRepo
-			))!.author;
-			rightDiffs = (
-				await git.getDiffs(
-					scm.repoPath,
-					{ includeSaved, includeStaged },
-					rightBaseShaForFirstChangesetInThisRepo
-				)
-			).filter(removeExcluded);
-			rightReverseDiffs = (
-				await git.getDiffs(
-					scm.repoPath,
-					{ includeSaved, includeStaged, reverse: true },
-					rightBaseShaForFirstChangesetInThisRepo
-				)
-			).filter(removeExcluded);
-		} else if (!newestCommitInReview || newestCommitInReview.localOnly) {
-			rightBaseSha = baseSha;
-			rightBaseAuthor = (await git.getCommit(scm.repoPath, baseSha))!.author;
-			rightDiffs = (
-				await git.getDiffs(scm.repoPath, { includeSaved, includeStaged }, baseSha)
-			).filter(removeExcluded);
-			rightReverseDiffs = (
-				await git.getDiffs(scm.repoPath, { includeSaved, includeStaged, reverse: true }, baseSha)
-			).filter(removeExcluded);
 		} else {
-			rightBaseSha = newestCommitInReview.sha;
-			rightBaseAuthor = (await git.getCommit(scm.repoPath, newestCommitInReview.sha))!.author;
-			rightDiffs = (
-				await git.getDiffs(scm.repoPath, { includeSaved, includeStaged }, newestCommitInReview.sha)
-			).filter(removeExcluded);
-			rightReverseDiffs = (
-				await git.getDiffs(
-					scm.repoPath,
-					{ includeSaved, includeStaged, reverse: true },
-					newestCommitInReview.sha
-				)
-			).filter(removeExcluded);
+			rightBaseSha = leftBaseSha;
 		}
+		rightBaseAuthor = (await git.getCommit(scm.repoPath, rightBaseSha))!.author;
+		rightDiffs = (
+			await git.getDiffs(scm.repoPath, { includeSaved, includeStaged }, rightBaseSha)
+		).filter(removeExcluded);
+		rightReverseDiffs = (
+			await git.getDiffs(scm.repoPath, { includeSaved, includeStaged, reverse: true }, rightBaseSha)
+		).filter(removeExcluded);
 		rightDiffs.push(...newFileDiffs);
 		rightReverseDiffs.push(...newFileReverseDiffs);
 

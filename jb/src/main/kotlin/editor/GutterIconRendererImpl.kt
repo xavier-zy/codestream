@@ -9,12 +9,15 @@ import com.codestream.protocols.agent.TelemetryParams
 import com.codestream.protocols.webview.CodemarkNotifications
 import com.codestream.protocols.webview.PullRequestNotifications
 import com.codestream.webViewService
+import com.intellij.codeInsight.highlighting.TooltipLinkHandler
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.IconLoader
+import java.text.SimpleDateFormat
+import java.util.Date
 import javax.swing.Icon
 
 class GutterIconRendererImpl(val editor: Editor, val marker: DocumentMarker) : GutterIconRenderer() {
@@ -28,7 +31,18 @@ class GutterIconRendererImpl(val editor: Editor, val marker: DocumentMarker) : G
     override fun getClickAction(): AnAction = GutterIconAction(editor, marker)
 
     override fun getTooltipText(): String? {
-        return marker.summary
+        val dateFormat = SimpleDateFormat("MMMM D, YYYY h:mma")
+        var tooltip = "<b>${marker.creatorName}</b> (${dateFormat.format( Date(marker.createdAt) )})" +
+            "\n\n<q>${marker.summary}</q>"
+
+        if (marker.codemark !== null) {
+            tooltip += "\n\n<a href='#codemark/show/${marker.codemark.id}'>View Comment</a>"
+        } else if (marker.externalContent != null) {
+            tooltip += "\n\n<a href='#pr/show/${marker.externalContent.provider?.id}" +
+                "/${marker.externalContent.externalId}/${marker.externalContent.externalChildId}'>View Comment</a>"
+        }
+
+        return tooltip
     }
 
     override fun getIcon(): Icon {
@@ -75,6 +89,44 @@ class GutterIconAction(val editor: Editor, val marker: DocumentMarker) : AnActio
             }
             telemetry(project, TelemetryEvent.PR_CLICKED)
         }
+    }
+}
+
+class GutterCodemarkTooltipLinkHandler : TooltipLinkHandler() {
+    override fun handleLink(codemarkId: String, editor: Editor): Boolean {
+        val project = editor.project ?: return false
+
+        project.codeStream?.show {
+            project.webViewService?.postNotification(
+                CodemarkNotifications.Show(
+                    codemarkId,
+                    editor.document.uri
+                )
+            )
+        }
+        telemetry(project, TelemetryEvent.CODEMARK_CLICKED)
+
+        return super.handleLink(codemarkId, editor)
+    }
+
+}
+
+class GutterPullRequestTooltipLinkHandler : TooltipLinkHandler() {
+    override fun handleLink(prLink: String, editor: Editor): Boolean {
+        val project = editor.project ?: return false
+
+        val prData = prLink.split("/")
+
+        project.webViewService?.postNotification(
+            PullRequestNotifications.Show(
+                prData[0],
+                prData[1],
+                prData[2]
+            )
+        )
+        telemetry(project, TelemetryEvent.CODEMARK_CLICKED)
+
+        return super.handleLink(prLink, editor)
     }
 }
 

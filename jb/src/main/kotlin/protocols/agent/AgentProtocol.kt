@@ -132,6 +132,8 @@ class DocumentMarkersResult(val markers: List<DocumentMarker>, val markersNotLoc
 class DocumentMarker(
     val id: String,
     val codemark: Codemark?,
+    val creatorName: String,
+    val createdAt: Long,
     val type: String?,
     val range: Range,
     val summary: String,

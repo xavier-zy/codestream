@@ -53,6 +53,10 @@
 
         <jbProtocolCommand implementation="com.codestream.commands.CodeStreamCommand"/>
         <ignoredFileProvider implementation="com.codestream.vcs.CodeStreamIgnoredFileProvider"/>
+        <codeInsight.linkHandler prefix="#codemark/show/"
+                                 handlerClass="com.codestream.editor.GutterCodemarkTooltipLinkHandler"/>
+        <codeInsight.linkHandler prefix="#pr/show/"
+                                 handlerClass="com.codestream.editor.GutterPullRequestTooltipLinkHandler"/>
     </extensions>
 
     <project-components>

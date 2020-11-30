@@ -586,7 +586,8 @@ export const PullRequest = () => {
 						{iAmRequested && activeTab == 1 && (
 							<PRIAmRequested>
 								<div>
-									<b>{pr.author.login}</b> requested your review on this pull request.
+									<b>{pr.author.login}</b> requested your review
+									<span className="wide-text"> on this pull request</span>.
 								</div>
 								<Button
 									variant="success"
@@ -595,7 +596,7 @@ export const PullRequest = () => {
 										setActiveTab(4);
 									}}
 								>
-									Add your review
+									Add <span className="wide-text">your</span> review
 								</Button>
 							</PRIAmRequested>
 						)}

@@ -212,7 +212,8 @@ export class ScmManager {
 							startCommit: "local",
 							includeStaged: true,
 							includeSaved: true,
-							currentUserEmail: request.currentUserEmail
+							currentUserEmail: request.currentUserEmail,
+							skipAuthorsCalculation: true
 						});
 						return response;
 					})
@@ -350,7 +351,8 @@ export class ScmManager {
 			includeSaved,
 			startCommit,
 			reviewId,
-			currentUserEmail
+			currentUserEmail,
+			skipAuthorsCalculation
 		} = request;
 
 		if (reviewId) {
@@ -491,18 +493,19 @@ export class ScmManager {
 							}
 						}
 					}
-					(
-						await Promise.all(
-							modifiedFiles.map(f => {
-								return git.getDiffAuthors(
-									repoPath,
-									f.file,
-									includeSaved,
-									includeStaged,
-									startCommit
-								);
-							})
-						)
+					(skipAuthorsCalculation
+						? []
+						: await Promise.all(
+								modifiedFiles.map(f => {
+									return git.getDiffAuthors(
+										repoPath,
+										f.file,
+										includeSaved,
+										includeStaged,
+										startCommit
+									);
+								})
+						  )
 					)
 						.filter(Boolean)
 						.map(authorList =>

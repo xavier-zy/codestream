@@ -96,6 +96,7 @@ export interface GetRepoScmStatusRequest {
 	includeSaved: boolean;
 	includeStaged: boolean;
 	currentUserEmail: string;
+	skipAuthorsCalculation?: boolean;
 }
 
 export interface CoAuthors {

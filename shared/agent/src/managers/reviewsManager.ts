@@ -100,6 +100,7 @@ export class ReviewsManager extends CachedEntityManagerBase<CSReview> {
 	}
 
 	@lspHandler(FetchReviewsRequestType)
+	@log()
 	async get(request?: FetchReviewsRequest): Promise<FetchReviewsResponse> {
 		let reviews = await this.getAllCached();
 		if (request != null) {
@@ -425,6 +426,7 @@ export class ReviewsManager extends CachedEntityManagerBase<CSReview> {
 	}
 
 	@lspHandler(UpdateReviewRequestType)
+	@log()
 	async update(request: UpdateReviewRequest): Promise<UpdateReviewResponse> {
 		let isAmending = false;
 		let reviewChangesets: CSTransformedReviewChangeset[] = [];
@@ -456,11 +458,13 @@ export class ReviewsManager extends CachedEntityManagerBase<CSReview> {
 	}
 
 	@lspHandler(DeleteReviewRequestType)
+	@log()
 	delete(request: DeleteReviewRequest) {
 		return this.session.api.deleteReview(request);
 	}
 
 	@lspHandler(CheckReviewPreconditionsRequestType)
+	@log()
 	async checkReviewPreconditions(
 		request: CheckReviewPreconditionsRequest
 	): Promise<CheckReviewPreconditionsResponse> {
@@ -530,6 +534,7 @@ export class ReviewsManager extends CachedEntityManagerBase<CSReview> {
 	}
 
 	@lspHandler(CheckPullRequestBranchPreconditionsRequestType)
+	@log()
 	async checkPullRequestBranchPreconditions(
 		request: CheckPullRequestBranchPreconditionsRequest
 	): Promise<CheckPullRequestBranchPreconditionsResponse> {
@@ -634,6 +639,7 @@ export class ReviewsManager extends CachedEntityManagerBase<CSReview> {
 	}
 
 	@lspHandler(CheckPullRequestPreconditionsRequestType)
+	@log()
 	async checkPullRequestPreconditions(
 		request: CheckPullRequestPreconditionsRequest
 	): Promise<CheckPullRequestPreconditionsResponse> {
@@ -812,6 +818,7 @@ export class ReviewsManager extends CachedEntityManagerBase<CSReview> {
 	}
 
 	@lspHandler(CreatePullRequestRequestType)
+	@log()
 	async createPullRequest(request: CreatePullRequestRequest): Promise<CreatePullRequestResponse> {
 		const { git, providerRegistry, users } = SessionContainer.instance();
 		try {
@@ -950,6 +957,7 @@ export class ReviewsManager extends CachedEntityManagerBase<CSReview> {
 	}
 
 	@lspHandler(StartReviewRequestType)
+	@log()
 	async startReview(request: StartReviewRequest): Promise<StartReviewResponse> {
 		return {
 			success: true
@@ -957,6 +965,7 @@ export class ReviewsManager extends CachedEntityManagerBase<CSReview> {
 	}
 
 	@lspHandler(PauseReviewRequestType)
+	@log()
 	async pauseReview(request: PauseReviewRequest): Promise<PauseReviewResponse> {
 		return {
 			success: true
@@ -964,6 +973,7 @@ export class ReviewsManager extends CachedEntityManagerBase<CSReview> {
 	}
 
 	@lspHandler(EndReviewRequestType)
+	@log()
 	async endReview(request: EndReviewRequest): Promise<EndReviewResponse> {
 		return {
 			success: true

@@ -6,6 +6,7 @@ import * as paths from "path";
 import * as qs from "querystring";
 import { CodeStreamSession } from "session";
 import { URI } from "vscode-uri";
+import { InternalError, ReportSuppressedMessages } from "../agentError";
 import { SessionContainer } from "../container";
 import { Logger, TraceLevel } from "../logger";
 import {
@@ -180,7 +181,28 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 	};
 
 	async query<T = any>(query: string, variables: any = undefined) {
-		const response = await (await this.client()).request<any>(query, variables);
+		if (this._providerInfo && this._providerInfo.tokenError) {
+			throw new InternalError(ReportSuppressedMessages.AccessTokenInvalid);
+		}
+
+		let response;
+		try {
+			response = await (await this.client()).request<any>(query, variables);
+		}
+		catch (ex) {
+			if (ex.response && ex.response.message === "Bad credentials") {
+				this.session.api.setThirdPartyProviderInfo({
+					providerId: this.providerConfig.id,
+					data: {
+						tokenError: {
+							error: ex,
+							occurredAt: Date.now()
+						}
+					}
+				});
+			}
+			throw new InternalError(ReportSuppressedMessages.AccessTokenInvalid, { error: ex });
+		}
 
 		try {
 			if (Logger.level === TraceLevel.Debug && response && response.rateLimit) {

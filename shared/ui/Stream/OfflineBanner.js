@@ -7,7 +7,7 @@ class OfflineBanner extends PureComponent {
 		if (this.props.isOffline)
 			return (
 				<div className="banner">
-					<div id="offline-banner">
+					<div className="error-banner">
 						<div className="content">
 							<FormattedMessage
 								id="offlineBanner.offline.main"

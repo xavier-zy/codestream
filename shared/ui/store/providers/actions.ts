@@ -10,11 +10,10 @@ import {
 	TelemetryRequestType
 } from "@codestream/protocols/agent";
 import { ConnectToIDEProviderRequestType, DisconnectFromIDEProviderRequestType } from "../../ipc/host.protocol";
-import { CSGitHubProviderInfo, CSMe } from "@codestream/protocols/api";
+import { CSMe } from "@codestream/protocols/api";
 import { logError } from "../../logger";
 import { setIssueProvider, openPanel } from "../context/actions";
 import { deleteForProvider } from "../activeIntegrations/actions";
-import { CodeStreamState } from "..";
 
 export const reset = () => action("RESET");
 
@@ -29,7 +28,8 @@ export const updateProviders = (data: ProvidersState) => action(ProvidersActions
 
 export const configureAndConnectProvider = (
 	providerId: string,
-	connectionLocation: ViewLocation
+	connectionLocation: ViewLocation,
+	force?: boolean
 ) => async (dispatch, getState) => {
 	const { providers } = getState();
 	const provider = providers[providerId];
@@ -39,11 +39,11 @@ export const configureAndConnectProvider = (
 	} else if ((forEnterprise || isEnterprise) && name !== "jiraserver") {
 		dispatch(openPanel(`configure-enterprise-${name}-${provider.id}-Integrations Panel`));
 	} else {
-		dispatch(connectProvider(provider.id, connectionLocation));
+		dispatch(connectProvider(provider.id, connectionLocation, force));
 	}
 };
 
-export const connectProvider = (providerId: string, connectionLocation: ViewLocation) => async (
+export const connectProvider = (providerId: string, connectionLocation: ViewLocation, force?: boolean) => async (
 	dispatch,
 	getState
 ) => {
@@ -56,7 +56,7 @@ export const connectProvider = (providerId: string, connectionLocation: ViewLoca
 	if (providerInfo && isEnterprise) {
 		providerInfo = (providerInfo.hosts || {})[id];
 	}
-	if (providerInfo && providerInfo.accessToken) {
+	if (!force && providerInfo && providerInfo.accessToken) {
 		if (provider.hasIssues) {
 			dispatch(setIssueProvider(providerId));
 		}
@@ -92,7 +92,8 @@ export type ViewLocation =
 	| "Status"
 	| "Sidebar"
 	| "Create Pull Request Panel"
-	| "Issues Section";
+	| "Issues Section"
+	| "Provider Error Banner";
 
 export const sendIssueProviderConnected = (
 	providerId: string,

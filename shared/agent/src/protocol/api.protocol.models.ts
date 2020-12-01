@@ -424,6 +424,7 @@ export interface CSTag {
 export interface CSAsanaProviderInfo {
 	refreshToken: string;
 	accessToken: string;
+	tokenError?: any;
 	expiresAt: number;
 	userId: string;
 	hosts: { [host: string]: CSAsanaProviderInfo };
@@ -432,6 +433,7 @@ export interface CSAsanaProviderInfo {
 export interface CSBitbucketProviderInfo {
 	refreshToken: string;
 	accessToken: string;
+	tokenError?: any;
 	expiresAt: number;
 	userId: string;
 	hosts: { [host: string]: CSBitbucketProviderInfo };
@@ -443,6 +445,7 @@ export interface CSBitbucketProviderInfo {
 
 export interface CSGitHubProviderInfo {
 	accessToken: string;
+	tokenError?: any;
 	userId: string;
 	hosts: { [host: string]: CSGitHubProviderInfo };
 	data?: {
@@ -453,6 +456,7 @@ export interface CSGitHubProviderInfo {
 
 export interface CSGitLabProviderInfo {
 	accessToken: string;
+	tokenError?: any;
 	userId: string;
 	hosts: { [host: string]: CSGitLabProviderInfo };
 	data?: {
@@ -462,6 +466,7 @@ export interface CSGitLabProviderInfo {
 
 export interface CSJiraProviderInfo {
 	accessToken: string;
+	tokenError?: any;
 	refreshToken: string;
 	expiresAt: number;
 	hosts: { [hosts: string]: CSJiraProviderInfo };
@@ -469,6 +474,7 @@ export interface CSJiraProviderInfo {
 
 export interface CSMSTeamsProviderInfo {
 	accessToken: string;
+	tokenError?: any;
 	data: {
 		expires_in: number;
 		scope: string;
@@ -488,12 +494,14 @@ export interface CSMSTeamsProviderInfo {
 
 export interface CSJiraServerProviderInfo {
 	accessToken: string;
+	tokenError?: any;
 	oauthTokenSecret: string;
 	hosts: { [hosts: string]: CSJiraServerProviderInfo };
 }
 
 export interface CSSlackProviderInfo {
 	accessToken: string;
+	tokenError?: any;
 	teamId: string;
 	userId: string;
 	hosts?: { [host: string]: CSSlackProviderInfo };
@@ -506,6 +514,7 @@ export interface CSSlackProviderInfo {
 
 export interface MSTeamsProviderInfo {
 	accessToken: string;
+	tokenError?: any;
 	refreshToken: string;
 	expiresAt: number;
 	teamId: string;
@@ -520,6 +529,7 @@ export interface MSTeamsProviderInfo {
 
 export interface CSTrelloProviderInfo {
 	accessToken: string;
+	tokenError?: any;
 	apiKey: string;
 	userId: string;
 	hosts: { [host: string]: CSTrelloProviderInfo };
@@ -527,6 +537,7 @@ export interface CSTrelloProviderInfo {
 
 export interface CSYouTrackProviderInfo {
 	accessToken: string;
+	tokenError?: any;
 	userId: string;
 	hosts: { [host: string]: CSYouTrackProviderInfo };
 	data?: {
@@ -536,17 +547,20 @@ export interface CSYouTrackProviderInfo {
 
 export interface CSAzureDevOpsProviderInfo {
 	accessToken: string;
+	tokenError?: any;
 	organization?: string;
 	hosts: { [host: string]: CSAzureDevOpsProviderInfo };
 }
 
 export interface CSOktaProviderInfo {
 	accessToken: string;
+	tokenError?: any;
 	hosts: { [host: string]: CSAzureDevOpsProviderInfo };
 }
 
 export interface CSClubhouseProviderInfo {
 	accessToken: string;
+	tokenError?: any;
 	hosts: { [host: string]: CSAzureDevOpsProviderInfo };
 }
 

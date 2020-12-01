@@ -31,6 +31,7 @@ import Icon from "./Icon";
 import CancelButton from "./CancelButton";
 import Tooltip, { TipTitle, placeArrowTopRight } from "./Tooltip";
 import OfflineBanner from "./OfflineBanner";
+import { PRProviderErrorBanner } from "./PRProviderErrorBanner";
 import ConfigureAzureDevOpsPanel from "./ConfigureAzureDevOpsPanel";
 import ConfigureYouTrackPanel from "./ConfigureYouTrackPanel";
 import ConfigureJiraServerPanel from "./ConfigureJiraServerPanel";
@@ -286,6 +287,7 @@ export class SimpleStream extends PureComponent {
 		return (
 			<div id="stream-root" className={streamClass}>
 				<OfflineBanner />
+				<PRProviderErrorBanner />
 				<ModalRoot />
 				<CheckEmailVsGit />
 				{/*<EnjoyingCodeStream />*/}

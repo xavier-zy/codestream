@@ -137,36 +137,27 @@ export class ReviewsManager extends CachedEntityManagerBase<CSReview> {
 	async getAllDiffs(
 		reviewId: string
 	): Promise<{ [repoId: string]: { checkpoint: CSReviewCheckpoint; diff: CSReviewDiffs }[] }> {
-		const diffs = new Map<
-			string,
-			{ [repoId: string]: { checkpoint: CSReviewCheckpoint; diff: CSReviewDiffs }[] }
-		>();
 		const responses = await this.getReviewCheckpointDiffsResponses(reviewId);
 
-		if (responses && responses.length) {
-			const result: {
-				[repoId: string]: { checkpoint: CSReviewCheckpoint; diff: CSReviewDiffs }[];
-			} = {};
-			if (responses.length === 1 && responses[0].checkpoint === undefined) {
-				const response = responses[0];
-				result[response.repoId].push({ checkpoint: 0, diff: response.diffs });
-			} else {
-				for (const response of responses) {
-					if (!result[response.repoId]) {
-						result[response.repoId] = [];
-					}
-					result[response.repoId].push({ checkpoint: response.checkpoint, diff: response.diffs });
-				}
-			}
-			diffs.set(reviewId, result);
-		}
-
-		const diffsByRepo = diffs.get(reviewId);
-		if (!diffsByRepo) {
+		if (!responses || !responses.length) {
 			throw new Error(`Cannot find diffs for review ${reviewId}`);
 		}
 
-		return diffsByRepo;
+		const result: {
+			[repoId: string]: { checkpoint: CSReviewCheckpoint; diff: CSReviewDiffs }[];
+		} = {};
+		if (responses.length === 1 && responses[0].checkpoint === undefined) {
+			const response = responses[0];
+			result[response.repoId] = [{ checkpoint: 0, diff: response.diffs }];
+		} else {
+			for (const response of responses) {
+				if (!result[response.repoId]) {
+					result[response.repoId] = [];
+				}
+				result[response.repoId].push({ checkpoint: response.checkpoint, diff: response.diffs });
+			}
+		}
+		return result;
 	}
 
 	private async getReviewCheckpointDiffsResponses(reviewId: string) {
@@ -468,6 +459,7 @@ export class ReviewsManager extends CachedEntityManagerBase<CSReview> {
 	async checkReviewPreconditions(
 		request: CheckReviewPreconditionsRequest
 	): Promise<CheckReviewPreconditionsResponse> {
+		Logger.log(`Checking preconditions for review ${request.reviewId}`);
 		const { git, repositoryMappings } = SessionContainer.instance();
 		const review = await this.getById(request.reviewId);
 		const diffsByRepo = await this.getAllDiffs(review.id);
@@ -481,6 +473,7 @@ export class ReviewsManager extends CachedEntityManagerBase<CSReview> {
 				repoPath = repo.path;
 			}
 			if (repoPath == null) {
+				Logger.log(`Cannot perform review ${request.reviewId}: REPO_NOT_FOUND`);
 				return {
 					success: false,
 					error: {
@@ -509,6 +502,7 @@ export class ReviewsManager extends CachedEntityManagerBase<CSReview> {
 
 				function missingCommitError(sha: string, author: string) {
 					const shortSha = sha.substr(0, 8);
+					Logger.log(`Cannot perform review ${request.reviewId}: COMMIT_NOT_FOUND ${shortSha}`);
 					return {
 						success: false,
 						error: {
@@ -527,6 +521,7 @@ export class ReviewsManager extends CachedEntityManagerBase<CSReview> {
 			}
 		}
 
+		Logger.log(`Review ${request.reviewId} preconditions check successful`);
 		return {
 			success: true,
 			repoRoots

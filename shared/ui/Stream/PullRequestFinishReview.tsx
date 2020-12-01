@@ -13,6 +13,7 @@ import { HostApi } from "..";
 import { Button } from "../src/components/Button";
 import Tooltip from "./Tooltip";
 import { api } from "../store/providerPullRequests/actions";
+import { replaceHtml } from "../utils";
 
 export const PullRequestFinishReview = (props: {
 	pr: FetchThirdPartyPullRequestPullRequest;
@@ -54,7 +55,7 @@ export const PullRequestFinishReview = (props: {
 		await dispatch(
 			api("submitReview", {
 				eventType: reviewType,
-				text: reviewText
+				text: replaceHtml(reviewText)
 			})
 		);
 		setFinishReviewOpen && setFinishReviewOpen(false);

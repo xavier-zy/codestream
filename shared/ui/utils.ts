@@ -416,7 +416,7 @@ export function asPastedText(text: string) {
 	// (don't want to fence seemingly empty text)
 	const lines = text.split("\n").length;
 	if (lines > 1 && !text.match(/^\S/m) && text.match(/(.|\s)*\S(.|\s)*/))
-		text = "```" + text + "```";
+		text = "```\n" + text + "\n```";
 
 	// console.log("asPastedText result=", text);
 	return text;

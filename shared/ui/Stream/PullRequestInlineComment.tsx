@@ -9,6 +9,7 @@ import MessageInput from "./MessageInput";
 import { ButtonRow } from "../src/components/Dialog";
 import { Button } from "../src/components/Button";
 import { api, removeFromMyPullRequests } from "../store/providerPullRequests/actions";
+import { replaceHtml } from "../utils";
 
 interface Props {
 	pr: FetchThirdPartyPullRequestPullRequest;
@@ -54,7 +55,7 @@ export const PullRequestInlineComment = styled((props: Props) => {
 			api("createPullRequestInlineComment", {
 				filePath: filename,
 				startLine: lineNumber,
-				text: text,
+				text: replaceHtml(text),
 				rightSha: pr.headRefOid,
 				// old servers
 				position: lineOffsetInHunk
@@ -76,7 +77,7 @@ export const PullRequestInlineComment = styled((props: Props) => {
 			api("createPullRequestInlineReviewComment", {
 				filePath: filename,
 				position: lineOffsetInHunk,
-				text: text
+				text: replaceHtml(text)
 			})
 		);
 		setText("");

@@ -32,7 +32,7 @@ class GutterIconRendererImpl(val editor: Editor, val marker: DocumentMarker) : G
 
     override fun getTooltipText(): String? {
         val dateFormat = SimpleDateFormat("MMMM D, YYYY h:mma")
-        var tooltip = "<b>${marker.creatorName}</b> (${dateFormat.format( Date(marker.createdAt) )})" +
+        var tooltip = "<b>${marker.creatorName}</b> (${dateFormat.format(Date(marker.createdAt))})" +
             "\n\n<q>${marker.summary}</q>"
 
         if (marker.codemark !== null) {
@@ -108,7 +108,6 @@ class GutterCodemarkTooltipLinkHandler : TooltipLinkHandler() {
 
         return super.handleLink(codemarkId, editor)
     }
-
 }
 
 class GutterPullRequestTooltipLinkHandler : TooltipLinkHandler() {
@@ -131,7 +130,7 @@ class GutterPullRequestTooltipLinkHandler : TooltipLinkHandler() {
 }
 
 private enum class TelemetryEvent(val value: String, val properties: Map<String, String>) {
-    CODEMARK_CLICKED("Codemark Clicked", mapOf("Comment Location" to "Diff Gutter")),
+    CODEMARK_CLICKED("Codemark Clicked", mapOf("Comment Location" to "Diff Gutter", "Entry Point" to "Source File")),
     PR_CLICKED("PR Comment Clicked", mapOf("Comment Location" to "Diff Gutter"))
 }
 

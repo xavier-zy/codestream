@@ -18,11 +18,13 @@ import kotlin.math.min
 
 class NewCodemarkGutterIconManager(val editor: Editor) : EditorMouseMotionListener, SelectionListener {
 
+    val settingsService = ServiceManager.getService(ApplicationSettingsService::class.java)
+
     init {
         editor.selectionModel.addSelectionListener(this)
         val appSettings = ServiceManager.getService(ApplicationSettingsService::class.java)
+        editor.addEditorMouseMotionListener(this)
         if (appSettings.showNewCodemarkGutterIconOnHover) {
-            editor.addEditorMouseMotionListener(this)
             (editor as EditorEx).gutterComponentEx.setInitialIconAreaWidth(20)
         }
     }
@@ -42,7 +44,7 @@ class NewCodemarkGutterIconManager(val editor: Editor) : EditorMouseMotionListen
             val line = editor.xyToLogicalPosition(e.mouseEvent.point).line
             if (line != lastHighlightedLine && !editor.selectionModel.hasSelection() && line < editor.document.lineCount) {
                 disableCurrentRenderer()
-                enableRenderer(line)
+                if (settingsService.state.showNewCodemarkGutterIconOnHover) enableRenderer(line)
             }
         } else if (!editor.selectionModel.hasSelection()) {
             disableCurrentRenderer()

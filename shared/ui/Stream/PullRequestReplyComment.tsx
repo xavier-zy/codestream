@@ -14,6 +14,7 @@ import { Button } from "../src/components/Button";
 import { confirmPopup } from "./Confirm";
 import { Headshot, PRHeadshot } from "../src/components/Headshot";
 import { api } from "../store/providerPullRequests/actions";
+import { replaceHtml } from "../utils";
 
 interface Props {
 	pr: FetchThirdPartyPullRequestPullRequest;
@@ -54,7 +55,7 @@ export const PullRequestReplyComment = styled((props: Props) => {
 			await dispatch(
 				api("createCommentReply", {
 					commentId: databaseId,
-					text: text
+					text: replaceHtml(text)
 				})
 			);
 

@@ -65,7 +65,7 @@ export const PullRequestBottomComment = styled((props: Props) => {
 		trackComment("Comment and Close");
 		await dispatch(
 			api("createPullRequestCommentAndClose", {
-				text: text
+				text: replaceHtml(text)
 			})
 		);
 		setText("");
@@ -81,7 +81,7 @@ export const PullRequestBottomComment = styled((props: Props) => {
 		trackComment("Comment and Reopen");
 		await dispatch(
 			api("createPullRequestCommentAndReopen", {
-				text: text
+				text: replaceHtml(text)
 			})
 		);
 		setText("");

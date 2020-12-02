@@ -694,7 +694,10 @@ class Post extends React.Component {
 		const { codemark, editing } = this.props;
 		if (editing) return this.renderTextEditing(post);
 		else if ((post.text || "").match(/^\/me\s/)) return null;
-		else return [<MarkdownText text={(codemark && codemark.text) || post.text} />, <br />]; // unfortunately need to account for legacy slack codemarks that don't have text
+		else {
+			// unfortunately need to account for legacy slack codemarks that don't have text
+			return [<MarkdownText text={(codemark && codemark.text) || post.text} />, <br />];
+		}
 	};
 
 	getEditInputId = () => {

@@ -31,7 +31,7 @@ class GutterIconRendererImpl(val editor: Editor, val marker: DocumentMarker) : G
     override fun getClickAction(): AnAction = GutterIconAction(editor, marker)
 
     override fun getTooltipText(): String? {
-        val dateFormat = SimpleDateFormat("MMMM D, YYYY h:mma")
+        val dateFormat = SimpleDateFormat("MMMM d, YYYY h:mma")
         var tooltip = "<b>${marker.creatorName}</b> (${dateFormat.format(Date(marker.createdAt))})" +
             "\n\n<q>${marker.summary}</q>"
 

@@ -1,3 +1,1 @@
-export default {
-    "confirmation.checkEmail": "Username"
-};
+export default {};

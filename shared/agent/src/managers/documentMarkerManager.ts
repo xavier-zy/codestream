@@ -116,7 +116,14 @@ export class DocumentMarkerManager {
 
 	async fireDidChangeDocumentMarkers(uri: string, reason: "document" | "codemarks") {
 		// Normalize the uri to vscode style uri formating
-		uri = URI.parse(uri).toString();
+		try {
+			uri = URI.parse(uri).toString();
+		}
+		catch (e) {
+			// capture the URI being used so we'll have it for the sentry error and can diagnose
+			e.message = `${e.message}: ${uri}`;
+			throw e;
+		}
 
 		let fn = this._debouncedDocumentMarkersChangedByReason.get(reason);
 		if (fn === undefined) {

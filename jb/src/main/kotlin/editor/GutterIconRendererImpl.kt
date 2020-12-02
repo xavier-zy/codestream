@@ -130,8 +130,8 @@ class GutterPullRequestTooltipLinkHandler : TooltipLinkHandler() {
 }
 
 private enum class TelemetryEvent(val value: String, val properties: Map<String, String>) {
-    CODEMARK_CLICKED("Codemark Clicked", mapOf("Comment Location" to "Diff Gutter", "Entry Point" to "Source File")),
-    PR_CLICKED("PR Comment Clicked", mapOf("Comment Location" to "Diff Gutter"))
+    CODEMARK_CLICKED("Codemark Clicked", mapOf("Codemark Location" to "Source File")),
+    PR_CLICKED("PR Comment Clicked", mapOf("Codemark Location" to "Source File"))
 }
 
 private fun telemetry(project: Project, event: TelemetryEvent) {

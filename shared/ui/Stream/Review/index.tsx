@@ -419,12 +419,12 @@ export const BaseReviewMenu = (props: BaseReviewMenuProps) => {
 					action: () => {
 						confirmPopup({
 							title: "Are you sure?",
-							message: "Deleting a review cannot be undone.",
+							message: "Deleting a feedback request cannot be undone.",
 							centered: true,
 							buttons: [
 								{ label: "Go Back", className: "control-button" },
 								{
-									label: "Delete Review",
+									label: "Delete Feedback Request",
 									className: "delete",
 									wait: true,
 									action: () => {

@@ -71,8 +71,8 @@ export const PRProviderErrorBanner = () => {
 		const displayName = PROVIDER_MAPPINGS[name].displayName;
 		return (
 			<Root>
-				<div className="banner">
-					<div className="error-banner">
+				<div className="banner provider-error-banner" >
+					<div className="error-banner provider-error-banner">
 						<div className="content">
 							<p>
 								Your access to {displayName} doesn't appear to be working.

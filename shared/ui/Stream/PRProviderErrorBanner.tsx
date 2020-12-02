@@ -55,8 +55,9 @@ export const PRProviderErrorBanner = () => {
 		};
 	});
 	
-	const onClickReauthorize = event => {
+	const onClickReauthorize = async event => {
 		event.preventDefault();
+		await dispatch(disconnectProvider(derivedState.failedProvider!.id, "Provider Error Banner"));
 		dispatch(configureAndConnectProvider(derivedState.failedProvider!.id, "Provider Error Banner", true));
 	};
 

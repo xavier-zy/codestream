@@ -22,7 +22,8 @@ export class ErrorReporter {
 				dsn: "https://7c34949981cc45848fc4e3548363bb17@sentry.io/1314159",
 				release: session.versionInfo.extension.versionFormatted,
 				environment: session.environment,
-				maxBreadcrumbs: 500
+				maxBreadcrumbs: 500,
+				maxValueLength: 500
 			});
 
 			Sentry.configureScope(scope => {

@@ -47,11 +47,32 @@ export const PRProviderErrorBanner = () => {
 			return isConnected(state, { id }, undefined, tokenError) && tokenError.accessTokenError;
 		});
 
+		let failedProvider, failedProviderName;
+		if (failedProviderId) {
+			failedProvider = providers[failedProviderId];
+			if (failedProvider) {
+				failedProviderName = PROVIDER_MAPPINGS[failedProvider.name].displayName;
+			}
+		}
+
+		let errorMessage, extra;
+		if (failedProviderName) {
+			errorMessage = `Your access to ${failedProviderName} doesn't appear to be working.`;
+			if (tokenError.accessTokenError!.error && tokenError.accessTokenError!.error.response) {
+				const error = tokenError.accessTokenError.error.response.error;
+				if (error && error.toLowerCase().indexOf("cookies must be enabled to use github") > -1) {
+					extra = `Please ensure your ${failedProviderName} url is configured correctly.`;
+				}
+			}
+		}
+
 		return {
 			supportsReauth: capabilities.providerReauth,
 			offline: connectivity.offline,
-			failedProvider: failedProviderId ? providers[failedProviderId] : null,
-			tokenError: tokenError.accessTokenError
+			failedProvider,
+			failedProviderName,
+			errorMessage,
+			extra
 		};
 	});
 	
@@ -66,16 +87,20 @@ export const PRProviderErrorBanner = () => {
 		dispatch(disconnectProvider(derivedState.failedProvider!.id, "Provider Error Banner"));
 	};
 
-	if (derivedState.supportsReauth && !derivedState.offline && derivedState.failedProvider) {
-		const { name } = derivedState.failedProvider; 
-		const displayName = PROVIDER_MAPPINGS[name].displayName;
+	if (derivedState.supportsReauth && !derivedState.offline && derivedState.errorMessage) {
 		return (
 			<Root>
-				<div className="banner provider-error-banner" >
+				<div className="banner" >
 					<div className="error-banner provider-error-banner">
 						<div className="content">
 							<p>
-								Your access to {displayName} doesn't appear to be working.
+								{derivedState.errorMessage}
+								{derivedState.extra && (
+									<>
+									<br/>
+									<b>{derivedState.extra}</b>
+									</>
+								)}
 							</p>
 							<Button
 								className="control-button"
@@ -94,7 +119,7 @@ export const PRProviderErrorBanner = () => {
 								<b>Ignore</b>
 							</Button>
 							<p>
-								If you continue to experience problems with your {displayName} integration, please contact <a href="mailto:support@codestream.com">customer support</a>.
+								If you continue to experience problems with your {derivedState.failedProviderName} integration, please contact <a href="mailto:support@codestream.com">customer support</a>.
 							</p>
 						</div>
 					</div>

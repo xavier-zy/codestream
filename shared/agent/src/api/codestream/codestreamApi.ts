@@ -726,7 +726,7 @@ export class CodeStreamApiProvider implements ApiProvider {
 				};
 
 				const userPreferencesBefore = JSON.stringify(me.preferences);
-	
+
 				e.data = await SessionContainer.instance().users.resolve(e, {
 					onlyIfNeeded: true
 				});

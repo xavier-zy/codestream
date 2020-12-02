@@ -14,7 +14,8 @@ import {
 	PRCodeComment,
 	PRThreadedCommentCard,
 	PRCodeCommentPatch,
-	PRKebabIcon
+	PRKebabIcon,
+	PRIconOutdated
 } from "./PullRequestComponents";
 import React, { PropsWithChildren, useCallback, useState } from "react";
 import { PRHeadshot, Headshot } from "../src/components/Headshot";
@@ -519,6 +520,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 																	</bdi>
 																</Tooltip>
 															</span>
+															{comment.outdated && <PRIconOutdated>Outdated</PRIconOutdated>}
 															<div className="actions" style={{ right: 0 }}>
 																<Link
 																	href={pr.url.replace(

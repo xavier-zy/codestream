@@ -3239,6 +3239,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 								includesCreatedEdit
 								isMinimized
 								minimizedReason
+								outdated
 								replyTo {
 								  id
 								}

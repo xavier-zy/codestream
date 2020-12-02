@@ -843,6 +843,17 @@ export const PRActionIcons = styled.div`
 	}
 `;
 
+export const PRIconOutdated = styled.div`
+	display: inline-block;
+	height: auto;
+	border: 1px solid var(--base-border-color);
+	border-radius: 10px;
+	padding: 1px 7px;
+	font-size: smaller;
+	color: var(--text-color-subtle);
+	margin-left: 8px;
+`;
+
 export const PRIconButton = styled.div`
 	display: flex;
 	flex-shrink: 0;

@@ -1871,15 +1871,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 			Logger.error(ex);
 			let errString;
 			if (ex.response) {
-				if (
-					this.providerConfig.id === "github/enterprise" &&
-					ex.response.error &&
-					ex.response.error.toLowerCase().indexOf("cookies must be enabled to use github") > -1
-				) {
-					errString = "Please ensure your GitHub Enterprise url is configured correctly.";
-				} else {
-					errString = JSON.stringify(ex.response);
-				}
+				errString = JSON.stringify(ex.response);
 			} else {
 				errString = ex.message;
 			}

@@ -481,21 +481,17 @@ export const StartWork = (props: Props) => {
 			providerToken = card.providerToken;
 		}
 
-		return (
-			template
-				.replace(/\{id\}/g, tokenId)
-				.replace(/\{username\}/g, derivedState.currentUserName)
-				.replace(/\{team\}/g, derivedState.teamName)
-				.replace(/\{date\}/g, dateToken())
-				.replace(/\{title\}/g, title.toLowerCase())
-				.replace(/\{provider\}/g, providerToken)
-				// characters not allowed on windows
-				// https://gist.github.com/doctaphred/d01d05291546186941e1b7ddc02034d3
-				.replace(/["\\|]/g, "")
-				.trim()
-				.replace(/[\s]+/g, "-")
-				.substr(0, derivedState.branchMaxLength)
-		);
+		return template
+			.replace(/\{id\}/g, tokenId)
+			.replace(/\{username\}/g, derivedState.currentUserName)
+			.replace(/\{team\}/g, derivedState.teamName)
+			.replace(/\{date\}/g, dateToken())
+			.replace(/\{title\}/g, title.toLowerCase())
+			.replace(/\{provider\}/g, providerToken)
+			.replace(/["\\|<>\*\?:]/g, "")
+			.trim()
+			.replace(/[\s]+/g, "-")
+			.substr(0, derivedState.branchMaxLength);
 	};
 
 	const getBranches = async (uri?: string): Promise<{ openRepos?: ReposScm[] }> => {

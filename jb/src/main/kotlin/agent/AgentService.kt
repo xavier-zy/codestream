@@ -123,19 +123,25 @@ class AgentService(private val project: Project) : Disposable {
             launcher.startListening()
 
             if (!project.isDisposed) {
+                logger.info("Initializing language server")
                 this.initializeResult = agent.initialize(getInitializeParams()).await()
                 if (autoSignIn) {
                     project.authenticationService?.let {
                         val success = it.autoSignIn()
                         if (success) {
+                            logger.info("CodeStream LSP agent initialization complete (auto sign-in successful)")
                             initialization.complete(Unit)
                         } else {
+                            logger.info("CodeStream LSP agent restarting (auto sign-in failed)")
                             restart()
                         }
                     }
                 } else {
+                    logger.info("CodeStream LSP agent initialization complete (no auto sign-in)")
                     initialization.complete(Unit)
                 }
+            } else {
+                logger.info("Skipping language server initialization - project is disposed")
             }
         } catch (e: Exception) {
             logger.error(e)

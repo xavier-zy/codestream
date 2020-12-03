@@ -146,7 +146,8 @@ export class ThirdPartyProviderRegistry {
 						errorString.indexOf("ETIMEDOUT") > -1 ||
 						errorString.indexOf("EAI_AGAIN") > -1 ||
 						errorString.indexOf("ECONNRESET") > -1 ||
-						errorString.indexOf("ENETDOWN") > -1)
+						errorString.indexOf("ENETDOWN") > -1 ||
+						errorString.indexOf("socket disconnected before secure") > -1)
 				) {
 					// ignore network related errors.
 					return;
@@ -195,7 +196,7 @@ export class ThirdPartyProviderRegistry {
 		});
 
 		return newProvidersPRs;
-	}
+	};
 
 	private fireNewPRsNotifications(providersPRs: ProviderPullRequests[]) {
 		const prNotificationMessages: PullRequestsChangedData[] = [];

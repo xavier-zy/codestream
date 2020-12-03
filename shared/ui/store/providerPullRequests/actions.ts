@@ -461,7 +461,8 @@ export const api = <T = any, R = any>(
 					errorString.indexOf("ETIMEDOUT") > -1 ||
 					errorString.indexOf("EAI_AGAIN") > -1 ||
 					errorString.indexOf("ECONNRESET") > -1 ||
-					errorString.indexOf("ENETDOWN") > -1)
+					errorString.indexOf("ENETDOWN") > -1 ||
+					errorString.indexOf("socket disconnected before secure") > -1)
 			) {
 				// ignores calls where the user might be offline
 				console.error(error);

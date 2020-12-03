@@ -182,6 +182,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 
 	async query<T = any>(query: string, variables: any = undefined) {
 		if (this._providerInfo && this._providerInfo.tokenError) {
+			delete this._client;
 			throw new InternalError(ReportSuppressedMessages.AccessTokenInvalid);
 		}
 
@@ -217,6 +218,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 						}
 					}
 				});
+				delete this._client;
 				throw new InternalError(ReportSuppressedMessages.AccessTokenInvalid, { error: ex });
 			} else {
 				// this is an unexpected error, throw the exception normally

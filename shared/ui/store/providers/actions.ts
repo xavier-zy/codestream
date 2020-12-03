@@ -193,8 +193,8 @@ export const disconnectProvider = (
 		if (!provider) return;
 		const api = HostApi.instance;
 		await api.send(DisconnectThirdPartyProviderRequestType, { providerId, providerTeamId });
-		if (ide.name === "VSC" && provider === "github") {
-			await api.send(DisconnectFromIDEProviderRequestType, { provider });
+		if (ide.name === "VSC" && provider.name === "github") {
+			await api.send(DisconnectFromIDEProviderRequestType, { provider: provider.name });
 		}
 		api.send(TelemetryRequestType, {
 			eventName: "Issue Service Connected",

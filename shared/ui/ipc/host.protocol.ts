@@ -232,4 +232,4 @@ export const DisconnectFromIDEProviderRequestType = new RequestType<
 	void,
 	void,
 	void
->(`${IpcRoutes.Host}/disconnect/github`);
+>(`${IpcRoutes.Host}/disconnect/vscode-provider`);

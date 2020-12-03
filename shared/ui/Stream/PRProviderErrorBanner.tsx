@@ -6,6 +6,7 @@ import { CodeStreamState } from "../store";
 import { PROVIDER_MAPPINGS } from "./CrossPostIssueControls/types";
 import Button from "../Stream/Button";
 import { configureAndConnectProvider, disconnectProvider } from "../store/providers/actions";
+import { logWarning } from "../logger";
 
 const Root = styled.div`
 	position: absolute;
@@ -78,7 +79,9 @@ export const PRProviderErrorBanner = () => {
 	
 	const onClickReauthorize = async event => {
 		event.preventDefault();
+		logWarning(`Disconnecting ${derivedState.failedProvider!.id}`);
 		await dispatch(disconnectProvider(derivedState.failedProvider!.id, "Provider Error Banner"));
+		logWarning(`Configuring and connecting to ${derivedState.failedProvider!.id}`);
 		dispatch(configureAndConnectProvider(derivedState.failedProvider!.id, "Provider Error Banner", true));
 	};
 

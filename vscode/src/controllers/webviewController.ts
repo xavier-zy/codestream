@@ -1276,11 +1276,14 @@ export class WebviewController implements Disposable {
 			// and it is not in the typings file for the authentication namespace ... so we're cheating here
 			// If the VSCode engine is updated, this may cease to work
 			if (typeof (authentication as any).logout === "function") {
+				Logger.log(`Disconnecting from GitHub, session ${this._providerSessionIds.github}`);
 				await (authentication as any).logout("github", this._providerSessionIds.github);
 			} else {
 				Logger.log("logout() method not detected in VSCode engine, unable to invalidate GitHub session");
 			}
 			delete this._providerSessionIds.github;
+		} else {
+			Logger.log("No session for github to disconnect");
 		}
 	}
 }

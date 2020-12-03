@@ -36,6 +36,7 @@ import {
 	MergeMethod,
 	MoveThirdPartyCardRequest,
 	MoveThirdPartyCardResponse,
+	ThirdPartyDisconnect,
 	ThirdPartyProviderCard,
 	ThirdPartyProviderConfig
 } from "../protocol/agent.protocol";
@@ -162,6 +163,13 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 
 	async onConnected() {
 		this._knownRepos = new Map<string, GitHubRepo>();
+	}
+
+	@log()
+	async onDisconnected(request?: ThirdPartyDisconnect) {
+		// delete the graphql client so it will be reconstructed if a new token is applied
+		delete this._client;
+		super.onDisconnected(request);
 	}
 
 	async ensureInitialized() {}

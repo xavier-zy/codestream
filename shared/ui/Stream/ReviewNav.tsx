@@ -498,20 +498,6 @@ export function ReviewNav(props: Props) {
 		toggleInstructions();
 	};
 
-	const titleTip =
-		hoverButton === "files" ? (
-			<Tip>
-				<Step>1</Step>
-				<div>
-					Step through the changes of the review
-					<Subtext>By clicking on filenames in any order</Subtext>
-					<Button onClick={() => setHoverButton("comment")}>Next &gt;</Button>
-				</div>
-			</Tip>
-		) : (
-			undefined
-		);
-
 	const filesTip =
 		hoverButton === "files" ? (
 			<Tip>
@@ -533,7 +519,15 @@ export function ReviewNav(props: Props) {
 				<div>
 					Comment by selecting code in the right side of the diff
 					<Subtext>You can also comment on related code as part of the review</Subtext>
-					<Button onClick={() => setHoverButton("actions")}>Next &gt;</Button>
+					<Button
+						onClick={() => {
+							const el = document.getElementById("review-container");
+							if (el) el.scrollIntoView(true);
+							setHoverButton("actions");
+						}}
+					>
+						Next &gt;
+					</Button>
 				</div>
 			</Tip>
 		) : (
@@ -583,6 +577,7 @@ export function ReviewNav(props: Props) {
 					<ScrollBox>
 						<div
 							className="vscroll"
+							id="review-container"
 							style={{
 								padding: "0 20px 60px 40px",
 								width: "100%"
@@ -609,6 +604,8 @@ export function ReviewNav(props: Props) {
 								>
 									<span
 										onClick={() => {
+											const el = document.getElementById("changed-files");
+											if (el) el.scrollIntoView(true);
 											setHoverButton("files");
 											toggleInstructions();
 										}}

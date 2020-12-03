@@ -224,10 +224,6 @@ export const PullRequestPatch = (props: {
 								</PRCommentsInPatch>
 							);
 
-						if (shouldSkipLine && index === patchLength - patchShowContextLines - 1) {
-							return <>...</>;
-						}
-
 						if (_.indexOf("@@ ") === 0) {
 							const matches = _.match(/@@ \-(\d+).*? \+(\d+)/);
 							if (matches) {
@@ -249,50 +245,65 @@ export const PullRequestPatch = (props: {
 							);
 						} else if (_.indexOf("+") === 0) {
 							rightLine++;
-							return shouldSkipLine ? (
-								undefined
-							) : (
-								<React.Fragment key={index}>
-									<div className="line added">
-										{renderLineNum("")}
-										{renderLineNum(rightLine)}
-										{syntaxHighlight(_, index)}
-									</div>
-									{comments}
-									{commentForm}
-								</React.Fragment>
-							);
+							switch (true) {
+								case shouldSkipLine && index === patchLength - patchShowContextLines - 1:
+									return <>...</>;
+								case shouldSkipLine:
+									return undefined;
+								default:
+									return (
+										<React.Fragment key={index}>
+											<div className="line added">
+												{renderLineNum("")}
+												{renderLineNum(rightLine)}
+												{syntaxHighlight(_, index)}
+											</div>
+											{comments}
+											{commentForm}
+										</React.Fragment>
+									);
+							}
 						} else if (_.indexOf("-") === 0) {
 							leftLine++;
-							return shouldSkipLine ? (
-								undefined
-							) : (
-								<React.Fragment key={index}>
-									<div className="line deleted">
-										{renderLineNum(leftLine)}
-										{renderLineNum("")}
-										{syntaxHighlight(_, index)}
-									</div>
-									{comments}
-									{commentForm}
-								</React.Fragment>
-							);
+							switch (true) {
+								case shouldSkipLine && index === patchLength - patchShowContextLines - 1:
+									return <>...</>;
+								case shouldSkipLine:
+									return undefined;
+								default:
+									return (
+										<React.Fragment key={index}>
+											<div className="line deleted">
+												{renderLineNum(leftLine)}
+												{renderLineNum("")}
+												{syntaxHighlight(_, index)}
+											</div>
+											{comments}
+											{commentForm}
+										</React.Fragment>
+									);
+							}
 						} else {
 							leftLine++;
 							rightLine++;
-							return shouldSkipLine ? (
-								undefined
-							) : (
-								<React.Fragment key={index}>
-									<div className="line same">
-										{renderLineNum(leftLine)}
-										{renderLineNum(rightLine)}
-										{syntaxHighlight(_, index)}
-									</div>
-									{comments}
-									{commentForm}
-								</React.Fragment>
-							);
+							switch (true) {
+								case shouldSkipLine && index === patchLength - patchShowContextLines - 1:
+									return <>...</>;
+								case shouldSkipLine:
+									return undefined;
+								default:
+									return (
+										<React.Fragment key={index}>
+											<div className="line same">
+												{renderLineNum(leftLine)}
+												{renderLineNum(rightLine)}
+												{syntaxHighlight(_, index)}
+											</div>
+											{comments}
+											{commentForm}
+										</React.Fragment>
+									);
+							}
 						}
 					})}
 				</div>

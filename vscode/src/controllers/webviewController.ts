@@ -1277,6 +1277,8 @@ export class WebviewController implements Disposable {
 			// If the VSCode engine is updated, this may cease to work
 			if (typeof (authentication as any).logout === "function") {
 				await (authentication as any).logout("github", this._providerSessionIds.github);
+			} else {
+				Logger.log("logout() method not detected in VSCode engine, unable to invalidate GitHub session");
 			}
 			delete this._providerSessionIds.github;
 		}

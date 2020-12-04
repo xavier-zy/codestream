@@ -17,7 +17,10 @@ export function ConfigurePullRequestQuerySettings(props: Props) {
 		const { preferences } = state;
 
 		return {
-			allRepos: preferences.pullRequestQueryShowAllRepos,
+			allRepos:
+				preferences.pullRequestQueryShowAllRepos == null
+					? true
+					: preferences.pullRequestQueryShowAllRepos,
 			hideLabels: preferences.pullRequestQueryHideLabels
 		};
 	});

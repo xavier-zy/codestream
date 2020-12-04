@@ -150,7 +150,10 @@ export const OpenPullRequests = React.memo((props: Props) => {
 			PRConnectedProviders: prConnectedProviders,
 			PRConnectedProvidersWithErrors: prConnectedProvidersWithErrors,
 			PRConnectedProvidersWithErrorsCount: prConnectedProvidersWithErrors.length,
-			openReposOnly: !preferences.pullRequestQueryShowAllRepos,
+			openReposOnly:
+				preferences.pullRequestQueryShowAllRepos == null
+					? false
+					: !preferences.pullRequestQueryShowAllRepos,
 			showLabels: !preferences.pullRequestQueryHideLabels
 		};
 	}, shallowEqual);

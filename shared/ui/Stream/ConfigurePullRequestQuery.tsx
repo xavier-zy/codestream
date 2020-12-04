@@ -50,7 +50,10 @@ export function ConfigurePullRequestQuery(props: Props) {
 
 		return {
 			providers,
-			allRepos: preferences.pullRequestQueryShowAllRepos
+			allRepos:
+				preferences.pullRequestQueryShowAllRepos == null
+					? true
+					: preferences.pullRequestQueryShowAllRepos
 		};
 	});
 

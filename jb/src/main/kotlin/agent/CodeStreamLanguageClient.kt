@@ -143,7 +143,9 @@ class CodeStreamLanguageClient(private val project: Project) : LanguageClient {
     }
 
     override fun workspaceFolders(): CompletableFuture<MutableList<WorkspaceFolder>> {
-        return CompletableFuture.completedFuture(project.workspaceFolders.toMutableList())
+        val folders = project.workspaceFolders.toMutableList()
+        logger.info("Workspace folders: ${folders.joinToString()}")
+        return CompletableFuture.completedFuture(folders)
     }
 
     override fun configuration(configurationParams: ConfigurationParams): CompletableFuture<List<Any>> {

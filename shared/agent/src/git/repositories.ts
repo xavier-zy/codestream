@@ -124,8 +124,10 @@ export class GitRepositories {
 	}
 
 	private async start() {
+		Logger.log("GitRepositories.start: waiting for session");
 		// Wait for the session to be ready first
 		await this.session.ready();
+		Logger.log("GitRepositories.start: session ready");
 
 		const disposables: Disposable[] = [
 			this.session.onDidChangeRepositories(this.onRepositoriesChanged, this)
@@ -139,6 +141,7 @@ export class GitRepositories {
 
 		this._disposable = Disposables.from(...disposables);
 
+		Logger.log("GitRepositories.start: returning");
 		return this.onWorkspaceFoldersChanged();
 	}
 
@@ -152,120 +155,139 @@ export class GitRepositories {
 
 	private async onWorkspaceFoldersChanged(e?: WorkspaceFoldersChangeEvent) {
 		if (this._onWorkspaceFoldersChangedPromise !== undefined) {
+			Logger.log("onWorkspaceFoldersChanged: existing promise found - awaiting");
 			await this._onWorkspaceFoldersChangedPromise;
 			this._onWorkspaceFoldersChangedPromise = undefined;
 		}
 
+		Logger.log("onWorkspaceFoldersChanged: initializing promise");
 		this._onWorkspaceFoldersChangedPromise = new Promise(async (resolve, reject) => {
-			let initializing = false;
-			const repoMap: RepoMap[] = [];
-			if (e === undefined) {
-				initializing = true;
-				e = {
-					added: await this.session.getWorkspaceFolders(),
-					removed: []
-				} as WorkspaceFoldersChangeEvent;
+			try {
+				let initializing = false;
+				const repoMap: RepoMap[] = [];
+				if (e === undefined) {
+					Logger.log("onWorkspaceFoldersChanged: no event - initializing");
+					initializing = true;
+					e = {
+						added: await this.session.getWorkspaceFolders(),
+						removed: []
+					} as WorkspaceFoldersChangeEvent;
+
+					Logger.log(
+						`onWorkspaceFoldersChanged: Starting repository search in ${e.added.length} folders`
+					);
+				}
+
+				let allAddedRepositories: GitRepository[] = [];
+				Logger.log(`onWorkspaceFoldersChanged: ${e.added.length} folders added`);
+				for (const f of e.added) {
+					if (URI.parse(f.uri).scheme !== "file") continue;
+
+					// Search for and add all repositories (nested and/or submodules)
+					const repositories = await this.repositorySearch(
+						f,
+						this.session.workspace,
+						initializing,
+						true
+					);
+					allAddedRepositories = [...allAddedRepositories, ...repositories];
+				}
+
+				// for all repositories without a CodeStream repo ID, ask the server for matches,
+				// and create new CodeStream repos for any we have found that aren't known to the team
+				const unassignedRepositories = allAddedRepositories.filter(repo => !repo.id);
+				Logger.log(
+					`onWorkspaceFoldersChanged: processing ${unassignedRepositories.length} unassigned repositories`
+				);
+				if (unassignedRepositories.length > 0) {
+					const orderedUnassignedRepos: GitRepository[] = [];
+					const repoInfo: MatchReposRequest = { repos: [] };
+					const { git } = SessionContainer.instance();
+					await Promise.all(
+						unassignedRepositories.map(async repo => {
+							const remotes = (await repo.getWeightedRemotes()).map(r => r.normalizedUrl);
+							const knownCommitHashes = await git.getKnownCommitHashes(repo.path);
+							orderedUnassignedRepos.push(repo);
+							repoInfo.repos.push({ remotes, knownCommitHashes });
+						})
+					);
+					const repoMatches = await this.session.api.matchRepos(repoInfo);
+					for (let i = 0; i < repoMatches.repos.length; i++) {
+						Logger.debug(
+							`onWorkspaceFoldersChanged: Git repo ${orderedUnassignedRepos[i].path} matched to ${repoMatches.repos[i].id}:${repoMatches.repos[i].name}`
+						);
+						orderedUnassignedRepos[i].setKnownRepository(repoMatches.repos[i]);
+					}
+				}
 
 				Logger.log(
-					`onWorkspaceFoldersChanged: Starting repository search in ${e.added.length} folders`
+					`onWorkspaceFoldersChanged: processing ${allAddedRepositories.length} added repositories`
 				);
-			}
-
-			let allAddedRepositories: GitRepository[] = [];
-			for (const f of e.added) {
-				if (URI.parse(f.uri).scheme !== "file") continue;
-
-				// Search for and add all repositories (nested and/or submodules)
-				const repositories = await this.repositorySearch(
-					f,
-					this.session.workspace,
-					initializing,
-					true
-				);
-				allAddedRepositories = [...allAddedRepositories, ...repositories];
-			}
-
-			// for all repositories without a CodeStream repo ID, ask the server for matches,
-			// and create new CodeStream repos for any we have found that aren't known to the team
-			const unassignedRepositories = allAddedRepositories.filter(repo => !repo.id);
-			if (unassignedRepositories.length > 0) {
-				const orderedUnassignedRepos: GitRepository[] = [];
-				const repoInfo: MatchReposRequest = { repos: [] };
-				const { git } = SessionContainer.instance();
-				await Promise.all(
-					unassignedRepositories.map(async repo => {
-						const remotes = (await repo.getWeightedRemotes()).map(r => r.normalizedUrl);
-						const knownCommitHashes = await git.getKnownCommitHashes(repo.path);
-						orderedUnassignedRepos.push(repo);
-						repoInfo.repos.push({ remotes, knownCommitHashes });
-					})
-				);
-				const repoMatches = await this.session.api.matchRepos(repoInfo);
-				for (let i = 0; i < repoMatches.repos.length; i++) {
-					Logger.debug(
-						`onWorkspaceFoldersChanged: Git repo ${orderedUnassignedRepos[i].path} matched to ${repoMatches.repos[i].id}:${repoMatches.repos[i].name}`
-					);
-					orderedUnassignedRepos[i].setKnownRepository(repoMatches.repos[i]);
-				}
-			}
-
-			for (const r of allAddedRepositories) {
-				this._repositoryTree.set(r.path, r);
-				if (initializing && r.id) {
-					repoMap.push({
-						repoId: r.id,
-						path: r.path
-					});
-				}
-			}
-
-			for (const f of e.removed) {
-				// these workspace folders are using file:// schemes
-				const uri = URI.parse(f.uri);
-				if (uri.scheme !== "file") continue;
-
-				const fsPath = uri.fsPath;
-				let repoPath: string | undefined;
-				try {
-					// paths (strings) are normally using a GitRepository.path property
-					// which has gone through git.getRepoRoot which has normalized the path to use
-					// forward slashes
-					repoPath = Strings.normalizePath(fsPath);
-				} catch {}
-				if (!repoPath) continue;
-
-				const filteredTree = this._repositoryTree.findSuperstr(repoPath);
-				const reposToDelete =
-					filteredTree !== undefined
-						? [
-								...Iterables.map<[GitRepository, string], [GitRepository, string]>(
-									filteredTree.entries(),
-									([r, k]) => [r, r.path]
-								)
-						  ]
-						: [];
-
-				const repo = this._repositoryTree.get(repoPath);
-				if (repo !== undefined) {
-					reposToDelete.push([repo, repoPath]);
+				for (const r of allAddedRepositories) {
+					this._repositoryTree.set(r.path, r);
+					if (initializing && r.id) {
+						repoMap.push({
+							repoId: r.id,
+							path: r.path
+						});
+					}
 				}
 
-				for (const [, k] of reposToDelete) {
-					this._repositoryTree.delete(k);
+				Logger.log(`onWorkspaceFoldersChanged: processing ${e.removed.length} removed folders`);
+				for (const f of e.removed) {
+					// these workspace folders are using file:// schemes
+					const uri = URI.parse(f.uri);
+					if (uri.scheme !== "file") continue;
+
+					const fsPath = uri.fsPath;
+					let repoPath: string | undefined;
+					try {
+						// paths (strings) are normally using a GitRepository.path property
+						// which has gone through git.getRepoRoot which has normalized the path to use
+						// forward slashes
+						repoPath = Strings.normalizePath(fsPath);
+					} catch {}
+					if (!repoPath) continue;
+
+					const filteredTree = this._repositoryTree.findSuperstr(repoPath);
+					const reposToDelete =
+						filteredTree !== undefined
+							? [
+									...Iterables.map<[GitRepository, string], [GitRepository, string]>(
+										filteredTree.entries(),
+										([r, k]) => [r, r.path]
+									)
+							  ]
+							: [];
+
+					const repo = this._repositoryTree.get(repoPath);
+					if (repo !== undefined) {
+						reposToDelete.push([repo, repoPath]);
+					}
+
+					for (const [, k] of reposToDelete) {
+						this._repositoryTree.delete(k);
+					}
 				}
-			}
 
-			SessionContainer.instance().repositoryMappings.setRepoMappingData({
-				repos: repoMap,
-				skipRepositoryIntegration: true
-			});
+				SessionContainer.instance().repositoryMappings.setRepoMappingData({
+					repos: repoMap,
+					skipRepositoryIntegration: true
+				});
 
-			await this.monitorRepos();
-			if (!initializing) {
-				// Defer the event trigger enough to let everything unwind
-				setImmediate(() => this._onWorkspaceDidChange.fire({}));
+				Logger.log(`onWorkspaceFoldersChanged: monitoring repositories`);
+				await this.monitorRepos();
+				if (!initializing) {
+					// Defer the event trigger enough to let everything unwind
+					setImmediate(() => this._onWorkspaceDidChange.fire({}));
+				}
+
+				Logger.log(`onWorkspaceFoldersChanged: resolving`);
+				resolve(true);
+			} catch (e) {
+				Logger.error(e);
+				reject(e);
 			}
-			resolve(true);
 		});
 	}
 

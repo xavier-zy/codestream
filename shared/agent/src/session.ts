@@ -642,23 +642,30 @@ export class CodeStreamSession {
 
 	public async getWorkspaceFolders() {
 		if (this.agent.supportsWorkspaces) {
+			Logger.log("getWorkspaceFolders: workspaces supported");
 			return (await this.workspace.getWorkspaceFolders()) || [];
 		}
 
-		return new Promise<WorkspaceFolder[] | null>(resolve => {
-			if (this.agent.rootUri) {
-				const uri =
-					this.agent.rootUri[this.agent.rootUri.length - 1] === "/"
-						? this.agent.rootUri.substring(0, this.agent.rootUri.length - 1)
-						: this.agent.rootUri;
-				resolve([
-					{
-						uri: uri,
-						name: path.basename(this.agent.rootUri)
-					}
-				]);
-			} else {
-				resolve([]);
+		Logger.log("getWorkspaceFolders: workspaces not supported");
+		return new Promise<WorkspaceFolder[] | null>((resolve, reject) => {
+			try {
+				if (this.agent.rootUri) {
+					const uri =
+						this.agent.rootUri[this.agent.rootUri.length - 1] === "/"
+							? this.agent.rootUri.substring(0, this.agent.rootUri.length - 1)
+							: this.agent.rootUri;
+					resolve([
+						{
+							uri: uri,
+							name: path.basename(this.agent.rootUri)
+						}
+					]);
+				} else {
+					resolve([]);
+				}
+			} catch (e) {
+				Logger.error(e);
+				reject(e);
 			}
 		});
 	}

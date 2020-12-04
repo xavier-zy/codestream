@@ -11,7 +11,7 @@ import {
 } from "@codestream/protocols/agent";
 import { ConnectToIDEProviderRequestType, DisconnectFromIDEProviderRequestType } from "../../ipc/host.protocol";
 import { CSMe } from "@codestream/protocols/api";
-import { logError, logWarning } from "../../logger";
+import { logError } from "../../logger";
 import { setIssueProvider, openPanel } from "../context/actions";
 import { deleteForProvider } from "../activeIntegrations/actions";
 
@@ -65,9 +65,7 @@ export const connectProvider = (providerId: string, connectionLocation: ViewLoca
 	try {
 		const api = HostApi.instance;
 		if (ide.name === "VSC" && name === "github" && capabilities.vsCodeGithubSignin) {
-			logWarning(`Connecting to ${name}...`);
 			const result = await api.send(ConnectToIDEProviderRequestType, { provider: name });
-			logWarning(`Connected to ${name} sessionId=${result.sessionId}, configuring...`);
 			dispatch(configureProvider(
 				providerId, { token: result.accessToken, data: { sessionId: result.sessionId } }, true)
 			);
@@ -196,7 +194,6 @@ export const disconnectProvider = (
 		const api = HostApi.instance;
 		await api.send(DisconnectThirdPartyProviderRequestType, { providerId, providerTeamId });
 		if (ide.name === "VSC" && provider.name === "github") {
-			logWarning(`Disconnecting ${provider.name}...`);
 			await api.send(DisconnectFromIDEProviderRequestType, { provider: provider.name });
 		}
 		api.send(TelemetryRequestType, {

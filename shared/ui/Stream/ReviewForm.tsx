@@ -1526,7 +1526,7 @@ class ReviewForm extends React.Component<Props, State> {
 					<>
 						<div className="related-label">
 							<br />
-							Pushed Commits
+							{localCommits.length ? "Pushed " : ""}Commits
 						</div>
 						{this.renderCommitList(remoteCommits, excludeCommit)}
 					</>

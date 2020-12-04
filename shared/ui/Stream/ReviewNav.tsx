@@ -521,7 +521,7 @@ export function ReviewNav(props: Props) {
 					<Subtext>You can also comment on related code as part of the review</Subtext>
 					<Button
 						onClick={() => {
-							const el = document.getElementById("review-container");
+							const el = document.getElementById("nav-header");
 							if (el) el.scrollIntoView(true);
 							setHoverButton("actions");
 						}}
@@ -556,8 +556,8 @@ export function ReviewNav(props: Props) {
 
 	return (
 		<Root className={derivedState.hideReviewInstructions ? "" : "tour-on"}>
-			{!derivedState.hideReviewInstructions && <ClearModal />}
-			<NavHeader>
+			{!derivedState.hideReviewInstructions && <ClearModal onClick={() => tourDone()} />}
+			<NavHeader id="nav-header">
 				<BaseReviewHeader
 					review={review}
 					collapsed={false}

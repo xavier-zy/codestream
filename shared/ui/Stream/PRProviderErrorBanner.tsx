@@ -81,6 +81,9 @@ export const PRProviderErrorBanner = () => {
 		event.preventDefault();
 		logWarning(`Disconnecting ${derivedState.failedProvider!.id}`);
 		await dispatch(disconnectProvider(derivedState.failedProvider!.id, "Provider Error Banner"));
+		await new Promise(resolve => {
+			setTimeout(resolve, 1000);
+		});
 		logWarning(`Configuring and connecting to ${derivedState.failedProvider!.id}`);
 		dispatch(configureAndConnectProvider(derivedState.failedProvider!.id, "Provider Error Banner", true));
 	};

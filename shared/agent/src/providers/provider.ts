@@ -54,7 +54,7 @@ export const providerDisplayNamesByNameKey = new Map<string, string>([
 	["github", "GitHub"],
 	["github_enterprise", "GitHub Enterprise"],
 	["gitlab", "GitLab"],
-	["gitlab_enterprise", "GitLab Enterprise"],
+	["gitlab_enterprise", "GitLab Self-Managed"],
 	["jira", "Jira"],
 	["jiraserver", "Jira Server"],
 	["trello", "Trello"],

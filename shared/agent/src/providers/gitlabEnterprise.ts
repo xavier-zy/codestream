@@ -9,7 +9,7 @@ import { GitLabProvider } from "./gitlab";
 @lspProvider("gitlab_enterprise")
 export class GitLabEnterpriseProvider extends GitLabProvider {
 	get displayName() {
-		return "GitLab Enterprise";
+		return "GitLab Self-Managed";
 	}
 
 	get name() {

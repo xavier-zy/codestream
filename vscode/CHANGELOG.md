@@ -33,7 +33,6 @@
 - Improves the UX on the form to submit a review in a pull request by making it clear that the Cancel button is for cancelling the review, and not dismissing the form
 - Clarifies that when commenting on code outside of the changeset in a pull request, while a review is pending, the comment is added at the PR level and not included in the review
 
-
 ### Fixed
 
 - Fixes an issue where the icons for pull request comments would be displayed on the wrong line in the gutter of the diff
@@ -70,7 +69,7 @@
 
 ### Changed
 
-- After creating a pull request, when you then close it you are brought to the CodeStream sidebar instead of back to the Open a Pull Request page 
+- After creating a pull request, when you then close it you are brought to the CodeStream sidebar instead of back to the Open a Pull Request page
 - Provide more guidance for users trying to sign up/in with GitLab regarding the need to have a public primary email on GitLab
 - The "Work in Progress" section is now more performant, with reduced api requests
 
@@ -886,7 +885,7 @@ Note that CodeStream 10.0 requires VS Code version 1.50.
 ### Added
 
 - Add the ability to have multiple blocks of code, even across files/repos, associated with a single codemark
-- Adds the ability to create issues on GitLab Enterprise
+- Adds the ability to create issues on GitLab Self-Managed
 
 ### Changed
 

@@ -8,6 +8,7 @@ import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationNamesInfo
 import org.eclipse.lsp4j.Range
 import org.eclipse.lsp4j.TextDocumentIdentifier
+import org.eclipse.lsp4j.WorkspaceFolder
 
 class ProxySettings(val url: String, val strictSSL: Boolean)
 
@@ -21,6 +22,7 @@ class InitializationOptions(
     val disableStrictSSL: Boolean,
     val traceLevel: String,
     val gitPath: String?,
+    val workspaceFolders: Set<WorkspaceFolder>,
     val recordRequests: Boolean = RECORD_REQUESTS
 )
 

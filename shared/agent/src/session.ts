@@ -641,6 +641,13 @@ export class CodeStreamSession {
 	}
 
 	public async getWorkspaceFolders() {
+		if (this._options.workspaceFolders) {
+			Logger.log(
+				`getWorkspaceFolders: ${this._options.workspaceFolders.length} preconfigured folders found`
+			);
+			return this._options.workspaceFolders;
+		}
+
 		if (this.agent.supportsWorkspaces) {
 			Logger.log("getWorkspaceFolders: workspaces supported");
 			return (await this.workspace.getWorkspaceFolders()) || [];

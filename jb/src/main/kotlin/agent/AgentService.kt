@@ -3,6 +3,7 @@ package com.codestream.agent
 import com.codestream.DEBUG
 import com.codestream.authenticationService
 import com.codestream.extensions.baseUri
+import com.codestream.extensions.workspaceFolders
 import com.codestream.gson
 import com.codestream.protocols.agent.CSUser
 import com.codestream.protocols.agent.CreatePermalinkParams
@@ -291,7 +292,8 @@ class AgentService(private val project: Project) : Disposable {
             settings.serverUrl,
             settings.disableStrictSSL,
             settings.traceLevel.value,
-            gitPath
+            gitPath,
+            project.workspaceFolders
         )
     }
 

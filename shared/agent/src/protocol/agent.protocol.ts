@@ -1,6 +1,6 @@
 "use strict";
 import { RequestInit } from "node-fetch";
-import { InitializeResult, RequestType } from "vscode-languageserver-protocol";
+import { InitializeResult, RequestType, WorkspaceFolder } from "vscode-languageserver-protocol";
 import { LoginResponse } from "./agent.protocol.auth";
 import { Unreads } from "./agent.protocol.notifications";
 import { ThirdPartyProviders } from "./agent.protocol.providers";
@@ -111,6 +111,7 @@ export interface BaseAgentOptions {
 	disableStrictSSL?: boolean;
 	traceLevel: TraceLevel;
 	recordRequests?: boolean;
+	workspaceFolders?: WorkspaceFolder[];
 }
 
 export interface AgentOptions extends BaseAgentOptions {

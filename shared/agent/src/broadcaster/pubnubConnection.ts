@@ -159,7 +159,8 @@ export class PubnubConnection implements BroadcasterConnection {
 
 	// respond to a Pubnub status event
 	private onStatus(status: Pubnub.StatusEvent | any) {
-		this._debug("Status received: " + JSON.stringify(status));
+		this._debug(`Pubnub status received (category=${status.category} operation=${status.operation})`);
+		this._debug(`Subscribed channels: ${status.subscribedChannels}`);
 		if ((status as any).error && status.operation === Pubnub.OPERATIONS.PNUnsubscribeOperation) {
 			// ignore any errors associated with unsubscribing
 			return;

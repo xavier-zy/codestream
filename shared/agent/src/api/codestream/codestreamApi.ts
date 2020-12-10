@@ -310,9 +310,13 @@ export class CodeStreamApiProvider implements ApiProvider {
 		private readonly _httpsAgent: HttpsAgent | HttpsProxyAgent | HttpAgent | undefined,
 		private readonly _strictSSL: boolean
 	) {
-		this._debouncedSetModifiedReposUpdate = debounce(request => {
-			return this.setModifiedReposDebounced(request);
-		}, 15000, { leading: true });
+		this._debouncedSetModifiedReposUpdate = debounce(
+			request => {
+				return this.setModifiedReposDebounced(request);
+			},
+			15000,
+			{ leading: true }
+		);
 	}
 
 	get teamId(): string {
@@ -853,7 +857,9 @@ export class CodeStreamApiProvider implements ApiProvider {
 	async setModifiedReposDebounced(request: SetModifiedReposRequest) {
 		// eventually, when support for compactified modifiedRepos is full (both cloud and on-prem),
 		// we'll eliminate this completely and go only with compactified, below
-		const prunedModifiedRepos = SessionContainer.instance().users.pruneModifiedRepos(request.modifiedRepos);
+		const prunedModifiedRepos = SessionContainer.instance().users.pruneModifiedRepos(
+			request.modifiedRepos
+		);
 		this.put<{ [key: string]: any }, any>(
 			"/users/me",
 			{ modifiedRepos: { [request.teamId]: prunedModifiedRepos } },
@@ -862,7 +868,9 @@ export class CodeStreamApiProvider implements ApiProvider {
 
 		const capabilities = SessionContainer.instance().session.apiCapabilities;
 		if (capabilities.compactModifiedRepos) {
-			const compactModifiedRepos = SessionContainer.instance().users.compactifyModifiedRepos(request.modifiedRepos);
+			const compactModifiedRepos = SessionContainer.instance().users.compactifyModifiedRepos(
+				request.modifiedRepos
+			);
 			this.put<{ [key: string]: any }, any>(
 				"/users/me",
 				{ compactModifiedRepos: { [request.teamId]: compactModifiedRepos } },
@@ -2038,19 +2046,17 @@ export class CodeStreamApiProvider implements ApiProvider {
 
 	@lspHandler(ProviderTokenRequestType)
 	async setProviderToken(request: ProviderTokenRequest) {
-		await this.post(
-			`/no-auth/provider-token/${request.provider}`,
-			{
-				token: request.token,
-				data: request.data,
-				invite_code: request.inviteCode,
-				no_signup: request.noSignup,
-				signup_token: request.signupToken
-			}
-		);
+		await this.post(`/no-auth/provider-token/${request.provider}`, {
+			token: request.token,
+			data: request.data,
+			invite_code: request.inviteCode,
+			no_signup: request.noSignup,
+			signup_token: request.signupToken
+		});
 	}
 
-	private delete<R extends object>(url: string, token?: string): Promise<R> {
+	async delete<R extends object>(url: string, token?: string): Promise<R> {
+		if (!token && url.indexOf("/no-auth/") === -1) token = this._token;
 		let resp = undefined;
 		if (resp === undefined) {
 			resp = this.fetch<R>(url, { method: "DELETE" }, token) as Promise<R>;
@@ -2058,15 +2064,17 @@ export class CodeStreamApiProvider implements ApiProvider {
 		return resp;
 	}
 
-	private get<R extends object>(url: string, token?: string): Promise<R> {
+	async get<R extends object>(url: string, token?: string): Promise<R> {
+		if (!token && url.indexOf("/no-auth/") === -1) token = this._token;
 		return this.fetch<R>(url, { method: "GET" }, token) as Promise<R>;
 	}
 
-	private post<RQ extends object, R extends object>(
+	async post<RQ extends object, R extends object>(
 		url: string,
 		body: RQ,
 		token?: string
 	): Promise<R> {
+		if (!token && url.indexOf("/no-auth/") === -1) token = this._token;
 		return this.fetch<R>(
 			url,
 			{
@@ -2077,11 +2085,12 @@ export class CodeStreamApiProvider implements ApiProvider {
 		);
 	}
 
-	private put<RQ extends object, R extends object>(
+	async put<RQ extends object, R extends object>(
 		url: string,
 		body: RQ,
 		token?: string
 	): Promise<R> {
+		if (!token && url.indexOf("/no-auth/") === -1) token = this._token;
 		return this.fetch<R>(
 			url,
 			{

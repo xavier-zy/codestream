@@ -270,3 +270,16 @@ export interface CodeStreamDiffUriData {
 		};
 	};
 }
+
+export const CodeStreamApiGetRequestType = new RequestType<any, any, void, void>(
+	"codestream/api/get"
+);
+export const CodeStreamApiPostRequestType = new RequestType<any, any, void, void>(
+	"codestream/api/post"
+);
+export const CodeStreamApiPutRequestType = new RequestType<any, any, void, void>(
+	"codestream/api/put"
+);
+export const CodeStreamApiDeleteRequestType = new RequestType<any, any, void, void>(
+	"codestream/api/delete"
+);

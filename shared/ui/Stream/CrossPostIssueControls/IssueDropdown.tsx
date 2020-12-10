@@ -55,6 +55,7 @@ interface ConnectedProps {
 	providers: ThirdPartyProviders;
 	disabledProviders: { [key: string]: boolean };
 	setUserPreference?: Function;
+	teamSettings: { [key: string]: any };
 }
 
 interface Props extends ConnectedProps {
@@ -139,7 +140,7 @@ class IssueDropdown extends React.Component<Props, State> {
 
 	render() {
 		// console.warn("rendering issues...");
-		const { issueProviderConfig } = this.props;
+		const { issueProviderConfig, teamSettings } = this.props;
 		const providerInfo = issueProviderConfig
 			? this.getProviderInfo(issueProviderConfig.id)
 			: undefined;
@@ -154,30 +155,25 @@ class IssueDropdown extends React.Component<Props, State> {
 			return null;
 		}
 
-		const knownIssueProviderOptions = mapFilter(knownIssueProviders,
-			providerId => {
-				const issueProvider = this.props.providers![providerId];
-				const providerDisplay = PROVIDER_MAPPINGS[issueProvider.name];
-				const displayName = issueProvider.isEnterprise
-					? `${providerDisplay.displayName} - ${issueProvider.host}`
-					: providerDisplay.displayName;
-				if (providerDisplay.supportsStartWork) {
-					return {
-						providerIcon: <Icon name={providerDisplay.icon || "blank"} />,
-						checked: this.providerIsConnected(providerId) && !this.providerIsDisabled(providerId),
-						value: providerId,
-						label: displayName,
-						key: providerId,
-						action: () => this.selectIssueProvider(providerId)
-					};
-				} else {
-					return null;
-				}
-			}
-		)
-		.sort((a, b) =>
-			a.label.localeCompare(b.label)
-		);
+		const knownIssueProviderOptions = mapFilter(knownIssueProviders, providerId => {
+			const issueProvider = this.props.providers![providerId];
+			const providerDisplay = PROVIDER_MAPPINGS[issueProvider.name];
+			const displayName = issueProvider.isEnterprise
+				? `${providerDisplay.displayName} - ${issueProvider.host}`
+				: providerDisplay.displayName;
+
+			const checked = this.providerIsConnected(providerId) && !this.providerIsDisabled(providerId);
+			if (!providerDisplay.supportsStartWork) return;
+			if (teamSettings.limitIssues && !teamSettings.issuesProviders[providerId] && !checked) return;
+			return {
+				providerIcon: <Icon name={providerDisplay.icon || "blank"} />,
+				checked: checked,
+				value: providerId,
+				label: displayName,
+				key: providerId,
+				action: () => this.selectIssueProvider(providerId)
+			};
+		}).sort((a, b) => a.label.localeCompare(b.label));
 		// const index = knownIssueProviderOptions.findIndex(i => i.disabled);
 		// @ts-ignore
 		// knownIssueProviderOptions.splice(index, 0, { label: "-" });
@@ -356,17 +352,21 @@ class IssueDropdown extends React.Component<Props, State> {
 	}
 }
 
+const EMPTY_HASH2 = {};
 const mapStateToProps = (state: CodeStreamState): ConnectedProps => {
-	const { users, session, context, providers, preferences } = state;
+	const { users, teams, session, context, providers, preferences } = state;
 	const currentIssueProviderConfig = context.issueProvider
 		? providers[context.issueProvider]
 		: undefined;
 
 	const workPreferences = preferences.startWork || EMPTY_HASH;
+	const team = teams[context.currentTeamId];
+	const teamSettings = team.settings || EMPTY_HASH2;
 
 	return {
 		currentUser: users[session.userId!] as CSMe,
 		currentTeamId: context.currentTeamId,
+		teamSettings,
 		providers,
 		issueProviderConfig: currentIssueProviderConfig,
 		disabledProviders: workPreferences.disabledProviders || EMPTY_HASH

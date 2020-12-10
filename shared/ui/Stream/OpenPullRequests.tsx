@@ -127,6 +127,8 @@ interface Props {
 	paneState: PaneState;
 }
 
+const EMPTY_HASH = {} as any;
+
 let hasRenderedOnce = false;
 const e: ThirdPartyProviderConfig[] = [];
 export const OpenPullRequests = React.memo((props: Props) => {
@@ -134,15 +136,23 @@ export const OpenPullRequests = React.memo((props: Props) => {
 	const derivedState = useSelector((state: CodeStreamState) => {
 		const { preferences, repos } = state;
 
+		const team = state.teams[state.context.currentTeamId];
+		const teamSettings = team.settings ? team.settings : EMPTY_HASH;
+
 		const queries = preferences.pullRequestQueries || DEFAULT_QUERIES;
 
-		const prSupportedProviders = providerSelectors.getSupportedPullRequestHosts(state);
+		const prSupportedProviders = providerSelectors
+			.getSupportedPullRequestHosts(state)
+			.filter(
+				provider => !teamSettings.limitCodeHost || teamSettings.codeHostProviders[provider.id]
+			);
 		const prConnectedProviders = providerSelectors.getConnectedSupportedPullRequestHosts(state);
 		const prConnectedProvidersWithErrors = prConnectedProviders.filter(_ => _.hasAccessTokenError);
 
 		const myPullRequests = getMyPullRequestsSelector(state);
 		return {
 			repos,
+			teamSettings,
 			queries,
 			myPullRequests,
 			isPRSupportedCodeHostConnected: prConnectedProviders.length > 0,

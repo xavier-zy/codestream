@@ -466,8 +466,12 @@ export interface ApiProvider {
 
 	verifyConnectivity(): Promise<VerifyConnectivityResponse>;
 	setServerUrl(url: string): void;
-}
 
+	get<R extends object>(url: string, token?: string): Promise<R>;
+	post<RQ extends object, R extends object>(url: string, body: any, token?: string): Promise<R>;
+	put<RQ extends object, R extends object>(url: string, body: RQ, token?: string): Promise<R>;
+	delete<R extends object>(url: string, token?: string): Promise<R>;
+}
 export interface CodeStreamApiMiddlewareContext {
 	url: string;
 	method: string;

@@ -357,7 +357,7 @@ export function ReviewNav(props: Props) {
 										{numOpenChangeRequests > 1 ? "s" : ""}
 									</>
 								}
-								placement="bottom"
+								placement="top"
 							>
 								<Button variant="primary" onClick={highlightChanges}>
 									<div
@@ -377,7 +377,7 @@ export function ReviewNav(props: Props) {
 							</Tooltip>
 						)}
 						{isMine && (
-							<Tooltip title="Amend Review (add code)" placement="bottom">
+							<Tooltip title="Amend Review (add code)" placement="top">
 								<Button onClick={amend}>
 									<Icon className="narrow-icon" name="plus" />
 									<span className="wide-text">Amend</span>
@@ -393,7 +393,7 @@ export function ReviewNav(props: Props) {
 										Click to withdraw approval.
 									</div>
 								}
-								placement="bottom"
+								placement="top"
 							>
 								<Button variant="secondary" onClick={reopen}>
 									<Icon className="narrow-icon" name="diff-removed" />
@@ -402,20 +402,20 @@ export function ReviewNav(props: Props) {
 							</Tooltip>
 						)}
 						{numOpenChangeRequests === 0 && !approvedByMe && (
-							<Tooltip title="Approve Feedback Request" placement="bottom">
+							<Tooltip title="Approve Feedback Request" placement="top">
 								<Button variant="success" onClick={approve}>
 									<Icon className="narrow-icon" name="thumbsup" />
 									<span className="wide-text">Approve</span>
 								</Button>
 							</Tooltip>
 						)}
-						<Tooltip title="Require Changes" placement="bottom">
+						<Tooltip title="Require Changes" placement="top">
 							<Button variant="destructive" onClick={reject}>
 								<Icon className="narrow-icon" name="thumbsdown" />
 								<span className="wide-text">Reject</span>
 							</Button>
 						</Tooltip>
-						<Tooltip title="More actions" placement="bottom">
+						<Tooltip title="More actions" placement="top">
 							<Button variant="secondary">
 								<BaseReviewMenu
 									review={review}
@@ -435,7 +435,7 @@ export function ReviewNav(props: Props) {
 							isMine &&
 							review.pullRequestUrl == null &&
 							review.status === "approved" && (
-								<Tooltip title="Create a PR" placement="bottom">
+								<Tooltip title="Create a PR" placement="top">
 									<Button onClick={pr}>
 										<Icon className="narrow-icon" name="pull-request" />
 										<span className="wide-text">Create PR</span>
@@ -443,7 +443,7 @@ export function ReviewNav(props: Props) {
 								</Tooltip>
 							)}
 						{isMine && review.pullRequestUrl == null && (
-							<Tooltip title="Reopen & Amend Review (add code)" placement="bottom">
+							<Tooltip title="Reopen & Amend Review (add code)" placement="top">
 								<Button onClick={amend}>
 									<Icon className="narrow-icon" name="plus" />
 									<span className="wide-text">Amend</span>
@@ -451,14 +451,14 @@ export function ReviewNav(props: Props) {
 							</Tooltip>
 						)}
 						{review.pullRequestUrl == null && (
-							<Tooltip title="Reopen Review" placement="bottom">
+							<Tooltip title="Reopen Review" placement="top">
 								<Button variant="secondary" onClick={reopen}>
 									<Icon className="narrow-icon" name="reopen" />
 									<span className="wide-text">Reopen</span>
 								</Button>
 							</Tooltip>
 						)}
-						<Tooltip title="More actions" placement="bottom">
+						<Tooltip title="More actions" placement="top">
 							<Button variant="secondary">
 								<BaseReviewMenu
 									review={review}

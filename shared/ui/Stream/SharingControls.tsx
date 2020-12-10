@@ -141,6 +141,9 @@ export const SharingControls = React.memo(
 						(lastShareAttributes && lastShareAttributes.providerTeamId))
 			);
 
+			const team = state.teams[state.context.currentTeamId];
+			const teamSettings = team.settings || {};
+
 			return {
 				currentTeamId,
 				on: shareTargets.length > 0 && Boolean(preferencesForTeam.shareCodemarkEnabled),
@@ -153,7 +156,8 @@ export const SharingControls = React.memo(
 				lastSelectedChannelId: lastShareAttributes && lastShareAttributes.channelId,
 				repos: state.repos,
 				defaultChannelId: defaultChannel && defaultChannel.channelId,
-				defaultChannels
+				defaultChannels,
+				teamSettings
 			};
 		});
 		const [authenticationState, setAuthenticationState] = React.useState<{
@@ -162,7 +166,9 @@ export const SharingControls = React.memo(
 		}>({ isAuthenticating: false, label: "" });
 		const [isFetchingData, setIsFetchingData] = React.useState<boolean>(false);
 		const [editingChannels, setEditingChannels] = React.useState<boolean>(false);
-		const [currentChannel, setCurrentChannel] = React.useState<ThirdPartyChannel | undefined>(undefined);
+		const [currentChannel, setCurrentChannel] = React.useState<ThirdPartyChannel | undefined>(
+			undefined
+		);
 
 		const selectedShareTargetTeamId = safe(() => derivedState.selectedShareTarget.teamId) as
 			| string
@@ -280,6 +286,11 @@ export const SharingControls = React.memo(
 			isFetchingData
 		]);
 
+		const { teamSettings } = derivedState;
+		const providers = teamSettings.messagingProviders || {};
+		const showSlack = !teamSettings.limitMessaging || providers["slack*com"];
+		const showTeams = !teamSettings.limitMessaging || providers["login*microsoftonline*com"];
+
 		const shareProviderMenuItems = React.useMemo(() => {
 			const targetItems = derivedState.shareTargets.map(target => ({
 				key: target.teamId,
@@ -289,7 +300,7 @@ export const SharingControls = React.memo(
 			}));
 			if (derivedState.slackConfig || derivedState.msTeamsConfig) {
 				targetItems.push({ label: "-" } as any);
-				if (derivedState.slackConfig)
+				if (showSlack && derivedState.slackConfig)
 					targetItems.push({
 						key: "add-slack",
 						icon: <Icon name="slack" />,
@@ -298,7 +309,7 @@ export const SharingControls = React.memo(
 							authenticateWithSlack();
 						}) as any
 					});
-				if (derivedState.msTeamsConfig) {
+				if (showTeams && derivedState.msTeamsConfig) {
 					targetItems.push({
 						key: "add-msteams",
 						icon: <Icon name="msteams" />,
@@ -405,22 +416,25 @@ export const SharingControls = React.memo(
 		if (
 			!derivedState.selectedShareTarget ||
 			(!derivedState.isConnectedToSlack && !derivedState.isConnectedToMSTeams)
-		)
+		) {
+			if (!showSlack && !showTeams) return null;
 			return (
 				<Root>
 					Share on{" "}
-					<TextButton
-						onClick={async e => {
-							e.preventDefault();
-							authenticateWithSlack();
-						}}
-					>
-						<Icon name="slack" /> Slack
-					</TextButton>
-					{derivedState.msTeamsConfig != undefined && (
+					{showSlack && (
+						<TextButton
+							onClick={async e => {
+								e.preventDefault();
+								authenticateWithSlack();
+							}}
+						>
+							<Icon name="slack" /> Slack
+						</TextButton>
+					)}
+					{derivedState.msTeamsConfig != undefined && showTeams && (
 						<>
 							{" "}
-							or{" "}
+							{showSlack && <>or </>}
 							<TextButton
 								onClick={e => {
 									e.preventDefault();
@@ -433,6 +447,7 @@ export const SharingControls = React.memo(
 					)}
 				</Root>
 			);
+		}
 
 		const setDefaultChannel = (repoId, providerTeamId, channelId) => {
 			const value = { providerTeamId, channelId };

@@ -16,6 +16,7 @@ import { RepositoryMappingManager } from "./managers/repositoryMappingManager";
 import { ReposManager } from "./managers/reposManager";
 import { ReviewsManager } from "./managers/reviewsManager";
 import { ScmManager } from "./managers/scmManager";
+import { ServerManager } from "./managers/serverManager";
 import { StreamsManager } from "./managers/streamsManager";
 import { TeamsManager } from "./managers/teamsManager";
 import { TelemetryManager } from "./managers/telemetryManager";
@@ -141,10 +142,10 @@ class SessionServiceContainer {
 
 class ServiceContainer {
 	// TODO: [EA] I think we should try to rework this to avoid the need of the session here
-	constructor(public readonly agent: CodeStreamAgent, session: CodeStreamSession) {
+	constructor(public readonly agent: CodeStreamAgent, private session: CodeStreamSession) {
 		this._documents = agent.documents;
 		this._unauthenticatedScm = new UnauthenticatedScmManager();
-
+		this._server = new ServerManager(session);
 		this._errorReporter = new ErrorReporter(session);
 		this._telemetry = new TelemetryManager(session);
 		this._urls = new UrlManager();
@@ -173,6 +174,11 @@ class ServiceContainer {
 	private readonly _urls: UrlManager;
 	get urls() {
 		return this._urls;
+	}
+
+	private readonly _server: ServerManager;
+	get server(): ServerManager {
+		return this._server;
 	}
 }
 

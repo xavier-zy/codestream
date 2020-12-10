@@ -359,7 +359,14 @@ export class ScmManager {
 			return this.getAmendedRepoStatus(request);
 		}
 
-		const uri = URI.parse(documentUri);
+		let uri;
+		try {
+			uri = URI.parse(documentUri);
+		} catch (ex) {
+			// capture the URI being used so we'll have it for the sentry error and can diagnose
+			ex.message = `${ex.message}: ${uri}`;
+			throw ex;
+		}
 
 		let branch: string | undefined;
 		let file: string | undefined;

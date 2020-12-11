@@ -30,7 +30,7 @@ import { setUserPreference, openPanel } from "./actions";
 import { PROVIDER_MAPPINGS } from "./CrossPostIssueControls/types";
 import { confirmPopup } from "./Confirm";
 import { ConfigurePullRequestQuery } from "./ConfigurePullRequestQuery";
-import { DEFAULT_QUERIES } from "../store/preferences/reducer";
+import { DEFAULT_QUERIES, getSavedPullRequestQueries } from "../store/preferences/reducer";
 import { ConfigurePullRequestQuerySettings } from "./ConfigurePullRequestQuerySettings";
 import { PullRequestQuery } from "@codestream/protocols/api";
 import { configureAndConnectProvider } from "../store/providers/actions";
@@ -139,7 +139,7 @@ export const OpenPullRequests = React.memo((props: Props) => {
 		const team = state.teams[state.context.currentTeamId];
 		const teamSettings = team.settings ? team.settings : EMPTY_HASH;
 
-		const queries = preferences.pullRequestQueries || DEFAULT_QUERIES;
+		const queries = getSavedPullRequestQueries(state);
 
 		const prSupportedProviders = providerSelectors
 			.getSupportedPullRequestHosts(state)

@@ -109,3 +109,19 @@ export const getSavedPullRequestQueriesForProvider = createSelector(
 		return pullRequestQueries.filter(q => q && q.providerId === providerId && q.query.length > 0);
 	}
 );
+
+export const getSavedPullRequestQueries = createSelector(
+	(state: CodeStreamState) => state.preferences,
+	preferences => {
+		const queries = preferences.pullRequestQueries || DEFAULT_QUERIES;
+		let results = {};
+		// massage the data for any old data formats
+		Object.keys(queries || {}).forEach(p => {
+			results[p] = [];
+			Object.values(queries[p] || {}).forEach(_ => {
+				results[p].push(_);
+			});
+		});
+		return results;
+	}
+);

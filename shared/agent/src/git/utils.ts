@@ -5,7 +5,6 @@ interface LineWithMetadata {
 	position: number;
 	index: number;
 	lineNumber?: number | undefined;
-	relativeLine?: number | undefined;
 }
 
 export interface HunkWithMetadata extends Hunk {
@@ -43,43 +42,55 @@ export function translateLineToPosition(
 	 */
 
 	let i = 0;
-	let relativeLine = 0;
-	for (const h of diff.hunks) {
+	let position = 0;
+	for (const hunk of diff!.hunks) {
 		// can't increment for the first hunk
-		if (i !== 0) relativeLine++;
+		if (i !== 0) position++;
+		const h = hunk as HunkWithMetadata;
+
 		const linesWithMetadata = [];
 		let j = 0;
+		let lineNumber = h.newStart;
 		for (const line of h.lines) {
-			relativeLine++;
-			linesWithMetadata.push({ line: line, relativeLine: relativeLine, index: j });
+			position++;
+			const firstChar = line[0];
+			const firstCharIsMinus = firstChar === "-";
+			linesWithMetadata.push({
+				line: line,
+				position: position,
+				index: j,
+				// don't assign a line number to the removed lines
+				lineNumber: firstCharIsMinus ? undefined : lineNumber
+			});
+			if (!firstCharIsMinus) lineNumber++;
 			j++;
 		}
-		(h as any).linesWithMetadata = linesWithMetadata;
+		h.linesWithMetadata = linesWithMetadata;
 		i++;
 	}
 
 	const { startLine, startHunk } = start;
 	const { endLine, endHunk } = end;
-	// the line the user is asking for minus the start of this hunk
-	// that will give us the index of where it is in the hunk
-	// from there, we fetch the relativeLine which is what github needs
-	let offset: number;
+
 	let lineWithMetadata;
 	if (startLine === endLine) {
 		// is a single line if startLine === endLine
 		// we don't care about the endHunk here (though it will === startingHunk)
-		offset = startLine - startHunk.newStart;
-		lineWithMetadata = (startHunk as any).linesWithMetadata.find((b: any) => b.index === offset);
+		lineWithMetadata = (startHunk as any).linesWithMetadata.find(
+			(b: any) => b.lineNumber === startLine
+		);
 	} else {
 		if (endHunk && startHunk === endHunk) {
 			// it is a range within the same hunk
-			offset = endLine - endHunk.newStart;
-			lineWithMetadata = (endHunk as any).linesWithMetadata.find((b: any) => b.index === offset);
+			lineWithMetadata = (endHunk as any).linesWithMetadata.find(
+				(b: any) => b.lineNumber === endLine
+			);
 		} else {
 			// couldn't get an end hunk. since we can't create comments
 			// across hunks, use the starting hunk
-			offset = startLine - startHunk.newStart;
-			lineWithMetadata = (startHunk as any).linesWithMetadata.find((b: any) => b.index === offset);
+			lineWithMetadata = (startHunk as any).linesWithMetadata.find(
+				(b: any) => b.lineNumber === startLine
+			);
 		}
 	}
 

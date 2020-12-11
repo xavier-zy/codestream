@@ -197,24 +197,16 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 		let response;
 		try {
 			response = await (await this.client()).request<any>(query, variables);
-		}
-		catch (ex) {
+		} catch (ex) {
 			if (
-				(
-					ex.response &&
-					ex.response.message === "Bad credentials"
-				) ||
-				(
-					ex.response &&
+				(ex.response && ex.response.message === "Bad credentials") ||
+				(ex.response &&
 					ex.response.errors instanceof Array &&
-					ex.response.errors.find((e: any) => e.type === "FORBIDDEN")
-				) ||
-				(
-					this.providerConfig.id === "github/enterprise" &&
+					ex.response.errors.find((e: any) => e.type === "FORBIDDEN")) ||
+				(this.providerConfig.id === "github/enterprise" &&
 					ex.response.error &&
-					ex.response.error.toLowerCase().indexOf("cookies must be enabled to use github") > -1
-				)
-			 ) {
+					ex.response.error.toLowerCase().indexOf("cookies must be enabled to use github") > -1)
+			) {
 				// we know about this error, and we want to give the user a chance to correct it
 				// (but throwing up a banner), rather than logging the error to sentry
 				this.session.api.setThirdPartyProviderInfo({

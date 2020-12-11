@@ -1026,7 +1026,7 @@ export class PostsManager extends EntityManagerBase<CSPost> {
 							// pullRequestReviewId will be looked up
 							text: request.attributes.text || "",
 							filePath: parsedUri.path,
-							position: lineWithMetadata.relativeLine
+							position: lineWithMetadata.position
 						}
 					});
 				} else {
@@ -1052,7 +1052,7 @@ export class PostsManager extends EntityManagerBase<CSPost> {
 						startLine: startLine,
 						endLine: calculatedEndLine,
 						// legacy servers will need this
-						position: lineWithMetadata?.relativeLine
+						position: lineWithMetadata?.position
 					}
 				});
 			}

@@ -65,6 +65,12 @@ interface GitHubRepo {
 	has_issues: boolean;
 }
 
+enum GitHubExceptionType {
+	Unknown = "UNKNOWN",
+	Credentials = "CREDENTIALS",
+	Connection = "CONNECTION"
+};
+
 const diffHunkRegex = /^@@ -([\d]+)(?:,([\d]+))? \+([\d]+)(?:,([\d]+))? @@/;
 
 @lspProvider("github")
@@ -188,6 +194,41 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 		restApi: { fns: {} }
 	};
 
+	_isKnownException (ex: any): GitHubExceptionType {
+		if ((
+			ex.message &&
+			ex.message.match(/reason: connect ECONNREFUSED/)
+		) ||
+		(
+			ex.message &&
+			ex.message.match(/reason: getaddrinfo ENOTFOUND/)
+		) ||
+		(
+			ex.message &&
+			ex.message.match(/GraphQL Error \(Code: 404\)/)
+		) ||
+		(
+			this.providerConfig.id === "github/enterprise" &&
+			ex.response &&
+			ex.response.error &&
+			ex.response.error.toLowerCase().indexOf("cookies must be enabled to use github") > -1
+		)) {
+			return GitHubExceptionType.Connection
+		} else if ((
+			ex.response &&
+			ex.response.message === "Bad credentials"
+		) ||
+		(
+			ex.response &&
+			ex.response.errors instanceof Array &&
+			ex.response.errors.find((e: any) => e.type === "FORBIDDEN")
+		)) {
+			return GitHubExceptionType.Credentials;
+		} else {
+			return GitHubExceptionType.Unknown;
+		}
+	}
+
 	async query<T = any>(query: string, variables: any = undefined) {
 		if (this._providerInfo && this._providerInfo.tokenError) {
 			delete this._client;
@@ -197,16 +238,10 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 		let response;
 		try {
 			response = await (await this.client()).request<any>(query, variables);
-		} catch (ex) {
-			if (
-				(ex.response && ex.response.message === "Bad credentials") ||
-				(ex.response &&
-					ex.response.errors instanceof Array &&
-					ex.response.errors.find((e: any) => e.type === "FORBIDDEN")) ||
-				(this.providerConfig.id === "github/enterprise" &&
-					ex.response.error &&
-					ex.response.error.toLowerCase().indexOf("cookies must be enabled to use github") > -1)
-			) {
+		}
+		catch (ex) {
+			const exType = this._isKnownException(ex);
+			if (exType !== GitHubExceptionType.Unknown) {
 				// we know about this error, and we want to give the user a chance to correct it
 				// (but throwing up a banner), rather than logging the error to sentry
 				this.session.api.setThirdPartyProviderInfo({
@@ -214,7 +249,8 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 					data: {
 						tokenError: {
 							error: ex,
-							occurredAt: Date.now()
+							occurredAt: Date.now(),
+							isConnectionError: exType === GitHubExceptionType.Connection
 						}
 					}
 				});
@@ -1742,7 +1778,6 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 		request: GetMyPullRequestsRequest
 	): Promise<GetMyPullRequestsResponse[][] | undefined> {
 		void (await this.ensureConnected());
-
 		// const cacheKey = JSON.stringify({ ...request, providerId: this.providerConfig.id });
 		// if (!request.force) {
 		// 	const cached = this._getMyPullRequestsCache.get(cacheKey);
@@ -1877,7 +1912,6 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 			}
 			throw new Error(errString);
 		});
-
 		const response: GetMyPullRequestsResponse[][] = [];
 		items.forEach((item, index) => {
 			if (item && item.search && item.search.edges) {

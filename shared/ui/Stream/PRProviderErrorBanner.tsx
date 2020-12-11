@@ -58,11 +58,8 @@ export const PRProviderErrorBanner = () => {
 		let errorMessage, extra;
 		if (failedProviderName) {
 			errorMessage = `Your access to ${failedProviderName} doesn't appear to be working.`;
-			if (tokenError.accessTokenError!.error && tokenError.accessTokenError!.error.response) {
-				const error = tokenError.accessTokenError.error.response.error;
-				if (error && error.toLowerCase().indexOf("cookies must be enabled to use github") > -1) {
-					extra = `Please ensure your ${failedProviderName} url is configured correctly.`;
-				}
+			if (tokenError.accessTokenError!.isConnectionError) {
+				extra = `Please ensure your ${failedProviderName} url is configured correctly.`;
 			}
 		}
 

@@ -2046,10 +2046,12 @@ export class CodeStreamApiProvider implements ApiProvider {
 
 	@lspHandler(ProviderTokenRequestType)
 	async setProviderToken(request: ProviderTokenRequest) {
+		const repoInfo = request.repoInfo && `${request.repoInfo.teamId}|${request.repoInfo.repoId}|${request.repoInfo.commitHash}`;
 		await this.post(`/no-auth/provider-token/${request.provider}`, {
 			token: request.token,
 			data: request.data,
 			invite_code: request.inviteCode,
+			repo_info: repoInfo || undefined,
 			no_signup: request.noSignup,
 			signup_token: request.signupToken
 		});

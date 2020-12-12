@@ -43,6 +43,11 @@ export interface SSOAuthInfo {
 	hostUrl?: string;
 	useIDEAuth?: boolean;
 	gotError?: boolean;
+	repoInfo?: {
+		teamId: string;
+		repoId: string;
+		commitHash: string;
+	}
 }
 
 const ProviderNames = {
@@ -71,6 +76,9 @@ export const startSSOSignin = (
 	}
 	if (info && info.inviteCode) {
 		query.inviteCode = info.inviteCode;
+	}
+	if (info && info.repoInfo) {
+		query.repoInfo = `${info.repoInfo.teamId}|${info.repoInfo.repoId}|${info.repoInfo.commitHash}`;
 	}
 	if (info && info.hostUrl) {
 		query.hostUrl = info.hostUrl;

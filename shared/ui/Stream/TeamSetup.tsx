@@ -25,6 +25,8 @@ import { PROVIDER_MAPPINGS } from "./CrossPostIssueControls/types";
 import { SmartFormattedList } from "./SmartFormattedList";
 import { useDidMount } from "../utilities/hooks";
 import { keyFilter, mapFilter } from "@codestream/webview/utils";
+import { getRepos } from "../store/repos/reducer";
+import { difference as _difference, sortBy as _sortBy } from "lodash-es";
 
 const Form = styled.form`
 	h3 {
@@ -173,10 +175,10 @@ export function TeamSetup(props: Props) {
 			team,
 			xray: team.settings ? team.settings.xray || "user" : "user",
 			multipleReviewersApprove: isFeatureEnabled(state, "multipleReviewersApprove"),
-			repos: state.repos
+			repos: _sortBy(Object.values(getRepos(state)), "name")
 		};
 	});
-	const { team, providers } = derivedState;
+	const { team, repos, providers } = derivedState;
 
 	const [isLoading, setIsLoading] = useState(false);
 	const [autoJoinReposField, setAutoJoinReposField] = useState(derivedState.autoJoinRepos);
@@ -188,8 +190,6 @@ export function TeamSetup(props: Props) {
 	const [limitCodeHostField, setLimitCodeHostField] = useState(derivedState.limitCodeHost);
 	const [limitMessagingField, setLimitMessagingField] = useState(derivedState.limitMessaging);
 	const [limitIssuesField, setLimitIssuesField] = useState(derivedState.limitIssues);
-	const [xray, setXray] = useState(derivedState.xray);
-	const [openRepos, setOpenRepos] = useState<ReposScm[]>(EMPTY_ARRAY);
 	const [unexpectedError, setUnexpectedError] = useState(false);
 	const [authenticationProvidersField, setAuthenticationProvidersField] = useState({
 		...derivedState.authenticationSettings
@@ -202,22 +202,6 @@ export function TeamSetup(props: Props) {
 	});
 	const [issuesProvidersField, setIssuesProvidersField] = useState({
 		...derivedState.issuesSettings
-	});
-
-	const fetchOpenRepos = async () => {
-		const response = await HostApi.instance.send(GetReposScmRequestType, {
-			inEditorOnly: true,
-			includeCurrentBranches: true,
-			includeProviders: true
-		});
-		if (response && response.repositories) {
-			setOpenRepos(response.repositories);
-		}
-	};
-
-	useDidMount(() => {
-		fetchOpenRepos();
-		// HostApi.instance.track("TeamSetup Rendered", {});
 	});
 
 	const authenticationItems = mapFilter(derivedState.codeHostProviders, id => {
@@ -509,7 +493,7 @@ export function TeamSetup(props: Props) {
 							</Checkbox>
 						</PreConfigure>
 					</div>
-					{openRepos && openRepos.length > 0 && (
+					{repos && repos.length > 0 && (
 						<>
 							<HR />
 							<h3>Repo-based Team Assignment</h3>
@@ -520,7 +504,7 @@ export function TeamSetup(props: Props) {
 									<Icon name="info" className="clickable" title="More info" />
 								</Link>
 							</p>
-							{openRepos.map(repo => {
+							{repos.map(repo => {
 								const repoId = repo.id || "";
 								// return {
 								// 	icon: <Icon name={repo.id === currentRepoId ? "arrow-right" : "blank"} />,
@@ -528,9 +512,6 @@ export function TeamSetup(props: Props) {
 								// 	key: repo.id,
 								// 	action: () => getBranches(repo.folder.uri)
 								// };
-								const repoName = derivedState.repos[repoId]
-									? derivedState.repos[repoId].name
-									: repo.folder.name;
 								return (
 									<Checkbox
 										key={`configure-${repoId}`}
@@ -543,7 +524,7 @@ export function TeamSetup(props: Props) {
 											})
 										}
 									>
-										Add people who open <b>{repoName}</b> to <b>{team.name}</b>
+										Add people who open <b>{repo.name}</b> to <b>{team.name}</b>
 									</Checkbox>
 								);
 							})}

@@ -809,7 +809,7 @@ export class ReviewsManager extends CachedEntityManagerBase<CSReview> {
 				},
 				branch: headRefName,
 				branches: branches!.branches,
-				remoteBranches: remoteBranches!.branches,
+				remoteBranches: remoteBranches ? remoteBranches.branches : undefined,
 				warning: warning
 			};
 		} catch (ex) {

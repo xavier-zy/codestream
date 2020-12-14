@@ -620,7 +620,7 @@ export const CreatePullRequestPanel = props => {
 
 	const renderBaseBranchesDropdown = () => {
 		if (acrossForks) return renderBaseBranchesAcrossForksDropdown();
-
+		if (!remoteBranches || !remoteBranches.length) return undefined;
 		const items = remoteBranches!.map(_ => {
 			return {
 				label: _,

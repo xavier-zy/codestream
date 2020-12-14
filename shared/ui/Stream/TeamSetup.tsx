@@ -1,12 +1,7 @@
 import React, { useCallback, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { HostApi } from "../webview-api";
-import {
-	GetReposScmRequestType,
-	ReposScm,
-	UpdateTeamRequestType,
-	UpdateTeamSettingsRequestType
-} from "@codestream/protocols/agent";
+import { UpdateTeamSettingsRequestType } from "@codestream/protocols/agent";
 import { Button } from "../src/components/Button";
 import { Dialog, ButtonRow } from "../src/components/Dialog";
 import { Link } from "./Link";
@@ -15,15 +10,12 @@ import styled from "styled-components";
 import { closeModal } from "./actions";
 import { CodeStreamState } from "../store";
 import { isFeatureEnabled } from "../store/apiVersioning/reducer";
-import { Radio, RadioGroup } from "../src/components/RadioGroup";
 import { InlineMenu } from "../src/components/controls/InlineMenu";
 import { logError } from "../logger";
-import { TextInput } from "../Authentication/TextInput";
 import Icon from "./Icon";
 import { isConnected } from "../store/providers/reducer";
 import { PROVIDER_MAPPINGS } from "./CrossPostIssueControls/types";
 import { SmartFormattedList } from "./SmartFormattedList";
-import { useDidMount } from "../utilities/hooks";
 import { keyFilter, mapFilter } from "@codestream/webview/utils";
 import { getRepos } from "../store/repos/reducer";
 import { difference as _difference, sortBy as _sortBy } from "lodash-es";
@@ -498,8 +490,8 @@ export function TeamSetup(props: Props) {
 							<HR />
 							<h3>Repo-based Team Assignment</h3>
 							<p className="explainer">
-								When teammates install CodeStream they will be automatically added to your team when
-								they open configured repos
+								When teammates install CodeStream they will be automatically added to{" "}
+								<b>{team.name}</b> when they open configured repos
 								<Link href="https://docs.codestream.com/userguide/features/myteam-section/">
 									<Icon name="info" className="clickable" title="More info" />
 								</Link>
@@ -524,7 +516,7 @@ export function TeamSetup(props: Props) {
 											})
 										}
 									>
-										Add people who open <b>{repo.name}</b> to <b>{team.name}</b>
+										{repo.name}
 									</Checkbox>
 								);
 							})}

@@ -147,6 +147,7 @@ interface ConnectedProps {
 	dontSuggestInvitees: any;
 	multipleReviewersApprove: boolean;
 	emailSupported: boolean;
+	autoJoinSupported: boolean;
 	blameMap: { [email: string]: string };
 	serverUrl: string;
 	isOnPrem: boolean;
@@ -664,7 +665,7 @@ class TeamPanel extends React.Component<Props, State> {
 						placement="bottom"
 						delay={1}
 					/>
-					{this.props.isCurrentUserAdmin && (
+					{this.props.isCurrentUserAdmin && this.props.autoJoinSupported && (
 						<Icon
 							onClick={() => this.props.openModal(WebviewModals.TeamSetup)}
 							name="gear"
@@ -989,6 +990,7 @@ const mapStateToProps = state => {
 	const dontSuggestInvitees = team.settings ? team.settings.dontSuggestInvitees || {} : {};
 	const multipleReviewersApprove = isFeatureEnabled(state, "multipleReviewersApprove");
 	const emailSupported = isFeatureEnabled(state, "emailSupport");
+	const autoJoinSupported = isFeatureEnabled(state, "autoJoin");
 
 	return {
 		teamId: team.id,
@@ -1011,6 +1013,7 @@ const mapStateToProps = state => {
 		xrayEnabled,
 		multipleReviewersApprove,
 		emailSupported,
+		autoJoinSupported,
 		serverUrl: configs.serverUrl,
 		isOnPrem: isOnPrem(configs),
 		hiddenPaneNodes: preferences.hiddenPaneNodes || EMPTY_HASH

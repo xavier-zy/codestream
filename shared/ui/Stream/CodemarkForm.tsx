@@ -2529,13 +2529,10 @@ const mapStateToProps = (state: CodeStreamState): ConnectedProps => {
 	};
 };
 
-const ConnectedCodemarkForm = connect(
-	mapStateToProps,
-	{
-		openPanel,
-		openModal,
-		setUserPreference
-	}
-)(CodemarkForm);
+const ConnectedCodemarkForm = connect(mapStateToProps, {
+	openPanel,
+	openModal,
+	setUserPreference
+})(CodemarkForm);
 
 export { ConnectedCodemarkForm as CodemarkForm };

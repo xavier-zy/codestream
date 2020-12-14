@@ -346,16 +346,16 @@ export function TeamSetup(props: Props) {
 		setIsLoading(true);
 		const teamId = derivedState.team.id;
 		try {
-			await HostApi.instance.send(UpdateTeamRequestType, {
-				teamId,
-				name: teamName
-			});
+			// await HostApi.instance.send(UpdateTeamRequestType, {
+			// 	teamId,
+			// 	name: teamName
+			// });
 
 			const autoJoinRepos = keyFilter(autoJoinReposField);
 			await HostApi.instance.send(UpdateTeamSettingsRequestType, {
 				teamId,
 				settings: {
-					xray,
+					// xray,
 					limitAuthentication: limitAuthenticationField,
 					limitCodeHost: limitCodeHostField,
 					limitMessaging: limitMessagingField,
@@ -402,10 +402,11 @@ export function TeamSetup(props: Props) {
 	};
 
 	return [
-		<Dialog title="" onClose={() => dispatch(closeModal())}>
+		<Dialog title="">
 			<Form className="standard-form">
 				<fieldset className="form-body">
 					<div id="controls">
+						{/*
 						<h3>Team Name</h3>
 						<TextInput
 							name="teamName"
@@ -428,7 +429,7 @@ export function TeamSetup(props: Props) {
 							<Radio value="off">Always Off</Radio>
 							<Radio value="user">User Selectable</Radio>
 						</RadioGroup>
-
+						*/}
 						{/*
 						<HR />
 						<h3>VS Code Recommended Extensions</h3>
@@ -443,47 +444,6 @@ export function TeamSetup(props: Props) {
 							</Link>
 						</Checkbox>
 						*/}
-						{openRepos && openRepos.length > 0 && (
-							<>
-								<HR />
-								<h3>Repo-based Team Assignment</h3>
-								<p className="explainer">
-									When teammates install CodeStream they will be automatically added to your team
-									when they open configured repos
-									<Link href="https://docs.codestream.com/userguide/features/myteam-section/">
-										<Icon name="info" className="clickable" title="More info" />
-									</Link>
-								</p>
-								{openRepos.map(repo => {
-									const repoId = repo.id || "";
-									// return {
-									// 	icon: <Icon name={repo.id === currentRepoId ? "arrow-right" : "blank"} />,
-									// 	label: derivedState.repos[repoId] ? derivedState.repos[repoId].name : repo.folder.name,
-									// 	key: repo.id,
-									// 	action: () => getBranches(repo.folder.uri)
-									// };
-									const repoName = derivedState.repos[repoId]
-										? derivedState.repos[repoId].name
-										: repo.folder.name;
-									return (
-										<Checkbox
-											key={`configure-${repoId}`}
-											name={`configure-${repoId}`}
-											checked={autoJoinReposField[repoId]}
-											onChange={() =>
-												setAutoJoinReposField({
-													...autoJoinReposField,
-													[repoId]: !autoJoinReposField[repoId]
-												})
-											}
-										>
-											Add people who open <b>{repoName}</b> to <b>{team.name}</b>
-										</Checkbox>
-									);
-								})}
-							</>
-						)}
-						<HR />
 						<h3>Integration Options</h3>
 						<p className="explainer">
 							Streamline integrations for your teammates by limiting the options that CodeStream
@@ -549,13 +509,53 @@ export function TeamSetup(props: Props) {
 							</Checkbox>
 						</PreConfigure>
 					</div>
+					{openRepos && openRepos.length > 0 && (
+						<>
+							<HR />
+							<h3>Repo-based Team Assignment</h3>
+							<p className="explainer">
+								When teammates install CodeStream they will be automatically added to your team when
+								they open configured repos
+								<Link href="https://docs.codestream.com/userguide/features/myteam-section/">
+									<Icon name="info" className="clickable" title="More info" />
+								</Link>
+							</p>
+							{openRepos.map(repo => {
+								const repoId = repo.id || "";
+								// return {
+								// 	icon: <Icon name={repo.id === currentRepoId ? "arrow-right" : "blank"} />,
+								// 	label: derivedState.repos[repoId] ? derivedState.repos[repoId].name : repo.folder.name,
+								// 	key: repo.id,
+								// 	action: () => getBranches(repo.folder.uri)
+								// };
+								const repoName = derivedState.repos[repoId]
+									? derivedState.repos[repoId].name
+									: repo.folder.name;
+								return (
+									<Checkbox
+										key={`configure-${repoId}`}
+										name={`configure-${repoId}`}
+										checked={autoJoinReposField[repoId]}
+										onChange={() =>
+											setAutoJoinReposField({
+												...autoJoinReposField,
+												[repoId]: !autoJoinReposField[repoId]
+											})
+										}
+									>
+										Add people who open <b>{repoName}</b> to <b>{team.name}</b>
+									</Checkbox>
+								);
+							})}
+						</>
+					)}
 					<HR style={{ marginBottom: 0 }} />
 					<ButtonRow>
 						<Button variant="secondary" onClick={() => dispatch(closeModal())}>
 							Cancel
 						</Button>
 						<Button onClick={save} isLoading={isLoading}>
-							Save Team Settings
+							Save Onboarding Settings
 						</Button>
 					</ButtonRow>
 				</fieldset>

@@ -48,7 +48,7 @@ export const ExportPanel = () => {
 	const insertText = () => {};
 
 	const escapeText = text => {
-		const returnText = text.replace(/\n/g, "\\" + "n");
+		const returnText = (text || "").replace(/\n/g, "\\" + "n");
 		if (returnText.match(/\"/)) return `"${returnText.replace(/\"/g, '\\"')}"`;
 		else return returnText;
 	};

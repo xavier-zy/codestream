@@ -106,6 +106,10 @@ import { isFeatureEnabled } from "../store/apiVersioning/reducer";
 import { HeadshotName } from "../src/components/HeadshotName";
 import { FloatingLoadingMessage } from "../src/components/FloatingLoadingMessage";
 
+const NoWrap = styled.span`
+	white-space: nowrap;
+`;
+
 interface Props extends ConnectedProps {
 	editingReview?: CSReview;
 	isEditing?: boolean;
@@ -2000,7 +2004,7 @@ class ReviewForm extends React.Component<Props, State> {
 									{this.props.statusLabel && (
 										<Icon
 											placement="top"
-											title="Use Current Ticket"
+											title={<NoWrap>Use Current Ticket</NoWrap>}
 											name={this.props.statusIcon}
 											className="clickable"
 											onClick={() => this.setTitle(this.props.statusLabel)}
@@ -2009,7 +2013,7 @@ class ReviewForm extends React.Component<Props, State> {
 									{latestCommit && (
 										<Icon
 											placement="top"
-											title="Use Latest Commit Message"
+											title={<NoWrap>Use Latest Commit Message</NoWrap>}
 											name="git-commit-vertical"
 											className="clickable"
 											onClick={() => this.setTitle(latestCommit.shortMessage)}
@@ -2017,7 +2021,7 @@ class ReviewForm extends React.Component<Props, State> {
 									)}
 									<Icon
 										placement="top"
-										title="Use Branch Name"
+										title={<NoWrap>Use Branch Name</NoWrap>}
 										name="git-branch"
 										className="clickable"
 										onClick={() => this.setTitleBasedOnBranch()}

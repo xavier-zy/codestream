@@ -522,23 +522,13 @@
                 },
                 {
                     "command": "codestream.newIssue",
-                    "when": "codestream:status == signedIn",
+                    "when": "codestream:status == signedIn && resourceScheme == file",
                     "group": "9_zcodestream@2"
                 },
                 {
                     "command": "codestream.newPermalink",
-                    "when": "codestream:status == signedIn",
+                    "when": "codestream:status == signedIn && resourceScheme == file",
                     "group": "9_zcodestream@4"
-                },
-                {
-                    "command": "codestream.newReview",
-                    "when": "codestream:status == signedIn",
-                    "group": "9_zcodestream@6"
-                },
-                {
-                    "command": "codestream.newPullRequest",
-                    "when": "codestream:status == signedIn",
-                    "group": "9_zcodestream@7"
                 }
             ],
             "view/title": [

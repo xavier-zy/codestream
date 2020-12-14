@@ -79,17 +79,17 @@ export class CodeStreamCodeActionProvider implements CodeActionProvider, Disposa
 				title: "Get Permalink",
 				command: "codestream.newPermalink",
 				arguments: [args]
-			},
-			{
-				title: "Request Feedback",
-				command: "codestream.newReview",
-				arguments: [args]
-			},
-			{
-				title: "Open a Pull Request",
-				command: "codestream.newPullRequest",
-				arguments: [args]
 			}
+			// {
+			// 	title: "Request Feedback",
+			// 	command: "codestream.newReview",
+			// 	arguments: [args]
+			// },
+			// {
+			// 	title: "Open a Pull Request",
+			// 	command: "codestream.newPullRequest",
+			// 	arguments: [args]
+			// }
 		];
 		return commands;
 	}

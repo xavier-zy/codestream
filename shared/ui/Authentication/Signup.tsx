@@ -48,6 +48,10 @@ interface Props {
 	teamId?: string;
 	inviteCode?: string;
 	type?: SignupType;
+
+	/** the following attributes are for auto-joining teams */
+	repoId?: string;
+	commitHash?: string;
 }
 
 export const Signup = (props: Props) => {
@@ -169,7 +173,12 @@ export const Signup = (props: Props) => {
 				password,
 				fullName,
 				inviteCode: props.inviteCode,
-				companyName: wasInvited ? undefined : companyName
+				companyName: wasInvited ? undefined : companyName,
+
+				// for auto-joining teams
+				commitHash: props.commitHash,
+				repoId: props.repoId,
+				teamId: props.commitHash ? props.teamId : undefined
 			};
 			const { status, token } = await HostApi.instance.send(RegisterUserRequestType, attributes);
 
@@ -304,9 +313,15 @@ export const Signup = (props: Props) => {
 			(authenticationProviders["github*com"] ||
 				authenticationProviders["gitlab*com"] ||
 				authenticationProviders["bitbucket*org"]));
+	const showOauth =
+		!limitAuthentication ||
+		authenticationProviders["github*com"] ||
+		authenticationProviders["gitlab*com"] ||
+		authenticationProviders["bitbucket*org"];
+
 	return (
 		<div className="onboarding-page">
-			{derivedState.supportsIntegrations && (
+			{derivedState.supportsIntegrations && showOauth && (
 				<form className="standard-form">
 					<fieldset className="form-body" style={{ paddingTop: 0, paddingBottom: 0 }}>
 						<div id="controls">

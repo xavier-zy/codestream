@@ -24,7 +24,7 @@ import { isConnected } from "../store/providers/reducer";
 import { PROVIDER_MAPPINGS } from "./CrossPostIssueControls/types";
 import { SmartFormattedList } from "./SmartFormattedList";
 import { useDidMount } from "../utilities/hooks";
-import { mapFilter } from "@codestream/webview/utils";
+import { keyFilter, mapFilter } from "@codestream/webview/utils";
 
 const Form = styled.form`
 	h3 {
@@ -70,8 +70,8 @@ const CODE_HOSTS = [
 ];
 
 const EMPTY_ARRAY = [];
+const EMPTY_ARRAY_AJ = [];
 const EMPTY_HASH = {};
-const EMPTY_HASH_AJ = {};
 
 interface PickerProps {
 	key: string;
@@ -136,6 +136,14 @@ export function TeamSetup(props: Props) {
 			issuesSettings[id] = limitIssues ? teamIssuesSettings[id] : connected(id);
 		});
 
+		let autoJoinRepos = teamSettings["autoJoinRepos"] || EMPTY_ARRAY_AJ;
+		if (!Array.isArray(autoJoinRepos)) autoJoinRepos = EMPTY_ARRAY_AJ;
+		// const autoJoinRepos = EMPTY_ARRAY_AJ as any;
+		const autoJoinReposHash = autoJoinRepos.reduce((hash, elem) => {
+			hash[elem] = true;
+			return hash;
+		}, {});
+
 		return {
 			webviewFocused: state.context.hasFocus,
 			providers,
@@ -155,7 +163,7 @@ export function TeamSetup(props: Props) {
 			messagingSettings,
 			issuesSettings,
 
-			autoJoinRepos: teamSettings["autoJoinRepos"] || EMPTY_HASH_AJ,
+			autoJoinRepos: autoJoinReposHash,
 
 			currentTeam: team,
 			currentUser: user,
@@ -343,6 +351,7 @@ export function TeamSetup(props: Props) {
 				name: teamName
 			});
 
+			const autoJoinRepos = keyFilter(autoJoinReposField);
 			await HostApi.instance.send(UpdateTeamSettingsRequestType, {
 				teamId,
 				settings: {
@@ -357,7 +366,7 @@ export function TeamSetup(props: Props) {
 					codeHostProviders: limitCodeHostField ? { ...codeHostProvidersField } : {},
 					messagingProviders: limitMessagingField ? { ...messagingProvidersField } : {},
 					issuesProviders: limitIssuesField ? { ...issuesProvidersField } : {},
-					autoJoinRepos: { ...autoJoinReposField }
+					autoJoinRepos: autoJoinRepos
 				}
 			});
 

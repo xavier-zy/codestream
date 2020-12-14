@@ -25,6 +25,7 @@ import {
 	CodeStreamApiPutRequestType,
 	TelemetryRequestType
 } from "@codestream/protocols/agent";
+import * as qs from "querystring";
 
 type NotificationParamsOf<NT> = NT extends NotificationType<infer N, any> ? N : never;
 type RequestParamsOf<RT> = RT extends RequestType<infer R, any, any, any> ? R : never;
@@ -232,7 +233,8 @@ export class HostApi extends EventEmitter {
 }
 
 export class Server {
-	static get<Res = any>(url: string): Promise<Res> {
+	static get<Res = any>(url: string, params?: { [key: string]: any }): Promise<Res> {
+		if (params) url += `?${qs.stringify(params)}`;
 		return HostApi.instance.send(new RequestType<any, Res, void, void>("codestream/api/get"), {
 			url: url
 		});

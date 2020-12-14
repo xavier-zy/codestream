@@ -3,8 +3,8 @@ import { action } from "../common";
 import { CodemarksActionsTypes } from "./types";
 import { HostApi } from "@codestream/webview/webview-api";
 import {
-	AddMarkerRequest,
-	AddMarkerRequestType,
+	AddMarkersRequest,
+	AddMarkersRequestType,
 	UpdateCodemarkRequestType,
 	DeleteCodemarkRequestType,
 	GetRangeScmInfoResponse,
@@ -204,15 +204,14 @@ export const editCodemark = (
 		}
 
 		if (codeBlocks) {
-			const toAdd: AddMarkerRequest[] = [];
+			const toAdd: AddMarkersRequest = { codemarkId: codemark.id, newMarkers: [] };
 			const toMove: MoveMarkerRequest[] = [];
 
 			codeBlocks.forEach((codeBlock, index) => {
 				if (!codeBlock || deleteMarkerLocations[index]) return;
 
 				if (index >= markers.length && codeBlock.scm) {
-					toAdd.push({
-						codemarkId: codemark.id,
+					toAdd.newMarkers.push({
 						code: codeBlock.contents,
 						documentId: { uri: codeBlock.uri },
 						range: codeBlock.range,
@@ -229,8 +228,12 @@ export const editCodemark = (
 				}
 			});
 
-			await Promise.all(toAdd.map(args => HostApi.instance.send(AddMarkerRequestType, args)));
-			await Promise.all(toMove.map(args => HostApi.instance.send(MoveMarkerRequestType, args)));
+			if (toAdd.newMarkers.length > 0) {
+				await HostApi.instance.send(AddMarkersRequestType, toAdd);
+			}
+			if (toMove.length > 0) {
+				await Promise.all(toMove.map(args => HostApi.instance.send(MoveMarkerRequestType, args)));
+			}
 		}
 
 		const response = await HostApi.instance.send(UpdateCodemarkRequestType, {

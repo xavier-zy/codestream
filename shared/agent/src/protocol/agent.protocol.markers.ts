@@ -111,24 +111,26 @@ export const MoveMarkerRequestType = new RequestType<
 	void
 >("codestream/marker/move");
 
-export interface AddMarkerRequest {
+export interface AddMarkersRequest {
 	codemarkId: string;
-	code: string;
-	documentId: TextDocumentIdentifier;
-	range: Range;
-	source: CodeBlockSource;
+	newMarkers: {
+		code: string;
+		documentId: TextDocumentIdentifier;
+		range: Range;
+		source: CodeBlockSource;
+	}[];
 }
 
-export interface AddMarkerResponse {
+export interface AddMarkersResponse {
 	codemark: CSCodemark;
 }
 
-export const AddMarkerRequestType = new RequestType<
-	AddMarkerRequest,
-	AddMarkerResponse,
+export const AddMarkersRequestType = new RequestType<
+	AddMarkersRequest,
+	AddMarkersResponse,
 	void,
 	void
->("codestream/marker/add");
+>("codestream/markers/add");
 
 export interface AddReferenceLocationRequest {
 	markerId: string;

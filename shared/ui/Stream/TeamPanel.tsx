@@ -664,13 +664,15 @@ class TeamPanel extends React.Component<Props, State> {
 						placement="bottom"
 						delay={1}
 					/>
-					<Icon
-						onClick={() => this.props.openModal(WebviewModals.TeamSetup)}
-						name="gear"
-						title="Team Settings"
-						placement="bottom"
-						delay={1}
-					/>
+					{this.props.isCurrentUserAdmin && (
+						<Icon
+							onClick={() => this.props.openModal(WebviewModals.TeamSetup)}
+							name="gear"
+							title="Team Settings"
+							placement="bottom"
+							delay={1}
+						/>
+					)}
 				</PaneHeader>
 				{this.props.paneState !== PaneState.Collapsed && (
 					<PaneBody className="team-pane-body">

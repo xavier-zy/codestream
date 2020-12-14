@@ -5,7 +5,11 @@ import { CodeStreamState } from "../store";
 import { Row } from "./CrossPostIssueControls/IssueDropdown";
 import Icon from "./Icon";
 import { PRHeadshot } from "../src/components/Headshot";
-import { setCurrentPullRequest, setNewPostEntry } from "../store/context/actions";
+import {
+	setCreatePullRequest,
+	setCurrentPullRequest,
+	setNewPostEntry
+} from "../store/context/actions";
 import Tooltip from "./Tooltip";
 import Timestamp from "./Timestamp";
 import { isConnected } from "../store/providers/reducer";
@@ -466,6 +470,7 @@ export const OpenPullRequests = React.memo((props: Props) => {
 						)}
 						<Icon
 							onClick={() => {
+								dispatch(setCreatePullRequest());
 								dispatch(setNewPostEntry("Status"));
 								dispatch(openPanel(WebviewPanels.NewPullRequest));
 							}}

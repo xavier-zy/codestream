@@ -18,7 +18,7 @@ import { GetReposScmRequestType } from "@codestream/protocols/agent";
 import Timestamp from "./Timestamp";
 import * as path from "path-browserify";
 import { PaneNode, PaneNodeName, PaneBody, NoContent, PaneState } from "../src/components/Pane";
-import { setCurrentRepo, setNewPostEntry } from "../store/context/actions";
+import { setCreatePullRequest, setCurrentRepo, setNewPostEntry } from "../store/context/actions";
 import { openPanel } from "./actions";
 import { TextInput } from "../Authentication/TextInput";
 import { CommitAndPush } from "./CommitAndPush";
@@ -162,6 +162,7 @@ export const RepoFileDiffs = (props: { onlyRepos?: (string | undefined)[] }) => 
 							placement="bottom"
 							delay={1}
 							onClick={() => {
+								dispatch(setCreatePullRequest());
 								dispatch(setNewPostEntry("WIP Section"));
 								dispatch(setCurrentRepo(repo.repoId, repo.repoPath));
 								dispatch(openPanel(WebviewPanels.NewPullRequest));

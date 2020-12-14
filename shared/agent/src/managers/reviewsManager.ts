@@ -660,8 +660,9 @@ export class ReviewsManager extends CachedEntityManagerBase<CSReview> {
 				};
 			}
 
+			const localModifications = await git.getHasModifications(repo.path);
+			const localCommits = await git.getLocalCommits(repo.path);
 			if (request.reviewId && !request.skipLocalModificationsCheck) {
-				const localModifications = await git.getHasModifications(repo.path);
 				if (localModifications) {
 					return {
 						success: false,
@@ -669,11 +670,21 @@ export class ReviewsManager extends CachedEntityManagerBase<CSReview> {
 					};
 				}
 
-				const localCommits = await git.getLocalCommits(repo.path);
 				if (localCommits && localCommits.length > 0) {
 					return {
 						success: false,
 						error: { type: "HAS_LOCAL_COMMITS" }
+					};
+				}
+			} else {
+				if (localModifications) {
+					warning = {
+						type: "HAS_LOCAL_MODIFICATIONS"
+					};
+				}
+				if (localCommits && localCommits.length > 0) {
+					warning = {
+						type: "HAS_LOCAL_COMMITS"
 					};
 				}
 			}

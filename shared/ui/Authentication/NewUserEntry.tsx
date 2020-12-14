@@ -146,7 +146,7 @@ export const NewUserEntry = (connect(mapStateToProps) as any)((props: Props) => 
 													<b>{admin.fullName}</b>
 												))}
 											/>{" "}
-											configured <b>{match.repo.name}</b> for <b>{match.team.name}</b>
+											set up a team for people working on the <b>{match.repo.name}</b> repository.
 										</div>
 									</JoinTitle>
 									<Button

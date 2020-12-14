@@ -370,10 +370,31 @@ export function TeamSetup(props: Props) {
 				}
 			});
 
-			HostApi.instance.track("teamSettings Changed", {});
+			if (
+				limitAuthenticationField ||
+				limitCodeHostField ||
+				limitMessagingField ||
+				limitIssuesField
+			) {
+				HostApi.instance.track("Team Integrations Restricted Changed", {
+					Authentication: limitAuthenticationField
+						? keyFilter(authenticationProvidersField).join(",")
+						: "all",
+					"Code Host": limitCodeHostField,
+					"Issue Tracking": limitIssuesField,
+					Messaging: limitMessagingField
+				});
+			}
+
+			if (autoJoinRepos.length > 0) {
+				HostApi.instance.track("Team AutoJoin Enabled", {
+					Repos: autoJoinRepos.length
+				});
+			}
+
 			dispatch(closeModal());
 		} catch (error) {
-			logError(`Unexpected error during update team settings: ${error}`, { teamName });
+			logError(`Unexpected error during update team settings: ${error}`, {});
 			setUnexpectedError(true);
 		}
 		// @ts-ignore

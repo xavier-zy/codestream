@@ -233,10 +233,10 @@ export class HostApi extends EventEmitter {
 }
 
 export class Server {
-	static get<Res = any>(url: string, params?: { [key: string]: any }): Promise<Res> {
-		if (params) url += `?${qs.stringify(params)}`;
+	static get<Res = any>(url: string, paramData?: { [key: string]: any }): Promise<Res> {
 		return HostApi.instance.send(new RequestType<any, Res, void, void>("codestream/api/get"), {
-			url: url
+			url: url,
+			paramData: paramData
 		});
 	}
 

@@ -1,6 +1,6 @@
 "use strict";
 import { Range, RequestType } from "vscode-languageserver-protocol";
-import { ModifiedFile } from "./api.protocol";
+import { CSRepository, CSTeam, CSUser, ModifiedFile } from "./api.protocol";
 
 export interface GetBranchesRequest {
 	uri: string;
@@ -356,6 +356,30 @@ export const GetUserInfoRequestType = new RequestType<
 	void,
 	void
 >("codestream/scm/user/info");
+
+export interface GetWorkspaceRepoInfoRequest {}
+export interface GetWorkspaceRepoInfoResponse {
+	repos: { [path: string]: string[] };
+}
+export const GetWorkspaceRepoInfoRequestType = new RequestType<
+	GetWorkspaceRepoInfoRequest,
+	GetWorkspaceRepoInfoResponse,
+	void,
+	void
+>("codestream/scm/workspace/repos");
+
+export interface GetWorkspaceAutoJoinInfoRequest {}
+export interface GetWorkspaceAutoJoinInfoResponse {
+	admins: CSUser[];
+	team: CSTeam;
+	repo: CSRepository;
+}
+export const GetWorkspaceAutoJoinInfoRequestType = new RequestType<
+	GetWorkspaceAutoJoinInfoRequest,
+	GetWorkspaceAutoJoinInfoResponse[],
+	void,
+	void
+>("codestream/scm/workspace/autojoin");
 
 export interface GetLatestCommittersRequest {}
 export interface GetLatestCommittersResponse {

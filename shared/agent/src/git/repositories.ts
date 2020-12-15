@@ -3,22 +3,17 @@ import * as chokidar from "chokidar";
 import * as fs from "fs";
 import * as path from "path";
 import { CommitsChangedData, WorkspaceChangedData } from "protocol/agent.protocol";
-import {
-	Disposable,
-	Emitter,
-	Event,
-	WorkspaceFolder,
-	WorkspaceFoldersChangeEvent
-} from "vscode-languageserver";
+import { Disposable, Emitter, Event, WorkspaceFoldersChangeEvent } from "vscode-languageserver";
 import { URI } from "vscode-uri";
 import { SessionContainer } from "../container";
 import { Logger, TraceLevel } from "../logger";
 import { MatchReposRequest, RepoMap } from "../protocol/agent.protocol.repos";
 import { CSRepository } from "../protocol/api.protocol";
 import { CodeStreamSession } from "../session";
-import { Iterables, Objects, Strings, TernarySearchTree } from "../system";
+import { Iterables, Strings, TernarySearchTree } from "../system";
 import { Disposables } from "../system/disposable";
-import { GitRepository, GitService } from "./gitService";
+import { GitRepository } from "./gitService";
+import { RepositoryLocator } from "./repositoryLocator";
 
 export class GitRepositories {
 	private _onWorkspaceDidChange = new Emitter<WorkspaceChangedData>();
@@ -43,9 +38,11 @@ export class GitRepositories {
 	private _repositoryMappingSyncPromise: Promise<{ [key: string]: boolean }> | undefined;
 	private _onWorkspaceFoldersChangedPromise: Promise<any> | undefined;
 
-	constructor(private readonly _git: GitService, public readonly session: CodeStreamSession) {
-		this._repositoryTree = TernarySearchTree.forPaths();
-
+	constructor(
+		public readonly session: CodeStreamSession,
+		private readonly repoLocator: RepositoryLocator
+	) {
+		this._repositoryTree = repoLocator.repositoryTree;
 		this._searchPromise = this.start();
 	}
 
@@ -165,32 +162,63 @@ export class GitRepositories {
 			try {
 				let initializing = false;
 				const repoMap: RepoMap[] = [];
+				let allAddedRepositories: GitRepository[] = [];
+				const remoteToRepoMap = await this.getKnownRepositories();
 				if (e === undefined) {
+					e = {
+						added: [],
+						removed: []
+					};
 					Logger.log("onWorkspaceFoldersChanged: no event - initializing");
 					initializing = true;
-					e = {
-						added: await this.session.getWorkspaceFolders(),
-						removed: []
-					} as WorkspaceFoldersChangeEvent;
-
+					const existingRepositories = await this.repoLocator.getRepos();
+					const upgradedRepos = [];
+					for (const existingRepo of existingRepositories) {
+						// "upgrade the objects" to GitRepository with remoteToRepoMap objects
+						// so we can get IDs if necessary
+						const repo = await new GitRepository(
+							existingRepo.path,
+							existingRepo.root,
+							existingRepo.folder,
+							true
+						).withKnownRepo(remoteToRepoMap);
+						upgradedRepos.push(repo);
+					}
+					allAddedRepositories = [...upgradedRepos];
+					// clear out the structure, since we're upgrading to GitRepos with remotes
+					// we're going to add them back all in below
+					this._repositoryTree.clear();
 					Logger.log(
-						`onWorkspaceFoldersChanged: Starting repository search in ${e.added.length} folders`
+						`onWorkspaceFoldersChanged: ${upgradedRepos.length} folders added from existing repos`
 					);
-				}
+				} else {
+					Logger.log("onWorkspaceFoldersChanged: with event");
 
-				let allAddedRepositories: GitRepository[] = [];
-				Logger.log(`onWorkspaceFoldersChanged: ${e.added.length} folders added`);
-				for (const f of e.added) {
-					if (URI.parse(f.uri).scheme !== "file") continue;
+					for (const folder of e.added) {
+						if (URI.parse(folder.uri).scheme !== "file") continue;
 
-					// Search for and add all repositories (nested and/or submodules)
-					const repositories = await this.repositorySearch(
-						f,
-						this.session.workspace,
-						initializing,
-						true
-					);
-					allAddedRepositories = [...allAddedRepositories, ...repositories];
+						// Search for and add all repositories (nested and/or submodules)
+						const repositories = await this.repoLocator.repositorySearch(
+							folder,
+							this.session.workspace,
+							initializing,
+							true
+						);
+
+						const repos = [];
+						for (const foundRepo of repositories) {
+							const repo = await new GitRepository(
+								foundRepo.path,
+								foundRepo.root,
+								foundRepo.folder,
+								true
+							).withKnownRepo(remoteToRepoMap);
+
+							repos.push(repo);
+						}
+						allAddedRepositories = [...repos];
+					}
+					Logger.log(`onWorkspaceFoldersChanged: ${e.added.length} folders added`);
 				}
 
 				// for all repositories without a CodeStream repo ID, ask the server for matches,
@@ -312,7 +340,7 @@ export class GitRepositories {
 		for (const r in repos) {
 			const repo = repos[r];
 
-			const repositories = await this.repositorySearch({
+			const repositories = await this.repoLocator.repositorySearch({
 				uri: repo.path,
 				name: path.basename(repo.path)
 			});
@@ -343,7 +371,7 @@ export class GitRepositories {
 		let found;
 		if (URI.parse(document.uri).scheme === "file") {
 			// Search for and add all repositories (nested and/or submodules)
-			const repositories = await this.repositorySearch({
+			const repositories = await this.repoLocator.repositorySearch({
 				uri: dir,
 				name: path.basename(document.uri)
 			});
@@ -584,193 +612,5 @@ export class GitRepositories {
 		}
 
 		return this._repositoryTree;
-	}
-
-	private async repositorySearch(
-		folder: WorkspaceFolder,
-		workspace: any = null,
-		initializing: boolean = false,
-		isInWorkspace: boolean = false
-	): Promise<GitRepository[]> {
-		// const workspace = this.session.workspace;
-		const folderUri = URI.parse(folder.uri);
-
-		// TODO: Make this configurable
-		const depth = 2;
-		// configuration.get<number>(
-		// 	configuration.name("advanced")("repositorySearchDepth").value,
-		// 	folderUri
-		// );
-
-		const remoteToRepoMap = await this.getKnownRepositories();
-
-		Logger.log(
-			`repositorySearch: Searching for repositories (depth=${depth}) in '${folderUri.fsPath}' initializing=${initializing} isInWorkspace=${isInWorkspace}...`
-		);
-
-		const start = process.hrtime();
-
-		const repositories: GitRepository[] = [];
-
-		let rootPath;
-		try {
-			rootPath = await this._git.getRepoRoot(folderUri.fsPath);
-		} catch {}
-		if (rootPath) {
-			Logger.log(`repositorySearch: Repository found in '${rootPath}'`);
-			const repo = new GitRepository(rootPath, true, folder, remoteToRepoMap, isInWorkspace);
-			await repo.ensureSearchComplete();
-			repositories.push(repo);
-		}
-
-		if (depth <= 0) {
-			Logger.log(
-				`repositorySearch: Searching for repositories (depth=${depth}) in '${
-					folderUri.fsPath
-				}' took ${Strings.getDurationMilliseconds(start)} ms`
-			);
-
-			return repositories;
-		}
-
-		let excludes: { [key: string]: boolean } = Object.create(null);
-		if (workspace && this.session.agent.supportsConfiguration) {
-			// Get any specified excludes -- this is a total hack, but works for some simple cases and something is better than nothing :)
-			const [files, search] = await workspace.getConfiguration([
-				{
-					section: "files.exclude",
-					scopeUri: folderUri.toString()
-				},
-				{
-					section: "search.exclude",
-					scopeUri: folderUri.toString()
-				}
-			]);
-
-			excludes = {
-				...(files || {}),
-				...(search || {})
-			};
-
-			const excludedPaths = [
-				...Iterables.filterMap(Objects.entries(excludes), ([key, value]) => {
-					if (!value) return undefined;
-					if (key.startsWith("**/")) return key.substring(3);
-					return key;
-				})
-			];
-
-			excludes = excludedPaths.reduce((accumulator, current) => {
-				accumulator[current] = true;
-				return accumulator;
-			}, Object.create(null) as any);
-		}
-
-		let paths;
-		try {
-			paths = await this.repositorySearchCore(folderUri.fsPath, depth, excludes);
-		} catch (ex) {
-			if (
-				/no such file or directory/i.test(ex.message || "") ||
-				/EPERM: operation not permitted, scandir/i.test(ex.message || "")
-			) {
-				Logger.log(
-					`repositorySearch: Searching for repositories (depth=${depth}) in '${
-						folderUri.fsPath
-					}' FAILED${ex.message ? ` (${ex.message})` : ""}`
-				);
-			} else {
-				Logger.error(
-					ex,
-					`repositorySearch: Searching for repositories (depth=${depth}) in '${folderUri.fsPath}' FAILED`
-				);
-			}
-
-			return repositories;
-		}
-
-		for (let p of paths) {
-			p = path.dirname(p);
-			// If we are the same as the root, skip it
-			if (Strings.normalizePath(p) === rootPath) continue;
-
-			let rp;
-			try {
-				rp = await this._git.getRepoRoot(p);
-			} catch {}
-			if (!rp) continue;
-
-			Logger.log(`repositorySearch: Repository found in '${rp}'`);
-			const repo = new GitRepository(rp, false, folder, remoteToRepoMap, isInWorkspace);
-			await repo.ensureSearchComplete();
-			repositories.push(repo);
-		}
-
-		Logger.log(
-			`repositorySearch: Searching for repositories (depth=${depth}) in '${
-				folderUri.fsPath
-			}' took ${Strings.getDurationMilliseconds(start)} ms`
-		);
-
-		return repositories;
-	}
-
-	private async repositorySearchCore(
-		root: string,
-		depth: number,
-		excludes: { [key: string]: boolean },
-		repositories: string[] = []
-	): Promise<string[]> {
-		return new Promise<string[]>((resolve, reject) => {
-			fs.readdir(root, async (err, files) => {
-				if (err != null) {
-					reject(err);
-					return;
-				}
-
-				if (files.length === 0) {
-					resolve(repositories);
-					return;
-				}
-
-				const folders: string[] = [];
-
-				const promises = files.map(file => {
-					const fullPath = path.resolve(root, file);
-
-					return new Promise<void>((res, rej) => {
-						fs.stat(fullPath, (err, stat) => {
-							if (file === ".git") {
-								repositories.push(fullPath);
-							} else if (
-								err == null &&
-								excludes[file] !== true &&
-								stat != null &&
-								stat.isDirectory()
-							) {
-								folders.push(fullPath);
-							}
-
-							res();
-						});
-					});
-				});
-
-				await Promise.all(promises);
-
-				if (depth-- > 0) {
-					for (const folder of folders) {
-						try {
-							await this.repositorySearchCore(folder, depth, excludes, repositories);
-						} catch (ex) {
-							reject(ex);
-							return;
-						}
-					}
-				}
-
-				resolve(repositories);
-			});
-		});
 	}
 }

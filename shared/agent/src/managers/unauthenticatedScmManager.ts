@@ -1,5 +1,14 @@
+import { Logger } from "../logger";
+import { Container } from "../container";
 import { git } from "../git/git";
-import { GetUserInfoRequestType, GetUserInfoResponse } from "../protocol/agent.protocol";
+import {
+	GetUserInfoRequestType,
+	GetUserInfoResponse,
+	GetWorkspaceAutoJoinInfoRequestType,
+	GetWorkspaceAutoJoinInfoResponse,
+	GetWorkspaceRepoInfoRequestType,
+	GetWorkspaceRepoInfoResponse
+} from "../protocol/agent.protocol";
 import { lsp, lspHandler } from "../system";
 const os = require("os");
 
@@ -20,6 +29,45 @@ export class UnauthenticatedScmManager {
 			return { email: email.trim(), name: name.trim(), username };
 		} catch {
 			return { email: "", name: "", username: "" };
+		}
+	}
+
+	@lspHandler(GetWorkspaceRepoInfoRequestType)
+	async getKnownCommitHashesInOpenRepos(): Promise<GetWorkspaceRepoInfoResponse | undefined> {
+		try {
+			const { repositoryLocator } = Container.instance();
+			const repos = await repositoryLocator.getKnownCommitHashesForRepos();
+			return { repos: repos };
+		} catch (ex) {
+			Logger.error(ex);
+			return undefined;
+		}
+	}
+
+	@lspHandler(GetWorkspaceAutoJoinInfoRequestType)
+	async getAutoJoinInfo(): Promise<GetWorkspaceAutoJoinInfoResponse[] | undefined> {
+		try {
+			const { server } = Container.instance();
+			const result = await this.getKnownCommitHashesInOpenRepos();
+			if (!result || !result.repos) return undefined;
+
+			const accumulator: string[] = [];
+			const shas = Object.keys(result.repos).reduce(
+				(r, k) => r.concat(result.repos[k]),
+				accumulator
+			);
+			if (!shas || !shas.length) return undefined;
+
+			const response = (await server.get({
+				url: "/no-auth/team-lookup",
+				queryData: {
+					commitHashes: shas.join(",")
+				}
+			})) as GetWorkspaceAutoJoinInfoResponse[];
+			return response;
+		} catch (ex) {
+			Logger.error(ex);
+			return undefined;
 		}
 	}
 }

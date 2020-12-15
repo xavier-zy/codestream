@@ -17,30 +17,28 @@ import { GitRemote } from "./models";
 
 export class GitRepository {
 	readonly normalizedPath: string;
-
-	private readonly _knownRepositorySearchPromise: Promise<CSRepository | undefined>;
-	private readonly _defaultRemoteBranchReferencesPromise: Promise<(string | undefined)[]>;
+	private _defaultRemoteBranchReferencesPromise: Promise<(string | undefined)[]> | undefined;
 	private _knownRepository: CSRepository | undefined;
 
 	constructor(
 		public readonly path: string,
 		public readonly root: boolean,
 		public readonly folder: WorkspaceFolder,
-		knownRepos: Map<string, CSRepository>,
-		public readonly isInWorkspace: boolean
+
+		public readonly isInWorkspace?: boolean
 	) {
 		this.normalizedPath = (this.path.endsWith("/") ? this.path : `${this.path}/`).toLowerCase();
+	}
 
-		this._knownRepositorySearchPromise = this.searchForKnownRepository(knownRepos);
+	async withKnownRepo(knownRepos: Map<string, CSRepository>): Promise<GitRepository> {
+		await this.searchForKnownRepository(knownRepos);
 		this._defaultRemoteBranchReferencesPromise = this.getDefaultRemoteBranchReferencesPromise();
+
+		return this;
 	}
 
 	get id() {
 		return this._knownRepository !== undefined ? this._knownRepository.id : undefined;
-	}
-
-	async ensureSearchComplete() {
-		await this._knownRepositorySearchPromise;
 	}
 
 	getRemotes() {

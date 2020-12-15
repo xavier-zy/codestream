@@ -649,8 +649,13 @@ export class CodeStreamSession {
 		}
 
 		if (this.agent.supportsWorkspaces) {
-			Logger.log("getWorkspaceFolders: workspaces supported");
-			return (await this.workspace.getWorkspaceFolders()) || [];
+			try {
+				Logger.log("getWorkspaceFolders: workspaces supported");
+				return (await this.workspace.getWorkspaceFolders()) || [];
+			} catch (ex) {
+				// if you're here, ensure you've waited for the agent to be ready
+				debugger;
+			}
 		}
 
 		Logger.log("getWorkspaceFolders: workspaces not supported");

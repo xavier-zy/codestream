@@ -15,6 +15,10 @@ import { Headshot } from "../src/components/Headshot";
 import styled from "styled-components";
 import { Link } from "../Stream/Link";
 import { Loading } from "../Container/Loading";
+import {
+	GetWorkspaceAutoJoinInfoRequestType,
+	GetWorkspaceAutoJoinInfoResponse
+} from "@codestream/protocols/agent";
 
 const JoinTitle = styled.div`
 	font-size: 14px;
@@ -67,19 +71,17 @@ const mapStateToProps = (state: CodeStreamState) => {
 
 export const NewUserEntry = (connect(mapStateToProps) as any)((props: Props) => {
 	const [isInitializing, setIsInitializing] = React.useState(true);
-	const [autoJoinInfo, setAutoJoinInfo] = React.useState<AutoJoinTeamInfo[]>([]);
+	const [autoJoinInfo, setAutoJoinInfo] = React.useState<GetWorkspaceAutoJoinInfoResponse[]>([]);
 	const [showAdvanced, setShowAdvanced] = React.useState(false);
 
 	const getAutoJoinInfo = async () => {
 		try {
-			// FIXME
-			const commitHashes = "4aec016ccd614a534b3c789c9b035d7878d523d4";
-			const params = { commitHashes };
-			const response = await Server.get<AutoJoinTeamInfo[]>("/no-auth/team-lookup", params);
-			setAutoJoinInfo(response || []);
-			console.warn("Response: ", response);
+			const response = await HostApi.instance.send(GetWorkspaceAutoJoinInfoRequestType, {});
+			if (response) {
+				setAutoJoinInfo(response || []);
+			}
 		} catch (e) {
-			console.warn("Got an error: ", e);
+			console.error("Got an error: ", e);
 		}
 		setIsInitializing(false);
 	};

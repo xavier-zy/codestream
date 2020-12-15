@@ -1,6 +1,6 @@
 import { Logger } from "../logger";
 import { CodeStreamSession } from "../session";
-
+import * as qs from "querystring";
 import {
 	CodeStreamApiDeleteRequestType,
 	CodeStreamApiGetRequestType,
@@ -14,8 +14,11 @@ export class ServerManager {
 	constructor(private readonly session: CodeStreamSession) {}
 
 	@lspHandler(CodeStreamApiGetRequestType)
-	async get(request: { url: string }): Promise<any> {
+	async get(request: { url: string; queryData: object }): Promise<any> {
 		try {
+			if (request.queryData) {
+				request.url += `?${qs.stringify(request.queryData)}`;
+			}
 			return this.session.api.get(request.url);
 		} catch (e) {
 			Logger.error(e, "Could not GET", {

@@ -52,6 +52,7 @@ export function EllipsisMenu(props: EllipsisMenuProps) {
 			pluginVersion: state.pluginVersion,
 			xraySetting: team.settings ? team.settings.xray : "",
 			multipleReviewersApprove: isFeatureEnabled(state, "multipleReviewersApprove"),
+			autoJoinSupported: isFeatureEnabled(state, "autoJoin"),
 			isOnPrem: onPrem
 		};
 	});
@@ -210,6 +211,24 @@ export function EllipsisMenu(props: EllipsisMenuProps) {
 		if (adminIds && adminIds.includes(currentUserId!)) {
 			const submenu = [
 				{
+					label: "Change Team Name",
+					key: "change-team-name",
+					action: () => dispatch(openModal(WebviewModals.ChangeTeamName))
+				},
+				{ label: "-" },
+				{
+					label: "Onboarding Settings...",
+					key: "onboarding-settings",
+					action: () => dispatch(openModal(WebviewModals.TeamSetup)),
+					disabled: !derivedState.autoJoinSupported
+				},
+				{
+					label: "Feedback Request Settings...",
+					key: "feedback-request-settings",
+					action: () => dispatch(openModal(WebviewModals.ReviewSettings)),
+					disabled: !derivedState.multipleReviewersApprove
+				},
+				{
 					label: "Live View Settings",
 					key: "live-view-settings",
 					submenu: [
@@ -238,18 +257,6 @@ export function EllipsisMenu(props: EllipsisMenuProps) {
 							}
 						}
 					]
-				},
-				{
-					label: "Feedback Request Settings...",
-					key: "review-settings",
-					action: () => dispatch(openModal(WebviewModals.ReviewSettings)),
-					disabled: !derivedState.multipleReviewersApprove
-				},
-				{ label: "-" },
-				{
-					label: "Change Team Name",
-					key: "change-team-name",
-					action: () => dispatch(openModal(WebviewModals.ChangeTeamName))
 				},
 				{ label: "-" },
 				{ label: "Export Data", action: () => go(WebviewPanels.Export) },

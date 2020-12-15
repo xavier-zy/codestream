@@ -33,6 +33,7 @@ export const PullRequestReplyComment = styled((props: Props) => {
 	const [text, setText] = useState("");
 	const [open, setOpen] = useState(props.isOpen);
 	const [isSubmitting, setIsSubmitting] = useState(false);
+	const [isPreviewing, setIsPreviewing] = useState(false);
 
 	const handleComment = async () => {
 		try {
@@ -107,10 +108,11 @@ export const PullRequestReplyComment = styled((props: Props) => {
 					placeholder="Reply..."
 					onChange={value => setText(value)}
 					onSubmit={handleComment}
+					setIsPreviewing={value => setIsPreviewing(value)}
 					__onDidRender={stuff => props.__onDidRender(stuff)}
 				/>
 			</PRCodeCommentReplyInput>
-			{open && (
+			{open && !isPreviewing && (
 				<PRButtonRow>
 					<Button variant="secondary" onClick={handleCancelComment}>
 						Cancel

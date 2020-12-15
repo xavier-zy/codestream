@@ -42,6 +42,7 @@ export const PullRequestFinishReview = (props: {
 	const [reviewType, setReviewType] = useState<"COMMENT" | "APPROVE" | "REQUEST_CHANGES">(
 		"COMMENT"
 	);
+	const [isPreviewing, setIsPreviewing] = useState(false);
 
 	const { pr, mode, fetch, setIsLoadingMessage, setFinishReviewOpen } = props;
 
@@ -81,7 +82,7 @@ export const PullRequestFinishReview = (props: {
 			<div
 				style={{
 					margin: "5px 0 15px 0",
-					border: "1px solid var(--base-border-color)"
+					border: isPreviewing ? "none" : "1px solid var(--base-border-color)"
 				}}
 			>
 				<MessageInput
@@ -91,60 +92,68 @@ export const PullRequestFinishReview = (props: {
 					placeholder="Leave a comment"
 					onChange={setReviewText}
 					onSubmit={submitReview}
+					setIsPreviewing={value => setIsPreviewing(value)}
 				/>
+				<div style={{ clear: "both" }}></div>
 			</div>
-			<RadioGroup
-				name="approval"
-				selectedValue={reviewType}
-				onChange={value => setReviewType(value)}
-			>
-				<Radio value={"COMMENT"}>
-					Comment
-					<div className="subtle">Submit general feedback without explicit approval.</div>
-				</Radio>
-				<Radio disabled={pr.viewerDidAuthor} value={"APPROVE"}>
-					<Tooltip
-						title={
-							pr.viewerDidAuthor ? "Pull request authors can't approve their own pull request" : ""
-						}
-						placement="top"
-					>
-						<span>
-							Approve
-							<div className="subtle">Submit feedback and approve merging these changes. </div>
-						</span>
-					</Tooltip>
-				</Radio>
-				<Radio disabled={pr.viewerDidAuthor} value={"REQUEST_CHANGES"}>
-					<Tooltip
-						title={
-							pr.viewerDidAuthor
-								? "Pull request authors can't request changes on their own pull request"
-								: ""
-						}
-						placement="top"
-					>
-						<span>
-							{" "}
-							Request Changes
-							<div className="subtle">Submit feedback that must be addressed before merging.</div>
-						</span>
-					</Tooltip>
-				</Radio>
-			</RadioGroup>
-			<ButtonRow>
-				<Button isLoading={submittingReview} onClick={submitReview}>
-					Submit<span className="wide-text"> review</span>
-				</Button>
-				{pendingCommentCount > 0 && (
-					<Button variant="secondary" onClick={e => cancelReview(e, pr.pendingReview.id)}>
-						Cancel review
+			{!isPreviewing && (
+				<RadioGroup
+					name="approval"
+					selectedValue={reviewType}
+					onChange={value => setReviewType(value)}
+				>
+					<Radio value={"COMMENT"}>
+						Comment
+						<div className="subtle">Submit general feedback without explicit approval.</div>
+					</Radio>
+					<Radio disabled={pr.viewerDidAuthor} value={"APPROVE"}>
+						<Tooltip
+							title={
+								pr.viewerDidAuthor
+									? "Pull request authors can't approve their own pull request"
+									: ""
+							}
+							placement="top"
+						>
+							<span>
+								Approve
+								<div className="subtle">Submit feedback and approve merging these changes. </div>
+							</span>
+						</Tooltip>
+					</Radio>
+					<Radio disabled={pr.viewerDidAuthor} value={"REQUEST_CHANGES"}>
+						<Tooltip
+							title={
+								pr.viewerDidAuthor
+									? "Pull request authors can't request changes on their own pull request"
+									: ""
+							}
+							placement="top"
+						>
+							<span>
+								{" "}
+								Request Changes
+								<div className="subtle">Submit feedback that must be addressed before merging.</div>
+							</span>
+						</Tooltip>
+					</Radio>
+				</RadioGroup>
+			)}
+			{!isPreviewing && (
+				<ButtonRow>
+					<Button isLoading={submittingReview} onClick={submitReview}>
+						Submit<span className="wide-text"> review</span>
 					</Button>
-				)}
-				<div className="subtle" style={{ margin: "10px 0 0 10px" }}>
-					{pendingCommentCount} pending comment{pendingCommentCount == 1 ? "" : "s"}
-				</div>
-			</ButtonRow>
+					{pendingCommentCount > 0 && (
+						<Button variant="secondary" onClick={e => cancelReview(e, pr.pendingReview.id)}>
+							Cancel review
+						</Button>
+					)}
+					<div className="subtle" style={{ margin: "10px 0 0 10px" }}>
+						{pendingCommentCount} pending comment{pendingCommentCount == 1 ? "" : "s"}
+					</div>
+				</ButtonRow>
+			)}
 		</PRCommentCard>
 	);
 };

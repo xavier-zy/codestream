@@ -24,6 +24,7 @@ export const PullRequestEditingComment = styled((props: Props) => {
 	const dispatch = useDispatch();
 	const { pr, setIsLoadingMessage, type, id, done } = props;
 	const [text, setText] = useState(props.text);
+	const [isPreviewing, setIsPreviewing] = useState(false);
 
 	const handleEdit = async () => {
 		setIsLoadingMessage("Updating Comment...");
@@ -91,23 +92,26 @@ export const PullRequestEditingComment = styled((props: Props) => {
 
 	return (
 		<>
-			<div style={{ border: "1px solid var(--base-border-color)" }}>
+			<div style={{ border: isPreviewing ? "none" : "1px solid var(--base-border-color)" }}>
 				<MessageInput
 					autoFocus
 					multiCompose
 					text={text}
 					onChange={value => setText(value)}
 					onSubmit={handleEdit}
+					setIsPreviewing={value => setIsPreviewing(value)}
 				/>
 			</div>
-			<PRButtonRow>
-				<Button variant="secondary" onClick={handleCancelEdit}>
-					Cancel
-				</Button>
-				<Button variant="primary" onClick={handleEdit}>
-					Update comment
-				</Button>
-			</PRButtonRow>
+			{!isPreviewing && (
+				<PRButtonRow>
+					<Button variant="secondary" onClick={handleCancelEdit}>
+						Cancel
+					</Button>
+					<Button variant="primary" onClick={handleEdit}>
+						Update comment
+					</Button>
+				</PRButtonRow>
+			)}
 		</>
 	);
 })``;

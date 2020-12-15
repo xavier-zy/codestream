@@ -28,6 +28,10 @@ export class DocMarker {
 		return this._entity.codemarkId;
 	}
 
+	get isReviewDescendant() {
+		return this._entity.codemark && !!this._entity.codemark.reviewId;
+	}
+
 	get color(): string {
 		// TODO: -- Use a setting
 		return "blue";

@@ -417,9 +417,20 @@ export class CodemarkDecorationProvider implements HoverProvider, Disposable {
 						};
 
 						const typeString = Strings.toTitleCase(m.type);
-						message += `__${m.creatorName}__, ${m.fromNow()} &nbsp; _(${m.formatDate()})_ ${
-							m.summaryMarkdown
-						}\n\n[__View ${typeString} \u2197__](command:codestream.openCodemark?${encodeURIComponent(
+						const markerColor = m.color || "blue";
+						message += `__${m.creatorName}__, ${m.fromNow()} &nbsp; _(${m.formatDate()})_ \n\n`;
+						switch (true) {
+							case m.type === "issue":
+								message += `![issue codemark](${Container.context.asAbsolutePath(`assets/images/icons16/marker-issue-${markerColor}.png`)})`;
+								break;
+							case m.type === "comment" && m.isReviewDescendant:
+								message += `![FR codemark](${Container.context.asAbsolutePath(`assets/images/icons16/marker-fr-${markerColor}.png`)})`;
+								break;
+							default:
+								message += `![regular codemark](${Container.context.asAbsolutePath(`assets/images/icons16/marker-comment-${markerColor}.png`)})`;
+								break;
+						}
+						message += ` ${m.summaryMarkdown} \n\n[__View ${typeString} \u2197__](command:codestream.openCodemark?${encodeURIComponent(
 							JSON.stringify(viewCommandArgs)
 						)} "View ${typeString}")`;
 
@@ -436,9 +447,9 @@ export class CodemarkDecorationProvider implements HoverProvider, Disposable {
 						};
 
 						const typeString = Strings.toTitleCase(m.type);
-						message += `__${m.creatorName}__, ${m.fromNow()} &nbsp; _(${m.formatDate()})_ ${
-							m.summaryMarkdown
-						}\n\n[__View ${typeString} \u2197__](command:codestream.openPullRequest?${encodeURIComponent(
+						message += `__${m.creatorName}__, ${m.fromNow()} &nbsp; _(${m.formatDate()})_ \n\n`;
+						message += `![PR codemark](${Container.context.asAbsolutePath(`assets/images/icons16/marker-pr-${m.color}.png`)})`;
+						message += ` ${m.summaryMarkdown} \n\n[__View ${typeString} \u2197__](command:codestream.openPullRequest?${encodeURIComponent(
 							JSON.stringify(viewCommandArgs)
 						)} "View ${typeString}")`;
 

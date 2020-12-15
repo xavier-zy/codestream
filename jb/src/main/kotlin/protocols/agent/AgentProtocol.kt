@@ -246,7 +246,8 @@ class Codemark(
     val postId: String?,
     val status: String?,
     val pinned: Boolean?,
-    val followerIds: List<String>?
+    val followerIds: List<String>?,
+    val reviewId: String?
 )
 
 class TextDocument(val uri: String)

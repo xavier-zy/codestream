@@ -27,6 +27,7 @@ import { useUpdates } from "../utilities/hooks";
 import { setUserPreference } from "./actions";
 import { Modal } from "./Modal";
 import { InlineMenu } from "../src/components/controls/InlineMenu";
+import { CSTeamSettings } from "@codestream/protocols/api";
 
 const TextButton = styled.span`
 	color: ${props => props.theme.colors.textHighlight};
@@ -113,6 +114,7 @@ export type SharingAttributes = Pick<
 	"providerId" | "providerTeamId" | "channelId"
 >;
 
+const EMPTY_HASH = {};
 export const SharingControls = React.memo(
 	(props: {
 		onChangeValues: (values?: SharingAttributes) => void;
@@ -142,7 +144,7 @@ export const SharingControls = React.memo(
 			);
 
 			const team = state.teams[state.context.currentTeamId];
-			const teamSettings = team.settings || {};
+			const teamSettings = team.settings || (EMPTY_HASH as CSTeamSettings);
 
 			return {
 				currentTeamId,

@@ -408,28 +408,30 @@ export interface CSTeam extends CSEntity {
 	// only used for analytics and reporting. differentiates between teams created by us employees
 	reportingGroup?: string;
 
-	settings?: {
-		limitAuthentication?: boolean;
-		limitCodeHost?: boolean;
-		limitMessage?: boolean;
-		limitIssues?: boolean;
-		authenticationProviders?: {
-			[providerId: string]: boolean;
-		};
-		codeHostProviders?: {
-			[providerId: string]: boolean;
-		};
-		messagingProviders?: {
-			[providerId: string]: boolean;
-		};
-		issuesProviders?: {
-			[providerId: string]: boolean;
-		};
-		autoJoinRepos?: {
-			[repoId: string]: boolean;
-		};
-		[setting: string]: any;
+	settings?: CSTeamSettings;
+}
+
+export interface CSTeamSettings {
+	limitAuthentication?: boolean;
+	limitCodeHost?: boolean;
+	limitMessage?: boolean;
+	limitIssues?: boolean;
+	authenticationProviders?: {
+		[providerId: string]: boolean;
 	};
+	codeHostProviders?: {
+		[providerId: string]: boolean;
+	};
+	messagingProviders?: {
+		[providerId: string]: boolean;
+	};
+	issuesProviders?: {
+		[providerId: string]: boolean;
+	};
+	autoJoinRepos?: {
+		[repoId: string]: boolean;
+	};
+	[setting: string]: any;
 }
 
 export interface CSTag {

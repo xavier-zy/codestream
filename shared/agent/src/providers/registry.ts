@@ -569,9 +569,11 @@ export class ThirdPartyProviderRegistry {
 	})
 	@lspHandler(QueryThirdPartyRequestType)
 	async queryThirdParty(request: QueryThirdPartyRequest) {
+		if (!request || !request.url) {
+			Logger.warn(`queryThirdParty: no url found, returning`);
+			return undefined;
+		}
 		try {
-			if (!request || !request.url) return undefined;
-
 			const uri = URI.parse(request.url);
 			const providers = getRegisteredProviders();
 			for (const provider of providers.filter(_ => {
@@ -595,22 +597,28 @@ export class ThirdPartyProviderRegistry {
 
 					const fn = thirdPartyIssueProvider.getIsMatchingRemotePredicate();
 					if (fn && fn({ domain: uri.authority })) {
+						const id = provider.getConfig().id;
+						Logger.log(
+							`queryThirdParty: found matching provider for ${uri.authority}. providerId=${id}`
+						);
 						return {
-							providerId: provider.getConfig().id
+							providerId: id
 						};
 					}
 				} catch (err) {
 					// only warn the log here as `fn` might fail.
-					Logger.warn(err, "provider queryThirdParty failed", {
+					Logger.warn(err, "queryThirdParty: provider failed", {
 						url: request.url
 					});
 				}
 			}
 		} catch (ex) {
-			Logger.error(ex, "generic queryThirdParty failed", {
+			Logger.error(ex, "queryThirdParty: generic failure", {
 				url: request.url
 			});
 		}
+
+		Logger.log(`queryThirdParty: no matching provider found for ${request.url}`);
 		return undefined;
 	}
 

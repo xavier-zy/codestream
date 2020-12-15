@@ -69,7 +69,7 @@ enum GitHubExceptionType {
 	Unknown = "UNKNOWN",
 	Credentials = "CREDENTIALS",
 	Connection = "CONNECTION"
-};
+}
 
 interface Directives {
 	directives: {
@@ -219,35 +219,23 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 		restApi: { fns: {} }
 	};
 
-	_isKnownException (ex: any): GitHubExceptionType {
-		if ((
-			ex.message &&
-			ex.message.match(/reason: connect ECONNREFUSED/)
-		) ||
-		(
-			ex.message &&
-			ex.message.match(/reason: getaddrinfo ENOTFOUND/)
-		) ||
-		(
-			ex.message &&
-			ex.message.match(/GraphQL Error \(Code: 404\)/)
-		) ||
-		(
-			this.providerConfig.id === "github/enterprise" &&
-			ex.response &&
-			ex.response.error &&
-			ex.response.error.toLowerCase().indexOf("cookies must be enabled to use github") > -1
-		)) {
-			return GitHubExceptionType.Connection
-		} else if ((
-			ex.response &&
-			ex.response.message === "Bad credentials"
-		) ||
-		(
-			ex.response &&
-			ex.response.errors instanceof Array &&
-			ex.response.errors.find((e: any) => e.type === "FORBIDDEN")
-		)) {
+	_isKnownException(ex: any): GitHubExceptionType {
+		if (
+			(ex.message && ex.message.match(/reason: connect ECONNREFUSED/)) ||
+			(ex.message && ex.message.match(/reason: getaddrinfo ENOTFOUND/)) ||
+			(ex.message && ex.message.match(/GraphQL Error \(Code: 404\)/)) ||
+			(this.providerConfig.id === "github/enterprise" &&
+				ex.response &&
+				ex.response.error &&
+				ex.response.error.toLowerCase().indexOf("cookies must be enabled to use github") > -1)
+		) {
+			return GitHubExceptionType.Connection;
+		} else if (
+			(ex.response && ex.response.message === "Bad credentials") ||
+			(ex.response &&
+				ex.response.errors instanceof Array &&
+				ex.response.errors.find((e: any) => e.type === "FORBIDDEN"))
+		) {
 			return GitHubExceptionType.Credentials;
 		} else {
 			return GitHubExceptionType.Unknown;
@@ -2106,6 +2094,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 				if (repos.length) {
 					repoQuery = repos.map(_ => `repo:${_}`).join(" ") + " ";
 				} else {
+					Logger.log(`getMyPullRequests: request.isOpen=true, but no repos found, returning empty`);
 					return [];
 				}
 			} catch (ex) {
@@ -3587,7 +3576,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 				  login
 				  avatarUrl
 				}
-			  }:>2.20.0]`),
+			  }:>=2.21.0]`),
 			// 	`... on ConvertedNoteToIssueEvent {
 			// 	__typename
 			// 	id
@@ -3896,7 +3885,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 			  login
 			  avatarUrl
 			}
-		  }:>2.20.0]`),
+		  }:>=2.21.0]`),
 			`... on ReferencedEvent {
 			__typename
 			id

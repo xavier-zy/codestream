@@ -65,12 +65,6 @@ interface GitHubRepo {
 	has_issues: boolean;
 }
 
-enum GitHubExceptionType {
-	Unknown = "UNKNOWN",
-	Credentials = "CREDENTIALS",
-	Connection = "CONNECTION"
-}
-
 interface Directives {
 	directives: {
 		type:
@@ -219,26 +213,36 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 		restApi: { fns: {} }
 	};
 
-	_isKnownException(ex: any): GitHubExceptionType {
-		if (
-			(ex.message && ex.message.match(/reason: connect ECONNREFUSED/)) ||
-			(ex.message && ex.message.match(/reason: getaddrinfo ENOTFOUND/)) ||
+	_isSuppressedException(ex: any): ReportSuppressedMessages | undefined {
+		const networkErrors = [
+			"ENOTFOUND",
+			"ETIMEDOUT",
+			"EAI_AGAIN",
+			"ECONNRESET",
+			"ECONNREFUSED",
+			"ENETDOWN",
+			"socket disconnected before secure"
+		];
+
+		if (ex.message && networkErrors.some(e => ex.message.match(new RegExp(e)))) {
+			return ReportSuppressedMessages.NetworkError;
+		} else if (
 			(ex.message && ex.message.match(/GraphQL Error \(Code: 404\)/)) ||
 			(this.providerConfig.id === "github/enterprise" &&
 				ex.response &&
 				ex.response.error &&
 				ex.response.error.toLowerCase().indexOf("cookies must be enabled to use github") > -1)
 		) {
-			return GitHubExceptionType.Connection;
+			return ReportSuppressedMessages.ConnectionError;
 		} else if (
 			(ex.response && ex.response.message === "Bad credentials") ||
 			(ex.response &&
 				ex.response.errors instanceof Array &&
 				ex.response.errors.find((e: any) => e.type === "FORBIDDEN"))
 		) {
-			return GitHubExceptionType.Credentials;
+			return ReportSuppressedMessages.AccessTokenInvalid;
 		} else {
-			return GitHubExceptionType.Unknown;
+			return undefined;
 		}
 	}
 
@@ -252,22 +256,26 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 		try {
 			response = await (await this.client()).request<any>(query, variables);
 		} catch (ex) {
-			const exType = this._isKnownException(ex);
-			if (exType !== GitHubExceptionType.Unknown) {
-				// we know about this error, and we want to give the user a chance to correct it
-				// (but throwing up a banner), rather than logging the error to sentry
-				this.session.api.setThirdPartyProviderInfo({
-					providerId: this.providerConfig.id,
-					data: {
-						tokenError: {
-							error: ex,
-							occurredAt: Date.now(),
-							isConnectionError: exType === GitHubExceptionType.Connection
+			Logger.warn("GitHub query caught:", ex);
+			const exType = this._isSuppressedException(ex);
+			if (exType !== undefined) {
+				if (exType !== ReportSuppressedMessages.NetworkError) {
+					// we know about this error, and we want to give the user a chance to correct it
+					// (but throwing up a banner), rather than logging the error to sentry
+					this.session.api.setThirdPartyProviderInfo({
+						providerId: this.providerConfig.id,
+						data: {
+							tokenError: {
+								error: ex,
+								occurredAt: Date.now(),
+								isConnectionError: exType === ReportSuppressedMessages.ConnectionError
+							}
 						}
-					}
-				});
-				delete this._client;
-				throw new InternalError(ReportSuppressedMessages.AccessTokenInvalid, { error: ex });
+					});
+					delete this._client;
+				}
+				// this throws the error but won't log to sentry (for ordinary network errors that seem temporary)
+				throw new InternalError(exType, { error: ex });
 			} else {
 				// this is an unexpected error, throw the exception normally
 				throw ex;

@@ -31,6 +31,7 @@ export const PullRequestInlineComment = styled((props: Props) => {
 	const [text, setText] = useState("");
 	const [isLoadingSingleComment, setIsLoadingSingleComment] = useState(false);
 	const [isLoadingStartReview, setIsLoadingStartReview] = useState(false);
+	const [isPreviewing, setIsPreviewing] = useState(false);
 
 	const trackComment = type => {
 		HostApi.instance.track("PR Comment Added", {
@@ -119,7 +120,7 @@ export const PullRequestInlineComment = styled((props: Props) => {
 						<div
 							style={{
 								margin: "5px 0 0 0",
-								border: "1px solid var(--base-border-color)",
+								border: isPreviewing ? "none" : "1px solid var(--base-border-color)",
 								fontFamily: "var(--font-family)"
 							}}
 						>
@@ -130,38 +131,42 @@ export const PullRequestInlineComment = styled((props: Props) => {
 								placeholder="Leave a comment"
 								onChange={setText}
 								onSubmit={startReview}
+								setIsPreviewing={value => setIsPreviewing(value)}
 								__onDidRender={stuff => props.__onDidRender(stuff)}
 							/>
+							<div style={{ clear: "both" }}></div>
 						</div>
-						<ButtonRow>
-							<Button onClick={() => props.onClose()} variant="secondary">
-								Cancel
-							</Button>
-
-							<Button
-								isLoading={isLoadingSingleComment}
-								onClick={addSingleComment}
-								disabled={(pr && pr.pendingReview != null) || !text}
-							>
-								Add single comment
-							</Button>
-							<Tooltip
-								title={
-									<span>
-										Submit Comment
-										<span className="keybinding extra-pad">
-											{navigator.appVersion.includes("Macintosh") ? "⌘" : "Ctrl"} ENTER
-										</span>
-									</span>
-								}
-								placement="bottomRight"
-								delay={1}
-							>
-								<Button isLoading={isLoadingStartReview} onClick={startReview} disabled={!text}>
-									{pr.pendingReview ? "Add to review" : "Start a review"}
+						{!isPreviewing && (
+							<ButtonRow>
+								<Button onClick={() => props.onClose()} variant="secondary">
+									Cancel
 								</Button>
-							</Tooltip>
-						</ButtonRow>
+
+								<Button
+									isLoading={isLoadingSingleComment}
+									onClick={addSingleComment}
+									disabled={(pr && pr.pendingReview != null) || !text}
+								>
+									Add single comment
+								</Button>
+								<Tooltip
+									title={
+										<span>
+											Submit Comment
+											<span className="keybinding extra-pad">
+												{navigator.appVersion.includes("Macintosh") ? "⌘" : "Ctrl"} ENTER
+											</span>
+										</span>
+									}
+									placement="bottomRight"
+									delay={1}
+								>
+									<Button isLoading={isLoadingStartReview} onClick={startReview} disabled={!text}>
+										{pr.pendingReview ? "Add to review" : "Start a review"}
+									</Button>
+								</Tooltip>
+							</ButtonRow>
+						)}
 					</>
 				)}
 			</PRCommentCard>

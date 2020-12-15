@@ -1059,7 +1059,7 @@ export class MessageInput extends React.Component<Props, State> {
 	};
 
 	renderTextReplaceCodeBlocks = (text: string) => {
-		if (!this.props.renderCodeBlock) return;
+		if (!this.props.renderCodeBlock) return <MarkdownText text={text} inline={false} />;
 
 		const blocks: any[] = [];
 		const groups = text.split(/\[#(\d+)]/);

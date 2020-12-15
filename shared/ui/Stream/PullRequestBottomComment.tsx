@@ -38,6 +38,7 @@ export const PullRequestBottomComment = styled((props: Props) => {
 	const [text, setText] = useState("");
 	const [isLoadingComment, setIsLoadingComment] = useState(false);
 	const [isLoadingCommentAndClose, setIsLoadingCommentAndClose] = useState(false);
+	const [isPreviewing, setIsPreviewing] = useState(false);
 
 	const trackComment = type => {
 		HostApi.instance.track("PR Comment Added", {
@@ -110,76 +111,94 @@ export const PullRequestBottomComment = styled((props: Props) => {
 					</>
 				) : (
 					<>
-						<div style={{ margin: "5px 0 0 0", border: "1px solid var(--base-border-color)" }}>
+						<div
+							style={{
+								margin: "5px 0 0 0",
+								border: isPreviewing ? "none" : "1px solid var(--base-border-color)",
+								fontFamily: "var(--font-family)"
+							}}
+						>
 							<MessageInput
 								multiCompose
 								text={text}
 								placeholder="Add Comment..."
 								onChange={setText}
 								onSubmit={onCommentClick}
+								setIsPreviewing={value => setIsPreviewing(value)}
 								__onDidRender={stuff => props.__onDidRender(stuff)}
 							/>
+							<div style={{ clear: "both" }}></div>
 						</div>
-						<ButtonRow>
-							{pr.state === "CLOSED" ? (
-								<div style={{ textAlign: "right", flexGrow: 1 }}>
-									<Button
-										disabled={pr.merged}
-										isLoading={isLoadingCommentAndClose}
-										onClick={onCommentAndReopenClick}
-										variant="secondary"
-									>
-										{text ? "Reopen and comment" : "Reopen pull request"}
-									</Button>
-
-									<Tooltip
-										title={
-											<span>
-												Submit Comment
-												<span className="keybinding extra-pad">
-													{navigator.appVersion.includes("Macintosh") ? "⌘" : "Ctrl"} ENTER
-												</span>
-											</span>
-										}
-										placement="bottomRight"
-										delay={1}
-									>
-										<Button isLoading={isLoadingComment} onClick={onCommentClick} disabled={!text}>
-											Comment
-										</Button>
-									</Tooltip>
-								</div>
-							) : (
-								<div style={{ textAlign: "right", flexGrow: 1 }}>
-									{!pr.merged && (
+						{!isPreviewing && (
+							<ButtonRow>
+								{pr.state === "CLOSED" ? (
+									<div style={{ textAlign: "right", flexGrow: 1 }}>
 										<Button
+											disabled={pr.merged}
 											isLoading={isLoadingCommentAndClose}
-											onClick={onCommentAndCloseClick}
+											onClick={onCommentAndReopenClick}
 											variant="secondary"
 										>
-											<Icon name="issue-closed" className="red-color margin-right" />
-											{text ? "Close and comment" : "Close pull request"}
+											{text ? "Reopen and comment" : "Reopen pull request"}
 										</Button>
-									)}
-									<Tooltip
-										title={
-											<span>
-												Submit Comment
-												<span className="keybinding extra-pad">
-													{navigator.appVersion.includes("Macintosh") ? "⌘" : "Ctrl"} ENTER
+
+										<Tooltip
+											title={
+												<span>
+													Submit Comment
+													<span className="keybinding extra-pad">
+														{navigator.appVersion.includes("Macintosh") ? "⌘" : "Ctrl"} ENTER
+													</span>
 												</span>
-											</span>
-										}
-										placement="bottomRight"
-										delay={1}
-									>
-										<Button isLoading={isLoadingComment} onClick={onCommentClick} disabled={!text}>
-											Comment
-										</Button>
-									</Tooltip>
-								</div>
-							)}
-						</ButtonRow>
+											}
+											placement="bottomRight"
+											delay={1}
+										>
+											<Button
+												isLoading={isLoadingComment}
+												onClick={onCommentClick}
+												disabled={!text}
+											>
+												Comment
+											</Button>
+										</Tooltip>
+									</div>
+								) : (
+									<div style={{ textAlign: "right", flexGrow: 1 }}>
+										{!pr.merged && (
+											<Button
+												isLoading={isLoadingCommentAndClose}
+												onClick={onCommentAndCloseClick}
+												variant="secondary"
+											>
+												<Icon name="issue-closed" className="red-color margin-right" />
+												{text ? "Close and comment" : "Close pull request"}
+											</Button>
+										)}
+										<Tooltip
+											title={
+												<span>
+													Submit Comment
+													<span className="keybinding extra-pad">
+														{navigator.appVersion.includes("Macintosh") ? "⌘" : "Ctrl"} ENTER
+													</span>
+												</span>
+											}
+											placement="bottomRight"
+											delay={1}
+										>
+											<Button
+												isLoading={isLoadingComment}
+												onClick={onCommentClick}
+												disabled={!text}
+											>
+												Comment
+											</Button>
+										</Tooltip>
+									</div>
+								)}
+							</ButtonRow>
+						)}
 					</>
 				)}
 			</PRCommentCard>

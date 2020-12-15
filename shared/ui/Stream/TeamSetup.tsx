@@ -362,9 +362,11 @@ export function TeamSetup(props: Props) {
 				});
 			}
 
-			if (autoJoinRepos.length > 0) {
+			const newLength = autoJoinRepos.length;
+			const oldLength = Object.keys(derivedState.autoJoinRepos).length;
+			if (newLength > 0 && newLength !== oldLength) {
 				HostApi.instance.track("Team AutoJoin Enabled", {
-					Repos: autoJoinRepos.length
+					Repos: newLength
 				});
 			}
 

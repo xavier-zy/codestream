@@ -23,7 +23,11 @@ import {
 	goToSetPassword
 } from "../store/context/actions";
 import { GetActiveEditorContextRequestType } from "../ipc/host.protocol.editor";
-import { BootstrapInHostRequestType, ConnectToIDEProviderRequestType, OpenUrlRequestType } from "../ipc/host.protocol";
+import {
+	BootstrapInHostRequestType,
+	ConnectToIDEProviderRequestType,
+	OpenUrlRequestType
+} from "../ipc/host.protocol";
 import { bootstrap } from "../store/actions";
 import { logError } from "../logger";
 import { ChatProviderAccess } from "../store/context/types";
@@ -47,7 +51,7 @@ export interface SSOAuthInfo {
 		teamId: string;
 		repoId: string;
 		commitHash: string;
-	}
+	};
 }
 
 const ProviderNames = {
@@ -97,10 +101,10 @@ export const startSSOSignin = (
 	}
 };
 
-export const startIDESignin = (
-	provider: SupportedSSOProvider,
-	info?: SSOAuthInfo
-) => async (dispatch, getState: () => CodeStreamState) => {
+export const startIDESignin = (provider: SupportedSSOProvider, info?: SSOAuthInfo) => async (
+	dispatch,
+	getState: () => CodeStreamState
+) => {
 	try {
 		const { session } = getState();
 		const result = await HostApi.instance.send(ConnectToIDEProviderRequestType, { provider });
@@ -108,6 +112,7 @@ export const startIDESignin = (
 			provider,
 			token: result.accessToken,
 			inviteCode: info && info.inviteCode,
+			repoInfo: info && info.repoInfo,
 			noSignup: !info || !info.fromSignup,
 			data: {
 				sessionId: result.sessionId
@@ -125,14 +130,12 @@ export const startIDESignin = (
 			};
 			HostApi.instance.send(ProviderTokenRequestType, request, { alternateReject: fail });
 			return dispatch(goToSSOAuth(provider, { ...(info || emptyObject) }));
-		}
-		catch (tokenError) {
+		} catch (tokenError) {
 			info.gotError = true;
 			return dispatch(goToSSOAuth(provider, { ...(info || emptyObject) }));
-		} 
-	}
-	catch (error) {
-		logError (`Unable to start VSCode ${provider} sign in: ${error}`);
+		}
+	} catch (error) {
+		logError(`Unable to start VSCode ${provider} sign in: ${error}`);
 	}
 };
 
@@ -257,10 +260,7 @@ export const validateSignup = (provider: string, authInfo?: SSOAuthInfo) => asyn
 			case LoginResult.AlreadySignedIn:
 				return dispatch(bootstrap());
 			case LoginResult.NotOnTeam:
-				HostApi.instance.track(
-					"Account Created",
-					{ email: response.extra.email }
-				);
+				HostApi.instance.track("Account Created", { email: response.extra.email });
 				return dispatch(
 					goToTeamCreation({
 						email: response.extra && response.extra.email,
@@ -278,12 +278,9 @@ export const validateSignup = (provider: string, authInfo?: SSOAuthInfo) => asyn
 	}
 
 	if (authInfo && authInfo.fromSignup) {
-		HostApi.instance.track(
-			"Account Created",
-			{
-				email: response.loginResponse.user.email
-			}
-		);
+		HostApi.instance.track("Account Created", {
+			email: response.loginResponse.user.email
+		});
 
 		const providerName = provider
 			? ProviderNames[provider.toLowerCase()] || provider

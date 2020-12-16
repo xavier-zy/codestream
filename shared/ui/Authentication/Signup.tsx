@@ -101,15 +101,15 @@ export const Signup = (props: Props) => {
 		setIsInitializing(true);
 		try {
 			const url = `/no-auth/teams/${teamId}/auth-settings`;
-			console.warn("Request: ", url);
+			// console.warn("Request: ", url);
 			const response = await Server.get<TeamAuthSettings>(url);
 			if (response && response.limitAuthentication) {
 				setLimitAuthentication(true);
 				setAuthenticationProviders(response.authenticationProviders);
 			}
-			console.warn("Response: ", response);
+			// console.warn("Response: ", response);
 		} catch (e) {
-			console.warn("Got an error: ", e);
+			console.warn("Error in getTeamAuthInfo: ", e);
 		}
 		setIsInitializing(false);
 	};
@@ -252,19 +252,38 @@ export const Signup = (props: Props) => {
 		[props.type]
 	);
 
+	const buildSignupInfo = () => {
+		const info: any = { fronSignup: true };
+
+		if (props.inviteCode) {
+			info.type = SignupType.JoinTeam;
+			info.inviteCode = props.inviteCode;
+		} else if (props.commitHash) {
+			info.type = SignupType.JoinTeam;
+			info.repoInfo = {
+				teamId: props.teamId,
+				commitHash: props.commitHash,
+				repoId: props.repoId
+			};
+		} else {
+			info.type = SignupType.CreateTeam;
+		}
+
+		info.fromSignup = true;
+
+		return info;
+	};
+
 	const onClickGithubSignup = useCallback(
 		(event: React.SyntheticEvent) => {
 			event.preventDefault();
 			HostApi.instance.track("Provider Auth Selected", {
 				Provider: "GitHub"
 			});
-			const info = props.inviteCode
-				? { type: SignupType.JoinTeam, inviteCode: props.inviteCode }
-				: { type: SignupType.CreateTeam };
 			if (derivedState.isInVSCode && derivedState.supportsVSCodeGithubSignin) {
-				return dispatch(startIDESignin("github", { ...info, fromSignup: true }));
+				return dispatch(startIDESignin("github", buildSignupInfo()));
 			} else {
-				return dispatch(startSSOSignin("github", { ...info, fromSignup: true }));
+				return dispatch(startSSOSignin("github", buildSignupInfo()));
 			}
 		},
 		[props.type]
@@ -276,10 +295,7 @@ export const Signup = (props: Props) => {
 			HostApi.instance.track("Provider Auth Selected", {
 				Provider: "GitLab"
 			});
-			const info = props.inviteCode
-				? { type: SignupType.JoinTeam, inviteCode: props.inviteCode }
-				: { type: SignupType.CreateTeam };
-			return dispatch(startSSOSignin("gitlab", { ...info, fromSignup: true }));
+			return dispatch(startSSOSignin("gitlab", buildSignupInfo()));
 		},
 		[props.type]
 	);
@@ -290,10 +306,7 @@ export const Signup = (props: Props) => {
 			HostApi.instance.track("Provider Auth Selected", {
 				Provider: "Bitbucket"
 			});
-			const info = props.inviteCode
-				? { type: SignupType.JoinTeam, inviteCode: props.inviteCode }
-				: { type: SignupType.CreateTeam };
-			return dispatch(startSSOSignin("bitbucket", { ...info, fromSignup: true }));
+			return dispatch(startSSOSignin("bitbucket", buildSignupInfo()));
 		},
 		[props.type]
 	);

@@ -619,7 +619,13 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 			const repos = allRepos.repos;
 
 			const matchingRepos = repos.filter(_ =>
-				_.remotes.some(r => r.normalizedUrl && repoUrl.indexOf(r.normalizedUrl.toLowerCase()) > -1)
+				_.remotes.some(
+					r =>
+						r.normalizedUrl &&
+						r.normalizedUrl.length > 2 &&
+						r.normalizedUrl.match(/([a-zA-Z0-9]+)/) &&
+						repoUrl.indexOf(r.normalizedUrl.toLowerCase()) > -1
+				)
 			);
 			if (matchingRepos.length === 1) {
 				currentRepo = matchingRepos[0];
@@ -632,7 +638,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 					if (matchingRepos2.length === 1) {
 						currentRepo = matchingRepos2[0];
 					} else {
-						console.error(`Could not find repo for repoName=${repoName} repoUrl=${repoUrl}`);
+						Logger.warn(`Could not find repo for repoName=${repoName} repoUrl=${repoUrl}`);
 					}
 				} else {
 					currentRepo = matchingRepos2[0];

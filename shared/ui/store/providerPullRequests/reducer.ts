@@ -379,7 +379,13 @@ export const getProviderPullRequestRepo = createSelector(
 			const repoUrl = currentPr.conversations.repository.url.toLowerCase();
 
 			let matchingRepos = repos.filter(_ =>
-				_.remotes.some(r => r.normalizedUrl && repoUrl.indexOf(r.normalizedUrl.toLowerCase()) > -1)
+				_.remotes.some(
+					r =>
+						r.normalizedUrl &&
+						r.normalizedUrl.length > 2 &&
+						r.normalizedUrl.match(/([a-zA-Z0-9]+)/) &&
+						repoUrl.indexOf(r.normalizedUrl.toLowerCase()) > -1
+				)
 			);
 			if (matchingRepos.length === 1) {
 				currentRepo = matchingRepos[0];

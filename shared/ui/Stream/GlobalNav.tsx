@@ -112,6 +112,7 @@ export function GlobalNav() {
 	const selected = panel => false;
 	return React.useMemo(() => {
 		if (currentCodemarkId) return null;
+		else if (activePanel === WebviewPanels.Onboard) return null;
 		else {
 			return (
 				<nav className="inline" id="global-nav">

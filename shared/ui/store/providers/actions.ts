@@ -9,7 +9,10 @@ import {
 	RemoveEnterpriseProviderRequestType,
 	TelemetryRequestType
 } from "@codestream/protocols/agent";
-import { ConnectToIDEProviderRequestType, DisconnectFromIDEProviderRequestType } from "../../ipc/host.protocol";
+import {
+	ConnectToIDEProviderRequestType,
+	DisconnectFromIDEProviderRequestType
+} from "../../ipc/host.protocol";
 import { CSMe } from "@codestream/protocols/api";
 import { logError } from "../../logger";
 import { setIssueProvider, openPanel } from "../context/actions";
@@ -43,10 +46,11 @@ export const configureAndConnectProvider = (
 	}
 };
 
-export const connectProvider = (providerId: string, connectionLocation: ViewLocation, force?: boolean) => async (
-	dispatch,
-	getState
-) => {
+export const connectProvider = (
+	providerId: string,
+	connectionLocation: ViewLocation,
+	force?: boolean
+) => async (dispatch, getState) => {
 	const { context, users, session, providers, ide, capabilities } = getState();
 	const provider = providers[providerId];
 	if (!provider) return;
@@ -66,8 +70,12 @@ export const connectProvider = (providerId: string, connectionLocation: ViewLoca
 		const api = HostApi.instance;
 		if (ide.name === "VSC" && name === "github" && capabilities.vsCodeGithubSignin) {
 			const result = await api.send(ConnectToIDEProviderRequestType, { provider: name });
-			dispatch(configureProvider(
-				providerId, { token: result.accessToken, data: { sessionId: result.sessionId } }, true)
+			dispatch(
+				configureProvider(
+					providerId,
+					{ token: result.accessToken, data: { sessionId: result.sessionId } },
+					true
+				)
 			);
 			return {};
 		} else {
@@ -93,7 +101,8 @@ export type ViewLocation =
 	| "Sidebar"
 	| "Create Pull Request Panel"
 	| "Issues Section"
-	| "Provider Error Banner";
+	| "Provider Error Banner"
+	| "Onboard";
 
 export const sendIssueProviderConnected = (
 	providerId: string,

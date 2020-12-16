@@ -292,6 +292,7 @@ export function EllipsisMenu(props: EllipsisMenuProps) {
 	}
 
 	menuItems.push(
+		// { label: "Onboard", key: "onboard", action: () => go(WebviewPanels.Onboard) },
 		{
 			label: "Account",
 			action: "account",

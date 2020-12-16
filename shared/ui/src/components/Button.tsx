@@ -2,11 +2,13 @@ import React, { PropsWithChildren } from "react";
 import styled from "styled-components";
 import Icon from "@codestream/webview/Stream/Icon";
 
-type ButtonSize = "default" | "large" | "compact" | "subcompact";
+type ButtonSize = "default" | "xl" | "large" | "compact" | "subcompact";
 
 const getFontSize = (size?: ButtonSize, variant?: ButtonVariant) => {
 	if (variant == "text") return "font-size: inherit !important";
 	switch (size) {
+		case "xl":
+			return "font-size: 1.25em !important;";
 		case "large":
 			return "font-size: 1.15em !important;";
 		case "compact":
@@ -22,6 +24,8 @@ const getFontSize = (size?: ButtonSize, variant?: ButtonVariant) => {
 const getPadding = (size?: ButtonSize, variant?: ButtonVariant) => {
 	if (variant == "text") return "padding: 0;";
 	switch (size) {
+		case "xl":
+			return "padding: 1px 30px;";
 		case "large":
 			return "padding: 1px 15px;";
 		case "compact":
@@ -37,6 +41,8 @@ const getPadding = (size?: ButtonSize, variant?: ButtonVariant) => {
 const getLineHeight = (size?: ButtonSize, variant?: ButtonVariant) => {
 	if (variant == "text") return "line-height: inherit;";
 	switch (size) {
+		case "xl":
+			return "line-height: 2em;";
 		case "large":
 			return "line-height: 2em;";
 		case "compact":

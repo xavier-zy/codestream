@@ -5,6 +5,7 @@ import { connect } from "react-redux";
 import cx from "classnames";
 import { ActivityPanel } from "./ActivityPanel";
 import { ExportPanel } from "./ExportPanel";
+import { Onboard } from "./Onboard";
 import { Sidebar } from "./Sidebar";
 import { Notifications } from "./Notifications";
 import { ChangeEmail } from "./ChangeEmail";
@@ -280,7 +281,9 @@ export class SimpleStream extends PureComponent {
 				: null;
 		const enterpriseProvider = activePanel.startsWith("configure-enterprise-");
 		const [, , providerName, providerId, origin] = configureProviderInfo || [];
-		const customConfigureProvider = providerName ? ["azuredevops", "youtrack", "jiraserver"].find(name => name === providerName) : null;
+		const customConfigureProvider = providerName
+			? ["azuredevops", "youtrack", "jiraserver"].find(name => name === providerName)
+			: null;
 
 		// console.warn("ACTIVE: ", activePanel);
 		// status and teams panels have been deprecated
@@ -296,7 +299,7 @@ export class SimpleStream extends PureComponent {
 				)}
 				<div id="confirm-root" />
 				<GlobalNav />
-				<Sidebar />
+				{activePanel === WebviewPanels.Onboard ? <Onboard /> : <Sidebar />}
 				{activeModal && (
 					<Modal translucent>
 						{activeModal === WebviewModals.CreateTeam && <CreateTeamPage />}
@@ -347,6 +350,7 @@ export class SimpleStream extends PureComponent {
 					activePanel !== WebviewPanels.OpenPullRequests &&
 					activePanel !== WebviewPanels.WorkInProgress &&
 					activePanel !== WebviewPanels.Sidebar &&
+					activePanel !== WebviewPanels.Onboard &&
 					activePanel !== WebviewPanels.CodemarksForFile && (
 						<Modal translucent>
 							{activePanel === WebviewPanels.Tester && <Tester />}
@@ -391,34 +395,19 @@ export class SimpleStream extends PureComponent {
 							)}
 							{activePanel === WebviewPanels.GettingStarted && <GettingStarted />}
 							{configureProviderInfo && !enterpriseProvider && !customConfigureProvider && (
-								<ConfigureTokenProviderPanel
-									providerId={providerId}
-									originLocation={origin}
-								/>
+								<ConfigureTokenProviderPanel providerId={providerId} originLocation={origin} />
 							)}
 							{customConfigureProvider === "youtrack" && (
-								<ConfigureYouTrackPanel
-									providerId={providerId}
-									originLocation={origin}
-								/>
+								<ConfigureYouTrackPanel providerId={providerId} originLocation={origin} />
 							)}
 							{customConfigureProvider === "azuredevops" && (
-								<ConfigureAzureDevOpsPanel
-									providerId={providerId}
-									originLocation={origin}
-								/>
+								<ConfigureAzureDevOpsPanel providerId={providerId} originLocation={origin} />
 							)}
 							{customConfigureProvider === "jiraserver" && (
-								<ConfigureJiraServerPanel
-									providerId={providerId}
-									originLocation={origin}
-								/>
+								<ConfigureJiraServerPanel providerId={providerId} originLocation={origin} />
 							)}
 							{enterpriseProvider && (
-								<ConfigureEnterprisePanel
-									providerId={providerId}
-									originLocation={origin}
-								/>
+								<ConfigureEnterprisePanel providerId={providerId} originLocation={origin} />
 							)}
 						</Modal>
 					)}
@@ -673,15 +662,12 @@ const mapStateToProps = state => {
 	};
 };
 
-export default connect(
-	mapStateToProps,
-	{
-		...actions,
-		setCurrentReview,
-		setCurrentPullRequest,
-		setCurrentStream,
-		setCurrentCodemark,
-		editCodemark,
-		setNewPostEntry
-	}
-)(injectIntl(SimpleStream));
+export default connect(mapStateToProps, {
+	...actions,
+	setCurrentReview,
+	setCurrentPullRequest,
+	setCurrentStream,
+	setCurrentCodemark,
+	editCodemark,
+	setNewPostEntry
+})(injectIntl(SimpleStream));

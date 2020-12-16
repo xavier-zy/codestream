@@ -207,7 +207,7 @@ export class Logger {
 
 	static sanitize(key: string, value: any) {
 		// hide "private" members from logging (aka keys that start with underscore)
-		if (key && key.indexOf("_") === 0) return undefined;
+		if (key.indexOf("_") === 0) return undefined;
 		return /(apikey|password|secret|token|privatekey)/i.test(key) ? `<${key}>` : value;
 	}
 

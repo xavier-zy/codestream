@@ -2,10 +2,14 @@
 import * as chokidar from "chokidar";
 import * as fs from "fs";
 import * as path from "path";
-import { CommitsChangedData, WorkspaceChangedData } from "protocol/agent.protocol";
+import {
+	CommitsChangedData,
+	ReportingMessageType,
+	WorkspaceChangedData
+} from "../protocol/agent.protocol";
 import { Disposable, Emitter, Event, WorkspaceFoldersChangeEvent } from "vscode-languageserver";
 import { URI } from "vscode-uri";
-import { SessionContainer } from "../container";
+import { Container, SessionContainer } from "../container";
 import { Logger, TraceLevel } from "../logger";
 import { MatchReposRequest, RepoMap } from "../protocol/agent.protocol.repos";
 import { CSRepository } from "../protocol/api.protocol";
@@ -231,9 +235,18 @@ export class GitRepositories {
 					const orderedUnassignedRepos: GitRepository[] = [];
 					const repoInfo: MatchReposRequest = { repos: [] };
 					const { git } = SessionContainer.instance();
+					const badRemotes: any = [];
 					await Promise.all(
 						unassignedRepositories.map(async repo => {
-							const remotes = (await repo.getWeightedRemotes()).map(r => r.normalizedUrl);
+							const weightedRemotes = await repo.getWeightedRemotes();
+							// any bad remotes here? -- store for later
+							// we've found remotes that have "/" as their normalizedUrls, and these are bad
+							const badNormalizedUrls = weightedRemotes.filter(_ => _.normalizedUrl === "/");
+							if (badNormalizedUrls.length) {
+								badRemotes.push(badNormalizedUrls);
+							}
+
+							const remotes = weightedRemotes.map(r => r.normalizedUrl);
 							const knownCommitHashes = await git.getKnownCommitHashes(repo.path);
 							orderedUnassignedRepos.push(repo);
 							repoInfo.repos.push({ remotes, knownCommitHashes });
@@ -245,6 +258,20 @@ export class GitRepositories {
 							`onWorkspaceFoldersChanged: Git repo ${orderedUnassignedRepos[i].path} matched to ${repoMatches.repos[i].id}:${repoMatches.repos[i].name}`
 						);
 						orderedUnassignedRepos[i].setKnownRepository(repoMatches.repos[i]);
+					}
+					if (badRemotes.length) {
+						try {
+							Container.instance().errorReporter.reportMessage({
+								type: ReportingMessageType.Error,
+								source: "agent",
+								message: "Bad remotes found",
+								extra: {
+									badRemotes: badRemotes
+								}
+							});
+						} catch (ex) {
+							Logger.warn(ex);
+						}
 					}
 				}
 

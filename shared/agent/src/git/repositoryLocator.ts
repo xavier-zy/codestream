@@ -85,6 +85,7 @@ export class RepositoryLocator {
 		if (this._startCorePromise !== undefined) {
 			Logger.log("startCore: existing promise found - awaiting");
 			await this._startCorePromise;
+			Logger.log("startCore: existing promise found - done");
 			this._startCorePromise = undefined;
 		}
 

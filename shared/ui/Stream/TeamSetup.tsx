@@ -426,7 +426,7 @@ export function TeamSetup(props: Props) {
 						<p className="explainer">
 							Streamline integrations for your teammates by limiting the options that CodeStream
 							displays
-							<Link href="https://docs.codestream.com/userguide/features/myteam-section/">
+							<Link href="https://docs.codestream.com/userguide/features/team-administration/">
 								<Icon name="info" className="clickable" title="More info" />
 							</Link>
 						</p>

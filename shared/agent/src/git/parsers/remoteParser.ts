@@ -1,13 +1,15 @@
 "use strict";
 import { GitRemote, GitRemoteType } from "../models/remote";
+import * as childProcess from "child_process";
+import { Logger } from "../../logger";
 
 const emptyStr = "";
 
 const remoteRegex = /^(.*)\t(.*)\s\((.*)\)$/gm;
 const urlRegex = /^(?:(git:\/\/)(.*?)(?::.*?)?\/|(https?:\/\/)(?:.*?@)?(.*?)(?::.*?)?\/|git@(.*):|(ssh:\/\/)(?:.*@)?(.*?)(?::.*?)?(?:\/|(?=~))|(?:.*?@)(.*?):)(.*)$/;
-
+const hostnameRegex = new RegExp("hostname (.*)");
 export class GitRemoteParser {
-	static parse(data: string, repoPath: string): GitRemote[] {
+	static async parse(data: string, repoPath: string): Promise<GitRemote[]> {
 		if (!data) return [];
 
 		const remotes: GitRemote[] = [];
@@ -27,7 +29,7 @@ export class GitRemoteParser {
 			// Stops excessive memory usage -- https://bugs.chromium.org/p/v8/issues/detail?id=2869
 			url = ` ${match[2]}`.substr(1);
 
-			[scheme, domain, path] = this.parseGitUrl(url);
+			[scheme, domain, path] = await this.parseGitUrl(url);
 
 			uniqueness = `${domain}/${path}`;
 			remote = groups[uniqueness];
@@ -56,20 +58,51 @@ export class GitRemoteParser {
 		return remotes;
 	}
 
-	static parseGitUrl(url: string): [string, string, string] {
-		const match = urlRegex.exec(url);
-		if (match == null) return [emptyStr, emptyStr, emptyStr];
-
-		let host = match[5];
-		const githubHost = "github.com";
-		if (host && host.toLowerCase().startsWith(githubHost)) {
-			host = githubHost;
-		}
-
+	private static matchToTuple(match: any, host: string): [string, string, string] {
 		return [
 			match[1] || match[3] || match[6],
 			match[2] || match[4] || host || match[7] || match[8],
 			match[9].replace(/\.git\/?$/, emptyStr)
 		];
+	}
+
+	static async parseGitUrl(url: string): Promise<[string, string, string]> {
+		const match = urlRegex.exec(url);
+		if (match == null) return [emptyStr, emptyStr, emptyStr];
+
+		let host = match[5];
+
+		// if this isn't ssh, just return normal, if it is, use the ssh alias finder below
+		if (url.indexOf("git@") === -1) return GitRemoteParser.matchToTuple(match, host);
+
+		return new Promise(resolve => {
+			try {
+				// if this is an ssh setup, it's possible that a user has an alias setup.
+				// we can get the alias for this by running the `ssh -G <remoteAlias>`` command
+				// and parsing to get the `hostname` value
+				// if, for some reason this fails, fall back to doing the old (current) logic
+				childProcess.execFile("ssh", ["-G", host], function(err: any, stdout: any, stderr: any) {
+					try {
+						if (err || stderr) {
+							Logger.warn(`remoteParser: parseGitUrl err=${err} stderr=${stderr}`);
+							resolve(GitRemoteParser.matchToTuple(match, host));
+						} else {
+							const hostnameMatch = hostnameRegex.exec(stdout);
+							if (hostnameMatch && hostnameMatch[1]) {
+								host = hostnameMatch[1];
+							}
+
+							resolve(GitRemoteParser.matchToTuple(match, host));
+						}
+					} catch (ex) {
+						Logger.warn(`remoteParser: parseGitUrl ex=${ex}`);
+						resolve(GitRemoteParser.matchToTuple(match, host));
+					}
+				});
+			} catch (ex) {
+				Logger.warn(`remoteParser: parseGitUrl execFile ex=${ex}`);
+				resolve(GitRemoteParser.matchToTuple(match, host));
+			}
+		});
 	}
 }

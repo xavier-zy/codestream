@@ -94,7 +94,7 @@ export class BroadcasterEvents implements Disposable {
 
 		const channels: ChannelDescriptor[] = [
 			{ name: `user-${this._options.api.userId}` },
-			{ name: `team-${this._options.api.teamId}`, withPresence: true }
+			{ name: `team-${this._options.api.teamId}` }
 		];
 
 		for (const streamId of streamIds || []) {

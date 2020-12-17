@@ -599,6 +599,7 @@ export class CodeStreamApiProvider implements ApiProvider {
 		});
 		this._events.onDidReceiveMessage(this.onPubnubMessageReceived, this);
 
+		/* No longer need to subscribe to streams
 		if (types === undefined || types.includes(MessageType.Streams)) {
 			const streams = (await SessionContainer.instance().streams.getSubscribable(this.teamId))
 				.streams;
@@ -606,6 +607,8 @@ export class CodeStreamApiProvider implements ApiProvider {
 		} else {
 			await this._events.connect();
 		}
+		*/
+		await this._events.connect();
 
 		this._onDidSubscribe.fire();
 	}
@@ -2046,7 +2049,9 @@ export class CodeStreamApiProvider implements ApiProvider {
 
 	@lspHandler(ProviderTokenRequestType)
 	async setProviderToken(request: ProviderTokenRequest) {
-		const repoInfo = request.repoInfo && `${request.repoInfo.teamId}|${request.repoInfo.repoId}|${request.repoInfo.commitHash}`;
+		const repoInfo =
+			request.repoInfo &&
+			`${request.repoInfo.teamId}|${request.repoInfo.repoId}|${request.repoInfo.commitHash}`;
 		await this.post(`/no-auth/provider-token/${request.provider}`, {
 			token: request.token,
 			data: request.data,

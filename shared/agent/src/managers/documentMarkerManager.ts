@@ -324,8 +324,8 @@ export class DocumentMarkerManager {
 
 				const location: CSLocationArray = [gotoLine, 0, gotoLine, 0, undefined];
 				documentMarkers.push({
-					createdAt: comment.createdAt,
-					modifiedAt: comment.createdAt,
+					createdAt: +new Date(comment.createdAt),
+					modifiedAt: +new Date(comment.createdAt),
 					id: comment.id,
 					file: comment.path,
 					repoId: "",

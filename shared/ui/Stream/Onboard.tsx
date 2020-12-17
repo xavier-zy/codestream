@@ -43,8 +43,8 @@ const Step = styled.div`
 	width: 100%;
 	min-height: 100vh;
 	.body {
-		padding: 40px 20px 20px 20px;
-		margin-bottom: 40px;
+		padding: 30px 20px 20px 20px;
+		margin-bottom: 30px;
 		max-width: 450px;
 		pointer-events: none;
 	}
@@ -71,6 +71,7 @@ const Step = styled.div`
 			animation-duration: 2s;
 			animation-timing-function: ease-out;
 			animation-name: hoverin;
+			animation-fill-mode: forwards;
 		}
 	}
 	h3 {
@@ -109,6 +110,7 @@ const Step = styled.div`
 		animation-timing-function: ease;
 		animation-fill-mode: forwards;
 		display: flex;
+		overflow: hidden;
 	}
 
 	@keyframes easedown {
@@ -291,6 +293,9 @@ export const Onboard = React.memo(function Onboard() {
 				"gitlab_enterprise"
 			].includes(providers[id].name)
 		);
+		const connectedCodeHostProviders = codeHostProviders.filter(id =>
+			connectedProviders.includes(id)
+		);
 		const issueProviders = Object.keys(providers)
 			.filter(id => providers[id].hasIssues)
 			.filter(id => !codeHostProviders.includes(id));
@@ -301,6 +306,7 @@ export const Onboard = React.memo(function Onboard() {
 			dontSuggestInvitees,
 			connectedProviders,
 			codeHostProviders,
+			connectedCodeHostProviders,
 			issueProviders,
 			messagingProviders,
 			teamMates: getTeamMates(state)
@@ -311,6 +317,9 @@ export const Onboard = React.memo(function Onboard() {
 	const [lastStep, setLastStep] = React.useState(0);
 	const [suggestedInvitees, setSuggestedInvitees] = React.useState<any[]>([]);
 	const [seenCommentingStep, setSeenCommentingStep] = React.useState<boolean>(false);
+	const [hasConnectedCodeHost, setHasConnectedCodeHost] = React.useState(
+		derivedState.connectedCodeHostProviders.length > 0
+	);
 
 	useDidMount(() => {
 		getSuggestedInvitees();
@@ -352,6 +361,7 @@ export const Onboard = React.memo(function Onboard() {
 	const skip = () => setStep(currentStep + 1);
 
 	const setStep = (step: number) => {
+		if (step === 1 && hasConnectedCodeHost) step = 2;
 		if (step === 6) {
 			dispatch(closePanel());
 			return;
@@ -600,6 +610,7 @@ export const Onboard = React.memo(function Onboard() {
 			<Dots id="dots">
 				{STEPS.map((step, index) => {
 					const selected = index === currentStep;
+					if (index === 1 && hasConnectedCodeHost) return null;
 					return <Dot selected={selected} onClick={() => setStep(index)} />;
 				})}
 			</Dots>

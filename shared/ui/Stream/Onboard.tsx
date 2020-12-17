@@ -22,6 +22,7 @@ import { PROVIDER_MAPPINGS } from "./CrossPostIssueControls/types";
 import { configureAndConnectProvider } from "../store/providers/actions";
 import ComposeTitles, { ComposeKeybindings } from "./ComposeTitles";
 import { CreateCodemarkIcons } from "./CreateCodemarkIcons";
+import { isConnected } from "../store/providers/reducer";
 
 const EMPTY_ARRAY = [];
 const EMPTY_HASH = {};
@@ -40,7 +41,7 @@ const Step = styled.div`
 	top: 0;
 	left: 0;
 	width: 100%;
-	height: 100vh;
+	min-height: 100vh;
 	.body {
 		padding: 40px 20px 20px 20px;
 		margin-bottom: 40px;
@@ -106,10 +107,8 @@ const Step = styled.div`
 		animation-duration: 0.25s;
 		animation-name: slideout;
 		animation-timing-function: ease;
+		animation-fill-mode: forwards;
 		display: flex;
-		max-width: 100%;
-		max-height: 100%;
-		overflow: hidden;
 	}
 
 	@keyframes easedown {
@@ -143,10 +142,17 @@ const Step = styled.div`
 	@keyframes slideout {
 		from {
 			opacity: 1;
+			height: auto;
+		}
+		99% {
+			opacity: 0;
+			height: auto;
+			transform: scale(0.9);
 		}
 		to {
 			opacity: 0;
-			transform: scale(0.9);
+			height: 0px;
+			transform: scale(0.09);
 		}
 	}
 	@keyframes slidein {
@@ -186,14 +192,14 @@ const LinkRow = styled.div`
 `;
 
 const CenterRow = styled.div`
-	margin-top: 10px;
+	margin-top: 20px;
 	text-align: center;
 `;
 
 const Dots = styled.div`
 	display: flex;
 	position: absolute;
-	bottom: 20px;
+	top: calc(100vh - 30px);
 	left: calc(50vw - ${STEPS.length * 10}px);
 	z-index: 11;
 `;
@@ -215,24 +221,16 @@ const OutlineBox = styled.div`
 `;
 
 const DialogRow = styled.div`
-	margin-left: -20px;
-	margin-right: -20px;
 	display: flex;
-	padding: 20px;
+	padding: 10px 0;
 	&:first-child {
-		margin-top: -20px;
-	}
-	&:last-child {
-		margin-bottom: -20px;
+		margin-top: -10px;
 	}
 	.icon {
 		color: var(--text-color-info);
 		margin-right: 15px;
 		flex-shrink: 0;
 		flex-grow: 0;
-	}
-	& + & {
-		border-top: 1px solid var(--base-border-color);
 	}
 `;
 
@@ -254,12 +252,35 @@ const Keybinding = styled.div`
 	transform: scale(2);
 `;
 
+const Sep = styled.div`
+	border-top: 1px solid var(--base-border-color);
+	margin: 10px -20px 20px -20px;
+`;
+
+const OutlineNumber = styled.div`
+	display: flex;
+	flex-shrink: 0;
+	align-items: center;
+	justify-content: center;
+	font-size: 14px;
+	width: 30px;
+	height: 30px;
+	border-radius: 50%;
+	margin: 0 10px 0 0;
+	font-weight: bold;
+
+	background: var(--button-background-color);
+	color: var(--button-foreground-color);
+`;
+
 export const Onboard = React.memo(function Onboard() {
 	const dispatch = useDispatch();
 	const derivedState = useSelector((state: CodeStreamState) => {
 		const { providers } = state;
 		const team = state.teams[state.context.currentTeamId];
 		const dontSuggestInvitees = team.settings ? team.settings.dontSuggestInvitees || {} : {};
+
+		const connectedProviders = Object.keys(providers).filter(id => isConnected(state, { id }));
 		const codeHostProviders = Object.keys(providers).filter(id =>
 			[
 				"github",
@@ -278,6 +299,7 @@ export const Onboard = React.memo(function Onboard() {
 		return {
 			providers: state.providers,
 			dontSuggestInvitees,
+			connectedProviders,
 			codeHostProviders,
 			issueProviders,
 			messagingProviders,
@@ -334,9 +356,40 @@ export const Onboard = React.memo(function Onboard() {
 			dispatch(closePanel());
 			return;
 		}
-		if (step === 4) setSeenCommentingStep(true);
+		if (step === 5) setSeenCommentingStep(true);
 		setLastStep(currentStep);
 		setCurrentStep(step);
+		requestAnimationFrame(() => {
+			const $container = document.getElementById("scroll-container");
+			if ($container) $container.scrollTo({ top: 0, behavior: "smooth" });
+			const $active = document.getElementsByClassName("active")[0];
+			if ($active) {
+				const $dots = document.getElementById("dots");
+				if ($dots) $dots.style.top = `${$active.clientHeight - 30}px`;
+			}
+		});
+	};
+
+	const renderProviderButtons = providerIds => {
+		return providerIds.map(providerId => {
+			const provider = providers[providerId];
+			const providerDisplay = PROVIDER_MAPPINGS[provider.name];
+			const connected = derivedState.connectedProviders.includes(providerId);
+			if (providerDisplay) {
+				return (
+					<Provider
+						key={provider.id}
+						variant={connected ? "success" : undefined}
+						onClick={() =>
+							!connected && dispatch(configureAndConnectProvider(provider.id, "Onboard"))
+						}
+					>
+						<Icon name={providerDisplay.icon} />
+						{providerDisplay.displayName}
+					</Provider>
+				);
+			} else return null;
+		});
 	};
 
 	const className = (step: number) => {
@@ -347,15 +400,17 @@ export const Onboard = React.memo(function Onboard() {
 
 	return (
 		<div
+			id="scroll-container"
 			className="onboarding-page"
 			style={{
-				justifyContent: "center",
+				position: "relative",
+				alignItems: "center",
 				overflowX: "hidden",
 				overflowY: currentStep === 0 ? "hidden" : "auto"
 			}}
 		>
 			{seenCommentingStep && <CreateCodemarkIcons />}
-			<form className="standard-form">
+			<form className="standard-form" style={{ height: "auto", position: "relative" }}>
 				<fieldset className="form-body">
 					<div style={{ position: "absolute", top: "10px", right: "10px", zIndex: 15 }}>
 						<CancelButton onClick={() => dispatch(closePanel())} />
@@ -409,31 +464,9 @@ export const Onboard = React.memo(function Onboard() {
 										(GitHub only)
 									</div>
 								</DialogRow>
-
-								<div
-									style={{
-										borderTop: "1px solid var(--base-border-color)",
-										margin: "0 -20px 20px -20px"
-									}}
-								/>
+								<Sep />
 								<IntegrationButtons noBorder noPadding>
-									{derivedState.codeHostProviders.map(providerId => {
-										const provider = providers[providerId];
-										const providerDisplay = PROVIDER_MAPPINGS[provider.name];
-										if (providerDisplay) {
-											return (
-												<Provider
-													key={provider.id}
-													onClick={() =>
-														dispatch(configureAndConnectProvider(provider.id, "Onboard"))
-													}
-												>
-													<Icon name={providerDisplay.icon} />
-													{providerDisplay.displayName}
-												</Provider>
-											);
-										} else return null;
-									})}
+									{renderProviderButtons(derivedState.codeHostProviders)}
 								</IntegrationButtons>
 							</Dialog>
 							<SkipLink onClick={skip}>I'll do this later</SkipLink>
@@ -442,12 +475,51 @@ export const Onboard = React.memo(function Onboard() {
 					<Step className={className(2)}>
 						<div className="body">
 							<h3>
+								<Icon name="jira" />
+								<Icon name="trello" />
+								<Icon name="asana" />
+								<br />
+								Connect to your Issue Tracker
+							</h3>
+							<p className="explainer">Grab tickets and get to work without breaking flow</p>
+							<Dialog>
+								<DialogRow>
+									<Icon name="check" />
+									<div>View a list of outstanding tasks assigned to you with custom queries</div>
+								</DialogRow>
+								<DialogRow>
+									<Icon name="check" />
+									<div>
+										One-click to update task status, create a branch, and update your status on
+										Slack
+									</div>
+								</DialogRow>
+								<DialogRow>
+									<Icon name="check" />
+									<div>
+										Enrich the context of code discussion, pull requests, and feedback requests by
+										including ticket information
+									</div>
+								</DialogRow>
+								<Sep />
+								<IntegrationButtons noBorder noPadding>
+									{renderProviderButtons(derivedState.issueProviders)}
+								</IntegrationButtons>
+							</Dialog>
+							<SkipLink onClick={skip}>I'll do this later</SkipLink>
+						</div>
+					</Step>
+					<Step className={className(3)}>
+						<div className="body">
+							<h3>
 								<Icon name="slack" />
 								<Icon name="msteams" />
 								<br />
 								Connect to Slack or MS Teams
 							</h3>
-							<p className="explainer">Someone write some copy here</p>
+							<p className="explainer">
+								Ask questions or make suggestions about any code in your repo
+							</p>
 							<Dialog>
 								<DialogRow>
 									<Icon name="check" />
@@ -467,90 +539,9 @@ export const Onboard = React.memo(function Onboard() {
 										merges in
 									</div>
 								</DialogRow>
-								<div
-									style={{
-										borderTop: "1px solid var(--base-border-color)",
-										margin: "0 -20px 20px -20px"
-									}}
-								/>
+								<Sep />
 								<IntegrationButtons noBorder noPadding>
-									{derivedState.messagingProviders.map(providerId => {
-										const provider = providers[providerId];
-										const providerDisplay = PROVIDER_MAPPINGS[provider.name];
-										if (providerDisplay) {
-											return (
-												<Provider
-													key={provider.id}
-													onClick={() =>
-														dispatch(configureAndConnectProvider(provider.id, "Onboard"))
-													}
-												>
-													<Icon name={providerDisplay.icon} />
-													{providerDisplay.displayName}
-												</Provider>
-											);
-										} else return null;
-									})}
-								</IntegrationButtons>
-							</Dialog>
-							<SkipLink onClick={skip}>I'll do this later</SkipLink>
-						</div>
-					</Step>
-					<Step className={className(3)}>
-						<div className="body">
-							<h3>
-								<Icon name="jira" />
-								<Icon name="trello" />
-								<Icon name="asana" />
-								<br />
-								Connect to your Issue Tracker
-							</h3>
-							<p className="explainer">
-								Bring pull requests into your IDE to streamline your workflow
-							</p>
-							<Dialog>
-								<DialogRow>
-									<Icon name="check" />
-									<div>View a list of outstanding tasks assigned to you with custom queries</div>
-								</DialogRow>
-								<DialogRow>
-									<Icon name="check" />
-									<div>
-										One-click to update task status, create a branch, and update your status on
-										Slack
-									</div>
-								</DialogRow>
-								<DialogRow>
-									<Icon name="check" />
-									<div>
-										Pull requests and feedback requests contain the context of which ticket you are
-										working on
-									</div>
-								</DialogRow>
-								<div
-									style={{
-										borderTop: "1px solid var(--base-border-color)",
-										margin: "0 -20px 20px -20px"
-									}}
-								/>
-								<IntegrationButtons noBorder noPadding>
-									{derivedState.issueProviders.map(providerId => {
-										const provider = providers[providerId];
-										const providerDisplay = PROVIDER_MAPPINGS[provider.name];
-										if (providerDisplay) {
-											return (
-												<Provider
-													key={provider.id}
-													onClick={() =>
-														dispatch(configureAndConnectProvider(provider.id, "Onboard"))
-													}
-												>
-													<Icon name={providerDisplay.icon} />
-													{providerDisplay.displayName}
-												</Provider>
-											);
-										} else return null;
-									})}
+									{renderProviderButtons([...derivedState.messagingProviders].reverse())}
 								</IntegrationButtons>
 							</Dialog>
 							<SkipLink onClick={skip}>I'll do this later</SkipLink>
@@ -558,27 +549,13 @@ export const Onboard = React.memo(function Onboard() {
 					</Step>
 					<Step className={className(4)}>
 						<div className="body">
-							<h3>Discuss Code with your Team</h3>
-							<p className="explainer">
-								Ask questions or make suggestions about any code in your repo
-							</p>
-							<Dialog>
-								Try commenting on code by selecting a range in your editor and clicking an icon that
-								appears, or hitting the keybinding below.
-								<Keybinding>{ComposeKeybindings.comment}</Keybinding>
-							</Dialog>
-							<SkipLink onClick={skip}>I'll do this later</SkipLink>
-						</div>
-					</Step>
-					<Step className={className(5)}>
-						<div className="body">
 							<h3>Invite your team</h3>
 							<p className="explainer">We recommend exploring CodeStream with your team </p>
 							<Dialog>
 								{suggestedInvitees.length > 0 && (
 									<>
 										<p className="explainer" style={{ textAlign: "left" }}>
-											Invite suggestions based on your git history
+											Suggestions below are based on your git history
 										</p>
 										{suggestedInvitees.map(user => {
 											return (
@@ -600,14 +577,32 @@ export const Onboard = React.memo(function Onboard() {
 							<SkipLink onClick={confirmSkip}>I'll do this later</SkipLink>
 						</div>
 					</Step>
-					<Dots>
-						{STEPS.map((step, index) => {
-							const selected = index === currentStep;
-							return <Dot selected={selected} onClick={() => setStep(index)} />;
-						})}
-					</Dots>
+					<Step className={className(5)}>
+						<div className="body">
+							<h3>Try it: Discuss Code with your Team</h3>
+							<div style={{ height: "5px" }} />
+							<Dialog>
+								<DialogRow style={{ alignItems: "center" }}>
+									<OutlineNumber>1</OutlineNumber>
+									<div>Select a range in your editor</div>
+								</DialogRow>
+								<DialogRow style={{ alignItems: "center" }}>
+									<OutlineNumber>2</OutlineNumber>
+									<div>Click the comment icon or press the keybinding:</div>
+								</DialogRow>
+								<Keybinding>{ComposeKeybindings.comment}</Keybinding>
+							</Dialog>
+							<SkipLink onClick={skip}>I'll try this later</SkipLink>
+						</div>
+					</Step>
 				</fieldset>
 			</form>
+			<Dots id="dots">
+				{STEPS.map((step, index) => {
+					const selected = index === currentStep;
+					return <Dot selected={selected} onClick={() => setStep(index)} />;
+				})}
+			</Dots>
 		</div>
 	);
 });

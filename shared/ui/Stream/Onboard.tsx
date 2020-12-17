@@ -1,9 +1,8 @@
-import { WebviewModals, WebviewPanels } from "@codestream/protocols/webview";
 import React, { useState, useEffect, useMemo } from "react";
 import { shallowEqual, useDispatch, useSelector } from "react-redux";
 import styled from "styled-components";
 import { CodeStreamState } from "../store";
-import { getPreferences, getTeamMates } from "../store/users/reducer";
+import { getTeamMates } from "../store/users/reducer";
 import { useDidMount } from "../utilities/hooks";
 import { HostApi } from "../webview-api";
 import { closePanel } from "./actions";
@@ -20,14 +19,12 @@ import { Dialog } from "../src/components/Dialog";
 import { IntegrationButtons, Provider } from "./IntegrationsPanel";
 import { PROVIDER_MAPPINGS } from "./CrossPostIssueControls/types";
 import { configureAndConnectProvider } from "../store/providers/actions";
-import ComposeTitles, { ComposeKeybindings } from "./ComposeTitles";
+import { ComposeKeybindings } from "./ComposeTitles";
 import { CreateCodemarkIcons } from "./CreateCodemarkIcons";
 import { isConnected } from "../store/providers/reducer";
+import { TextInput } from "../Authentication/TextInput";
 
-const EMPTY_ARRAY = [];
-const EMPTY_HASH = {};
-
-export const STEPS = [{}, {}, {}, {}, {}, {}];
+export const NUM_STEPS = 6;
 
 const Step = styled.div`
 	margin: 0 auto;
@@ -198,12 +195,13 @@ const CenterRow = styled.div`
 	text-align: center;
 `;
 
-const Dots = styled.div`
+const Dots = styled.div<{ steps: number }>`
 	display: flex;
 	position: absolute;
 	top: calc(100vh - 30px);
-	left: calc(50vw - ${STEPS.length * 10}px);
+	left: calc(50vw - ${props => props.steps * 10}px);
 	z-index: 11;
+	transition: top 0.15s;
 `;
 
 const Dot = styled.div<{ selected?: boolean }>`
@@ -275,6 +273,24 @@ const OutlineNumber = styled.div`
 	color: var(--button-foreground-color);
 `;
 
+const ExpandingText = styled.div`
+	margin: 10px 0;
+
+	animation-duration: 0.25s;
+	animation-name: expand;
+	animation-timing-function: ease;
+	animation-fill-mode: forwards;
+
+	@keyframes expand {
+		from {
+			height: 0px;
+		}
+		to {
+			height: 25px;
+		}
+	}
+`;
+
 export const Onboard = React.memo(function Onboard() {
 	const dispatch = useDispatch();
 	const derivedState = useSelector((state: CodeStreamState) => {
@@ -312,14 +328,16 @@ export const Onboard = React.memo(function Onboard() {
 			teamMates: getTeamMates(state)
 		};
 	}, shallowEqual);
+
 	const { providers } = derivedState;
-	const [currentStep, setCurrentStep] = React.useState(0);
-	const [lastStep, setLastStep] = React.useState(0);
-	const [suggestedInvitees, setSuggestedInvitees] = React.useState<any[]>([]);
-	const [seenCommentingStep, setSeenCommentingStep] = React.useState<boolean>(false);
-	const [hasConnectedCodeHost, setHasConnectedCodeHost] = React.useState(
+	const [currentStep, setCurrentStep] = useState(0);
+	const [lastStep, setLastStep] = useState(0);
+	const [suggestedInvitees, setSuggestedInvitees] = useState<any[]>([]);
+	const [seenCommentingStep, setSeenCommentingStep] = useState<boolean>(false);
+	const [hasConnectedCodeHost, setHasConnectedCodeHost] = useState(
 		derivedState.connectedCodeHostProviders.length > 0
 	);
+	const [numInviteFields, setNumInviteFields] = useState(0);
 
 	useDidMount(() => {
 		getSuggestedInvitees();
@@ -338,12 +356,12 @@ export const Onboard = React.memo(function Onboard() {
 			suggested.push({ email, fullName: committers[email] || email });
 		});
 		setSuggestedInvitees(suggested);
+		if (suggested.length === 0) setNumInviteFields(3);
 	};
 
 	const confirmSkip = () => {
 		confirmPopup({
 			title: "Skip this step?",
-			className: "wide",
 			message:
 				"CodeStream is more powerful when you collaborate. You can invite team members at any time, but don’t hoard all the fun.",
 			centered: false,
@@ -369,15 +387,30 @@ export const Onboard = React.memo(function Onboard() {
 		if (step === 5) setSeenCommentingStep(true);
 		setLastStep(currentStep);
 		setCurrentStep(step);
+		scrollToTop();
+		setTimeout(() => positionDots(), 250);
+	};
+
+	const scrollToTop = () => {
 		requestAnimationFrame(() => {
 			const $container = document.getElementById("scroll-container");
 			if ($container) $container.scrollTo({ top: 0, behavior: "smooth" });
+		});
+	};
+
+	const positionDots = () => {
+		requestAnimationFrame(() => {
 			const $active = document.getElementsByClassName("active")[0];
 			if ($active) {
 				const $dots = document.getElementById("dots");
 				if ($dots) $dots.style.top = `${$active.clientHeight - 30}px`;
 			}
 		});
+	};
+
+	const addInvite = () => {
+		setNumInviteFields(numInviteFields + 1);
+		setTimeout(() => positionDots(), 250);
 	};
 
 	const renderProviderButtons = providerIds => {
@@ -579,8 +612,20 @@ export const Onboard = React.memo(function Onboard() {
 										})}
 									</>
 								)}
+								{[...Array(numInviteFields)].map((_, index) => {
+									return (
+										<ExpandingText>
+											<TextInput
+												autoFocus={index === numInviteFields - 1}
+												placeholder="name@example.com"
+												value=""
+												onChange={() => {}}
+											/>
+										</ExpandingText>
+									);
+								})}
 								<LinkRow>
-									<Link>+ Add more</Link>
+									<Link onClick={addInvite}>+ Add more</Link>
 									<Button>Send invites</Button>
 								</LinkRow>
 							</Dialog>
@@ -598,7 +643,7 @@ export const Onboard = React.memo(function Onboard() {
 								</DialogRow>
 								<DialogRow style={{ alignItems: "center" }}>
 									<OutlineNumber>2</OutlineNumber>
-									<div>Click the comment icon or press the keybinding:</div>
+									<div>Click the comment icon or type the keybinding:</div>
 								</DialogRow>
 								<Keybinding>{ComposeKeybindings.comment}</Keybinding>
 							</Dialog>
@@ -607,8 +652,8 @@ export const Onboard = React.memo(function Onboard() {
 					</Step>
 				</fieldset>
 			</form>
-			<Dots id="dots">
-				{STEPS.map((step, index) => {
+			<Dots id="dots" steps={hasConnectedCodeHost ? NUM_STEPS - 1 : NUM_STEPS}>
+				{[...Array(NUM_STEPS)].map((_, index) => {
 					const selected = index === currentStep;
 					if (index === 1 && hasConnectedCodeHost) return null;
 					return <Dot selected={selected} onClick={() => setStep(index)} />;
@@ -617,3 +662,15 @@ export const Onboard = React.memo(function Onboard() {
 		</div>
 	);
 });
+
+/* TODO
+   add more input fields to invite
+   make invites work
+   handle what happens when you connect a code host
+   after you create a codemark, what happens?
+   hook it up to registration, remove from ellipsis menu
+   A/B testing methodology
+   instrumentation
+ x center the dots when there are one fewer
+ x what happens when there are no suggested invitees? (3 input fields)
+*/

@@ -34,12 +34,6 @@ const JoinTitle = styled.div`
 	}
 `;
 
-interface AutoJoinTeamInfo {
-	admins: CSUser[];
-	team: CSTeam;
-	repo: CSRepository;
-}
-
 interface ConnectedProps {
 	pluginVersion: string;
 	whichServer: string;
@@ -72,13 +66,25 @@ const mapStateToProps = (state: CodeStreamState) => {
 export const NewUserEntry = (connect(mapStateToProps) as any)((props: Props) => {
 	const [isInitializing, setIsInitializing] = React.useState(true);
 	const [autoJoinInfo, setAutoJoinInfo] = React.useState<GetWorkspaceAutoJoinInfoResponse[]>([]);
+	const [repoNamesByTeam, setRepoNamesByTeam] = React.useState<{ [id: string]: string[] }>({});
 	const [showAdvanced, setShowAdvanced] = React.useState(false);
 
 	const getAutoJoinInfo = async () => {
 		try {
 			const response = await HostApi.instance.send(GetWorkspaceAutoJoinInfoRequestType, {});
 			if (response) {
-				setAutoJoinInfo(response || []);
+				// massage the info to a more collapsed format
+				const infoByTeam: { [id: string]: GetWorkspaceAutoJoinInfoResponse } = {};
+				const repoNames: { [id: string]: string[] } = {};
+				response.forEach(match => {
+					const teamId = match.team.id;
+					if (infoByTeam[teamId]) return;
+					else infoByTeam[teamId] = match;
+
+					repoNames[teamId] = response.filter(m => m.team.id === teamId).map(m => m.repo.name);
+				});
+				setRepoNamesByTeam(repoNames);
+				setAutoJoinInfo(Object.values(infoByTeam));
 			}
 		} catch (e) {
 			console.error("Got an error: ", e);
@@ -148,7 +154,13 @@ export const NewUserEntry = (connect(mapStateToProps) as any)((props: Props) => 
 													<b>{admin.fullName}</b>
 												))}
 											/>{" "}
-											set up a team for people working on the <b>{match.repo.name}</b> repository.
+											set up a team for people working on the{" "}
+											<SmartFormattedList
+												value={repoNamesByTeam[match.team.id].map(name => (
+													<b>{name}</b>
+												))}
+											/>{" "}
+											{repoNamesByTeam[match.team.id].length > 1 ? "repositories" : "repository"}.
 										</div>
 									</JoinTitle>
 									<Button

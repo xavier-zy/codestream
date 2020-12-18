@@ -23,6 +23,7 @@ import { ComposeKeybindings } from "./ComposeTitles";
 import { CreateCodemarkIcons } from "./CreateCodemarkIcons";
 import { isConnected } from "../store/providers/reducer";
 import { TextInput } from "../Authentication/TextInput";
+import { Tab, Tabs } from "../src/components/Tabs";
 
 export const NUM_STEPS = 6;
 
@@ -247,9 +248,9 @@ const SkipLink = styled.div`
 `;
 
 const Keybinding = styled.div`
-	margin: 40px 0;
+	margin: 20px 0;
 	text-align: center;
-	transform: scale(2);
+	transform: scale(1.5);
 `;
 
 const Sep = styled.div`
@@ -380,7 +381,7 @@ export const Onboard = React.memo(function Onboard() {
 
 	const setStep = (step: number) => {
 		if (step === 1 && hasConnectedCodeHost) step = 2;
-		if (step === 6) {
+		if (step === NUM_STEPS) {
 			dispatch(closePanel());
 			return;
 		}
@@ -593,7 +594,7 @@ export const Onboard = React.memo(function Onboard() {
 					<Step className={className(4)}>
 						<div className="body">
 							<h3>Invite your team</h3>
-							<p className="explainer">We recommend exploring CodeStream with your team </p>
+							<p className="explainer">We recommend exploring CodeStream with your team</p>
 							<Dialog>
 								{suggestedInvitees.length > 0 && (
 									<>
@@ -632,11 +633,40 @@ export const Onboard = React.memo(function Onboard() {
 							<SkipLink onClick={confirmSkip}>I'll do this later</SkipLink>
 						</div>
 					</Step>
+					{/* 
 					<Step className={className(5)}>
 						<div className="body">
-							<h3>Try it: Discuss Code with your Team</h3>
-							<div style={{ height: "5px" }} />
+							<h3>Learn the basics</h3>
+							<p className="explainer">
+								Watch a few sample videos to get the most out of CodeStream
+							</p>
+							<Tabs>
+								<Tab active>Pull Requests</Tab>
+								<Tab>Feedback Requests</Tab>
+							</Tabs>
+							<img src="https://images.codestream.com/video/PullRequests.gif" />
+							<SkipLink onClick={skip}>I'll do this later</SkipLink>
+						</div>
+					</Step>
+					*/}
+					<Step className={className(5)}>
+						<div className="body">
+							<h3>Discuss any code, anytime</h3>
+							<p className="explainer">
+								Discuss code in a pull request, a feedback request, or to ask a question or make a
+								suggestion about any part of your code base.
+							</p>
 							<Dialog>
+								<div
+									style={{
+										textAlign: "center",
+										margin: "0 0 10px 0",
+										fontSize: "larger",
+										color: "var(--text-color-highlight)"
+									}}
+								>
+									Try sharing a code comment with your team:
+								</div>
 								<DialogRow style={{ alignItems: "center" }}>
 									<OutlineNumber>1</OutlineNumber>
 									<div>Select a range in your editor</div>

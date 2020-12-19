@@ -6,6 +6,7 @@ import * as actions from "./actions";
 import { ContextActionsType, ContextState, Route } from "./types";
 import { WebviewPanels } from "@codestream/protocols/webview";
 import { SessionActionType } from "../session/types";
+import { CodeStreamState } from "..";
 
 type ContextActions = ActionType<typeof actions>;
 type PreferencesActions = ActionType<typeof preferencesActions>;
@@ -189,3 +190,8 @@ export function reduceContext(
 			return { ...initialState, ...state };
 	}
 }
+
+export const getTestGroup = (state: CodeStreamState, testName: string): string | undefined => {
+	const company = state.companies[state.teams[state.context.currentTeamId].companyId];
+	return (company.testGroups || {})[testName] || undefined;
+};

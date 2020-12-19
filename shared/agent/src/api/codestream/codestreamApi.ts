@@ -1635,6 +1635,14 @@ export class CodeStreamApiProvider implements ApiProvider {
 		return this.get<CSGetCompanyResponse>(`/companies/${request.companyId}`, this._token);
 	}
 
+	setCompanyTestGroups(companyId: string, request: { [key: string]: string }): Promise<object> {
+		return this.put<{ [key: string]: string }, {}>(
+			`/company-test-group/${companyId}`,
+			request,
+			this._token
+		);
+	}
+
 	@lspHandler(CreateTeamTagRequestType)
 	async createTeamTag(request: CSTeamTagRequest) {
 		await this.post(`/team-tags/${request.team.id}`, { ...request.tag }, this._token);

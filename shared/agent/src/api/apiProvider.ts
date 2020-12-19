@@ -431,6 +431,7 @@ export interface ApiProvider {
 
 	fetchCompanies(request: FetchCompaniesRequest): Promise<FetchCompaniesResponse>;
 	getCompany(request: GetCompanyRequest): Promise<GetCompanyResponse>;
+	setCompanyTestGroups(companyId: string, request: { [key: string]: string }): Promise<object>;
 
 	fetchUsers(request: FetchUsersRequest): Promise<FetchUsersResponse>;
 	getUser(request: GetUserRequest): Promise<GetUserResponse>;

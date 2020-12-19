@@ -381,6 +381,9 @@ export interface CSCompany extends CSEntity {
 	trialEndDate?: number;
 	plan?: string;
 	reportingGroup?: string;
+	testGroups?: {
+		[key: string]: string;
+	};
 }
 
 export interface CSTeam extends CSEntity {

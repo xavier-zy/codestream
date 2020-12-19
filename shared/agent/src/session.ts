@@ -893,8 +893,7 @@ export class CodeStreamSession {
 			this.api.updateUser({ timeZone });
 		}
 
-		const capabilities = SessionContainer.instance().session.apiCapabilities;
-		if (capabilities.testGroups) {
+		if (this.apiCapabilities.testGroups) {
 			await this.setCompanyTestGroups();
 		}
 

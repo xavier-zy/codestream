@@ -81,6 +81,9 @@ export const connectProvider = (
 		} else {
 			await api.send(ConnectThirdPartyProviderRequestType, { providerId });
 		}
+		if (provider.hasSharing) {
+			dispatch(sendMessagingServiceConnected(providerId, connectionLocation));
+		}
 		if (provider.hasIssues) {
 			dispatch(sendIssueProviderConnected(providerId, connectionLocation));
 			dispatch(setIssueProvider(providerId));
@@ -118,6 +121,23 @@ export const sendIssueProviderConnected = (
 		properties: {
 			Service: name,
 			Host: isEnterprise ? host : null,
+			"Connection Location": connectionLocation
+		}
+	});
+};
+
+export const sendMessagingServiceConnected = (
+	providerId: string,
+	connectionLocation: ViewLocation = "Onboard"
+) => async (dispatch, getState) => {
+	const { providers } = getState();
+	const provider = providers[providerId];
+	if (!provider) return;
+
+	HostApi.instance.send(TelemetryRequestType, {
+		eventName: "Messaging Service Connected",
+		properties: {
+			Service: provider.name,
 			"Connection Location": connectionLocation
 		}
 	});

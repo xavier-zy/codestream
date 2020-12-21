@@ -22,11 +22,10 @@ import { ComposeKeybindings } from "./ComposeTitles";
 import { CreateCodemarkIcons } from "./CreateCodemarkIcons";
 import { isConnected } from "../store/providers/reducer";
 import { TextInput } from "../Authentication/TextInput";
-import { Tab, Tabs } from "../src/components/Tabs";
 import { FormattedMessage } from "react-intl";
-import { EMAIL_REGEX } from "./TeamPanel";
 import { isEmailValid } from "../Authentication/Signup";
 import { OpenUrlRequestType } from "@codestream/protocols/webview";
+import { TelemetryRequestType } from "@codestream/protocols/agent";
 
 export const NUM_STEPS = 6;
 
@@ -501,6 +500,13 @@ export const Onboard = React.memo(function Onboard() {
 							if (provider.id == "login*microsoftonline*com") {
 								HostApi.instance.send(OpenUrlRequestType, {
 									url: "https://docs.codestream.com/userguide/features/msteams-integration"
+								});
+								HostApi.instance.send(TelemetryRequestType, {
+									eventName: "Messaging Service Connected",
+									properties: {
+										Service: provider.name,
+										"Connection Location": "Onboard"
+									}
 								});
 								return;
 							}

@@ -26,6 +26,7 @@ import { Tab, Tabs } from "../src/components/Tabs";
 import { FormattedMessage } from "react-intl";
 import { EMAIL_REGEX } from "./TeamPanel";
 import { isEmailValid } from "../Authentication/Signup";
+import { OpenUrlRequestType } from "@codestream/protocols/webview";
 
 export const NUM_STEPS = 6;
 
@@ -495,9 +496,16 @@ export const Onboard = React.memo(function Onboard() {
 					<Provider
 						key={provider.id}
 						variant={connected ? "success" : undefined}
-						onClick={() =>
-							!connected && dispatch(configureAndConnectProvider(provider.id, "Onboard"))
-						}
+						onClick={() => {
+							if (connected) return;
+							if (provider.id == "login*microsoftonline*com") {
+								HostApi.instance.send(OpenUrlRequestType, {
+									url: "https://docs.codestream.com/userguide/features/msteams-integration"
+								});
+								return;
+							}
+							dispatch(configureAndConnectProvider(provider.id, "Onboard"));
+						}}
 					>
 						<Icon name={providerDisplay.icon} />
 						{providerDisplay.displayName}

@@ -41,7 +41,7 @@ import { Dialog } from "../src/components/Dialog";
 import { PaneState } from "../src/components/Pane";
 import { switchToTeam } from "../store/session/actions";
 
-const EMAIL_REGEX = new RegExp(
+export const EMAIL_REGEX = new RegExp(
 	"^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$"
 );
 

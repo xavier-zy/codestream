@@ -22,9 +22,6 @@ import {
 	CheckPullRequestPreconditionsResponse,
 	GetLatestCommitScmRequestType,
 	DiffBranchesRequestType,
-	ExecuteThirdPartyTypedType,
-	ExecuteThirdPartyTypedRequest,
-	GetMyPullRequestsResponse,
 	ExecuteThirdPartyRequestUntypedType
 } from "@codestream/protocols/agent";
 import { connectProvider } from "./actions";
@@ -48,14 +45,8 @@ import { PanelHeader } from "../src/components/PanelHeader";
 import { CSMe } from "@codestream/protocols/api";
 import { EMPTY_STATUS } from "./StartWork";
 import Tooltip from "./Tooltip";
-import { api, clearMyPullRequests } from "../store/providerPullRequests/actions";
-import { css } from "react-select/src/components/SingleValue";
-import { InlineMenu } from "../src/components/controls/InlineMenu";
-import { PRDiffHunks, PRDiffHunk } from "./PullRequestFilesChangedList";
-import { PullRequestPatch } from "./PullRequestPatch";
 import { PullRequestFilesChangedList } from "./PullRequestFilesChangedList";
 import { PRError } from "./PullRequestComponents";
-import { RequestType } from "vscode-languageserver-protocol";
 
 export const ButtonRow = styled.div`
 	text-align: right;
@@ -469,7 +460,15 @@ export const CreatePullRequestPanel = props => {
 			}
 		}
 		if (success) {
-			await dispatch(clearMyPullRequests(prProviderId));
+			// create a small buffer for the provider to incorporate this change before re-fetching
+			setTimeout(() => {
+				HostApi.instance.emit(DidChangeDataNotificationType.method, {
+					type: ChangeDataType.PullRequests,
+					data: {
+						prProviderId: prProviderId
+					}
+				});
+			}, 100);
 		}
 	};
 

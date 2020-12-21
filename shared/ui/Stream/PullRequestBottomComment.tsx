@@ -1,18 +1,20 @@
 import React, { useState } from "react";
-import { useSelector, useDispatch } from "react-redux";
-import { CodeStreamState } from "../store";
+import { useDispatch } from "react-redux";
 import Icon from "./Icon";
 import styled from "styled-components";
 import { PRComment, PRCommentCard } from "./PullRequestComponents";
 import Tooltip from "./Tooltip";
 import { HostApi } from "../webview-api";
-import { FetchThirdPartyPullRequestPullRequest } from "@codestream/protocols/agent";
+import {
+	ChangeDataType,
+	DidChangeDataNotificationType,
+	FetchThirdPartyPullRequestPullRequest
+} from "@codestream/protocols/agent";
 import { PRHeadshot } from "../src/components/Headshot";
 import MessageInput from "./MessageInput";
-import { CSMe } from "@codestream/protocols/api";
 import { ButtonRow } from "../src/components/Dialog";
 import { Button } from "../src/components/Button";
-import { api, removeFromMyPullRequests } from "../store/providerPullRequests/actions";
+import { api } from "../store/providerPullRequests/actions";
 import { replaceHtml } from "../utils";
 
 interface Props {
@@ -25,15 +27,6 @@ interface Props {
 export const PullRequestBottomComment = styled((props: Props) => {
 	const dispatch = useDispatch();
 	const { pr, setIsLoadingMessage } = props;
-	const derivedState = useSelector((state: CodeStreamState) => {
-		const currentUser = state.users[state.session.userId!] as CSMe;
-		return {
-			currentUser,
-			currentPullRequestId: state.context.currentPullRequest
-				? state.context.currentPullRequest.id
-				: undefined
-		};
-	});
 
 	const [text, setText] = useState("");
 	const [isLoadingComment, setIsLoadingComment] = useState(false);
@@ -68,9 +61,15 @@ export const PullRequestBottomComment = styled((props: Props) => {
 				text: replaceHtml(text)
 			})
 		);
+
+		HostApi.instance.emit(DidChangeDataNotificationType.method, {
+			type: ChangeDataType.PullRequests
+		});
 		setText("");
-		dispatch(removeFromMyPullRequests(pr.providerId, derivedState.currentPullRequestId!));
-		setIsLoadingCommentAndClose(false);
+		setTimeout(() => {
+			// create a small buffer for the provider to incorporate this change before re-fetching
+			setIsLoadingCommentAndClose(false);
+		}, 50);
 	};
 
 	const onCommentAndReopenClick = async e => {
@@ -82,8 +81,15 @@ export const PullRequestBottomComment = styled((props: Props) => {
 				text: replaceHtml(text)
 			})
 		);
+
+		HostApi.instance.emit(DidChangeDataNotificationType.method, {
+			type: ChangeDataType.PullRequests
+		});
 		setText("");
-		setIsLoadingCommentAndClose(false);
+		setTimeout(() => {
+			// create a small buffer for the provider to incorporate this change before re-fetching
+			setIsLoadingCommentAndClose(false);
+		}, 50);
 	};
 
 	const map = {

@@ -12,13 +12,10 @@ import {
 } from "../store/context/actions";
 import Tooltip from "./Tooltip";
 import Timestamp from "./Timestamp";
-import { isConnected } from "../store/providers/reducer";
 import { HostApi } from "../webview-api";
 import {
 	ReposScm,
 	GetMyPullRequestsResponse,
-	ExecuteThirdPartyRequestUntypedType,
-	QueryThirdPartyRequestType,
 	DidChangeDataNotificationType,
 	ChangeDataType,
 	ThirdPartyProviderConfig
@@ -203,29 +200,13 @@ export const OpenPullRequests = React.memo((props: Props) => {
 
 	const setQueries = (providerId, queries) => {
 		dispatch(setUserPreference(["pullRequestQueries", providerId], [...queries]));
-		// dispatch(setUserPreference(["pullRequestQueries"], null));
 	};
-
-	useEffect(() => {
-		for (const connectedProvider of derivedState.PRConnectedProviders) {
-			const providerId = connectedProvider.id;
-			if (derivedState.myPullRequests) {
-				const providerPullRequests =
-					derivedState.myPullRequests && derivedState.myPullRequests[providerId];
-				if (providerPullRequests && providerPullRequests.data === undefined) {
-					// refetch PRs if something has nuked them
-					fetchPRs(derivedState.queries, {
-						force: true
-					});
-				}
-			}
-		}
-	}, [derivedState.myPullRequests, derivedState.PRConnectedProviders]);
 
 	useEffect(() => {
 		const disposable = HostApi.instance.on(DidChangeDataNotificationType, (e: any) => {
 			if (e.type === ChangeDataType.PullRequests) {
-				fetchPRs(queries);
+				console.warn("OpenPullRequests: ChangeDataType.PullRequests", e);
+				fetchPRs(queries, { force: true });
 			}
 		});
 		return () => {

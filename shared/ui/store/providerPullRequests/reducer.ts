@@ -58,26 +58,6 @@ export function reduceProviderPullRequests(
 				pullRequests: { ...state.pullRequests }
 			};
 		}
-		case ProviderPullRequestActionsTypes.RemoveFromMyPullRequests: {
-			const newState = { ...state.myPullRequests };
-			newState[action.payload.providerId] = {
-				data: undefined
-			};
-			return {
-				myPullRequests: newState,
-				pullRequests: { ...state.pullRequests }
-			};
-		}
-		case ProviderPullRequestActionsTypes.ClearMyPullRequests: {
-			const newState = { ...state.myPullRequests };
-			newState[action.payload.providerId] = {
-				data: undefined
-			};
-			return {
-				myPullRequests: newState,
-				pullRequests: { ...state.pullRequests }
-			};
-		}
 		case ProviderPullRequestActionsTypes.AddPullRequestFiles: {
 			const newState = createNewObject(state, action);
 			newState[action.payload.providerId][action.payload.id] = {

@@ -207,17 +207,6 @@ export const getPullRequestFiles = (providerId: string, id: string) => async (
 	return undefined;
 };
 
-export const clearMyPullRequests = (providerId: string) =>
-	action(ProviderPullRequestActionsTypes.ClearMyPullRequests, {
-		providerId
-	});
-
-export const removeFromMyPullRequests = (providerId: string, id: string) =>
-	action(ProviderPullRequestActionsTypes.RemoveFromMyPullRequests, {
-		providerId,
-		id
-	});
-
 export const getMyPullRequests = (
 	providerId: string,
 	queries: string[],

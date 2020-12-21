@@ -271,7 +271,10 @@ export const PullRequest = () => {
 		setIsLoadingPR(true);
 
 		const response = (await dispatch(
-			getPullRequestConversationsFromProvider(pr!.providerId, derivedState.currentPullRequestId!)
+			getPullRequestConversationsFromProvider(
+				derivedState.currentPullRequestProviderId!,
+				derivedState.currentPullRequestId!
+			)
 		)) as any;
 		_assignState(response);
 	};
@@ -286,7 +289,10 @@ export const PullRequest = () => {
 		if (message) setIsLoadingMessage(message);
 		setIsLoadingPR(true);
 		const response = (await dispatch(
-			getPullRequestConversationsFromProvider(pr!.providerId, derivedState.currentPullRequestId!)
+			getPullRequestConversationsFromProvider(
+				derivedState.currentPullRequestProviderId!,
+				derivedState.currentPullRequestId!
+			)
 		)) as any;
 		_assignState(response);
 

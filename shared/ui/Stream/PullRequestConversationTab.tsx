@@ -14,10 +14,10 @@ import { PRHeadshotName } from "../src/components/HeadshotName";
 import Tag from "./Tag";
 import { HostApi } from "../webview-api";
 import {
-	ExecuteThirdPartyTypedType,
 	MergeMethod,
-	MergePullRequestRequest,
-	FetchThirdPartyPullRequestPullRequest
+	FetchThirdPartyPullRequestPullRequest,
+	DidChangeDataNotificationType,
+	ChangeDataType
 } from "@codestream/protocols/agent";
 import {
 	PRContent,
@@ -56,7 +56,7 @@ import { setUserPreference } from "./actions";
 import copy from "copy-to-clipboard";
 import { PullRequestBottomComment } from "./PullRequestBottomComment";
 import { reduce as _reduce, groupBy as _groupBy, map as _map } from "lodash-es";
-import { api, removeFromMyPullRequests } from "../store/providerPullRequests/actions";
+import { api } from "../store/providerPullRequests/actions";
 import { PullRequestReviewStatus } from "./PullRequestReviewStatus";
 import { autoCheckedMergeabilityStatus } from "./PullRequest";
 
@@ -168,7 +168,11 @@ export const PullRequestConversationTab = (props: {
 				: undefined,
 			blameMap,
 			currentPullRequest: currentPullRequest,
-			pr: currentPullRequest.conversations.repository.pullRequest,
+			pr:
+				currentPullRequest &&
+				currentPullRequest.conversations &&
+				currentPullRequest.conversations.repository &&
+				currentPullRequest.conversations.repository.pullRequest,
 			team,
 			skipGitEmailCheck,
 			addBlameMapEnabled
@@ -225,7 +229,9 @@ export const PullRequestConversationTab = (props: {
 				})
 			)) as any;
 			if (response) {
-				dispatch(removeFromMyPullRequests(pr.providerId, derivedState.currentPullRequestId!));
+				HostApi.instance.emit(DidChangeDataNotificationType.method, {
+					type: ChangeDataType.PullRequests
+				});
 			}
 		},
 		[

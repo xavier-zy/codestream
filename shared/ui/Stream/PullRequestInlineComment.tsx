@@ -8,7 +8,7 @@ import { FetchThirdPartyPullRequestPullRequest } from "@codestream/protocols/age
 import MessageInput from "./MessageInput";
 import { ButtonRow } from "../src/components/Dialog";
 import { Button } from "../src/components/Button";
-import { api, removeFromMyPullRequests } from "../store/providerPullRequests/actions";
+import { api } from "../store/providerPullRequests/actions";
 import { replaceHtml } from "../utils";
 
 interface Props {

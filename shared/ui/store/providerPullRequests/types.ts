@@ -7,8 +7,6 @@ export enum ProviderPullRequestActionsTypes {
 	AddPullRequestFiles = "@providerPullRequests/AddFiles",
 	AddPullRequestCommits = "@providerPullRequests/AddCommits",
 	AddMyPullRequests = "@providerPullRequests/AddMyPullRequests",
-	RemoveFromMyPullRequests = "@providerPullRequests/RemoveFromMyPullRequests",
-	ClearMyPullRequests = "@providerPullRequests/ClearMyPullRequests",
 	ClearPullRequestFiles = "@providerPullRequests/ClearFiles",
 	ClearPullRequestCommits = "@providerPullRequests/ClearCommits",
 	AddPullRequestError = "@providerPullRequests/AddError",

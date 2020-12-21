@@ -118,7 +118,6 @@ export const sendIssueProviderConnected = (
 		properties: {
 			Service: name,
 			Host: isEnterprise ? host : null,
-			Connection: "On",
 			"Connection Location": connectionLocation
 		}
 	});
@@ -205,15 +204,6 @@ export const disconnectProvider = (
 		if (ide.name === "VSC" && provider.name === "github") {
 			await api.send(DisconnectFromIDEProviderRequestType, { provider: provider.name });
 		}
-		api.send(TelemetryRequestType, {
-			eventName: "Issue Service Connected",
-			properties: {
-				Service: provider.name,
-				Host: provider.isEnterprise ? provider.host : null,
-				Connection: "Off",
-				"Connection Location": connectionLocation // ? "Global Nav" : "Compose Modal"
-			}
-		});
 		dispatch(deleteForProvider(providerId, providerTeamId));
 		if (getState().context.issueProvider === provider.host) {
 			dispatch(setIssueProvider(undefined));

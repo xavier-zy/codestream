@@ -302,11 +302,16 @@ const ExpandingText = styled.div`
 	}
 `;
 
+const CODE_HOSTS_STEP = 1;
+const CODEMARK_STEP = 5;
+const CONGRATULATIONS_STEP = 999;
+
 export const Onboard = React.memo(function Onboard() {
 	const dispatch = useDispatch();
 	const derivedState = useSelector((state: CodeStreamState) => {
 		const { providers } = state;
 		const team = state.teams[state.context.currentTeamId];
+		const user = state.users[state.session.userId!];
 		const dontSuggestInvitees = team.settings ? team.settings.dontSuggestInvitees || {} : {};
 
 		const connectedProviders = Object.keys(providers).filter(id => isConnected(state, { id }));
@@ -342,7 +347,8 @@ export const Onboard = React.memo(function Onboard() {
 			connectedIssueProviders,
 			messagingProviders,
 			connectedMessagingProviders,
-			teamMates: getTeamMates(state)
+			teamMates: getTeamMates(state),
+			totalPosts: user.totalPosts || 0
 		};
 	}, shallowEqual);
 
@@ -355,7 +361,7 @@ export const Onboard = React.memo(function Onboard() {
 	const [inviteEmailFields, setInviteEmailFields] = useState<string[]>([]);
 	const [inviteInputTouched, setInviteInputTouched] = useState<boolean[]>([]);
 	const [inviteEmailValidity, setInviteEmailValidity] = useState<boolean[]>(
-		new Array(5).fill(true)
+		new Array(50).fill(true)
 	);
 	const [sendingInvites, setSendingInvites] = useState(false);
 	const [inviteSuggestedField, setInviteSuggestedField] = useState<{ [email: string]: boolean }>(
@@ -364,6 +370,7 @@ export const Onboard = React.memo(function Onboard() {
 	const previousConnectedCodeHostProviders = usePrevious(derivedState.connectedCodeHostProviders);
 	const previousConnectedIssueProviders = usePrevious(derivedState.connectedIssueProviders);
 	const previousConnectedMessagingProviders = usePrevious(derivedState.connectedMessagingProviders);
+	const previousTotalPosts = usePrevious(derivedState.totalPosts);
 
 	useDidMount(() => {
 		getSuggestedInvitees();
@@ -414,6 +421,16 @@ export const Onboard = React.memo(function Onboard() {
 		}
 	}, [derivedState.connectedMessagingProviders]);
 
+	useEffect(() => {
+		if (
+			typeof previousTotalPosts !== "undefined" &&
+			derivedState.totalPosts > (previousTotalPosts || 0)
+		) {
+			// we posted a codemark
+			setStep(CONGRATULATIONS_STEP);
+		}
+	}, [derivedState.totalPosts]);
+
 	const confirmSkip = () => {
 		confirmPopup({
 			title: "Skip this step?",
@@ -434,15 +451,15 @@ export const Onboard = React.memo(function Onboard() {
 	const skip = () => setStep(currentStep + 1);
 
 	const setStep = (step: number) => {
-		if (step === 1 && derivedState.connectedCodeHostProviders.length > 0) step = 2;
+		if (step === CODE_HOSTS_STEP && derivedState.connectedCodeHostProviders.length > 0) step = 2;
 		if (step === NUM_STEPS) {
 			dispatch(closePanel());
 			return;
 		}
-		if (step === 5) setSeenCommentingStep(true);
+		if (step === CODEMARK_STEP) setSeenCommentingStep(true);
 		setLastStep(currentStep);
 		setCurrentStep(step);
-		scrollToTop();
+		setTimeout(() => scrollToTop(), 250);
 		setTimeout(() => positionDots(), 250);
 	};
 
@@ -506,23 +523,11 @@ export const Onboard = React.memo(function Onboard() {
 		setInviteEmailFields(invites);
 	};
 
-	const onInviteEmailBlur = index => {
-		const touched = [...inviteInputTouched];
-		touched[index] = true;
-		setInviteInputTouched(touched);
-
-		const value = inviteEmailFields[index];
-		const invalid = [...inviteEmailValidity];
-		invalid[index] = value !== "" && EMAIL_REGEX.test(value) === false;
-		setInviteEmailValidity(invalid);
-	};
-
 	const onInviteValidityChanged = (field: string, validity: boolean) => {
 		const inviteMatches = field.match(/^invite-(\d+)/);
 		if (inviteMatches) {
 			const invalid = [...inviteEmailValidity];
 			invalid[inviteMatches[1]] = validity;
-			console.warn("Validity is: ", validity, " for value ", inviteEmailFields[inviteMatches[1]]);
 			setInviteEmailValidity(invalid);
 		}
 	};
@@ -788,7 +793,7 @@ export const Onboard = React.memo(function Onboard() {
 						</div>
 					</Step>
 					*/}
-					<Step className={className(5)}>
+					<Step className={className(CODEMARK_STEP)}>
 						<div className="body">
 							<h3>Discuss any code, anytime</h3>
 							<p className="explainer">
@@ -819,6 +824,17 @@ export const Onboard = React.memo(function Onboard() {
 							<SkipLink onClick={skip}>I'll try this later</SkipLink>
 						</div>
 					</Step>
+					<Step className={className(CONGRATULATIONS_STEP)}>
+						<div className="body">
+							<h1>Congratulations!</h1>
+							<p className="explainer">Thus endeth the tour.</p>
+							<CenterRow>
+								<Button size="xl" onClick={() => setStep(NUM_STEPS)}>
+									Start using CodeStream
+								</Button>
+							</CenterRow>
+						</div>
+					</Step>
 				</fieldset>
 			</div>
 			<Dots
@@ -827,8 +843,8 @@ export const Onboard = React.memo(function Onboard() {
 			>
 				{[...Array(NUM_STEPS)].map((_, index) => {
 					const selected = index === currentStep;
-					// HARD-CODED connect code host is step==1
-					if (index === 1 && derivedState.connectedCodeHostProviders.length > 0) return null;
+					if (index === CODE_HOSTS_STEP && derivedState.connectedCodeHostProviders.length > 0)
+						return null;
 					return <Dot selected={selected} onClick={() => setStep(index)} />;
 				})}
 			</Dots>
@@ -837,10 +853,10 @@ export const Onboard = React.memo(function Onboard() {
 });
 
 /* TODO
-   after you create a codemark, what happens?
-   hook it up to registration, remove from ellipsis menu
-   A/B testing methodology
-   instrumentation
+ - after you create a codemark, what happens?
+ x hook it up to registration, remove from ellipsis menu
+ x A/B testing methodology
+ x instrumentation
  x handle what happens when you connect a code host or issue tracker
  x add more input fields to invite
  x make invites work

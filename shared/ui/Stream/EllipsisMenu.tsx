@@ -292,7 +292,6 @@ export function EllipsisMenu(props: EllipsisMenuProps) {
 	}
 
 	menuItems.push(
-		// { label: "Onboard", key: "onboard", action: () => go(WebviewPanels.Onboard) },
 		{
 			label: "Account",
 			action: "account",
@@ -404,6 +403,7 @@ export function EllipsisMenu(props: EllipsisMenuProps) {
 					key: "flow",
 					action: () => dispatch(openPanel(WebviewPanels.Flow))
 				},
+				{ label: "Onboard", key: "onboard", action: () => go(WebviewPanels.Onboard) },
 				{
 					label: "What's New",
 					key: "whats-new",

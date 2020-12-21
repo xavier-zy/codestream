@@ -69,7 +69,6 @@ import { getFileScmError } from "../store/editorContext/reducer";
 import { CodemarkView } from "./CodemarkView";
 import { Review } from "./Review";
 import { Link } from "./Link";
-
 import {
 	setCurrentStream,
 	setNewPostEntry,
@@ -84,6 +83,7 @@ import { PRInfoModal } from "./SpatialView/PRInfoModal";
 import { GlobalNav } from "./GlobalNav";
 import { CheckEmailVsGit } from "./CheckEmailVsGit";
 import { EnjoyingCodeStream } from "./EnjoyingCodeStream";
+import { getTestGroup } from "../store/context/reducer";
 
 const EMAIL_MATCH_REGEX = new RegExp(
 	"[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*",
@@ -218,8 +218,12 @@ export class SimpleStream extends PureComponent {
 		let { activePanel, activeModal } = this.props;
 		const { q } = this.state;
 
-		// console.warn("RENDERING STREAM");
-		if (activePanel === WebviewPanels.LandingRedirect) activePanel = WebviewPanels.Sidebar;
+		console.warn("RENDERING STREAM: AP: ", activePanel);
+		console.warn("PROPS: ", this.props);
+		if (activePanel === WebviewPanels.LandingRedirect) {
+			if (this.props.onboardingTestGroup === "tour") activePanel = WebviewPanels.Onboard;
+			else activePanel = WebviewPanels.Sidebar;
+		}
 
 		const isConfigurationPanel =
 			activePanel && activePanel.match(/^configure\-(provider|enterprise)-/);
@@ -298,7 +302,7 @@ export class SimpleStream extends PureComponent {
 					<PrePRProviderInfoModal {...this.state.propsForPrePRProviderInfoModal} />
 				)}
 				<div id="confirm-root" />
-				<GlobalNav />
+				{activePanel !== WebviewPanels.Onboard && <GlobalNav />}
 				{activePanel === WebviewPanels.Onboard ? <Onboard /> : <Sidebar />}
 				{activeModal && (
 					<Modal translucent>
@@ -658,7 +662,8 @@ const mapStateToProps = state => {
 		showHeadshots: configs.showHeadshots,
 		postStream,
 		postStreamId: postStream.id,
-		composeCodemarkActive: context.composeCodemarkActive
+		composeCodemarkActive: context.composeCodemarkActive,
+		onboardingTestGroup: getTestGroup(state, "onboard")
 	};
 };
 

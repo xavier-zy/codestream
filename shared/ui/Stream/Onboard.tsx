@@ -6,7 +6,6 @@ import { getTeamMates } from "../store/users/reducer";
 import { useDidMount, usePrevious } from "../utilities/hooks";
 import { HostApi } from "../webview-api";
 import { closePanel, invite } from "./actions";
-import CancelButton from "./CancelButton";
 import { GetLatestCommittersRequestType } from "@codestream/protocols/agent";
 import { difference as _difference, sortBy as _sortBy } from "lodash-es";
 import { Checkbox } from "../src/components/Checkbox";
@@ -580,9 +579,6 @@ export const Onboard = React.memo(function Onboard() {
 			{seenCommentingStep && <CreateCodemarkIcons />}
 			<div className="standard-form" style={{ height: "auto", position: "relative" }}>
 				<fieldset className="form-body">
-					<div style={{ position: "absolute", top: "10px", right: "10px", zIndex: 15 }}>
-						<CancelButton onClick={() => dispatch(closePanel())} />
-					</div>
 					<Step className={`ease-down ${className(0)}`}>
 						<div className="body">
 							<h1>

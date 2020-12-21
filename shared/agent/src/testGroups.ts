@@ -13,5 +13,8 @@ export const testGroups: TestGroupDefs = {
 	// are the groups to which a given company can be randomly assigned
 	sample: {
 		choices: ["A", "B"]
+	},
+	onboard: {
+		choices: ["tour", "sidebar"]
 	}
 };

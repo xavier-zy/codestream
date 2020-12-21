@@ -59,6 +59,7 @@ export const getByStatusAndUser = createSelector(
 			review =>
 				!review.deactivated &&
 				review.status === status &&
+				review.reviewChangesets &&
 				(review.creatorId === userId || (review.reviewers || []).includes(userId))
 		);
 	}

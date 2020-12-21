@@ -48,15 +48,18 @@ export const ChangesetFileList = (props: {
 		let indexToChangesetMap = {};
 		let indexToFileMap = {};
 
-		let changesets;
-		if (checkpoint !== undefined) {
-			changesets = review.reviewChangesets.filter(rc => rc.checkpoint === checkpoint);
-		} else {
-			const latestChangesetByRepo = new Map<string, CSReviewChangeset>();
-			for (const changeset of review.reviewChangesets) {
-				latestChangesetByRepo.set(changeset.repoId, changeset);
+		let changesets: CSReviewChangeset[] = [];
+
+		if (review.reviewChangesets) {
+			if (checkpoint !== undefined) {
+				changesets = review.reviewChangesets.filter(rc => rc.checkpoint === checkpoint);
+			} else {
+				const latestChangesetByRepo = new Map<string, CSReviewChangeset>();
+				for (const changeset of review.reviewChangesets) {
+					latestChangesetByRepo.set(changeset.repoId, changeset);
+				}
+				changesets = Array.from(latestChangesetByRepo.values());
 			}
-			changesets = Array.from(latestChangesetByRepo.values());
 		}
 
 		for (let changeset of changesets) {
@@ -82,7 +85,9 @@ export const ChangesetFileList = (props: {
 			indexToChangesetMap,
 			indexToFileMap,
 			changesets,
-			maxCheckpoint: review.reviewChangesets[review.reviewChangesets.length - 1].checkpoint
+			maxCheckpoint: review.reviewChangesets
+				? review.reviewChangesets[review.reviewChangesets.length - 1].checkpoint
+				: 0
 		};
 	});
 
@@ -209,6 +214,7 @@ export const ChangesetFileList = (props: {
 		const files: any[] = [];
 
 		let index = 0;
+		if (!derivedState.changesets) return files;
 		for (let changeset of derivedState.changesets) {
 			if (props.showRepoLabels) {
 				const repoName = safe(() => getById(derivedState.repos, changeset!.repoId).name) || "";

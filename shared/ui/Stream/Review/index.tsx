@@ -575,7 +575,7 @@ const BaseReview = (props: BaseReviewProps) => {
 			: "";
 	const { approvedBy = {} } = review;
 	const hasChangeRequests = props.changeRequests != null && props.changeRequests.length > 0;
-	const numFiles = review.reviewChangesets
+	const numFiles = (review.reviewChangesets || [])
 		.map(r => r.modifiedFiles.length)
 		.reduce((a, b) => a + b, 0);
 	const renderedFooter = props.renderFooter && props.renderFooter(CardFooter, ComposeWrapper);
@@ -608,7 +608,7 @@ const BaseReview = (props: BaseReviewProps) => {
 	const numCheckpoints =
 		Math.max.apply(
 			Math,
-			review.reviewChangesets.map(_ => (_.checkpoint === undefined ? 0 : _.checkpoint))
+			(review.reviewChangesets || []).map(_ => (_.checkpoint === undefined ? 0 : _.checkpoint))
 		) + 1;
 
 	const dropdownItems: any = [
@@ -1185,10 +1185,12 @@ const ReviewForReview = (props: PropsWithReview) => {
 	const repoInfoById = React.useMemo(() => {
 		const reviewRepos = new Map<string, any>();
 
-		for (let changeset of review.reviewChangesets) {
-			const repo = derivedState.repos[changeset.repoId];
-			if (repo && !reviewRepos.has(changeset.repoId))
-				reviewRepos.set(changeset.repoId, { repoName: repo.name, branch: changeset.branch });
+		if (review.reviewChangesets) {
+			for (let changeset of review.reviewChangesets) {
+				const repo = derivedState.repos[changeset.repoId];
+				if (repo && !reviewRepos.has(changeset.repoId))
+					reviewRepos.set(changeset.repoId, { repoName: repo.name, branch: changeset.branch });
+			}
 		}
 
 		return reviewRepos;

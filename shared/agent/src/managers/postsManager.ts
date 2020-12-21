@@ -1189,7 +1189,7 @@ export class PostsManager extends EntityManagerBase<CSPost> {
 			const changeset = await this.buildChangeset(repoChange);
 
 			// WTF typescript, this is defined above
-			if (reviewRequest.reviewChangesets && changeset) {
+			if (reviewRequest.reviewChangesets) {
 				reviewRequest.reviewChangesets.push(changeset);
 			}
 			/*for (const patch of localDiffs) {
@@ -1288,11 +1288,14 @@ export class PostsManager extends EntityManagerBase<CSPost> {
 	async buildChangeset(
 		repoChange: CSRepoChange,
 		amendingReviewId?: string
-	): Promise<CSTransformedReviewChangeset | undefined> {
+	): Promise<CSTransformedReviewChangeset> {
 		// FIXME the logic for amendments became significantly different, so it should be a separate method
 		//  or a builder class similar to MarkersBuilder
 		const { scm, includeSaved, includeStaged, excludedFiles, newFiles } = repoChange;
-		if (!scm || !scm.repoId || !scm.branch || !scm.commits) return undefined;
+		if (!scm) throw new Error("Unable to create review: SCM info not found");
+		if (!scm.repoId) throw new Error("Unable to create review: git repository not found");
+		if (!scm.branch) throw new Error("Unable to create review: branch not found");
+		if (!scm.commits) throw new Error("Unable to create review: commit history not found");
 		const { git, reviews, scm: scmManager } = SessionContainer.instance();
 
 		let checkpoint = 0;

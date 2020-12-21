@@ -85,9 +85,10 @@ export const ChangesetFileList = (props: {
 			indexToChangesetMap,
 			indexToFileMap,
 			changesets,
-			maxCheckpoint: review.reviewChangesets
-				? review.reviewChangesets[review.reviewChangesets.length - 1].checkpoint
-				: 0
+			maxCheckpoint:
+				review.reviewChangesets && review.reviewChangesets.length
+					? review.reviewChangesets[review.reviewChangesets.length - 1].checkpoint
+					: 0
 		};
 	});
 

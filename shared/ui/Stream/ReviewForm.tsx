@@ -496,6 +496,15 @@ class ReviewForm extends React.Component<Props, State> {
 				return;
 			}
 
+			if (!statusInfo.scm) {
+				this.setState({
+					isLoadingScm: false,
+					isReloadingScm: false,
+					scmError: true,
+					scmErrorMessage: "Unable to retrieve Git repository information"
+				});
+			}
+
 			this._disposableDidChangeDataNotification &&
 				this._disposableDidChangeDataNotification.dispose();
 			const self = this;

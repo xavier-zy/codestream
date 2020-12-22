@@ -1178,13 +1178,15 @@ export class SimpleInlineCodemarks extends Component<Props, State> {
 	}
 
 	close() {
-		const { currentReviewId, currentPullRequestId } = this.props;
+		const { currentReviewId, currentPullRequestId, composeCodemarkActive } = this.props;
 		if (currentReviewId) {
 			HostApi.instance.send(ReviewCloseDiffRequestType, {});
 			this.props.closeAllModals();
 		} else if (currentPullRequestId) {
 			HostApi.instance.send(LocalFilesCloseDiffRequestType, {});
 			this.props.closeAllModals();
+		} else if (composeCodemarkActive) {
+			this.closeCodemarkForm();
 		} else {
 			this.props.closePanel();
 		}

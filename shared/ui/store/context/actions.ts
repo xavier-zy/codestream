@@ -137,6 +137,8 @@ export const clearCurrentPullRequest = () =>
 		commentId: ""
 	});
 
+export const setOnboardStep = (step: number) => action(ContextActionsType.SetOnboardStep, { step });
+
 export const setStartWorkCard = (card: any) =>
 	action(ContextActionsType.SetStartWorkCard, { card });
 

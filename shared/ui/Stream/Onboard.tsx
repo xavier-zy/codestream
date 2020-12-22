@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import { shallowEqual, useDispatch, useSelector } from "react-redux";
 import styled from "styled-components";
 import { CodeStreamState } from "../store";
@@ -6,8 +6,11 @@ import { getTeamMates } from "../store/users/reducer";
 import { useDidMount, usePrevious } from "../utilities/hooks";
 import { HostApi } from "../webview-api";
 import { closePanel, invite } from "./actions";
-import { GetLatestCommittersRequestType } from "@codestream/protocols/agent";
-import { difference as _difference, sortBy as _sortBy } from "lodash-es";
+import {
+	GetLatestCommittersRequestType,
+	GetReposScmRequestType,
+	ReposScm
+} from "@codestream/protocols/agent";
 import { Checkbox } from "../src/components/Checkbox";
 import { CSText } from "../src/components/CSText";
 import { Button } from "../src/components/Button";
@@ -26,8 +29,7 @@ import { FormattedMessage } from "react-intl";
 import { isEmailValid } from "../Authentication/Signup";
 import { OpenUrlRequestType } from "@codestream/protocols/webview";
 import { TelemetryRequestType } from "@codestream/protocols/agent";
-
-export const NUM_STEPS = 6;
+import { setOnboardStep } from "../store/context/actions";
 
 const Step = styled.div`
 	margin: 0 auto;
@@ -302,9 +304,12 @@ const ExpandingText = styled.div`
 	}
 `;
 
+const NUM_STEPS = 7;
 const CODE_HOSTS_STEP = 1;
 const CODEMARK_STEP = 5;
-const CONGRATULATIONS_STEP = 999;
+const CONGRATULATIONS_STEP = 6;
+
+const EMPTY_ARRAY = [];
 
 export const Onboard = React.memo(function Onboard() {
 	const dispatch = useDispatch();
@@ -338,6 +343,7 @@ export const Onboard = React.memo(function Onboard() {
 		);
 
 		return {
+			currentStep: state.context.onboardStep,
 			providers: state.providers,
 			dontSuggestInvitees,
 			connectedProviders,
@@ -352,14 +358,13 @@ export const Onboard = React.memo(function Onboard() {
 		};
 	}, shallowEqual);
 
-	const { providers } = derivedState;
-	const [currentStep, setCurrentStep] = useState(0);
-	const [lastStep, setLastStep] = useState(0);
+	const { providers, currentStep } = derivedState;
+	const [lastStep, setLastStep] = useState(currentStep);
 	const [suggestedInvitees, setSuggestedInvitees] = useState<any[]>([]);
-	const [seenCommentingStep, setSeenCommentingStep] = useState<boolean>(false);
+	// if we come back into the tour from elsewhere and currentStep is the codemark step, add icons
+	const [seenCommentingStep, setSeenCommentingStep] = useState(currentStep === CODEMARK_STEP);
 	const [numInviteFields, setNumInviteFields] = useState(0);
 	const [inviteEmailFields, setInviteEmailFields] = useState<string[]>([]);
-	const [inviteInputTouched, setInviteInputTouched] = useState<boolean[]>([]);
 	const [inviteEmailValidity, setInviteEmailValidity] = useState<boolean[]>(
 		new Array(50).fill(true)
 	);
@@ -371,10 +376,24 @@ export const Onboard = React.memo(function Onboard() {
 	const previousConnectedIssueProviders = usePrevious(derivedState.connectedIssueProviders);
 	const previousConnectedMessagingProviders = usePrevious(derivedState.connectedMessagingProviders);
 	const previousTotalPosts = usePrevious(derivedState.totalPosts);
+	const [openRepos, setOpenRepos] = useState<ReposScm[]>(EMPTY_ARRAY);
 
 	useDidMount(() => {
 		getSuggestedInvitees();
+		fetchOpenRepos();
+		setTimeout(() => positionDots(), 250);
 	});
+
+	const fetchOpenRepos = async () => {
+		const response = await HostApi.instance.send(GetReposScmRequestType, {
+			inEditorOnly: true,
+			includeCurrentBranches: true,
+			includeProviders: true
+		});
+		if (response && response.repositories) {
+			setOpenRepos(response.repositories);
+		}
+	};
 
 	const getSuggestedInvitees = async () => {
 		const result = await HostApi.instance.send(GetLatestCommittersRequestType, {});
@@ -453,12 +472,13 @@ export const Onboard = React.memo(function Onboard() {
 	const setStep = (step: number) => {
 		if (step === CODE_HOSTS_STEP && derivedState.connectedCodeHostProviders.length > 0) step = 2;
 		if (step === NUM_STEPS) {
+			dispatch(setOnboardStep(0));
 			dispatch(closePanel());
 			return;
 		}
 		if (step === CODEMARK_STEP) setSeenCommentingStep(true);
 		setLastStep(currentStep);
-		setCurrentStep(step);
+		dispatch(setOnboardStep(step));
 		setTimeout(() => scrollToTop(), 250);
 		setTimeout(() => positionDots(), 250);
 	};
@@ -825,14 +845,33 @@ export const Onboard = React.memo(function Onboard() {
 								>
 									Try sharing a code comment with your team:
 								</div>
-								<DialogRow style={{ alignItems: "center" }}>
-									<OutlineNumber>1</OutlineNumber>
-									<div>Select a range in your editor</div>
-								</DialogRow>
-								<DialogRow style={{ alignItems: "center" }}>
-									<OutlineNumber>2</OutlineNumber>
-									<div>Click the comment icon or type the keybinding:</div>
-								</DialogRow>
+								{openRepos.length === 0 ? (
+									<>
+										<DialogRow style={{ alignItems: "center" }}>
+											<OutlineNumber>1</OutlineNumber>
+											<div>Open a repository in your editor</div>
+										</DialogRow>
+										<DialogRow style={{ alignItems: "center" }}>
+											<OutlineNumber>2</OutlineNumber>
+											<div>Select a range in a source file</div>
+										</DialogRow>
+										<DialogRow style={{ alignItems: "center" }}>
+											<OutlineNumber>3</OutlineNumber>
+											<div>Click the comment icon or type the keybinding:</div>
+										</DialogRow>
+									</>
+								) : (
+									<>
+										<DialogRow style={{ alignItems: "center" }}>
+											<OutlineNumber>1</OutlineNumber>
+											<div>Select a range in your editor</div>
+										</DialogRow>
+										<DialogRow style={{ alignItems: "center" }}>
+											<OutlineNumber>2</OutlineNumber>
+											<div>Click the comment icon or type the keybinding:</div>
+										</DialogRow>
+									</>
+								)}
 								<Keybinding>{ComposeKeybindings.comment}</Keybinding>
 							</Dialog>
 							<SkipLink onClick={skip}>I'll try this later</SkipLink>
@@ -840,11 +879,14 @@ export const Onboard = React.memo(function Onboard() {
 					</Step>
 					<Step className={className(CONGRATULATIONS_STEP)}>
 						<div className="body">
-							<h1>Congratulations!</h1>
-							<p className="explainer">Thus endeth the tour.</p>
+							<h1>You're good to go!</h1>
+							<p className="explainer">
+								Next, explore the features, and any time you want to discuss code with your team,
+								select it and hit {ComposeKeybindings.comment}
+							</p>
 							<CenterRow>
 								<Button size="xl" onClick={() => setStep(NUM_STEPS)}>
-									Start using CodeStream
+									Open CodeStream
 								</Button>
 							</CenterRow>
 						</div>
@@ -867,6 +909,8 @@ export const Onboard = React.memo(function Onboard() {
 });
 
 /* TODO
+   check for no git/file on codemark step
+   fix alignment of compose icons when sidebar on left
  - after you create a codemark, what happens?
  x hook it up to registration, remove from ellipsis menu
  x A/B testing methodology

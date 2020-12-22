@@ -214,16 +214,13 @@ export class SimpleStream extends PureComponent {
 	}
 
 	render() {
-		const { showHeadshots } = this.props;
+		const { showHeadshots, isFirstPageview, onboardingTestGroup } = this.props;
 		let { activePanel, activeModal } = this.props;
 		const { q } = this.state;
 
-		console.warn("RENDERING STREAM: AP: ", activePanel);
-		console.warn("PROPS: ", this.props);
-		if (activePanel === WebviewPanels.LandingRedirect) {
-			if (this.props.onboardingTestGroup === "tour") activePanel = WebviewPanels.Onboard;
-			else activePanel = WebviewPanels.Sidebar;
-		}
+		if (activePanel === WebviewPanels.LandingRedirect) activePanel = WebviewPanels.Sidebar;
+
+		if (isFirstPageview && onboardingTestGroup === "tour") activePanel = WebviewPanels.Onboard;
 
 		const isConfigurationPanel =
 			activePanel && activePanel.match(/^configure\-(provider|enterprise)-/);
@@ -663,6 +660,7 @@ const mapStateToProps = state => {
 		postStream,
 		postStreamId: postStream.id,
 		composeCodemarkActive: context.composeCodemarkActive,
+		isFirstPageview: context.isFirstPageview,
 		onboardingTestGroup: getTestGroup(state, "onboard")
 	};
 };

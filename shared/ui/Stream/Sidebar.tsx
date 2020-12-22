@@ -108,6 +108,9 @@ export const Sidebar = React.memo(function Sidebar() {
 		if (response && response.repositories) {
 			setOpenRepos(response.repositories);
 		}
+		requestAnimationFrame(() => {
+			setInitialRender(false);
+		});
 	};
 
 	useDidMount(() => {
@@ -115,9 +118,6 @@ export const Sidebar = React.memo(function Sidebar() {
 		HostApi.instance.track("Sidebar Rendered", {
 			Width: window.innerWidth,
 			Height: window.innerHeight
-		});
-		requestAnimationFrame(() => {
-			setInitialRender(false);
 		});
 	});
 

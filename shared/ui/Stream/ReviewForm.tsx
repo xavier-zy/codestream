@@ -556,9 +556,13 @@ class ReviewForm extends React.Component<Props, State> {
 						// @ts-ignore
 						commit => commit.info.email !== currentUser.email
 					);
-					// show at least 5 commits, but if the 6th+ commit isn't mine,
-					// hide it behind a "show more" button
-					if (commitListLength >= 5) this.setState({ commitListLength });
+					if (commitListLength) {
+						// show only commits from the user logged in (limited to 10)
+						this.setState({ commitListLength: Math.min(commitListLength, 10) });
+					} else {
+						// show last 10 commits from any author, since none of them are from the user logged in
+						this.setState({ commitListLength: Math.min(10, statusInfo.scm.commits.length) });
+					}
 				}
 			}
 			// if (isAmending && statusInfo.scm && statusInfo.scm.branch !== this.state.editingReviewBranch) {
@@ -1549,7 +1553,7 @@ class ReviewForm extends React.Component<Props, State> {
 						style={{ marginTop: "5px", cursor: "pointer" }}
 						onClick={e => this.setState({ commitListLength: this.state.commitListLength + 10 })}
 					>
-						Show More
+						Show Earlier Commits
 					</div>
 				)}
 			</div>

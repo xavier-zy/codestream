@@ -5,7 +5,7 @@ import { CodeStreamState } from "../store";
 import { getTeamMates } from "../store/users/reducer";
 import { useDidMount, usePrevious } from "../utilities/hooks";
 import { HostApi } from "../webview-api";
-import { closePanel, invite } from "./actions";
+import { closePanel, invite, openPanel } from "./actions";
 import {
 	GetLatestCommittersRequestType,
 	GetReposScmRequestType,
@@ -27,7 +27,7 @@ import { isConnected } from "../store/providers/reducer";
 import { TextInput } from "../Authentication/TextInput";
 import { FormattedMessage } from "react-intl";
 import { isEmailValid } from "../Authentication/Signup";
-import { OpenUrlRequestType } from "@codestream/protocols/webview";
+import { OpenUrlRequestType, WebviewPanels } from "@codestream/protocols/webview";
 import { TelemetryRequestType } from "@codestream/protocols/agent";
 import { setOnboardStep } from "../store/context/actions";
 

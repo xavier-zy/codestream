@@ -72,6 +72,7 @@ import { Link } from "./Link";
 import {
 	setCurrentStream,
 	setNewPostEntry,
+	setIsFirstPageview,
 	setCurrentReview,
 	setCurrentPullRequest,
 	setCurrentCodemark
@@ -102,6 +103,13 @@ export class SimpleStream extends PureComponent {
 	};
 
 	componentDidMount() {
+		const { isFirstPageview, onboardingTestGroup } = this.props;
+
+		if (isFirstPageview && onboardingTestGroup === "tour") {
+			this.props.openPanel(WebviewPanels.Onboard);
+		}
+		this.props.setIsFirstPageview(false);
+
 		if (this.props.activePanel === "main" && this.props.postStreamId != undefined) {
 			HostApi.instance.track("Page Viewed", { "Page Name": "Stream" });
 		}
@@ -214,13 +222,13 @@ export class SimpleStream extends PureComponent {
 	}
 
 	render() {
-		const { showHeadshots, isFirstPageview, onboardingTestGroup } = this.props;
+		const { showHeadshots, isFirstPageview } = this.props;
 		let { activePanel, activeModal } = this.props;
 		const { q } = this.state;
 
 		if (activePanel === WebviewPanels.LandingRedirect) activePanel = WebviewPanels.Sidebar;
 
-		if (isFirstPageview && onboardingTestGroup === "tour") activePanel = WebviewPanels.Onboard;
+		if (isFirstPageview) return null;
 
 		const isConfigurationPanel =
 			activePanel && activePanel.match(/^configure\-(provider|enterprise)-/);
@@ -505,7 +513,6 @@ export class SimpleStream extends PureComponent {
 		}
 	};
 
-	// dead code
 	setActivePanel = panel => {
 		this.props.openPanel(panel);
 	};
@@ -638,7 +645,7 @@ export class SimpleStream extends PureComponent {
  * @param {Object} state.teams
  **/
 const mapStateToProps = state => {
-	const { configs, context, session, streams, teams } = state;
+	const { configs, context, session, streams, companies } = state;
 
 	// FIXME -- eventually we'll allow the user to switch to other streams, like DMs and channels
 	const teamStream = getStreamForTeam(streams, context.currentTeamId) || {};
@@ -649,6 +656,7 @@ const mapStateToProps = state => {
 	// rely on it here
 	// const { scmInfo } = state.editorContext;
 
+	// console.warn("COMP: ", companies);
 	return {
 		currentCodemarkId: context.currentCodemarkId,
 		currentMarkerId: context.currentMarkerId,
@@ -676,5 +684,6 @@ export default connect(mapStateToProps, {
 	setCurrentStream,
 	setCurrentCodemark,
 	editCodemark,
-	setNewPostEntry
+	setNewPostEntry,
+	setIsFirstPageview
 })(injectIntl(SimpleStream));

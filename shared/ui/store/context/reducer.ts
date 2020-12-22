@@ -97,6 +97,8 @@ export function reduceContext(
 			return { ...state, hasFocus: action.payload };
 		case ContextActionsType.SetChannelsMuteAll:
 			return { ...state, channelsMuteAll: action.payload };
+		case ContextActionsType.SetIsFirstPageview:
+			return { ...state, isFirstPageview: action.payload };
 		case ContextActionsType.SetChannelFilter:
 			return { ...state, channelFilter: action.payload };
 		case ContextActionsType.SetCodemarkTagFilter:

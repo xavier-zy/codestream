@@ -36,7 +36,8 @@ export enum ContextActionsType {
 	SetCurrentPullRequest = "@context/SetCurrentPullRequest",
 	SetCurrentPullRequestAndBranch = "@context/SetCurrentPullRequestAndBranch",
 	SetStartWorkCard = "@context/SetStartWorkCard",
-	SetOnboardStep = "@context/SetOnboardStep"
+	SetOnboardStep = "@context/SetOnboardStep",
+	SetIsFirstPageview = "@context/SetIsFirstPageview"
 }
 
 /**

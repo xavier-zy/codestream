@@ -65,6 +65,9 @@ export const setChannelFilter = (value: string) => async dispatch => {
 export const setChannelsMuteAll = (enabled: boolean) =>
 	action(ContextActionsType.SetChannelsMuteAll, enabled);
 
+export const setIsFirstPageview = (value: boolean) =>
+	action(ContextActionsType.SetIsFirstPageview, value);
+
 export const setCodemarkTagFilter = (value: string) =>
 	action(ContextActionsType.SetCodemarkTagFilter, value);
 

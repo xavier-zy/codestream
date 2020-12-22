@@ -221,7 +221,9 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 			"ECONNRESET",
 			"ECONNREFUSED",
 			"ENETDOWN",
-			"socket disconnected before secure"
+			"ENETUNREACH",
+			"socket disconnected before secure",
+			"socket hang up"
 		];
 
 		if (ex.message && networkErrors.some(e => ex.message.match(new RegExp(e)))) {

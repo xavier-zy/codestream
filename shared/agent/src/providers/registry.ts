@@ -147,7 +147,9 @@ export class ThirdPartyProviderRegistry {
 						errorString.indexOf("EAI_AGAIN") > -1 ||
 						errorString.indexOf("ECONNRESET") > -1 ||
 						errorString.indexOf("ENETDOWN") > -1 ||
-						errorString.indexOf("socket disconnected before secure") > -1)
+						errorString.indexOf("ENETUNREACH") > -1 ||
+						errorString.indexOf("socket disconnected before secure") > -1 ||
+						errorString.indexOf("socket hang up") > -1)
 				) {
 					// ignore network related errors.
 					return;

@@ -363,7 +363,7 @@ export const Onboard = React.memo(function Onboard() {
 	const [suggestedInvitees, setSuggestedInvitees] = useState<any[]>([]);
 	// if we come back into the tour from elsewhere and currentStep is the codemark step, add icons
 	const [seenCommentingStep, setSeenCommentingStep] = useState(currentStep === CODEMARK_STEP);
-	const [numInviteFields, setNumInviteFields] = useState(0);
+	const [numInviteFields, setNumInviteFields] = useState(1);
 	const [inviteEmailFields, setInviteEmailFields] = useState<string[]>([]);
 	const [inviteEmailValidity, setInviteEmailValidity] = useState<boolean[]>(
 		new Array(50).fill(true)
@@ -812,7 +812,7 @@ export const Onboard = React.memo(function Onboard() {
 											</ExpandingText>
 										);
 									})}
-									<LinkRow style={{ minWidth: "300px" }}>
+									<LinkRow style={{ minWidth: "180px" }}>
 										<Link onClick={addInvite}>+ Add more</Link>
 										<Button isLoading={sendingInvites} onClick={sendInvites}>
 											Send invites

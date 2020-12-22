@@ -303,7 +303,7 @@ export class SimpleStream extends PureComponent {
 				<ModalRoot />
 
 				{/* don't want to show the check email if you're onboarding */}
-				{activePanel !== WebviewPanels.Onboard && <CheckEmailVsGit />}
+				{activePanel === WebviewPanels.Sidebar && <CheckEmailVsGit />}
 
 				{/*<EnjoyingCodeStream />*/}
 

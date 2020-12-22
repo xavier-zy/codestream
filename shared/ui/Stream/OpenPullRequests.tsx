@@ -206,7 +206,12 @@ export const OpenPullRequests = React.memo((props: Props) => {
 		const disposable = HostApi.instance.on(DidChangeDataNotificationType, (e: any) => {
 			if (e.type === ChangeDataType.PullRequests) {
 				console.warn("OpenPullRequests: ChangeDataType.PullRequests", e);
-				fetchPRs(queries, { force: true });
+				setIsLoadingPRs(true);
+				setTimeout(() => {
+					// kind of a hack to ensure that the provider's search api
+					// has all the latest data after a PR is merged/opened/closed
+					fetchPRs(queries, { force: true, alreadyLoading: true });
+				}, 4000);
 			}
 		});
 		return () => {
@@ -232,8 +237,10 @@ export const OpenPullRequests = React.memo((props: Props) => {
 	}, [derivedState.PRConnectedProvidersWithErrorsCount]);
 
 	const fetchPRs = useCallback(
-		async (theQueries, options?: { force?: boolean }) => {
-			setIsLoadingPRs(true);
+		async (theQueries, options?: { force?: boolean; alreadyLoading?: boolean }) => {
+			if (!options || options.alreadyLoading !== true) {
+				setIsLoadingPRs(true);
+			}
 			let count: number | undefined = undefined;
 			try {
 				const newGroups = {};

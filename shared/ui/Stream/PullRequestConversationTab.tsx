@@ -192,7 +192,7 @@ export const PullRequestConversationTab = (props: {
 	const [mergeMethod, setMergeMethod] = useState(derivedState.defaultMergeMethod);
 	const [clInstructionsIsOpen, toggleClInstructions] = useReducer((open: boolean) => !open, false);
 	const [cloneURLType, setCloneURLType] = useState("https");
-	const [cloneURL, setCloneURL] = useState(`${pr.repository.url}.git`);
+	const [cloneURL, setCloneURL] = useState(pr && pr.repository ? `${pr.repository.url}.git` : "");
 
 	const __onDidRender = functions => {
 		insertText = functions.insertTextAtCursor;

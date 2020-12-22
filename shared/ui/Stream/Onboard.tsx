@@ -377,6 +377,7 @@ export const Onboard = React.memo(function Onboard() {
 	const previousConnectedMessagingProviders = usePrevious(derivedState.connectedMessagingProviders);
 	const previousTotalPosts = usePrevious(derivedState.totalPosts);
 	const [openRepos, setOpenRepos] = useState<ReposScm[]>(EMPTY_ARRAY);
+	const [showNextMessagingStep, setShowNextMessagingStep] = useState(false);
 
 	useDidMount(() => {
 		getSuggestedInvitees();
@@ -528,6 +529,7 @@ export const Onboard = React.memo(function Onboard() {
 										"Connection Location": "Onboard"
 									}
 								});
+								setShowNextMessagingStep(true);
 								return;
 							}
 							dispatch(configureAndConnectProvider(provider.id, "Onboard"));
@@ -748,7 +750,15 @@ export const Onboard = React.memo(function Onboard() {
 										{renderProviderButtons([...derivedState.messagingProviders].reverse())}
 									</IntegrationButtons>
 								</Dialog>
-								<SkipLink onClick={skip}>I'll do this later</SkipLink>
+								{showNextMessagingStep ? (
+									<CenterRow>
+										<Button size="xl" onClick={skip}>
+											Next
+										</Button>
+									</CenterRow>
+								) : (
+									<SkipLink onClick={skip}>I'll do this later</SkipLink>
+								)}
 							</div>
 						</Step>
 						<Step className={className(4)}>

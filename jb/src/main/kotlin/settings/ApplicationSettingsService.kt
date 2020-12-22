@@ -41,7 +41,8 @@ data class ApplicationSettingsServiceState(
     var autoHideMarkers: Boolean = false,
     var proxySupport: ProxySupport = ProxySupport.ON,
     var proxyStrictSSL: Boolean = true,
-    var firstRun: Boolean = true
+    var firstRun: Boolean = true,
+    var createReviewOnCommit: Boolean = true
 )
 
 @State(name = "CodeStream", storages = [Storage("codestream.xml")])

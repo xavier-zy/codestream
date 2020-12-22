@@ -51,6 +51,8 @@
                                  handlerClass="com.codestream.editor.GutterPullRequestTooltipLinkHandler"/>
         <codeInsight.linkHandler prefix="#codemark/link/"
                                  handlerClass="com.codestream.editor.GutterCodemarkLinkTooltipLinkHandler"/>
+
+        <vcsCheckinHandlerFactory implementation="com.codestream.vcs.CodeStreamCheckinHandlerFactory"/>
     </extensions>
 
     <project-components>

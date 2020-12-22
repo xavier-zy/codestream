@@ -293,8 +293,12 @@ export class SimpleStream extends PureComponent {
 				<OfflineBanner />
 				<PRProviderErrorBanner />
 				<ModalRoot />
-				<CheckEmailVsGit />
+
+				{/* don't want to show the check email if you're onboarding */}
+				{activePanel !== WebviewPanels.Onboard && <CheckEmailVsGit />}
+
 				{/*<EnjoyingCodeStream />*/}
+
 				{this.state.propsForPrePRProviderInfoModal && (
 					<PrePRProviderInfoModal {...this.state.propsForPrePRProviderInfoModal} />
 				)}

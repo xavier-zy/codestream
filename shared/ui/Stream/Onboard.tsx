@@ -605,213 +605,214 @@ export const Onboard = React.memo(function Onboard() {
 	};
 
 	return (
-		<div
-			id="scroll-container"
-			className="onboarding-page"
-			style={{
-				position: "relative",
-				alignItems: "center",
-				overflowX: "hidden",
-				overflowY: currentStep === 0 ? "hidden" : "auto"
-			}}
-		>
+		<>
 			{seenCommentingStep && <CreateCodemarkIcons />}
-			<div className="standard-form" style={{ height: "auto", position: "relative" }}>
-				<fieldset className="form-body">
-					<Step className={`ease-down ${className(0)}`}>
-						<div className="body">
-							<h1>
-								<Icon name="codestream" />
-								<br />
-								Welcome to CodeStream
-							</h1>
-							<p className="explainer">
-								CodeStream helps you discuss, review, and understand code.
-							</p>
-							<CenterRow>
-								<Button size="xl" onClick={() => setStep(1)}>
-									Get Started
-								</Button>
-							</CenterRow>
-						</div>
-					</Step>
-
-					<Step className={className(1)}>
-						<div className="body">
-							<h3>
-								<Icon name="mark-github" />
-								<Icon name="gitlab" />
-								<Icon name="bitbucket" />
-								<br />
-								Connect to your Code Host
-							</h3>
-							<p className="explainer">
-								Bring pull requests into your IDE to streamline your workflow
-							</p>
-							<Dialog>
-								<DialogRow>
-									<Icon name="check" />
-									<div>Rich create pull request interface w/diff tool</div>
-								</DialogRow>
-								<DialogRow>
-									<Icon name="check" />
-									<div>
-										Visualize code comments from merged-in pull requests as annotations on your
-										source files
-									</div>
-								</DialogRow>
-								<DialogRow>
-									<Icon name="check" />
-									<div>
-										Manage pull requests and conduct code reviews with full source-tree context
-										(GitHub only)
-									</div>
-								</DialogRow>
-								<Sep />
-								<IntegrationButtons noBorder noPadding>
-									{renderProviderButtons(derivedState.codeHostProviders)}
-								</IntegrationButtons>
-							</Dialog>
-							<SkipLink onClick={skip}>I'll do this later</SkipLink>
-						</div>
-					</Step>
-					<Step className={className(2)}>
-						<div className="body">
-							<h3>
-								<Icon name="jira" />
-								<Icon name="trello" />
-								<Icon name="asana" />
-								<br />
-								Connect to your Issue Tracker
-							</h3>
-							<p className="explainer">Grab tickets and get to work without breaking flow</p>
-							<Dialog>
-								<DialogRow>
-									<Icon name="check" />
-									<div>View a list of outstanding tasks assigned to you with custom queries</div>
-								</DialogRow>
-								<DialogRow>
-									<Icon name="check" />
-									<div>
-										One-click to update task status, create a branch, and update your status on
-										Slack
-									</div>
-								</DialogRow>
-								<DialogRow>
-									<Icon name="check" />
-									<div>
-										Enrich the context of code discussion, pull requests, and feedback requests by
-										including ticket information
-									</div>
-								</DialogRow>
-								<Sep />
-								<IntegrationButtons noBorder noPadding>
-									{renderProviderButtons(derivedState.issueProviders)}
-								</IntegrationButtons>
-							</Dialog>
-							<SkipLink onClick={skip}>I'll do this later</SkipLink>
-						</div>
-					</Step>
-					<Step className={className(3)}>
-						<div className="body">
-							<h3>
-								<Icon name="slack" />
-								<Icon name="msteams" />
-								<br />
-								Connect to Slack or MS Teams
-							</h3>
-							<p className="explainer">
-								Ask questions or make suggestions about any code in your repo
-							</p>
-							<Dialog>
-								<DialogRow>
-									<Icon name="check" />
-									<div>
-										Discussing code is as simple as: select the code, type your question, and share
-										to a channel or DM
-									</div>
-								</DialogRow>
-								<DialogRow>
-									<Icon name="check" />
-									<div>Code authors are automatically at-mentioned based on git blame info</div>
-								</DialogRow>
-								<DialogRow>
-									<Icon name="check" />
-									<div>
-										Conversation threads are tied to code locations across branches and as new code
-										merges in
-									</div>
-								</DialogRow>
-								<Sep />
-								<IntegrationButtons noBorder noPadding>
-									{renderProviderButtons([...derivedState.messagingProviders].reverse())}
-								</IntegrationButtons>
-							</Dialog>
-							<SkipLink onClick={skip}>I'll do this later</SkipLink>
-						</div>
-					</Step>
-					<Step className={className(4)}>
-						<div className="body">
-							<h3>Invite your team</h3>
-							<p className="explainer">We recommend exploring CodeStream with your team</p>
-							<Dialog>
-								{suggestedInvitees.length > 0 && (
-									<>
-										<p className="explainer" style={{ textAlign: "left" }}>
-											Suggestions below are based on your git history
-										</p>
-										{suggestedInvitees.map(user => {
-											return (
-												<Checkbox
-													name={user.email}
-													checked={inviteSuggestedField[user.email]}
-													onChange={() => {
-														setInviteSuggestedField({
-															...inviteSuggestedField,
-															[user.email]: !inviteSuggestedField[user.email]
-														});
-													}}
-												>
-													{user.fullName}{" "}
-													<CSText as="span" muted>
-														{user.email}
-													</CSText>
-												</Checkbox>
-											);
-										})}
-									</>
-								)}
-								{[...Array(numInviteFields)].map((_, index) => {
-									return (
-										<ExpandingText className="control-group">
-											<TextInput
-												name={`invite-${index}`}
-												autoFocus={index === numInviteFields - 1}
-												placeholder="name@example.com"
-												value={inviteEmailFields[index] || ""}
-												onChange={value => onInviteEmailChange(value, index)}
-												onValidityChanged={onInviteValidityChanged}
-												validate={inviteEmailFields[index] ? isEmailValid : () => true}
-											/>
-											{!inviteEmailValidity[index] && (
-												<small className="error-message">
-													<FormattedMessage id="login.email.invalid" />
-												</small>
-											)}
-										</ExpandingText>
-									);
-								})}
-								<LinkRow style={{ minWidth: "300px" }}>
-									<Link onClick={addInvite}>+ Add more</Link>
-									<Button isLoading={sendingInvites} onClick={sendInvites}>
-										Send invites
+			<div
+				id="scroll-container"
+				className="onboarding-page"
+				style={{
+					position: "relative",
+					alignItems: "center",
+					overflowX: "hidden",
+					overflowY: currentStep === 0 ? "hidden" : "auto"
+				}}
+			>
+				<div className="standard-form" style={{ height: "auto", position: "relative" }}>
+					<fieldset className="form-body">
+						<Step className={`ease-down ${className(0)}`}>
+							<div className="body">
+								<h1>
+									<Icon name="codestream" />
+									<br />
+									Welcome to CodeStream
+								</h1>
+								<p className="explainer">
+									CodeStream helps you discuss, review, and understand code.
+								</p>
+								<CenterRow>
+									<Button size="xl" onClick={() => setStep(1)}>
+										Get Started
 									</Button>
-								</LinkRow>
-							</Dialog>
-							<SkipLink onClick={confirmSkip}>I'll do this later</SkipLink>
-						</div>
-					</Step>
-					{/* 
+								</CenterRow>
+							</div>
+						</Step>
+
+						<Step className={className(1)}>
+							<div className="body">
+								<h3>
+									<Icon name="mark-github" />
+									<Icon name="gitlab" />
+									<Icon name="bitbucket" />
+									<br />
+									Connect to your Code Host
+								</h3>
+								<p className="explainer">
+									Bring pull requests into your IDE to streamline your workflow
+								</p>
+								<Dialog>
+									<DialogRow>
+										<Icon name="check" />
+										<div>Rich create pull request interface w/diff tool</div>
+									</DialogRow>
+									<DialogRow>
+										<Icon name="check" />
+										<div>
+											Visualize code comments from merged-in pull requests as annotations on your
+											source files
+										</div>
+									</DialogRow>
+									<DialogRow>
+										<Icon name="check" />
+										<div>
+											Manage pull requests and conduct code reviews with full source-tree context
+											(GitHub only)
+										</div>
+									</DialogRow>
+									<Sep />
+									<IntegrationButtons noBorder noPadding>
+										{renderProviderButtons(derivedState.codeHostProviders)}
+									</IntegrationButtons>
+								</Dialog>
+								<SkipLink onClick={skip}>I'll do this later</SkipLink>
+							</div>
+						</Step>
+						<Step className={className(2)}>
+							<div className="body">
+								<h3>
+									<Icon name="jira" />
+									<Icon name="trello" />
+									<Icon name="asana" />
+									<br />
+									Connect to your Issue Tracker
+								</h3>
+								<p className="explainer">Grab tickets and get to work without breaking flow</p>
+								<Dialog>
+									<DialogRow>
+										<Icon name="check" />
+										<div>View a list of outstanding tasks assigned to you with custom queries</div>
+									</DialogRow>
+									<DialogRow>
+										<Icon name="check" />
+										<div>
+											One-click to update task status, create a branch, and update your status on
+											Slack
+										</div>
+									</DialogRow>
+									<DialogRow>
+										<Icon name="check" />
+										<div>
+											Enrich the context of code discussion, pull requests, and feedback requests by
+											including ticket information
+										</div>
+									</DialogRow>
+									<Sep />
+									<IntegrationButtons noBorder noPadding>
+										{renderProviderButtons(derivedState.issueProviders)}
+									</IntegrationButtons>
+								</Dialog>
+								<SkipLink onClick={skip}>I'll do this later</SkipLink>
+							</div>
+						</Step>
+						<Step className={className(3)}>
+							<div className="body">
+								<h3>
+									<Icon name="slack" />
+									<Icon name="msteams" />
+									<br />
+									Connect to Slack or MS Teams
+								</h3>
+								<p className="explainer">
+									Ask questions or make suggestions about any code in your repo
+								</p>
+								<Dialog>
+									<DialogRow>
+										<Icon name="check" />
+										<div>
+											Discussing code is as simple as: select the code, type your question, and
+											share to a channel or DM
+										</div>
+									</DialogRow>
+									<DialogRow>
+										<Icon name="check" />
+										<div>Code authors are automatically at-mentioned based on git blame info</div>
+									</DialogRow>
+									<DialogRow>
+										<Icon name="check" />
+										<div>
+											Conversation threads are tied to code locations across branches and as new
+											code merges in
+										</div>
+									</DialogRow>
+									<Sep />
+									<IntegrationButtons noBorder noPadding>
+										{renderProviderButtons([...derivedState.messagingProviders].reverse())}
+									</IntegrationButtons>
+								</Dialog>
+								<SkipLink onClick={skip}>I'll do this later</SkipLink>
+							</div>
+						</Step>
+						<Step className={className(4)}>
+							<div className="body">
+								<h3>Invite your team</h3>
+								<p className="explainer">We recommend exploring CodeStream with your team</p>
+								<Dialog>
+									{suggestedInvitees.length > 0 && (
+										<>
+											<p className="explainer" style={{ textAlign: "left" }}>
+												Suggestions below are based on your git history
+											</p>
+											{suggestedInvitees.map(user => {
+												return (
+													<Checkbox
+														name={user.email}
+														checked={inviteSuggestedField[user.email]}
+														onChange={() => {
+															setInviteSuggestedField({
+																...inviteSuggestedField,
+																[user.email]: !inviteSuggestedField[user.email]
+															});
+														}}
+													>
+														{user.fullName}{" "}
+														<CSText as="span" muted>
+															{user.email}
+														</CSText>
+													</Checkbox>
+												);
+											})}
+										</>
+									)}
+									{[...Array(numInviteFields)].map((_, index) => {
+										return (
+											<ExpandingText className="control-group">
+												<TextInput
+													name={`invite-${index}`}
+													autoFocus={index === numInviteFields - 1}
+													placeholder="name@example.com"
+													value={inviteEmailFields[index] || ""}
+													onChange={value => onInviteEmailChange(value, index)}
+													onValidityChanged={onInviteValidityChanged}
+													validate={inviteEmailFields[index] ? isEmailValid : () => true}
+												/>
+												{!inviteEmailValidity[index] && (
+													<small className="error-message">
+														<FormattedMessage id="login.email.invalid" />
+													</small>
+												)}
+											</ExpandingText>
+										);
+									})}
+									<LinkRow style={{ minWidth: "300px" }}>
+										<Link onClick={addInvite}>+ Add more</Link>
+										<Button isLoading={sendingInvites} onClick={sendInvites}>
+											Send invites
+										</Button>
+									</LinkRow>
+								</Dialog>
+								<SkipLink onClick={confirmSkip}>I'll do this later</SkipLink>
+							</div>
+						</Step>
+						{/* 
 					<Step className={className(5)}>
 						<div className="body">
 							<h3>Learn the basics</h3>
@@ -827,97 +828,84 @@ export const Onboard = React.memo(function Onboard() {
 						</div>
 					</Step>
 					*/}
-					<Step className={className(CODEMARK_STEP)}>
-						<div className="body">
-							<h3>Discuss any code, anytime</h3>
-							<p className="explainer">
-								Discuss code in a pull request, a feedback request, or to ask a question or make a
-								suggestion about any part of your code base.
-							</p>
-							<Dialog>
-								<div
-									style={{
-										textAlign: "center",
-										margin: "0 0 10px 0",
-										fontSize: "larger",
-										color: "var(--text-color-highlight)"
-									}}
-								>
-									Try sharing a code comment with your team:
-								</div>
-								{openRepos.length === 0 ? (
-									<>
-										<DialogRow style={{ alignItems: "center" }}>
-											<OutlineNumber>1</OutlineNumber>
-											<div>Open a repository in your editor</div>
-										</DialogRow>
-										<DialogRow style={{ alignItems: "center" }}>
-											<OutlineNumber>2</OutlineNumber>
-											<div>Select a range in a source file</div>
-										</DialogRow>
-										<DialogRow style={{ alignItems: "center" }}>
-											<OutlineNumber>3</OutlineNumber>
-											<div>Click the comment icon or type the keybinding:</div>
-										</DialogRow>
-									</>
-								) : (
-									<>
-										<DialogRow style={{ alignItems: "center" }}>
-											<OutlineNumber>1</OutlineNumber>
-											<div>Select a range in your editor</div>
-										</DialogRow>
-										<DialogRow style={{ alignItems: "center" }}>
-											<OutlineNumber>2</OutlineNumber>
-											<div>Click the comment icon or type the keybinding:</div>
-										</DialogRow>
-									</>
-								)}
-								<Keybinding>{ComposeKeybindings.comment}</Keybinding>
-							</Dialog>
-							<SkipLink onClick={skip}>I'll try this later</SkipLink>
-						</div>
-					</Step>
-					<Step className={className(CONGRATULATIONS_STEP)}>
-						<div className="body">
-							<h1>You're good to go!</h1>
-							<p className="explainer">
-								Next, explore the features, and any time you want to discuss code with your team,
-								select it and hit {ComposeKeybindings.comment}
-							</p>
-							<CenterRow>
-								<Button size="xl" onClick={() => setStep(NUM_STEPS)}>
-									Open CodeStream
-								</Button>
-							</CenterRow>
-						</div>
-					</Step>
-				</fieldset>
+						<Step className={className(CODEMARK_STEP)}>
+							<div className="body">
+								<h3>Discuss any code, anytime</h3>
+								<p className="explainer">
+									Discuss code in a pull request, a feedback request, or to ask a question or make a
+									suggestion about any part of your code base.
+								</p>
+								<Dialog>
+									<div
+										style={{
+											textAlign: "center",
+											margin: "0 0 10px 0",
+											fontSize: "larger",
+											color: "var(--text-color-highlight)"
+										}}
+									>
+										Try sharing a code comment with your team:
+									</div>
+									{openRepos.length === 0 ? (
+										<>
+											<DialogRow style={{ alignItems: "center" }}>
+												<OutlineNumber>1</OutlineNumber>
+												<div>Open a repository in your editor</div>
+											</DialogRow>
+											<DialogRow style={{ alignItems: "center" }}>
+												<OutlineNumber>2</OutlineNumber>
+												<div>Select a range in a source file</div>
+											</DialogRow>
+											<DialogRow style={{ alignItems: "center" }}>
+												<OutlineNumber>3</OutlineNumber>
+												<div>Click the comment icon or type the keybinding:</div>
+											</DialogRow>
+										</>
+									) : (
+										<>
+											<DialogRow style={{ alignItems: "center" }}>
+												<OutlineNumber>1</OutlineNumber>
+												<div>Select a range in your editor</div>
+											</DialogRow>
+											<DialogRow style={{ alignItems: "center" }}>
+												<OutlineNumber>2</OutlineNumber>
+												<div>Click the comment icon or type the keybinding:</div>
+											</DialogRow>
+										</>
+									)}
+									<Keybinding>{ComposeKeybindings.comment}</Keybinding>
+								</Dialog>
+								<SkipLink onClick={skip}>I'll try this later</SkipLink>
+							</div>
+						</Step>
+						<Step className={className(CONGRATULATIONS_STEP)}>
+							<div className="body">
+								<h1>You're good to go!</h1>
+								<p className="explainer">
+									Next, explore the features, and any time you want to discuss code with your team,
+									select it and hit {ComposeKeybindings.comment}
+								</p>
+								<CenterRow>
+									<Button size="xl" onClick={() => setStep(NUM_STEPS)}>
+										Open CodeStream
+									</Button>
+								</CenterRow>
+							</div>
+						</Step>
+					</fieldset>
+				</div>
+				<Dots
+					id="dots"
+					steps={derivedState.connectedCodeHostProviders.length > 0 ? NUM_STEPS - 1 : NUM_STEPS}
+				>
+					{[...Array(NUM_STEPS)].map((_, index) => {
+						const selected = index === currentStep;
+						if (index === CODE_HOSTS_STEP && derivedState.connectedCodeHostProviders.length > 0)
+							return null;
+						return <Dot selected={selected} onClick={() => setStep(index)} />;
+					})}
+				</Dots>
 			</div>
-			<Dots
-				id="dots"
-				steps={derivedState.connectedCodeHostProviders.length > 0 ? NUM_STEPS - 1 : NUM_STEPS}
-			>
-				{[...Array(NUM_STEPS)].map((_, index) => {
-					const selected = index === currentStep;
-					if (index === CODE_HOSTS_STEP && derivedState.connectedCodeHostProviders.length > 0)
-						return null;
-					return <Dot selected={selected} onClick={() => setStep(index)} />;
-				})}
-			</Dots>
-		</div>
+		</>
 	);
 });
-
-/* TODO
-   check for no git/file on codemark step
-   fix alignment of compose icons when sidebar on left
- - after you create a codemark, what happens?
- x hook it up to registration, remove from ellipsis menu
- x A/B testing methodology
- x instrumentation
- x handle what happens when you connect a code host or issue tracker
- x add more input fields to invite
- x make invites work
- x center the dots when there are one fewer
- x what happens when there are no suggested invitees? (3 input fields)
-*/

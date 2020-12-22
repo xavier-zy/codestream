@@ -148,6 +148,7 @@ import {
 	CSApiCapabilities,
 	CSApiFeatures,
 	CSChannelStream,
+	CSCompany,
 	CSCompleteSignupRequest,
 	CSConfirmRegistrationRequest,
 	CSCreateChannelStreamRequest,
@@ -1635,12 +1636,20 @@ export class CodeStreamApiProvider implements ApiProvider {
 		return this.get<CSGetCompanyResponse>(`/companies/${request.companyId}`, this._token);
 	}
 
-	setCompanyTestGroups(companyId: string, request: { [key: string]: string }): Promise<object> {
-		return this.put<{ [key: string]: string }, {}>(
+	async setCompanyTestGroups(
+		companyId: string,
+		request: { [key: string]: string }
+	): Promise<CSCompany> {
+		const response = await this.put<{ [key: string]: string }, { company: any }>(
 			`/company-test-group/${companyId}`,
 			request,
 			this._token
 		);
+		const companies = (await SessionContainer.instance().companies.resolve({
+			type: MessageType.Companies,
+			data: [response.company]
+		})) as CSCompany[];
+		return companies[0];
 	}
 
 	@lspHandler(CreateTeamTagRequestType)

@@ -868,6 +868,18 @@ export class CodeStreamSession {
 			});
 		});
 
+		// this needs to happen before initializing telemetry, because super-properties are dependent
+		if (this.apiCapabilities.testGroups) {
+			const company = await this.setCompanyTestGroups();
+			if (company) {
+				// replace company object in the response, so the test groups are correct
+				// for telemetry, and also what we send back to the webview
+				const index = response.companies.findIndex(c => c.id === company.id);
+				response.companies.splice(index, 1);
+				response.companies.push(company);
+			}
+		}
+
 		// Initialize tracking
 		this.initializeTelemetry(response.user, currentTeam, response.companies);
 
@@ -891,10 +903,6 @@ export class CodeStreamSession {
 		if (!response.user.timeZone) {
 			const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 			this.api.updateUser({ timeZone });
-		}
-
-		if (this.apiCapabilities.testGroups) {
-			await this.setCompanyTestGroups();
 		}
 
 		return loginResponse;
@@ -1079,6 +1087,11 @@ export class CodeStreamSession {
 				if (company.trialStartDate && company.trialEndDate) {
 					props["company"]["trialStart_at"] = new Date(company.trialStartDate).toISOString();
 					props["company"]["trialEnd_at"] = new Date(company.trialEndDate).toISOString();
+				}
+				if (company.testGroups) {
+					props["AB Test"] = Object.keys(company.testGroups).map(
+						key => `${key}|${company.testGroups![key]}`
+					);
 				}
 			}
 		}

@@ -442,12 +442,9 @@ export const Onboard = React.memo(function Onboard() {
 	}, [derivedState.connectedMessagingProviders]);
 
 	useEffect(() => {
-		if (
-			typeof previousTotalPosts !== "undefined" &&
-			derivedState.totalPosts > (previousTotalPosts || 0)
-		) {
+		if (derivedState.totalPosts > (previousTotalPosts || 0)) {
 			// we posted a codemark
-			setStep(CONGRATULATIONS_STEP);
+			if (currentStep === CODEMARK_STEP) setStep(CONGRATULATIONS_STEP);
 		}
 	}, [derivedState.totalPosts]);
 

@@ -860,7 +860,6 @@ export class GitService implements IGitService, Disposable {
 				{ cwd: repoPath },
 				"log",
 				branch,
-				"--first-parent",
 				"-n100",
 				`--format='${GitLogParser.defaultFormat}`,
 				"--"
@@ -1452,7 +1451,6 @@ export class GitService implements IGitService, Disposable {
 			{ cwd: repoPath },
 			"log",
 			sha,
-			"--first-parent",
 			`-n${limit}`,
 			"--skip=1",
 			`--format='${GitLogParser.defaultFormat}`,

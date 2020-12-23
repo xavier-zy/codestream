@@ -5,12 +5,14 @@
 ### Added
 
 - Adds a new onboarding flow for some users that guides them through the setup of integrations and creating their first code comment
+- Adds support for remotes using SSH aliases
 
 ### Changed
 
 - When creating a feedback request only commits from current user are checked by default, and only if they include the most recent commit
 - The list in the Pull Requests section automatically updates when you open, close or merge a pull request from CodeStream
 - The hovers for icons in the editor gutter now make it clear if the discussion was a comment, issue, feedback request or pull request
+- Optimization of git operations to gather commits when creating a feedback request
 
 ### Fixed
 

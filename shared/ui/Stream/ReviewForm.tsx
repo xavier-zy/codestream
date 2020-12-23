@@ -1952,6 +1952,10 @@ class ReviewForm extends React.Component<Props, State> {
 			});
 		}
 
+		const hasChanges =
+			repoStatus &&
+			repoStatus.scm &&
+			repoStatus.scm.modifiedFiles.filter(f => !this.excluded(f.file)).length;
 		const showChanges = (!isEditing || isAmending) && !isLoadingScm && !scmError && !branchError;
 		// @ts-ignore
 		const latestCommit: { shortMessage: string } | undefined =
@@ -2195,6 +2199,7 @@ class ReviewForm extends React.Component<Props, State> {
 										}}
 										className={cx("control-button", { cancel: !this.state.title })}
 										type="submit"
+										disabled={!hasChanges}
 										loading={isReloadingScm || this.state.isLoading}
 										onClick={this.handleClickSubmit}
 									>

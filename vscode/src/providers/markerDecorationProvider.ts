@@ -417,7 +417,6 @@ export class CodemarkDecorationProvider implements HoverProvider, Disposable {
 						};
 
 						const typeString = Strings.toTitleCase(m.type);
-						const markerColor = m.color || "blue";
 						message += `__${m.creatorName}__, ${m.fromNow()} &nbsp; _(${m.formatDate()})_ \n\n`;
 						switch (true) {
 							case m.type === "issue":

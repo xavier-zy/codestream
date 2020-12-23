@@ -338,6 +338,7 @@ export class DocumentMarkerManager {
 					creatorName: comment.author ? comment.author.login : "Unknown",
 					range: MarkerLocation.toRangeFromArray(location),
 					location: MarkerLocation.fromArray(location, comment.id),
+					title: pr.title,
 					summary: summary,
 					summaryMarkdown: `${Strings.escapeMarkdown(summary, { quoted: false })}`,
 					type: CodemarkType.Comment,
@@ -422,7 +423,7 @@ export class DocumentMarkerManager {
 	}: FetchDocumentMarkersRequest) {
 		const cc = Logger.getCorrelationContext();
 
-		const { codemarks, files, markers, markerLocations, users } = SessionContainer.instance();
+		const { codemarks, files, markers, markerLocations, users, reviews, posts } = SessionContainer.instance();
 		const { documents } = Container.instance();
 
 		try {
@@ -491,6 +492,13 @@ export class DocumentMarkerManager {
 							);
 						}
 
+						let title;
+						if (codemark.reviewId) {
+							const review = await reviews.getById(codemark.reviewId);
+							const reviewPost = await posts.getById(review.postId);
+							title = reviewPost.text;
+						}
+
 						if (!locations[marker.id]) {
 							const doc = documents.get(documentId.uri);
 							const currentBufferText = doc && doc.getText();
@@ -515,12 +523,13 @@ export class DocumentMarkerManager {
 						const location = locations[marker.id];
 						if (location) {
 							documentMarkers.push({
-								...marker,
+								...marker,								
 								fileUri: documentUri.toString(),
 								codemark: codemark,
 								creatorName: (creator && creator.username) || "Unknown",
 								range: MarkerLocation.toRange(location),
 								location: location,
+								...(title ? {title} : {}),
 								summary: summary,
 								summaryMarkdown: `${Strings.escapeMarkdown(summary, { quoted: false })}`,
 								type: codemark.type
@@ -534,6 +543,7 @@ export class DocumentMarkerManager {
 							if (missingLocation) {
 								markersNotLocated.push({
 									...marker,
+									...(title ? {title} : {}),
 									summary: summary,
 									summaryMarkdown: `${Strings.escapeMarkdown(summary, { quoted: false })}`,
 									creatorName: (creator && creator.username) || "Unknown",
@@ -549,6 +559,7 @@ export class DocumentMarkerManager {
 							} else {
 								markersNotLocated.push({
 									...marker,
+									...(title ? {title} : {}),
 									summary: summary,
 									summaryMarkdown: `${Strings.escapeMarkdown(summary, { quoted: false })}`,
 									creatorName: (creator && creator.username) || "Unknown",

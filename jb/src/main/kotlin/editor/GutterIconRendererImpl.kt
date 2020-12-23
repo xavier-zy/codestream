@@ -18,6 +18,8 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.IconLoader
+import com.intellij.ui.ColorUtil
+import com.intellij.ui.JBColor
 import org.eclipse.lsp4j.Position
 import org.eclipse.lsp4j.Range
 import java.text.SimpleDateFormat
@@ -38,29 +40,36 @@ class GutterIconRendererImpl(val editor: Editor, val marker: DocumentMarker) : G
         val dateFormat = SimpleDateFormat("MMMM d, YYYY h:mma")
         var tooltip = "<b>${marker.creatorName}</b> (${dateFormat.format(Date(marker.createdAt))})" +
             "\n\n"
+        val rangeString = serializeRange(marker.range);
 
         if (marker.codemark !== null) {
             if (marker.type == "issue") {
-                tooltip += "<img src='${getIconLink("issue")}'>"
+                tooltip += "<img src='${getIconLink("issue")}'> &nbsp; "
             } else if(marker.codemark.reviewId !== null) {
-                tooltip += "<img src='${getIconLink("fr")}'>"
+                tooltip += "<img src='${getIconLink("fr")}'> &nbsp; "
+                if (marker.title !== null) {
+                    tooltip += "${marker.title} \n\n"
+                }
             } else {
-                tooltip += "<img src='${getIconLink("comment")}'>"
+                tooltip += "<img src='${getIconLink("comment")}'> &nbsp; "
             }
-            tooltip += " &nbsp; ${marker.summary}"
+            tooltip += marker.summary
             tooltip += "\n\n<a href='#codemark/show/${marker.codemark.id}'>View Comment</a>"
+            tooltip += "<hr style='margin-top: 3px; margin-bottom: 3px;'>"
+            tooltip += "<a href='#codemark/link/${CodemarkType.COMMENT},${rangeString}'>Add Comment</a> &#183; " +
+                "<a href='#codemark/link/${CodemarkType.ISSUE},${rangeString}'>Create Issue</a> &#183; " +
+                "<a href='#codemark/link/${CodemarkType.LINK},${rangeString}'>Get Permalink</a>"
         } else if (marker.externalContent != null) {
-            tooltip += "<img src='${getIconLink("pr")}'>"
-            tooltip += " &nbsp; ${marker.summary}"
+            tooltip += "<img src='${getIconLink("pr")}'> &nbsp; "
+            if (marker.title !== null) {
+                tooltip += "${marker.title} \n\n"
+            }
+            tooltip += marker.summary
             tooltip += "\n\n<a href='#pr/show/${marker.externalContent.provider?.id}" +
                 "/${marker.externalContent.externalId}/${marker.externalContent.externalChildId}'>View Comment</a>"
+            tooltip += "<hr style='margin-top: 3px; margin-bottom: 3px;'>"
+            tooltip += "<a href='#codemark/link/${CodemarkType.COMMENT},${rangeString}'>Add Comment</a>"
         }
-
-        val rangeString = serializeRange(marker.range);
-        tooltip += "<hr>"
-        tooltip += "<a href='#codemark/link/${CodemarkType.COMMENT},${rangeString}'>Add Comment</a> * " +
-            "<a href='#codemark/link/${CodemarkType.ISSUE},${rangeString}'>Create Issue</a> * " +
-            "<a href='#codemark/link/${CodemarkType.LINK},${rangeString}'>Get Permalink</a>"
 
         return tooltip
     }
@@ -83,8 +92,12 @@ class GutterIconRendererImpl(val editor: Editor, val marker: DocumentMarker) : G
     }
 
     fun getIconLink(type: String): String {
-        val color = marker.codemark?.color.ifNullOrBlank { "blue" }
-        val icon = IconLoader.getIcon("/images/icon16/marker-$type-$color.png");
+        val bg = JBColor.background()
+        var color = "dark";
+        if (ColorUtil.isDark(bg)) {
+            color = "light"
+        }
+        val icon = IconLoader.getIcon("/images/icon14/marker-$type-$color.png");
 
         return (icon as IconLoader.CachedImageIcon).url.toString()
     }

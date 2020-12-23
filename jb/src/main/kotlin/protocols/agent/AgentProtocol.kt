@@ -139,6 +139,7 @@ class DocumentMarker(
     val type: String?,
     val range: Range,
     val summary: String,
+    val title: String?,
     val externalContent: DocumentMarkerExternalContent?
 )
 

@@ -46,6 +46,7 @@ export type DocumentMarker = CSEntity &
 		// property already, however there is additional data on the location
 		// object, called `meta` that we also want to expose
 		location: CSMarkerLocation;
+		title?: string;
 		summary: string;
 		summaryMarkdown: string;
 		type: CodemarkType;
@@ -61,8 +62,7 @@ export type DocumentMarker = CSEntity &
 				codemark?: undefined;
 				codemarkId?: undefined;
 				externalContent: DocumentMarkerExternalContent;
-		  }
-	);
+		  });
 
 export interface DocumentMarkerExternalContent {
 	provider: {

@@ -73,6 +73,10 @@ export class DocMarker {
 		return (this._entity.codemark && this._entity.codemark.status) || "open";
 	}
 
+	get title() {
+		return this._entity.title;
+	}
+
 	get summary() {
 		return this._entity.summary;
 	}

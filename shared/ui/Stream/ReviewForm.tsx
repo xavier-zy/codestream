@@ -558,7 +558,7 @@ class ReviewForm extends React.Component<Props, State> {
 					statusInfo.scm.commits.length > 1 &&
 					statusInfo.scm.commits[0].info
 				) {
-					this.setChangeStart(statusInfo.scm.commits[1].sha);
+					this.setChangeStart(statusInfo.scm.commits[1].sha, () => this.handleRepoChange());
 					this.setState({ title: statusInfo.scm.commits[0].info.message });
 					// only show this 1 commit
 					limitedLength = 1;

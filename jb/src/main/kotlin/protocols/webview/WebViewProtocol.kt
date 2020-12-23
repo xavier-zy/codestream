@@ -69,7 +69,8 @@ object ReviewNotifications {
     class New(
         val uri: String?,
         val range: Range,
-        val source: String?
+        val source: String?,
+        val includeLatestCommit: Boolean = false
     ) : WebViewNotification {
         override fun getMethod() = "webview/review/new"
     }

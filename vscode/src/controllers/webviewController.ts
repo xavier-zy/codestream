@@ -333,7 +333,8 @@ export class WebviewController implements Disposable {
 	@log()
 	async newReviewRequest(
 		editor: TextEditor | undefined = this._lastEditor,
-		source: string
+		source: string,
+		includeLatestCommit?: boolean
 	): Promise<void> {
 		if (this.visible) {
 			await this._webview!.show();
@@ -350,7 +351,8 @@ export class WebviewController implements Disposable {
 		this._webview!.notify(NewReviewNotificationType, {
 			uri: editor ? editor.document.uri.toString() : undefined,
 			range: editor ? Editor.toSerializableRange(editor.selection) : undefined,
-			source: source
+			source: source,
+			includeLatestCommit: includeLatestCommit
 		});
 	}
 
@@ -1259,14 +1261,16 @@ export class WebviewController implements Disposable {
 		} catch {}
 	}
 
-	private async connectToGitHub () {
-		const session = await authentication.getSession("github", ["read:user", "user:email", "repo"], { createIfNone: true });
-		Logger.log(`Connected to GitHub session ${  session.id}`);
+	private async connectToGitHub() {
+		const session = await authentication.getSession("github", ["read:user", "user:email", "repo"], {
+			createIfNone: true
+		});
+		Logger.log(`Connected to GitHub session ${session.id}`);
 		this._providerSessionIds.github = session.id;
 		return { accessToken: session.accessToken, sessionId: session.id };
 	}
 
-	private async disconnectFromGitHub () {
+	private async disconnectFromGitHub() {
 		if (this._providerSessionIds.github) {
 			Logger.log(`Disconnected from GitHub session ${this._providerSessionIds.github}`);
 
@@ -1279,7 +1283,9 @@ export class WebviewController implements Disposable {
 				Logger.log(`Disconnecting from GitHub, session ${this._providerSessionIds.github}`);
 				await (authentication as any).logout("github", this._providerSessionIds.github);
 			} else {
-				Logger.log("logout() method not detected in VSCode engine, unable to invalidate GitHub session");
+				Logger.log(
+					"logout() method not detected in VSCode engine, unable to invalidate GitHub session"
+				);
 			}
 			delete this._providerSessionIds.github;
 		} else {

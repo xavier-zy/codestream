@@ -114,6 +114,9 @@ export interface WebviewContext {
 	};
 	currentCodemarkId?: string;
 	currentReviewId?: string;
+	currentReviewOptions?: {
+		includeLatestCommit?: boolean;
+	};
 	createPullRequestReviewId?: string;
 	currentPullRequest?:
 		| {

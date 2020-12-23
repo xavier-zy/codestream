@@ -74,6 +74,7 @@ export interface NewPullRequestNotification {
 	uri?: string;
 	range?: Range;
 	source?: string;
+	includeLatestCommit?: boolean;
 }
 
 export const NewReviewNotificationType = new NotificationType<NewReviewNotification, void>(

@@ -74,6 +74,7 @@ import {
 	setNewPostEntry,
 	setIsFirstPageview,
 	setCurrentReview,
+	setCurrentReviewOptions,
 	setCurrentPullRequest,
 	setCurrentCodemark
 } from "../store/context/actions";
@@ -154,6 +155,9 @@ export class SimpleStream extends PureComponent {
 		}
 		this.props.setCurrentReview("");
 		this.props.setCurrentPullRequest("");
+		if (e && e.includeLatestCommit) {
+			this.props.setCurrentReviewOptions({ includeLatestCommit: e.includeLatestCommit });
+		}
 		this.props.openPanel(WebviewPanels.NewReview);
 	}
 
@@ -680,6 +684,7 @@ const mapStateToProps = state => {
 export default connect(mapStateToProps, {
 	...actions,
 	setCurrentReview,
+	setCurrentReviewOptions,
 	setCurrentPullRequest,
 	setCurrentStream,
 	setCurrentCodemark,

@@ -121,6 +121,8 @@ export function reduceContext(
 			return { ...state, codemarksWrapComments: action.payload };
 		case ContextActionsType.SetCurrentReview:
 			return { ...state, currentReviewId: action.payload.reviewId };
+		case ContextActionsType.SetCurrentReviewOptions:
+			return { ...state, currentReviewOptions: action.payload.options };
 		case ContextActionsType.SetCurrentRepo:
 			return {
 				...state,

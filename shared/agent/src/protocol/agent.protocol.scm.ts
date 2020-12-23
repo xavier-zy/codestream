@@ -109,7 +109,7 @@ export interface RepoScmStatus {
 	repoPath: string;
 	repoId?: string;
 	branch?: string;
-	commits?: { sha: string; info: {}; localOnly: boolean }[];
+	commits?: { sha: string; info: any; localOnly: boolean }[];
 	modifiedFiles: ModifiedFile[];
 	savedFiles: string[];
 	stagedFiles: string[];

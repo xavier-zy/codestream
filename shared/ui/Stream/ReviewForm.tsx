@@ -136,6 +136,7 @@ interface ConnectedProps {
 	};
 	currentUser: CSUser;
 	skipPostCreationModal?: boolean;
+	currentReviewOptions?: any;
 	teamTagsArray: any;
 	textEditorUri?: string;
 	createPostAndReview?: Function;
@@ -549,8 +550,21 @@ class ReviewForm extends React.Component<Props, State> {
 
 			this.setState({ repoStatus: statusInfo, repoUri: uri, currentFile: "" });
 			if (!startCommit && statusInfo.scm && statusInfo.scm.startCommit) {
-				this.setChangeStart(statusInfo.scm.startCommit);
-
+				let limitedLength: number | undefined = undefined;
+				if (
+					this.props.currentReviewOptions &&
+					this.props.currentReviewOptions.includeLatestCommit &&
+					statusInfo.scm.commits &&
+					statusInfo.scm.commits.length > 1 &&
+					statusInfo.scm.commits[0].info
+				) {
+					this.setChangeStart(statusInfo.scm.commits[1].sha);
+					this.setState({ title: statusInfo.scm.commits[0].info.message });
+					// only show this 1 commit
+					limitedLength = 1;
+				} else {
+					this.setChangeStart(statusInfo.scm.startCommit);
+				}
 				if (statusInfo.scm.commits) {
 					const commitListLength = statusInfo.scm.commits.findIndex(
 						// @ts-ignore
@@ -558,7 +572,7 @@ class ReviewForm extends React.Component<Props, State> {
 					);
 					if (commitListLength) {
 						// show only commits from the user logged in (limited to 10)
-						this.setState({ commitListLength: Math.min(commitListLength, 10) });
+						this.setState({ commitListLength: Math.min(commitListLength, limitedLength || 10) });
 					} else {
 						// show last 10 commits from any author, since none of them are from the user logged in
 						this.setState({ commitListLength: Math.min(10, statusInfo.scm.commits.length) });
@@ -2292,6 +2306,7 @@ const mapStateToProps = (state: CodeStreamState, props): ConnectedProps => {
 		providerInfo: (user.providerInfo && user.providerInfo[context.currentTeamId]) || EMPTY_OBJECT,
 		currentUser: user,
 		skipPostCreationModal,
+		currentReviewOptions: state.context.currentReviewOptions,
 		textEditorUri: editorContext.textEditorUri,
 		teamTagsArray,
 		repos,

@@ -523,7 +523,7 @@ export class DocumentMarkerManager {
 						const location = locations[marker.id];
 						if (location) {
 							documentMarkers.push({
-								...marker,								
+								...marker,
 								fileUri: documentUri.toString(),
 								codemark: codemark,
 								creatorName: (creator && creator.username) || "Unknown",

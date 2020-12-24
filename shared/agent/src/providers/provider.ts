@@ -806,6 +806,7 @@ export abstract class ThirdPartyIssueProviderBase<
 				externalContent: this.getPRExternalContent(comment)!,
 				range: MarkerLocation.toRange(location),
 				location: location,
+				title: comment.pullRequest.title,
 				summary: comment.text,
 				summaryMarkdown: `\n\n${Strings.escapeMarkdown(comment.text)}`,
 				type: CodemarkType.Comment

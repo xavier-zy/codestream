@@ -58,10 +58,17 @@ export class GitRemoteParser {
 		return remotes;
 	}
 
-	private static matchToTuple(match: any, host: string): [string, string, string] {
+	private static getHostFromMatch(match: RegExpExecArray) {
+		return match[2] || match[4] || match[5] || match[7] || match[8];
+	}
+
+	private static matchToTuple(
+		match: RegExpExecArray,
+		host?: string | undefined
+	): [string, string, string] {
 		return [
 			match[1] || match[3] || match[6],
-			match[2] || match[4] || host || match[7] || match[8],
+			host || GitRemoteParser.getHostFromMatch(match),
 			match[9].replace(/\.git\/?$/, emptyStr)
 		];
 	}
@@ -70,11 +77,10 @@ export class GitRemoteParser {
 		const match = urlRegex.exec(url);
 		if (match == null) return [emptyStr, emptyStr, emptyStr];
 
-		let host = match[5];
-
 		// if this isn't ssh, just return normal, if it is, use the ssh alias finder below
-		if (url.indexOf("git@") === -1) return GitRemoteParser.matchToTuple(match, host);
+		if (url.indexOf("git@") === -1) return GitRemoteParser.matchToTuple(match);
 
+		const host = GitRemoteParser.getHostFromMatch(match);
 		return new Promise(resolve => {
 			try {
 				// if this is an ssh setup, it's possible that a user has an alias setup.
@@ -85,23 +91,24 @@ export class GitRemoteParser {
 					try {
 						if (err || stderr) {
 							Logger.warn(`remoteParser: parseGitUrl err=${err} stderr=${stderr}`);
-							resolve(GitRemoteParser.matchToTuple(match, host));
+							resolve(GitRemoteParser.matchToTuple(match));
 						} else {
 							const hostnameMatch = hostnameRegex.exec(stdout);
-							if (hostnameMatch && hostnameMatch[1]) {
-								host = hostnameMatch[1];
+							// passing undefined into ssh -G will result in "undefined" as a string for the hostname
+							if (hostnameMatch && hostnameMatch[1] && hostnameMatch[1] !== "undefined") {
+								resolve(GitRemoteParser.matchToTuple(match, hostnameMatch[1]));
+							} else {
+								resolve(GitRemoteParser.matchToTuple(match));
 							}
-
-							resolve(GitRemoteParser.matchToTuple(match, host));
 						}
 					} catch (ex) {
 						Logger.warn(`remoteParser: parseGitUrl ex=${ex}`);
-						resolve(GitRemoteParser.matchToTuple(match, host));
+						resolve(GitRemoteParser.matchToTuple(match));
 					}
 				});
 			} catch (ex) {
 				Logger.warn(`remoteParser: parseGitUrl execFile ex=${ex}`);
-				resolve(GitRemoteParser.matchToTuple(match, host));
+				resolve(GitRemoteParser.matchToTuple(match));
 			}
 		});
 	}

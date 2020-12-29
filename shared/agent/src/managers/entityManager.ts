@@ -1,4 +1,5 @@
 "use strict";
+import { RawRTMessage } from "../api/apiProvider";
 import { CSEntity } from "../protocol/api.protocol";
 import { CodeStreamSession } from "../session";
 import { log } from "../system";
@@ -86,6 +87,14 @@ export abstract class CachedEntityManagerBase<T extends CSEntity> extends Entity
 		}
 
 		return super.getByIdFromCache(id);
+	}
+
+	async resolve(
+		message: RawRTMessage,
+		{ onlyIfNeeded }: { onlyIfNeeded?: boolean } = {}
+	): Promise<T[]> {
+		await this.ensureCached();
+		return super.resolve(message, { onlyIfNeeded });
 	}
 
 	@log()

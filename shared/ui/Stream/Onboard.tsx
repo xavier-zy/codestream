@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { shallowEqual, useDispatch, useSelector } from "react-redux";
 import styled from "styled-components";
 import { CodeStreamState } from "../store";
-import { getTeamMates } from "../store/users/reducer";
+import { getTeamMembers } from "../store/users/reducer";
 import { useDidMount, usePrevious } from "../utilities/hooks";
 import { HostApi } from "../webview-api";
 import { closePanel, invite, openPanel } from "./actions";
@@ -343,6 +343,7 @@ export const Onboard = React.memo(function Onboard() {
 		);
 
 		return {
+			currentUserId: user.id,
 			currentStep: state.context.onboardStep,
 			providers: state.providers,
 			dontSuggestInvitees,
@@ -353,7 +354,7 @@ export const Onboard = React.memo(function Onboard() {
 			connectedIssueProviders,
 			messagingProviders,
 			connectedMessagingProviders,
-			teamMates: getTeamMates(state),
+			teamMembers: getTeamMembers(state),
 			totalPosts: user.totalPosts || 0
 		};
 	}, shallowEqual);
@@ -401,10 +402,10 @@ export const Onboard = React.memo(function Onboard() {
 		const committers = result ? result.scm : undefined;
 		if (!committers) return;
 
-		const { teamMates, dontSuggestInvitees } = derivedState;
+		const { teamMembers, dontSuggestInvitees } = derivedState;
 		const suggested: any[] = [];
 		Object.keys(committers).forEach(email => {
-			if (teamMates.find(user => user.email === email)) return;
+			if (teamMembers.find(user => user.email === email)) return;
 			if (dontSuggestInvitees[email.replace(/\./g, "*")]) return;
 			suggested.push({ email, fullName: committers[email] || email });
 		});

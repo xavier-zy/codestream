@@ -1,3 +1,5 @@
+import { DEFAULT_FR_QUERIES } from "@codestream/webview/store/preferences/reducer";
+import { setUserPreference } from "@codestream/webview/Stream/actions";
 import React from "react";
 import { shallowEqual, useDispatch, useSelector } from "react-redux";
 import * as reviewSelectors from "../store/reviews/reducer";
@@ -6,14 +8,27 @@ import { CodeStreamState } from "../store";
 import { Row } from "./CrossPostIssueControls/IssueDropdown";
 import Icon from "./Icon";
 import { Headshot } from "../src/components/Headshot";
-import { setCurrentReview, setNewPostEntry, openPanel, openModal } from "../store/context/actions";
+import {
+	setCurrentReview,
+	setNewPostEntry,
+	openPanel,
+	openModal,
+	setCreatePullRequest
+} from "../store/context/actions";
 import { useDidMount } from "../utilities/hooks";
 import { bootstrapReviews } from "../store/reviews/actions";
 import Tooltip from "./Tooltip";
 import Timestamp from "./Timestamp";
 import { ReposScm } from "@codestream/protocols/agent";
 import Tag from "./Tag";
-import { PaneHeader, PaneBody, NoContent, PaneState } from "../src/components/Pane";
+import {
+	PaneHeader,
+	PaneBody,
+	NoContent,
+	PaneState,
+	PaneNode,
+	PaneNodeName
+} from "../src/components/Pane";
 import { WebviewModals, WebviewPanels } from "../ipc/webview.protocol.common";
 import { Link } from "./Link";
 
@@ -25,16 +40,22 @@ interface Props {
 export const OpenReviews = React.memo(function OpenReviews(props: Props) {
 	const dispatch = useDispatch();
 	const derivedState = useSelector((state: CodeStreamState) => {
-		const { session } = state;
+		const { session, preferences } = state;
+
+		const queries = preferences.fetchRequestQueries || DEFAULT_FR_QUERIES;
 
 		const currentUserId = session.userId!;
 		const teamMembers = userSelectors.getTeamMembers(state);
-		const reviews = reviewSelectors.getByStatusAndUser(state, "open", currentUserId);
+		const feedbackRequests = queries.map(_ => {
+			const reviews = reviewSelectors.getByStatusAndUser(state, _.query, currentUserId);
+			return _.limit ? reviews.slice(0, _.limit) : reviews;
+		});
 
 		return {
 			team: state.teams[state.context.currentTeamId],
 			teamTagsHash: userSelectors.getTeamTagsHash(state),
-			reviews,
+			queries,
+			feedbackRequests,
 			currentUserId,
 			teamMembers
 		};
@@ -42,27 +63,48 @@ export const OpenReviews = React.memo(function OpenReviews(props: Props) {
 
 	const bootstrapped = useSelector((state: CodeStreamState) => state.reviews.bootstrapped);
 
+	const setQueries = queries => {
+		dispatch(setUserPreference(["fetchRequestQueries"], [...queries]));
+	};
+
 	useDidMount(() => {
 		if (!bootstrapped) {
 			dispatch(bootstrapReviews());
 		}
 	});
 
-	const { team, reviews, teamMembers, currentUserId } = derivedState;
+	const { team, teamMembers, currentUserId, feedbackRequests, queries } = derivedState;
 	const { adminIds } = team;
 
-	const sortedReviews = React.useMemo(() => {
-		const sorted = [...reviews];
-		sorted.sort((a, b) => b.createdAt - a.createdAt);
-		return sorted;
-	}, [reviews]);
+	const sortedFeedbackRequests = React.useMemo(() => {
+		return feedbackRequests.map(frRequests => {
+			const sorted = [...frRequests];
+			sorted.sort((a, b) => b.createdAt - a.createdAt);
+			return sorted;
+		});
+	}, [feedbackRequests]);
+
+	const totalFRs = React.useMemo(() => {
+		let total = 0;
+		feedbackRequests.map(_ => {
+			total += _.length;
+		});
+		return total;
+	}, [feedbackRequests]);
+
+	const toggleQueryHidden = (e, index) => {
+		if (e.target.closest(".actions")) return;
+		const newQueries = [...queries];
+		newQueries[index].hidden = !newQueries[index].hidden;
+		setQueries(newQueries);
+	};
 
 	// console.warn("Rendering reviews...");
 	return (
 		<>
 			<PaneHeader
 				title="Feedback Requests"
-				count={reviews.length}
+				count={totalFRs}
 				id={WebviewPanels.OpenReviews}
 				isLoading={!bootstrapped}
 			>
@@ -94,7 +136,7 @@ export const OpenReviews = React.memo(function OpenReviews(props: Props) {
 							<span>Loading...</span>
 						</Row>
 					)}
-					{bootstrapped && sortedReviews.length === 0 && (
+					{bootstrapped && totalFRs === 0 && (
 						<NoContent>
 							Lightweight, pre-PR code review. Get quick feedback on any code, even pre-commit.{" "}
 							<Link href="https://docs.codestream.com/userguide/workflow/feedback-requests">
@@ -102,45 +144,79 @@ export const OpenReviews = React.memo(function OpenReviews(props: Props) {
 							</Link>
 						</NoContent>
 					)}
-					{sortedReviews.map(review => {
-						const creator = teamMembers.find(user => user.id === review.creatorId);
-						return (
-							<Row
-								key={"review-" + review.id}
-								onClick={() => dispatch(setCurrentReview(review.id))}
-							>
-								<div>
-									<Tooltip title={creator && creator.fullName} placement="bottomLeft">
-										<span>
-											<Headshot person={creator} />
-										</span>
-									</Tooltip>
-								</div>
-								<div>
-									<span>{review.title}</span>
-									{review.tags && review.tags.length > 0 && (
-										<span className="cs-tag-container">
-											{(review.tags || []).map(tagId => {
-												const tag = derivedState.teamTagsHash[tagId];
-												return tag ? <Tag key={tagId} tag={tag} /> : null;
+					{totalFRs > 0 && (
+						<>
+							{sortedFeedbackRequests.map((frRequests, index) => {
+								const query = queries[index];
+								const count = frRequests ? frRequests.length : 0;
+								return (
+									<PaneNode key={index}>
+										<PaneNodeName
+											onClick={e => toggleQueryHidden(e, index)}
+											title={query.name}
+											collapsed={query.hidden}
+											count={count}
+											isLoading={false}
+										/>
+										{!query.hidden &&
+											frRequests &&
+											frRequests.map((review, index) => {
+												const creator = teamMembers.find(user => user.id === review.creatorId);
+												return (
+													<Row
+														key={"review-" + review.id}
+														onClick={() => dispatch(setCurrentReview(review.id))}
+													>
+														<div>
+															<Tooltip title={creator && creator.fullName} placement="bottomLeft">
+																<span>
+																	<Headshot person={creator} />
+																</span>
+															</Tooltip>
+														</div>
+														<div>
+															<span>{review.title}</span>
+															{review.tags && review.tags.length > 0 && (
+																<span className="cs-tag-container">
+																	{(review.tags || []).map(tagId => {
+																		const tag = derivedState.teamTagsHash[tagId];
+																		return tag ? <Tag key={tagId} tag={tag} /> : null;
+																	})}
+																</span>
+															)}
+															<span className="subtle">{review.text}</span>
+														</div>
+														<div className="icons">
+															{query.query === "approved" && (
+																<Icon
+																	name="pull-request"
+																	title="Create a PR"
+																	placement="bottomLeft"
+																	delay={1}
+																	onClick={async e => {
+																		e.stopPropagation();
+																		await dispatch(setCreatePullRequest(review.id));
+																		dispatch(openPanel(WebviewPanels.NewPullRequest));
+																	}}
+																/>
+															)}
+															<Icon
+																name="review"
+																className="clickable"
+																title="Review Changes"
+																placement="bottomLeft"
+																delay={1}
+															/>
+															<Timestamp time={review.createdAt} relative abbreviated />
+														</div>
+													</Row>
+												);
 											})}
-										</span>
-									)}
-									<span className="subtle">{review.text}</span>
-								</div>
-								<div className="icons">
-									<Icon
-										name="review"
-										className="clickable"
-										title="Review Changes"
-										placement="bottomLeft"
-										delay={1}
-									/>
-									<Timestamp time={review.createdAt} relative abbreviated />
-								</div>
-							</Row>
-						);
-					})}
+									</PaneNode>
+								);
+							})}
+						</>
+					)}
 				</PaneBody>
 			)}
 		</>

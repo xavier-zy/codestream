@@ -4,7 +4,7 @@ import { PreferencesActionsType, PreferencesState, FilterQuery } from "./types";
 import { merge, mergeWith } from "lodash-es";
 import { createSelector } from "reselect";
 import { CodeStreamState } from "..";
-import { PullRequestQuery } from "@codestream/protocols/api";
+import { FetchRequestQuery, PullRequestQuery } from "@codestream/protocols/api";
 
 type PreferencesActions = ActionType<typeof actions>;
 
@@ -39,6 +39,26 @@ export const getSavedSearchFilters = createSelector(
 		return savedSearchFilters.filter(filter => filter.label.length > 0);
 	}
 );
+
+export const DEFAULT_FR_QUERIES: FetchRequestQuery[] = [
+	{
+		name: "Open",
+		hidden: false,
+		query: "open"
+	},
+	{
+		name: "Approved",
+		hidden: false,
+		query: "approved",
+		limit: 5
+	},
+	{
+		name: "Needs Work",
+		hidden: false,
+		query: "rejected",
+		limit: 5
+	}
+];
 
 // FIXME hard-coded github*com
 export const DEFAULT_QUERIES: { [providerId: string]: PullRequestQuery[] } = {

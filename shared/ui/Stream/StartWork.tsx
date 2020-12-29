@@ -1,4 +1,7 @@
+import { logError } from "@codestream/webview/logger";
+import { Link } from "@codestream/webview/Stream/Link";
 import React, { useState, useEffect } from "react";
+import { FormattedMessage } from "react-intl";
 import { useDispatch, useSelector } from "react-redux";
 import { CodeStreamState } from "../store";
 import { HostApi } from "../webview-api";
@@ -20,7 +23,9 @@ import {
 	ReposScm,
 	UpdateThirdPartyStatusRequestType,
 	DidChangeDataNotificationType,
-	ChangeDataType
+	ChangeDataType,
+	FetchRemoteBranchRequestType,
+	FetchBranchCommitsStatusRequestType
 } from "@codestream/protocols/agent";
 import IssueDropdown, { Row } from "./CrossPostIssueControls/IssueDropdown";
 import { ConfigureBranchNames } from "./ConfigureBranchNames";
@@ -243,7 +248,7 @@ const HR = styled.div`
 
 const BranchDiagram = styled.div`
 	transition: height 0.2s, opacity 0.4s;
-	height: 110px;
+	height: auto;
 	overflow: hidden;
 	&.closed {
 		height: 0;
@@ -262,27 +267,40 @@ const BranchDiagram = styled.div`
 		margin-left: -20px;
 	}
 	${BranchLineDown} {
-		height: 10px;
 		margin-left: -20px;
+		top: 50px;
+		bottom: 48px;
+		height: auto;
 	}
 	${BranchLineAcross} {
-		top: 82px;
 		margin-left: -20px;
 		width: 25px;
+    	top: auto;
+    	bottom: 25px;		
 	}
 	${BranchCurve} {
-		top: 35px;
 		margin-left: -20px;
+		top: auto;
+		bottom: 25px;
+	}
+	.pull-option {	
+	}
+	.branch-info {
+		margin-left: 110px;
+		position: relative;
+    	padding: 55px 0;
 	}
 	.base-branch {
 		position: absolute;
 		top: 20px;
-		left: 110px;
+		left: 0px;
 	}
 	.local-branch {
 		position: absolute;
 		top: 72px;
-		left: 110px;
+		left: 0;
+		top: auto;
+		bottom: 19px;
 	}
 	@media only screen and (max-width: 430px) {
 		height: auto;
@@ -295,6 +313,10 @@ const BranchDiagram = styled.div`
 		${BranchCurve} {
 			display: none;
 		}
+		.branch-info {
+			margin-left: 0;
+			padding: 0;
+		}		
 		.base-branch {
 			position: relative;
 			padding-bottom: 5px;
@@ -373,6 +395,9 @@ export const StartWork = (props: Props) => {
 
 		const adminIds = team.adminIds || [];
 		const defaultBranchTicketTemplate = "feature/{title}";
+
+		const issueReposDefaultBranch = state.preferences.issueReposDefaultBranch || {};
+
 		return {
 			status,
 			repos: state.repos,
@@ -394,6 +419,7 @@ export const StartWork = (props: Props) => {
 			slackConfig: getProviderConfig(state, "slack"),
 			// msTeamsConfig: getProviderConfig(state, "msteams"),
 			isConnectedToSlack,
+			issueReposDefaultBranch,
 			selectedShareTarget: selectedShareTarget || shareTargets[0],
 			isCurrentUserAdmin: adminIds.includes(state.session.userId!),
 			shareToSlackSupported: isFeatureEnabled(state, "shareStatusToSlack")
@@ -416,6 +442,9 @@ export const StartWork = (props: Props) => {
 	const [currentRepoName, setCurrentRepoName] = useState("");
 	const [fromBranch, setFromBranch] = useState("");
 	const inputRef = React.useRef<HTMLInputElement>(null);
+	const [commitsBehindOrigin, setCommitsBehindOrigin] = useState(0);
+	const [unexpectedPullError, setUnexpectedPullError] = useState(false);
+	const [pullSubmitting, setPullSubmitting] = useState(false);
 
 	const { moveCard, updateSlack, createBranch } = derivedState;
 
@@ -450,6 +479,10 @@ export const StartWork = (props: Props) => {
 			disposables && disposables.forEach(_ => _.dispose());
 		}
 	}, [editingBranch]);
+
+	useEffect(() => {
+		fetchBranchCommitsStatus();
+	}, [fromBranch]);
 
 	const setMoveCard = value => dispatch(setUserPreference(["startWork", "moveCard"], value));
 	const setCreateBranch = value =>
@@ -494,6 +527,15 @@ export const StartWork = (props: Props) => {
 			.substr(0, derivedState.branchMaxLength);
 	};
 
+	const fetchBranchCommitsStatus = async () => {
+		const commitsStatus = await HostApi.instance.send(FetchBranchCommitsStatusRequestType, {
+			repoId: currentRepoId,
+			branchName: fromBranch || currentBranch
+		});
+
+		setCommitsBehindOrigin(+commitsStatus.commitsBehindOrigin);
+	};
+
 	const getBranches = async (uri?: string): Promise<{ openRepos?: ReposScm[] }> => {
 		const response = await HostApi.instance.send(GetReposScmRequestType, {
 			inEditorOnly: true,
@@ -524,13 +566,33 @@ export const StartWork = (props: Props) => {
 		}
 
 		if (branchInfo.scm && !branchInfo.error) {
+			let defaultBranch = derivedState.issueReposDefaultBranch[branchInfo.scm.repoId];
+
+			if (
+				!defaultBranch ||
+				(branchInfo.scm.branches &&
+					!branchInfo.scm.branches.some(branchName => branchName === defaultBranch))
+			) {
+				defaultBranch = branchInfo.scm.current;
+				dispatch(
+					setUserPreference(["issueReposDefaultBranch"], { [branchInfo.scm.repoId]: defaultBranch })
+				);
+			}
+
 			setBranches(branchInfo.scm.branches);
 			setFromBranch("");
-			setCurrentBranch(branchInfo.scm.current);
+			setCurrentBranch(defaultBranch);
 			setCurrentRepoId(branchInfo.scm.repoId);
 			const repoId = branchInfo.scm.repoId;
 			const repoName = derivedState.repos[repoId] ? derivedState.repos[repoId].name : "repo";
 			setCurrentRepoName(repoName);
+
+			const commitsStatus = await HostApi.instance.send(FetchBranchCommitsStatusRequestType, {
+				repoId: branchInfo.scm.repoId,
+				branchName: defaultBranch
+			});
+
+			setCommitsBehindOrigin(+commitsStatus.commitsBehindOrigin);
 		}
 		return {
 			openRepos: response ? response.repositories : []
@@ -730,6 +792,25 @@ export const StartWork = (props: Props) => {
 					};
 			  });
 
+	const onPullSubmit = async (event: React.SyntheticEvent) => {
+		setUnexpectedPullError(false);
+		setPullSubmitting(true);
+
+		try {
+			await HostApi.instance.send(FetchRemoteBranchRequestType, {
+				repoId: currentRepoId,
+				branchName: fromBranch || currentBranch
+			});
+			await fetchBranchCommitsStatus();
+		} catch (error) {
+			logError(error, {});
+			logError(`Unexpected error during branch pulling : ${error}`, {});
+			setUnexpectedPullError(true);
+		} finally {
+			setPullSubmitting(false);
+		}
+	};
+
 	return (
 		<>
 			{configureBranchNames && (
@@ -843,37 +924,81 @@ export const StartWork = (props: Props) => {
 												<GitBranch className="no-hover">
 													<Icon name="git-branch" />
 												</GitBranch>
-												<div className="base-branch">
-													<MonoMenu items={baseBranchMenuItems}>
-														<Tooltip title="Base Branch" align={{ offset: [15, 0] }}>
-															<span>{fromBranch || currentBranch}</span>
-														</Tooltip>
-													</MonoMenu>
-												</div>
-												<div className="local-branch">
-													{editingBranch ? (
-														<input
-															id="branch-input"
-															name="branch"
-															value={customBranchName || branch}
-															className="input-text control"
-															autoFocus={true}
-															type="text"
-															onChange={e => setCustomBranchName(e.target.value)}
-															placeholder="Enter branch name"
-															onBlur={() => toggleEditingBranch(false)}
-															onKeyPress={e => {
-																if (e.key == "Enter") toggleEditingBranch(false);
-															}}
-															style={{ width: "200px" }}
-														/>
-													) : (
-														<MonoMenu items={branchMenuItems}>
-															<Tooltip title="Local Branch" align={{ offset: [15, 0] }}>
-																<span>{branch}</span>
+												<div className="branch-info">
+													<div className="base-branch">
+														<MonoMenu items={baseBranchMenuItems}>
+															<Tooltip title="Base Branch" align={{ offset: [15, 0] }}>
+																<span>{fromBranch || currentBranch}</span>
 															</Tooltip>
 														</MonoMenu>
+													</div>
+													{commitsBehindOrigin > 0 && (
+														<div className="pull-option">
+															<Icon name="info" /> {commitsBehindOrigin} commit
+															{commitsBehindOrigin > 1 ? "s" : ""} behind origin{" "}
+															<Button onClick={onPullSubmit} isLoading={pullSubmitting}>
+																Pull
+															</Button>
+															{unexpectedPullError && (
+																<div
+																	className="error-message form-error"
+																	style={{ marginBottom: "10px" }}
+																>
+																	<FormattedMessage
+																		id="error.unexpected"
+																		defaultMessage="Something went wrong! Please try again, or pull origin manually"
+																	/>
+																	<FormattedMessage
+																		id="contactSupport"
+																		defaultMessage="contact support"
+																	>
+																		{text => <Link href="https://help.codestream.com">{text}</Link>}
+																	</FormattedMessage>
+																	.
+																</div>
+															)}
+														</div>
 													)}
+													{fromBranch && fromBranch !== currentBranch && (
+														<Checkbox
+															name="change-base-branch-request"
+															onChange={value => {
+																dispatch(
+																	setUserPreference(["issueReposDefaultBranch"], {
+																		[currentRepoId]: fromBranch
+																	})
+																);
+																setCurrentBranch(fromBranch);
+															}}
+														>
+															Always use <b>{fromBranch || currentBranch}</b> as base branch
+														</Checkbox>
+													)}
+													<div className="local-branch">
+														{editingBranch ? (
+															<input
+																id="branch-input"
+																name="branch"
+																value={customBranchName || branch}
+																className="input-text control"
+																autoFocus={true}
+																type="text"
+																onChange={e => setCustomBranchName(e.target.value)}
+																placeholder="Enter branch name"
+																onBlur={() => toggleEditingBranch(false)}
+																onKeyPress={e => {
+																	if (e.key == "Enter") toggleEditingBranch(false);
+																}}
+																style={{ width: "200px" }}
+															/>
+														) : (
+															<MonoMenu items={branchMenuItems}>
+																<Tooltip title="Local Branch" align={{ offset: [15, 0] }}>
+																	<span>{branch}</span>
+																</Tooltip>
+															</MonoMenu>
+														)}
+													</div>
 												</div>
 											</BranchDiagram>
 										</>

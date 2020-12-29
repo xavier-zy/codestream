@@ -927,6 +927,30 @@ export class GitService implements IGitService, Disposable {
 		}
 	}
 
+	async fetchRemoteBranch(
+		repoPath: string,
+		remoteName: string,
+		sourceBranchName: string,
+		destBranchName: string
+	): Promise<{ success: boolean; error?: string }> {
+		try {
+			const data = await git({ cwd: repoPath }, "branch", "--show-current");
+			if (data.trim() === destBranchName) {
+				await git({ cwd: repoPath }, "pull");
+			} else {
+				await git(
+					{cwd: repoPath},
+					"fetch",
+					remoteName,
+					`${sourceBranchName}:${destBranchName}`
+				);
+			}
+			return { success: true };
+		} catch (err) {
+			return { success: false, error: err.message };
+		}
+	}
+
 	async getLocalCommits(
 		repoPath: string
 	): Promise<{ sha: string; info: {}; localOnly: boolean }[] | undefined> {
@@ -1406,6 +1430,32 @@ export class GitService implements IGitService, Disposable {
 			return data ? data.trim() : undefined;
 		} catch {
 			return undefined;
+		}
+	}
+
+	async getBranchCommitsStatus(repoPath: string, remoteBranch: string, branch: string): Promise<string> {
+		try {
+			const data = +await git(
+				{ cwd: repoPath },
+				"rev-list",
+				`${remoteBranch}..${branch}`,
+				"--count"
+			);
+
+			if (data > 0) {
+				return (0 - data).toString();
+			}
+
+			const reverseData = await git(
+				{ cwd: repoPath },
+				"rev-list",
+				`${branch}..${remoteBranch}`,
+				"--count"
+			);
+
+			return reverseData.trim();
+		} catch {
+			return "0";
 		}
 	}
 

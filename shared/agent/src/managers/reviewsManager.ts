@@ -706,6 +706,7 @@ export class ReviewsManager extends CachedEntityManagerBase<CSReview> {
 			const connectedProviders = await providerRegistry.getConnectedPullRequestProviders(user);
 			const providerRepo = await repo.getPullRequestProvider(user, connectedProviders);
 			let providerRepoDefaultBranch: string | undefined = "";
+			let baseRefName: string | undefined = request.baseRefName;
 
 			if (providerRepo?.provider) {
 				remoteUrl = "https://example.com/" + providerRepo.remotePaths[0];
@@ -722,7 +723,7 @@ export class ReviewsManager extends CachedEntityManagerBase<CSReview> {
 					}
 
 					providerRepoDefaultBranch = providerRepoInfo.defaultBranch;
-					const baseRefName = request.baseRefName || providerRepoDefaultBranch;
+					baseRefName = baseRefName || providerRepoDefaultBranch;
 					if (providerRepoInfo.pullRequests) {
 						if (baseRefName && headRefName) {
 							const existingPullRequest = providerRepoInfo.pullRequests.find(
@@ -790,6 +791,9 @@ export class ReviewsManager extends CachedEntityManagerBase<CSReview> {
 				(await xfs.readText(path.join(repo.path, "docs/pull_request_template.md"))) ||
 				(await xfs.readText(path.join(repo.path, ".github/pull_request_template.md")));
 
+			const baseBranchRemote = await git.getBranchRemote(repo.path, baseRefName!);
+			const commitsBehindOrigin = await git.getBranchCommitsStatus(repo.path, baseBranchRemote!, baseRefName!);
+
 			return {
 				success: success,
 				repoId: repo.id,
@@ -810,6 +814,7 @@ export class ReviewsManager extends CachedEntityManagerBase<CSReview> {
 				branch: headRefName,
 				branches: branches!.branches,
 				remoteBranches: remoteBranches ? remoteBranches.branches : undefined,
+				commitsBehindOriginHeadBranch: commitsBehindOrigin,
 				warning: warning
 			};
 		} catch (ex) {

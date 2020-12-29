@@ -699,6 +699,9 @@ export interface CSMePreferences {
 	pullRequestQueryShowAllRepos?: boolean;
 	pullRequestQueryHideLabels?: boolean;
 	pullRequestView?: "auto" | "vertical" | "side-by-side";
+	issueReposDefaultBranch?: {
+		[repoId: string]: string;
+	};
 	hiddenPaneNodes?: {
 		[nodeId: string]: boolean;
 	};

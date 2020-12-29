@@ -16,9 +16,15 @@ import {
 	DiffBranchesRequest,
 	DiffBranchesRequestType,
 	DiffBranchesResponse,
+	FetchBranchCommitsStatusRequest,
+	FetchBranchCommitsStatusRequestType,
+	FetchBranchCommitsStatusResponse,
 	FetchForkPointRequest,
 	FetchForkPointRequestType,
 	FetchForkPointResponse,
+	FetchRemoteBranchRequest,
+	FetchRemoteBranchRequestType,
+	FetchRemoteBranchResponse,
 	GetLatestCommitScmRequest,
 	GetLatestCommitScmRequestType,
 	GetLatestCommitScmResponse,
@@ -1346,6 +1352,56 @@ export class ScmManager {
 
 		await git.fetchAllRemotes(repo.path);
 		return true;
+	}
+
+	@log()
+	@lspHandler(FetchRemoteBranchRequestType)
+	async fetchRemoteBranch(request: FetchRemoteBranchRequest): Promise<FetchRemoteBranchResponse> {
+		const { git } = SessionContainer.instance();
+
+		const repo = await git.getRepositoryById(request.repoId);
+		if (!repo) throw new Error(`fetchRemoteBranch: Could not load repo with ID ${request.repoId}`);
+
+		const remoteBranch = await git.getBranchRemote(repo.path, request.branchName);
+		if (!remoteBranch) {
+			throw new Error(`fetchRemoteBranch: Couldn't find branchRemote for ${repo.path} and ${request.branchName}`);
+		}
+
+		const { error } = await git.fetchRemoteBranch(
+			repo.path,
+			".",
+			remoteBranch,
+			request.branchName
+		);
+		if (error) {
+			throw new Error(error);
+		}
+		return true;
+	}
+
+	@log()
+	@lspHandler(FetchBranchCommitsStatusRequestType)
+	async fetchBranchCommitsStatus(
+		request: FetchBranchCommitsStatusRequest
+	): Promise<FetchBranchCommitsStatusResponse> {
+		const { git } = SessionContainer.instance();
+
+		const repo = await git.getRepositoryById(request.repoId);
+		let repoPath;
+		if (repo) {
+			repoPath = repo.path;
+		}
+
+		if (!repoPath) {
+			throw new Error(`getFileContentsAtRevision: Could not load repo with ID ${request.repoId}`);
+		}
+
+		const baseBranchRemote = await git.getBranchRemote(repoPath, request.branchName);
+		const commitsBehindOrigin = await git.getBranchCommitsStatus(repoPath, baseBranchRemote!, request.branchName);
+
+		return {
+			commitsBehindOrigin
+		};
 	}
 
 	@log()

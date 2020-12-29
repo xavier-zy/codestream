@@ -411,6 +411,37 @@ export const FetchAllRemotesRequestType = new RequestType<
 	void
 >("codestream/scm/remotes");
 
+export interface FetchRemoteBranchRequest {
+	/**
+	 * CodeStream repositoryId
+	 * */
+	repoId: string;
+	branchName: string;
+}
+export interface FetchRemoteBranchResponse {}
+
+export const FetchRemoteBranchRequestType = new RequestType<
+	FetchRemoteBranchRequest,
+	FetchRemoteBranchResponse,
+	void,
+	void
+>("codestream/scm/remoteBranch");
+
+export interface FetchBranchCommitsStatusRequest {
+	repoId: string;
+	branchName: string;
+}
+export interface FetchBranchCommitsStatusResponse {
+	commitsBehindOrigin: string;
+}
+
+export const FetchBranchCommitsStatusRequestType = new RequestType<
+	FetchBranchCommitsStatusRequest,
+	FetchBranchCommitsStatusResponse,
+	void,
+	void
+>("codestream/scm/commitsStatus");
+
 export interface GetFileContentsAtRevisionRequest {
 	/**
 	 * CodeStream repositoryId

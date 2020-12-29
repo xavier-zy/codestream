@@ -87,14 +87,20 @@ export class GitRemoteParser {
 				// we can get the alias for this by running the `ssh -G <remoteAlias>`` command
 				// and parsing to get the `hostname` value
 				// if, for some reason this fails, fall back to doing the old (current) logic
-				childProcess.execFile("ssh", ["-G", host], function(err: any, stdout: any, stderr: any) {
+
+				// use -T to prevent `Pseudo-terminal will not be allocated because stdin is not a terminal`
+				childProcess.execFile("ssh", ["-T", "-G", host], function(
+					err: any,
+					stdout: any,
+					stderr: any
+				) {
 					try {
-						if (err || stderr) {
+						if (!stdout) {
 							Logger.warn(`remoteParser: parseGitUrl err=${err} stderr=${stderr}`);
 							resolve(GitRemoteParser.matchToTuple(match));
 						} else {
 							const hostnameMatch = hostnameRegex.exec(stdout);
-							// passing undefined into ssh -G will result in "undefined" as a string for the hostname
+							// passing undefined into the child process will result in "undefined" as a string for the hostname
 							if (hostnameMatch && hostnameMatch[1] && hostnameMatch[1] !== "undefined") {
 								resolve(GitRemoteParser.matchToTuple(match, hostnameMatch[1]));
 							} else {

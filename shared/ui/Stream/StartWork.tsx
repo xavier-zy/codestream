@@ -445,6 +445,7 @@ export const StartWork = (props: Props) => {
 	const [commitsBehindOrigin, setCommitsBehindOrigin] = useState(0);
 	const [unexpectedPullError, setUnexpectedPullError] = useState(false);
 	const [pullSubmitting, setPullSubmitting] = useState(false);
+	const [isFromBranchDefault, setIsFromBranchDefault] = useState(false);
 
 	const { moveCard, updateSlack, createBranch } = derivedState;
 
@@ -757,7 +758,10 @@ export const StartWork = (props: Props) => {
 			label: <span className="monospace">{branch}</span>,
 			key: branch,
 			icon: <Icon name={iconName} />,
-			action: () => setFromBranch(branch)
+			action: () => {
+				setFromBranch(branch);
+				setIsFromBranchDefault(derivedState.issueReposDefaultBranch[currentRepoId] === branch);
+			}
 		};
 	});
 
@@ -959,13 +963,16 @@ export const StartWork = (props: Props) => {
 															)}
 														</div>
 													)}
-													{fromBranch && fromBranch !== currentBranch && (
+													{fromBranch && (
 														<Checkbox
 															name="change-base-branch-request"
+															checked={isFromBranchDefault}
 															onChange={value => {
+																const isBranchDefault = !isFromBranchDefault;
+																setIsFromBranchDefault(isBranchDefault);
 																dispatch(
 																	setUserPreference(["issueReposDefaultBranch"], {
-																		[currentRepoId]: fromBranch
+																		[currentRepoId]: isBranchDefault ? fromBranch : ""
 																	})
 																);
 																setCurrentBranch(fromBranch);

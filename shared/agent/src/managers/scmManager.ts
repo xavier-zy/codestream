@@ -1396,6 +1396,8 @@ export class ScmManager {
 			throw new Error(`getFileContentsAtRevision: Could not load repo with ID ${request.repoId}`);
 		}
 
+		await git.fetchAllRemotes(repoPath);
+
 		const baseBranchRemote = await git.getBranchRemote(repoPath, request.branchName);
 		const commitsBehindOrigin = await git.getBranchCommitsStatus(repoPath, baseBranchRemote!, request.branchName);
 

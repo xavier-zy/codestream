@@ -165,6 +165,7 @@ export const OpenReviews = React.memo(function OpenReviews(props: Props) {
 												return (
 													<Row
 														key={"review-" + review.id}
+														className="pane-row"
 														onClick={() => dispatch(setCurrentReview(review.id))}
 													>
 														<div>

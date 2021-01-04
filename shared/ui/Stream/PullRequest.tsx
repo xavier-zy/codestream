@@ -717,7 +717,7 @@ export const PullRequest = () => {
 										placement="bottom"
 										name="copy"
 										className="clickable"
-										onClick={e => copy(pr.baseRefName)}
+										onClick={e => copy(pr.headRefName)}
 									/>
 								</PRAction>
 								<Timestamp time={pr.createdAt} relative />

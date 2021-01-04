@@ -859,28 +859,14 @@ export class CodeStreamApiProvider implements ApiProvider {
 
 	@log()
 	async setModifiedReposDebounced(request: SetModifiedReposRequest) {
-		// eventually, when support for compactified modifiedRepos is full (both cloud and on-prem),
-		// we'll eliminate this completely and go only with compactified, below
-		const prunedModifiedRepos = SessionContainer.instance().users.pruneModifiedRepos(
+		const compactModifiedRepos = SessionContainer.instance().users.compactifyModifiedRepos(
 			request.modifiedRepos
 		);
 		this.put<{ [key: string]: any }, any>(
 			"/users/me",
-			{ modifiedRepos: { [request.teamId]: prunedModifiedRepos } },
+			{ compactModifiedRepos: { [request.teamId]: compactModifiedRepos } },
 			this._token
 		);
-
-		const capabilities = SessionContainer.instance().session.apiCapabilities;
-		if (capabilities.compactModifiedRepos) {
-			const compactModifiedRepos = SessionContainer.instance().users.compactifyModifiedRepos(
-				request.modifiedRepos
-			);
-			this.put<{ [key: string]: any }, any>(
-				"/users/me",
-				{ compactModifiedRepos: { [request.teamId]: compactModifiedRepos } },
-				this._token
-			);
-		}
 	}
 
 	@log()

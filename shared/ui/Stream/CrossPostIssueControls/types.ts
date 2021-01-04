@@ -56,6 +56,11 @@ export const PROVIDER_MAPPINGS: { [provider: string]: ProviderDisplay } = {
 		helpUrl: "https://help.clubhouse.io/hc/en-us/articles/205701199-Clubhouse-API-Tokens",
 		supportsStartWork: true
 	},
+	linear: {
+		displayName: "Linear",
+		icon: "linear",
+		supportsStartWork: true
+	},
 	codestream: {
 		displayName: "CodeStream",
 		icon: "codestream"

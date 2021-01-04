@@ -14,6 +14,7 @@ import { TrelloCardControls } from "./TrelloCardControls";
 import { YouTrackCardControls } from "./YouTrackCardControls";
 import { AzureDevOpsCardControls } from "./AzureDevOpsCardControls";
 import { ClubhouseCardControls } from "./ClubhouseCardControls";
+import { LinearCardControls } from "./LinearCardControls";
 import { ProviderDisplay, PROVIDER_MAPPINGS } from "./types";
 import { ThirdPartyProviderConfig, ThirdPartyProviders } from "@codestream/protocols/agent";
 import { CSMe } from "@codestream/protocols/api";
@@ -195,6 +196,14 @@ class CrossPostIssueControls extends React.Component<Props, State> {
 					<ClubhouseCardControls provider={providerInfo.provider}>
 						{providerOptions}
 					</ClubhouseCardControls>
+				);
+			}
+
+			case "linear": {
+				return (
+					<LinearCardControls provider={providerInfo.provider}>
+						{providerOptions}
+					</LinearCardControls>
 				);
 			}
 

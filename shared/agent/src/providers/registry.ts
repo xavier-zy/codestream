@@ -87,6 +87,7 @@ export * from "./slack";
 export * from "./msteams";
 export * from "./okta";
 export * from "./clubhouse";
+export * from "./linear";
 
 const PR_QUERIES = [
 	{

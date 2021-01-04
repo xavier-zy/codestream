@@ -2100,6 +2100,20 @@ export class PostsManager extends EntityManagerBase<CSPost> {
 					});
 					break;
 				}
+
+				case "linear": {
+					response = await providerRegistry.createCard({
+						providerId: attributes.issueProvider.id,
+						data: {
+							description,
+							name: providerCardRequest.codemark.title,
+							projectId: attributes.projectId,
+							assignees: attributes.assignees
+						}
+					});
+					break;
+				}
+
 				default:
 					return undefined;
 			}

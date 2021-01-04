@@ -715,7 +715,7 @@ export interface ProviderTokenRequest {
 		teamId: string;
 		repoId: string;
 		commitHash: string;
-	}
+	};
 	noSignup?: boolean;
 	signupToken?: string;
 	data?: {

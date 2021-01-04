@@ -35,6 +35,7 @@ export * from "./agent.protocol.youtrack";
 export * from "./agent.protocol.azuredevops";
 export * from "./agent.protocol.okta";
 export * from "./agent.protocol.clubhouse";
+export * from "./agent.protocol.linear";
 
 export interface Document {
 	uri: string;

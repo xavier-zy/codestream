@@ -3,6 +3,8 @@ import {
 	TrelloList,
 	TrelloBoard,
 	ClubhouseProject,
+	LinearProject,
+	LinearTeam,
 	JiraBoard,
 	GitHubBoard,
 	BitbucketBoard,
@@ -79,6 +81,13 @@ export interface YouTrackIntegrationData extends ActiveIntegrationData {
 export interface ClubhouseIntegrationData extends ActiveIntegrationData {
 	projects?: ClubhouseProject[];
 	currentProject?: ClubhouseProject;
+}
+
+export interface LinearIntegrationData extends ActiveIntegrationData {
+	projects?: LinearProject[];
+	currentProject?: LinearProject;
+	teams?: LinearTeam[];
+	currentTeam?: LinearTeam;
 }
 
 export interface ActiveIntegrationsState extends Index<ActiveIntegrationData> {}

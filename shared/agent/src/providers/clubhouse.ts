@@ -1,5 +1,4 @@
 "use strict";
-import { url } from "inspector";
 import * as qs from "querystring";
 import { Logger } from "../logger";
 import {
@@ -20,7 +19,7 @@ import {
 } from "../protocol/agent.protocol";
 import { CSClubhouseProviderInfo } from "../protocol/api.protocol";
 import { log, lspProvider } from "../system";
-import { ApiResponse, ThirdPartyIssueProviderBase } from "./provider";
+import { ThirdPartyIssueProviderBase } from "./provider";
 
 @lspProvider("clubhouse")
 export class ClubhouseProvider extends ThirdPartyIssueProviderBase<CSClubhouseProviderInfo> {
@@ -105,10 +104,7 @@ export class ClubhouseProvider extends ThirdPartyIssueProviderBase<CSClubhousePr
 			owner_ids: (data.assignees! || []).map(a => a.id),
 			story_type: "bug"
 		};
-		const response = await this.post<{}, ClubhouseCreateCardResponse>(
-			`/stories`,
-			body
-		);
+		const response = await this.post<{}, ClubhouseCreateCardResponse>(`/stories`, body);
 		return { ...response.body, url: response.body.app_url };
 	}
 
@@ -122,7 +118,7 @@ export class ClubhouseProvider extends ThirdPartyIssueProviderBase<CSClubhousePr
 		await this.ensureConnected();
 		const { body } = await this.get<ClubhouseMember[]>("/members");
 		const users = body.filter(u => !u.profile.deactivated);
-		return { users: body.map(u => ({ ...u, displayName: u.profile.name })) };
+		return { users: users.map(u => ({ ...u, displayName: u.profile.name })) };
 	}
 
 	private async getMemberInfo(): Promise<ClubhouseSelf> {

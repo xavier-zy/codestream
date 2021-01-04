@@ -11,9 +11,9 @@ export interface TestGroupDefs {
 export const testGroups: TestGroupDefs = {
 	// each key here is the name of a test group, and the choices listed
 	// are the groups to which a given company can be randomly assigned
-	sample: {
-		choices: ["A", "B"]
-	},
+	// sample: {
+	// 	choices: ["A", "B"]
+	// },
 	onboard: {
 		choices: ["tour", "sidebar"]
 	}

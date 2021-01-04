@@ -2066,6 +2066,59 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 		return query;
 	}
 
+	private buildSearchQuery(query: string, limit: number) {
+		return `query Search {
+			rateLimit {
+				limit
+				cost
+				remaining
+				resetAt
+			}
+			search(query: "${query}", type: ISSUE, last: ${limit}) {
+			edges {
+			  node {
+				... on PullRequest {
+					url
+					title
+					createdAt
+					baseRefName
+					headRefName
+					headRepository {
+						name
+						nameWithOwner
+					}
+					author {
+						login
+						avatarUrl(size: 20)
+						url
+					}
+					body
+					bodyText
+					number
+					state
+					${this._transform(`[isDraft:>=2.21.0]`)}
+					updatedAt
+					lastEditedAt
+					id
+					headRefName
+					headRepository {
+						name
+					}
+					labels(first: 10) {
+						nodes {
+							color
+							description
+							name
+							id
+						}
+					}
+				  }
+			  }
+			}
+		  }
+		}`;
+	}
+
 	// _getMyPullRequestsCache = new Map<string, GetMyPullRequestsResponse[][]>();
 	async getMyPullRequests(
 		request: GetMyPullRequestsRequest
@@ -2110,7 +2163,9 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 				if (repos.length) {
 					repoQuery = repos.map(_ => `repo:${_}`).join(" ") + " ";
 				} else {
-					Logger.log(`getMyPullRequests: request.isOpen=true, but no repos found, returning empty`);
+					Logger.warn(
+						`getMyPullRequests: request.isOpen=true, but no repos found, returning empty`
+					);
 					return [];
 				}
 			} catch (ex) {
@@ -2119,70 +2174,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 		}
 
 		const queries = request.queries;
-		const buildQuery = (query: string, repoQuery: string) => {
-			const limit = query === "recent" ? 5 : 100;
-			// recent is kind of a magic string, where we just look
-			// for some random PR activity to at least show you
-			// something. if you have the repo query checked, and
-			// we can query by repo, then use that. otherwise github
-			// needs at least one qualifier so we query for PRs
-			// that you were the author of
-			// https://trello.com/c/XIg6MKWy/4813-add-4th-default-pr-query-recent
-			if (query === "recent") {
-				if (repoQuery.length > 0) query = "is:pr";
-				else query = "is:pr author:@me";
-			}
-			return `query Search {
-			rateLimit {
-				limit
-				cost
-				remaining
-				resetAt
-			}
-			search(query: "${repoQuery}${query}", type: ISSUE, last: ${limit}) {
-			edges {
-			  node {
-				... on PullRequest {
-					url
-					title
-					createdAt
-					baseRefName
-					headRefName
-					headRepository {
-						name
-						nameWithOwner
-					}
-					author {
-						login
-						avatarUrl(size: 20)
-						url
-					}
-					body
-					bodyText
-					number
-					state
-					${this._transform(`[isDraft:>=2.21.0]`)}
-					updatedAt
-					lastEditedAt
-					id
-					headRefName
-					headRepository {
-						name
-					}
-					labels(first: 10) {
-						nodes {
-							color
-							description
-							name
-							id
-						}
-					}
-				  }
-			  }
-			}
-		  }
-		}`;
-		};
+
 		// NOTE: there is also `reviewed-by` which `review-requested` translates to after the user
 		// has started or completed the review.
 
@@ -2193,11 +2185,34 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 		// 	{ name: "Created by Me", query: `is:pr author:@me` }
 		// ];
 
+		const providerId = this.providerConfig?.id;
 		// see: https://docs.github.com/en/github/searching-for-information-on-github/searching-issues-and-pull-requests
 		const items = await Promise.all(
-			queries.map(_ => this.query<any>(buildQuery(_, repoQuery)))
+			queries.map(_query => {
+				let query = _query;
+				let limit = 100;
+				// recent is kind of a magic string, where we just look
+				// for some random PR activity to at least show you
+				// something. if you have the repo query checked, and
+				// we can query by repo, then use that. otherwise github
+				// needs at least one qualifier so we query for PRs
+				// that you were the author of
+				// https://trello.com/c/XIg6MKWy/4813-add-4th-default-pr-query-recent
+				if (query === "recent") {
+					if (repoQuery.length > 0) {
+						query = "is:pr";
+					} else {
+						query = "is:pr author:@me";
+					}
+					limit = 5;
+				}
+
+				const finalQuery = repoQuery + query;
+				Logger.log(`getMyPullRequests providerId="${providerId}" query="${finalQuery}"`);
+				return this.query<any>(this.buildSearchQuery(finalQuery, limit));
+			})
 		).catch(ex => {
-			Logger.error(ex);
+			Logger.error(ex, "getMyPullRequests");
 			let errString;
 			if (ex.response) {
 				errString = JSON.stringify(ex.response);
@@ -2214,7 +2229,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 					.filter((_: any) => _.id)
 					.map((pr: { createdAt: string }) => ({
 						...pr,
-						providerId: this.providerConfig?.id,
+						providerId: providerId,
 						createdAt: new Date(pr.createdAt).getTime()
 					}));
 				if (!queries[index].match(/\bsort:/)) {
@@ -2223,11 +2238,8 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 					);
 				}
 			}
-			// if (item.rateLimit) {
-			// 	Logger.debug(`github getMyPullRequests rateLimit=${JSON.stringify(item.rateLimit)}`);
-			// }
 		});
-		// results = _uniqBy(results, (_: { id: string }) => _.id);
+
 		// this._getMyPullRequestsCache.set(cacheKey, response);
 		return response;
 	}

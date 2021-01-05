@@ -416,21 +416,23 @@ export class CodemarkDecorationProvider implements HoverProvider, Disposable {
 							sourceUri: uri
 						};
 
+						let inReplyTo = "";
 						const typeString = Strings.toTitleCase(m.type);
-						message += `__${m.creatorName}__, ${m.fromNow()} &nbsp; _(${m.formatDate()})_ \n\n`;
+						message += `__${m.creatorName}__, ${m.fromNow()} \n\n`;
 						switch (true) {
 							case m.type === "issue":
 								message += "  $(bug) ";
 								break;
-							case m.type === "comment" && m.isReviewDescendant:
-								message += "  $(search) ";
-								message += m.title ? ` ${m.title} \n\n` : "";
+							case m.type === "comment" && m.isReviewDescendant && !!m.title:
+								inReplyTo = `\n\n  __FEEDBACK REQUEST__ \n\n  $(search) ${m.title} \n\n`;
 								break;
 							default:
-								message += "  $(comment) ";
+								// message += "  $(comment) ";
 								break;
 						}
-						message += ` ${m.summaryMarkdown} \n\n[__View ${typeString} \u2197__](command:codestream.openCodemark?${encodeURIComponent(
+						message += ` ${
+							m.summaryMarkdown
+						} \n\n${inReplyTo}[__View ${typeString} \u2197__](command:codestream.openCodemark?${encodeURIComponent(
 							JSON.stringify(viewCommandArgs)
 						)} "View ${typeString}")`;
 
@@ -448,11 +450,13 @@ export class CodemarkDecorationProvider implements HoverProvider, Disposable {
 
 						const typeString = Strings.toTitleCase(m.type);
 						message += `__${m.creatorName}__, ${m.fromNow()} &nbsp; _(${m.formatDate()})_ \n\n`;
-						if (externalContent.provider.id === "github*com")  {
+						if (externalContent.provider.id === "github*com") {
 							message += "  $(github-inverted) ";
 						}
 						message += m.title ? ` ${m.title} \n\n` : "";
-						message += ` ${m.summaryMarkdown} \n\n[__View ${typeString} \u2197__](command:codestream.openPullRequest?${encodeURIComponent(
+						message += ` ${
+							m.summaryMarkdown
+						} \n\n[__View ${typeString} \u2197__](command:codestream.openPullRequest?${encodeURIComponent(
 							JSON.stringify(viewCommandArgs)
 						)} "View ${typeString}")`;
 

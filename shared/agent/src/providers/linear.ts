@@ -1,11 +1,7 @@
 "use strict";
-import * as qs from "querystring";
 import { GraphQLClient } from "graphql-request";
-import { Logger } from "../logger";
 import {
-	LinearConfigurationData,
 	LinearCreateCardRequest,
-	LinearCreateCardResponse,
 	LinearIssue,
 	LinearProject,
 	LinearTeam,
@@ -87,9 +83,22 @@ export class LinearProvider extends ThirdPartyIssueProviderBase<CSLinearProvider
 		await this.ensureConnected();
 
 		const response = await this.query<{ user: { assignedIssues: { nodes: LinearIssue[] } } }>(
-			`query { user(id: "${
-				this._linearUserInfo!.id
-			}") { assignedIssues { nodes { id title updatedAt url description } } } }`
+			`query GetCards($id: String!) {
+				user(id: $id) {
+					assignedIssues {
+						nodes {
+							id
+							title
+							updatedAt
+							url
+							description
+						}
+					}
+				}
+			}`,
+			{
+				id: this._linearUserInfo!.id
+			}
 		);
 
 		const cards: ThirdPartyProviderCard[] = response.user.assignedIssues.nodes.map(
@@ -128,8 +137,8 @@ export class LinearProvider extends ThirdPartyIssueProviderBase<CSLinearProvider
 
 		const team = await this.getTeam();
 		const response = await this.query<{ data: { issues: { nodes: LinearProject[] } } }>(
-			`query { 
-				team(id: "${team.id}") {
+			`query GetBoards($teamId: String!) { 
+				team(id: $teamId) {
 					projects {
 						nodes {
 							id
@@ -137,7 +146,10 @@ export class LinearProvider extends ThirdPartyIssueProviderBase<CSLinearProvider
 						}
 					}
 				}
-			}`
+			}`,
+			{
+				teamId: team.id
+			}
 		);
 		const projects = [{ id: "_", name: "No Project" }, ...response.team.projects.nodes];
 		return { boards: projects };
@@ -149,18 +161,17 @@ export class LinearProvider extends ThirdPartyIssueProviderBase<CSLinearProvider
 
 		const team = await this.getTeam();
 		const data = request.data as LinearCreateCardRequest;
-		const assigneeId = (data.assignees && data.assignees[0] && data.assignees[0].id) || "";
-		const project = data.projectId !== "_" ? `projectId: "${data.projectId}"` : "";
-		const assignee = assigneeId ? `assigneeId: "${assigneeId}"` : "";
+		const projectId = data.projectId !== "_" ? data.projectId : null;
+		const assigneeId = (data.assignees && data.assignees[0] && data.assignees[0].id) || null;
 		const query = `
-			mutation {
+			mutation CreateIssue($title:String!, $description:String!, $teamId:String!, $projectId:String, $assigneeId:String) {
 				issueCreate(
 					input: {
-						title: "${data.name.trim()}"
-						description: "${data.description.trim()}"
-						teamId: "${team.id}"
-						${project}
-						${assignee}
+						title: $title
+						description: $description
+						teamId: $teamId
+						projectId: $projectId
+						assigneeId: $assigneeId
 					}
 				) {
 					success
@@ -172,7 +183,14 @@ export class LinearProvider extends ThirdPartyIssueProviderBase<CSLinearProvider
 				}
 			}
 		`;
-		const response = await this.query<{ issueCreate: { issue: LinearIssue } }>(query);
+		const vars: { [key: string]: string | null } = {
+			title: data.name.trim(),
+			description: data.description.trim(),
+			teamId: team.id,
+			projectId,
+			assigneeId
+		};
+		const response = await this.query<{ issueCreate: { issue: LinearIssue } }>(query, vars);
 		return response.issueCreate.issue;
 	}
 

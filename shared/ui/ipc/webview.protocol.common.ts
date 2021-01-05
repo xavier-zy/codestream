@@ -123,6 +123,8 @@ export interface WebviewContext {
 				providerId: string;
 				id: string;
 				commentId?: string;
+				/* defined if this was triggered by an external means (like an IDE button, etc.) */
+				source?: string;
 		  }
 		| undefined;
 	profileUserId?: string;

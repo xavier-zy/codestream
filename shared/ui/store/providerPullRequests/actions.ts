@@ -307,6 +307,7 @@ export const getPullRequestCommits = (providerId: string, id: string) => async (
 export const openPullRequestByUrl = (
 	url: string,
 	options?: {
+		source?: string;
 		checkoutBranch?: any;
 	}
 ) => async (dispatch, getState: () => CodeStreamState) => {
@@ -329,7 +330,14 @@ export const openPullRequestByUrl = (
 				dispatch(setCurrentReview(""));
 				if (options && options.checkoutBranch)
 					dispatch(setCurrentPullRequestAndBranch(id as string));
-				dispatch(setCurrentPullRequest(providerInfo.providerId, id as string, ""));
+				dispatch(
+					setCurrentPullRequest(
+						providerInfo.providerId,
+						id as string,
+						"",
+						options ? options.source : undefined
+					)
+				);
 				handled = true;
 			}
 		}

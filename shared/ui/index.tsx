@@ -335,7 +335,11 @@ function listenForEvents(store) {
 	});
 
 	api.on(ShowPullRequestNotificationType, async e => {
-		store.dispatch(setCurrentPullRequest(e.providerId, e.id, e.commentId));
+		if (e.url) {
+			store.dispatch(openPullRequestByUrl(e.url, { source: e.source }));
+		} else {
+			store.dispatch(setCurrentPullRequest(e.providerId, e.id, e.commentId, e.source));
+		}
 	});
 
 	api.on(HostDidReceiveRequestNotificationType, async e => {

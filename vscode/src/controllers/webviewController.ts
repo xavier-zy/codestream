@@ -460,6 +460,26 @@ export class WebviewController implements Disposable {
 	}
 
 	@log()
+	async openPullRequestByUrl(url: string, source?: string): Promise<void> {
+		if (!this.visible) {
+			await this.show();
+		}
+
+		if (!this._webview) {
+			// it's possible that the webview is closing...
+			return;
+		}
+
+		// TODO: Change this to be a request vs a notification
+		this._webview!.notify(ShowPullRequestNotificationType, {
+			providerId: "",
+			id: "",
+			url: url,
+			source: source
+		});
+	}
+
+	@log()
 	async layoutChanged(): Promise<void> {
 		if (!this._webview) {
 			// it's possible that the webview is closing...

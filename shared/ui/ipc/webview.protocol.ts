@@ -36,6 +36,9 @@ export interface ShowPullRequestwNotification {
 	providerId: string;
 	id: string;
 	commentId?: string;
+	/* Either a providerId && id are used, OR a url */
+	url?: string;
+	source?: string;
 }
 export const ShowPullRequestNotificationType = new NotificationType<
 	ShowPullRequestwNotification,

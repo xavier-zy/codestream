@@ -143,14 +143,19 @@ export const setCurrentRepo = (id?: string, path?: string) =>
 export const setCreatePullRequest = (reviewId?: string) =>
 	action(ContextActionsType.SetCreatePullRequest, { reviewId });
 
-export const setCurrentPullRequest = (providerId: string, id: string, commentId?: string) =>
-	action(ContextActionsType.SetCurrentPullRequest, { providerId, id, commentId });
+export const setCurrentPullRequest = (
+	providerId: string,
+	id: string,
+	commentId?: string,
+	source?: string
+) => action(ContextActionsType.SetCurrentPullRequest, { providerId, id, commentId, source });
 
 export const clearCurrentPullRequest = () =>
 	action(ContextActionsType.SetCurrentPullRequest, {
 		providerId: "",
 		id: "",
-		commentId: ""
+		commentId: "",
+		source: ""
 	});
 
 export const setOnboardStep = (step: number) => action(ContextActionsType.SetOnboardStep, { step });

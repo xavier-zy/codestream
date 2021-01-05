@@ -13,6 +13,12 @@ import {
 import { ScmTreeDataProvider } from "views/scmTreeDataProvider";
 import { CodeStreamWebviewSidebar } from "webviews/webviewSidebar";
 import { WebviewLike } from "webviews/webviewLike";
+
+import {
+	CreatePullRequestActionContext,
+	GitLensApi,
+	OpenPullRequestActionContext
+} from "./@types/gitlens";
 import { GitExtension } from "./@types/git";
 import { SessionStatusChangedEvent } from "./api/session";
 import { ContextKeys, GlobalState, setContext } from "./common";
@@ -24,6 +30,7 @@ import { FileSystem, Strings, Versions } from "./system";
 
 const extension = extensions.getExtension(extensionQualifiedId)!;
 export const extensionVersion = extension.packageJSON.version;
+let gitLensIntegrationInitializing = false;
 
 interface BuildInfoMetadata {
 	buildNumber: string;
@@ -32,7 +39,6 @@ interface BuildInfoMetadata {
 
 export async function activate(context: ExtensionContext) {
 	const start = process.hrtime();
-
 	Configuration.configure(context);
 	Logger.configure(context, configuration.get<TraceLevel>(configuration.name("traceLevel").value));
 
@@ -125,6 +131,100 @@ export async function activate(context: ExtensionContext) {
 			start
 		)} ms`
 	);
+
+	context.subscriptions.push(
+		Container.agent.onAgentInitialized(_ => {
+			if (gitLensIntegrationInitializing) return;
+			registerGitLensIntegration();
+		})
+	);
+}
+
+function registerGitLensIntegration() {
+	try {
+		gitLensIntegrationInitializing = true;
+
+		const getGitLens = () =>
+			extensions.getExtension<Promise<GitLensApi>>("eamodio.gitlens") ||
+			extensions.getExtension<Promise<GitLensApi>>("eamodio.gitlens-insiders");
+
+		let gitlens = getGitLens();
+		if (!gitlens) {
+			Logger.log("GitLens: Not installed.");
+			return;
+		}
+
+		let i = 0;
+		// NOTE: there's no event to listen to when another extension has activated
+		// so we have to poll to keep checking it. Open issue for that is:
+		// https://github.com/microsoft/vscode/issues/113783
+		const timeout = setTimeout(async _ => {
+			gitlens = getGitLens();
+			if (!gitlens) {
+				Logger.log(`GitLens: Not detected. Returning. attempt=${i}`);
+				clearInterval(timeout);
+				return;
+			}
+			if (gitlens.isActive) {
+				try {
+					const api: GitLensApi = await gitlens.exports;
+					api.registerActionRunner("openPullRequest", {
+						label: "CodeStream",
+						run: function(context: OpenPullRequestActionContext) {
+							try {
+								if (context.pullRequest.provider === "GitHub") {
+									Container.webview.openPullRequestByUrl(context.pullRequest.url, "VSC GitLens");
+								} else {
+									Logger.log(
+										`GitLens: openPullRequest. No provider for ${context.pullRequest.provider}`
+									);
+								}
+							} catch (e) {
+								Logger.warn(
+									`GitLens: openPullRequest. Failed to handle actionRunner openPullRequest e=${e}`
+								);
+							}
+						}
+					});
+					api.registerActionRunner("createPullRequest", {
+						label: "CodeStream",
+						run: function(context: CreatePullRequestActionContext) {
+							try {
+								if (context.branch && context.branch.remote) {
+									const editor = window.activeTextEditor;
+									Container.webview.newPullRequestRequest(
+										editor && editor.selection && !editor.selection.isEmpty ? editor : undefined,
+										"VSC GitLens"
+									);
+								} else {
+									Logger.log("GitLens: createPullRequest. No branch and/or remote");
+								}
+							} catch (e) {
+								Logger.warn(
+									`GitLens: createPullRequest. Failed to handle actionRunner createPullRequest e=${e}`
+								);
+							}
+						}
+					});
+					Logger.log(`GitLens: Found. attempt=${i}`);
+					Container.agent.telemetry.track("GitLens Detected", {});
+				} catch (e) {
+					Logger.warn(`GitLens: Failed to register. Giving up. attempt=${i} e=${e}`);
+				} finally {
+					clearInterval(timeout);
+				}
+			} else {
+				Logger.log(`GitLens: Not detected yet. attempt=${i}`);
+				i++;
+				if (i === 60) {
+					Logger.warn(`GitLens: Activation giving up. attempt=${i}`);
+					clearInterval(timeout);
+				}
+			}
+		}, 10000);
+	} catch (e) {
+		Logger.warn(`GitLens: generic error e=${e}`);
+	}
 }
 
 export async function deactivate(): Promise<void> {

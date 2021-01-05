@@ -132,6 +132,9 @@ export const PullRequest = () => {
 			currentPullRequestCommentId: state.context.currentPullRequest
 				? state.context.currentPullRequest.commentId
 				: undefined,
+			currentPullRequestSource: state.context.currentPullRequest
+				? state.context.currentPullRequest.source
+				: undefined,
 			currentPullRequest: currentPullRequest,
 			currentPullRequestLastUpdated: providerPullRequestLastUpdated,
 			composeCodemarkActive: state.context.composeCodemarkActive,
@@ -464,7 +467,8 @@ export const PullRequest = () => {
 		getOpenRepos();
 		initialFetch().then(_ => {
 			HostApi.instance.track("PR Details Viewed", {
-				Host: derivedState.currentPullRequestProviderId
+				Host: derivedState.currentPullRequestProviderId,
+				Source: derivedState.currentPullRequestSource
 			});
 		});
 	});

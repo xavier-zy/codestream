@@ -92,6 +92,9 @@ export class LinearProvider extends ThirdPartyIssueProviderBase<CSLinearProvider
 							updatedAt
 							url
 							description
+							state {
+								name
+							}
 						}
 					}
 				}
@@ -101,8 +104,11 @@ export class LinearProvider extends ThirdPartyIssueProviderBase<CSLinearProvider
 			}
 		);
 
-		const cards: ThirdPartyProviderCard[] = response.user.assignedIssues.nodes.map(
-			(issue: LinearIssue) => {
+		const cards: ThirdPartyProviderCard[] = response.user.assignedIssues.nodes
+			.filter((issue: LinearIssue) => {
+				return issue.state.name !== "Done" && issue.state.name !== "Canceled";
+			})
+			.map((issue: LinearIssue) => {
 				return {
 					id: issue.id,
 					url: issue.url,
@@ -111,8 +117,8 @@ export class LinearProvider extends ThirdPartyIssueProviderBase<CSLinearProvider
 					tokenId: issue.id,
 					body: issue.description
 				};
-			}
-		);
+			});
+
 		cards.sort((a, b) => {
 			return a.modifiedAt - b.modifiedAt;
 		});

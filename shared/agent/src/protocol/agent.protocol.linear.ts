@@ -49,6 +49,9 @@ export interface LinearIssue {
 	url: string;
 	updatedAt: string;
 	archivedAt?: null | string;
+	state: {
+		name: string;
+	};
 }
 
 export interface LinearFetchListsResponse {

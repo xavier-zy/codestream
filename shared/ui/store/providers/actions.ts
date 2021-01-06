@@ -75,7 +75,8 @@ export const connectProvider = (
 				configureProvider(
 					providerId,
 					{ token: result.accessToken, data: { sessionId: result.sessionId } },
-					true
+					true,
+					connectionLocation
 				)
 			);
 			return {};

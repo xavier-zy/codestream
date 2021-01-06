@@ -278,7 +278,7 @@ class IssueDropdown extends React.Component<Props, State> {
 					}
 				});
 			} else */ this.props.openPanel(
-				`configure-enterprise-${name}-${id}-Compose Modal`
+				`configure-enterprise-${name}-${id}-Issues Section`
 			);
 		} else {
 			const { name } = providerInfo.provider;

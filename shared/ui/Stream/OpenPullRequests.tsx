@@ -497,7 +497,7 @@ export const OpenPullRequests = React.memo((props: Props) => {
 													<Provider
 														key={provider.id}
 														onClick={() =>
-															dispatch(configureAndConnectProvider(provider.id, "Sidebar"))
+															dispatch(configureAndConnectProvider(provider.id, "PRs Section"))
 														}
 													>
 														<Icon name={providerDisplay.icon} />

@@ -37,10 +37,11 @@ export const configureAndConnectProvider = (
 	const { providers } = getState();
 	const provider = providers[providerId];
 	const { forEnterprise, isEnterprise, name, needsConfigure } = provider;
+	connectionLocation = connectionLocation || "Integrations Panel";
 	if (needsConfigure) {
-		dispatch(openPanel(`configure-provider-${provider.name}-${provider.id}-Integrations Panel`));
+		dispatch(openPanel(`configure-provider-${provider.name}-${provider.id}-${connectionLocation}`));
 	} else if ((forEnterprise || isEnterprise) && name !== "jiraserver") {
-		dispatch(openPanel(`configure-enterprise-${name}-${provider.id}-Integrations Panel`));
+		dispatch(openPanel(`configure-enterprise-${name}-${provider.id}-${connectionLocation}`));
 	} else {
 		dispatch(connectProvider(provider.id, connectionLocation, force));
 	}
@@ -105,7 +106,8 @@ export type ViewLocation =
 	| "Create Pull Request Panel"
 	| "Issues Section"
 	| "Provider Error Banner"
-	| "Onboard";
+	| "Onboard"
+	| "PRs Section";
 
 export const sendIssueProviderConnected = (
 	providerId: string,

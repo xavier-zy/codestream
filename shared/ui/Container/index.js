@@ -115,7 +115,7 @@ const Root = connect(mapStateToProps)(props => {
 			<RoadBlock title="Update Required">
 				<p>
 					We're all for vintage, but your version of CodeStream is simply too old! Please update to
-					the latest version to continue.
+					the latest version to continue. You may need to update your IDE as well if it isn't recent.
 				</p>
 				{getIdeInstallationInstructions(props)}
 			</RoadBlock>

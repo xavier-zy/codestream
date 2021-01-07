@@ -47,7 +47,7 @@
 		"styled-components": "4.3.2",
 		"uuid": "3.3.2",
 		"vscode-languageserver-protocol": "3.14.1",
-		"vscode-uri": "2.0.3"
+		"vscode-uri": "3.0.2"
 	},
 	"peerDependencies": {
 		"react": "16.8.6",

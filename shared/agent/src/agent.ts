@@ -22,6 +22,7 @@ import {
 	TextDocumentSyncKind
 } from "vscode-languageserver";
 import { DocumentManager } from "./documentManager";
+import { setGitPath } from "./git/git";
 import { Logger } from "./logger";
 import {
 	AgentInitializedNotificationType,
@@ -119,6 +120,7 @@ export class CodeStreamAgent implements Disposable {
 			this.rootUri = e.rootUri == null ? undefined : e.rootUri;
 
 			const agentOptions = e.initializationOptions! as BaseAgentOptions;
+			await setGitPath(agentOptions.gitPath);
 
 			Logger.level = agentOptions.traceLevel;
 			if (agentOptions.isDebugging) {

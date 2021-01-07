@@ -838,8 +838,6 @@ export class CodeStreamSession {
 
 		this.setStatus(SessionStatus.SignedIn);
 
-		await setGitPath(this._options.gitPath);
-
 		this.api.onDidReceiveMessage(e => this.onRTMessageReceived(e), this);
 
 		Logger.log(cc, `Subscribing to real-time events...`);

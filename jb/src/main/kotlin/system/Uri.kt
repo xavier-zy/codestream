@@ -24,7 +24,7 @@ fun sanitizeURI(uri: String?): String? {
         return null
     }
     if (uri.startsWith(WINDOWS_NETWORK_FILE_BEGIN)) {
-        return uri
+        return uri.replace("file:////", "file://")
     } else if (!uri.startsWith(URI_FILE_BEGIN)) {
         // LOG.warn("Malformed uri : " + uri)
         return uri // Probably not an uri

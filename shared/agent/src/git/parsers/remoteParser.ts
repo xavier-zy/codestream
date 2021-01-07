@@ -69,7 +69,9 @@ export class GitRemoteParser {
 		return [
 			match[1] || match[3] || match[6],
 			host || GitRemoteParser.getHostFromMatch(match),
-			match[9].replace(/\.git\/?$/, emptyStr)
+			// remove any starting slashes for odd remotes that look like
+			// git@github.com:/TeamCodeStream/codestream.git
+			match[9].replace(/^\/+/g, emptyStr).replace(/\.git\/?$/, emptyStr)
 		];
 	}
 

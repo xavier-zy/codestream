@@ -1,4 +1,4 @@
-import React, { useState, useReducer, useCallback, useMemo } from "react";
+import React, { useState, useReducer, useCallback, useMemo, FunctionComponent } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { OpenUrlRequestType } from "@codestream/protocols/webview";
 import { CodeStreamState } from "../store";
@@ -1518,23 +1518,27 @@ const CommitCheckSuite = (props: { commit: any }) => {
 		}
 	};
 
+	const checksData = React.useMemo(() => {
+		return getChecksData(commit.statusCheckRollup.contexts.nodes);
+	}, [commit]);
+
 	const statusMeta = React.useMemo(() => {
-		if (commit.statusCheckRollup.contexts.nodes.length === 0) {
+		if (checksData.length === 0) {
 			return "";
 		}
 		let status = "";
 		const checkStatuses = {
+			success: {
+				count: 0,
+				title: "successful"
+			},
 			inProgress: {
 				count: 0,
 				title: "in progress"
 			},
-			fail: {
+			failure: {
 				count: 0,
 				title: "failing"
-			},
-			success: {
-				count: 0,
-				title: "successful"
 			},
 			pending: {
 				count: 0,
@@ -1545,43 +1549,9 @@ const CommitCheckSuite = (props: { commit: any }) => {
 				title: "queued"
 			}
 		};
-		commit.statusCheckRollup.contexts.nodes.map(statusCheck => {
-			if (statusCheck.__typename === "CheckRun") {
-				switch (true) {
-					case statusCheck.status === "QUEUED":
-						checkStatuses.queued.count++;
-						break;
-					case statusCheck.status === "IN_PROGRESS":
-						checkStatuses.inProgress.count++;
-						break;
-					case statusCheck.status === "COMPLETED" && statusCheck.conclusion === "SUCCESS":
-						checkStatuses.success.count++;
-						break;
-					case statusCheck.status === "COMPLETED" && statusCheck.conclusion === "FAILURE":
-						checkStatuses.fail.count++;
-						break;
-					case statusCheck.status === "COMPLETED" && statusCheck.conclusion === "CANCELLED":
-						checkStatuses.fail.count++;
-						break;
-				}
-			}
-			if (statusCheck.__typename === "StatusContext") {
-				switch (statusCheck.state) {
-					case "EXPECTED":
-						break;
-					case "ERROR":
-						checkStatuses.fail.count++;
-						break;
-					case "FAILURE":
-						checkStatuses.fail.count++;
-						break;
-					case "PENDING":
-						checkStatuses.pending.count++;
-						break;
-					case "SUCCESS":
-						checkStatuses.success.count++;
-						break;
-				}
+		checksData.map(checkData => {
+			if (checkStatuses[checkData.state]) {
+				checkStatuses[checkData.state].count++;
 			}
 		});
 
@@ -1616,8 +1586,8 @@ const CommitCheckSuite = (props: { commit: any }) => {
 				</div>
 				{isChecksOpen && (
 					<div className="checkRuns">
-						{commit.statusCheckRollup.contexts.nodes.map(statusCheck => (
-							<CommitCheckRun statusCheck={statusCheck} />
+						{checksData.map(checkData => (
+							<CommitCheckRun checkData={checkData} />
 						))}
 					</div>
 				)}
@@ -1626,128 +1596,23 @@ const CommitCheckSuite = (props: { commit: any }) => {
 	);
 };
 
-const CommitCheckRun = (props: { statusCheck: CheckRun | StatusContext }) => {
-	const { statusCheck } = props;
-
-	const CheckRunStatusIcon = () => {
-		switch (true) {
-			case "state" in statusCheck ? statusCheck.state === "EXPECTED" : false:
-				return <Icon name="dot-fill" className="yellow-color" />;
-			case "state" in statusCheck ? statusCheck.state === "PENDING" : false:
-				return <Icon name="dot-fill" className="yellow-color" />;
-			case "state" in statusCheck ? statusCheck.state === "SUCCESS" : false:
-				return <Icon name="check" className="green-color" />;
-			case "conclusion" in statusCheck ? statusCheck.conclusion === "SUCCESS" : false:
-				return <Icon name="check" className="green-color" />;
-			case "conclusion" in statusCheck ? statusCheck.conclusion === "CANCELLED" : false:
-				return <Icon name="x" className="red-color" />;
-			case "conclusion" in statusCheck ? statusCheck.conclusion === "FAILURE" : false:
-				return <Icon name="x" className="red-color" />;
-			case "state" in statusCheck ? statusCheck.state === "FAILURE" : false:
-				return <Icon name="x" className="red-color" />;
-			case "state" in statusCheck ? statusCheck.state === "ERROR" : false:
-				return <Icon name="x" className="red-color" />;
-			default:
-				return <></>;
-		}
-	};
-
-	const AppIcon = () => {
-		let iconUrl, title;
-		if ("checkSuite" in statusCheck && statusCheck.checkSuite.app.logoUrl) {
-			iconUrl = statusCheck.checkSuite.app.logoUrl;
-			title = `@${statusCheck.checkSuite.app.slug} generated this status`;
-		} else if ("avatarUrl" in statusCheck && statusCheck.avatarUrl) {
-			iconUrl = statusCheck.avatarUrl;
-			title = " generated this status";
-		} else {
-			return <></>;
-		}
-		return <Icon src={iconUrl} title={title} className="appIcon" />;
-	};
-
-	const Description = () => {
-		if (statusCheck.__typename === "CheckRun") {
-			const check = statusCheck as CheckRun;
-			let description = <></>;
-
-			if (check.status === "COMPLETED") {
-				let formattedDuration;
-				if (check.startedAt && check.completedAt) {
-					formattedDuration = getCheckDuration(check.startedAt, check.completedAt);
-				}
-
-				switch (check.conclusion) {
-					case "SUCCESS":
-						description = (
-							<span>{formattedDuration > "" ? `Successful in ${formattedDuration}` : ""}</span>
-						);
-						break;
-					case "FAILURE":
-						description = (
-							<span>{formattedDuration > "" ? `Failing after ${formattedDuration}` : ""}</span>
-						);
-						break;
-				}
-			} else if (check.status === "IN_PROGRESS") {
-				description = <i>In progress — This check has started...</i>;
-			} else if (check.status === "QUEUED") {
-				description = <i>Queued — Waiting to run this check...</i>;
-			}
-
-			return (
-				<div className="description">
-					<strong style={{ marginRight: "8px" }}>{check.name}</strong> {description}{" "}
-					{check.title && <> — {check.title}</>}
-				</div>
-			);
-		} else if (statusCheck.__typename === "StatusContext") {
-			const check = statusCheck as StatusContext;
-			return (
-				<div className="description">
-					<strong>{check.context}</strong>
-					{check.description && <> — {check.description}</>}
-				</div>
-			);
-		} else {
-			return <></>;
-		}
-	};
-
-	const getCheckDuration = (startedAt, completedAt): string => {
-		const startTime = new Date(startedAt);
-		const endTime = new Date(completedAt);
-		const duration = endTime.getTime() - startTime.getTime();
-		const minutes = Math.floor(duration / 60000);
-		const seconds = ((duration % 60000) / 1000).toFixed(0);
-
-		return minutes > 0 ? `${minutes}m` : `${seconds}s`;
-	};
-
-	const DetailsLink = () => {
-		let href;
-		if ("detailsUrl" in statusCheck) {
-			href = statusCheck.detailsUrl;
-		} else if ("targetUrl" in statusCheck) {
-			href = statusCheck.targetUrl;
-		} else {
-			return <></>;
-		}
-		return (
-			<Link href={href} className="details">
-				Details
-			</Link>
-		);
-	};
+const CommitCheckRun = (props: { checkData: CheckData }) => {
+	const { checkData } = props;
 
 	return (
 		<div className="checkRun">
 			<PRIconButton>
-				<CheckRunStatusIcon />
+				{checkData.statusIcon && (
+					<Icon name={checkData.statusIcon.name} className={checkData.statusIcon.className} />
+				)}
 			</PRIconButton>
-			<AppIcon />
-			<Description />
-			<DetailsLink />
+			{checkData.appIcon && (
+				<Icon src={checkData.appIcon.src} title={checkData.appIcon.title} className="appIcon" />
+			)}
+			{checkData.Description && <>{checkData.Description}</>}
+			<Link href={checkData.detailsLink} className="details">
+				Details
+			</Link>
 		</div>
 	);
 };
@@ -1768,3 +1633,176 @@ const CopyableTerminal = (props: any) => {
 		</PRCopyableTerminal>
 	);
 };
+
+const getChecksData = (statusChecks: (CheckRun | StatusContext)[]) => {
+	let checksData: CheckData[] = [];
+	statusChecks.map(statusCheck => {
+		const checkData = {} as CheckData;
+
+		if (statusCheck.__typename === "CheckRun") {
+			const check = statusCheck as CheckRun;
+			let description: JSX.Element | string = "";
+			switch (check.status) {
+				case "QUEUED":
+					checkData.state = "queued";
+					description = <i>In progress — This check has started...</i>;
+					break;
+				case "IN_PROGRESS":
+					checkData.state = "inProgress";
+					description = <i>Queued — Waiting to run this check...</i>;
+					break;
+				case "COMPLETED":
+					let formattedDuration;
+					if (check.startedAt && check.completedAt) {
+						formattedDuration = getCheckDuration(check.startedAt, check.completedAt);
+					}
+
+					switch (check.conclusion) {
+						case "SUCCESS":
+							checkData.state = "success";
+							description = (
+								<span>{formattedDuration > "" ? `Successful in ${formattedDuration}` : ""}</span>
+							);
+							break;
+						case "FAILURE":
+							checkData.state = "failure";
+							description = (
+								<span>{formattedDuration > "" ? `Failing after ${formattedDuration}` : ""}</span>
+							);
+							break;
+						case "CANCELLED":
+							checkData.state = "failure";
+							break;
+						default:
+							checkData.state = "undefined";
+							break;
+					}
+					break;
+				default:
+					checkData.state = "undefined";
+					break;
+			}
+
+			checkData.appIcon = {
+				src: check.checkSuite.app.logoUrl,
+				title: `@${check.checkSuite.app.slug} generated this status`
+			};
+			checkData.Description = (
+				<div className="description">
+					<strong style={{ marginRight: "8px" }}>{check.name}</strong> {description}{" "}
+					{check.title && <> — {check.title}</>}
+				</div>
+			);
+			checkData.detailsLink = check.detailsUrl;
+		}
+
+		if (statusCheck.__typename === "StatusContext") {
+			const check = statusCheck as StatusContext;
+			switch (check.state) {
+				case "EXPECTED":
+					checkData.state = "expected";
+					break;
+				case "ERROR":
+					checkData.state = "failure";
+					break;
+				case "FAILURE":
+					checkData.state = "failure";
+					break;
+				case "PENDING":
+					checkData.state = "pending";
+					break;
+				case "SUCCESS":
+					checkData.state = "success";
+					break;
+				default:
+					checkData.state = "undefined";
+					break;
+			}
+
+			checkData.appIcon = {
+				src: check.avatarUrl,
+				title: ` generated this status`
+			};
+			checkData.Description = (
+				<div className="description">
+					<strong>{check.context}</strong>
+					{check.description && <> — {check.description}</>}
+				</div>
+			);
+			checkData.detailsLink = check.targetUrl;
+		}
+
+		switch (checkData.state) {
+			case "failure":
+				checkData.statusIcon = {
+					name: "x",
+					className: "red-color"
+				};
+				break;
+			case "inProgress":
+				checkData.statusIcon = {
+					name: "dot-fill",
+					className: "yellow-color"
+				};
+				break;
+			case "pending":
+				checkData.statusIcon = {
+					name: "dot-fill",
+					className: "yellow-color"
+				};
+				break;
+			case "queued":
+				checkData.statusIcon = {
+					name: "dot-fill",
+					className: "yellow-color"
+				};
+				break;
+			case "success":
+				checkData.statusIcon = {
+					name: "check",
+					className: "green-color"
+				};
+				break;
+			case "expected":
+				checkData.statusIcon = {
+					name: "dot-fill",
+					className: "yellow-color"
+				};
+				break;
+			case "undefined":
+			default:
+				checkData.statusIcon = {
+					name: "dot-fill",
+					className: "yellow-color"
+				};
+				break;
+		}
+
+		checksData.push(checkData);
+	});
+	return checksData;
+};
+
+const getCheckDuration = (startedAt, completedAt): string => {
+	const startTime = new Date(startedAt);
+	const endTime = new Date(completedAt);
+	const duration = endTime.getTime() - startTime.getTime();
+	const minutes = Math.floor(duration / 60000);
+	const seconds = ((duration % 60000) / 1000).toFixed(0);
+
+	return minutes > 0 ? `${minutes}m` : `${seconds}s`;
+};
+
+interface CheckData {
+	state: "queued" | "inProgress" | "failure" | "success" | "pending" | "expected" | "undefined";
+	statusIcon: {
+		name: string;
+		className: string;
+	};
+	appIcon: {
+		src: string;
+		title: string;
+	};
+	Description: JSX.Element;
+	detailsLink: string;
+}

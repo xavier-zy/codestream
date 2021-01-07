@@ -3,12 +3,7 @@ import {
 	FetchThirdPartyPullRequestPullRequest,
 	ExecuteThirdPartyTypedType
 } from "../protocols/agent/agent.protocol.providers";
-import {
-	PRCommentCard,
-	ButtonRow,
-	PRResolveConflictsRow,
-	PRIconButton
-} from "./PullRequestComponents";
+import { PRCommentCard, ButtonRow, PRIconButton } from "./PullRequestComponents";
 import MessageInput from "./MessageInput";
 import { RadioGroup, Radio } from "../src/components/RadioGroup";
 import { useDispatch, useSelector } from "react-redux";

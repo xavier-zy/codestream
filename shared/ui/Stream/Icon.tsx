@@ -9,7 +9,7 @@ interface Props {
 	// the keys in icons8-data.json (which are our custom
 	// icons and we add to that file from time to time),
 	// or the included "Ocitcons" from GitHub https://octicons.github.com/
-	name: string;
+	name?: string;
 	className?: string;
 	title?: React.ReactNode;
 	placement?: Placement;
@@ -24,14 +24,15 @@ interface Props {
 	onPopupAlign?: any;
 	trigger?: Trigger[];
 	tabIndex?: number;
+	src?: string;
 }
 
 const Icon = React.forwardRef<any, Props>((props, ref) => {
-	const name = props.loading ? "sync" : props.name;
+	const name = props.loading ? "sync" : props.name ? props.name : "";
 	const icon = Icons8[name] || octicons[name];
 	// const icon = octicons[props.name]; why is this commented out?
 	// if we can't find the icon, throw an error
-	if (!icon) throw new Error(`No icon found for '${props.name}'`);
+	if (!props.src && !icon) throw new Error(`No icon found for '${props.name}'`);
 
 	const iconImage = (
 		<span
@@ -43,7 +44,9 @@ const Icon = React.forwardRef<any, Props>((props, ref) => {
 			onClick={props.onClick}
 			onMouseDown={props.onMouseDown}
 			style={props.style}
-			dangerouslySetInnerHTML={{ __html: icon.toSVG() }}
+			dangerouslySetInnerHTML={{
+				__html: props.src ? `<img src="${props.src}" />` : icon.toSVG()
+			}}
 			ref={ref}
 			tabIndex={props.tabIndex}
 		/>

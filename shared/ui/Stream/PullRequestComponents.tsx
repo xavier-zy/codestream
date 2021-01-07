@@ -1027,7 +1027,7 @@ export const PRCopyableTerminal = styled.div`
 	}
 `;
 
-export const PRResolveConflictsRow = styled.div`
+export const PRCommentCardRow = styled.div`
 	display: flex;
 	align-items: flex-start;
 	button {
@@ -1040,15 +1040,15 @@ export const PRResolveConflictsRow = styled.div`
 	}
 `;
 
-export const PRResolveConflicts = styled.div`
+export const PRCommentCardRowsWrapper = styled.div`
 	padding: "5px 0";
-	${PRResolveConflictsRow} {
+	${PRCommentCardRow} {
 		padding-bottom: 10px;
 		margin-bottom: 10px;
 		border-bottom: 1px solid;
 		border-color: var(--base-border-color);
 	}
-	${PRResolveConflictsRow}:last-child {
+	${PRCommentCardRow}:last-child {
 		padding-bottom: 0px;
 		margin-bottom: 0px;
 		border: none;

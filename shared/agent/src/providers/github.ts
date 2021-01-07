@@ -3793,6 +3793,9 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 			  messageBodyHTML
 			  abbreviatedOid
 			  authoredDate
+			  statusCheckRollup {
+			  	state
+			  }
 			}
 		  }`,
 			// 	`... on PullRequestCommitCommentThread {
@@ -4184,9 +4187,44 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 						  }
 						}
 					  }
-					commits(first: 100) {
+					commits(last: 1) {
 						totalCount
-					  }
+						nodes {
+						  commit {
+						  	statusCheckRollup {
+						  		state
+						  		contexts(first: 100) {
+						  			nodes {
+						  				... on CheckRun {
+						  					__typename
+						  					conclusion
+						  					status
+						  					name
+						  					title
+						  					detailsUrl
+						  					startedAt
+						  					completedAt
+											checkSuite {
+											  app {
+												logoUrl(size: 40)
+												slug
+											  }
+											}
+						  				}
+						  				... on StatusContext {
+						  					__typename
+						  					avatarUrl(size: 40)
+						  					context
+						  					description
+						  					state
+						  					targetUrl
+						  				}
+						  			}
+						  		}
+						  	}
+						  }
+						}
+					}
 					headRefName
 					headRefOid
 					labels(first: 10) {

@@ -365,6 +365,46 @@ export interface FetchThirdPartyPullRequestFilesResponse {
 	patch?: string;
 }
 
+export type CheckConclusionState =
+	| "ACTION_REQUIRED"
+	| "TIMED_OUT"
+	| "CANCELLED"
+	| "FAILURE"
+	| "SUCCESS"
+	| "NEUTRAL"
+	| "SKIPPED"
+	| "STARTUP_FAILURE"
+	| "STALE";
+
+export type StatusState = "EXPECTED" | "ERROR" | "FAILURE" | "PENDING" | "SUCCESS";
+export type CheckStatusState = "QUEUED" | "IN_PROGRESS" | "COMPLETED" | "WAITING" | "REQUESTED";
+
+export interface CheckRun {
+	__typename: string;
+	conclusion: CheckConclusionState;
+	status: CheckStatusState;
+	name: string;
+	title: string;
+	detailsUrl: string;
+	startedAt: string;
+	completedAt: string;
+	checkSuite: {
+		app: {
+			logoUrl: string;
+			slug: string;
+		};
+	};
+}
+
+export interface StatusContext {
+	__typename: string;
+	avatarUrl: string;
+	context: string;
+	description: string;
+	state: StatusState;
+	targetUrl: string;
+}
+
 export interface FetchThirdPartyPullRequestPullRequest {
 	id: string;
 	providerId: string; // e.g. "github*com"
@@ -396,6 +436,16 @@ export interface FetchThirdPartyPullRequestPullRequest {
 	createdAt: string;
 	commits: {
 		totalCount: number;
+		nodes: {
+			commit: {
+				statusCheckRollup?: {
+					state: StatusState;
+					contexts: {
+						nodes: CheckRun | StatusContext;
+					};
+				};
+			};
+		};
 	};
 	files: {
 		totalCount: number;

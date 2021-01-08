@@ -6,7 +6,7 @@ import { URI } from "vscode-uri";
 import { Logger } from "../logger";
 import { CodeStreamSession } from "../session";
 import { Strings } from "../system";
-import { git } from "./git";
+import { git, isWslGit } from "./git";
 
 const cygwinRegex = /\/cygdrive\/([a-zA-Z])/;
 const wslRegex = /(\\\\wsl\$\\.+?)\\.*/;
@@ -111,7 +111,7 @@ export class GitServiceLite {
 			}
 		}
 
-		const wslPrefix = this._getWslPrefix(filePath)
+		const wslPrefix = isWslGit() ? this._getWslPrefix(filePath) : undefined;
 		try {
 			const data = (await git({ cwd: cwd }, "rev-parse", "--show-toplevel")).trim();
 			const repoRoot = data === "" ? undefined : this._normalizePath(data, wslPrefix);

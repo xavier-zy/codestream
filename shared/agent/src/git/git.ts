@@ -113,7 +113,7 @@ function gitPath(): string {
 }
 
 let _isWsl = false;
-function isWslGit(): boolean {
+export function isWslGit(): boolean {
 	return _isWsl;
 }
 

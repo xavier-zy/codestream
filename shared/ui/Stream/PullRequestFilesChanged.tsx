@@ -227,7 +227,7 @@ export const PullRequestFilesChanged = (props: Props) => {
 	const openFile = async index => {
 		if (index < 0) index = derivedState.numFiles - 1;
 		if (index > derivedState.numFiles - 1) index = 0;
-		const f = filesChanged[index];
+		const f = filesInOrder[index];
 
 		let repoRoot = currentRepoRoot;
 		if (!repoRoot) {

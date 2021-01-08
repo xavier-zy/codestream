@@ -4,8 +4,8 @@
 
 ### Added
 
-- Adds news integration with the Linear issue-tracking service
-- Adds an integration with GitLens which allows you to create and view pull requests using CodeStream
+- Adds a new integration with the Linear issue-tracking service
+- Adds an [integration with GitLens](https://medium.com/teamcodestream/how-we-extended-gitlens-pull-request-functionality-in-visual-studio-code-f4dbecbea4c2) which allows you to create and view pull requests using CodeStream
 
 ### Fixed
 

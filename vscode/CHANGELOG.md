@@ -1,5 +1,17 @@
 # Change Log
 
+## [10.3.0] - 2021-1-8
+
+### Added
+
+- Adds news integration with the Linear issue-tracking service
+- Adds an integration with GitLens which allows you to create and view pull requests using CodeStream
+
+### Fixed
+
+- Addresses [#364](https://github.com/TeamCodeStream/CodeStream/issues/364) &mdash; Copy button in PR is copying the base branch name instead of the compare branch
+- Fixes an issue where the Open File button in the Tree View of the list of files in a PR wouldn't open the correct file if sections of the tree were collapsed
+
 ## [10.2.2] - 2020-12-30
 
 ### Added

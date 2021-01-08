@@ -201,5 +201,5 @@ export function reduceContext(
 
 export const getTestGroup = (state: CodeStreamState, testName: string): string | undefined => {
 	const company = state.companies[state.teams[state.context.currentTeamId].companyId];
-	return (company.testGroups || {})[testName] || undefined;
+	return (company && (company.testGroups || {}))[testName] || undefined;
 };

@@ -22,8 +22,9 @@ import com.intellij.ui.ColorUtil
 import com.intellij.ui.JBColor
 import org.eclipse.lsp4j.Position
 import org.eclipse.lsp4j.Range
-import java.text.SimpleDateFormat
+import java.util.Arrays
 import java.util.Date
+import java.util.concurrent.TimeUnit
 import javax.swing.Icon
 
 class GutterIconRendererImpl(val editor: Editor, val marker: DocumentMarker) : GutterIconRenderer() {
@@ -37,34 +38,37 @@ class GutterIconRendererImpl(val editor: Editor, val marker: DocumentMarker) : G
     override fun getClickAction(): AnAction = GutterIconAction(editor, marker)
 
     override fun getTooltipText(): String? {
-        val dateFormat = SimpleDateFormat("MMMM d, YYYY h:mma")
-        var tooltip = "<b>${marker.creatorName}</b> (${dateFormat.format(Date(marker.createdAt))})" +
+        var tooltip = "<b>${marker.creatorName}</b>, ${fromNow(Date(marker.createdAt))} " +
             "\n\n"
         val rangeString = serializeRange(marker.range);
 
         if (marker.codemark !== null) {
             if (marker.type == "issue") {
                 tooltip += "<img src='${getIconLink("issue")}'> &nbsp; "
+                tooltip += marker.summary
             } else if(marker.codemark.reviewId !== null) {
+                tooltip += "${marker.summary} \n\n"
+                tooltip += "<b>FEEDBACK REQUEST</b> \n\n"
                 tooltip += "<img src='${getIconLink("fr")}'> &nbsp; "
                 if (marker.title !== null) {
-                    tooltip += "${marker.title} \n\n"
+                    tooltip += "${marker.title} "
                 }
             } else {
                 tooltip += "<img src='${getIconLink("comment")}'> &nbsp; "
+                tooltip += marker.summary
             }
-            tooltip += marker.summary
             tooltip += "\n\n<a href='#codemark/show/${marker.codemark.id}'>View Comment</a>"
             tooltip += "<hr style='margin-top: 3px; margin-bottom: 3px;'>"
             tooltip += "<a href='#codemark/link/${CodemarkType.COMMENT},${rangeString}'>Add Comment</a> &#183; " +
                 "<a href='#codemark/link/${CodemarkType.ISSUE},${rangeString}'>Create Issue</a> &#183; " +
                 "<a href='#codemark/link/${CodemarkType.LINK},${rangeString}'>Get Permalink</a>"
         } else if (marker.externalContent != null) {
+            tooltip += "${marker.summary} \n\n"
+            tooltip += "<b>PULL REQUEST</b> \n\n"
             tooltip += "<img src='${getIconLink("pr")}'> &nbsp; "
             if (marker.title !== null) {
-                tooltip += "${marker.title} \n\n"
+                tooltip += "${marker.title} "
             }
-            tooltip += marker.summary
             tooltip += "\n\n<a href='#pr/show/${marker.externalContent.provider?.id}" +
                 "/${marker.externalContent.externalId}/${marker.externalContent.externalChildId}'>View Comment</a>"
             tooltip += "<hr style='margin-top: 3px; margin-bottom: 3px;'>"
@@ -90,6 +94,32 @@ class GutterIconRendererImpl(val editor: Editor, val marker: DocumentMarker) : G
     override fun hashCode(): Int {
         return id.hashCode()
     }
+
+    fun fromNow(past: Date): String {
+        val now = Date()
+        val duration = now.getTime() - past.getTime();
+        val res = StringBuffer()
+        for (i in 0 until this.times.size) {
+            val current: Long = this.times.get(i)
+            val temp: Long = duration / current
+            if (temp > 0) {
+                res.append(temp).append(" ").append(this.timesString.get(i)).append(if (temp != 1L) "s" else "")
+                    .append(" ago")
+                break
+            }
+        }
+        return if ("" == res.toString()) "0 seconds ago" else res.toString()
+    }
+
+    val times: List<Long> = Arrays.asList(
+        TimeUnit.DAYS.toMillis(365),
+        TimeUnit.DAYS.toMillis(30),
+        TimeUnit.DAYS.toMillis(1),
+        TimeUnit.HOURS.toMillis(1),
+        TimeUnit.MINUTES.toMillis(1),
+        TimeUnit.SECONDS.toMillis(1)
+    )
+    val timesString: List<String> = Arrays.asList("year", "month", "day", "hour", "minute", "second")
 
     fun getIconLink(type: String): String {
         val bg = JBColor.background()

@@ -950,15 +950,14 @@ export const StartWork = (props: Props) => {
 																>
 																	<FormattedMessage
 																		id="error.unexpected"
-																		defaultMessage="Something went wrong! Please try again, or pull origin manually"
-																	/>
+																		defaultMessage="Something went wrong! Please try again, or pull origin manually."
+																	/>{" "}
 																	<FormattedMessage
 																		id="contactSupport"
 																		defaultMessage="contact support"
 																	>
 																		{text => <Link href="https://help.codestream.com">{text}</Link>}
 																	</FormattedMessage>
-																	.
 																</div>
 															)}
 														</div>

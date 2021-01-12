@@ -111,6 +111,7 @@ export interface AttachedFile {
 	size: number;
 	url?: string;
 	status?: "uploading" | "error" | "uploaded";
+	error?: string;
 }
 
 interface Props extends ConnectedProps {
@@ -1327,34 +1328,36 @@ class CodemarkForm extends React.Component<Props, State> {
 					const imageInjected =
 						isImage && file.url ? this.state.text.includes(`![${file.name}](${file.url})`) : false;
 					return (
-						<div key={index} className="attachment">
-							<span>{icon}</span>
-							<span>{file.name}</span>
-							<span>
-								{isImage && file.url && (
+						<Tooltip title={file.error} placement="top" delay={1}>
+							<div key={index} className="attachment">
+								<span>{icon}</span>
+								<span>{file.name}</span>
+								<span>
+									{isImage && file.url && (
+										<Icon
+											title={
+												imageInjected
+													? `This image is in the markdown above`
+													: `Insert this image in markdown`
+											}
+											placement="bottomRight"
+											name="pin"
+											className={imageInjected ? "clickable selected" : "clickable"}
+											onMouseDown={e => this.pinImage(file.name, file.url!, e)}
+										/>
+									)}
 									<Icon
-										title={
-											imageInjected
-												? `This image is in the markdown above`
-												: `Insert this image in markdown`
-										}
-										placement="bottomRight"
-										name="pin"
-										className={imageInjected ? "clickable selected" : "clickable"}
-										onMouseDown={e => this.pinImage(file.name, file.url!, e)}
+										name="x"
+										className="clickable"
+										onClick={() => {
+											const attachments = [...this.state.attachments];
+											attachments.splice(index, 1);
+											this.setState({ attachments });
+										}}
 									/>
-								)}
-								<Icon
-									name="x"
-									className="clickable"
-									onClick={() => {
-										const attachments = [...this.state.attachments];
-										attachments.splice(index, 1);
-										this.setState({ attachments });
-									}}
-								/>
-							</span>
-						</div>
+								</span>
+							</div>
+						</Tooltip>
 					);
 				})}
 			</div>
@@ -1409,13 +1412,26 @@ class CodemarkForm extends React.Component<Props, State> {
 		this.handleAttachFiles(e.clipboardData.files);
 	};
 
+	replaceAttachment = (attachment, index) => {
+		const { attachments } = this.state;
+		let newAttachments = [...attachments];
+		newAttachments.splice(index, 1, attachment);
+		this.setState({ attachments: newAttachments });
+	};
+
 	handleAttachFiles = async files => {
 		if (!files || files.length === 0) return;
+
+		const { attachments } = this.state;
+		let index = attachments.length;
+
 		HostApi.instance.track("File Attached", {});
+
 		[...files].forEach(file => {
 			file.status = "uploading";
 		});
-		const attachments: AttachedFile[] = [];
+		// add the dropped files to the list of attachments, with uploading state
+		this.setState({ attachments: [...attachments, ...files] });
 
 		for (const file of files) {
 			try {
@@ -1426,28 +1442,19 @@ class CodemarkForm extends React.Component<Props, State> {
 					type: file.type
 				});
 				if (response && response.url) {
-					file.status = "uploaded";
-					file.url = response.url;
-					attachments.push(response);
+					this.replaceAttachment(response, index);
 				} else {
 					file.status = "error";
+					this.replaceAttachment(file, index);
 				}
 			} catch (e) {
 				console.warn("Error uploading file: ", e);
 				file.status = "error";
+				file.error = e;
+				this.replaceAttachment(file, index);
 			}
+			index++;
 		}
-
-		this.setState({ attachments: [...this.state.attachments, ...attachments] });
-
-		// setTimeout(() => {
-		// 	const attachments = [...this.state.attachments];
-		// 	attachments.forEach(file => {
-		// 		file.status = "uploaded";
-		// 		file.url = "http://static.codestream.com/uc/" + file.name;
-		// 	});
-		// 	this.setState({ attachments });
-		// }, 2000);
 	};
 
 	handleChangeRelated = codemarkIds => {
@@ -2307,7 +2314,6 @@ class CodemarkForm extends React.Component<Props, State> {
 			linkWithCodeBlock += "*\n```\n" + codeBlock.contents + "\n```\n";
 		}
 
-		console.warn("IS DRAGGING: ", this.state.isDragging);
 		return [
 			<form
 				id="code-comment-form"

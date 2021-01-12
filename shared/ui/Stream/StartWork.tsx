@@ -698,7 +698,11 @@ export const StartWork = (props: Props) => {
 				const request = branches.includes(branch)
 					? SwitchBranchRequestType
 					: CreateBranchRequestType;
-				const result = await HostApi.instance.send(request, { branch, uri, fromBranch });
+				const result = await HostApi.instance.send(request, {
+					branch,
+					uri,
+					fromBranch: fromBranch || currentBranch
+				});
 				// FIXME handle error
 				if (result.error) {
 					console.warn("ERROR FROM SET BRANCH: ", result.error);

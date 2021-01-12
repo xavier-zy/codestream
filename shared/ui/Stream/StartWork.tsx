@@ -51,6 +51,8 @@ import { GitTimeline, BranchLineDown, BranchCurve, BranchLineAcross, GitBranch }
 import KeystrokeDispatcher from "../utilities/keystroke-dispatcher";
 import { ButtonRow } from "../src/components/Dialog";
 import { ExtensionTitle } from "./Sidebar";
+import { ScmError } from "../store/editorContext/reducer";
+import { confirmPopup } from "./Confirm";
 
 const StyledCheckbox = styled(Checkbox)`
 	color: var(--text-color-subtle);
@@ -247,11 +249,12 @@ const HR = styled.div`
 `;
 
 const BranchDiagram = styled.div`
-	transition: height 0.2s, opacity 0.4s;
+	transition: max-height 0.2s, opacity 0.4s;
+	max-height: 400px;
 	height: auto;
 	overflow: hidden;
 	&.closed {
-		height: 0;
+		max-height: 0;
 		opacity: 0;
 	}
 	margin: 0 0 0 30px;
@@ -262,71 +265,100 @@ const BranchDiagram = styled.div`
 		&:after {
 			display: none;
 		}
+		transition: all 0.2s;
 	}
 	${GitBranch} {
 		margin-left: -20px;
+		transition: all 0.2s;
 	}
 	${BranchLineDown} {
 		margin-left: -20px;
 		top: 50px;
-		bottom: 48px;
+		bottom: 51px;
 		height: auto;
+		transition: all 0.2s;
 	}
 	${BranchLineAcross} {
 		margin-left: -20px;
 		width: 25px;
     	top: auto;
-    	bottom: 25px;		
+    	bottom: 28px;		
+		transition: all 0.2s;
 	}
 	${BranchCurve} {
 		margin-left: -20px;
 		top: auto;
-		bottom: 25px;
+		bottom: 28px;
+		transition: all 0.2s;
 	}
 	.pull-option {	
+		margin: 5px 0;
 	}
 	.branch-info {
 		margin-left: 110px;
 		position: relative;
-    	padding: 55px 0;
+    	padding: 0;
 	}
 	.base-branch {
-		position: absolute;
-		top: 20px;
-		left: 0px;
+		transition: all 0.2s;
+		margin-top: 20px;
+		min-height: 50px;
+		.change-base-branch {
+			margin: 5px 0;
+		}
 	}
 	.local-branch {
-		position: absolute;
-		top: 72px;
-		left: 0;
-		top: auto;
-		bottom: 19px;
+		transition: all 0.2s;
+		margin-bottom: 20px;
 	}
 	@media only screen and (max-width: 430px) {
-		height: auto;
-		overflow: visible;
-		padding-bottom: 10px;
-		${GitTimeline},
-		${GitBranch},
-		${BranchLineDown},
-		${BranchLineAcross},
+		${GitTimeline} {
+			top: 9px;
+			width: 30px;
+			left: 0;
+		}
+		${GitBranch} {
+			margin-left: 0;
+			left: 10px;
+			top: 5px;
+			.icon {
+				display: none;
+			}
+			width: 10px;
+			height: 10px;
+			&:before {
+				width: 4px;
+				height: 4px;
+				top: 3px;
+				left: 3px;
+			}
+		}
+		${BranchLineDown} {
+			margin-left: 0;
+			left: 13px;
+			top: 15px;
+			bottom: 38px;
+			height: auto;
+		}
+		${BranchLineAcross} {
+			margin-left: 0;
+			width: 10px;
+			left: 20px;
+		}
 		${BranchCurve} {
-			display: none;
+			margin-left: 0;
+			width: 20px;
+			height: 20px;
+			left: 13px;
 		}
 		.branch-info {
-			margin-left: 0;
-			padding: 0;
+			margin-left: 40px;
 		}		
 		.base-branch {
-			position: relative;
-			padding-bottom: 5px;
-			top: 0;
-			left: 0;
+			margin-top: 0;
 		}
-		.local-branch {
-			position: relative;
-			top: 0;
-			left: 0;
+		x.local-branch {
+			bottom: 0;
 		}
 	}	
 }
@@ -443,7 +475,7 @@ export const StartWork = (props: Props) => {
 	const [fromBranch, setFromBranch] = useState("");
 	const inputRef = React.useRef<HTMLInputElement>(null);
 	const [commitsBehindOrigin, setCommitsBehindOrigin] = useState(0);
-	const [unexpectedPullError, setUnexpectedPullError] = useState(false);
+	const [unexpectedPullError, setUnexpectedPullError] = useState("");
 	const [pullSubmitting, setPullSubmitting] = useState(false);
 	const [isFromBranchDefault, setIsFromBranchDefault] = useState(false);
 
@@ -633,6 +665,7 @@ export const StartWork = (props: Props) => {
 
 	const newBranch = React.useMemo(() => {
 		if (customBranchName) return customBranchName;
+		if (card && card.branchName) return card.branchName;
 		return (
 			replaceTicketTokens(derivedState.branchTicketTemplate, card, label) ||
 			replaceTicketTokens(derivedState.defaultBranchTicketTemplate, card, label)
@@ -641,6 +674,7 @@ export const StartWork = (props: Props) => {
 
 	const branch = React.useMemo(() => {
 		if (customBranchName) return customBranchName;
+		if (card && card.branchName) return card.branchName;
 		return (
 			replaceTicketTokens(derivedState.branchTicketTemplate, card, label) ||
 			replaceTicketTokens(derivedState.defaultBranchTicketTemplate, card, label)
@@ -746,8 +780,12 @@ export const StartWork = (props: Props) => {
 				key: "configure",
 				icon: <Icon name="gear" />,
 				action: () => setConfigureBranchNames(true),
-				disabled: !derivedState.isCurrentUserAdmin,
-				subtext: derivedState.isCurrentUserAdmin || "Disabled: admin only"
+				disabled: !!card.branchName || !derivedState.isCurrentUserAdmin,
+				subtext: card.branchName
+					? "Disabled: branch name comes from 3rd party card"
+					: derivedState.isCurrentUserAdmin
+					? ""
+					: "Disabled: admin only"
 			}
 		);
 	}
@@ -797,7 +835,7 @@ export const StartWork = (props: Props) => {
 			  });
 
 	const onPullSubmit = async (event: React.SyntheticEvent) => {
-		setUnexpectedPullError(false);
+		setUnexpectedPullError("");
 		setPullSubmitting(true);
 
 		try {
@@ -809,7 +847,28 @@ export const StartWork = (props: Props) => {
 		} catch (error) {
 			logError(error, {});
 			logError(`Unexpected error during branch pulling : ${error}`, {});
-			setUnexpectedPullError(true);
+			confirmPopup({
+				title: "Git Error",
+				message: (
+					<div style={{ fontSize: "13px" }}>
+						<FormattedMessage
+							id="error.unexpected"
+							defaultMessage="Something went wrong. Please try again, or pull origin manually."
+						/>{" "}
+						<SCMError>{error}</SCMError>
+					</div>
+				),
+				buttons: [
+					{ label: "Close", className: "control-button" },
+					{
+						label: "Contact Support",
+						action: () => {
+							HostApi.instance.send(OpenUrlRequestType, { url: "https://help.codestream.com/" });
+						}
+					}
+				]
+			});
+			// setUnexpectedPullError(error);
 		} finally {
 			setPullSubmitting(false);
 		}
@@ -915,10 +974,14 @@ export const StartWork = (props: Props) => {
 												onChange={v => setCreateBranch(v)}
 											>
 												Set up a branch in{" "}
-												<MonoMenu items={repoMenuItems}>
-													<Icon name="repo" />
-													{currentRepoName}
-												</MonoMenu>
+												<span style={{ whiteSpace: "nowrap" }}>
+													<MonoMenu items={repoMenuItems}>
+														<span style={{ whiteSpace: "nowrap" }}>
+															<Icon name="repo" />
+															{currentRepoName}
+														</span>
+													</MonoMenu>
+												</span>
 											</StyledCheckbox>
 											<BranchDiagram className={createBranch ? "open" : "closed"}>
 												<GitTimeline />
@@ -935,51 +998,43 @@ export const StartWork = (props: Props) => {
 																<span>{fromBranch || currentBranch}</span>
 															</Tooltip>
 														</MonoMenu>
-													</div>
-													{commitsBehindOrigin > 0 && (
-														<div className="pull-option">
-															<Icon name="info" /> {commitsBehindOrigin} commit
-															{commitsBehindOrigin > 1 ? "s" : ""} behind origin{" "}
-															<Button onClick={onPullSubmit} isLoading={pullSubmitting}>
-																Pull
-															</Button>
-															{unexpectedPullError && (
-																<div
-																	className="error-message form-error"
-																	style={{ marginBottom: "10px" }}
+														{commitsBehindOrigin > 0 && (
+															<div className="pull-option">
+																<Icon name="info" /> {commitsBehindOrigin} commit
+																{commitsBehindOrigin > 1 ? "s" : ""} behind origin{" "}
+																<Button
+																	size="subcompact"
+																	onClick={onPullSubmit}
+																	isLoading={pullSubmitting}
 																>
-																	<FormattedMessage
-																		id="error.unexpected"
-																		defaultMessage="Something went wrong! Please try again, or pull origin manually."
-																	/>{" "}
-																	<FormattedMessage
-																		id="contactSupport"
-																		defaultMessage="contact support"
-																	>
-																		{text => <Link href="https://help.codestream.com">{text}</Link>}
-																	</FormattedMessage>
-																</div>
-															)}
-														</div>
-													)}
-													{fromBranch && (
-														<Checkbox
-															name="change-base-branch-request"
-															checked={isFromBranchDefault}
-															onChange={value => {
-																const isBranchDefault = !isFromBranchDefault;
-																setIsFromBranchDefault(isBranchDefault);
-																dispatch(
-																	setUserPreference(["issueReposDefaultBranch"], {
-																		[currentRepoId]: isBranchDefault ? fromBranch : ""
-																	})
-																);
-																setCurrentBranch(fromBranch);
-															}}
-														>
-															Always use <b>{fromBranch || currentBranch}</b> as base branch
-														</Checkbox>
-													)}
+																	Pull
+																</Button>
+															</div>
+														)}
+														{fromBranch && (
+															<StyledCheckbox
+																className="change-base-branch"
+																name="change-base-branch-request"
+																checked={isFromBranchDefault}
+																onChange={value => {
+																	const isBranchDefault = !isFromBranchDefault;
+																	setIsFromBranchDefault(isBranchDefault);
+																	dispatch(
+																		setUserPreference(["issueReposDefaultBranch"], {
+																			[currentRepoId]: isBranchDefault ? fromBranch : ""
+																		})
+																	);
+																	setCurrentBranch(fromBranch);
+																}}
+															>
+																Always use{" "}
+																<span className="monospace highlight">
+																	{fromBranch || currentBranch}
+																</span>{" "}
+																as base branch
+															</StyledCheckbox>
+														)}
+													</div>
 													<div className="local-branch">
 														{editingBranch ? (
 															<input

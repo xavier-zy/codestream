@@ -106,7 +106,12 @@ export function InlineMenu(props: InlineMenuProps) {
 				className={props.className}
 			>
 				{props.children}
-				{!props.noChevronDown && <Icon name="chevron-down" />}
+				{!props.noChevronDown && (
+					<span style={{ whiteSpace: "nowrap" }}>
+						&#65279;
+						<Icon name="chevron-down" />
+					</span>
+				)}
 			</TextButton>
 		</>
 	);

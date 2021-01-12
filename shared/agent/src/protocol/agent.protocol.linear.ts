@@ -49,6 +49,8 @@ export interface LinearIssue {
 	url: string;
 	updatedAt: string;
 	archivedAt?: null | string;
+	identifier: string;
+	branchName: string;
 	state: {
 		name: string;
 	};

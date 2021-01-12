@@ -1,16 +1,17 @@
 "use strict";
 import { GraphQLClient } from "graphql-request";
+import { Logger } from "logger";
 import {
-	LinearCreateCardRequest,
-	LinearIssue,
-	LinearProject,
-	LinearTeam,
-	LinearUser,
 	CreateThirdPartyCardRequest,
 	FetchThirdPartyBoardsRequest,
 	FetchThirdPartyBoardsResponse,
 	FetchThirdPartyCardsRequest,
 	FetchThirdPartyCardsResponse,
+	LinearCreateCardRequest,
+	LinearIssue,
+	LinearProject,
+	LinearTeam,
+	LinearUser,
 	MoveThirdPartyCardRequest,
 	ThirdPartyDisconnect,
 	ThirdPartyProviderCard
@@ -91,6 +92,8 @@ export class LinearProvider extends ThirdPartyIssueProviderBase<CSLinearProvider
 							title
 							updatedAt
 							url
+							identifier
+							branchName
 							description
 							state {
 								name
@@ -112,10 +115,11 @@ export class LinearProvider extends ThirdPartyIssueProviderBase<CSLinearProvider
 				return {
 					id: issue.id,
 					url: issue.url,
-					title: issue.title,
+					title: `${issue.identifier} ${issue.title}`,
 					modifiedAt: new Date(issue.updatedAt).getTime(),
-					tokenId: issue.id,
-					body: issue.description
+					tokenId: issue.identifier,
+					body: issue.description,
+					branchName: issue.branchName
 				};
 			});
 
@@ -185,6 +189,7 @@ export class LinearProvider extends ThirdPartyIssueProviderBase<CSLinearProvider
 						id
 						title
 						url
+						identifier
 					}
 				}
 			}

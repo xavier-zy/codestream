@@ -42,7 +42,6 @@ import { PrePRProviderInfoModal } from "./PrePRProviderInfoModal";
 import * as actions from "./actions";
 import { canCreateCodemark, editCodemark } from "../store/codemarks/actions";
 import { ComponentUpdateEmitter, safe, toMapBy, isNotOnDisk, uriToFilePath } from "../utils";
-import { confirmPopup } from "./Confirm";
 import { ModalRoot, Modal } from "./Modal";
 import { getPostsForStream, getPost } from "../store/posts/reducer";
 import { isFeatureEnabled } from "../store/apiVersioning/reducer";

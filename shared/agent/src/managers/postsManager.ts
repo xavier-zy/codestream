@@ -2111,6 +2111,7 @@ export class PostsManager extends EntityManagerBase<CSPost> {
 							assignees: attributes.assignees
 						}
 					});
+					Logger.log("GOT RESPONSE: " + JSON.stringify(response, null, 4));
 					break;
 				}
 

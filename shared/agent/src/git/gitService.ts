@@ -934,16 +934,11 @@ export class GitService implements IGitService, Disposable {
 		destBranchName: string
 	): Promise<{ success: boolean; error?: string }> {
 		try {
-			const data = await git({ cwd: repoPath }, "branch", "--show-current");
+			const data = await git({ cwd: repoPath }, "rev-parse", "--abbrev-ref", "HEAD");
 			if (data.trim() === destBranchName) {
 				await git({ cwd: repoPath }, "pull");
 			} else {
-				await git(
-					{cwd: repoPath},
-					"fetch",
-					remoteName,
-					`${sourceBranchName}:${destBranchName}`
-				);
+				await git({ cwd: repoPath }, "fetch", remoteName, `${sourceBranchName}:${destBranchName}`);
 			}
 			return { success: true };
 		} catch (err) {
@@ -1433,14 +1428,18 @@ export class GitService implements IGitService, Disposable {
 		}
 	}
 
-	async getBranchCommitsStatus(repoPath: string, remoteBranch: string, branch: string): Promise<string> {
+	async getBranchCommitsStatus(
+		repoPath: string,
+		remoteBranch: string,
+		branch: string
+	): Promise<string> {
 		try {
-			const data = +await git(
+			const data = +(await git(
 				{ cwd: repoPath },
 				"rev-list",
 				`${remoteBranch}..${branch}`,
 				"--count"
-			);
+			));
 
 			if (data > 0) {
 				return (0 - data).toString();

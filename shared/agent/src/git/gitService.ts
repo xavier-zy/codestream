@@ -425,7 +425,6 @@ export class GitService implements IGitService, Disposable {
 		}
 
 		const patches = parsePatch(data);
-		Logger.log("RETURNING PATCHES: ", JSON.stringify(patches, null, 4));
 		return { patches, data };
 	}
 

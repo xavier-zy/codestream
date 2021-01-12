@@ -369,6 +369,7 @@ export class SimpleStream extends PureComponent {
 					activePanel !== WebviewPanels.OpenReviews &&
 					activePanel !== WebviewPanels.OpenPullRequests &&
 					activePanel !== WebviewPanels.WorkInProgress &&
+					activePanel !== WebviewPanels.APM &&
 					activePanel !== WebviewPanels.Sidebar &&
 					activePanel !== WebviewPanels.Onboard &&
 					activePanel !== WebviewPanels.CodemarksForFile && (

@@ -12,6 +12,7 @@ import { TeamPanel } from "./TeamPanel";
 import { WebviewPanels } from "../ipc/webview.protocol.common";
 import IssueDropdown from "./CrossPostIssueControls/IssueDropdown";
 import { WorkInProgress } from "./WorkInProgress";
+import { APM } from "./APM";
 import Codemarks from "./Codemarks";
 import { CreateCodemarkIcons } from "./CreateCodemarkIcons";
 import { Pane, PaneState } from "../src/components/Pane";
@@ -62,6 +63,7 @@ export const DragHeaderContext = React.createContext({
 export const AVAILABLE_PANES = [
 	WebviewPanels.OpenPullRequests,
 	WebviewPanels.OpenReviews,
+	WebviewPanels.APM,
 	WebviewPanels.CodemarksForFile,
 	WebviewPanels.WorkInProgress,
 	WebviewPanels.Tasks,
@@ -336,6 +338,8 @@ export const Sidebar = React.memo(function Sidebar() {
 				return <OpenReviews openRepos={openRepos} paneState={paneState} />;
 			case WebviewPanels.WorkInProgress:
 				return <WorkInProgress openRepos={openRepos} paneState={paneState} />;
+			case WebviewPanels.APM:
+				return <APM openRepos={openRepos} paneState={paneState} />;
 			case WebviewPanels.Tasks:
 				return <IssueDropdown paneState={paneState} />;
 			case WebviewPanels.CodemarksForFile:

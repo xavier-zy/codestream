@@ -17,7 +17,7 @@ interface Props {
 }
 
 const Tag = React.forwardRef<any, Props>((props, ref) => {
-	const { tag } = props;
+	const { tag, className } = props;
 
 	const color = tag.color.startsWith("#") ? "" : tag.color;
 	let label = tag.label || color;
@@ -37,7 +37,7 @@ const Tag = React.forwardRef<any, Props>((props, ref) => {
 		tagDiv = (
 			<div
 				key={tag.id}
-				className={`cs-tag ${brightness}`}
+				className={`cs-tag ${brightness} ${className}`}
 				style={{ background: tag.color }}
 				onClick={() => goSearch(`tag:${label}`)}
 			>
@@ -48,7 +48,9 @@ const Tag = React.forwardRef<any, Props>((props, ref) => {
 		tagDiv = (
 			<div
 				key={tag.id}
-				className={`cs-tag ${tag.color}-background${tag.color === "yellow" ? " light" : ""}`}
+				className={`cs-tag ${className} ${tag.color}-background${
+					tag.color === "yellow" ? " light" : ""
+				}`}
 				onClick={() => goSearch(`tag:${label}`)}
 			>
 				<div>&nbsp;{tag.label}&nbsp;</div>

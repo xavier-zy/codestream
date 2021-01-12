@@ -256,6 +256,13 @@ export const CreateCodemarkIcons = (props: Props) => {
 				codemarkType: CodemarkType.Link,
 				offset: [-3, 10],
 				isVisible: () => showNonComments
+			},
+			{
+				key: "apm",
+				title: ComposeTitles.apm,
+				codemarkType: CodemarkType.Link,
+				offset: [-3, 10],
+				isVisible: () => showNonComments
 			}
 		];
 		let right = "";

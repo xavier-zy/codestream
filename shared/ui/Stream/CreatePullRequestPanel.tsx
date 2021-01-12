@@ -22,7 +22,9 @@ import {
 	CheckPullRequestPreconditionsResponse,
 	GetLatestCommitScmRequestType,
 	DiffBranchesRequestType,
-	ExecuteThirdPartyRequestUntypedType
+	ExecuteThirdPartyRequestUntypedType,
+	FetchRemoteBranchRequestType,
+	FetchBranchCommitsStatusRequestType
 } from "@codestream/protocols/agent";
 import { connectProvider } from "./actions";
 import { isConnected, getPRLabel } from "../store/providers/reducer";
@@ -149,6 +151,7 @@ export const CreatePullRequestPanel = props => {
 	const [loading, setLoading] = useState(true);
 	const [loadingBranchInfo, setLoadingBranchInfo] = useState(false);
 	const [submitting, setSubmitting] = useState(false);
+	const [pullSubmitting, setPullSubmitting] = useState(false);
 
 	const [preconditionError, setPreconditionError] = useState({
 		message: "",
@@ -203,6 +206,9 @@ export const CreatePullRequestPanel = props => {
 	const [parentRepo, setParentRepo] = useState<any>(undefined);
 	const [baseForkedRepo, setBaseForkedRepo] = useState<any>(undefined);
 	const [headForkedRepo, setHeadForkedRepo] = useState<any>(undefined);
+
+	const [commitsBehindOrigin, setCommitsBehindOrigin] = useState(0);
+	const [unexpectedPullError, setUnexpectedPullError] = useState(false);
 
 	const stopWaiting = useCallback(() => {
 		setIsWaiting(false);
@@ -262,6 +268,7 @@ export const CreatePullRequestPanel = props => {
 				args.repoId = result.repoId!;
 				setBranches(result.branches!);
 				setRemoteBranches(result.remoteBranches!);
+				setCommitsBehindOrigin(+result.commitsBehindOriginHeadBranch!);
 
 				let newPrBranch = prBranch;
 				let newReviewBranch = args.headRefName || reviewBranch || result.branch || "";
@@ -303,6 +310,7 @@ export const CreatePullRequestPanel = props => {
 				) {
 					setPreconditionError({ type: "BRANCHES_MUST_NOT_MATCH", message: "", url: "", id: "" });
 					setFormState({ type: "", message: "", url: "", id: "" });
+					setCommitsBehindOrigin(+result.commitsBehindOriginHeadBranch!);
 				} else {
 					setPreconditionError({ type: "", message: "", url: "", id: "" });
 				}
@@ -469,6 +477,24 @@ export const CreatePullRequestPanel = props => {
 					}
 				});
 			}, 100);
+		}
+	};
+
+	const onPullSubmit = async (event: React.SyntheticEvent) => {
+		setUnexpectedPullError(false);
+		setPullSubmitting(true);
+
+		try {
+			await HostApi.instance.send(FetchRemoteBranchRequestType, {
+				repoId: prRepoId,
+				branchName: prBranch
+			});
+		} catch (error) {
+			logError(error, {});
+			logError(`Unexpected error during branch pulling : ${error}`, {});
+			setUnexpectedPullError(true);
+		} finally {
+			setPullSubmitting(false);
 		}
 	};
 
@@ -695,6 +721,30 @@ export const CreatePullRequestPanel = props => {
 			<DropdownButton variant="secondary" items={items}>
 				<span className="subtle">compare:</span> <strong>{reviewBranch}</strong>
 			</DropdownButton>
+		);
+	};
+
+	const renderPullButton = () => {
+		return (
+			<div>
+				<Icon name="info" /> {commitsBehindOrigin} commit
+				{commitsBehindOrigin > 1 ? "s" : ""} behind base origin{" "}
+				<Button onClick={onPullSubmit} isLoading={pullSubmitting}>
+					Pull
+				</Button>
+				{unexpectedPullError && (
+					<div className="error-message form-error" style={{ marginBottom: "10px" }}>
+						<FormattedMessage
+							id="error.unexpected"
+							defaultMessage="Something went wrong! Please try again, or pull origin manually, or "
+						/>
+						<FormattedMessage id="contactSupport" defaultMessage="contact support">
+							{text => <Link href="https://help.codestream.com">{text}</Link>}
+						</FormattedMessage>
+						.
+					</div>
+				)}
+			</div>
 		);
 	};
 
@@ -1102,6 +1152,19 @@ export const CreatePullRequestPanel = props => {
 		getLatestCommit();
 	}, [selectedRepo, reviewBranch]);
 
+	useEffect(() => {
+		fetchBranchCommitsStatus();
+	}, [prBranch, reviewBranch]);
+
+	const fetchBranchCommitsStatus = async () => {
+		const commitsStatus = await HostApi.instance.send(FetchBranchCommitsStatusRequestType, {
+			repoId: prRepoId,
+			branchName: prBranch || reviewBranch
+		});
+
+		setCommitsBehindOrigin(+commitsStatus.commitsBehindOrigin);
+	};
+
 	const setTitleBasedOnBranch = () => {
 		setPrTitle(
 			reviewBranch.charAt(0).toUpperCase() +
@@ -1430,7 +1493,10 @@ export const CreatePullRequestPanel = props => {
 				</div>
 				<div style={{ height: "40px" }} />
 				{filesChanged.length > 0 && (
-					<PanelHeader className="no-padding" title="Comparing Changes"></PanelHeader>
+					<>
+						<PanelHeader className="no-padding" title="Comparing Changes"></PanelHeader>
+						{commitsBehindOrigin > 0 && renderPullButton()}
+					</>
 				)}
 				{!acrossForks && (
 					<PullRequestFilesChangedList

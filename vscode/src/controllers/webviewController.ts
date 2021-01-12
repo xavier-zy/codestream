@@ -172,11 +172,7 @@ export class WebviewController implements Disposable {
 		if (this._lastEditor === editor) return;
 		// If the new editor is not a real editor ignore it
 		if (editor !== undefined && !Editor.isTextEditor(editor)) return;
-
-		// Ignore left side of review diffs
-		const uri = editor && editor.document.uri;
-		const csReviewDiffInfo = uri && Strings.parseCSReviewDiffUrl(uri.toString());
-		if (csReviewDiffInfo && csReviewDiffInfo.version !== "right") return;
+		if (editor !== undefined && !this.isSupportedEditor(editor)) return;
 
 		this._lastEditor = editor;
 		this._notifyActiveEditorChangedDebounced(editor);
@@ -673,7 +669,7 @@ export class WebviewController implements Disposable {
 	}
 
 	private async onEditorSelectionChanged(webview: WebviewLike, e: TextEditorSelectionChangeEvent) {
-		if (e.textEditor !== this._lastEditor) return;
+		if (e.textEditor !== this._lastEditor || !this.isSupportedEditor(e.textEditor)) return;
 
 		webview.notify(HostDidChangeEditorSelectionNotificationType, {
 			uri: e.textEditor.document.uri.toString(),
@@ -687,20 +683,24 @@ export class WebviewController implements Disposable {
 		webview: WebviewLike,
 		e: TextEditorVisibleRangesChangeEvent
 	) {
-		if (e.textEditor !== this._lastEditor) return;
-
-		const uri = e.textEditor.document.uri;
-		if (uri.scheme !== "file" && uri.scheme !== "codestream-diff") return;
-
-		const csRangeDiffInfo = Strings.parseCSReviewDiffUrl(uri.toString());
-		if (csRangeDiffInfo && csRangeDiffInfo.version !== "right") return;
+		if (e.textEditor !== this._lastEditor || !this.isSupportedEditor(e.textEditor)) return;
 
 		webview.notify(HostDidChangeEditorVisibleRangesNotificationType, {
-			uri: uri.toString(),
+			uri: e.textEditor.document.uri.toString(),
 			selections: Editor.toEditorSelections(e.textEditor.selections),
 			visibleRanges: Editor.toSerializableRange(e.visibleRanges),
 			lineCount: e.textEditor.document.lineCount
 		});
+	}
+
+	private isSupportedEditor(textEditor: TextEditor): boolean {
+		const uri = textEditor.document.uri;
+		if (uri.scheme !== "file" && uri.scheme !== "codestream-diff") return false;
+
+		const csRangeDiffInfo = Strings.parseCSReviewDiffUrl(uri.toString());
+		if (csRangeDiffInfo && (csRangeDiffInfo.reviewId === "local" || csRangeDiffInfo.version !== "right")) return false;
+
+		return true;
 	}
 
 	private onWebviewClosed() {

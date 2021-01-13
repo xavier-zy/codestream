@@ -724,7 +724,11 @@ export const archiveStream = (streamId: string, archive = true) => async dispatc
 	}
 };
 
-export const invite = (attributes: { email: string; fullName?: string }) => async dispatch => {
+export const invite = (attributes: {
+	email: string;
+	fullName?: string;
+	inviteType?: string;
+}) => async dispatch => {
 	try {
 		const response = await HostApi.instance.send(InviteUserRequestType, attributes);
 		return dispatch(addUsers([response.user]));

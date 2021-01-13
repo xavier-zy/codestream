@@ -37,6 +37,7 @@ export interface InviteUserRequest {
 		serverUrl: string;
 		disableStrictSSL: boolean;
 	};
+	inviteType?: string;
 }
 
 export interface InviteUserResponse {

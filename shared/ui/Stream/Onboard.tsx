@@ -568,7 +568,7 @@ export const Onboard = React.memo(function Onboard() {
 
 	const inviteEmail = async (email: string, method: "Onboarding" | "Onboarding Suggestion") => {
 		if (email) {
-			await dispatch(invite({ email }));
+			await dispatch(invite({ email, inviteType: method }));
 			HostApi.instance.track("Teammate Invited", {
 				"Invitee Email Address": email,
 				"Invitation Method": method

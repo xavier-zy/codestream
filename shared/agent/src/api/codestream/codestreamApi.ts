@@ -2083,7 +2083,7 @@ export class CodeStreamApiProvider implements ApiProvider {
 			}
 			formData.append("file", Buffer.from(bareString, "base64"), {
 				filename: request.name,
-				contentType: request.type
+				contentType: request.mimetype
 			});
 		} else {
 			formData.append("file", require("fs").createReadStream(request.path));

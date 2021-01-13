@@ -260,7 +260,7 @@ export const CreateCodemarkIcons = (props: Props) => {
 			{
 				key: "apm",
 				title: ComposeTitles.apm,
-				codemarkType: CodemarkType.Link,
+				codemarkType: CodemarkType.APM,
 				offset: [-3, 10],
 				isVisible: () => showNonComments
 			}

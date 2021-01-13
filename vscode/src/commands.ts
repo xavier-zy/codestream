@@ -328,6 +328,11 @@ export class Commands implements Disposable {
 		return this.newCodemarkRequest(CodemarkType.Comment, args);
 	}
 
+	@command("newAPM", { showErrorMessage: "Unable to add APM link" })
+	newAPM(args?: NewCodemarkCommandArgs) {
+		return this.newCodemarkRequest(CodemarkType.APM, args);
+	}
+
 	@command("newIssue", { showErrorMessage: "Unable to create issue" })
 	newIssue(args?: NewCodemarkCommandArgs) {
 		return this.newCodemarkRequest(CodemarkType.Issue, args);

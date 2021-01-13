@@ -33,7 +33,7 @@ const ComposeTitles = {
 				<span className="keybinding extra-pad">{modifier}</span>
 				<span className="keybinding">a</span>
 			</span>
-			<span className="function">Link to APM Service</span>{" "}
+			<span className="function">Create APM Marker</span>{" "}
 		</span>
 	),
 	issue: (

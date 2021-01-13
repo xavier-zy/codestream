@@ -91,6 +91,7 @@ import { ReposState } from "../store/repos/types";
 import * as path from "path-browserify";
 import { isOnPrem } from "../store/configs/reducer";
 import { getDocumentFromMarker } from "./api-functions";
+import { InlineMenu } from "../src/components/controls/InlineMenu";
 
 export interface ICrossPostIssueContext {
 	setSelectedAssignees(any: any): void;
@@ -2355,6 +2356,15 @@ class CodemarkForm extends React.Component<Props, State> {
 							<CrossPostIssueContext.Provider value={this._getCrossPostIssueContext()}>
 								<CrossPostIssueControls />
 							</CrossPostIssueContext.Provider>
+						)}
+						{commentType === CodemarkType.APM && (
+							<div style={{ margin: "5px 0 15px 0" }} className="subtle">
+								Link this code to{" "}
+								<InlineMenu items={[{ label: "shopping", key: "shopping" }]}>
+									<span className="highlight">select service</span>
+								</InlineMenu>{" "}
+								on Datadog
+							</div>
 						)}
 						{(commentType === "issue" ||
 							commentType === "question" ||

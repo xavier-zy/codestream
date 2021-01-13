@@ -13,6 +13,7 @@ interface Mention {
 		fullName?: string;
 		avatar?: string;
 	};
+	icon?: string;
 	description?: string;
 	help?: string;
 	identifier: string;
@@ -98,6 +99,14 @@ export const AtMentionsPopup = (props: React.PropsWithChildren<AtMentionsPopupPr
 													{props.prefix}"
 												</b>
 											</span>
+										) : props.on === "services" ? (
+											<span>
+												Services matching{" "}
+												<b>
+													"#
+													{props.prefix}"
+												</b>
+											</span>
 										) : props.on === "channels" ? (
 											<span>
 												Channels matching{" "}
@@ -139,6 +148,7 @@ export const AtMentionsPopup = (props: React.PropsWithChildren<AtMentionsPopupPr
 													onMouseDown={() => props.handleSelectAtMention(item.id)}
 												>
 													{item.headshot && <Headshot size={18} person={item.headshot} />}
+													{item.icon && <Icon name={item.icon} />}
 													<span className="username">{item.identifier}</span>{" "}
 													{item.description && <span className="name">{item.description}</span>}
 													{item.help && <span className="help">{item.help}</span>}

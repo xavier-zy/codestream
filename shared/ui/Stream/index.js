@@ -35,6 +35,7 @@ import OfflineBanner from "./OfflineBanner";
 import { PRProviderErrorBanner } from "./PRProviderErrorBanner";
 import ConfigureAzureDevOpsPanel from "./ConfigureAzureDevOpsPanel";
 import ConfigureYouTrackPanel from "./ConfigureYouTrackPanel";
+import ConfigureDatadogPanel from "./ConfigureDatadogPanel";
 import ConfigureJiraServerPanel from "./ConfigureJiraServerPanel";
 import ConfigureEnterprisePanel from "./ConfigureEnterprisePanel";
 import ConfigureTokenProviderPanel from "./ConfigureTokenProviderPanel";
@@ -294,7 +295,7 @@ export class SimpleStream extends PureComponent {
 		const enterpriseProvider = activePanel.startsWith("configure-enterprise-");
 		const [, , providerName, providerId, origin] = configureProviderInfo || [];
 		const customConfigureProvider = providerName
-			? ["azuredevops", "youtrack", "jiraserver"].find(name => name === providerName)
+			? ["azuredevops", "youtrack", "jiraserver", "datadog"].find(name => name === providerName)
 			: null;
 
 		// console.warn("ACTIVE: ", activePanel);
@@ -420,6 +421,9 @@ export class SimpleStream extends PureComponent {
 							)}
 							{customConfigureProvider === "youtrack" && (
 								<ConfigureYouTrackPanel providerId={providerId} originLocation={origin} />
+							)}
+							{customConfigureProvider === "datadog" && (
+								<ConfigureDatadogPanel providerId={providerId} originLocation={origin} />
 							)}
 							{customConfigureProvider === "azuredevops" && (
 								<ConfigureAzureDevOpsPanel providerId={providerId} originLocation={origin} />

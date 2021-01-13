@@ -32,13 +32,27 @@ import { isFeatureEnabled } from "../store/apiVersioning/reducer";
 import { getProviderPullRequestCollaborators } from "../store/providerPullRequests/reducer";
 import Tooltip from "./Tooltip";
 
-type PopupType = "at-mentions" | "slash-commands" | "channels" | "emojis";
+type PopupType = "at-mentions" | "slash-commands" | "channels" | "services" | "emojis";
 
 type QuotePost = CSPost & { author: { username: string } };
 
 const tuple = <T extends string[]>(...args: T) => args;
 
 const COLOR_OPTIONS = tuple("blue", "green", "yellow", "orange", "red", "purple", "aqua", "gray");
+
+const SERVICES = [
+	{ name: "shopping" },
+	{ name: "shopping.endpoint1" },
+	{ name: "shopping.endpoint2" },
+	{ name: "storage" },
+	{ name: "storage.endpoint3" },
+	{ name: "storage.endpoing4" },
+	{ name: "backups" },
+	{ name: "backups.endpoint5" },
+	{ name: "backups.endpoint6" },
+	{ name: "backups.endpoint7" },
+	{ name: "backups.endpoint8" }
+];
 
 interface State {
 	emojiOpen: boolean;
@@ -284,6 +298,7 @@ export class MessageInput extends React.Component<Props, State> {
 			headshot?: CSUser;
 			identifier?: string;
 			description?: string;
+			icon?: string;
 		}[] = [];
 		KeystrokeDispatcher.levelUp();
 
@@ -319,6 +334,18 @@ export class MessageInput extends React.Component<Props, State> {
 			// 			});
 			// 		}
 			// 	});
+		} else if (type === "services") {
+			SERVICES.forEach(service => {
+				const toMatch = service.name.toLowerCase();
+				if (toMatch.indexOf(normalizedPrefix) !== -1) {
+					itemsToShow.push({
+						id: service.name,
+						identifier: " " + service.name,
+						icon: "apm",
+						description: ""
+					});
+				}
+			});
 		} else if (type === "emojis") {
 			if (normalizedPrefix && normalizedPrefix.length > 1) {
 				Object.keys(emojiData).map(emojiId => {
@@ -375,6 +402,7 @@ export class MessageInput extends React.Component<Props, State> {
 		const upToCursor = nodeText.substring(0, range.startOffset);
 		const peopleMatch = upToCursor.match(/(?:^|\s)@([a-zA-Z0-9_.+]*)$/);
 		// const channelMatch = upToCursor.match(/(?:^|\s)#([a-zA-Z0-9_.+]*)$/);
+		const serviceMatch = upToCursor.match(/(?:^|\s)#([a-zA-Z0-9_.+]*)$/);
 		const emojiMatch = upToCursor.match(/(?:^|\s):([a-z+_]*)$/);
 		const slashMatch = newPostText.match(/^\/([a-zA-Z0-9+]*)$/);
 		if (this.state.currentPopup === "at-mentions") {
@@ -398,6 +426,13 @@ export class MessageInput extends React.Component<Props, State> {
 			// 		// if the line doesn't end with #word, then hide the popup
 			// 		this.hidePopup();
 			// 	}
+		} else if (this.state.currentPopup === "services") {
+			if (serviceMatch) {
+				this.showPopupSelectors(serviceMatch[1].replace(/#/, ""), "services");
+			} else {
+				// if the line doesn't end with #word, then hide the popup
+				this.hidePopup();
+			}
 		} else if (this.state.currentPopup === "emojis") {
 			if (emojiMatch) {
 				this.showPopupSelectors(emojiMatch[1].replace(/:/, ""), "emojis");
@@ -411,6 +446,7 @@ export class MessageInput extends React.Component<Props, State> {
 				this.showPopupSelectors(slashMatch[0].replace(/\//, ""), "slash-commands");
 			}
 			// if (channelMatch) this.showPopupSelectors(channelMatch[1].replace(/#/, ""), "channels");
+			if (serviceMatch) this.showPopupSelectors(serviceMatch[1].replace(/#/, ""), "services");
 			if (emojiMatch) this.showPopupSelectors(emojiMatch[1].replace(/:/, ""), "emojis");
 		}
 
@@ -439,6 +475,8 @@ export class MessageInput extends React.Component<Props, State> {
 			toInsert = id + "\u00A0";
 			// } else if (this.state.currentPopup === "channels") {
 			// 	toInsert = id + "\u00A0";
+		} else if (this.state.currentPopup === "services") {
+			toInsert = id + "\u00A0";
 		} else if (this.state.currentPopup === "emojis") {
 			toInsert = id + ":\u00A0";
 		} else {
@@ -577,6 +615,8 @@ export class MessageInput extends React.Component<Props, State> {
 			this.showPopupSelectors("", "slash-commands");
 			// } else if (event.key === "#") {
 			// 	this.showPopupSelectors("", "channels");
+		} else if (event.key === "#") {
+			this.showPopupSelectors("", "services");
 		} else if (
 			event.charCode === 13 &&
 			!event.shiftKey &&
@@ -1068,6 +1108,25 @@ export class MessageInput extends React.Component<Props, State> {
 		// this.insertTextAtCursor("@");
 	};
 
+	handleClickServices = () => {
+		if (this.state.currentPopup) {
+			this.focus(() => {
+				this.setState({ insertPrefix: "" });
+				this.setCurrentCursorPosition(this.state.cursorPosition);
+				// this.insertTextAtCursor("", "@");
+				this.hidePopup();
+			});
+		} else
+			this.focus(() => {
+				this.setState({ insertPrefix: "#" });
+				this.setCurrentCursorPosition(this.state.cursorPosition);
+				// this.insertTextAtCursor("@");
+				this.showPopupSelectors("", "services");
+			});
+
+		// this.insertTextAtCursor("@");
+	};
+
 	handleClickFormatCode = () => {
 		const formatCode = !this.state.formatCode;
 		this.focus(() => {
@@ -1163,6 +1222,16 @@ export class MessageInput extends React.Component<Props, State> {
 								delay={1}
 								className={cx("preview", { hover: isPreviewing })}
 								onClick={this.handleClickPreview}
+							/>
+							<Icon
+								key="service"
+								name="apm"
+								title="Refer to an APM Service or Endpoint"
+								placement="topRight"
+								align={{ offset: [18, 0] }}
+								delay={1}
+								className={cx("service", { hover: this.state.currentPopup === "services" })}
+								onClick={this.handleClickServices}
 							/>
 							{this.props.teammates.length > 0 && (
 								<Icon

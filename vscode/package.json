@@ -234,6 +234,11 @@
 				"category": "CodeStream"
 			},
 			{
+				"command": "codestream.newAPM",
+				"title": "Create APM Marker",
+				"category": "CodeStream"
+			},
+			{
 				"command": "codestream.newIssue",
 				"title": "Create Issue",
 				"category": "CodeStream"
@@ -486,6 +491,10 @@
 					"when": "codestream:status == signedIn"
 				},
 				{
+					"command": "codestream.newAPM",
+					"when": "codestream:status == signedIn"
+				},
+				{
 					"command": "codestream.newIssue",
 					"when": "codestream:status == signedIn"
 				},
@@ -529,6 +538,11 @@
 					"command": "codestream.newPermalink",
 					"when": "codestream:status == signedIn && resourceScheme == file",
 					"group": "9_zcodestream@4"
+				},
+				{
+					"command": "codestream.newAPM",
+					"when": "codestream:status == signedIn",
+					"group": "9_zcodestream@5"
 				}
 			],
 			"view/title": [

@@ -28,7 +28,8 @@ export enum CodemarkType {
 	Link = "link",
 	Review = "review",
 	Reaction = "reaction",
-	PRComment = "prcomment"
+	PRComment = "prcomment",
+	APM = "apm"
 }
 
 export enum CodemarkStatus {

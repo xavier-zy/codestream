@@ -79,6 +79,11 @@ export class CodeStreamCodeActionProvider implements CodeActionProvider, Disposa
 				title: "Get Permalink",
 				command: "codestream.newPermalink",
 				arguments: [args]
+			},
+			{
+				title: "Create APM Marker",
+				command: "codestream.newAPM",
+				arguments: [args]
 			}
 			// {
 			// 	title: "Request Feedback",

@@ -164,7 +164,11 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 	protected _client: GraphQLClient | undefined;
 	protected async client(): Promise<GraphQLClient> {
 		if (this._client === undefined) {
-			this._client = new GraphQLClient(this.graphQlBaseUrl);
+			const options: { [key: string]: any } = {};
+			if (this._httpsAgent) {
+				options.agent = this._httpsAgent;
+			}
+			this._client = new GraphQLClient(this.graphQlBaseUrl, options);
 		}
 		if (!this.accessToken) {
 			throw new Error("Could not get a GitHub personal access token");

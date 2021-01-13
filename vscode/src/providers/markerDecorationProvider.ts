@@ -1,4 +1,6 @@
 "use strict";
+
+import * as fs from "fs";
 import { CodeStreamDiffUriData } from "@codestream/protocols/agent";
 import { PullRequestCommentsChangedEvent } from "api/sessionEvents";
 import {
@@ -42,16 +44,19 @@ const positionStyleMap: { [key: string]: string } = {
 		"display: inline-block; left: 0; position: absolute; top: 50%; transform: translateY(-50%)"
 };
 
-const buildDecoration = (position: string, type: string, color: string, _status: string) => ({
-	contentText: "",
-	height: "16px",
-	width: "16px",
-	textDecoration: `none; background-image: url(${Uri.file(
-		Container.context.asAbsolutePath(`assets/images/marker-${type}-${color}.png`)
-	).toString()}); background-position: center; background-repeat: no-repeat; background-size: contain; ${
-		positionStyleMap[position]
-	}`
-});
+const buildDecoration = (position: string, type: string, color: string, _status: string) => {
+	const pngPath = Container.context.asAbsolutePath(`assets/images/marker-${type}-${color}.png`);
+	const pngBase64 = fs.readFileSync(pngPath, { encoding: "base64" });
+	const pngInlineUrl = `data:image/png;base64,${pngBase64}`;
+
+	return {
+		contentText: "",
+		height: "16px",
+		width: "16px",
+
+		textDecoration: `none; background-image: url(${pngInlineUrl}); background-position: center; background-repeat: no-repeat; background-size: contain; ${positionStyleMap[position]}`
+	};
+};
 
 const MarkerPositions = ["inline", "overlay"];
 const MarkerTypes = ["comment", "question", "issue", "trap", "bookmark"];

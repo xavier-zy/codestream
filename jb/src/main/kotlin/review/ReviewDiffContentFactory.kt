@@ -28,7 +28,7 @@ fun createReviewDiffContent(
     val checkpointStr = checkpoint?.toString() ?: "undefined"
     val fullPath = "$reviewId/$checkpointStr/$repoId/${side.path}/$path"
 
-    return createDiffContent(project, fullPath, side, path, text)
+    return createDiffContent(project, fullPath, side, path, text, reviewId != "local")
 }
 
 fun createRevisionDiffContent(
@@ -37,7 +37,7 @@ fun createRevisionDiffContent(
     side: ReviewDiffSide,
     text: String
 ): DocumentContent {
-    return createDiffContent(project, data.toEncodedPath(), side, data.path, text)
+    return createDiffContent(project, data.toEncodedPath(), side, data.path, text, true)
 }
 
 fun createDiffContent(
@@ -45,7 +45,8 @@ fun createDiffContent(
     fullPath: String,
     side: ReviewDiffSide,
     path: String,
-    text: String
+    text: String,
+    canCreateMarker: Boolean
 ): DocumentContent {
     val filePath = RemoteFilePath(fullPath, false)
 
@@ -58,7 +59,7 @@ fun createDiffContent(
 
     // Borrowed from com.intellij.diff.DiffContentFactoryImpl
     val document = ReadAction.compute<Document, RuntimeException> {
-        val file = ReviewDiffVirtualFile.create(fullPath, side, path, correctedText)
+        val file = ReviewDiffVirtualFile.create(fullPath, side, path, correctedText, canCreateMarker)
         file.isWritable = false
         OutsidersPsiFileSupport.markFile(file, fullPath)
         val document = FileDocumentManager.getInstance().getDocument(file) ?: return@compute null

@@ -96,7 +96,9 @@ class EditorService(val project: Project) {
 
     fun add(editor: Editor) {
         val reviewFile = editor.document.file as? ReviewDiffVirtualFile
-        if (reviewFile?.side == ReviewDiffSide.LEFT) return
+        reviewFile?.let {
+            if (!it.canCreateMarker || it.side == ReviewDiffSide.LEFT) return
+        }
 
         val agentService = project.agentService ?: return
         managedEditors.add(editor)

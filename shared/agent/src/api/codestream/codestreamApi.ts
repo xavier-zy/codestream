@@ -2071,7 +2071,23 @@ export class CodeStreamApiProvider implements ApiProvider {
 	@lspHandler(UploadFileRequestType)
 	async uploadFile(request: UploadFileRequest) {
 		const formData = new FormData();
-		formData.append("file", require("fs").createReadStream(request.path));
+		if (request.buffer) {
+			const base64String = request.buffer;
+			// string off dataUri / content info from base64 string
+			var bareString = "";
+			var commaIndex = base64String.indexOf(",");
+			if (commaIndex == -1) {
+				bareString = base64String;
+			} else {
+				bareString = base64String.substring(commaIndex + 1);
+			}
+			formData.append("file", Buffer.from(bareString, "base64"), {
+				filename: request.name,
+				contentType: request.type
+			});
+		} else {
+			formData.append("file", require("fs").createReadStream(request.path));
+		}
 		const url = `${this.baseUrl}/upload-file/${this.teamId}`;
 		const headers = new Headers({
 			Authorization: `Bearer ${this._token}`

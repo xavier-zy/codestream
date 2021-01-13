@@ -108,6 +108,7 @@ export const CrossPostIssueContext = React.createContext<ICrossPostIssueContext>
 
 export interface AttachedFile {
 	name: string;
+	mimetype?: string;
 	type: string;
 	size: number;
 	url?: string;
@@ -1325,7 +1326,7 @@ class CodemarkForm extends React.Component<Props, State> {
 						) : (
 							<Icon name="file" className="spinnable" />
 						);
-					const isImage = file.type.startsWith("image");
+					const isImage = (file.mimetype || file.type || "").startsWith("image");
 					const imageInjected =
 						isImage && file.url ? this.state.text.includes(`![${file.name}](${file.url})`) : false;
 					return (
@@ -1436,12 +1437,24 @@ class CodemarkForm extends React.Component<Props, State> {
 
 		for (const file of files) {
 			try {
-				const response = await HostApi.instance.send(UploadFileRequestType, {
+				const request: UploadFileRequest = {
 					path: file.path,
 					name: file.name,
 					size: file.size,
 					type: file.type
-				});
+				};
+				if (!file.path) {
+					// encode as base64 to send to the agent
+					const toBase64 = file =>
+						new Promise((resolve, reject) => {
+							const reader = new FileReader();
+							reader.readAsDataURL(file);
+							reader.onload = () => resolve(reader.result);
+							reader.onerror = error => reject(error);
+						});
+					request.buffer = await toBase64(file);
+				}
+				const response = await HostApi.instance.send(UploadFileRequestType, request);
 				if (response && response.url) {
 					this.replaceAttachment(response, index);
 				} else {

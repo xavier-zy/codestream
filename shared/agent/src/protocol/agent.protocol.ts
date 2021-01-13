@@ -277,6 +277,7 @@ export interface UploadFileRequest {
 	name: string;
 	type: string;
 	size: number;
+	buffer?: any;
 }
 
 export interface UploadFileResponse {

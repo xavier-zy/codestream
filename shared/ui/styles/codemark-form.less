@@ -477,6 +477,10 @@
 		.icon {
 			margin-left: 0;
 		}
+		// https://stackoverflow.com/questions/1537223/change-cursor-type-on-input-type-file
+		input[type="file"]::-webkit-file-upload-button {
+			cursor: pointer;
+		}
 	}
 	.icon-wrapper:hover .icon {
 		opacity: 1;

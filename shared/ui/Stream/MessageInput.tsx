@@ -1222,8 +1222,7 @@ export class MessageInput extends React.Component<Props, State> {
 												height: "16px",
 												position: "absolute",
 												opacity: 0,
-												zIndex: 5,
-												cursor: "pointer"
+												zIndex: 5
 											}}
 										/>
 										<label htmlFor="attachment">

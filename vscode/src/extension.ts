@@ -144,12 +144,6 @@ function registerGitLensIntegration() {
 	try {
 		gitLensIntegrationInitializing = true;
 
-		const track = (detected: boolean) => {
-			Container.agent.telemetry.track("GitLens Check", {
-				Detected: detected
-			});
-		};
-
 		const getGitLens = () =>
 			extensions.getExtension<Promise<GitLensApi>>("eamodio.gitlens") ||
 			extensions.getExtension<Promise<GitLensApi>>("eamodio.gitlens-insiders");
@@ -157,7 +151,6 @@ function registerGitLensIntegration() {
 		let gitlens = getGitLens();
 		if (!gitlens) {
 			Logger.log("GitLens: Not installed.");
-			track(false);
 			return;
 		}
 
@@ -170,7 +163,6 @@ function registerGitLensIntegration() {
 			if (!gitlens) {
 				Logger.log(`GitLens: Not detected. Returning. attempt=${i}`);
 				clearInterval(timeout);
-				track(false);
 				return;
 			}
 			if (gitlens.isActive) {
@@ -215,7 +207,6 @@ function registerGitLensIntegration() {
 						}
 					});
 					Logger.log(`GitLens: Found. attempt=${i}`);
-					track(true);
 				} catch (e) {
 					Logger.warn(`GitLens: Failed to register. Giving up. attempt=${i} e=${e}`);
 				} finally {
@@ -227,7 +218,6 @@ function registerGitLensIntegration() {
 				if (i === 60) {
 					Logger.warn(`GitLens: Activation giving up. attempt=${i}`);
 					clearInterval(timeout);
-					track(false);
 				}
 			}
 		}, 10000);

@@ -164,6 +164,14 @@ export class PubnubHistory {
 		this._debug(`Pubnub.history returned ${response.messages.length} messages`);
 		this._allMessages.push(...response.messages);
 		if (response.messages.length >= 100) {
+			if (this.timetokenToTimeStamp(response.startTimeToken!) > Date.now()) {
+				// https://trello.com/c/djvI9i7L - if customer's clock is wrong, continuing to fetch history
+				// could result in too many messages being fetched, or even an infinite loop
+				this._debug(
+					"Pubnub.history shows timestamps greater than now, presuming client clock is wrong and aborting history fetch"
+				);
+				return;
+			}
 			this._debug("Pubnub.history returned 100 or more messages, fetching more...");
 			await this.retrieveChannelHistory(
 				channel,

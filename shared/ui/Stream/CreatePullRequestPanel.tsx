@@ -211,6 +211,8 @@ export const CreatePullRequestPanel = props => {
 	const [commitsBehindOrigin, setCommitsBehindOrigin] = useState(0);
 	const [unexpectedPullError, setUnexpectedPullError] = useState(false);
 
+	const fetchPreconditionDataRef = useRef((isRepoUpdate?: boolean) => {});
+
 	const stopWaiting = useCallback(() => {
 		setIsWaiting(false);
 	}, [isWaiting]);
@@ -218,7 +220,7 @@ export const CreatePullRequestPanel = props => {
 	const waitFor = inMillis(60, "sec");
 	useTimeout(stopWaiting, waitFor);
 
-	const fetchPreconditionData = async () => {
+	const fetchPreconditionData = async (isRepoUpdate = false) => {
 		setFormState({ type: "", message: "", url: "", id: "" });
 		setPreconditionError({ type: "", message: "", url: "", id: "" });
 		// already waiting on a provider auth, keep using that loading ui
@@ -228,8 +230,19 @@ export const CreatePullRequestPanel = props => {
 		}
 
 		try {
-			const args = { reviewId: derivedState.reviewId, repoId: "", headRefName: "" };
-			if (!derivedState.reviewId) {
+			const args: { [k: string]: any } = {
+				reviewId: derivedState.reviewId,
+				repoId: "",
+				headRefName: ""
+			};
+			if (isRepoUpdate && prBranch && reviewBranch && selectedRepo && prProviderId) {
+				// if we're updating data, we must get branches and repo from state
+				args.providerId = prProviderId;
+				args.repoId = selectedRepo.id;
+				args.baseRefName = prBranch;
+				args.headRefName = reviewBranch;
+				args.skipLocalModificationsCheck = true;
+			} else if (!derivedState.reviewId) {
 				// if we're not creating a PR from a review, then get the current
 				// repo and branch from the editor
 				const response = await HostApi.instance.send(GetReposScmRequestType, {
@@ -341,6 +354,7 @@ export const CreatePullRequestPanel = props => {
 			setLoading(false);
 		}
 	};
+	fetchPreconditionDataRef.current = fetchPreconditionData;
 
 	useEffect(() => {
 		// prevent this from firing if we haven't mounted yet
@@ -376,7 +390,7 @@ export const CreatePullRequestPanel = props => {
 		const disposable = HostApi.instance.on(DidChangeDataNotificationType, (e: any) => {
 			if (pauseDataNotifications.current) return;
 			if (e.type === ChangeDataType.Commits) {
-				fetchPreconditionData();
+				fetchPreconditionDataRef.current(true);
 			}
 		});
 		return () => {

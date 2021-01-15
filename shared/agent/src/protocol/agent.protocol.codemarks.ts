@@ -19,6 +19,7 @@ import {
 	CSReview,
 	CSStream
 } from "./api.protocol";
+import { Attachment } from "./api.protocol.models";
 
 export interface CodemarkPlus extends CSCodemark {
 	markers?: CSMarker[];
@@ -80,6 +81,7 @@ export interface CreateShareableCodemarkRequest {
 	entryPoint?: string;
 	mentionedUserIds?: string[];
 	addedUsers?: string[];
+	files?: Attachment[];
 	// codemarks can now be replies
 	parentPostId?: string;
 	isPseudoCodemark?: boolean;

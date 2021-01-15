@@ -1,4 +1,4 @@
-import { CSCodemark, CodemarkType } from "@codestream/protocols/api";
+import { CSCodemark, CodemarkType, Attachment } from "@codestream/protocols/api";
 import { action } from "../common";
 import { CodemarksActionsTypes } from "./types";
 import { HostApi } from "@codestream/webview/webview-api";
@@ -50,6 +50,7 @@ export interface BaseNewCodemarkAttributes {
 	deleteMarkerLocations?: {
 		[index: number]: boolean;
 	};
+	files?: Attachment[];
 }
 
 export interface SharingNewCodemarkAttributes extends BaseNewCodemarkAttributes {
@@ -109,7 +110,8 @@ export const createCodemark = (attributes: SharingNewCodemarkAttributes) => asyn
 			addedUsers: attributes.addedUsers,
 			parentPostId: attributes.parentPostId,
 			isPseudoCodemark: attributes.isPseudoCodemark,
-			isProviderReview: attributes.isProviderReview
+			isProviderReview: attributes.isProviderReview,
+			files: attributes.files
 		});
 		if (response) {
 			let result;

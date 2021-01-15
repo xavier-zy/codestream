@@ -290,6 +290,12 @@ export function BaseCodemark(props: BaseCodemarkProps) {
 									<Icon title="Show description" placement="bottom" name="description" />
 								</span>
 							)}
+							{props.post && props.post.files && props.post.files.length > 0 && (
+								<span className="detail-icon">
+									<Icon title="Show attachments" placement="bottom" name="paperclip" />{" "}
+									{props.post.files.length}
+								</span>
+							)}
 							{codemark.markers && codemark.markers.length > 1 && (
 								<Tooltip title="Multiple code locations" placement="bottom">
 									<span className="detail-icon">

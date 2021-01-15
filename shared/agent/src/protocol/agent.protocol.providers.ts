@@ -376,7 +376,7 @@ export type CheckConclusionState =
 	| "STARTUP_FAILURE"
 	| "STALE";
 
-export type StatusState = "EXPECTED" | "ERROR" | "FAILURE" | "PENDING" | "SUCCESS";
+export type StatusState = "EXPECTED" | "ERROR" | "FAILURE" | "PENDING" | "SUCCESS" | "NEUTRAL";
 export type CheckStatusState = "QUEUED" | "IN_PROGRESS" | "COMPLETED" | "WAITING" | "REQUESTED";
 
 export interface CheckRun {

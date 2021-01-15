@@ -2,6 +2,7 @@
 import { CreateReviewChangesetsRequest } from "./agent.protocol.reviews";
 import { RepoScmStatus } from "./agent.protocol.scm";
 import {
+	Attachment,
 	ChannelServiceType,
 	CodemarkType,
 	CSApiCapabilities,

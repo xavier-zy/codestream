@@ -19,6 +19,7 @@ import {
 	CSReview,
 	CSStream
 } from "./api.protocol";
+import { Attachment } from "./api.protocol.models";
 
 export interface PostPlus extends CSPost {
 	codemark?: CodemarkPlus;
@@ -74,6 +75,7 @@ export interface CreatePostRequest {
 	// a real codemark from a review reply marked as "Change Request"
 	isPseudoCodemark?: boolean;
 	reviewCheckpoint?: number;
+	files?: Attachment[];
 }
 
 export interface CrossPostIssueValues {

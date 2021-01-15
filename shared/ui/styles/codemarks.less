@@ -66,7 +66,8 @@
 			span {
 				white-space: nowrap;
 			}
-			br {
+			br,
+			img {
 				display: none;
 			}
 			p {
@@ -701,6 +702,7 @@
 .attachment {
 	margin: 0 0 5px 0;
 	display: flex;
+	color: var(--text-color);
 	> span {
 		word-break: break-all;
 	}
@@ -720,6 +722,12 @@
 	}
 	&:hover > span:last-child .icon {
 		opacity: 1;
+	}
+	&.clickable {
+		cursor: pointer;
+		&:hover {
+			color: var(--text-color-highlight);
+		}
 	}
 }
 .related-codemark {

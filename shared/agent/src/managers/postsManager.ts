@@ -1111,7 +1111,8 @@ export class PostsManager extends EntityManagerBase<CSPost> {
 			parentPostId: request.parentPostId,
 			dontSendEmail: !!request.attributes.crossPostIssueValues,
 			mentionedUserIds: request.mentionedUserIds,
-			addedUsers: request.addedUsers
+			addedUsers: request.addedUsers,
+			files: request.files
 		});
 
 		const { markers } = response!;

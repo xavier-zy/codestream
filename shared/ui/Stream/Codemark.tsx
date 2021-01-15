@@ -963,35 +963,54 @@ export class Codemark extends React.Component<Props, State> {
 	}
 
 	renderAttachments = post => {
-		if (post.files && post.files.length) {
-			return post.files.map(file => {
-				// console.log(file);
-				//<img src={preview.url} width={preview.width} height={preview.height} />
-				const { type, url, name, title, preview } = file;
-				if (type === "image") {
-					return (
-						<div className="thumbnail">
-							<a href={url}>{title}</a>
-						</div>
-					);
-				} else if (type === "post") {
-					return (
-						<div className="external-post">
-							<a href={url}>{title}</a>
-							<div className="preview" dangerouslySetInnerHTML={{ __html: preview }} />
-						</div>
-					);
-				} else {
-					return (
-						<div className="attachment">
-							<a href={url}>{title}</a>
-							<pre>
-								<code>{preview}</code>
-							</pre>
-						</div>
-					);
-				}
-			});
+		if (!post) return null;
+		if (post.files && post.files.length > 0) {
+			return (
+				<div className="related">
+					<div className="related-label">Attachments</div>
+
+					{post.files.map((file, index) => {
+						// console.log(file);
+						//<img src={preview.url} width={preview.width} height={preview.height} />
+						const { mimetype = "", url, name } = file;
+						const isImage = mimetype.startsWith("image");
+						return (
+							<div
+								key={index}
+								className="attachment clickable"
+								onClick={e => {
+									e.preventDefault();
+									HostApi.instance.send(OpenUrlRequestType, { url });
+								}}
+							>
+								<span>
+									<Icon name="file" />
+								</span>
+								<span>{name}</span>
+								<span>
+									<Icon name="download" className="clickable" />
+								</span>
+							</div>
+						);
+
+						// if (mimetype.startsWith("image")) {
+						// 	return (
+						// 		<div className="thumbnail">
+						// 			<Link href={url}>
+						// 				<img src={url} />
+						// 			</Link>
+						// 		</div>
+						// 	);
+						// } else {
+						// 	return (
+						// 		<div className="attachment">
+						// 			<Link href={url}>{name}</Link>
+						// 		</div>
+						// 	);
+						// }
+					})}
+				</div>
+			);
 		}
 		return null;
 	};
@@ -1589,6 +1608,7 @@ export class Codemark extends React.Component<Props, State> {
 									</div>
 								)}
 								{this.renderTagsAndAssigneesSelected(codemark)}
+								{this.renderAttachments(this.props.post)}
 								{description && (
 									<div className="related">
 										<div className="related-label">Description</div>

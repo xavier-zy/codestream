@@ -206,7 +206,7 @@ export const PullRequestConversationTab = (props: {
 		const skipGitEmailCheck = state.preferences.skipGitEmailCheck;
 		const addBlameMapEnabled = isFeatureEnabled(state, "addBlameMap");
 		const currentPullRequest = getCurrentProviderPullRequest(state);
-		const { preferences } = state;
+		const { preferences, ide } = state;
 
 		return {
 			defaultMergeMethod: preferences.lastPRMergeMethod || "SQUASH",
@@ -223,7 +223,8 @@ export const PullRequestConversationTab = (props: {
 				currentPullRequest.conversations.repository.pullRequest,
 			team,
 			skipGitEmailCheck,
-			addBlameMapEnabled
+			addBlameMapEnabled,
+			isInVscode: ide.name === "VSC"
 		};
 	});
 	const { pr } = derivedState;
@@ -1352,31 +1353,33 @@ export const PullRequestConversationTab = (props: {
 					None yet
 				</PRSection>
 				*/}
-				<PRSection>
-					<h1>
-						{/* <Icon name="gear" className="settings clickable" onClick={() => {}} /> */}
-						Notifications
-					</h1>
-					{pr.viewerSubscription === "SUBSCRIBED" ? (
-						<>
-							<Button variant="secondary" className="no-wrap" onClick={toggleSubscription}>
-								<Icon name="mute" /> <span className="wide-text">Unsubscribe</span>
-							</Button>
-							<span className="wide-text">
-								You’re receiving notifications because you’re watching this repository.
-							</span>
-						</>
-					) : (
-						<>
-							<Button variant="secondary" onClick={toggleSubscription}>
-								<Icon name="unmute" /> <span className="wide-text">Subscribe</span>
-							</Button>
-							<span className="wide-text">
-								You’re not receiving notifications from this pull request.
-							</span>
-						</>
-					)}
-				</PRSection>
+				{!derivedState.isInVscode && (
+					<PRSection>
+						<h1>
+							{/* <Icon name="gear" className="settings clickable" onClick={() => {}} /> */}
+							Notifications
+						</h1>
+						{pr.viewerSubscription === "SUBSCRIBED" ? (
+							<>
+								<Button variant="secondary" className="no-wrap" onClick={toggleSubscription}>
+									<Icon name="mute" /> <span className="wide-text">Unsubscribe</span>
+								</Button>
+								<span className="wide-text">
+									You’re receiving notifications because you’re watching this repository.
+								</span>
+							</>
+						) : (
+							<>
+								<Button variant="secondary" onClick={toggleSubscription}>
+									<Icon name="unmute" /> <span className="wide-text">Subscribe</span>
+								</Button>
+								<span className="wide-text">
+									You’re not receiving notifications from this pull request.
+								</span>
+							</>
+						)}
+					</PRSection>
+				)}
 				<PRSection>
 					<h1>{participantsLabel}</h1>
 					<PRHeadshots>

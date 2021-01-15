@@ -30,7 +30,7 @@ const argv = yargs
 	})
 	.option("output-directory", {
 		alias: "o",
-		description: "the color of the icons",
+		description: "the output directory",
 		type: "string",
 		default: "/tmp/"
 	})

@@ -1746,10 +1746,14 @@ const getChecksData = (statusChecks: (CheckRun | StatusContext)[]) => {
 					break;
 			}
 
-			checkData.appIcon = {
-				src: check.checkSuite.app.logoUrl,
-				title: `@${check.checkSuite.app.slug} generated this status`
-			};
+			if (check.checkSuite.app) {
+				checkData.appIcon = {
+					src: check.checkSuite.app.logoUrl,
+					title: `@${check.checkSuite.app.slug} generated this status`
+				};
+			} else {
+				checkData.appIcon = { src: "", title: "" };
+			}
 			checkData.Description = (
 				<div className="description">
 					<strong style={{ marginRight: "8px" }}>{check.name}</strong> {description}{" "}

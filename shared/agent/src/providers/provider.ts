@@ -645,6 +645,9 @@ export abstract class ThirdPartyIssueProviderBase<
 			});
 			if (foundOneWithUrl) request.description += addressesText;
 		}
+		const codeStreamLink = 'https://codestream.com/?utm_source=cs&utm_medium=pr&utm_campaign=github';
+		const createdFrom = request.ideName ? `from ${request.ideName}` : "";
+		request.description += `\n\n<sup> Created ${createdFrom} using [CodeStream](${codeStreamLink})</sup>`;
 		return request.description;
 	}
 
@@ -966,6 +969,7 @@ export interface ProviderCreatePullRequestRequest {
 		approvedAt?: number;
 		addresses?: { title: string; url: string }[];
 	};
+	ideName?: string;
 }
 
 export interface ProviderCreatePullRequestResponse {

@@ -143,7 +143,8 @@ export const CreatePullRequestPanel = props => {
 			isConnectedToGitLabEnterprise: isConnected(state, { name: "gitlab_enterprise" }),
 			isConnectedToBitbucketServer: isConnected(state, { name: "bitbucket_server" }),
 			prLabel: getPRLabel(state),
-			currentRepo: context.currentRepo
+			currentRepo: context.currentRepo,
+			ideName: state.ide.name
 		};
 	});
 	const { userStatus, reviewId, prLabel } = derivedState;
@@ -427,7 +428,8 @@ export const CreatePullRequestPanel = props => {
 				remoteName: prUpstreamOn && prUpstream ? prUpstream : undefined,
 				addresses: addressesStatus
 					? [{ title: userStatus.label, url: userStatus.ticketUrl }]
-					: undefined
+					: undefined,
+				ideName: derivedState.ideName
 			});
 			if (result.error) {
 				setFormState({

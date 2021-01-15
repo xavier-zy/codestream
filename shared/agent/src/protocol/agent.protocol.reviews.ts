@@ -377,6 +377,7 @@ export interface CreatePullRequestRequest {
 		title: string;
 		url: string;
 	}[];
+	ideName?: string;
 }
 
 export interface CreatePullRequestResponse {

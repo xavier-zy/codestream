@@ -639,8 +639,8 @@ export const PRContent = styled.div`
 		flex-grow: 10;
 		max-width: 75vw;
 	}
-		@media only screen and (max-width: ${props => props.theme.breakpoint}) {
 
+	@media only screen and (max-width: ${props => props.theme.breakpoint}) {
 		flex-direction: column;
 		.main-content {
 			order: 2;
@@ -1041,10 +1041,12 @@ export const PRCommentCardRow = styled.div`
 `;
 
 export const PRCommentCardRowsWrapper = styled.div`
-	padding: "5px 0";
+	padding: 5px 0;
 	${PRCommentCardRow} {
 		padding-bottom: 10px;
 		margin-bottom: 10px;
+		margin: 0 -15px 10px -15px;
+		padding: 0 15px 10px 15px;
 		border-bottom: 1px solid;
 		border-color: var(--base-border-color);
 	}

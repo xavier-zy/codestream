@@ -984,7 +984,7 @@ export class Codemark extends React.Component<Props, State> {
 								}}
 							>
 								<span>
-									<Icon name="file" />
+									<Icon name="paperclip" />
 								</span>
 								<span>{name}</span>
 								<span>

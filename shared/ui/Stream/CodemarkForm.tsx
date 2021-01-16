@@ -1320,7 +1320,7 @@ class CodemarkForm extends React.Component<Props, State> {
 						) : file.status === "error" ? (
 							<Icon name="alert" className="spinnable" />
 						) : (
-							<Icon name="file" className="spinnable" />
+							<Icon name="paperclip" className="spinnable" />
 						);
 					const isImage = (file.mimetype || "").startsWith("image");
 					const imageInjected =

@@ -22,12 +22,7 @@ import { PullRequestReplyComment } from "./PullRequestReplyComment";
 import { Button } from "../src/components/Button";
 import { api } from "../store/providerPullRequests/actions";
 import { useDispatch } from "react-redux";
-
-export const GHOST = {
-	login: "ghost",
-	avatarUrl:
-		"https://avatars2.githubusercontent.com/u/10137?s=460&u=b1951d34a583cf12ec0d3b0781ba19be97726318&v=4"
-};
+import { GHOST } from "./PullRequestTimelineItems";
 
 const ReviewIcons = {
 	APPROVED: <Icon name="check" className="circled green" />,

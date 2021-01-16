@@ -333,7 +333,7 @@ export const PullRequestConversationTab = (props: {
 	// these are completed reviews
 	if (pr.reviews && pr.reviews.nodes) {
 		// group by author
-		const gb = _groupBy(pr.reviews.nodes, _ => _.author.id);
+		const gb = _groupBy(pr.reviews.nodes, _ => (_.author || GHOST).id);
 		// then convert to hash... key is the author,
 		// value is the last review
 		const map = _map(gb, (values, key) => {

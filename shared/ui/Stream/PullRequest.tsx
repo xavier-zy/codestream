@@ -69,6 +69,7 @@ import { PullRequestFileComments } from "./PullRequestFileComments";
 import { InlineMenu } from "../src/components/controls/InlineMenu";
 import { getPreferences } from "../store/users/reducer";
 import { setUserPreference } from "./actions";
+import { GHOST } from "./PullRequestTimelineItems";
 
 const Root = styled.div`
 	@media only screen and (max-width: ${props => props.theme.breakpoint}) {
@@ -580,7 +581,7 @@ export const PullRequest = () => {
 	]);
 
 	const iAmRequested = useMemo(() => {
-		if (pr) {
+		if (pr && pr.viewer) {
 			return pr.reviewRequests.nodes.find(
 				request => request.requestedReviewer && request.requestedReviewer.login === pr.viewer.login
 			);
@@ -629,7 +630,7 @@ export const PullRequest = () => {
 						{iAmRequested && activeTab == 1 && (
 							<PRIAmRequested>
 								<div>
-									<b>{pr.author.login}</b> requested your review
+									<b>{(pr.author || GHOST).login}</b> requested your review
 									<span className="wide-text"> on this pull request</span>.
 								</div>
 								<Button
@@ -704,7 +705,7 @@ export const PullRequest = () => {
 								{pr.isDraft ? "Draft" : pr.state ? pr.state.toLowerCase() : ""}
 							</PRStatusButton>
 							<PRStatusMessage>
-								<PRAuthor>{pr.author.login}</PRAuthor>
+								<PRAuthor>{(pr.author || GHOST).login}</PRAuthor>
 								<PRAction>
 									{action} {pr.commits && pr.commits.totalCount} commits into{" "}
 									<Link href={`${pr.repoUrl}/tree/${pr.baseRefName}`}>

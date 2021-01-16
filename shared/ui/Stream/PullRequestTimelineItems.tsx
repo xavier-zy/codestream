@@ -155,7 +155,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 				<PRCommentCard className="dark-header">
 					<PRCommentHeader>
 						<div>
-							<PRAuthor>{pr.author.login}</PRAuthor> commented{" "}
+							<PRAuthor>{(pr.author || GHOST).login}</PRAuthor> commented{" "}
 							<Timestamp time={pr.createdAt!} relative />
 							{pr.includesCreatedEdit ? <> • edited</> : ""}
 						</div>
@@ -226,7 +226,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 										<>
 											<PRCommentHeader>
 												<div>
-													<PRAuthor>{author.login}</PRAuthor> commented{" "}
+													<PRAuthor>{(author || GHOST).login}</PRAuthor> commented{" "}
 													<Timestamp time={item.createdAt!} relative />
 													{item.includesCreatedEdit ? <> • edited</> : ""}
 												</div>
@@ -287,7 +287,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 									<PRHeadshot key={index} size={40} person={author} />
 									{reviewIcon}
 									<PRTimelineItemBody>
-										<PRAuthor>{author.login}</PRAuthor>{" "}
+										<PRAuthor>{(author || GHOST).login}</PRAuthor>{" "}
 										{item.state === "APPROVED" && "approved this review"}
 										{item.state === "CHANGES_REQUESTED" && "requested changes"}
 										{item.state === "COMMENTED" && "reviewed"}
@@ -315,7 +315,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 											<>
 												<PRCommentHeader>
 													<div>
-														<PRAuthor>{author.login}</PRAuthor> commented{" "}
+														<PRAuthor>{(author || GHOST).login}</PRAuthor> commented{" "}
 														<Timestamp time={item.createdAt!} relative />
 														{item.includesCreatedEdit ? <> • edited</> : ""}
 													</div>

@@ -645,9 +645,27 @@ export abstract class ThirdPartyIssueProviderBase<
 			});
 			if (foundOneWithUrl) request.description += addressesText;
 		}
-		const codeStreamLink = 'https://codestream.com/?utm_source=cs&utm_medium=pr&utm_campaign=github';
-		const createdFrom = request.ideName ? `from ${request.ideName}` : "";
-		request.description += `\n\n<sup> Created ${createdFrom} using [CodeStream](${codeStreamLink})</sup>`;
+		const codeStreamLink = "https://codestream.com/?utm_source=cs&utm_medium=pr&utm_campaign=github";
+		let createdFrom = "";
+		switch (request.ideName) {
+			case "VSC":
+				createdFrom = "from VS Code";
+				break;
+			case "JETBRAINS":
+				createdFrom = "from JetBrains";
+				break;
+			case "VS":
+				createdFrom = "from Visual Studio";
+				break;
+			case "ATOM":
+				createdFrom = "from Atom";
+				break;
+		}
+		let codeStreamAttribution = `Created ${createdFrom} using [CodeStream](${codeStreamLink})`;
+		if (["github*com", "github/enterprise"].includes(request.providerId) ) {
+			codeStreamAttribution = `<sup> ${codeStreamAttribution}</sup>`;
+		}
+		request.description += `\n\n${codeStreamAttribution}`;
 		return request.description;
 	}
 

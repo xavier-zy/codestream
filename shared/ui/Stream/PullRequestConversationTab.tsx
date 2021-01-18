@@ -120,6 +120,7 @@ const StatusMetaRow = styled.div`
 				height: 20px;
 				border-radius: 6px;
 				overflow: hidden;
+				background-color: #fff;
 			}
 		}
 	}
@@ -1491,70 +1492,6 @@ const CommitCheckSuite = (props: { commit: any }) => {
 		return <></>;
 	}
 
-	const statusTitle = React.useMemo(() => {
-		switch (commit.statusCheckRollup.state) {
-			case "SUCCESS":
-				return "All checks have passed";
-			case "ERROR":
-			case "FAILURE":
-				return "Some checks were not successful";
-			case "EXPECTED":
-			case "PENDING":
-				return "Some checks haven’t completed yet";
-		}
-		return "";
-	}, [commit]);
-
-	const statusTitleColor = React.useMemo(() => {
-		switch (commit.statusCheckRollup.state) {
-			case "SUCCESS":
-				return "";
-			case "ERROR":
-			case "FAILURE":
-				return "red";
-			case "EXPECTED":
-			case "PENDING":
-				return "gray";
-		}
-		return "";
-	}, [commit]);
-
-	const CheckSuiteStatusIcon = () => {
-		switch (commit.statusCheckRollup.state) {
-			case "SUCCESS":
-				return (
-					<PRIconButton className="green-background">
-						<Icon name="check" />
-					</PRIconButton>
-				);
-			case "ERROR":
-			case "FAILURE":
-				if (statusMeta.data.success.count > 0) {
-					const totalChecks = statusMeta.data.total.count;
-					const green = totalChecks === 0 ? 0 : (360 * statusMeta.data.success.count) / totalChecks;
-					const red = totalChecks === 0 ? 0 : (360 * statusMeta.data.failure.count) / totalChecks;
-					const yellow =
-						totalChecks === 0 ? 0 : (360 * statusMeta.data.pending.count) / totalChecks;
-					const gray = totalChecks === 0 ? 0 : (360 * statusMeta.data.neutral.count) / totalChecks;
-					return <ColorDonut green={green} red={red} yellow={yellow} gray={gray} />;
-				}
-				return (
-					<PRIconButton className="red-background">
-						<Icon name="x" />
-					</PRIconButton>
-				);
-			case "EXPECTED":
-			case "PENDING":
-				return (
-					<PRIconButton className="yellow-background">
-						<Icon name="check" />
-					</PRIconButton>
-				);
-			default:
-				return <></>;
-		}
-	};
-
 	const checksData = React.useMemo(() => {
 		return getChecksData(commit.statusCheckRollup.contexts.nodes);
 	}, [commit]);
@@ -1570,9 +1507,21 @@ const CommitCheckSuite = (props: { commit: any }) => {
 				count: 0,
 				title: "in progress"
 			},
+			cancel: {
+				count: 0,
+				title: "cancelled"
+			},
 			failure: {
 				count: 0,
 				title: "failing"
+			},
+			actionRequired: {
+				count: 0,
+				title: "action required"
+			},
+			error: {
+				count: 0,
+				title: "errored"
 			},
 			pending: {
 				count: 0,
@@ -1611,17 +1560,96 @@ const CommitCheckSuite = (props: { commit: any }) => {
 			.filter(([, statusType]) => statusType.count > 0 && statusType.title !== "total")
 			.map(([, statusType]) => `${statusType.count} ${statusType.title}`);
 
+		const statusLabel = checkStatuses.total.count > 1 ? "checks" : "check";
 		if (statuses.length === 1) {
-			status = `${statuses[0]} checks`;
+			status = `${statuses[0]} ${statusLabel}`;
 		} else if (statuses.length === 2) {
-			status = `${statuses.join(" and ")} checks`;
+			status = `${statuses.join(" and ")} ${statusLabel}`;
 		} else {
 			statuses[statuses.length - 1] = `and ${statuses[statuses.length - 1]}`;
-			status = `${statuses.join(", ")} checks`;
+			status = `${statuses.join(", ")} ${statusLabel}`;
 		}
 
 		return { label: status, data: checkStatuses };
 	}, [commit]);
+
+	const statusTitle = React.useMemo(() => {
+		switch (commit.statusCheckRollup.state) {
+			case "SUCCESS":
+				return "All checks have passed";
+			case "ERROR":
+			case "FAILURE":
+				const failureChecks =
+					statusMeta.data.failure.count +
+					statusMeta.data.error.count +
+					statusMeta.data.actionRequired.count;
+				const totalChecks = statusMeta.data.total.count;
+				return failureChecks === totalChecks
+					? "All checks have failed"
+					: "Some checks were not successful";
+			case "EXPECTED":
+			case "PENDING":
+				return "Some checks haven’t completed yet";
+		}
+		return "";
+	}, [commit]);
+
+	const statusTitleColor = React.useMemo(() => {
+		switch (commit.statusCheckRollup.state) {
+			case "SUCCESS":
+				return "";
+			case "ERROR":
+			case "FAILURE":
+				return "red";
+			case "EXPECTED":
+			case "PENDING":
+				return "gray";
+		}
+		return "";
+	}, [commit]);
+
+	const CheckSuiteStatusIcon = () => {
+		switch (commit.statusCheckRollup.state) {
+			case "SUCCESS":
+				return (
+					<PRIconButton className="green-background">
+						<Icon name="check" />
+					</PRIconButton>
+				);
+			case "ERROR":
+			case "FAILURE":
+				const totalChecks = statusMeta.data.total.count;
+				const successChecks = statusMeta.data.success.count;
+				const failureChecks =
+					statusMeta.data.failure.count +
+					statusMeta.data.error.count +
+					statusMeta.data.actionRequired.count;
+				const pendingChecks = statusMeta.data.pending.count;
+				const neutralChecks = statusMeta.data.neutral.count;
+				const totalDonutChecks = successChecks + failureChecks + pendingChecks + neutralChecks;
+				if (totalChecks > failureChecks && totalDonutChecks > 0) {
+					const green = (360 * successChecks) / totalDonutChecks;
+					const red = (360 * failureChecks) / totalDonutChecks;
+					const yellow = (360 * pendingChecks) / totalDonutChecks;
+					const gray = (360 * neutralChecks) / totalDonutChecks;
+					return <ColorDonut green={green} red={red} yellow={yellow} gray={gray} />;
+				}
+				return (
+					<PRIconButton className="red-background">
+						<Icon name="x" />
+					</PRIconButton>
+				);
+			case "EXPECTED":
+			case "PENDING":
+				return (
+					<PRIconButton className="yellow-background">
+						<Icon name="check" />
+					</PRIconButton>
+				);
+			default:
+				return <></>;
+		}
+	};
 
 	return (
 		<PRCommentCardRow>
@@ -1731,13 +1759,19 @@ const getChecksData = (statusChecks: (CheckRun | StatusContext)[]) => {
 							);
 							break;
 						case "CANCELLED":
-							checkData.state = "failure";
+							description = (
+								<span>{formattedDuration > "" ? `Cancelled after ${formattedDuration}` : ""}</span>
+							);
+							checkData.state = "cancel";
 							break;
 						case "NEUTRAL":
 							checkData.state = "neutral";
 							break;
 						case "SKIPPED":
 							checkData.state = "skipped";
+							break;
+						case "ACTION_REQUIRED":
+							checkData.state = "actionRequired";
 							break;
 						default:
 							checkData.state = "undefined";
@@ -1774,7 +1808,7 @@ const getChecksData = (statusChecks: (CheckRun | StatusContext)[]) => {
 					checkData.state = "expected";
 					break;
 				case "ERROR":
-					checkData.state = "failure";
+					checkData.state = "error";
 					break;
 				case "FAILURE":
 					checkData.state = "failure";
@@ -1805,6 +1839,8 @@ const getChecksData = (statusChecks: (CheckRun | StatusContext)[]) => {
 		}
 
 		switch (checkData.state) {
+			case "actionRequired":
+			case "error":
 			case "failure":
 				checkData.statusIcon = {
 					name: "x",
@@ -1841,6 +1877,18 @@ const getChecksData = (statusChecks: (CheckRun | StatusContext)[]) => {
 					className: "yellow-color"
 				};
 				break;
+			case "neutral":
+				checkData.statusIcon = {
+					name: "dot-fill",
+					className: "gray-color"
+				};
+				break;
+			case "cancel":
+				checkData.statusIcon = {
+					name: "stop",
+					className: "gray-color"
+				};
+				break;
 			case "undefined":
 			default:
 				checkData.statusIcon = {
@@ -1874,11 +1922,14 @@ interface CheckData {
 		| "queued"
 		| "inProgress"
 		| "failure"
+		| "error"
+		| "cancel"
 		| "success"
 		| "pending"
 		| "expected"
 		| "neutral"
 		| "skipped"
+		| "actionRequired"
 		| "undefined";
 	statusIcon: {
 		name: string;

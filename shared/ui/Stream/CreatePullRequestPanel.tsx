@@ -742,7 +742,7 @@ export const CreatePullRequestPanel = props => {
 
 	const renderPullButton = () => {
 		return (
-			<div>
+			<div style={{ marginBottom: "10px" }}>
 				<Icon name="info" /> {commitsBehindOrigin} commit
 				{commitsBehindOrigin > 1 ? "s" : ""} behind base origin{" "}
 				<Button onClick={onPullSubmit} isLoading={pullSubmitting}>

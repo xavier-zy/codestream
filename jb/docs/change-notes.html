@@ -1,3 +1,24 @@
+<h4 id="10_4_0">10.4.0</h4>
+<h5>Added</h5>
+<ul>
+    <li>Adds support for <a href="https://www.codestream.com/blog/codestream-10-4-file-attachments-github-status-checks"></a>file attachments</a> when creating comment or issue codemarks</li>
+    <li>Adds support for GitHub status checks in pull requests rendered in CodeStream</li>
+    <li>When selecting a Linear issue to start work, the branch name associated with the issue is used</li>
+    <li>Adds the ability to pull the latest, if the base branch is behind origin, when previewing diffs while creating a pull request</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+    <li>Prevent the creation of codemarks when in a preview diff while submitting a feedback request</li>
+</ul>
+<h5>Fixed</h5>
+<ul>
+    <li>Addresses <a href="https://github.com/TeamCodeStream/CodeStream/issues/353">#353</a> - Codemark glyphs do not show up in WSL environment</li>
+    <li>Fixes an issue where starting work on an issue creates a feature branch against the wrong base</li>
+    <li>Fixes a data integrity issue that led to a small group of users getting an error clicking on a codemark</li>
+    <li>Fixes with the fetching of too much history data from PubNub if client clock is inaccurately set</li>
+    <li>Performance improvements</li>
+    <li>Fixes an issue with feedback requests assigned to you not appearing in the Approved or Needs Work sections without a reload</li>
+</ul>
 <h4 id="10_3_0">10.3.0</h4>
 <h5>Added</h5>
 <ul>

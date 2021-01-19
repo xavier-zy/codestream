@@ -7,6 +7,8 @@
     </bytecodeTargetLevel>
   </component>
   <component name="TypeScriptCompiler">
-    <option name="versionType" value="EMBEDDED" />
+    <option name="recompileOnChanges" value="true" />
+    <option name="typeScriptServiceDirectory" value="$PROJECT_DIR$/../shared/agent/node_modules/typescript" />
+    <option name="versionType" value="SERVICE_DIRECTORY" />
   </component>
 </project>

@@ -524,6 +524,7 @@ export class BitbucketProvider extends ThirdPartyIssueProviderBase<CSBitbucketPr
 				// NOTE: Keep this await here, so any errors are caught here
 				return await cachedComments.comments;
 			}
+			super.invalidatePullRequestDocumentMarkersCache();
 
 			const remotePath = await getRemotePaths(
 				repo,

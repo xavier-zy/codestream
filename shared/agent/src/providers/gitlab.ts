@@ -457,6 +457,7 @@ export class GitLabProvider extends ThirdPartyIssueProviderBase<CSGitLabProvider
 				// NOTE: Keep this await here, so any errors are caught here
 				return await cachedComments.comments;
 			}
+			super.invalidatePullRequestDocumentMarkersCache();
 
 			const remotePaths = await getRemotePaths(
 				repo,

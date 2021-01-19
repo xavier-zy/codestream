@@ -30,6 +30,7 @@ import { FileSystem, Strings, Versions } from "./system";
 
 const extension = extensions.getExtension(extensionQualifiedId)!;
 export const extensionVersion = extension.packageJSON.version;
+let gitLensIntegrationInitializing = false;
 
 interface BuildInfoMetadata {
 	buildNumber: string;
@@ -134,6 +135,7 @@ export async function activate(context: ExtensionContext) {
 	context.subscriptions.push(
 		Container.session.onDidChangeSessionStatus(event => {
 			if (event.getStatus() !== SessionStatus.SignedIn) return;
+			if (gitLensIntegrationInitializing) return;
 			registerGitLensIntegration();
 		})
 	);
@@ -141,6 +143,7 @@ export async function activate(context: ExtensionContext) {
 
 function registerGitLensIntegration() {
 	try {
+		gitLensIntegrationInitializing = true;
 		const getGitLens = () =>
 			extensions.getExtension<Promise<GitLensApi>>("eamodio.gitlens") ||
 			extensions.getExtension<Promise<GitLensApi>>("eamodio.gitlens-insiders");

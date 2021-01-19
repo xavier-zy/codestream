@@ -159,7 +159,16 @@ export const createCodemark = (attributes: SharingNewCodemarkAttributes) => asyn
 		// if this is a sharing error just throw it
 		if (isCreateCodemarkError(error)) throw error;
 
-		logError("Error creating a codemark", { message: error.toString() });
+		logError(
+			attributes &&
+				attributes.codeBlocks &&
+				attributes.codeBlocks.length &&
+				attributes.codeBlocks[0].context &&
+				attributes.codeBlocks[0].context.pullRequest
+				? "Error creating PR comment"
+				: "Error creating a codemark",
+			{ message: error.toString() }
+		);
 		throw { reason: "create" } as CreateCodemarkError;
 	}
 };

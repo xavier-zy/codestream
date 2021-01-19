@@ -196,11 +196,11 @@ export const PullRequestFilesChanged = (props: Props) => {
 				visitFile(f.file, index);
 
 				HostApi.instance.track("PR Diff Viewed", {
-					Host: props.pr && props.pr.providerId
+					Host: pr && pr.providerId
 				});
 			})(i);
 		},
-		[derivedState.currentRepo, repoId, visitedFiles, forkPointSha]
+		[derivedState.currentRepo, repoId, visitedFiles, forkPointSha, pr]
 	);
 
 	const nextFile = useCallback(() => {

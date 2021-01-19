@@ -94,7 +94,9 @@ import {
 	FetchReviewsRequestType,
 	GetFileContentsAtRevisionRequestType,
 	GetFileContentsAtRevisionResponse,
-	AgentInitializedNotificationType
+	AgentInitializedNotificationType,
+	UpdateUserRequest,
+	UpdateUserRequestType
 } from "@codestream/protocols/agent";
 import {
 	ChannelServiceType,
@@ -189,7 +191,9 @@ export class CodeStreamAgentConnection implements Disposable {
 		return this._onDidChangeDocumentMarkers.event;
 	}
 
-	private _onDidChangePullRequestComments = new EventEmitter<DidChangePullRequestCommentsNotification>();
+	private _onDidChangePullRequestComments = new EventEmitter<
+		DidChangePullRequestCommentsNotification
+	>();
 	get onDidChangePullRequestComments(): Event<DidChangePullRequestCommentsNotification> {
 		return this._onDidChangePullRequestComments.event;
 	}
@@ -277,8 +281,7 @@ export class CodeStreamAgentConnection implements Disposable {
 							this._restartCount = 0;
 							try {
 								this.setHandlers();
-							}
-							catch (e) {
+							} catch (e) {
 								const msg = e instanceof Error ? e.message : JSON.stringify(e);
 								Logger.log(`Error setting handlers after restart: ${msg}`);
 								throw e;
@@ -884,6 +887,10 @@ export class CodeStreamAgentConnection implements Disposable {
 			});
 		}
 
+		updateUser(user: UpdateUserRequest) {
+			return this._connection.sendRequest(UpdateUserRequestType, user);
+		}
+
 		unreads() {
 			return this._connection.sendRequest(GetUnreadsRequestType, {});
 		}
@@ -909,8 +916,7 @@ export class CodeStreamAgentConnection implements Disposable {
 	}
 
 	@log({
-		prefix: (context, _e: DidChangePullRequestCommentsNotification) =>
-			`${context.prefix}`
+		prefix: (context, _e: DidChangePullRequestCommentsNotification) => `${context.prefix}`
 	})
 	private onPullRequestCommentsChanged(e: DidChangePullRequestCommentsNotification) {
 		this._onDidChangePullRequestComments.fire(e);
@@ -1049,7 +1055,7 @@ export class CodeStreamAgentConnection implements Disposable {
 		return this._client.initializeResult! as AgentInitializeResult;
 	}
 
-	private setHandlers () {
+	private setHandlers() {
 		if (!this._client) return;
 		this._client.onNotification(DidChangeDataNotificationType, this.onDataChanged.bind(this));
 		this._client.onNotification(

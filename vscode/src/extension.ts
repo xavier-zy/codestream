@@ -20,7 +20,7 @@ import {
 	OpenPullRequestActionContext
 } from "./@types/gitlens";
 import { GitExtension } from "./@types/git";
-import { SessionStatusChangedEvent } from "./api/session";
+import { SessionStatus, SessionStatusChangedEvent } from "./api/session";
 import { ContextKeys, GlobalState, setContext } from "./common";
 import { Config, configuration, Configuration } from "./configuration";
 import { extensionQualifiedId } from "./constants";
@@ -133,7 +133,8 @@ export async function activate(context: ExtensionContext) {
 	);
 
 	context.subscriptions.push(
-		Container.agent.onAgentInitialized(_ => {
+		Container.session.onDidChangeSessionStatus(event => {
+			if (event.getStatus() !== SessionStatus.SignedIn) return;
 			if (gitLensIntegrationInitializing) return;
 			registerGitLensIntegration();
 		})
@@ -151,6 +152,9 @@ function registerGitLensIntegration() {
 		let gitlens = getGitLens();
 		if (!gitlens) {
 			Logger.log("GitLens: Not installed.");
+			if (Container.session.user.hasGitLens !== false) {
+				Container.agent.users.updateUser({ hasGitLens: false });
+			}
 			return;
 		}
 
@@ -163,16 +167,25 @@ function registerGitLensIntegration() {
 			if (!gitlens) {
 				Logger.log(`GitLens: Not detected. Returning. attempt=${i}`);
 				clearInterval(timeout);
+				if (Container.session.user.hasGitLens !== false) {
+					Container.agent.users.updateUser({ hasGitLens: false });
+				}
 				return;
 			}
 			if (gitlens.isActive) {
 				try {
 					const api: GitLensApi = await gitlens.exports;
 					api.registerActionRunner("openPullRequest", {
-						label: "CodeStream",
+						name: "CodeStream",
+						label: "Open this pull request in VS Code",
 						run: function(context: OpenPullRequestActionContext) {
 							try {
-								if (context.pullRequest.provider === "GitHub") {
+								// later this won't be a string in the next GitLens version
+								const isGitHub =
+									typeof context.pullRequest.provider === "string"
+										? context.pullRequest.provider
+										: context.pullRequest.provider!.name;
+								if (isGitHub) {
 									Container.webview.openPullRequestByUrl(context.pullRequest.url, "VSC GitLens");
 								} else {
 									Logger.log(
@@ -187,7 +200,8 @@ function registerGitLensIntegration() {
 						}
 					});
 					api.registerActionRunner("createPullRequest", {
-						label: "CodeStream",
+						name: "CodeStream",
+						label: "Create a pull request in VS Code",
 						run: function(context: CreatePullRequestActionContext) {
 							try {
 								if (context.branch && context.branch.remote) {
@@ -207,6 +221,9 @@ function registerGitLensIntegration() {
 						}
 					});
 					Logger.log(`GitLens: Found. attempt=${i}`);
+					if (!Container.session.user.hasGitLens) {
+						Container.agent.users.updateUser({ hasGitLens: true });
+					}
 				} catch (e) {
 					Logger.warn(`GitLens: Failed to register. Giving up. attempt=${i} e=${e}`);
 				} finally {

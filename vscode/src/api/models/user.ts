@@ -20,6 +20,10 @@ export class User extends CodeStreamItem<CSUser> {
 		return this.entity.username || this.fullName;
 	}
 
+	get hasGitLens() {
+		return this.entity.hasGitLens;
+	}
+
 	hasMutedChannel(streamId: string) {
 		const preferences = (this.entity as CSMe).preferences;
 		if (preferences === undefined) return false;

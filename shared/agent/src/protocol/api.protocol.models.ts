@@ -646,6 +646,7 @@ export interface CSUser extends CSEntity {
 	presence?: string;
 	preferences?: CSMePreferences;
 	firstSessionStartedAt?: number;
+	hasGitLens?: boolean;
 }
 
 export interface CSLastReads {

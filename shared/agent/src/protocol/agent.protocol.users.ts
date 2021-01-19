@@ -62,6 +62,7 @@ export interface UpdateUserRequest {
 		image?: string;
 		image48?: string;
 	};
+	hasGitLens?: boolean;
 }
 
 export interface UpdateUserResponse {

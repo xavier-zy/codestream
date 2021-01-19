@@ -458,7 +458,7 @@ export class DocumentMarkerManager {
 		}
 	}
 
-	private async getCodemarkDocumentMarkers(
+	private getCodemarkDocumentMarkers(
 		request: FetchDocumentMarkersRequest
 	): Promise<FetchDocumentMarkersResponse> {
 		const cc = Logger.getCorrelationContext();
@@ -479,7 +479,7 @@ export class DocumentMarkerManager {
 
 		const promise = this.getCodemarkDocumentMarkersCore(request);
 
-		if (doc && doc.version !== undefined) {
+		if (doc?.version !== undefined) {
 			this._codemarkDocumentMarkersCache.set(documentUri.toString(), {
 				documentVersion: doc.version,
 				promise

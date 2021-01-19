@@ -135,7 +135,6 @@ export async function activate(context: ExtensionContext) {
 	context.subscriptions.push(
 		Container.session.onDidChangeSessionStatus(event => {
 			if (event.getStatus() !== SessionStatus.SignedIn) return;
-			if (gitLensIntegrationInitializing) return;
 			registerGitLensIntegration();
 		})
 	);

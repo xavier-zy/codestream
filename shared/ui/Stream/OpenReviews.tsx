@@ -48,6 +48,9 @@ export const OpenReviews = React.memo(function OpenReviews(props: Props) {
 		const teamMembers = userSelectors.getTeamMembers(state);
 		const feedbackRequests = queries.map(_ => {
 			const reviews = reviewSelectors.getByStatusAndUser(state, _.query, currentUserId);
+			if (_.query === "approved" || _.query === "rejected") {
+				reviews.sort((a, b) => b.modifiedAt - a.modifiedAt);
+			}
 			return _.limit ? reviews.slice(0, _.limit) : reviews;
 		});
 

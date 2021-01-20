@@ -96,7 +96,9 @@ import {
 	GetFileContentsAtRevisionResponse,
 	AgentInitializedNotificationType,
 	UpdateUserRequest,
-	UpdateUserRequestType
+	UpdateUserRequestType,
+	UserDidCommitNotificationType,
+	UserDidCommitNotification
 } from "@codestream/protocols/agent";
 import {
 	ChannelServiceType,
@@ -196,6 +198,11 @@ export class CodeStreamAgentConnection implements Disposable {
 	>();
 	get onDidChangePullRequestComments(): Event<DidChangePullRequestCommentsNotification> {
 		return this._onDidChangePullRequestComments.event;
+	}
+
+	private _onUserDidCommit = new EventEmitter<UserDidCommitNotification>();
+	get onUserDidCommit(): Event<UserDidCommitNotification> {
+		return this._onUserDidCommit.event;
 	}
 
 	private _onDidChangeVersion = new EventEmitter<DidChangeVersionCompatibilityNotification>();
@@ -933,6 +940,13 @@ export class CodeStreamAgentConnection implements Disposable {
 		}
 	}
 
+	@log({
+		prefix: (context, _e: UserDidCommitNotification) => `${context.prefix}`
+	})
+	private onUserCommitted(e: UserDidCommitNotification) {
+		this._onUserDidCommit.fire(e);
+	}
+
 	@log()
 	private onLogout(e: DidLogoutNotification) {
 		if (e.reason === LogoutReason.Token) {
@@ -1098,6 +1112,7 @@ export class CodeStreamAgentConnection implements Disposable {
 		this._client.onNotification(AgentInitializedNotificationType, () => {
 			this._onAgentInitialized.fire();
 		});
+		this._client.onNotification(UserDidCommitNotificationType, this.onUserCommitted.bind(this));
 		this._client.onRequest(AgentOpenUrlRequestType, e => this._onOpenUrl.fire(e));
 	}
 

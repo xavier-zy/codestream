@@ -179,6 +179,12 @@
 					],
 					"description": "Specifies how much (if any) output will be sent to the CodeStream output channel",
 					"scope": "window"
+				},
+				"codestream.requestFeedbackOnCommit": {
+					"type": "boolean",
+					"default": true,
+					"description": "Specifies whether to request feedback on commit",
+					"scope": "window"
 				}
 			}
 		},

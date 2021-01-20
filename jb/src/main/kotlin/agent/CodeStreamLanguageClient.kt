@@ -130,6 +130,11 @@ class CodeStreamLanguageClient(private val project: Project) : LanguageClient {
         }
     }
 
+    @JsonNotification("codestream/userDidCommit")
+    fun userDidCommit(notification: UserDidCommitNotification) {
+        logger.info("User did commit: ${notification.sha}")
+    }
+
     @JsonNotification("codestream/restartRequired")
     fun restartRequired(json: JsonElement) = GlobalScope.launch {
         project.agentService?.restart()
@@ -226,6 +231,8 @@ enum class LogoutReason {
     @SerializedName("unsupportedApiVersion")
     UNSUPPORTED_API_VERSION
 }
+
+class UserDidCommitNotification(val sha: String)
 
 class DidChangeApiVersionCompatibilityNotification(
     val compatibility: ApiVersionCompatibility,

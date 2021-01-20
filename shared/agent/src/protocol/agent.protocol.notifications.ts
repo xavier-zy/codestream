@@ -313,3 +313,11 @@ export const DidChangeServerUrlNotificationType = new NotificationType<
 export const AgentInitializedNotificationType = new NotificationType<void, void>(
 	"codestream/agentInitialized"
 );
+
+export interface UserDidCommitNotification {
+	sha: string;
+}
+
+export const UserDidCommitNotificationType = new NotificationType<UserDidCommitNotification, void>(
+	"codestream/userDidCommit"
+);

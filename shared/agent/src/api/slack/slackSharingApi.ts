@@ -901,7 +901,7 @@ export class SlackSharingApiProvider {
 
 	private async getMeCore(meResponse?: CSGetMeResponse) {
 		if (meResponse === undefined) {
-			meResponse = await this._codestream.getMe();
+			meResponse = await SessionContainer.instance().users.getMe();
 		}
 
 		let me = meResponse.user;

@@ -671,10 +671,8 @@ export class DocumentMarkerManager {
 		uri: URI;
 		streamId: string | undefined;
 	}): Promise<DocumentMarker[]> {
-		const cc = Logger.getCorrelationContext();
-		const user = await this.getMe();
-
-		const { providerRegistry } = SessionContainer.instance();
+		const { providerRegistry, users } = SessionContainer.instance();
+		const { user } = await users.getMe();
 		const providers = providerRegistry.getConnectedProviders(
 			user,
 			(p): p is ThirdPartyIssueProvider & ThirdPartyProviderSupportsPullRequests => {
@@ -793,12 +791,5 @@ export class DocumentMarkerManager {
 		}
 
 		return response;
-	}
-
-	private async getMe() {
-		if (this._user === undefined) {
-			({ user: this._user } = await this.session.api.getMe());
-		}
-		return this._user;
 	}
 }

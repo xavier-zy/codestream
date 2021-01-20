@@ -1,4 +1,5 @@
 "use strict";
+import { Logger } from "../logger";
 import {
 	BlameAuthor,
 	CompactModifiedRepo,
@@ -38,7 +39,7 @@ import {
 	UpdateUserRequest,
 	UpdateUserRequestType
 } from "../protocol/agent.protocol";
-import { CSUser, FileStatus } from "../protocol/api.protocol";
+import { CSMe, CSUser, FileStatus } from "../protocol/api.protocol";
 import { lsp, lspHandler } from "../system";
 import { CachedEntityManagerBase, Id } from "./entityManager";
 
@@ -146,8 +147,14 @@ export class UsersManager extends CachedEntityManagerBase<CSUser> {
 
 	@lspHandler(GetMeRequestType)
 	async getMe(): Promise<GetMeResponse> {
-		const me = (await this.session.api.getMe()).user;
-		return { user: me };
+		if (this.session.userId !== undefined) {
+			const cachedMe = await this.getById(this.session.userId);
+			if (cachedMe !== undefined) {
+				return { user: cachedMe as CSMe };
+			}
+		}
+
+		return await this.session.api.getMe();
 	}
 
 	@lspHandler(GetUnreadsRequestType)
@@ -174,7 +181,9 @@ export class UsersManager extends CachedEntityManagerBase<CSUser> {
 		if (entity.compactModifiedRepos) {
 			entity.modifiedRepos = {};
 			Object.keys(entity.compactModifiedRepos).forEach(teamId => {
-				entity.modifiedRepos![teamId] = this.decompactifyModifiedRepos(entity.compactModifiedRepos![teamId]);
+				entity.modifiedRepos![teamId] = this.decompactifyModifiedRepos(
+					entity.compactModifiedRepos![teamId]
+				);
 			});
 			delete entity.compactModifiedRepos;
 		}
@@ -201,11 +210,15 @@ export class UsersManager extends CachedEntityManagerBase<CSUser> {
 				branch: repo.branch || "",
 				startCommit: repo.startCommit,
 				modifiedFiles: repo.modifiedFiles.map(file => {
-					return `1|${this.pipeEscape(file.file)}|${file.status}|${file.linesAdded}|${file.linesRemoved}`;
+					return `1|${this.pipeEscape(file.file)}|${file.status}|${file.linesAdded}|${
+						file.linesRemoved
+					}`;
 				}),
-				stompingAuthors: repo.authors.filter(author => author.stomped).map(author => {
-					return `1|${this.pipeEscape(author.email)}|${author.stomped}`;
-				}),
+				stompingAuthors: repo.authors
+					.filter(author => author.stomped)
+					.map(author => {
+						return `1|${this.pipeEscape(author.email)}|${author.stomped}`;
+					}),
 				localCommits: (repo.commits || []).map(commit => {
 					const info = commit.info as { [key: string]: string };
 					return `1|${commit.sha || ""}|${this.pipeEscape(info.shortMessage || "")}`;
@@ -274,23 +287,27 @@ export class UsersManager extends CachedEntityManagerBase<CSUser> {
 						linesRemoved: file.linesRemoved
 					};
 				}),
-				authors: repo.authors.filter(author => author.stomped).map(author => {
-					return {
-						email: author.email,
-						stomped: author.stomped,
-						commits: 0 // unused but required
-					};
-				}),
-				commits: (repo.commits || []).filter(commit => commit.localOnly).map(commit => {
-					const info = commit.info as { [key: string]: string };
-					return {
-						sha: commit.sha,
-						localOnly: true,
-						info: {
-							shortMessage: info.shortMessage || ""
-						}
-					};
-				}),
+				authors: repo.authors
+					.filter(author => author.stomped)
+					.map(author => {
+						return {
+							email: author.email,
+							stomped: author.stomped,
+							commits: 0 // unused but required
+						};
+					}),
+				commits: (repo.commits || [])
+					.filter(commit => commit.localOnly)
+					.map(commit => {
+						const info = commit.info as { [key: string]: string };
+						return {
+							sha: commit.sha,
+							localOnly: true,
+							info: {
+								shortMessage: info.shortMessage || ""
+							}
+						};
+					}),
 				// these are unused but required in RepoScmStatus
 				savedFiles: [],
 				stagedFiles: [],

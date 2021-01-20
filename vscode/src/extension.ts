@@ -133,6 +133,12 @@ export async function activate(context: ExtensionContext) {
 	);
 
 	context.subscriptions.push(
+		Container.agent.onUserDidCommit(e => {
+			if (Container.config.requestFeedbackOnCommit) {
+				Logger.log(`User committed ${e.sha} - opening feedback request form`);
+				Container.webview.newReviewRequest(undefined, "VSC Commit Detected", true);
+			}
+		}),
 		Container.session.onDidChangeSessionStatus(event => {
 			if (event.getStatus() !== SessionStatus.SignedIn) return;
 			if (gitLensIntegrationInitializing) return;

@@ -17,7 +17,6 @@ import {
 	DidChangeVersionCompatibilityNotificationType,
 	DidEncounterMaintenanceModeNotificationType,
 	ReportingMessageType,
-	UserDidCommitNotification,
 	VersionCompatibility
 } from "@codestream/protocols/agent";
 import { CodemarkType, CSApiCapabilities } from "@codestream/protocols/api";
@@ -539,7 +538,6 @@ export class WebviewController implements Disposable {
 				(...args) => this.onDocumentMarkersChanged(webview, ...args),
 				this
 			),
-			Container.agent.onUserDidCommit((...args) => this.onUserDidCommit(...args), this),
 			window.onDidChangeTextEditorSelection(
 				Functions.debounce<(e: TextEditorSelectionChangeEvent) => any>(
 					(...args) => this.onEditorSelectionChanged(webview, ...args),
@@ -671,13 +669,6 @@ export class WebviewController implements Disposable {
 
 	private onDocumentMarkersChanged(webview: WebviewLike, e: DidChangeDocumentMarkersNotification) {
 		webview.notify(DidChangeDocumentMarkersNotificationType, e);
-	}
-
-	private onUserDidCommit(e: UserDidCommitNotification) {
-		if (Container.config.requestFeedbackOnCommit) {
-			Logger.log(`User committed ${e.sha} - opening feedback request form`);
-			this.newReviewRequest(undefined, "VSC Commit Detected", true);
-		}
 	}
 
 	private async onEditorSelectionChanged(webview: WebviewLike, e: TextEditorSelectionChangeEvent) {

@@ -21,6 +21,7 @@ const initialState: ContextState = {
 	createPullRequestReviewId: undefined,
 	currentPullRequest: undefined,
 	pullRequestCheckoutBranch: false,
+	newPullRequestOptions: undefined,
 	isRepositioning: false,
 	issueProvider: undefined,
 	threadId: undefined,
@@ -156,6 +157,12 @@ export function reduceContext(
 				currentPullRequestId: action.payload.prId,
 				pullRequestCheckoutBranch: true
 			};
+		case ContextActionsType.SetNewPullRequestOptions: {
+			return {
+				...state,
+				newPullRequestOptions: action.payload.options
+			};
+		}
 		case ContextActionsType.SetStartWorkCard:
 			return { ...state, startWorkCard: action.payload.card };
 		case ContextActionsType.SetOnboardStep:

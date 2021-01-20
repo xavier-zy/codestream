@@ -74,10 +74,25 @@ export interface NewReviewNotification {
 	includeLatestCommit?: boolean;
 }
 
+export interface NewPullRequestBranch {
+	name: string;
+	remote?: {
+		name: string;
+		provider?: {
+			id: string;
+			name: string;
+			domain: string;
+		};
+		url?: string;
+	};
+	repoPath: string;
+}
+
 export interface NewPullRequestNotification {
 	uri?: string;
 	range?: Range;
 	source?: string;
+	branch?: NewPullRequestBranch;
 }
 
 export const NewReviewNotificationType = new NotificationType<NewReviewNotification, void>(

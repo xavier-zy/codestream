@@ -3,7 +3,7 @@ import { logError } from "../../logger";
 import { setUserPreference } from "../../Stream/actions";
 import { action } from "../common";
 import { ContextActionsType, ContextState, PostEntryPoint, Route } from "./types";
-import { WebviewPanels, WebviewModals } from "@codestream/protocols/webview";
+import { WebviewPanels, WebviewModals, NewPullRequestBranch } from "@codestream/protocols/webview";
 import { CodemarkType } from "@codestream/protocols/api";
 
 export const reset = () => action("RESET");
@@ -149,6 +149,9 @@ export const setCurrentPullRequest = (
 	commentId?: string,
 	source?: string
 ) => action(ContextActionsType.SetCurrentPullRequest, { providerId, id, commentId, source });
+
+export const setNewPullRequestOptions = (options?: { branch: NewPullRequestBranch }) =>
+	action(ContextActionsType.SetNewPullRequestOptions, { options });
 
 export const clearCurrentPullRequest = () =>
 	action(ContextActionsType.SetCurrentPullRequest, {

@@ -36,12 +36,13 @@ import {
 	openPanel,
 	setCurrentPullRequest,
 	setCurrentRepo,
-	closeAllPanels
+	closeAllPanels,
+	setNewPullRequestOptions
 } from "../store/context/actions";
 import { PROVIDER_MAPPINGS } from "./CrossPostIssueControls/types";
 import { PrePRProviderInfoModal } from "./PrePRProviderInfoModal";
 import Icon from "./Icon";
-import { OpenUrlRequestType } from "@codestream/protocols/webview";
+import { NewPullRequestBranch, OpenUrlRequestType } from "@codestream/protocols/webview";
 import { Checkbox } from "../src/components/Checkbox";
 import { PanelHeader } from "../src/components/PanelHeader";
 import { CSMe } from "@codestream/protocols/api";
@@ -144,7 +145,8 @@ export const CreatePullRequestPanel = props => {
 			isConnectedToBitbucketServer: isConnected(state, { name: "bitbucket_server" }),
 			prLabel: getPRLabel(state),
 			currentRepo: context.currentRepo,
-			ideName: state.ide.name
+			ideName: state.ide.name,
+			newPullRequestOptions: state.context.newPullRequestOptions
 		};
 	});
 	const { userStatus, reviewId, prLabel } = derivedState;
@@ -228,6 +230,11 @@ export const CreatePullRequestPanel = props => {
 			setLoading(true);
 			setCurrentStep(0);
 		}
+		let newPullRequestBranch: NewPullRequestBranch | undefined = undefined;
+		if (derivedState.newPullRequestOptions && derivedState.newPullRequestOptions.branch) {
+			newPullRequestBranch = derivedState.newPullRequestOptions.branch!;
+			dispatch(setNewPullRequestOptions());
+		}
 
 		try {
 			const args: { [k: string]: any } = {
@@ -253,6 +260,10 @@ export const CreatePullRequestPanel = props => {
 				if (response && response.repositories && response.repositories.length) {
 					let panelRepo =
 						selectedRepo ||
+						(newPullRequestBranch != null &&
+							response.repositories.find(
+								_ => newPullRequestBranch && _.path === newPullRequestBranch.repoPath
+							)) ||
 						response.repositories.find(_ => _.providerId) ||
 						response.repositories[0];
 					if (derivedState.currentRepo && derivedState.currentRepo.id) {
@@ -268,9 +279,16 @@ export const CreatePullRequestPanel = props => {
 					args.repoId = panelRepo.id || "";
 					setPrRepoId(args.repoId);
 
-					let branchInfo = await HostApi.instance.send(GetBranchesRequestType, {
-						uri: panelRepo.folder.uri
-					});
+					let branchInfo;
+					if (newPullRequestBranch && newPullRequestBranch.name) {
+						branchInfo = await HostApi.instance.send(GetBranchesRequestType, {
+							uri: newPullRequestBranch.repoPath
+						});
+					} else {
+						branchInfo = await HostApi.instance.send(GetBranchesRequestType, {
+							uri: panelRepo.folder.uri
+						});
+					}
 					if (branchInfo && branchInfo.scm && branchInfo.scm.current) {
 						args.headRefName = branchInfo.scm.current;
 					}
@@ -1170,9 +1188,11 @@ export const CreatePullRequestPanel = props => {
 
 	useEffect(() => {
 		fetchBranchCommitsStatus();
-	}, [prBranch, reviewBranch]);
+	}, [prRepoId, prBranch, reviewBranch]);
 
 	const fetchBranchCommitsStatus = async () => {
+		if (!prRepoId) return;
+
 		const commitsStatus = await HostApi.instance.send(FetchBranchCommitsStatusRequestType, {
 			repoId: prRepoId,
 			branchName: prBranch || reviewBranch

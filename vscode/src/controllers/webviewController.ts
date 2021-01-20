@@ -81,7 +81,8 @@ import {
 	ShowPullRequestNotificationType,
 	WebviewPanels,
 	SidebarLocation,
-	HostDidChangeLayoutNotificationType
+	HostDidChangeLayoutNotificationType,
+	NewPullRequestBranch
 } from "@codestream/protocols/webview";
 import { gate } from "system/decorators/gate";
 import {
@@ -356,7 +357,8 @@ export class WebviewController implements Disposable {
 	@log()
 	async newPullRequestRequest(
 		editor: TextEditor | undefined = this._lastEditor,
-		source: string
+		source: string,
+		branch?: NewPullRequestBranch
 	): Promise<void> {
 		if (this.visible) {
 			await this._webview!.show();
@@ -373,7 +375,8 @@ export class WebviewController implements Disposable {
 		this._webview!.notify(NewPullRequestNotificationType, {
 			uri: editor ? editor.document.uri.toString() : undefined,
 			range: editor ? Editor.toSerializableRange(editor.selection) : undefined,
-			source: source
+			source: source,
+			branch: branch
 		});
 	}
 
@@ -710,8 +713,9 @@ export class WebviewController implements Disposable {
 		if (
 			csRangeDiffInfo &&
 			(csRangeDiffInfo.reviewId === "local" || csRangeDiffInfo.version !== "right")
-		)
+		) {
 			return false;
+		}
 
 		return true;
 	}

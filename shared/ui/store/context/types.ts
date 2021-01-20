@@ -1,4 +1,9 @@
-import { WebviewContext, WebviewPanels, WebviewModals } from "@codestream/protocols/webview";
+import {
+	WebviewContext,
+	WebviewPanels,
+	WebviewModals,
+	NewPullRequestBranch
+} from "@codestream/protocols/webview";
 import { AnyObject } from "@codestream/webview/utils";
 import { CodemarkType } from "@codestream/protocols/api";
 
@@ -36,6 +41,7 @@ export enum ContextActionsType {
 	SetCreatePullRequest = "@context/SetCreatePullRequest",
 	SetCurrentPullRequest = "@context/SetCurrentPullRequest",
 	SetCurrentPullRequestAndBranch = "@context/SetCurrentPullRequestAndBranch",
+	SetNewPullRequestOptions = "@context/SetNewPullRequestOptions",
 	SetStartWorkCard = "@context/SetStartWorkCard",
 	SetOnboardStep = "@context/SetOnboardStep",
 	SetIsFirstPageview = "@context/SetIsFirstPageview"
@@ -85,6 +91,7 @@ export interface ContextState extends WebviewContext {
 	composeCodemarkActive: CodemarkType | undefined;
 
 	pullRequestCheckoutBranch: boolean;
+	newPullRequestOptions?: { branch: NewPullRequestBranch };
 }
 
 export type ChatProviderAccess = "strict" | "permissive";

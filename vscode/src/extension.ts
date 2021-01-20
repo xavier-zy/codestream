@@ -207,7 +207,8 @@ function registerGitLensIntegration() {
 									const editor = window.activeTextEditor;
 									Container.webview.newPullRequestRequest(
 										editor && editor.selection && !editor.selection.isEmpty ? editor : undefined,
-										"VSC GitLens"
+										"VSC GitLens",
+										context.branch
 									);
 								} else {
 									Logger.log("GitLens: createPullRequest. No branch and/or remote");

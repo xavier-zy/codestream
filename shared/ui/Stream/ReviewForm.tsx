@@ -2061,6 +2061,7 @@ class ReviewForm extends React.Component<Props, State> {
 							</div>
 							{this.renderTextHelp()}
 							{this.renderMessageInput()}
+							<div style={{ clear: "both" }} />
 						</div>
 					)}
 					{!isAmending && this.renderTags()}
@@ -2076,6 +2077,7 @@ class ReviewForm extends React.Component<Props, State> {
 								</div>
 							</div>
 							{this.renderMessageInput()}
+							<div style={{ clear: "both" }} />
 							{this.renderAddressesIssues()}
 						</div>
 					)}

@@ -586,6 +586,7 @@ export class MessageInput extends React.Component<Props, State> {
 		if (this._contentEditable) {
 			this._contentEditable.htmlEl.focus();
 			this._contentEditable.htmlEl.scrollIntoView({
+				block: "nearest",
 				behavior: "smooth"
 			});
 		}

@@ -673,7 +673,7 @@ export abstract class ThirdPartyIssueProviderBase<
 				break;
 		}
 		let codeStreamAttribution = `Created ${createdFrom} using [CodeStream](${codeStreamLink})`;
-		if (["github*com", "github/enterprise"].includes(request.providerId)) {
+		if (!["bitbucket*org"].includes(request.providerId)) {
 			codeStreamAttribution = `<sup> ${codeStreamAttribution}</sup>`;
 		}
 		request.description += `\n\n${codeStreamAttribution}`;

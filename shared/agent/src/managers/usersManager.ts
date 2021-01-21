@@ -96,6 +96,11 @@ export class UsersManager extends CachedEntityManagerBase<CSUser> {
 	}
 
 	protected async fetchById(userId: Id): Promise<CSUser> {
+		if (this.session.userId !== userId) {
+			const response = await this.session.api.getMe();
+			return response.user;
+		}
+
 		const response = await this.session.api.getUser({ userId: userId });
 		return response.user;
 	}

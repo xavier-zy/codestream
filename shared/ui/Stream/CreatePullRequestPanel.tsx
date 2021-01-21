@@ -1380,25 +1380,27 @@ export const CreatePullRequestPanel = props => {
 															title="Use Current Ticket"
 															name={userStatus.ticketProvider || "ticket"}
 															className="clickable"
-															onClick={() => changePRTitle(userStatus.label)}
+															onMouseDown={() => changePRTitle(userStatus.label)}
 														/>
 													)}
 													{latestCommit && (
 														<Icon
 															placement="topRight"
 															title="Use Latest Commit Message"
+															align={{ offset: [20, 0] }}
 															name="git-commit-vertical"
 															className="clickable"
-															onClick={() => changePRTitle(latestCommit)}
+															onMouseDown={() => changePRTitle(latestCommit)}
 														/>
 													)}
 													{reviewBranch && (
 														<Icon
-															placement="top"
+															placement="topRight"
+															align={{ offset: [5, 0] }}
 															title="Use Branch Name"
 															name="git-branch"
 															className="clickable"
-															onClick={() => setTitleBasedOnBranch()}
+															onMouseDown={() => setTitleBasedOnBranch()}
 														/>
 													)}
 												</div>

@@ -97,15 +97,24 @@ export const IntegrationsPanel = () => {
 				].includes(providers[id].name)
 			)
 			.filter(id => !connectedProviders.includes(id))
-			.filter(id => !teamSettings.limitCodeHost || teamCodeHostProviders[id]);
+			.filter(id => !teamSettings.limitCodeHost || teamCodeHostProviders[id])
+			.sort((a, b) => {
+				return a.localeCompare(b);
+			});
 		const issueProviders = Object.keys(providers)
 			.filter(id => providers[id].hasIssues)
 			.filter(id => !codeHostProviders.includes(id))
 			.filter(id => !connectedProviders.includes(id))
-			.filter(id => !teamSettings.limitIssues || teamIssuesProviders[id]);
+			.filter(id => !teamSettings.limitIssues || teamIssuesProviders[id])
+			.sort((a, b) => {
+				return a.localeCompare(b);
+			});
 		const messagingProviders = Object.keys(providers)
 			.filter(id => providers[id].hasSharing)
-			.filter(id => !teamSettings.limitMessaging || teamMessagingProviders[id]);
+			.filter(id => !teamSettings.limitMessaging || teamMessagingProviders[id])
+			.sort((a, b) => {
+				return a.localeCompare(b);
+			});
 		const sharingTargets = getConnectedSharingTargets(state);
 
 		const apmProviders = ["datadog"];

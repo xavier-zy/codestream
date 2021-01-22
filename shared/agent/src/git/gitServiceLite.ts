@@ -9,7 +9,8 @@ import { Strings } from "../system";
 import { git, isWslGit } from "./git";
 
 const cygwinRegex = /\/cygdrive\/([a-zA-Z])/;
-const wslRegex = /(\\\\wsl\$\\.+?)\\.*/;
+const wslUncRegex = /(\\\\wsl\$\\.+?)\\.*/;
+const wslMntRegex = /\/mnt\/([a-z])(.+)/;
 /**
  * Class to allow for some basic git operations that has no dependency on a user session
  *
@@ -165,7 +166,7 @@ export class GitServiceLite {
 	}
 
 	_getWslPrefix(path: string): string | undefined {
-		const wslMatch = wslRegex.exec(path);
+		const wslMatch = wslUncRegex.exec(path);
 		if (wslMatch != null) {
 			const [, prefix] = wslMatch;
 			return prefix;
@@ -185,7 +186,20 @@ export class GitServiceLite {
 		}
 
 		if (wslPrefix) {
-			return wslPrefix + path.trim().replace(/\//g, "\\");
+			// wsl git + wsl folder
+			const normalized = wslPrefix + path.trim().replace(/\//g, "\\");
+			Logger.debug(`WSL path normalized: ${path} -> ${normalized}`);
+			return normalized;
+		} else if (isWslGit()) {
+			const wslMntMatch = wslMntRegex.exec(path);
+			if (wslMntMatch != null) {
+				// wsl git + windows folder perceived as /mnt/c/...
+				const [, drive, rest] = wslMntMatch;
+				const windowsPath = drive.toUpperCase() + ":" + rest;
+				const normalized = Strings.normalizePath(windowsPath.trim());
+				Logger.debug(`Windows path (with WSL git) normalized: ${path} -> ${normalized}`);
+				return normalized;
+			}
 		}
 
 		// Make sure to normalize: https://github.com/git-for-windows/git/issues/2478

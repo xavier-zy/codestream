@@ -134,6 +134,10 @@ export const PROVIDER_MAPPINGS: { [provider: string]: ProviderDisplay } = {
 		listLabel: "type",
 		cardLabel: "ticket",
 		supportsStartWork: true,
+		hasCustomFilters: true,
+		customFilterExample: "Example: assignee=currentuser() AND status!=Closed",
+		customFilterHelp:
+			'See <a href="https://confluence.atlassian.com/jirasoftwareserver/advanced-searching-939938733.html">Jira Advanced Searching</a> for documentation on JQL.',
 		hasCardBasedWorkflow: true
 	},
 	trello: {

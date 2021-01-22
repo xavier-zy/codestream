@@ -8,6 +8,7 @@ type ConfigsActions = ActionType<typeof actions>;
 const initialState: ConfigsState = {
 	showHeadshots: true,
 	debug: false,
+	requestFeedbackOnCommit: true,
 	serverUrl: ""
 };
 

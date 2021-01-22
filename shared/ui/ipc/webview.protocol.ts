@@ -72,6 +72,7 @@ export interface NewReviewNotification {
 	range?: Range;
 	source?: string;
 	includeLatestCommit?: boolean;
+	showAutoReviewToggle?: boolean;
 }
 
 export interface NewPullRequestBranch {

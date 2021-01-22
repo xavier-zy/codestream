@@ -14,7 +14,9 @@ namespace CodeStream.VisualStudio.Core.LanguageServer {
 
 		private static HashSet<string> IgnoredMethods = new HashSet<string> {
 			// this throws some bizarro internal exception -- we don't use it anyway
-			"textDocument/completion"
+			// (most likely a versioning issue [aka we're too old])
+			"textDocument/completion",
+			"textDocument/hover"
 		};
 
 		/// <summary>

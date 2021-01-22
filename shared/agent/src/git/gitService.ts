@@ -90,6 +90,7 @@ export interface IGitService extends Disposable {
 	//   resolveRef(uriOrPath: Uri | string, ref: string): Promise<string | undefined> {
 
 	getCommittersForRepo(repoPath: string, since: number): Promise<{ [email: string]: string }>;
+	getLastCommittersForRepo(repoPath: string, since: number): Promise<{ email: string, name: string }[]>;
 }
 
 export class GitService implements IGitService, Disposable {
@@ -1412,6 +1413,31 @@ export class GitService implements IGitService, Disposable {
 				.forEach(line => {
 					const [name, email] = line.split("|");
 					result[email.trim()] = name.trim();
+				});
+		} catch {}
+
+		return result;
+	}
+
+	async getLastCommittersForRepo(
+		repoPath: string,
+		since: number
+	): Promise<{ email: string, name: string }[]> {
+		const result: { email: string, name: string }[] = [];
+		try {
+			// this should be populated by something like
+			// git log --pretty=format:"%an|%aE" | sort -u
+			// and then filter out noreply.github.com (what else?)
+			const timeAgo = new Date().getTime() / 1000 - since;
+			(await git({ cwd: repoPath }, "log", "--pretty=format:%an|%aE", `--since=${timeAgo}`))
+				.split("\n")
+				.map(line => line.trim())
+				.filter(line => !line.match(/noreply/))
+				.forEach(line => {
+					const [name, email] = line.split("|");
+					if (!result.find(author => author.email === email)) {
+						result.push({name, email});
+					}
 				});
 		} catch {}
 

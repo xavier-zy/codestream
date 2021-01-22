@@ -527,6 +527,17 @@ export class ScmManager {
 								authorMap[author.email].stomped = author.hunks + authorMap[author.email].stomped;
 							})
 						);
+
+					if (Object.keys(authorMap).length < 3) {
+						const oneDay = 60 * 60 * 24;
+						const since = oneDay * 180; // six months
+						const lastCommitters = await git.getLastCommittersForRepo(repoPath, since);
+						lastCommitters.map(lastCommitter => {
+							if (!authorMap[lastCommitter.email]) {
+								authorMap[lastCommitter.email] = { stomped: 0, commits: 0 };
+							}
+						});
+					}
 				}
 				Object.keys(authorMap).forEach(email => {
 					authors.push({

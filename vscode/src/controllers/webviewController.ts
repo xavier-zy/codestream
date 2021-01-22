@@ -1137,7 +1137,8 @@ export class WebviewController implements Disposable {
 		const currentTeamId = this.session.signedIn ? this.session.team.id : undefined;
 		return {
 			session: {
-				userId: userId
+				userId: userId,
+				machineId: env.machineId
 			},
 			capabilities: this.session.capabilities,
 			configs: {

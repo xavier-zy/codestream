@@ -548,6 +548,9 @@ export class CodeStreamApiProvider implements ApiProvider {
 	}
 
 	async register(request: CSRegisterRequest) {
+		if (this._version.machine?.machineId) {
+			request.machineId = this._version.machine.machineId;
+		}
 		const response = await this.post<CSRegisterRequest, CSRegisterResponse | CSLoginResponse>(
 			"/no-auth/register",
 			request

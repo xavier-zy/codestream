@@ -113,6 +113,7 @@ export interface BaseAgentOptions {
 	traceLevel: TraceLevel;
 	recordRequests?: boolean;
 	workspaceFolders?: WorkspaceFolder[];
+	machineId?: string;
 }
 
 export interface AgentOptions extends BaseAgentOptions {

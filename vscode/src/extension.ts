@@ -104,7 +104,8 @@ export async function activate(context: ExtensionContext) {
 			isDebugging: Logger.isDebugging,
 			serverUrl: cfg.serverUrl,
 			disableStrictSSL: cfg.disableStrictSSL,
-			traceLevel: Logger.level
+			traceLevel: Logger.level,
+			machineId: env.machineId
 		},
 		webviewLikeSidebar
 	);

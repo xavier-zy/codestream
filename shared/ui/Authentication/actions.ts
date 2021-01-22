@@ -87,6 +87,9 @@ export const startSSOSignin = (
 	if (info && info.hostUrl) {
 		query.hostUrl = info.hostUrl;
 	}
+	if (session.machineId) {
+		query.machineId = session.machineId;
+	}
 	const queryString = Object.keys(query)
 		.map(key => `${key}=${query[key]}`)
 		.join("&");

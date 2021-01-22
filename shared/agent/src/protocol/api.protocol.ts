@@ -105,6 +105,7 @@ export interface CSRegisterRequest {
 	companyName?: string;
 	wantLink?: boolean;
 	inviteCode?: string;
+	machineId?: string;
 }
 
 export interface CSRegisterResponse {

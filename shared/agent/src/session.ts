@@ -155,6 +155,10 @@ export interface VersionInfo {
 		version: string;
 		detail: string;
 	};
+
+	machine?: {
+		machineId?: string;
+	};
 }
 
 export class CodeStreamSession {
@@ -631,7 +635,8 @@ export class CodeStreamSession {
 	get versionInfo(): Readonly<VersionInfo> {
 		return {
 			extension: { ...this._options.extension },
-			ide: { ...this._options.ide }
+			ide: { ...this._options.ide },
+			machine: { machineId: this._options.machineId }
 		};
 	}
 

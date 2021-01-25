@@ -737,7 +737,17 @@ export const PullRequestConversationTab = (props: {
 
 	// console.warn("ASSI: ", assigneeMenuItems);
 
-	const lastCommit = pr.commits.nodes[0].commit;
+	const lastCommit =
+		pr &&
+		pr.commits &&
+		pr.commits.nodes &&
+		pr.commits.nodes.length &&
+		pr.commits.nodes[0] &&
+		pr.commits.nodes[0].commit
+			? pr.commits.nodes[0].commit
+			: {
+					statusCheckRollup: null
+			  };
 	return (
 		<PRContent>
 			{isLocking && (

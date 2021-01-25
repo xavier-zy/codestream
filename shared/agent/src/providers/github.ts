@@ -3800,7 +3800,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 			  authoredDate
 			  ${this._transform(`[statusCheckRollup {
 			  	state
-			  }:>=2.21.0]`)}
+			  }:>=3.0.0]`)}
 			}
 		  }`,
 			// 	`... on PullRequestCommitCommentThread {
@@ -4229,7 +4229,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 									}
 								}
 							  }						
-							}:>=2.21.0]`)}
+							}:>=3.0.0]`)}
 					}
 					headRefName
 					headRefOid

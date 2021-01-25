@@ -320,24 +320,35 @@ export const Onboard = React.memo(function Onboard() {
 		const dontSuggestInvitees = team.settings ? team.settings.dontSuggestInvitees || {} : {};
 
 		const connectedProviders = Object.keys(providers).filter(id => isConnected(state, { id }));
-		const codeHostProviders = Object.keys(providers).filter(id =>
-			[
-				"github",
-				"github_enterprise",
-				"bitbucket",
-				"bitbucket_server",
-				"gitlab",
-				"gitlab_enterprise"
-			].includes(providers[id].name)
-		);
+		const codeHostProviders = Object.keys(providers)
+			.filter(id =>
+				[
+					"github",
+					"github_enterprise",
+					"bitbucket",
+					"bitbucket_server",
+					"gitlab",
+					"gitlab_enterprise"
+				].includes(providers[id].name)
+			)
+			.sort((a, b) => {
+				return providers[a].name.localeCompare(providers[b].name);
+			});
 		const connectedCodeHostProviders = codeHostProviders.filter(id =>
 			connectedProviders.includes(id)
 		);
 		const issueProviders = Object.keys(providers)
 			.filter(id => providers[id].hasIssues)
-			.filter(id => !codeHostProviders.includes(id));
+			.filter(id => !codeHostProviders.includes(id))
+			.sort((a, b) => {
+				return providers[a].name.localeCompare(providers[b].name);
+			});
 		const connectedIssueProviders = issueProviders.filter(id => connectedProviders.includes(id));
-		const messagingProviders = Object.keys(providers).filter(id => providers[id].hasSharing);
+		const messagingProviders = Object.keys(providers)
+			.filter(id => providers[id].hasSharing)
+			.sort((a, b) => {
+				return providers[a].name.localeCompare(providers[b].name);
+			});
 		const connectedMessagingProviders = messagingProviders.filter(id =>
 			connectedProviders.includes(id)
 		);

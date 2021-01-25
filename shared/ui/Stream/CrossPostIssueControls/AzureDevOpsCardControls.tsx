@@ -63,11 +63,6 @@ export function AzureDevOpsCardControls(
 
 			if (!isValid) return;
 
-			if (response.boards.length === 0) {
-				// 💩 retry in case there was a race condition (continues until this component is unmounted)
-				await fetchBoards();
-				return;
-			}
 			// make sure to persist current selections if possible
 			const newCurrentProject = (data.currentProject
 				? response.boards.find(b => b.id === data.currentProject!.id)

@@ -71,12 +71,6 @@ export function BitbucketCardControls(
 
 			if (!isValid) return;
 
-			if (response.boards.length === 0) {
-				// 💩 retry in case there was a race condition (continues until this component is unmounted)
-				await fetchBoards();
-				return;
-			}
-
 			crossPostIssueContext.setValues({
 				codeDelimiterStyle: CodeDelimiterStyles.TRIPLE_BACK_QUOTE
 			});

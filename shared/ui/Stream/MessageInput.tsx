@@ -136,6 +136,7 @@ interface Props extends ConnectedProps {
 	autoFocus?: boolean;
 	className?: string;
 	attachments?: AttachmentField[];
+	attachmentContainerType?: "codemark" | "reply" | "review";
 	setAttachments?(attachments: AttachmentField[]): void;
 	renderCodeBlock?(index: number, force: boolean): React.ReactNode | null;
 	renderCodeBlocks?(): React.ReactNode | null;
@@ -359,7 +360,7 @@ export class MessageInput extends React.Component<Props, State> {
 				}
 				HostApi.instance.track("File Attached", {
 					"File Type": file.type,
-					Parent: "codemark"
+					Parent: this.props.attachmentContainerType
 				});
 			} catch (e) {
 				console.warn("Error uploading file: ", e);

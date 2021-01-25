@@ -1574,6 +1574,7 @@ class CodemarkForm extends React.Component<Props, State> {
 				renderCodeBlock={this.renderCodeBlock}
 				renderCodeBlocks={this.renderCodeBlocks}
 				attachments={this.state.attachments}
+				attachmentContainerType="codemark"
 				setAttachments={this.setAttachments}
 				__onDidRender={__onDidRender}
 			/>

@@ -1171,6 +1171,9 @@ export class CodeStreamSession {
 	}
 
 	private async repositoryCommitHashChanged(repo: GitRepository) {
+		if (!this.apiCapabilities.autoFR) {
+			return;
+		}
 		SessionContainer.instance().markerLocations.flushUncommittedLocations(repo);
 		const { git } = SessionContainer.instance();
 		const commit = await git.getCommit(repo.path, "HEAD");

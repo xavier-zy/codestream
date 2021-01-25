@@ -166,6 +166,7 @@ interface ConnectedProps {
 	statusIcon: string;
 	currentRepoPath?: string;
 	isInVscode: boolean;
+	isAutoFREnabled: boolean;
 	requestFeedbackOnCommit: boolean;
 }
 
@@ -431,7 +432,8 @@ class ReviewForm extends React.Component<Props, State> {
 			textEditorUri,
 			currentRepoPath,
 			isInVscode,
-			requestFeedbackOnCommit
+			requestFeedbackOnCommit,
+			isAutoFREnabled
 		} = this.props;
 		if (isEditing && !isAmending) return;
 
@@ -440,7 +442,7 @@ class ReviewForm extends React.Component<Props, State> {
 			const isRequestingFeedbackOnCommit =
 				this.props.currentReviewOptions && this.props.currentReviewOptions.includeLatestCommit;
 			const showRequestFeedbackOnCommitToggle =
-				isInVscode && (isRequestingFeedbackOnCommit || !requestFeedbackOnCommit);
+				isInVscode && isAutoFREnabled && (isRequestingFeedbackOnCommit || !requestFeedbackOnCommit);
 			this.setState({ showRequestFeedbackOnCommitToggle });
 		}
 
@@ -1192,19 +1194,6 @@ class ReviewForm extends React.Component<Props, State> {
 						>
 							{!isAmending && <CancelButton onClick={this.confirmCancel} />}
 							<div className={cx({ "review-container": !isAmending })}>
-								<div className="codemark-form-container">{this.renderReviewForm()}</div>
-								{this.renderExcludedFiles()}
-								<div style={{ height: "5px" }}></div>
-								{!this.props.isEditing && this.state.reviewerEmails.length > 0 && (
-									<>
-										<div style={{ height: "10px" }}></div>
-										<CSText muted>
-											<SmartFormattedList value={this.state.reviewerEmails} /> will be notified via
-											email
-										</CSText>
-									</>
-								)}
-
 								{this.state.showRequestFeedbackOnCommitToggle && (
 									<>
 										<span className="subhead muted">
@@ -1225,6 +1214,20 @@ class ReviewForm extends React.Component<Props, State> {
 												width={64}
 											/>
 										</span>
+									</>
+								)}
+								<div style={{ height: "5px" }}></div>
+
+								<div className="codemark-form-container">{this.renderReviewForm()}</div>
+								{this.renderExcludedFiles()}
+								<div style={{ height: "5px" }}></div>
+								{!this.props.isEditing && this.state.reviewerEmails.length > 0 && (
+									<>
+										<div style={{ height: "10px" }}></div>
+										<CSText muted>
+											<SmartFormattedList value={this.state.reviewerEmails} /> will be notified via
+											email
+										</CSText>
 									</>
 								)}
 
@@ -2390,6 +2393,7 @@ const mapStateToProps = (state: CodeStreamState, props): ConnectedProps => {
 		statusIcon,
 		currentRepoPath: context.currentRepo && context.currentRepo.path,
 		isInVscode: ide.name === "VSC",
+		isAutoFREnabled: isFeatureEnabled(state, "autoFR"),
 		requestFeedbackOnCommit: state.configs.requestFeedbackOnCommit
 	};
 };

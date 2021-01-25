@@ -9,7 +9,6 @@ import {
 	ReposScm,
 	DidChangeDataNotificationType,
 	ChangeDataType,
-	GetUserInfoRequestType,
 	UpdateReviewResponse,
 	CodemarkPlus,
 	TelemetryRequestType,
@@ -82,7 +81,6 @@ import Timestamp from "./Timestamp";
 import {
 	ReviewShowLocalDiffRequestType,
 	WebviewPanels,
-	WebviewModals,
 	UpdateConfigurationRequestType
 } from "@codestream/protocols/webview";
 import { Checkbox } from "../src/components/Checkbox";
@@ -1195,14 +1193,12 @@ class ReviewForm extends React.Component<Props, State> {
 							{!isAmending && <CancelButton onClick={this.confirmCancel} />}
 							<div className={cx({ "review-container": !isAmending })}>
 								{this.state.showRequestFeedbackOnCommitToggle && (
-									<>
-										<span className="subhead muted">
-											Auto-prompt for feedback when committing:{" "}
-										</span>
+									<div style={{ margin: "-30px 30px 10px 0", display: "flex" }}>
+										<span className="subhead muted">Auto-prompt for feedback when committing </span>
 										<span
 											key="toggle-auto-fr"
 											className="headline-flex"
-											style={{ display: "inline-block" }}
+											style={{ display: "inline-block", marginLeft: "10px" }}
 										>
 											<LabeledSwitch
 												key="auto-feedback-toggle"
@@ -1211,10 +1207,10 @@ class ReviewForm extends React.Component<Props, State> {
 												onLabel="Yes"
 												onChange={this.toggleRequestFeedbackOnCommitEnabled}
 												height={20}
-												width={64}
+												width={60}
 											/>
 										</span>
-									</>
+									</div>
 								)}
 								<div style={{ height: "5px" }}></div>
 

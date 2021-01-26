@@ -54,4 +54,74 @@ export const MarkdownText = styled(
 			}
 		}
 	}
+	.js-suggested-changes-blob {
+		white-space: normal;
+		&.border,
+		.border {
+			border: 1px solid var(--base-border-color);
+		}
+		&.rounded-1,
+		.rounded-1 {
+			border-radius: 6px;
+		}
+		.d-flex {
+			display: flex !important;
+		}
+		.flex-auto {
+			flex: auto;
+		}
+		.p-2 {
+			padding: 8px;
+		}
+		.border-bottom {
+			border-bottom: 1px solid var(--base-border-color);
+		}
+		.file {
+			border-radius: 6px;
+		}
+		table {
+			border-spacing: 0;
+			border-collapse: collapse;
+			td {
+				padding: 4px 8px;
+			}
+		}		
+		.blob-num {
+			width: 1%;
+			min-width: 50px;
+			padding-right: 10px;
+			padding-left: 10px;
+			text-align: right;
+			white-space: nowrap;
+			vertical-align: top;
+			cursor: pointer;
+			-webkit-user-select: none;
+			-moz-user-select: none;
+			-ms-user-select: none;
+			user-select: none;
+		}
+		.blob-num::before {
+			content: attr(data-line-number);
+		}
+		.blob-num-deletion {
+			background: rgba(255, 0, 0, 0.2);
+		}
+		.blob-num-addition {
+			background: rgba(80, 255, 0, 0.18);
+		}
+		.blob-code-marker-deletion {
+			background: rgba(255, 0, 0, 0.1);
+			var(--text-color-subtle);
+		}
+		.blob-code-marker-addition {
+			background: rgba(80, 255, 0, 0.09);
+			var(--text-color-subtle);
+		}
+		.blob-code-marker-deletion::before {
+			content: "- ";
+		}
+		.blob-code-marker-addition::before {
+			content: "+ ";
+		}
+	}
 `;

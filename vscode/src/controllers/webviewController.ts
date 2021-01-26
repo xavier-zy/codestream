@@ -1148,6 +1148,7 @@ export class WebviewController implements Disposable {
 				email: Container.config.email,
 				serverUrl: this.session.serverUrl,
 				showHeadshots: Container.config.showAvatars,
+				requestFeedbackOnCommit: Container.config.requestFeedbackOnCommit,
 				team: Container.config.team
 			},
 			env: this.session.environment,

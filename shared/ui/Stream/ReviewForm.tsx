@@ -165,7 +165,7 @@ interface ConnectedProps {
 	currentRepoPath?: string;
 	isInVscode: boolean;
 	isAutoFREnabled: boolean;
-	requestFeedbackOnCommit: boolean;
+	requestFeedbackOnCommit?: boolean;
 }
 
 interface State {

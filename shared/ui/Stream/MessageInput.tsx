@@ -240,7 +240,7 @@ export class MessageInput extends React.Component<Props, State> {
 	}
 
 	pinImage = (filename: string, url: string) => {
-		this.insertTextAtCursor(`![${filename}](${url})`);
+		this.insertTextAtCursor(`![${filename}](${url.replace(/ /g, "%20")})`);
 	};
 
 	renderAttachedFiles = () => {

@@ -61,7 +61,7 @@ const Root = styled.div((props: PropsWithTheme<RootProps>) => {
 
 const Knob = styled.div<PropsWithTheme<RootProps>>(props => {
 	return `
-  transition: all 0.3s;
+  transition: all 0.2s;
   border-radius: ${props.$height * 2.2}px;
   position: absolute;
   background-color: ${props.$disabled ? props.theme.colors.grey1 : props.theme.colors.white};

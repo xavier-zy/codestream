@@ -323,8 +323,6 @@ export class MessageInput extends React.Component<Props, State> {
 		const { attachments = [] } = this.props;
 		let index = attachments.length;
 
-		HostApi.instance.track("File Attached", {});
-
 		[...files].forEach(file => {
 			file.status = "uploading";
 		});

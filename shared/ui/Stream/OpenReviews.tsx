@@ -13,7 +13,8 @@ import {
 	setNewPostEntry,
 	openPanel,
 	openModal,
-	setCreatePullRequest
+	setCreatePullRequest,
+	clearCurrentPullRequest
 } from "../store/context/actions";
 import { useDidMount } from "../utilities/hooks";
 import { bootstrapReviews } from "../store/reviews/actions";
@@ -114,6 +115,9 @@ export const OpenReviews = React.memo(function OpenReviews(props: Props) {
 				<Icon
 					onClick={() => {
 						dispatch(setNewPostEntry("Feedback Requests Section"));
+						dispatch(setCreatePullRequest());
+						dispatch(clearCurrentPullRequest());
+						dispatch(setCurrentReview());
 						dispatch(openPanel(WebviewPanels.NewReview));
 					}}
 					name="plus"

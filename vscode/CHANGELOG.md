@@ -1,5 +1,25 @@
 # Change Log
 
+## [10.4.1] - 2021-1-26
+
+### Added
+
+- Adds the ability to attach files to a feedback request, or to a reply
+- Adds support for custom queries for Jira Server in the Issues section
+- Adds a prompt to create a feedback request when you commit code, which can be turned off via a toggle above the form
+- Adds support for initiating a comment from GitLens hovers
+
+### Changed
+
+- Automatically populate all reviewer slots in a feedback request, going to recent committers if necessary, if one of the "authorship" assignment options is selected
+
+### Fixed
+
+- Addresses [#380](https://github.com/TeamCodeStream/CodeStream/issues/380) &mdash; Viewing a PR with status checks on GitHub Enterprise generates an error 
+- Addresses [#376](https://github.com/TeamCodeStream/CodeStream/issues/376) &mdash; Can't exit preview mode when creating a feedback request
+- Fixes an issue where you'd end up in an infinite "Fetching repo..." loop trying to create an issue on Bitbucket
+- Fixes an issue creating a permalink when in a WSL environment
+
 ## [10.4.0] - 2021-1-19
 
 ### Added
@@ -9,7 +29,7 @@
 - When selecting a Linear issue to start work, the branch name associated with the issue is used
 - Adds the ability to pull the latest, if the base branch is behind origin, when previewing diffs while creating a pull request
 
-### Changed
+### Changed2
 
 - Prevent the creation of codemarks when in a preview diff while submitting a feedback request
 - Suppress the Notifications section of pull request details in VS Code because GitHub auth through VS Code doesn't provide the appropriate scope

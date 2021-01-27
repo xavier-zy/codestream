@@ -677,7 +677,7 @@ export class WebviewController implements Disposable {
 		if (e.textEditor !== this._lastEditor || !this.isSupportedEditor(e.textEditor)) return;
 
 		webview.notify(HostDidChangeEditorSelectionNotificationType, {
-			uri: e.textEditor.document.uri.toString(),
+			uri: e.textEditor.document.uri.toString(true),
 			selections: Editor.toEditorSelections(e.selections),
 			visibleRanges: Editor.toSerializableRange(e.textEditor.visibleRanges),
 			lineCount: e.textEditor.document.lineCount
@@ -691,7 +691,7 @@ export class WebviewController implements Disposable {
 		if (e.textEditor !== this._lastEditor || !this.isSupportedEditor(e.textEditor)) return;
 
 		webview.notify(HostDidChangeEditorVisibleRangesNotificationType, {
-			uri: e.textEditor.document.uri.toString(),
+			uri: e.textEditor.document.uri.toString(true),
 			selections: Editor.toEditorSelections(e.textEditor.selections),
 			visibleRanges: Editor.toSerializableRange(e.visibleRanges),
 			lineCount: e.textEditor.document.lineCount

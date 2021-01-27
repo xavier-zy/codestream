@@ -196,7 +196,7 @@ export class ReviewDiffContentProvider implements TextDocumentContentProvider, D
 			);
 			return contents.content! || "";
 		}
-		const csReviewDiffInfo = Strings.parseCSReviewDiffUrl(uri.toString());
+		const csReviewDiffInfo = Strings.parseCSReviewDiffUrl(uri.toString(true));
 		if (csReviewDiffInfo == null) return "";
 
 		const { reviewId, checkpoint, repoId, version, path } = csReviewDiffInfo;

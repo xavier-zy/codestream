@@ -925,7 +925,7 @@ export class ScmManager {
 		}
 
 		return {
-			uri: uri.toString(),
+			uri: uri.toString(true),
 			scm:
 				repoPath !== undefined
 					? {

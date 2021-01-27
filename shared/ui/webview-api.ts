@@ -43,7 +43,7 @@ const normalizeNotificationsMap = new Map<
 		HostDidChangeActiveEditorNotificationType,
 		listener => (e: HostDidChangeActiveEditorNotification) => {
 			if (e.editor) {
-				e.editor.uri = URI.parse(e.editor.uri).toString();
+				e.editor.uri = URI.parse(e.editor.uri).toString(true);
 			}
 			return listener(e);
 		}
@@ -51,28 +51,28 @@ const normalizeNotificationsMap = new Map<
 	[
 		HostDidChangeEditorSelectionNotificationType,
 		listener => (e: HostDidChangeEditorSelectionNotification) => {
-			e.uri = URI.parse(e.uri).toString();
+			e.uri = URI.parse(e.uri).toString(true);
 			return listener(e);
 		}
 	],
 	[
 		HostDidChangeEditorVisibleRangesNotificationType,
 		listener => (e: HostDidChangeEditorVisibleRangesNotification) => {
-			e.uri = URI.parse(e.uri).toString();
+			e.uri = URI.parse(e.uri).toString(true);
 			return listener(e);
 		}
 	],
 	[
 		NewCodemarkNotificationType,
 		listener => (e: NewCodemarkNotification) => {
-			e.uri = e.uri ? URI.parse(e.uri).toString() : undefined;
+			e.uri = e.uri ? URI.parse(e.uri).toString(true) : undefined;
 			return listener(e);
 		}
 	],
 	[
 		NewReviewNotificationType,
 		listener => (e: NewReviewNotification) => {
-			e.uri = e.uri ? URI.parse(e.uri).toString() : undefined;
+			e.uri = e.uri ? URI.parse(e.uri).toString(true) : undefined;
 			return listener(e);
 		}
 	]

@@ -221,7 +221,7 @@ export class AsanaProvider extends ThirdPartyIssueProviderBase<CSAsanaProviderIn
 		const cardData = {
 			data: {
 				name: data.name,
-				notes: data.description,
+				html_notes: data.description,
 				projects: data.boardId,
 				memberships: [
 					{

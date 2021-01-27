@@ -93,6 +93,7 @@ export interface CreateShareableCodemarkRequest {
 	 * the possible reviewId of
 	 */
 	pullRequestReviewId?: string;
+	ideName?: string;
 }
 
 export interface CreateShareableCodemarkResponse {

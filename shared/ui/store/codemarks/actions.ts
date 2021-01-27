@@ -99,6 +99,7 @@ export const createCodemark = (attributes: SharingNewCodemarkAttributes) => asyn
 	getState: () => CodeStreamState
 ) => {
 	const { accessMemberIds, ...rest } = attributes;
+	const state = getState();
 
 	try {
 		const response = await HostApi.instance.send(CreateShareableCodemarkRequestType, {
@@ -111,7 +112,8 @@ export const createCodemark = (attributes: SharingNewCodemarkAttributes) => asyn
 			parentPostId: attributes.parentPostId,
 			isPseudoCodemark: attributes.isPseudoCodemark,
 			isProviderReview: attributes.isProviderReview,
-			files: attributes.files
+			files: attributes.files,
+			ideName: state.ide.name
 		});
 		if (response) {
 			let result;

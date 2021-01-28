@@ -92,11 +92,11 @@ export * from "./linear";
 const PR_QUERIES = [
 	{
 		name: "is waiting on your review",
-		query: `is:pr review-requested:@me -author:@me`
+		query: `is:pr is:open review-requested:@me -author:@me`
 	},
 	{
 		name: "was assigned to you",
-		query: `is:pr assignee:@me -author:@me`
+		query: `is:pr is:open assignee:@me -author:@me`
 	}
 ];
 
@@ -108,6 +108,7 @@ interface ProviderPullRequests {
 @lsp
 export class ThirdPartyProviderRegistry {
 	private _lastProvidersPRs: ProviderPullRequests[] | undefined;
+	private _queriedPRsAgeLimit?: {providerName: string; ageLimit: number[]}[] | undefined;
 	private _pollingInterval: NodeJS.Timer | undefined;
 
 	constructor(public readonly session: CodeStreamSession) {
@@ -154,6 +155,20 @@ export class ThirdPartyProviderRegistry {
 	private getProvidersPRsDiff = (providersPRs: ProviderPullRequests[]): ProviderPullRequests[] => {
 		const newProvidersPRs: ProviderPullRequests[] = [];
 		if (this._lastProvidersPRs === undefined) {
+			this._queriedPRsAgeLimit = providersPRs.map(providerPRs => {
+				const ageLimit = providerPRs.queriedPullRequests.map(
+					(pullRequests: GetMyPullRequestsResponse[], index: number) => {
+						if (pullRequests.length > 0) {
+							return pullRequests[pullRequests.length - 1].createdAt;
+						}
+						return 0;
+					}
+				);
+				return {
+					providerName: providerPRs.providerName,
+					ageLimit
+				};
+			});
 			return [];
 		}
 
@@ -168,9 +183,11 @@ export class ThirdPartyProviderRegistry {
 			const queriedPullRequests: GetMyPullRequestsResponse[][] = [];
 			providerPRs.queriedPullRequests.map(
 				(pullRequests: GetMyPullRequestsResponse[], index: number) => {
+					const ageLimit = this._queriedPRsAgeLimit?.find(_ => _.providerName === providerPRs.providerName);
+					const actualPRs = pullRequests.filter(pr => pr.createdAt >= (ageLimit ? ageLimit.ageLimit[index] : 0) );
 					queriedPullRequests.push(
 						differenceWith(
-							pullRequests,
+							actualPRs,
 							previousProviderPRs.queriedPullRequests[index],
 							(value, other) => value.id === other.id
 						)

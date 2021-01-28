@@ -452,6 +452,9 @@ const Root = styled.div`
 	.expander {
 		margin: 0 2px 0 -2px;
 	}
+	.codemark.collapsed {
+		padding-left: 40px !important;
+	}
 `;
 
 interface PaneProps {

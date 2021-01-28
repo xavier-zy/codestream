@@ -29,7 +29,14 @@ import { PostEntryPoint } from "../store/context/types";
 import { PRInfoModal } from "./SpatialView/PRInfoModal";
 import { isConnected } from "../store/providers/reducer";
 import * as fs from "../utilities/fs";
-import { PaneHeader, NoContent, PaneState, PaneBody } from "../src/components/Pane";
+import {
+	PaneHeader,
+	NoContent,
+	PaneState,
+	PaneBody,
+	PaneNode,
+	PaneNodeName
+} from "../src/components/Pane";
 import { Modal } from "./Modal";
 import { Dialog, ButtonRow } from "../src/components/Dialog";
 import { Checkbox } from "../src/components/Checkbox";
@@ -41,6 +48,7 @@ import { withSearchableItems, WithSearchableItemsProps } from "./withSearchableI
 import { ReposState } from "../store/repos/types";
 import { getActiveCodemarks } from "../store/codemarks/reducer";
 import { CSMarker } from "@codestream/protocols/api";
+import { PanelHeader } from "../src/components/PanelHeader";
 
 export enum CodemarkDomainType {
 	File = "file",
@@ -85,6 +93,7 @@ interface ConnectedProps {
 	repos: ReposState;
 	codemarks: CodemarkPlus[];
 	count: number;
+	hiddenPaneNodes: { [nodeId: string]: boolean };
 }
 
 interface DispatchProps {
@@ -378,6 +387,24 @@ export class SimpleCodemarksForFile extends Component<Props, State> {
 		const { codemarks } = this.props;
 		if (codemarks.length === 0) return this.renderNoCodemarks();
 		// if (this.state.isLoading) return null;
+		const open = codemarks.filter(codemark => codemark.status !== "closed");
+		const closed = codemarks.filter(codemark => codemark.status === "closed");
+		return (
+			<>
+				<PaneNode>
+					<PaneNodeName id="codemarks/open" title="Open" />
+					{!this.props.hiddenPaneNodes["codemarks/open"] && this.renderCodemarksSearchList(open)}
+				</PaneNode>
+				<PaneNode>
+					<PaneNodeName id="codemarks/closed" title="Resolved" />
+					{!this.props.hiddenPaneNodes["codemarks/closed"] &&
+						this.renderCodemarksSearchList(closed)}
+				</PaneNode>
+			</>
+		);
+	};
+
+	renderCodemarksSearchList = codemarks => {
 		return codemarks.map(codemark => {
 			this.renderedCodemarks[codemark.id] = true;
 			return (
@@ -397,8 +424,26 @@ export class SimpleCodemarksForFile extends Component<Props, State> {
 	};
 
 	renderCodemarksFile = () => {
-		const { documentMarkers = [], showHidden, codemarkSortType: codemarkSortType } = this.props;
+		const { documentMarkers = [] } = this.props;
+		const open = documentMarkers.filter(m => m.codemark && m.codemark.status !== "closed");
+		const closed = documentMarkers.filter(m => m.codemark && m.codemark.status === "closed");
 		if (documentMarkers.length === 0) return this.renderNoCodemarks();
+		return (
+			<>
+				<PaneNode>
+					<PaneNodeName id="codemarks/open" title="Open" />
+					{!this.props.hiddenPaneNodes["codemarks/open"] && this.renderCodemarksList(open)}
+				</PaneNode>
+				<PaneNode>
+					<PaneNodeName id="codemarks/closed" title="Resolved" />
+					{!this.props.hiddenPaneNodes["codemarks/closed"] && this.renderCodemarksList(closed)}
+				</PaneNode>
+			</>
+		);
+	};
+
+	renderCodemarksList = documentMarkers => {
+		const { showHidden, codemarkSortType: codemarkSortType } = this.props;
 		if (this.state.isLoading) return null;
 		const codemarksInList = {};
 		let codemarkSortFn;
@@ -428,7 +473,7 @@ export class SimpleCodemarksForFile extends Component<Props, State> {
 				}
 
 				const hidden =
-					(!showHidden && codemark && (!codemark.pinned || codemark.status === "closed")) ||
+					(!showHidden && codemark && !codemark.pinned) ||
 					(docMarker.externalContent && !this.props.showPRComments);
 				if (hidden) return null;
 
@@ -691,6 +736,7 @@ export class SimpleCodemarksForFile extends Component<Props, State> {
 }
 
 const EMPTY_ARRAY = [];
+const EMPTY_HASH_2 = {};
 
 const mapStateToProps = (state: CodeStreamState, props): ConnectedProps => {
 	const { context, repos, editorContext, documentMarkers, preferences, teams } = state;
@@ -751,7 +797,7 @@ const mapStateToProps = (state: CodeStreamState, props): ConnectedProps => {
 			.filter(codemark => {
 				const hidden =
 					//@ts-ignore
-					!showHidden && codemark && (!codemark.pinned || codemark.status === "closed");
+					!showHidden && codemark && !codemark.pinned;
 				if (hidden) return false;
 
 				if (
@@ -794,7 +840,8 @@ const mapStateToProps = (state: CodeStreamState, props): ConnectedProps => {
 		count,
 		numHidden,
 		codemarkDomain,
-		codemarkSortType
+		codemarkSortType,
+		hiddenPaneNodes: preferences.hiddenPaneNodes || EMPTY_HASH_2
 	};
 };
 export default withSearchableItems(

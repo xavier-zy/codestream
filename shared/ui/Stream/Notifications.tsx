@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { CodeStreamState } from "../store";
 import { isFeatureEnabled } from "../store/apiVersioning/reducer";
+import { Checkbox } from "../src/components/Checkbox";
 import { RadioGroup, Radio } from "../src/components/RadioGroup";
 import { setUserPreference, closeModal } from "./actions";
 import { HostApi } from "../webview-api";
@@ -23,6 +24,7 @@ export const Notifications = props => {
 			notificationPreference: state.preferences.notifications || CSNotificationPreference.InvolveMe,
 			notificationDeliveryPreference:
 				state.preferences.notificationDelivery || CSNotificationDeliveryPreference.All,
+			reviewReminderDelivery: state.preferences.reviewReminderDelivery === false ? false : true,
 			hasDesktopNotifications,
 			notificationDeliverySupported,
 			emailSupported
@@ -30,6 +32,7 @@ export const Notifications = props => {
 	});
 	const [loading, setLoading] = useState(false);
 	const [loadingDelivery, setLoadingDelivery] = useState(false);
+	const [loadingReminderDelivery, setLoadingReminderDelivery] = useState(false);
 
 	const handleChange = async (value: string) => {
 		setLoading(true);
@@ -37,6 +40,14 @@ export const Notifications = props => {
 		// @ts-ignore
 		await dispatch(setUserPreference(["notifications"], value));
 		setLoading(false);
+	};
+
+	const handleChangeFRReminders = async (value: boolean) => {
+		setLoadingReminderDelivery(true);
+		HostApi.instance.track("FR Reminder Preference Change", { Value: value });
+		// @ts-ignore
+		await dispatch(setUserPreference(["reviewReminderDelivery"], value));
+		setLoadingReminderDelivery(false);
 	};
 
 	const handleChangeDelivery = async (value: string) => {
@@ -85,6 +96,16 @@ export const Notifications = props => {
 								Don't automatically follow any codemarks or feedback requests
 							</Radio>
 						</RadioGroup>
+						<div style={{ marginTop: "20px" }}>
+							<Checkbox
+								name="frReminders"
+								checked={derivedState.reviewReminderDelivery}
+								onChange={handleChangeFRReminders}
+								loading={loadingReminderDelivery}
+							>
+								Notify me about outstanding feedback requests
+							</Checkbox>
+						</div>
 						{derivedState.hasDesktopNotifications && derivedState.notificationDeliverySupported && (
 							<div style={{ marginTop: "20px" }}>
 								<p className="explainer">Deliver notifications via:</p>

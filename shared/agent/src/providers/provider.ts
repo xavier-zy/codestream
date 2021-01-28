@@ -47,6 +47,7 @@ import {
 import { CodemarkType, CSMe, CSProviderInfos, CSReferenceLocation } from "../protocol/api.protocol";
 import { CodeStreamSession } from "../session";
 import { Functions, Strings } from "../system";
+import * as url from "url";
 
 export const providerDisplayNamesByNameKey = new Map<string, string>([
 	["asana", "Asana"],
@@ -215,7 +216,12 @@ export abstract class ThirdPartyProviderBase<
 		// assume OK to have it disabled for third-party on-prem providers as well ...
 		// kind of insecure, but easier than other options ... so in this case (and
 		// this case only), establish our own HTTPS agent
-		if ((providerConfig.forEnterprise || providerConfig.isEnterprise) && session.disableStrictSSL) {
+		const info = url.parse(this.baseUrl);
+		if (
+			info.protocol === "https" &&
+			(providerConfig.forEnterprise || providerConfig.isEnterprise) &&
+			session.disableStrictSSL
+		) {
 			Logger.log(
 				`${providerConfig.name} provider will use a custom HTTPS agent with strictSSL disabled`
 			);

@@ -18,6 +18,12 @@ import {
 } from "@codestream/protocols/webview";
 import { WriteTextFileRequestType, ReadTextFileRequestType } from "@codestream/protocols/agent";
 import { Range } from "vscode-languageserver-types";
+import { getPreferences } from "@codestream/webview/store/users/reducer";
+import { setUserPreference } from "../actions";
+import { PRSelectorButtons } from "../PullRequestComponents";
+import { PRProgress, PRProgressFill, PRProgressLine } from "../PullRequestFilesChangedList";
+import { TernarySearchTree } from "@codestream/webview/utilities/searchTree";
+import { Directory } from "../PullRequestFilesChanged";
 
 // const VISITED_REVIEW_FILES = "review:changeset-file-list";
 const NOW = new Date().getTime(); // a rough timestamp so we know when the file was visited
@@ -31,6 +37,7 @@ export const ChangesetFileList = (props: {
 	checkpoint?: number;
 	withTelemetry?: boolean;
 	repoRoots?: { [repoId: string]: string };
+	showViewOptions?: boolean;
 }) => {
 	const { review, noOnClick, loading, checkpoint } = props;
 	const dispatch = useDispatch<Dispatch>();
@@ -43,10 +50,6 @@ export const ChangesetFileList = (props: {
 			state.editorContext.scmInfo.uri.startsWith("codestream-diff://")
 				? state.editorContext.scmInfo.uri
 				: "";
-
-		let index = 0;
-		let indexToChangesetMap = {};
-		let indexToFileMap = {};
 
 		let changesets: CSReviewChangeset[] = [];
 
@@ -61,30 +64,14 @@ export const ChangesetFileList = (props: {
 				changesets = Array.from(latestChangesetByRepo.values());
 			}
 		}
-
-		for (let changeset of changesets) {
-			const modifiedFiles =
-				checkpoint !== undefined ? changeset.modifiedFilesInCheckpoint : changeset.modifiedFiles;
-			modifiedFiles.forEach(f => {
-				indexToChangesetMap[index] = changeset;
-				indexToFileMap[index] = f;
-				index++;
-			});
-		}
-		// for (const modifiedFile of modifiedFiles) {
-		// 	indexToChangesetMap[index] = changeset;
-		// 	indexToFileMap[index] = modifiedFile;
-		// 	index++;
-		// }
+		const preferences = getPreferences(state);
 
 		return {
 			matchFile,
 			userId,
 			repos: state.repos,
-			numFiles: index,
-			indexToChangesetMap,
-			indexToFileMap,
 			changesets,
+			filesChangedMode: preferences.reviewFilesChangedMode || "files",
 			maxCheckpoint:
 				review.reviewChangesets && review.reviewChangesets.length
 					? review.reviewChangesets[review.reviewChangesets.length - 1].checkpoint
@@ -92,6 +79,14 @@ export const ChangesetFileList = (props: {
 		};
 	});
 
+	const mode = derivedState.filesChangedMode;
+	const setMode = mode => dispatch(setUserPreference(["reviewFilesChangedMode"], mode));
+
+	// visitedFiles contains three things:
+	// 1. key/value pairs where the key is the filename, and the value is whether the file
+	//    has been visited/seen yet. this can be toggled on and off
+	// 2. _latest which holds the index of the most recently visited file
+	// 3. _hide:[path] which denotes whether to expand/collapse files and directories
 	const [visitedFiles, setVisitedFiles] = React.useState({ _latest: 0 });
 
 	const visitFile = (visitedKey: string, index: number) => {
@@ -147,6 +142,42 @@ export const ChangesetFileList = (props: {
 		})();
 	}, [review, reviewCheckpointKey]);
 
+	const totalVisitedFiles = React.useMemo(() => {
+		if (!visitedFiles) return 0;
+		let num = 0;
+		Object.keys(visitedFiles).forEach(key => {
+			if (key && !key.startsWith("_") && visitedFiles[key]) num++;
+		});
+		return num;
+	}, [visitedFiles, reviewCheckpointKey]);
+
+	const latest = visitedFiles[reviewCheckpointKey] ? visitedFiles[reviewCheckpointKey]._latest : 0;
+
+	const toggleDirectory = hideKey => {
+		const newVisitedFiles = { ...visitedFiles, [hideKey]: !visitedFiles[hideKey] };
+		saveVisitedFiles(newVisitedFiles, reviewCheckpointKey);
+		setVisitedFiles(newVisitedFiles);
+	};
+
+	const renderDirectory = (fullPath, dirPath, depth) => {
+		const hideKey = "_hide:" + fullPath.join("/");
+		const hidden = visitedFiles[hideKey];
+		return (
+			<Directory
+				key={hideKey}
+				style={{ paddingLeft: `${depth * 12}px` }}
+				onClick={() => {
+					toggleDirectory(hideKey);
+				}}
+			>
+				<Icon name={hidden ? "chevron-right-thin" : "chevron-down-thin"} />
+				{path.join(...dirPath)}
+			</Directory>
+		);
+	};
+
+	const [filesInOrder, setFilesInOrder] = React.useState<any[]>([]);
+
 	// we need to re-make these handlers each time visitedFiles changes, otherwise
 	// it creates a closeure over the wrong version of those variables. not sure
 	// if there is a better solution here....
@@ -157,159 +188,295 @@ export const ChangesetFileList = (props: {
 		];
 
 		return () => disposables.forEach(disposable => disposable.dispose());
-	}, [visitedFiles]);
+	}, [visitedFiles, filesInOrder]);
 
-	const goDiff = async index => {
-		if (index < 0) index = derivedState.numFiles - 1;
-		if (index > derivedState.numFiles - 1) index = 0;
-		const f = derivedState.indexToFileMap[index];
-		const changeset = derivedState.indexToChangesetMap[index];
-		const visitedKey = [changeset.repoId, f.file].join(":");
-		await dispatch(showDiff(review.id, checkpoint, changeset.repoId, f.file));
-		visitFile(visitedKey, index);
+	const [changedFiles] = React.useMemo(() => {
+		const lines: any[] = [];
+		let filesInOrder: any[] = [];
 
-		if (props.withTelemetry && review.id) {
-			HostApi.instance.track("Review Diff Viewed", {
-				"Review ID": review.id
-			});
-		}
-	};
-
-	const nextFile = () => {
-		if (!visitedFiles) goDiff(0);
-		else if (visitedFiles._latest == null) goDiff(0);
-		else goDiff(visitedFiles._latest + 1);
-	};
-
-	const prevFile = () => {
-		if (!visitedFiles) goDiff(-1);
-		else if (visitedFiles._latest == null) goDiff(-1);
-		else goDiff(visitedFiles._latest - 1);
-	};
-
-	const openFile = async index => {
-		if (index < 0) index = derivedState.numFiles - 1;
-		if (index > derivedState.numFiles - 1) index = 0;
-		const f = derivedState.indexToFileMap[index];
-		const changeset = derivedState.indexToChangesetMap[index];
-		const visitedKey = [changeset.repoId, f.file].join(":");
-
-		if (changeset.repoId && props.repoRoots) {
-			const repoRoot = props.repoRoots[changeset.repoId];
-			const response = HostApi.instance.send(EditorRevealRangeRequestType, {
-				uri: path.join(repoRoot, f.file),
-				range: Range.create(0, 0, 0, 0)
-			});
-
-			if (props.withTelemetry && review.id) {
-				HostApi.instance.track("Review File Viewed", {
-					"Review ID": review.id
-				});
+		const renderFile = (f, index, depth, changeset) => {
+			const visitedKey = [changeset!.repoId, f.file].join(":");
+			const uri = `codestream-diff://${review.id}/${checkpoint}/${changeset!.repoId}/right/${
+				f.file
+			}`;
+			const selected = (derivedState.matchFile || "") == uri;
+			const visited = visitedFiles[visitedKey];
+			if (selected && !visited) {
+				// visitFile(visitedKey, index);
 			}
-		}
-	};
 
-	const latest = visitedFiles[reviewCheckpointKey] ? visitedFiles[reviewCheckpointKey]._latest : 0;
+			let icon;
+			// if we're loading, show a spinner
+			if (loading) icon = "sync";
+			// noOnClick means no icon indicators and no click handler
+			else if (noOnClick) icon = null;
+			// this file is currently selected, and visible in diff view
+			else if (selected) icon = "arrow-right";
+			// this file has been visitied during the review
+			else if (visited) icon = "ok";
+			// not yet visited, but part of the review
+			else icon = "circle";
 
-	const changedFiles = React.useMemo(() => {
-		const files: any[] = [];
+			const iconClass = loading ? "file-icon spin" : "file-icon";
+			// i is a temp variable to create the correct scope binding
+			const i = index++;
+			return (
+				<ChangesetFile
+					viewMode={mode}
+					selected={selected}
+					noHover={noOnClick}
+					icon={
+						icon ? (
+							<Icon
+								onClick={
+									visited
+										? async e => {
+												e.preventDefault();
+												e.stopPropagation();
+												unVisitFile(visitedKey);
+										  }
+										: undefined
+								}
+								name={icon}
+								className={iconClass}
+							/>
+						) : null
+					}
+					onClick={async e => {
+						if (noOnClick) return;
+						e.preventDefault();
+						goDiff(i);
+					}}
+					actionIcons={
+						!loading &&
+						!noOnClick && (
+							<div className="actions">
+								<Icon
+									name="goto-file"
+									className="clickable action"
+									title="Open File"
+									placement="left"
+									delay={1}
+									onClick={async e => {
+										e.stopPropagation();
+										e.preventDefault();
+										openFile(i);
+									}}
+								/>
+							</div>
+						)
+					}
+					depth={depth}
+					key={changeset!.checkpoint + ":" + i + ":" + f.file}
+					{...f}
+				/>
+			);
+		};
 
 		let index = 0;
-		if (!derivedState.changesets) return files;
+		if (!derivedState.changesets) {
+			setFilesInOrder([]);
+			return [lines];
+		}
 		for (let changeset of derivedState.changesets) {
 			if (props.showRepoLabels) {
 				const repoName = safe(() => getById(derivedState.repos, changeset!.repoId).name) || "";
 				if (repoName) {
-					files.push(
+					lines.push(
 						<div style={{ marginBottom: "5px" }}>
 							<Icon name="repo" /> {repoName} &nbsp; <Icon name="git-branch" /> {changeset!.branch}
 						</div>
 					);
 				}
 			}
-			const modifiedFiles =
+			let modifiedFiles =
 				checkpoint !== undefined ? changeset.modifiedFilesInCheckpoint : changeset.modifiedFiles;
-			files.push(
-				...modifiedFiles.map(f => {
-					const visitedKey = [changeset!.repoId, f.file].join(":");
-					const uri = `codestream-diff://${review.id}/${checkpoint}/${changeset!.repoId}/right/${
-						f.file
-					}`;
-					const selected = (derivedState.matchFile || "") == uri;
-					const visited = visitedFiles[visitedKey];
-					if (selected && !visited) {
-						visitFile(visitedKey, index);
+
+			modifiedFiles.forEach(f => {
+				f.repoId = changeset.repoId;
+			});
+
+			if (mode === "tree") {
+				const tree: TernarySearchTree<any> = TernarySearchTree.forPaths();
+
+				let filesChanged = [...modifiedFiles];
+				filesChanged = filesChanged
+					.sort((a, b) => {
+						if (b.file < a.file) return 1;
+						if (a.file < b.file) return -1;
+						return 0;
+					})
+					.filter(f => f.file);
+				// console.warn("SETTING UP THE TREE: ", tree, filesChanged);
+				filesChanged.forEach(f => tree.set(f.file, f));
+				let index = 0;
+				const render = (
+					node: any,
+					fullPath: string[],
+					dirPath: string[],
+					depth: number,
+					renderSiblings: boolean
+				) => {
+					if (dirPath.length > 0 && (node.right || node.value)) {
+						lines.push(renderDirectory(fullPath, dirPath, depth));
+						dirPath = [];
+						depth++;
+
+						const hideKey = "_hide:" + fullPath.join("/");
+						if (visitedFiles[hideKey]) return;
 					}
 
-					let icon;
-					// if we're loading, show a spinner
-					if (loading) icon = "sync";
-					// noOnClick means no icon indicators and no click handler
-					else if (noOnClick) icon = null;
-					// this file is currently selected, and visible in diff view
-					else if (selected) icon = "arrow-right";
-					// this file has been visitied during the review
-					else if (visited) icon = "ok";
-					// not yet visited, but part of the review
-					else icon = "circle";
+					// we either render siblings, or nodes. if we aren't
+					// rendering siblings, then check to see if this node
+					// has a value or children and render them
+					if (!renderSiblings) {
+						// node.value is a file object, so render the file
+						if (node.value) {
+							lines.push(renderFile(node.value, index++, depth, changeset));
+							filesInOrder.push(node.value);
+						}
+						// recurse deeper into file path if the dir isn't collapsed
+						if (node.mid) {
+							render(
+								node.mid,
+								[...fullPath, node.segment],
+								[...dirPath, node.segment],
+								depth,
+								true
+							);
+						}
+					}
+					// render sibling nodes at the same depth w/same dirPath
+					if (renderSiblings) {
+						// grab all the siblings, sort them, and render them.
+						const siblings: any[] = [node];
 
-					const iconClass = loading ? "file-icon spin" : "file-icon";
-					// i is a temp variable to create the correct scope binding
-					const i = index++;
-					return (
-						<ChangesetFile
-							selected={selected}
-							noHover={noOnClick}
-							icon={
-								icon ? (
-									<Icon
-										onClick={
-											visited
-												? async e => {
-														e.preventDefault();
-														e.stopPropagation();
-														unVisitFile(visitedKey);
-												  }
-												: undefined
-										}
-										name={icon}
-										className={iconClass}
-									/>
-								) : null
-							}
-							onClick={async e => {
-								if (noOnClick) return;
-								e.preventDefault();
-								goDiff(i);
-							}}
-							actionIcons={
-								!loading &&
-								!noOnClick && (
-									<div className="actions">
-										<Icon
-											name="goto-file"
-											className="clickable action"
-											title="Open File"
-											placement="left"
-											delay={1}
-											onClick={async e => {
-												e.stopPropagation();
-												e.preventDefault();
-												openFile(i);
-											}}
-										/>
-									</div>
-								)
-							}
-							key={changeset!.checkpoint + ":" + i + ":" + f.file}
-							{...f}
-						/>
-					);
-				})
-			);
+						let n = node;
+						// we don't need to check left because we sort the paths
+						// prior to inserting into the tree, so we never end up
+						// with left nodes
+						while (n.right) {
+							siblings.push(n.right);
+							n = n.right;
+						}
+						// sort directories first, then by segment name lexographically
+						siblings.sort(
+							(a, b) => Number(!!a.value) - Number(!!b.value) || a.segment.localeCompare(b.segment)
+						);
+						// render the siblings, but tell render not to re-render siblings
+						siblings.forEach(n => render(n, [...fullPath, n.segment], dirPath, depth, false));
+					}
+				};
+				render((tree as any)._root, [], [], 0, true);
+			} else {
+				lines.push(...modifiedFiles.map((f, index) => renderFile(f, index, 0, changeset)));
+				filesInOrder.push(...modifiedFiles);
+			}
 		}
-		return files;
-	}, [review, loading, noOnClick, derivedState.matchFile, latest, checkpoint, visitedFiles]);
+		// console.warn("RETURNING: ", filesInOrder);
+		setFilesInOrder(filesInOrder);
+		return [lines];
+	}, [review, loading, noOnClick, derivedState.matchFile, latest, checkpoint, visitedFiles, mode]);
 
-	return <>{changedFiles}</>;
+	const goDiff = React.useCallback(
+		async index => {
+			// console.warn("GOING TO: ", index);
+			// console.warn("FIO: ", filesInOrder);
+			if (index < 0) index = filesInOrder.length - 1;
+			if (index > filesInOrder.length - 1) index = 0;
+			const f = filesInOrder[index];
+			const visitedKey = [f.repoId, f.file].join(":");
+			await dispatch(showDiff(review.id, checkpoint, f.repoId, f.file));
+			visitFile(visitedKey, index);
+
+			if (props.withTelemetry && review.id) {
+				HostApi.instance.track("Review Diff Viewed", {
+					"Review ID": review.id
+				});
+			}
+		},
+		[visitedFiles, filesInOrder]
+	);
+
+	const openFile = React.useCallback(
+		async index => {
+			if (index < 0) index = filesInOrder.length - 1;
+			if (index > filesInOrder.length - 1) index = 0;
+			const f = filesInOrder[index];
+
+			if (f.repoId && props.repoRoots) {
+				const repoRoot = props.repoRoots[f.repoId];
+				const response = HostApi.instance.send(EditorRevealRangeRequestType, {
+					uri: path.join(repoRoot, f.file),
+					range: Range.create(0, 0, 0, 0)
+				});
+
+				if (props.withTelemetry && review.id) {
+					HostApi.instance.track("Review File Viewed", {
+						"Review ID": review.id
+					});
+				}
+			}
+		},
+		[visitedFiles, filesInOrder]
+	);
+
+	const nextFile = React.useCallback(() => {
+		if (!visitedFiles) goDiff(0);
+		else if (visitedFiles._latest == null) goDiff(0);
+		else goDiff(visitedFiles._latest + 1);
+	}, [visitedFiles, goDiff]);
+
+	const prevFile = React.useCallback(() => {
+		if (!visitedFiles) goDiff(-1);
+		else if (visitedFiles._latest == null) goDiff(-1);
+		else goDiff(visitedFiles._latest - 1);
+	}, [visitedFiles, goDiff]);
+
+	const pct = filesInOrder.length > 0 ? (100 * totalVisitedFiles) / filesInOrder.length : 0;
+
+	return (
+		<>
+			{props.showViewOptions && (
+				<div style={{ display: "flex", alignItems: "center", flexWrap: "wrap" }}>
+					<div style={{ margin: "10px 10px 5px 0", flexGrow: 2 }}>
+						<PRSelectorButtons>
+							<span className={mode == "files" ? "selected" : ""} onClick={() => setMode("files")}>
+								<Icon name="list-flat" title="List View" placement="bottom" />
+							</span>
+							<span className={mode == "tree" ? "selected" : ""} onClick={() => setMode("tree")}>
+								<Icon name="list-tree" title="Tree View" placement="bottom" />
+							</span>
+							{/*
+							<span className={mode == "hunks" ? "selected" : ""} onClick={() => setMode("hunks")}>
+								<Icon name="file-diff" title="Diff Hunks" placement="bottom" />
+							</span>
+							*/}
+						</PRSelectorButtons>
+					</div>
+
+					<PRProgress style={{ margin: "0 0 5px auto", minWidth: "30px" }}>
+						{totalVisitedFiles} / {filesInOrder.length}{" "}
+						<span className="wide-text">
+							files viewed{" "}
+							<Icon
+								name="info"
+								placement="bottom"
+								title={
+									<div style={{ width: "250px" }}>
+										As you visit files they will be marked as viewed. Unmark a file by clicking the
+										checkmark.
+									</div>
+								}
+							/>
+						</span>
+						<PRProgressLine>
+							{pct > 0 && <PRProgressFill style={{ width: pct + "%" }} />}
+						</PRProgressLine>
+					</PRProgress>
+				</div>
+			)}
+			{changedFiles}
+		</>
+	);
 };

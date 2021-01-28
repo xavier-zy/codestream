@@ -77,7 +77,7 @@ export const PRDiffHunk = styled.div`
 	}
 `;
 
-const PRProgress = styled.div`
+export const PRProgress = styled.div`
 	flex-grow: 1;
 	margin-left: auto;
 	margin-right: 10px;
@@ -89,7 +89,7 @@ const PRProgress = styled.div`
 	max-width: 150px;
 `;
 
-const PRProgressLine = styled.div`
+export const PRProgressLine = styled.div`
 	width: 100%;
 	height: 8px;
 	border-radius: 4px;
@@ -100,7 +100,7 @@ const PRProgressLine = styled.div`
 	left: 0;
 `;
 
-const PRProgressFill = styled.div`
+export const PRProgressFill = styled.div`
 	height: 8px;
 	background: var(--text-color-info);
 	// background: #7aba5d;

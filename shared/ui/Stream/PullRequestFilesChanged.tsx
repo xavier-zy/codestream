@@ -29,9 +29,10 @@ import { CompareFilesProps } from "./PullRequestFilesChangedList";
 import { TernarySearchTree } from "../utilities/searchTree";
 import { PRErrorBox } from "./PullRequestComponents";
 
-const Directory = styled.div`
+export const Directory = styled.div`
 	cursor: pointer;
 	padding: 2px 0;
+	margin: 0 !important;
 	&:hover {
 		background: var(--app-background-color-hover);
 		color: var(--text-color-highlight);
@@ -375,7 +376,7 @@ export const PullRequestFilesChanged = (props: Props) => {
 					return 0;
 				})
 				.filter(f => f.file);
-			console.warn("SETTING UP THE TREE: ", tree, filesChanged);
+			// console.warn("SETTING UP THE TREE: ", tree, filesChanged);
 			filesChanged.forEach(f => tree.set(f.file, f));
 			let index = 0;
 			const render = (

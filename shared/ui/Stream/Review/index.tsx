@@ -65,9 +65,10 @@ import Button from "../Button";
 import {
 	getTeamMates,
 	findMentionedUserIds,
-	getTeamTagsHash
+	getTeamTagsHash,
+	getPreferences
 } from "@codestream/webview/store/users/reducer";
-import { createPost, setReviewStatus, setCodemarkStatus } from "../actions";
+import { createPost, setReviewStatus, setCodemarkStatus, setUserPreference } from "../actions";
 import { getThreadPosts } from "@codestream/webview/store/posts/reducer";
 import { DropdownButton } from "./DropdownButton";
 import Tag from "../Tag";
@@ -100,6 +101,8 @@ import { isFeatureEnabled } from "@codestream/webview/store/apiVersioning/reduce
 import { getPost } from "../../store/posts/reducer";
 import { AddReactionIcon, Reactions } from "../Reactions";
 import { Attachments } from "../Attachments";
+import { PRSelectorButtons } from "../PullRequestComponents";
+import { PRProgress, PRProgressFill, PRProgressLine } from "../PullRequestFilesChangedList";
 
 interface RepoMetadata {
 	repoName: string;
@@ -928,6 +931,7 @@ const BaseReview = (props: BaseReviewProps) => {
 										}
 										noOnClick={!props.canStartReview}
 										withTelemetry={true}
+										showViewOptions
 									/>
 								</MetaDescriptionForAssignees>
 							</Meta>

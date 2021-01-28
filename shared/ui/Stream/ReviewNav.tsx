@@ -121,12 +121,12 @@ const Root = styled.div`
 					display: block;
 					margin: 0;
 				}
-				.wide-text {
-					display: none;
-				}
 				padding: 3px 5px;
 				line-height: 1em;
 			}
+		}
+		.wide-text {
+			display: none;
 		}
 	}
 `;

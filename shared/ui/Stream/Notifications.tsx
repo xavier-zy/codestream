@@ -42,9 +42,8 @@ export const Notifications = props => {
 		setLoading(false);
 	};
 
-	const handleChangeFRReminders = async (value: boolean) => {
+	const handleChangeReviewReminders = async (value: boolean) => {
 		setLoadingReminderDelivery(true);
-		HostApi.instance.track("FR Reminder Preference Change", { Value: value });
 		// @ts-ignore
 		await dispatch(setUserPreference(["reviewReminderDelivery"], value));
 		setLoadingReminderDelivery(false);
@@ -100,7 +99,7 @@ export const Notifications = props => {
 							<Checkbox
 								name="frReminders"
 								checked={derivedState.reviewReminderDelivery}
-								onChange={handleChangeFRReminders}
+								onChange={handleChangeReviewReminders}
 								loading={loadingReminderDelivery}
 							>
 								Notify me about outstanding feedback requests

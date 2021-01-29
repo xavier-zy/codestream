@@ -1991,7 +1991,7 @@ export class PostsManager extends EntityManagerBase<CSPost> {
 			const { providerRegistry } = SessionContainer.instance();
 
 			const codeStreamLink =
-				"https://codestream.com/?utm_source=cs&utm_medium=pr&utm_campaign=github";
+				"https://codestream.com/?utm_source=cs&utm_medium=issue&utm_campaign=";
 			let createdFrom = "";
 			switch (ideName) {
 				case "VSC":
@@ -2013,7 +2013,7 @@ export class PostsManager extends EntityManagerBase<CSPost> {
 					response = await providerRegistry.createCard({
 						providerId: attributes.issueProvider.id,
 						data: {
-							description: `${description}\n\n ~Created ${createdFrom} using [CodeStream|${codeStreamLink}]~`,
+							description: `${description}\n\n ~Created ${createdFrom} using [CodeStream|${codeStreamLink}jira]~`,
 							summary: providerCardRequest.codemark.title,
 							issueType: attributes.issueType,
 							project: attributes.boardId,
@@ -2029,7 +2029,7 @@ export class PostsManager extends EntityManagerBase<CSPost> {
 							listId: attributes.listId,
 							name: providerCardRequest.codemark.title,
 							assignees: attributes.assignees,
-							description: `${description}\n\n Created ${createdFrom} using [CodeStream](${codeStreamLink})`
+							description: `${description}\n\n Created ${createdFrom} using [CodeStream](${codeStreamLink}trello)`
 						}
 					});
 					break;
@@ -2039,7 +2039,7 @@ export class PostsManager extends EntityManagerBase<CSPost> {
 					response = await providerRegistry.createCard({
 						providerId: attributes.issueProvider.id,
 						data: {
-							description: `${description}\n\n <sup>Created ${createdFrom} using [CodeStream](${codeStreamLink})</sup>`,
+							description: `${description}\n\n <sup>Created ${createdFrom} using [CodeStream](${codeStreamLink}github)</sup>`,
 							title: providerCardRequest.codemark.title,
 							repoName: attributes.boardName,
 							assignees: attributes.assignees
@@ -2052,7 +2052,7 @@ export class PostsManager extends EntityManagerBase<CSPost> {
 					response = await providerRegistry.createCard({
 						providerId: attributes.issueProvider.id,
 						data: {
-							description: `${description}\n\n <sup>Created ${createdFrom} using [CodeStream](${codeStreamLink})</sup>`,
+							description: `${description}\n\n <sup>Created ${createdFrom} using [CodeStream](${codeStreamLink}gitlab)</sup>`,
 							title: providerCardRequest.codemark.title,
 							repoName: attributes.boardName,
 							assignee: attributes.assignees && attributes.assignees[0]
@@ -2064,7 +2064,7 @@ export class PostsManager extends EntityManagerBase<CSPost> {
 					response = await providerRegistry.createCard({
 						providerId: attributes.issueProvider.id,
 						data: {
-							description: `${description}\n\n <sup>Created ${createdFrom} using [CodeStream](${codeStreamLink})</sup>`,
+							description: `${description}\n\n <sup>Created ${createdFrom} using [CodeStream](${codeStreamLink}youtrack)</sup>`,
 							name: providerCardRequest.codemark.title,
 							boardId: attributes.board.id,
 							assignee: attributes.assignees && attributes.assignees[0]
@@ -2076,7 +2076,7 @@ export class PostsManager extends EntityManagerBase<CSPost> {
 					response = await providerRegistry.createCard({
 						providerId: attributes.issueProvider.id,
 						data: {
-							description: `<body>${description}\n\n Created ${createdFrom} using <a href="${codeStreamLink}">CodeStream</a></body>`,
+							description: `<body>${description}\n\n Created ${createdFrom} using <a href="${codeStreamLink}asana">CodeStream</a></body>`,
 							boardId: attributes.boardId,
 							listId: attributes.listId,
 							name: providerCardRequest.codemark.title,
@@ -2089,7 +2089,7 @@ export class PostsManager extends EntityManagerBase<CSPost> {
 					response = await providerRegistry.createCard({
 						providerId: attributes.issueProvider.id,
 						data: {
-							description: `${description}\n\n Created ${createdFrom} using [CodeStream](${codeStreamLink})`,
+							description: `${description}\n\n Created ${createdFrom} using [CodeStream](${codeStreamLink}bitbucket)`,
 							title: providerCardRequest.codemark.title,
 							repoName: attributes.boardName,
 							assignee: attributes.assignees && attributes.assignees[0]
@@ -2101,7 +2101,7 @@ export class PostsManager extends EntityManagerBase<CSPost> {
 					response = await providerRegistry.createCard({
 						providerId: attributes.issueProvider.id,
 						data: {
-							description: `${description}\n\n <sup>Created ${createdFrom} using <a href="${codeStreamLink}">CodeStream</a></sup>`,
+							description: `${description}\n\n <sup>Created ${createdFrom} using <a href="${codeStreamLink}azuredevops">CodeStream</a></sup>`,
 							title: providerCardRequest.codemark.title,
 							boardId: attributes.board.id,
 							assignee: attributes.assignees && attributes.assignees[0]
@@ -2114,7 +2114,7 @@ export class PostsManager extends EntityManagerBase<CSPost> {
 					response = await providerRegistry.createCard({
 						providerId: attributes.issueProvider.id,
 						data: {
-							description: `${description}\n\n <sup>Created ${createdFrom} using [CodeStream](${codeStreamLink})</sup>`,
+							description: `${description}\n\n <sup>Created ${createdFrom} using [CodeStream](${codeStreamLink}clubhouse)</sup>`,
 							name: providerCardRequest.codemark.title,
 							projectId: attributes.projectId,
 							assignees: attributes.assignees
@@ -2127,7 +2127,7 @@ export class PostsManager extends EntityManagerBase<CSPost> {
 					response = await providerRegistry.createCard({
 						providerId: attributes.issueProvider.id,
 						data: {
-							description: `${description}\n\n Created ${createdFrom} using [CodeStream](${codeStreamLink})`,
+							description: `${description}\n\n Created ${createdFrom} using [CodeStream](${codeStreamLink}linear)`,
 							name: providerCardRequest.codemark.title,
 							projectId: attributes.projectId,
 							assignees: attributes.assignees

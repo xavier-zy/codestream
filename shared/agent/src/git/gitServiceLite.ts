@@ -136,7 +136,7 @@ export class GitServiceLite {
 				);
 				const realCwd = this._normalizePath(fs.realpathSync(cwd));
 				Logger.log(`getRepoRoot: ${cwd} -> ${realCwd}`);
-				relative = path.relative(repoRoot, realCwd);
+				relative = path.relative(realCwd, repoRoot);
 				isParentOrSelf = !relative || (!relative.startsWith("..") && !path.isAbsolute(relative));
 				if (!isParentOrSelf) {
 					Logger.log(

@@ -218,7 +218,7 @@ export abstract class ThirdPartyProviderBase<
 		// this case only), establish our own HTTPS agent
 		const info = url.parse(this.baseUrl);
 		if (
-			info.protocol === "https" &&
+			info.protocol === "https:" &&
 			(providerConfig.forEnterprise || providerConfig.isEnterprise) &&
 			session.disableStrictSSL
 		) {

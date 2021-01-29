@@ -19,7 +19,7 @@ import { CodemarkType } from "@codestream/protocols/api";
 import {
 	CreatePullRequestActionContext,
 	GitLensApi,
-	HoverCommandHelpActionContext,
+	HoverCommandsActionContext,
 	OpenPullRequestActionContext
 } from "./@types/gitlens";
 import { GitExtension } from "./@types/git";
@@ -36,9 +36,7 @@ export const extensionVersion = extension.packageJSON.version;
 
 const gitLensDisposables: Disposable[] = [];
 let gitLensApiLocatorPromise: Promise<GitLensApi> | undefined;
-let gitLensLastHoverContext:
-	| { timestamp: Date; context: HoverCommandHelpActionContext }
-	| undefined;
+let gitLensLastHoverContext: { timestamp: Date; context: HoverCommandsActionContext } | undefined;
 
 interface BuildInfoMetadata {
 	buildNumber: string;
@@ -149,10 +147,11 @@ export async function activate(context: ExtensionContext) {
 				return;
 			}
 
-			api.registerActionRunner("hover.commandHelp", {
+			api.registerActionRunner<HoverCommandsActionContext>("hover.commands", {
+				partnerId: "codestream",
 				name: "CodeStream",
-				label: "Ask a question",
-				run: function(context: HoverCommandHelpActionContext) {
+				label: "$(comment) Leave a Comment",
+				run: function(context: HoverCommandsActionContext) {
 					try {
 						if (!Container.session.signedIn) {
 							// store the last context with a timestamp
@@ -162,7 +161,7 @@ export async function activate(context: ExtensionContext) {
 						// run it anyway -- it will pop open
 						runGitLensHoverCommand(context);
 					} catch (e) {
-						Logger.warn(`GitLens: hover.commandHelp. Failed to handle actionRunner e=${e}`);
+						Logger.warn(`GitLens: hover.commands. Failed to handle actionRunner e=${e}`);
 					}
 				}
 			});
@@ -209,7 +208,7 @@ export async function activate(context: ExtensionContext) {
 	);
 }
 
-function runGitLensHoverCommand(context: HoverCommandHelpActionContext) {
+function runGitLensHoverCommand(context: HoverCommandsActionContext) {
 	if (!context) return;
 
 	Container.webview.newCodemarkRequest(
@@ -299,9 +298,10 @@ async function registerGitLensIntegration() {
 		}
 
 		gitLensDisposables.push(
-			api.registerActionRunner("openPullRequest", {
+			api.registerActionRunner<OpenPullRequestActionContext>("openPullRequest", {
+				partnerId: "codestream",
 				name: "CodeStream",
-				label: "Open this pull request in VS Code",
+				label: "Open Pull Request in VS Code",
 				run: function(context: OpenPullRequestActionContext) {
 					try {
 						let providerName;
@@ -327,9 +327,10 @@ async function registerGitLensIntegration() {
 					}
 				}
 			}),
-			api.registerActionRunner("createPullRequest", {
+			api.registerActionRunner<CreatePullRequestActionContext>("createPullRequest", {
+				partnerId: "codestream",
 				name: "CodeStream",
-				label: "Create a pull request in VS Code",
+				label: "Create Pull Request in VS Code",
 				run: function(context: CreatePullRequestActionContext) {
 					try {
 						if (context.branch) {

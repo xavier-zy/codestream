@@ -64,7 +64,8 @@ export class GitLabProvider extends ThirdPartyIssueProviderBase<CSGitLabProvider
 
 	get headers(): any {
 		return {
-			Authorization: `Bearer ${this.accessToken}`
+			Authorization: `Bearer ${this.accessToken}`,
+			"Content-Type": "application/json"
 		};
 	}
 

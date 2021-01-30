@@ -18,7 +18,7 @@ const argv = yargs
 	.command("build-png-icons", "Converts CodeStream SVGs into PNG icons", {})
 	.option("size", {
 		alias: "s",
-		description: "the size of the pngs in puxels",
+		description: "the size of the pngs in pixels",
 		type: "number",
 		default: 32
 	})

@@ -152,6 +152,7 @@ interface InheritedProps {
 	hidden?: boolean;
 	deselectCodemarks?: Function;
 	wrap?: boolean;
+	iconColor?: string;
 }
 
 type Props = InheritedProps & DispatchProps & ConnectedProps;
@@ -893,7 +894,11 @@ export class Codemark extends React.Component<Props, State> {
 		return (
 			<div
 				id={`codemark-${codemark.id}`}
-				className={cx("codemark", { collapsed: !this.props.wrap, wrap: this.props.wrap })}
+				className={cx("codemark", {
+					collapsed: !this.props.wrap,
+					wrap: this.props.wrap,
+					archived: !codemark.pinned
+				})}
 				onClick={this.handleClickCodemark}
 				onMouseEnter={this.handleMouseEnterCodemark}
 				onMouseLeave={this.handleMouseLeaveCodemark}

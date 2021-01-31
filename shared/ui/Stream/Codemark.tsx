@@ -152,7 +152,6 @@ interface InheritedProps {
 	hidden?: boolean;
 	deselectCodemarks?: Function;
 	wrap?: boolean;
-	iconColor?: string;
 }
 
 type Props = InheritedProps & DispatchProps & ConnectedProps;
@@ -870,7 +869,7 @@ export class Codemark extends React.Component<Props, State> {
 	};
 
 	renderCollapsedCodemark() {
-		const { codemark, marker } = this.props;
+		const { codemark, marker, wrap } = this.props;
 
 		const lines: string | undefined = (() => {
 			if (!marker) return;
@@ -890,15 +889,13 @@ export class Codemark extends React.Component<Props, State> {
 			return null;
 		}
 
+		const color = codemark.pinned ? (codemark.status === "closed" ? "purple" : "green") : "gray";
+		console.warn("COLOR IS: ", color, " FROM ", codemark);
 		const renderedTags = this.renderTags(codemark);
 		return (
 			<div
 				id={`codemark-${codemark.id}`}
-				className={cx("codemark", {
-					collapsed: !this.props.wrap,
-					wrap: this.props.wrap,
-					archived: !codemark.pinned
-				})}
+				className={cx("codemark", { collapsed: !wrap, wrap: wrap })}
 				onClick={this.handleClickCodemark}
 				onMouseEnter={this.handleMouseEnterCodemark}
 				onMouseLeave={this.handleMouseLeaveCodemark}
@@ -906,7 +903,7 @@ export class Codemark extends React.Component<Props, State> {
 				<div className="contents">
 					{this.renderStatus(codemark)}
 					<div style={{ display: "flex", alignItems: "flex-start" }}>
-						<span style={{ flexGrow: 0, flexShrink: 0 }} className={codemark.color}>
+						<span style={{ flexGrow: 0, flexShrink: 0 }} className={color}>
 							{this.renderTypeIcon()}
 						</span>
 						<div className="body" style={{ flexGrow: 10 }}>

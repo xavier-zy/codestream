@@ -81,6 +81,7 @@ interface ConnectedProps {
 	hasPRProvider?: boolean;
 	showPRComments?: boolean;
 	showHidden: boolean;
+	showResolved: boolean;
 	wrapComments: boolean;
 	fileNameToFilterFor?: string;
 	scmInfo?: GetFileScmInfoResponse;
@@ -391,21 +392,21 @@ export class SimpleCodemarksForFile extends Component<Props, State> {
 			<>
 				<PaneNode>
 					<PaneNodeName id="codemarks/open" title="Open" count={open.length} />
-					{!hiddenPaneNodes["codemarks/open"] && this.renderCodemarksSearchList(open, "green")}
+					{!hiddenPaneNodes["codemarks/open"] && this.renderCodemarksSearchList(open)}
 				</PaneNode>
 				<PaneNode>
 					<PaneNodeName id="codemarks/closed" title="Resolved" count={closed.length} />
-					{!hiddenPaneNodes["codemarks/closed"] && this.renderCodemarksSearchList(closed, "purple")}
+					{!hiddenPaneNodes["codemarks/closed"] && this.renderCodemarksSearchList(closed)}
 				</PaneNode>
 				<PaneNode>
 					<PaneNodeName id="codemarks/archived" title="Archived" count={archived.length} />
-					{!hiddenPaneNodes["codemarks/archived"] && this.renderCodemarksSearchList(closed, "gray")}
+					{!hiddenPaneNodes["codemarks/archived"] && this.renderCodemarksSearchList(archived)}
 				</PaneNode>
 			</>
 		);
 	};
 
-	renderCodemarksSearchList = (codemarks, color) => {
+	renderCodemarksSearchList = codemarks => {
 		return codemarks.map(codemark => {
 			this.renderedCodemarks[codemark.id] = true;
 			return (
@@ -419,7 +420,6 @@ export class SimpleCodemarksForFile extends Component<Props, State> {
 					highlightCodeInTextEditor
 					postAction={() => {}}
 					action={() => {}}
-					iconColor={color}
 				/>
 			);
 		});
@@ -451,7 +451,7 @@ export class SimpleCodemarksForFile extends Component<Props, State> {
 	};
 
 	renderCodemarksList = documentMarkers => {
-		const { showHidden, codemarkSortType: codemarkSortType } = this.props;
+		const { showHidden, showResolved, codemarkSortType: codemarkSortType } = this.props;
 		if (this.state.isLoading) return null;
 		const codemarksInList = {};
 		let codemarkSortFn;
@@ -483,7 +483,7 @@ export class SimpleCodemarksForFile extends Component<Props, State> {
 				const hidden =
 					(!showHidden && codemark && !codemark.pinned) ||
 					(docMarker.externalContent && !this.props.showPRComments);
-				if (hidden) return null;
+				// if (hidden) return null;
 
 				return (
 					<Codemark
@@ -510,7 +510,13 @@ export class SimpleCodemarksForFile extends Component<Props, State> {
 			count,
 			scmInfo
 		} = this.props;
-		const { setUserPreference, showHidden, wrapComments, codemarkSortType } = this.props;
+		const {
+			setUserPreference,
+			showHidden,
+			showResolved,
+			wrapComments,
+			codemarkSortType
+		} = this.props;
 		const { showPRCommentsField } = this.state;
 
 		const isDiff = textEditorUri.startsWith("codestream-diff://");
@@ -587,35 +593,43 @@ export class SimpleCodemarksForFile extends Component<Props, State> {
 
 		const settingsMenuItems = [
 			{
-				label: "Wrap multi-line comments",
-				key: "wrap-comments",
-				checked: wrapComments,
-				action: () => setUserPreference(["codemarksWrapComments"], !wrapComments)
-			},
-			{
-				label: "Show archived codemarks",
-				key: "show-hidden",
-				checked: showHidden,
-				action: () => setUserPreference(["codemarksShowArchived"], !showHidden)
-			},
-			{
-				label: "Show comments from Pull Requests",
-				key: "show-pr-comments",
-				checked: this.props.hasPRProvider
-					? this.state.pendingPRConnection
-						? true
-						: !!showPRCommentsField
-					: false,
+				label: "Show icons in editor gutter",
+				key: "show-icons",
+				checked: false,
+				submenu: [
+					{
+						label: "Pull Request comments",
+						key: "prs",
+						checked: this.props.hasPRProvider
+							? this.state.pendingPRConnection
+								? true
+								: !!showPRCommentsField
+							: false,
 
-				action: () => {
-					if (!this.props.hasPRProvider) {
-						this.setState({ showPRInfoModal: true });
-						this.setState({ pendingPRConnection: true });
-					} else {
-						this.setState({ pendingPRConnection: false });
-						this.setState({ showPRCommentsField: !showPRCommentsField });
+						action: () => {
+							if (!this.props.hasPRProvider) {
+								this.setState({ showPRInfoModal: true });
+								this.setState({ pendingPRConnection: true });
+							} else {
+								this.setState({ pendingPRConnection: false });
+								this.setState({ showPRCommentsField: !showPRCommentsField });
+							}
+						}
+					},
+					{ label: "-" },
+					{
+						label: "Resolved codemarks",
+						key: "show-resolved",
+						checked: showResolved,
+						action: () => setUserPreference(["codemarksHideResolved"], showResolved)
+					},
+					{
+						label: "Archived codemarks",
+						key: "show-hidden",
+						checked: showHidden,
+						action: () => setUserPreference(["codemarksShowArchived"], !showHidden)
 					}
-				}
+				]
 			},
 			{
 				label: "Sort comments by...",
@@ -635,6 +649,12 @@ export class SimpleCodemarksForFile extends Component<Props, State> {
 						action: () => setUserPreference(["codemarkSortType"], CodemarkSortType.File)
 					}
 				]
+			},
+			{
+				label: "Wrap multi-line comments",
+				key: "wrap-comments",
+				checked: wrapComments,
+				action: () => setUserPreference(["codemarksWrapComments"], !wrapComments)
 			}
 		];
 
@@ -758,6 +778,7 @@ const mapStateToProps = (state: CodeStreamState, props): ConnectedProps => {
 	const codemarkDomain: CodemarkDomainType = preferences.codemarkDomain || CodemarkDomainType.Repo;
 	const codemarkSortType: CodemarkSortType = preferences.codemarkSortType || CodemarkSortType.File;
 	const showHidden = preferences.codemarksShowArchived || false;
+	const showResolved = preferences.codemarksHideResolved ? false : true;
 	let currentBranch = "";
 
 	let codemarksToRender = EMPTY_ARRAY as CodemarkPlus[];
@@ -796,7 +817,7 @@ const mapStateToProps = (state: CodeStreamState, props): ConnectedProps => {
 		codemarksToRender = getActiveCodemarks(state)
 			.filter(codemark => {
 				const hidden = !showHidden && codemark && !codemark.pinned;
-				if (hidden) return false;
+				// if (hidden) return false;
 
 				if (
 					codemarkDomain === CodemarkDomainType.Repo ||
@@ -836,6 +857,7 @@ const mapStateToProps = (state: CodeStreamState, props): ConnectedProps => {
 		hasPRProvider,
 		currentStreamId: context.currentStreamId,
 		showHidden: preferences.codemarksShowArchived || false,
+		showResolved,
 		wrapComments: preferences.codemarksWrapComments || false,
 		showPRComments: hasPRProvider && preferences.codemarksShowPRComments,
 		fileNameToFilterFor: editorContext.activeFile,

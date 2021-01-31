@@ -11,7 +11,8 @@ import {
 	CodemarkPlus,
 	Capabilities,
 	UploadFileRequestType,
-	UploadFileRequest
+	UploadFileRequest,
+	SetCodemarkPinnedRequestType
 } from "@codestream/protocols/agent";
 import { createPost, setCodemarkStatus } from "./actions";
 import { CSUser, CSMe, CSPost, CodemarkType } from "@codestream/protocols/api";
@@ -121,6 +122,15 @@ export class CodemarkDetails extends React.Component<Props, State> {
 	resolveCodemark = async () => {
 		await this.submitReply();
 		this.props.setCodemarkStatus(this.props.codemark.id, "closed");
+	};
+
+	resolveAndArchiveCodemark = async () => {
+		await this.submitReply();
+		this.props.setCodemarkStatus(this.props.codemark.id, "closed");
+		HostApi.instance.send(SetCodemarkPinnedRequestType, {
+			codemarkId: this.props.codemark.id,
+			value: false
+		});
 	};
 
 	handleOnChange = (text: string, formatCode: boolean) => {
@@ -264,7 +274,7 @@ export class CodemarkDetails extends React.Component<Props, State> {
 														this.state.text ? "with Comment" : typeLabel
 													}`,
 													onSelect: () => this.setResolveMethod("ARCHIVE"),
-													action: () => this.resolveCodemark()
+													action: () => this.resolveAndArchiveCodemark()
 												}
 											]}
 											selectedKey="resolve"

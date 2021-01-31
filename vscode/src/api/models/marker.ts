@@ -34,7 +34,7 @@ export class DocMarker {
 
 	get color(): string {
 		// TODO: -- Use a setting
-		return this.status === "closed" ? "gray" : "blue";
+		return this.status === "closed" ? "purple" : "green";
 		// return "blue";
 	}
 

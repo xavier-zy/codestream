@@ -185,6 +185,7 @@ export interface GetReviewContentsLocalRequest {
 }
 
 export interface GetReviewContentsResponse {
+	repoRoot?: string;
 	left?: string;
 	right?: string;
 	fileNotIncludedInReview?: boolean;

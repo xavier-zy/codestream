@@ -130,9 +130,9 @@ class ReviewService(private val project: Project) {
         title: String
     ) {
         val leftContent =
-            createReviewDiffContent(project, reviewId, checkpoint, repoId, ReviewDiffSide.LEFT, oldPath ?: path, contents.left)
+            createReviewDiffContent(project, contents.repoRoot, reviewId, checkpoint, repoId, ReviewDiffSide.LEFT, oldPath ?: path, contents.left)
         val rightContent =
-            createReviewDiffContent(project, reviewId, checkpoint, repoId, ReviewDiffSide.RIGHT, path, contents.right)
+            createReviewDiffContent(project, contents.repoRoot, reviewId, checkpoint, repoId, ReviewDiffSide.RIGHT, path, contents.right)
         val diffRequest = SimpleDiffRequest(title, leftContent, rightContent, oldPath ?: path, path)
         diffRequest.putUserData(REVIEW_DIFF, true)
         val file = SimpleDiffVirtualFile(diffRequest)

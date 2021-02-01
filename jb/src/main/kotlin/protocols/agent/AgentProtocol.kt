@@ -207,6 +207,7 @@ class GetLocalReviewContentsParams(
 )
 
 class GetReviewContentsResult(
+    val repoRoot: String?,
     val leftPath: String,
     val rightPath: String,
     val left: String,
@@ -368,6 +369,7 @@ class GetFileContentsAtRevisionParams(
 )
 
 class GetFileContentsAtRevisionResult(
+    val repoRoot: String,
     val content: String,
     val error: String?
 )

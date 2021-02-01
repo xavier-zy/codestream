@@ -15,9 +15,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.RemoteFilePath
 import com.intellij.psi.PsiDocumentManager
+import java.io.File
 
 fun createReviewDiffContent(
     project: Project,
+    repoRoot: String?,
     reviewId: String,
     checkpoint: Int?,
     repoId: String,
@@ -28,20 +30,22 @@ fun createReviewDiffContent(
     val checkpointStr = checkpoint?.toString() ?: "undefined"
     val fullPath = "$reviewId/$checkpointStr/$repoId/${side.path}/$path"
 
-    return createDiffContent(project, fullPath, side, path, text, reviewId != "local")
+    return createDiffContent(project, repoRoot, fullPath, side, path, text, reviewId != "local")
 }
 
 fun createRevisionDiffContent(
     project: Project,
+    repoRoot: String,
     data: CodeStreamDiffUriData,
     side: ReviewDiffSide,
     text: String
 ): DocumentContent {
-    return createDiffContent(project, data.toEncodedPath(), side, data.path, text, true)
+    return createDiffContent(project, repoRoot, data.toEncodedPath(), side, data.path, text, true)
 }
 
 fun createDiffContent(
     project: Project,
+    repoRoot: String?,
     fullPath: String,
     side: ReviewDiffSide,
     path: String,
@@ -61,7 +65,7 @@ fun createDiffContent(
     val document = ReadAction.compute<Document, RuntimeException> {
         val file = ReviewDiffVirtualFile.create(fullPath, side, path, correctedText, canCreateMarker)
         file.isWritable = false
-        OutsidersPsiFileSupport.markFile(file, fullPath)
+        OutsidersPsiFileSupport.markFile(file, repoRoot?.let{ File(it).resolve(path).path })
         val document = FileDocumentManager.getInstance().getDocument(file) ?: return@compute null
         PsiDocumentManager.getInstance(project).getPsiFile(document)
         document

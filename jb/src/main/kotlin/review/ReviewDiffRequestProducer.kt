@@ -31,6 +31,7 @@ class ReviewDiffRequestProducer(
             val response = agent.getReviewContents(GetReviewContentsParams(review.id, repoId, path, checkpoint))
             val leftContent = createReviewDiffContent(
                 project,
+                response.repoRoot,
                 review.id,
                 checkpoint,
                 repoId,
@@ -40,6 +41,7 @@ class ReviewDiffRequestProducer(
             )
             val rightContent = createReviewDiffContent(
                 project,
+                response.repoRoot,
                 review.id,
                 checkpoint,
                 repoId,

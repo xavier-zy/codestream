@@ -226,6 +226,7 @@ export class ReviewsManager extends CachedEntityManagerBase<CSReview> {
 		}
 
 		return {
+			repoRoot: repo.path,
 			left: Strings.normalizeFileContents(leftContents),
 			right: Strings.normalizeFileContents(rightContents || "")
 		};
@@ -278,7 +279,9 @@ export class ReviewsManager extends CachedEntityManagerBase<CSReview> {
 	@lspHandler(GetReviewContentsRequestType)
 	@log()
 	async getContents(request: GetReviewContentsRequest): Promise<GetReviewContentsResponse> {
+		const { git } = SessionContainer.instance();
 		const { reviewId, repoId, checkpoint, path } = request;
+		const repo = await git.getRepositoryById(repoId);
 		if (checkpoint === undefined) {
 			const review = await this.getById(request.reviewId);
 
@@ -309,6 +312,7 @@ export class ReviewsManager extends CachedEntityManagerBase<CSReview> {
 			);
 
 			return {
+				repoRoot: repo?.path,
 				left: firstContents.left,
 				right: latestContents.right
 			};
@@ -342,6 +346,7 @@ export class ReviewsManager extends CachedEntityManagerBase<CSReview> {
 				path
 			);
 			return {
+				repoRoot: repo?.path,
 				left: previousContents || atRequestedCheckpoint.left,
 				right: atRequestedCheckpoint.right
 			};
@@ -411,6 +416,7 @@ export class ReviewsManager extends CachedEntityManagerBase<CSReview> {
 				: normalizedRightBaseContents;
 
 		return {
+			repoRoot: repo.path,
 			left: leftContents,
 			right: rightContents
 		};
@@ -792,7 +798,11 @@ export class ReviewsManager extends CachedEntityManagerBase<CSReview> {
 				(await xfs.readText(path.join(repo.path, ".github/pull_request_template.md")));
 
 			const baseBranchRemote = await git.getBranchRemote(repo.path, baseRefName!);
-			const commitsBehindOrigin = await git.getBranchCommitsStatus(repo.path, baseBranchRemote!, baseRefName!);
+			const commitsBehindOrigin = await git.getBranchCommitsStatus(
+				repo.path,
+				baseBranchRemote!,
+				baseRefName!
+			);
 
 			return {
 				success: success,

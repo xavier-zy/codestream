@@ -1,5 +1,7 @@
 package com.codestream.review
 
+import com.intellij.openapi.fileTypes.FileType
+import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.vfs.VirtualFileSystem
 import com.intellij.testFramework.LightVirtualFile
 
@@ -8,7 +10,7 @@ class ReviewDiffVirtualFile : LightVirtualFile {
     private val mySide: ReviewDiffSide
     private val myCanCreateMarker: Boolean
 
-    private constructor(fullPath: String, side: ReviewDiffSide, path: String, content: String, canCreateMarker: Boolean) : super(path, content) {
+    private constructor(fullPath: String, side: ReviewDiffSide, path: String, fileType: FileType, content: String, canCreateMarker: Boolean) : super(path, fileType, content) {
         myFullPath = fullPath
         mySide = side
         myCanCreateMarker = canCreateMarker
@@ -16,7 +18,8 @@ class ReviewDiffVirtualFile : LightVirtualFile {
 
     companion object {
         fun create(fullPath: String, side: ReviewDiffSide, path: String, content: String, canCreateMarker: Boolean): ReviewDiffVirtualFile {
-            return ReviewDiffVirtualFile(fullPath, side, path, content, canCreateMarker)
+            val type = FileTypeManager.getInstance().getFileTypeByFileName(fullPath)
+            return ReviewDiffVirtualFile(fullPath, side, path, type, content, canCreateMarker)
         }
     }
 

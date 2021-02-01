@@ -460,6 +460,7 @@ export interface GetFileContentsAtRevisionRequest {
 }
 
 export interface GetFileContentsAtRevisionResponse {
+	repoRoot: string;
 	content: string;
 	error?: string;
 }

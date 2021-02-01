@@ -198,24 +198,24 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 
 	async ensureInitialized() {}
 
-	_queryLogger: {
-		restApi: {
-			rateLimit?: { remaining: number; limit: number; used: number; reset: number };
-			fns: any;
-		};
-		graphQlApi: {
-			rateLimit?: {
-				remaining: number;
-				resetAt: string;
-				resetInMinutes: number;
-				last?: { name: string; cost: number };
-			};
-			fns: any;
-		};
-	} = {
-		graphQlApi: { fns: {} },
-		restApi: { fns: {} }
-	};
+	// _queryLogger: {
+	// 	restApi: {
+	// 		rateLimit?: { remaining: number; limit: number; used: number; reset: number };
+	// 		fns: any;
+	// 	};
+	// 	graphQlApi: {
+	// 		rateLimit?: {
+	// 			remaining: number;
+	// 			resetAt: string;
+	// 			resetInMinutes: number;
+	// 			last?: { name: string; cost: number };
+	// 		};
+	// 		fns: any;
+	// 	};
+	// } = {
+	// 	graphQlApi: { fns: {} },
+	// 	restApi: { fns: {} }
+	// };
 
 	_isSuppressedException(ex: any): ReportSuppressedMessages | undefined {
 		const networkErrors = [
@@ -288,226 +288,226 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 			}
 		}
 
-		try {
-			if (Logger.level === TraceLevel.Debug && response && response.rateLimit) {
-				this._queryLogger.graphQlApi.rateLimit = {
-					remaining: response.rateLimit.remaining,
-					resetAt: response.rateLimit.resetAt,
-					resetInMinutes: Math.floor(
-						(new Date(new Date(response.rateLimit.resetAt).toString()).getTime() -
-							new Date().getTime()) /
-							1000 /
-							60
-					)
-				};
-				const e = new Error();
-				if (e.stack) {
-					let functionName;
-					try {
-						functionName = e.stack
-							.split("\n")
-							.filter(
-								_ =>
-									(_.indexOf("GitHubProvider") > -1 ||
-										_.indexOf("GitHubEnterpriseProvider") > -1) &&
-									_.indexOf(".query") === -1
-							)![0]
-							.match(/GitHubProvider\.(\w+)/)![1];
-					} catch (err) {
-						functionName = "unknown";
-						Logger.warn(err);
-					}
-					this._queryLogger.graphQlApi.rateLimit.last = {
-						name: functionName,
-						cost: response.rateLimit.cost
-					};
-					if (!this._queryLogger.graphQlApi.fns[functionName]) {
-						this._queryLogger.graphQlApi.fns[functionName] = {
-							count: 1,
-							cumulativeCost: response.rateLimit.cost,
-							averageCost: response.rateLimit.cost
-						};
-					} else {
-						const existing = this._queryLogger.graphQlApi.fns[functionName];
-						existing.count++;
-						existing.cumulativeCost += response.rateLimit.cost;
-						existing.averageCost = Math.floor(existing.cumulativeCost / existing.count);
-						this._queryLogger.graphQlApi.fns[functionName] = existing;
-					}
-				}
+		// try {
+		// 	if (Logger.level === TraceLevel.Debug && response && response.rateLimit) {
+		// 		this._queryLogger.graphQlApi.rateLimit = {
+		// 			remaining: response.rateLimit.remaining,
+		// 			resetAt: response.rateLimit.resetAt,
+		// 			resetInMinutes: Math.floor(
+		// 				(new Date(new Date(response.rateLimit.resetAt).toString()).getTime() -
+		// 					new Date().getTime()) /
+		// 					1000 /
+		// 					60
+		// 			)
+		// 		};
+		// 		const e = new Error();
+		// 		if (e.stack) {
+		// 			let functionName;
+		// 			try {
+		// 				functionName = e.stack
+		// 					.split("\n")
+		// 					.filter(
+		// 						_ =>
+		// 							(_.indexOf("GitHubProvider") > -1 ||
+		// 								_.indexOf("GitHubEnterpriseProvider") > -1) &&
+		// 							_.indexOf(".query") === -1
+		// 					)![0]
+		// 					.match(/GitHubProvider\.(\w+)/)![1];
+		// 			} catch (err) {
+		// 				functionName = "unknown";
+		// 				Logger.warn(err);
+		// 			}
+		// 			this._queryLogger.graphQlApi.rateLimit.last = {
+		// 				name: functionName,
+		// 				cost: response.rateLimit.cost
+		// 			};
+		// 			if (!this._queryLogger.graphQlApi.fns[functionName]) {
+		// 				this._queryLogger.graphQlApi.fns[functionName] = {
+		// 					count: 1,
+		// 					cumulativeCost: response.rateLimit.cost,
+		// 					averageCost: response.rateLimit.cost
+		// 				};
+		// 			} else {
+		// 				const existing = this._queryLogger.graphQlApi.fns[functionName];
+		// 				existing.count++;
+		// 				existing.cumulativeCost += response.rateLimit.cost;
+		// 				existing.averageCost = Math.floor(existing.cumulativeCost / existing.count);
+		// 				this._queryLogger.graphQlApi.fns[functionName] = existing;
+		// 			}
+		// 		}
 
-				Logger.log(JSON.stringify(this._queryLogger, null, 4));
-			}
-		} catch (err) {
-			Logger.warn(err);
-		}
+		// 		Logger.log(JSON.stringify(this._queryLogger, null, 4));
+		// 	}
+		// } catch (err) {
+		// 	Logger.warn(err);
+		// }
 
 		return response;
 	}
 
 	async mutate<T>(query: string, variables: any = undefined) {
 		const response = await (await this.client()).request<T>(query, variables);
-		if (Logger.level === TraceLevel.Debug) {
-			try {
-				const e = new Error();
-				if (e.stack) {
-					let functionName;
-					try {
-						functionName = e.stack
-							.split("\n")
-							.filter(
-								_ =>
-									(_.indexOf("GitHubProvider") > -1 ||
-										_.indexOf("GitHubEnterpriseProvider") > -1) &&
-									_.indexOf(".mutate") === -1
-							)![0]
-							.match(/GitHubProvider\.(\w+)/)![1];
-					} catch (err) {
-						Logger.warn(err);
-						functionName = "unknown";
-					}
-					if (!this._queryLogger.graphQlApi.rateLimit) {
-						this._queryLogger.graphQlApi.rateLimit = {
-							remaining: -1,
-							resetAt: "",
-							resetInMinutes: -1
-						};
-					}
-					this._queryLogger.graphQlApi.rateLimit.last = {
-						name: functionName,
-						// mutate costs are 1
-						cost: 1
-					};
-					if (!this._queryLogger.graphQlApi.fns[functionName]) {
-						this._queryLogger.graphQlApi.fns[functionName] = {
-							count: 1
-						};
-					} else {
-						const existing = this._queryLogger.graphQlApi.fns[functionName];
-						existing.count++;
+		// if (Logger.level === TraceLevel.Debug) {
+		// 	try {
+		// 		const e = new Error();
+		// 		if (e.stack) {
+		// 			let functionName;
+		// 			try {
+		// 				functionName = e.stack
+		// 					.split("\n")
+		// 					.filter(
+		// 						_ =>
+		// 							(_.indexOf("GitHubProvider") > -1 ||
+		// 								_.indexOf("GitHubEnterpriseProvider") > -1) &&
+		// 							_.indexOf(".mutate") === -1
+		// 					)![0]
+		// 					.match(/GitHubProvider\.(\w+)/)![1];
+		// 			} catch (err) {
+		// 				Logger.warn(err);
+		// 				functionName = "unknown";
+		// 			}
+		// 			if (!this._queryLogger.graphQlApi.rateLimit) {
+		// 				this._queryLogger.graphQlApi.rateLimit = {
+		// 					remaining: -1,
+		// 					resetAt: "",
+		// 					resetInMinutes: -1
+		// 				};
+		// 			}
+		// 			this._queryLogger.graphQlApi.rateLimit.last = {
+		// 				name: functionName,
+		// 				// mutate costs are 1
+		// 				cost: 1
+		// 			};
+		// 			if (!this._queryLogger.graphQlApi.fns[functionName]) {
+		// 				this._queryLogger.graphQlApi.fns[functionName] = {
+		// 					count: 1
+		// 				};
+		// 			} else {
+		// 				const existing = this._queryLogger.graphQlApi.fns[functionName];
+		// 				existing.count++;
 
-						this._queryLogger.graphQlApi.fns[functionName] = existing;
-					}
-				}
+		// 				this._queryLogger.graphQlApi.fns[functionName] = existing;
+		// 			}
+		// 		}
 
-				Logger.log(JSON.stringify(this._queryLogger, null, 4));
-			} catch (err) {
-				Logger.warn(err);
-			}
-		}
+		// 		Logger.log(JSON.stringify(this._queryLogger, null, 4));
+		// 	} catch (err) {
+		// 		Logger.warn(err);
+		// 	}
+		// }
 		return response;
 	}
 
 	async restPost<T extends object, R extends object>(url: string, variables: any) {
 		const response = await this.post<T, R>(url, variables);
-		if (
-			response &&
-			response.response &&
-			response.response.headers &&
-			Logger.level === TraceLevel.Debug
-		) {
-			try {
-				const rateLimit: any = {};
-				["limit", "remaining", "used", "reset"].forEach(key => {
-					try {
-						rateLimit[key] = parseInt(
-							response.response.headers.get(`x-ratelimit-${key}`) as string,
-							10
-						);
-					} catch (e) {
-						Logger.warn(e);
-					}
-				});
+		// if (
+		// 	response &&
+		// 	response.response &&
+		// 	response.response.headers &&
+		// 	Logger.level === TraceLevel.Debug
+		// ) {
+		// 	try {
+		// 		const rateLimit: any = {};
+		// 		["limit", "remaining", "used", "reset"].forEach(key => {
+		// 			try {
+		// 				rateLimit[key] = parseInt(
+		// 					response.response.headers.get(`x-ratelimit-${key}`) as string,
+		// 					10
+		// 				);
+		// 			} catch (e) {
+		// 				Logger.warn(e);
+		// 			}
+		// 		});
 
-				this._queryLogger.restApi.rateLimit = rateLimit;
+		// 		this._queryLogger.restApi.rateLimit = rateLimit;
 
-				const e = new Error();
-				if (e.stack) {
-					let functionName;
-					try {
-						functionName = e.stack
-							.split("\n")
-							.filter(
-								_ => _.indexOf("GitHubProvider") > -1 && _.indexOf("GitHubProvider.restPost") === -1
-							)![0]
-							.match(/GitHubProvider\.(\w+)/)![1];
-					} catch (ex) {
-						functionName = "unknown";
-					}
+		// 		const e = new Error();
+		// 		if (e.stack) {
+		// 			let functionName;
+		// 			try {
+		// 				functionName = e.stack
+		// 					.split("\n")
+		// 					.filter(
+		// 						_ => _.indexOf("GitHubProvider") > -1 && _.indexOf("GitHubProvider.restPost") === -1
+		// 					)![0]
+		// 					.match(/GitHubProvider\.(\w+)/)![1];
+		// 			} catch (ex) {
+		// 				functionName = "unknown";
+		// 			}
 
-					if (!this._queryLogger.restApi.fns[functionName]) {
-						this._queryLogger.restApi.fns[functionName] = {
-							count: 1
-						};
-					} else {
-						const existing = this._queryLogger.restApi.fns[functionName];
-						existing.count++;
-						this._queryLogger.restApi.fns[functionName] = existing;
-					}
-				}
+		// 			if (!this._queryLogger.restApi.fns[functionName]) {
+		// 				this._queryLogger.restApi.fns[functionName] = {
+		// 					count: 1
+		// 				};
+		// 			} else {
+		// 				const existing = this._queryLogger.restApi.fns[functionName];
+		// 				existing.count++;
+		// 				this._queryLogger.restApi.fns[functionName] = existing;
+		// 			}
+		// 		}
 
-				Logger.log(JSON.stringify(this._queryLogger, null, 4));
-			} catch (err) {
-				console.warn(err);
-			}
-		}
+		// 		Logger.log(JSON.stringify(this._queryLogger, null, 4));
+		// 	} catch (err) {
+		// 		console.warn(err);
+		// 	}
+		// }
 
 		return response;
 	}
 
 	async restGet<T extends object>(url: string) {
 		const response = await this.get<T>(url);
-		if (
-			response &&
-			response.response &&
-			response.response.headers &&
-			Logger.level === TraceLevel.Debug
-		) {
-			try {
-				const rateLimit: any = {};
-				["limit", "remaining", "used", "reset"].forEach(key => {
-					try {
-						rateLimit[key] = parseInt(
-							response.response.headers.get(`x-ratelimit-${key}`) as string,
-							10
-						);
-					} catch (e) {
-						Logger.warn(e);
-					}
-				});
+		// if (
+		// 	response &&
+		// 	response.response &&
+		// 	response.response.headers &&
+		// 	Logger.level === TraceLevel.Debug
+		// ) {
+		// 	try {
+		// 		const rateLimit: any = {};
+		// 		["limit", "remaining", "used", "reset"].forEach(key => {
+		// 			try {
+		// 				rateLimit[key] = parseInt(
+		// 					response.response.headers.get(`x-ratelimit-${key}`) as string,
+		// 					10
+		// 				);
+		// 			} catch (e) {
+		// 				Logger.warn(e);
+		// 			}
+		// 		});
 
-				this._queryLogger.restApi.rateLimit = rateLimit;
+		// 		this._queryLogger.restApi.rateLimit = rateLimit;
 
-				const e = new Error();
-				if (e.stack) {
-					let functionName;
-					try {
-						functionName = e.stack
-							.split("\n")
-							.filter(
-								_ => _.indexOf("GitHubProvider") > -1 && _.indexOf("GitHubProvider.restGet") === -1
-							)![0]
-							.match(/GitHubProvider\.(\w+)/)![1];
-					} catch (ex) {
-						functionName = "unknown";
-					}
+		// 		const e = new Error();
+		// 		if (e.stack) {
+		// 			let functionName;
+		// 			try {
+		// 				functionName = e.stack
+		// 					.split("\n")
+		// 					.filter(
+		// 						_ => _.indexOf("GitHubProvider") > -1 && _.indexOf("GitHubProvider.restGet") === -1
+		// 					)![0]
+		// 					.match(/GitHubProvider\.(\w+)/)![1];
+		// 			} catch (ex) {
+		// 				functionName = "unknown";
+		// 			}
 
-					if (!this._queryLogger.restApi.fns[functionName]) {
-						this._queryLogger.restApi.fns[functionName] = {
-							count: 1
-						};
-					} else {
-						const existing = this._queryLogger.restApi.fns[functionName];
-						existing.count++;
-						this._queryLogger.restApi.fns[functionName] = existing;
-					}
-				}
+		// 			if (!this._queryLogger.restApi.fns[functionName]) {
+		// 				this._queryLogger.restApi.fns[functionName] = {
+		// 					count: 1
+		// 				};
+		// 			} else {
+		// 				const existing = this._queryLogger.restApi.fns[functionName];
+		// 				existing.count++;
+		// 				this._queryLogger.restApi.fns[functionName] = existing;
+		// 			}
+		// 		}
 
-				Logger.log(JSON.stringify(this._queryLogger, null, 4));
-			} catch (err) {
-				console.warn(err);
-			}
-		}
+		// 		Logger.log(JSON.stringify(this._queryLogger, null, 4));
+		// 	} catch (err) {
+		// 		console.warn(err);
+		// 	}
+		// }
 
 		return response;
 	}

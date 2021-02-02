@@ -662,7 +662,7 @@ export abstract class ThirdPartyIssueProviderBase<
 			if (foundOneWithUrl) request.description += addressesText;
 		}
 		const codeStreamLink =
-			"https://codestream.com/?utm_source=cs&utm_medium=pr&utm_campaign=github";
+			`https://codestream.com/?utm_source=cs&utm_medium=pr&utm_campaign=${encodeURI(request.providerId)}`;
 		let createdFrom = "";
 		switch (request.ideName) {
 			case "VSC":

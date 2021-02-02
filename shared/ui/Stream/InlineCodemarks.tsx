@@ -1391,7 +1391,7 @@ const mapStateToProps = (state: CodeStreamState) => {
 		viewHeadshots: configs.showHeadshots,
 		showLabelText: false, //configs.showLabelText,
 		showHidden: context.codemarksShowArchived || false,
-		showPRComments: hasPRProvider && preferences.codemarksShowPRComments,
+		showPRComments: hasPRProvider && !!preferences.codemarksShowPRComments,
 		fileNameToFilterFor: editorContext.activeFile,
 		scmInfo: editorContext.scmInfo,
 		textEditorUri: editorContext.textEditorUri,

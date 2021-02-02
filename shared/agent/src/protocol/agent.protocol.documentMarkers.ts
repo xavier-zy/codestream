@@ -62,7 +62,8 @@ export type DocumentMarker = CSEntity &
 				codemark?: undefined;
 				codemarkId?: undefined;
 				externalContent: DocumentMarkerExternalContent;
-		  });
+		  }
+	);
 
 export interface DocumentMarkerExternalContent {
 	provider: {
@@ -98,10 +99,7 @@ export interface MarkerNotLocated extends CSMarker {
 
 export interface FetchDocumentMarkersRequest {
 	textDocument: TextDocumentIdentifier;
-	filters?: {
-		excludeArchived?: boolean;
-		excludePRs?: boolean;
-	};
+	applyFilters: boolean;
 }
 export interface FetchDocumentMarkersResponse {
 	markers: DocumentMarker[];

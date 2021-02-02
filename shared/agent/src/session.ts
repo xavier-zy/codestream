@@ -87,6 +87,7 @@ import {
 	CSMarker,
 	CSMarkerLocations,
 	CSMe,
+	CSMePreferences,
 	CSPost,
 	CSRegisterResponse,
 	CSRepository,
@@ -170,6 +171,11 @@ export class CodeStreamSession {
 	private _onDidChangeCurrentUser = new Emitter<CSMe>();
 	get onDidChangeCurrentUser(): Event<CSMe> {
 		return this._onDidChangeCurrentUser.event;
+	}
+
+	private _onDidChangePreferences = new Emitter<CSMePreferences>();
+	get onDidChangePreferences(): Event<CSMePreferences> {
+		return this._onDidChangePreferences.event;
 	}
 
 	private _onDidChangeMarkerLocations = new Emitter<CSMarkerLocations[]>();
@@ -468,6 +474,7 @@ export class CodeStreamSession {
 				});
 				break;
 			case MessageType.Preferences:
+				this._onDidChangePreferences.fire(e.data);
 				this.agent.sendNotification(DidChangeDataNotificationType, {
 					type: ChangeDataType.Preferences,
 					data: e.data

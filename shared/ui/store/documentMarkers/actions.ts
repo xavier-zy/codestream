@@ -21,9 +21,7 @@ export const addDocumentMarker = (uri: string, marker: DocumentMarker) =>
 export const fetchDocumentMarkers = (uri: string, excludePRs: boolean) => async dispatch => {
 	const response = await HostApi.instance.send(FetchDocumentMarkersRequestType, {
 		textDocument: { uri },
-		filters: {
-			excludePRs
-		}
+		applyFilters: false
 	});
 
 	if (response) {

@@ -122,7 +122,6 @@ interface State {
 	showConfiguationModal: boolean;
 	isLoading: boolean;
 	problem: ScmError | undefined;
-	showPRCommentsField: boolean | undefined;
 	pendingPRConnection: boolean | undefined;
 }
 
@@ -143,7 +142,6 @@ export class SimpleCodemarksForFile extends Component<Props, State> {
 			showConfiguationModal: false,
 			isLoading: props.documentMarkers ? props.documentMarkers.length === 0 : true,
 			problem: props.scmInfo && getFileScmError(props.scmInfo),
-			showPRCommentsField: props.showPRComments,
 			pendingPRConnection: false
 		};
 
@@ -508,17 +506,14 @@ export class SimpleCodemarksForFile extends Component<Props, State> {
 			textEditorUri = "",
 			codemarkDomain,
 			count,
-			scmInfo
-		} = this.props;
-		const {
 			setUserPreference,
 			showHidden,
 			showResolved,
 			showReviews,
+			showPRComments,
 			wrapComments,
 			codemarkSortType
 		} = this.props;
-		const { showPRCommentsField } = this.state;
 
 		const isDiff = textEditorUri.startsWith("codestream-diff://");
 		const isFile = textEditorUri.startsWith("file://");
@@ -600,6 +595,26 @@ export class SimpleCodemarksForFile extends Component<Props, State> {
 				action: () => setUserPreference(["codemarksWrapComments"], !wrapComments)
 			},
 			{
+				label: "Sort comments by...",
+				key: "sort-codemarks",
+				checked: false,
+				submenu: [
+					{
+						label: "Date",
+						key: "date",
+						checked: codemarkSortType === CodemarkSortType.CreatedAt,
+						action: () => setUserPreference(["codemarkSortType"], CodemarkSortType.CreatedAt)
+					},
+					{
+						label: "Line Number",
+						key: "file",
+						checked: codemarkSortType === CodemarkSortType.File,
+						action: () => setUserPreference(["codemarkSortType"], CodemarkSortType.File)
+					}
+				]
+			},
+			{ label: "-" },
+			{
 				label: "Show icons in editor gutter",
 				key: "show-icons",
 				checked: false,
@@ -610,7 +625,7 @@ export class SimpleCodemarksForFile extends Component<Props, State> {
 						checked: this.props.hasPRProvider
 							? this.state.pendingPRConnection
 								? true
-								: !!showPRCommentsField
+								: !!showPRComments
 							: false,
 
 						action: () => {
@@ -619,7 +634,8 @@ export class SimpleCodemarksForFile extends Component<Props, State> {
 								this.setState({ pendingPRConnection: true });
 							} else {
 								this.setState({ pendingPRConnection: false });
-								this.setState({ showPRCommentsField: !showPRCommentsField });
+								setUserPreference(["codemarksShowPRComments"], !showPRComments);
+								// this.setState({ showPRCommentsField: !showPRCommentsField });
 							}
 						}
 					},
@@ -641,25 +657,6 @@ export class SimpleCodemarksForFile extends Component<Props, State> {
 						key: "show-hidden",
 						checked: showHidden,
 						action: () => setUserPreference(["codemarksShowArchived"], !showHidden)
-					}
-				]
-			},
-			{
-				label: "Sort comments by...",
-				key: "sort-codemarks",
-				checked: false,
-				submenu: [
-					{
-						label: "Date",
-						key: "date",
-						checked: codemarkSortType === CodemarkSortType.CreatedAt,
-						action: () => setUserPreference(["codemarkSortType"], CodemarkSortType.CreatedAt)
-					},
-					{
-						label: "Line Number",
-						key: "file",
-						checked: codemarkSortType === CodemarkSortType.File,
-						action: () => setUserPreference(["codemarkSortType"], CodemarkSortType.File)
 					}
 				]
 			}

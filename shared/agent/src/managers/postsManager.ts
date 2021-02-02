@@ -1842,6 +1842,13 @@ export class PostsManager extends EntityManagerBase<CSPost> {
 					linefeed: "\n",
 					anchorFormat: "${text} ${url}"
 				};
+			case CodeDelimiterStyles.HTML_LIGHT_MARKUP:
+				return {
+					start: "",
+					end: "",
+					linefeed: "\n",
+					anchorFormat: '<a href="${url}">${text}</a>'
+				};
 			// https://docs.microsoft.com/en-us/azure/devops/project/wiki/markdown-guidance?view=azure-devops
 			case CodeDelimiterStyles.HTML_MARKUP:
 				return {

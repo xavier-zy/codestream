@@ -64,6 +64,7 @@ export enum CodeDelimiterStyles {
 	TRIPLE_BACK_QUOTE = "tripleBackQuote",
 	SINGLE_BACK_QUOTE = "singleBackQuote",
 	HTML_MARKUP = "htmlMarkup",
+	HTML_LIGHT_MARKUP = "htmlLightMarkup",
 	CODE_BRACE = "codeBrace"
 }
 

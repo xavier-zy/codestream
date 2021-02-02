@@ -39,7 +39,9 @@ export function AsanaCardControls(
 	const crossPostIssueContext = React.useContext(CrossPostIssueContext);
 
 	useDidMount(() => {
-		crossPostIssueContext.setValues({ codeDelimiterStyle: CodeDelimiterStyles.NONE });
+		crossPostIssueContext.setValues({
+			codeDelimiterStyle: CodeDelimiterStyles.HTML_LIGHT_MARKUP
+		});
 
 		if (data.boards && data.boards.length > 0 && data.currentBoard) {
 			const boardId = (data.currentBoard || data.boards[0]).id;

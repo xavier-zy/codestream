@@ -82,6 +82,7 @@ interface ConnectedProps {
 	showPRComments?: boolean;
 	showHidden: boolean;
 	showResolved: boolean;
+	showReviews: boolean;
 	wrapComments: boolean;
 	fileNameToFilterFor?: string;
 	scmInfo?: GetFileScmInfoResponse;
@@ -110,7 +111,6 @@ interface DispatchProps {
 		...args: Parameters<typeof setCurrentCodemark>
 	) => ReturnType<typeof setCurrentCodemark>;
 	setUserPreference: any;
-	setUserPreferences: Function;
 	openPanel: (...args: Parameters<typeof openPanel>) => ReturnType<typeof openPanel>;
 	setNewPostEntry: Function;
 }
@@ -451,7 +451,7 @@ export class SimpleCodemarksForFile extends Component<Props, State> {
 	};
 
 	renderCodemarksList = documentMarkers => {
-		const { showHidden, showResolved, codemarkSortType: codemarkSortType } = this.props;
+		const { showHidden, codemarkSortType: codemarkSortType } = this.props;
 		if (this.state.isLoading) return null;
 		const codemarksInList = {};
 		let codemarkSortFn;
@@ -514,6 +514,7 @@ export class SimpleCodemarksForFile extends Component<Props, State> {
 			setUserPreference,
 			showHidden,
 			showResolved,
+			showReviews,
 			wrapComments,
 			codemarkSortType
 		} = this.props;
@@ -593,13 +594,19 @@ export class SimpleCodemarksForFile extends Component<Props, State> {
 
 		const settingsMenuItems = [
 			{
+				label: "Wrap multi-line comments",
+				key: "wrap-comments",
+				checked: wrapComments,
+				action: () => setUserPreference(["codemarksWrapComments"], !wrapComments)
+			},
+			{
 				label: "Show icons in editor gutter",
 				key: "show-icons",
 				checked: false,
 				submenu: [
 					{
 						label: "Pull Request comments",
-						key: "prs",
+						key: "show-prs",
 						checked: this.props.hasPRProvider
 							? this.state.pendingPRConnection
 								? true
@@ -615,6 +622,12 @@ export class SimpleCodemarksForFile extends Component<Props, State> {
 								this.setState({ showPRCommentsField: !showPRCommentsField });
 							}
 						}
+					},
+					{
+						label: "Feedback Request comments",
+						key: "show-reviews",
+						checked: showReviews,
+						action: () => setUserPreference(["codemarksHideReviews"], showReviews)
 					},
 					{ label: "-" },
 					{
@@ -649,12 +662,6 @@ export class SimpleCodemarksForFile extends Component<Props, State> {
 						action: () => setUserPreference(["codemarkSortType"], CodemarkSortType.File)
 					}
 				]
-			},
-			{
-				label: "Wrap multi-line comments",
-				key: "wrap-comments",
-				checked: wrapComments,
-				action: () => setUserPreference(["codemarksWrapComments"], !wrapComments)
 			}
 		];
 
@@ -734,22 +741,6 @@ export class SimpleCodemarksForFile extends Component<Props, State> {
 			</>
 		);
 	}
-
-	saveSettings = async () => {
-		const { showPRCommentsField } = this.state;
-
-		let preferences = {} as any;
-		if (this.props.hasPRProvider) {
-			preferences.codemarksShowPRComments = !!showPRCommentsField;
-		} else {
-			preferences.codemarksShowPRComments = false;
-		}
-		await this.props.setUserPreferences(preferences);
-		if (this.props.hasPRProvider) {
-			this.props.fetchDocumentMarkers(this.props.textEditorUri!, !showPRCommentsField);
-		}
-		this.setState({ showConfiguationModal: false });
-	};
 }
 
 const EMPTY_ARRAY = [];
@@ -779,6 +770,7 @@ const mapStateToProps = (state: CodeStreamState, props): ConnectedProps => {
 	const codemarkSortType: CodemarkSortType = preferences.codemarkSortType || CodemarkSortType.File;
 	const showHidden = preferences.codemarksShowArchived || false;
 	const showResolved = preferences.codemarksHideResolved ? false : true;
+	const showReviews = preferences.codemarksHideReviews ? false : true;
 	let currentBranch = "";
 
 	let codemarksToRender = EMPTY_ARRAY as CodemarkPlus[];
@@ -858,6 +850,7 @@ const mapStateToProps = (state: CodeStreamState, props): ConnectedProps => {
 		currentStreamId: context.currentStreamId,
 		showHidden: preferences.codemarksShowArchived || false,
 		showResolved,
+		showReviews,
 		wrapComments: preferences.codemarksWrapComments || false,
 		showPRComments: hasPRProvider && preferences.codemarksShowPRComments,
 		fileNameToFilterFor: editorContext.activeFile,
@@ -880,7 +873,6 @@ export default withSearchableItems(
 		setCurrentCodemark,
 		setEditorContext,
 		setNewPostEntry,
-		setUserPreference,
-		setUserPreferences
+		setUserPreference
 	})(SimpleCodemarksForFile)
 );

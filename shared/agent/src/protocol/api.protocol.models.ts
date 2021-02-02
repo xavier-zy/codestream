@@ -717,6 +717,10 @@ export interface CSMePreferences {
 	hiddenPaneNodes?: {
 		[nodeId: string]: boolean;
 	};
+	codemarksHideReviews?: boolean;
+	codemarksHideResolved?: boolean;
+	codemarksShowArchived?: boolean;
+	defaultResolveAction?: "resolve" | "archive";
 	[key: string]: any;
 }
 

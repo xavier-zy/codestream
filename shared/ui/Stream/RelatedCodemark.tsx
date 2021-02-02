@@ -37,9 +37,8 @@ export function RelatedCodemark(props: { id: string; className?: string }) {
 		return null;
 	}
 
-	const icon = (
-		<Icon name={codemark.type || "comment"} className={`${codemark.color}-color type-icon`} />
-	);
+	const color = codemark.pinned ? (codemark.status === "closed" ? "purple" : "green") : "gray";
+	const icon = <Icon name={codemark.type || "comment"} className={`${color}-color type-icon`} />;
 
 	const marker = codemark.markers && codemark.markers[0];
 	const file = marker && marker.file;
@@ -48,7 +47,7 @@ export function RelatedCodemark(props: { id: string; className?: string }) {
 	return (
 		<div
 			key={codemark.id}
-			className={cx("related-codemark", { resolved }, props.className)}
+			className={cx("related-codemark", props.className)}
 			onClick={handleClickRelatedCodemark}
 		>
 			{icon}&nbsp;{codemark.title || codemark.text}

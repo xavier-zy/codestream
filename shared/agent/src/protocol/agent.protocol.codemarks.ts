@@ -181,7 +181,9 @@ export interface SetCodemarkPinnedRequest {
 	codemarkId: string;
 	value: boolean;
 }
-export interface SetCodemarkPinnedResponse {}
+export interface SetCodemarkPinnedResponse {
+	codemark: CodemarkPlus;
+}
 export const SetCodemarkPinnedRequestType = new RequestType<
 	SetCodemarkPinnedRequest,
 	SetCodemarkPinnedResponse,

@@ -32,7 +32,9 @@ import {
 	UpdateTeamTagRequestType,
 	DeleteTeamTagRequestType,
 	UpdateStatusRequestType,
-	UpdateInvisibleRequestType
+	UpdateInvisibleRequestType,
+	SetCodemarkPinnedRequestType,
+	CodemarkPlus
 } from "@codestream/protocols/agent";
 import { CSPost, StreamType, CSReviewStatus } from "@codestream/protocols/api";
 import { logError } from "../logger";
@@ -841,13 +843,48 @@ export const setCodemarkStatus = (
 			createPost(
 				response.codemark.streamId,
 				response.codemark.postId,
-				`/me ${describeIssueStatusChange(status)} this issue ${extraText || ""}`
+				`/me ${describeIssueStatusChange(status)} this codemark ${extraText || ""}`
 			)
 		);
 
 		return dispatch(updateCodemarks([response.codemark]));
 	} catch (error) {
 		logError(`failed to change codemark status: ${error}`, { codemarkId });
+		return undefined;
+	}
+};
+
+const describePinnedChange = (value: boolean) => {
+	switch (value) {
+		case true:
+			return "unarchived";
+		case false:
+			return "archived";
+	}
+};
+
+export const setCodemarkPinned = (
+	codemark: CodemarkPlus,
+	value: boolean,
+	extraText?: string
+) => async dispatch => {
+	try {
+		const response = await HostApi.instance.send(SetCodemarkPinnedRequestType, {
+			codemarkId: codemark.id,
+			value
+		});
+
+		await dispatch(
+			createPost(
+				codemark.streamId,
+				codemark.postId,
+				`/me ${describePinnedChange(value)} this codemark ${extraText || ""}`
+			)
+		);
+
+		return dispatch(updateCodemarks([response.codemark]));
+	} catch (error) {
+		logError(`failed to change codemark pinned: ${error}`, { codemarkId: codemark.id });
 		return undefined;
 	}
 };

@@ -2,14 +2,19 @@ import cx from "classnames";
 import React from "react";
 import { connect } from "react-redux";
 import { Range } from "vscode-languageserver-protocol";
-import { fetchThread, setCodemarkStatus, setUserPreference, createPost } from "./actions";
+import {
+	fetchThread,
+	setCodemarkStatus,
+	setCodemarkPinned,
+	setUserPreference,
+	createPost
+} from "./actions";
 import Headshot from "./Headshot";
 import Tag from "./Tag";
 import Icon from "./Icon";
 import Menu from "./Menu";
 import { InjectAsComment } from "./InjectAsComment";
 import { RepositionCodemark } from "./RepositionCodemark";
-import { markdownify } from "./Markdowner";
 import Timestamp from "./Timestamp";
 import CodemarkDetails from "./CodemarkDetails";
 import {
@@ -27,10 +32,7 @@ import {
 	CodemarkStatus
 } from "@codestream/protocols/api";
 import { HostApi } from "../webview-api";
-import {
-	FollowCodemarkRequestType,
-	SetCodemarkPinnedRequestType
-} from "@codestream/protocols/agent";
+import { FollowCodemarkRequestType } from "@codestream/protocols/agent";
 import { range, emptyArray, emptyObject } from "../utils";
 import {
 	getUserByCsId,
@@ -100,6 +102,7 @@ interface DispatchProps {
 	editCodemark: typeof editCodemark;
 	fetchThread: typeof fetchThread;
 	setCodemarkStatus: typeof setCodemarkStatus;
+	setCodemarkPinned: typeof setCodemarkPinned;
 	setUserPreference: typeof setUserPreference;
 	getPosts: typeof getPosts;
 	setCurrentCodemark: typeof setCurrentCodemark;
@@ -532,6 +535,9 @@ export class Codemark extends React.Component<Props, State> {
 	renderStatus(codemark, menuItems = [] as any[]) {
 		const { isChangeRequest, type, status = "open" } = codemark;
 
+		// resolving codemarks down done under reply box
+		return null;
+
 		if (this.state.isInjecting) return null;
 
 		const resolveItem = { label: "Resolve", action: this.toggleStatus };
@@ -829,10 +835,11 @@ export class Codemark extends React.Component<Props, State> {
 		}
 		this.props.addCodemarks([updatedCodemark]);
 
-		HostApi.instance.send(SetCodemarkPinnedRequestType, {
-			codemarkId: codemark.id,
-			value
-		});
+		this.props.setCodemarkPinned(codemark, value);
+		// HostApi.instance.send(SetCodemarkPinnedRequestType, {
+		// 	codemarkId: codemark.id,
+		// 	value
+		// });
 	};
 
 	toggleLabelIndicators = (_event: React.SyntheticEvent) => {
@@ -890,7 +897,6 @@ export class Codemark extends React.Component<Props, State> {
 		}
 
 		const color = codemark.pinned ? (codemark.status === "closed" ? "purple" : "green") : "gray";
-		console.warn("COLOR IS: ", color, " FROM ", codemark);
 		const renderedTags = this.renderTags(codemark);
 		return (
 			<div
@@ -1273,6 +1279,13 @@ export class Codemark extends React.Component<Props, State> {
 
 		menuItems.push({ label: "Copy link", action: this.copyPermalink });
 
+		if (codemark.status === "closed") {
+			menuItems.push({
+				label: "Reopen",
+				action: () => this.openIssue()
+			});
+		}
+
 		if (codemark.pinned) {
 			menuItems.push({
 				label: "Archive",
@@ -1485,11 +1498,9 @@ export class Codemark extends React.Component<Props, State> {
 										<Timestamp relative time={codemark.createdAt} />
 									</div>
 									<div className="right" style={{ alignItems: "center" }}>
-										{type !== CodemarkType.Issue && (
-											<span onClick={this.handleMenuClick}>
-												<Icon name="kebab-vertical" className="kebab-vertical clickable" />
-											</span>
-										)}
+										<span onClick={this.handleMenuClick}>
+											<Icon name="kebab-vertical" className="kebab-vertical clickable" />
+										</span>
 										{this.renderStatus(codemark, menuItems)}
 										{this.props.post && <AddReactionIcon post={this.props.post} />}
 										{/* this.renderKeybinding(codemark) */}
@@ -2086,6 +2097,7 @@ export default connect(
 	mapStateToProps,
 	{
 		setCodemarkStatus,
+		setCodemarkPinned,
 		setUserPreference,
 		deleteCodemark,
 		editCodemark,

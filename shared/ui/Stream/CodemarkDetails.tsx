@@ -7,14 +7,8 @@ import Tooltip from "./Tooltip";
 import MessageInput, { AttachmentField } from "./MessageInput";
 import { findMentionedUserIds, getTeamMembers } from "../store/users/reducer";
 import CodemarkActions from "./CodemarkActions";
-import {
-	CodemarkPlus,
-	Capabilities,
-	UploadFileRequestType,
-	UploadFileRequest,
-	SetCodemarkPinnedRequestType
-} from "@codestream/protocols/agent";
-import { createPost, setCodemarkStatus } from "./actions";
+import { CodemarkPlus, Capabilities } from "@codestream/protocols/agent";
+import { createPost, setCodemarkStatus, setCodemarkPinned, setUserPreference } from "./actions";
 import { CSUser, CSMe, CSPost, CodemarkType } from "@codestream/protocols/api";
 import { getTeamProvider } from "../store/teams/reducer";
 import { replaceHtml } from "../utils";
@@ -49,13 +43,18 @@ interface Props {
 	teamId: string;
 	displayType?: "collapsed" | "default" | "activity";
 	skipMarkers?: number[];
+	defaultResolveAction: "resolve" | "archive";
 
 	onSubmitPost?: any;
 	createPost(...args: Parameters<typeof createPost>): ReturnType<ReturnType<typeof createPost>>;
 	setCodemarkStatus(
 		...args: Parameters<typeof setCodemarkStatus>
 	): ReturnType<ReturnType<typeof setCodemarkStatus>>;
+	setCodemarkPinned(
+		...args: Parameters<typeof setCodemarkPinned>
+	): ReturnType<ReturnType<typeof setCodemarkPinned>>;
 	postAction?(...args: any[]): any;
+	setUserPreference?: Function;
 }
 
 export class CodemarkDetails extends React.Component<Props, State> {
@@ -122,15 +121,16 @@ export class CodemarkDetails extends React.Component<Props, State> {
 	resolveCodemark = async () => {
 		await this.submitReply();
 		this.props.setCodemarkStatus(this.props.codemark.id, "closed");
+		if (this.props.setUserPreference)
+			this.props.setUserPreference(["defaultResolveAction"], "resolve");
 	};
 
 	resolveAndArchiveCodemark = async () => {
 		await this.submitReply();
 		this.props.setCodemarkStatus(this.props.codemark.id, "closed");
-		HostApi.instance.send(SetCodemarkPinnedRequestType, {
-			codemarkId: this.props.codemark.id,
-			value: false
-		});
+		this.props.setCodemarkPinned(this.props.codemark, false);
+		if (this.props.setUserPreference)
+			this.props.setUserPreference(["defaultResolveAction"], "archive");
 	};
 
 	handleOnChange = (text: string, formatCode: boolean) => {
@@ -277,7 +277,7 @@ export class CodemarkDetails extends React.Component<Props, State> {
 													action: () => this.resolveAndArchiveCodemark()
 												}
 											]}
-											selectedKey="resolve"
+											selectedKey={this.props.defaultResolveAction}
 											variant="secondary"
 											splitDropdown
 										/>
@@ -308,7 +308,7 @@ export class CodemarkDetails extends React.Component<Props, State> {
 
 const EMPTY_OBJECT = {};
 const mapStateToProps = (state: CodeStreamState, props: { codemark: CodemarkPlus }) => {
-	const { capabilities, configs, connectivity, session, context, users, teams } = state;
+	const { capabilities, connectivity, session, context, users, teams, preferences } = state;
 
 	const team = teams[context.currentTeamId];
 	const teamProvider = getTeamProvider(team);
@@ -321,7 +321,6 @@ const mapStateToProps = (state: CodeStreamState, props: { codemark: CodemarkPlus
 
 	return {
 		threadId: context.threadId,
-		configs,
 		capabilities,
 		isOffline: connectivity.offline,
 		teammates: teamMembers,
@@ -331,8 +330,14 @@ const mapStateToProps = (state: CodeStreamState, props: { codemark: CodemarkPlus
 		hasFocus: context.hasFocus,
 		currentUserId: user.id,
 		currentUserName: user.username,
-		teamProvider: teamProvider
+		teamProvider: teamProvider,
+		defaultResolveAction: preferences.defaultResolveAction || "resolve"
 	};
 };
 
-export default connect(mapStateToProps, { createPost, setCodemarkStatus })(CodemarkDetails);
+export default connect(mapStateToProps, {
+	createPost,
+	setCodemarkStatus,
+	setCodemarkPinned,
+	setUserPreference
+})(CodemarkDetails);

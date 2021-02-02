@@ -23,6 +23,7 @@ export interface InlineMenuProps {
 	onOpen?: Function;
 	noChevronDown?: boolean;
 	noFocusOnSelect?: boolean;
+	align?: string;
 }
 
 export const TextButton = styled.span`
@@ -83,7 +84,7 @@ export function InlineMenu(props: InlineMenuProps) {
 		<>
 			{isOpen && buttonRef.current && (
 				<Menu
-					align="center"
+					align={props.align || "center"}
 					action={maybeToggleMenu}
 					title={props.title}
 					titleIcon={props.titleIcon}

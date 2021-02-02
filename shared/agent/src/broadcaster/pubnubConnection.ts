@@ -115,7 +115,11 @@ export class PubnubConnection implements BroadcasterConnection {
 			});
 		}
 		if (unsubscribedChannels.length > 0) {
-			this._debug(`Subscribing to ${JSON.stringify(unsubscribedChannels)}, withPresence=${options.withPresence}`);
+			this._debug(
+				`Subscribing to ${JSON.stringify(unsubscribedChannels)}, withPresence=${
+					options.withPresence
+				}`
+			);
 			this._pubnub!.subscribe({
 				channels: unsubscribedChannels,
 				withPresence: options.withPresence
@@ -159,7 +163,9 @@ export class PubnubConnection implements BroadcasterConnection {
 
 	// respond to a Pubnub status event
 	private onStatus(status: Pubnub.StatusEvent | any) {
-		this._debug(`Pubnub status received (category=${status.category} operation=${status.operation})`);
+		this._debug(
+			`Pubnub status received (category=${status.category} operation=${status.operation})`
+		);
 		this._debug(`Subscribed channels: ${status.subscribedChannels}`);
 		if ((status as any).error && status.operation === Pubnub.OPERATIONS.PNUnsubscribeOperation) {
 			// ignore any errors associated with unsubscribing
@@ -192,6 +198,7 @@ export class PubnubConnection implements BroadcasterConnection {
 				status.operation === Pubnub.OPERATIONS.PNSubscribeOperation)
 		) {
 			// a network error of some kind, make sure we are truly connected
+			this._debug(`PubNub network error: ${JSON.stringify(status)}`);
 			this.netHiccup();
 		}
 	}

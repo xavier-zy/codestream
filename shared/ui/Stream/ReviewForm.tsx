@@ -487,6 +487,8 @@ class ReviewForm extends React.Component<Props, State> {
 				editingReview
 			} = this.props;
 			const { includeSaved, includeStaged, startCommit, prevEndCommit } = this.state;
+			const includeLatestCommit =
+				this.props.currentReviewOptions && this.props.currentReviewOptions.includeLatestCommit;
 
 			const uri = repoUri || this.state.repoUri;
 			let statusInfo: GetRepoScmStatusResponse;
@@ -498,7 +500,8 @@ class ReviewForm extends React.Component<Props, State> {
 					includeSaved,
 					currentUserEmail: currentUser.email,
 					prevEndCommit,
-					reviewId: editingReview && editingReview.id
+					reviewId: editingReview && editingReview.id,
+					includeLatestCommit
 				});
 			} catch (e) {
 				logError(e);
@@ -570,20 +573,20 @@ class ReviewForm extends React.Component<Props, State> {
 			this.setState({ repoStatus: statusInfo, repoUri: uri, currentFile: "" });
 			if (!startCommit && statusInfo.scm && statusInfo.scm.startCommit) {
 				let limitedLength: number | undefined = undefined;
+
+				this.setChangeStart(statusInfo.scm.startCommit);
+
 				if (
-					this.props.currentReviewOptions &&
-					this.props.currentReviewOptions.includeLatestCommit &&
+					includeLatestCommit &&
 					statusInfo.scm.commits &&
 					statusInfo.scm.commits.length > 1 &&
 					statusInfo.scm.commits[0].info
 				) {
-					this.setChangeStart(statusInfo.scm.commits[1].sha, () => this.handleRepoChange());
 					this.setState({ title: statusInfo.scm.commits[0].info.message });
 					// only show this 1 commit
 					limitedLength = 1;
-				} else {
-					this.setChangeStart(statusInfo.scm.startCommit);
 				}
+
 				if (statusInfo.scm.commits) {
 					const commitListLength = statusInfo.scm.commits.findIndex(
 						// @ts-ignore
@@ -2394,17 +2397,20 @@ const mapStateToProps = (state: CodeStreamState, props): ConnectedProps => {
 	};
 };
 
-const ConnectedReviewForm = connect(mapStateToProps, {
-	openPanel,
-	openModal,
-	closePanel,
-	createPostAndReview,
-	editReview,
-	setUserPreference,
-	setCurrentReview,
-	setCurrentRepo,
-	setCodemarkStatus,
-	setNewPostEntry
-})(ReviewForm);
+const ConnectedReviewForm = connect(
+	mapStateToProps,
+	{
+		openPanel,
+		openModal,
+		closePanel,
+		createPostAndReview,
+		editReview,
+		setUserPreference,
+		setCurrentReview,
+		setCurrentRepo,
+		setCodemarkStatus,
+		setNewPostEntry
+	}
+)(ReviewForm);
 
 export { ConnectedReviewForm as ReviewForm };

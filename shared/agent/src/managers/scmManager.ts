@@ -358,7 +358,8 @@ export class ScmManager {
 			startCommit,
 			reviewId,
 			currentUserEmail,
-			skipAuthorsCalculation
+			skipAuthorsCalculation,
+			includeLatestCommit
 		} = request;
 
 		if (reviewId) {
@@ -420,6 +421,10 @@ export class ScmManager {
 
 					const gitRemotes = await git.getRepoRemotes(repoPath);
 					remotes = [...Iterables.map(gitRemotes, r => ({ name: r.name, url: r.normalizedUrl }))];
+
+					if (commits && commits.length > 1 && !startCommit && includeLatestCommit) {
+						startCommit = commits[1].sha;
+					}
 
 					// if we don't have a starting point to diff against,
 					// assume that we want to diff against either the first

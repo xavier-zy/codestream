@@ -2109,7 +2109,7 @@ export class PostsManager extends EntityManagerBase<CSPost> {
 						providerId: attributes.issueProvider.id,
 						data: {
 							description: `${description}\n<sup>Created ${createdFrom} using <a href="${codeStreamLink}azuredevops">CodeStream</a></sup>`,
-							title: providerCardRequest.codemagit rk.title,
+							title: providerCardRequest.codemark.title,
 							boardId: attributes.board.id,
 							assignee: attributes.assignees && attributes.assignees[0]
 						}

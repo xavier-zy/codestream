@@ -95,18 +95,16 @@ export const Notifications = props => {
 								Don't automatically follow any codemarks or feedback requests
 							</Radio>
 						</RadioGroup>
-						{false && ( // disabling this till we're ready
-							<div style={{ marginTop: "20px" }}>
-								<Checkbox
-									name="frReminders"
-									checked={derivedState.reviewReminderDelivery}
-									onChange={handleChangeReviewReminders}
-									loading={loadingReminderDelivery}
-								>
-									Notify me about outstanding feedback requests
-								</Checkbox>
-							</div>
-						)}
+						<div style={{ marginTop: "20px" }}>
+							<Checkbox
+								name="frReminders"
+								checked={derivedState.reviewReminderDelivery}
+								onChange={handleChangeReviewReminders}
+								loading={loadingReminderDelivery}
+							>
+								Notify me about outstanding feedback requests
+							</Checkbox>
+						</div>
 						{derivedState.hasDesktopNotifications && derivedState.notificationDeliverySupported && (
 							<div style={{ marginTop: "20px" }}>
 								<p className="explainer">Deliver notifications via:</p>

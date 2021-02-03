@@ -63,7 +63,6 @@ export class DocumentMarkerManager {
 		string,
 		{
 			documentVersion: number;
-			applyFilters: boolean;
 			promise: Promise<FetchDocumentMarkersResponse>;
 		}
 	>();
@@ -469,8 +468,19 @@ export class DocumentMarkerManager {
 				}
 			}
 
+			const filteredMarkers = request.applyFilters
+				? markers.filter(marker => {
+						const { codemark } = marker;
+						if (!codemark) return false;
+						if (filters.excludeArchived && !codemark.pinned) return false;
+						if (filters.excludeReviews && codemark.reviewId) return false;
+						if (filters.excludeResolved && codemark.status === "closed") return false;
+						return true;
+				  })
+				: markers;
+
 			return {
-				markers: [...markers, ...prMarkers],
+				markers: [...filteredMarkers, ...prMarkers],
 				markersNotLocated
 			};
 		} catch (ex) {
@@ -485,18 +495,13 @@ export class DocumentMarkerManager {
 	): Promise<FetchDocumentMarkersResponse> {
 		const cc = Logger.getCorrelationContext();
 
-		const { textDocument: documentId, applyFilters } = request;
+		const { textDocument: documentId } = request;
 		const { documents } = Container.instance();
 		const doc = documents.get(documentId.uri);
 		const documentUri = URI.parse(documentId.uri);
 
 		const cached = this._codemarkDocumentMarkersCache.get(documentUri.toString());
-		if (
-			doc &&
-			cached &&
-			cached.documentVersion === doc?.version &&
-			applyFilters === cached.applyFilters
-		) {
+		if (doc && cached && cached.documentVersion === doc?.version) {
 			Logger.log(
 				cc,
 				`MARKERS: found cached codemark document markers for ${documentUri.fsPath} v${doc?.version}`
@@ -509,7 +514,6 @@ export class DocumentMarkerManager {
 		if (doc?.version !== undefined) {
 			this._codemarkDocumentMarkersCache.set(documentUri.toString(), {
 				documentVersion: doc.version,
-				applyFilters: applyFilters,
 				promise
 			});
 		}
@@ -518,8 +522,7 @@ export class DocumentMarkerManager {
 	}
 
 	private async getCodemarkDocumentMarkersCore({
-		textDocument: documentId,
-		applyFilters
+		textDocument: documentId
 	}: FetchDocumentMarkersRequest): Promise<FetchDocumentMarkersResponse> {
 		const cc = Logger.getCorrelationContext();
 
@@ -547,7 +550,6 @@ export class DocumentMarkerManager {
 		const filePath = documentUri.fsPath;
 
 		const stream = await files.getByPath(filePath);
-		const filters = applyFilters ? await this.getFilters() : undefined;
 		// Logger.log(cc, "FILTERS ARE: " + JSON.stringify(filters, null, 4));
 		if (stream != null) {
 			const markersForDocument = await markers.getByStreamId(stream.id, true);
@@ -571,13 +573,7 @@ export class DocumentMarkerManager {
 					const codemark = await codemarks.getEnrichedCodemarkById(marker.codemarkId);
 
 					// Only return markers that are not links and match the filter[s] (if any)
-					if (
-						codemark.type === CodemarkType.Link ||
-						(filters &&
-							((filters.excludeArchived && !codemark.pinned) ||
-								(filters.excludeReviews && codemark.reviewId) ||
-								(filters.excludeResolved && codemark.status === "closed")))
-					) {
+					if (codemark.type === CodemarkType.Link) {
 						continue;
 					}
 

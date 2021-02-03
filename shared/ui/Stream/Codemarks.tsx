@@ -176,7 +176,7 @@ export class SimpleCodemarksForFile extends Component<Props, State> {
 
 	onFileChangedError(error: string) {
 		// unused
-   }
+	}
 
 	componentDidUpdate(prevProps: Props) {
 		this._updateEmitter.emit();
@@ -603,6 +603,7 @@ export class SimpleCodemarksForFile extends Component<Props, State> {
 				checked: !hideTags,
 				action: () => setUserPreference(["codemarksHideTags"], !hideTags)
 			},
+			{ label: "-" },
 			{
 				label: "Sort comments by...",
 				key: "sort-codemarks",

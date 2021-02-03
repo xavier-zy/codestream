@@ -174,6 +174,10 @@ export class SimpleCodemarksForFile extends Component<Props, State> {
 		this.onFileChanged(true, this.onFileChangedError);
 	}
 
+	onFileChangedError(error: string) {
+		// unused
+   }
+
 	componentDidUpdate(prevProps: Props) {
 		this._updateEmitter.emit();
 		const { codemarkDomain, textEditorUri, documentMarkers } = this.props;

@@ -252,6 +252,10 @@ export class SimpleInlineCodemarks extends Component<Props, State> {
 		this.scrollTo(this.props.metrics.lineHeight!);
 	}
 
+	onFileChangedError(error: string) {
+		// unused
+   }
+
 	// componentWillReceiveProps(nextProps) {
 	// 	Object.keys(nextProps)
 	// 		.filter(key => {

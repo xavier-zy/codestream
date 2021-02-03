@@ -136,6 +136,11 @@ export interface UnreadsChangedNotification {
 	data: Unreads;
 }
 
+export interface PreferencesChangedNotification {
+	type: ChangeDataType.Preferences;
+	data: CSMePreferences;
+}
+
 export interface UsersChangedNotification {
 	type: ChangeDataType.Users;
 	data: CSUser[];

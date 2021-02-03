@@ -51,7 +51,8 @@ import {
 	PullRequestCommentsChangedEvent,
 	UnreadsChangedEvent,
 	ReviewsChangedEvent,
-	PullRequestsChangedEvent
+	PullRequestsChangedEvent,
+	PreferencesChangedEvent
 } from "./sessionEvents";
 import { SessionState } from "./sessionState";
 import { TokenManager } from "./tokenManager";
@@ -134,6 +135,16 @@ export class CodeStreamSession implements Disposable {
 	}
 	private fireDidChangeUnreads = Functions.debounce(
 		(e: UnreadsChangedEvent) => this._onDidChangeUnreads.fire(e),
+		250,
+		{ maxWait: 1000 }
+	);
+
+	private _onDidChangePreferences = new EventEmitter<PreferencesChangedEvent>();
+	get onDidChangePreferences(): Event<PreferencesChangedEvent> {
+		return this._onDidChangePreferences.event;
+	}
+	private fireDidChangePreferences = Functions.debounce(
+		(e: PreferencesChangedEvent) => this._onDidChangePreferences.fire(e),
 		250,
 		{ maxWait: 1000 }
 	);
@@ -235,9 +246,7 @@ export class CodeStreamSession implements Disposable {
 	}
 
 	private onPullRequestCommentsChanged(_e: DidChangePullRequestCommentsNotification) {
-		this._onDidChangePullRequestComments.fire(
-			new PullRequestCommentsChangedEvent(this)
-		);
+		this._onDidChangePullRequestComments.fire(new PullRequestCommentsChangedEvent(this));
 	}
 
 	private onDataChanged(e: DidChangeDataNotification) {
@@ -259,6 +268,7 @@ export class CodeStreamSession implements Disposable {
 				break;
 			case ChangeDataType.Preferences:
 				this._state!.updatePreferences(e.data);
+				this.fireDidChangePreferences(new PreferencesChangedEvent(this, e));
 				break;
 			case ChangeDataType.Reviews: {
 				this.fireDidChangeReviews(new ReviewsChangedEvent(this, e));

@@ -6,8 +6,10 @@ import {
 	UnreadsChangedNotification,
 	ReviewsChangedNotification,
 	PullRequestsChangedNotification,
-	PullRequestsChangedData
+	PullRequestsChangedData,
+	PreferencesChangedNotification
 } from "@codestream/protocols/agent";
+import { CSMePreferences } from "@codestream/protocols/api";
 import { Uri } from "vscode";
 import { memoize } from "../system";
 import { CodeStreamSession, Post, SessionSignedOutReason, SessionStatus } from "./session";
@@ -104,7 +106,19 @@ export class UnreadsChangedEvent extends SessionChangedEventBase<UnreadsChangedN
 	}
 }
 
-export class PullRequestsChangedEvent extends SessionChangedEventBase<PullRequestsChangedNotification>
+export class PreferencesChangedEvent extends SessionChangedEventBase<
+	PreferencesChangedNotification
+> {
+	readonly type = SessionChangedEventType.Preferences;
+
+	@memoize
+	preferences(): CSMePreferences {
+		return this._event.data;
+	}
+}
+
+export class PullRequestsChangedEvent
+	extends SessionChangedEventBase<PullRequestsChangedNotification>
 	implements MergeableEvent<PullRequestsChangedEvent> {
 	readonly type = SessionChangedEventType.PullRequests;
 
@@ -113,7 +127,7 @@ export class PullRequestsChangedEvent extends SessionChangedEventBase<PullReques
 	}
 
 	@memoize
-	pullRequestNotifications(): PullRequestsChangedData[]  {
+	pullRequestNotifications(): PullRequestsChangedData[] {
 		return this._event.data;
 	}
 }

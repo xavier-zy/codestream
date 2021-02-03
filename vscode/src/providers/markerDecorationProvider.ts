@@ -141,9 +141,19 @@ export class CodemarkDecorationProvider implements HoverProvider, Disposable {
 				this.disable();
 				break;
 
-			case SessionStatus.SignedIn:
+			case SessionStatus.SignedIn: {
+				const preferences = Container.session.user.preferences;
+				if (preferences) {
+					this._lastPreferences = {
+						codemarksShowPRComments: !!preferences.codemarksShowPRComments,
+						codemarksHideReviews: !!preferences.codemarksHideReviews,
+						codemarksHideResolved: !!preferences.codemarksHideResolved,
+						codemarksShowArchived: !!preferences.codemarksShowArchived
+					};
+				}
 				this.ensure();
 				break;
+			}
 		}
 	}
 
@@ -218,7 +228,21 @@ export class CodemarkDecorationProvider implements HoverProvider, Disposable {
 			Container.session.onDidChangePullRequestComments(this.onPullRequestCommentsChanged, this),
 			Container.session.onDidChangeSessionStatus(this.onSessionStatusChanged, this),
 			window.onDidChangeVisibleTextEditors(this.onEditorVisibilityChanged, this),
-			workspace.onDidCloseTextDocument(this.onDocumentClosed, this)
+			workspace.onDidCloseTextDocument(this.onDocumentClosed, this),
+			Container.session.onDidChangePreferences(e => {
+				const preferences = e.preferences();
+				const currentPreferences = {
+					codemarksShowPRComments: !!preferences.codemarksShowPRComments,
+					codemarksHideReviews: !!preferences.codemarksHideReviews,
+					codemarksHideResolved: !!preferences.codemarksHideResolved,
+					codemarksShowArchived: !!preferences.codemarksShowArchived
+				};
+				if (JSON.stringify(currentPreferences) !== JSON.stringify(this._lastPreferences)) {
+					// set the reset flag to true if we need to re-fetch
+					this.ensure(true);
+				}
+				this._lastPreferences = currentPreferences;
+			}, this)
 		];
 
 		if (!this._suspended) {
@@ -230,6 +254,13 @@ export class CodemarkDecorationProvider implements HoverProvider, Disposable {
 
 		this.applyToApplicableVisibleEditors();
 	}
+
+	private _lastPreferences?: {
+		codemarksShowPRComments?: boolean;
+		codemarksHideReviews?: boolean;
+		codemarksHideResolved?: boolean;
+		codemarksShowArchived?: boolean;
+	};
 
 	private async onDocumentClosed(e: TextDocument) {
 		this._markersCache.delete(e.uri.toString());

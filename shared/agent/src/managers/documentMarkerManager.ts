@@ -61,7 +61,11 @@ export class DocumentMarkerManager {
 	private _documentFromMarkerCache = new Map<string, GetDocumentFromMarkerResponse>();
 	private _codemarkDocumentMarkersCache = new Map<
 		string,
-		{ documentVersion: number; promise: Promise<FetchDocumentMarkersResponse> }
+		{
+			documentVersion: number;
+			applyFilters: boolean;
+			promise: Promise<FetchDocumentMarkersResponse>;
+		}
 	>();
 
 	constructor(readonly session: CodeStreamSession) {
@@ -256,11 +260,10 @@ export class DocumentMarkerManager {
 	}
 
 	private async getFilters() {
-		const me = this._user;
 		const { users } = SessionContainer.instance();
-		const { preferences } = await users.getPreferences();
-		// const cc = Logger.getCorrelationContext();
-		// Logger.log(cc, "PREFS ARE: " + JSON.stringify(preferences, null, 4));
+		const preferences = (await users.getMe()).user.preferences;
+		if (!preferences) return {};
+
 		return {
 			excludeArchived: !preferences.codemarksShowArchived,
 			excludePRs: !preferences.codemarksShowPRComments,
@@ -488,7 +491,12 @@ export class DocumentMarkerManager {
 		const documentUri = URI.parse(documentId.uri);
 
 		const cached = this._codemarkDocumentMarkersCache.get(documentUri.toString());
-		if (doc && cached && cached.documentVersion === doc?.version) {
+		if (
+			doc &&
+			cached &&
+			cached.documentVersion === doc?.version &&
+			applyFilters === cached.applyFilters
+		) {
 			Logger.log(
 				cc,
 				`MARKERS: found cached codemark document markers for ${documentUri.fsPath} v${doc?.version}`
@@ -501,6 +509,7 @@ export class DocumentMarkerManager {
 		if (doc?.version !== undefined) {
 			this._codemarkDocumentMarkersCache.set(documentUri.toString(), {
 				documentVersion: doc.version,
+				applyFilters: applyFilters,
 				promise
 			});
 		}

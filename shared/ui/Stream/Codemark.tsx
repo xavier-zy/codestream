@@ -155,6 +155,7 @@ interface InheritedProps {
 	hidden?: boolean;
 	deselectCodemarks?: Function;
 	wrap?: boolean;
+	hideTags?: boolean;
 }
 
 type Props = InheritedProps & DispatchProps & ConnectedProps;
@@ -876,7 +877,7 @@ export class Codemark extends React.Component<Props, State> {
 	};
 
 	renderCollapsedCodemark() {
-		const { codemark, marker, wrap } = this.props;
+		const { codemark, marker, wrap, hideTags } = this.props;
 
 		const lines: string | undefined = (() => {
 			if (!marker) return;
@@ -897,7 +898,7 @@ export class Codemark extends React.Component<Props, State> {
 		}
 
 		const color = codemark.pinned ? (codemark.status === "closed" ? "purple" : "green") : "gray";
-		const renderedTags = this.renderTags(codemark);
+		const renderedTags = hideTags ? null : this.renderTags(codemark);
 		return (
 			<div
 				id={`codemark-${codemark.id}`}

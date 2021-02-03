@@ -32,7 +32,6 @@ import { PROVIDER_MAPPINGS } from "./CrossPostIssueControls/types";
 import { confirmPopup } from "./Confirm";
 import { ConfigurePullRequestQuery } from "./ConfigurePullRequestQuery";
 import { DEFAULT_QUERIES, getSavedPullRequestQueries } from "../store/preferences/reducer";
-import { ConfigurePullRequestQuerySettings } from "./ConfigurePullRequestQuerySettings";
 import { PullRequestQuery } from "@codestream/protocols/api";
 import { configureAndConnectProvider } from "../store/providers/actions";
 import {
@@ -46,6 +45,7 @@ import {
 import { Provider, IntegrationButtons } from "./IntegrationsPanel";
 import { usePrevious } from "../utilities/hooks";
 import { getMyPullRequests as getMyPullRequestsSelector } from "../store/providerPullRequests/reducer";
+import { InlineMenu } from "../src/components/controls/InlineMenu";
 const Root = styled.div`
 	height: 100%;
 	.pr-row {
@@ -116,12 +116,23 @@ export const PullRequestTooltip = (props: { pr: GetMyPullRequestsResponse }) => 
 	);
 };
 
-const ConnectToCodeHost = styled.div`
-	// margin: 10px 20px 0 20px;
-	button {
-		margin: 0 10px 10px 0;
-	}
-`;
+export const PullRequestIcon = (props: { pr: GetMyPullRequestsResponse }) => {
+	const { pr } = props;
+	const statusIcon =
+		pr.isDraft || pr.state === "OPEN" || pr.state === "CLOSED" ? "pull-request" : "git-merge";
+
+	const color = pr.isDraft
+		? "gray"
+		: pr.state === "OPEN"
+		? "green"
+		: pr.state === "MERGED"
+		? "purple"
+		: pr.state === "CLOSED"
+		? "red"
+		: "blue";
+
+	return <Icon name={statusIcon} className={`${color}-color`} style={{ marginRight: "5px" }} />;
+};
 
 interface Props {
 	openRepos: ReposScm[];
@@ -151,6 +162,7 @@ export const OpenPullRequests = React.memo((props: Props) => {
 		const prConnectedProvidersWithErrors = prConnectedProviders.filter(_ => _.hasAccessTokenError);
 
 		const myPullRequests = getMyPullRequestsSelector(state);
+
 		return {
 			repos,
 			teamSettings,
@@ -161,11 +173,11 @@ export const OpenPullRequests = React.memo((props: Props) => {
 			PRConnectedProviders: prConnectedProviders,
 			PRConnectedProvidersWithErrors: prConnectedProvidersWithErrors,
 			PRConnectedProvidersWithErrorsCount: prConnectedProvidersWithErrors.length,
-			openReposOnly:
+			allRepos:
 				preferences.pullRequestQueryShowAllRepos == null
-					? false
-					: !preferences.pullRequestQueryShowAllRepos,
-			showLabels: !preferences.pullRequestQueryHideLabels
+					? true
+					: preferences.pullRequestQueryShowAllRepos,
+			hideLabels: preferences.pullRequestQueryHideLabels
 		};
 	}, shallowEqual);
 
@@ -192,8 +204,6 @@ export const OpenPullRequests = React.memo((props: Props) => {
 	const [editingQuery, setEditingQuery] = React.useState<
 		{ providerId: string; index: number } | undefined
 	>(undefined);
-	const [configureQuerySettings, setConfigureQuerySettings] = React.useState(false);
-	const previousConfigureQuerySettings = usePrevious(configureQuerySettings);
 	const previousPRConnectedProvidersWithErrorsCount = usePrevious<number>(
 		derivedState.PRConnectedProvidersWithErrorsCount
 	);
@@ -220,11 +230,8 @@ export const OpenPullRequests = React.memo((props: Props) => {
 	});
 
 	useEffect(() => {
-		// if previously we were editing... and now we're not fetch the PRs...
-		if (previousConfigureQuerySettings && !configureQuerySettings) {
-			fetchPRs(derivedState.queries, { force: true });
-		}
-	}, [derivedState.openReposOnly, derivedState.showLabels]);
+		fetchPRs(derivedState.queries, { force: true });
+	}, [derivedState.allRepos]);
 
 	useEffect(() => {
 		if (
@@ -256,7 +263,7 @@ export const OpenPullRequests = React.memo((props: Props) => {
 							getMyPullRequests(
 								connectedProvider.id,
 								queryStrings,
-								derivedState.openReposOnly,
+								!derivedState.allRepos,
 								options,
 								true
 							)
@@ -296,12 +303,7 @@ export const OpenPullRequests = React.memo((props: Props) => {
 				}
 			}
 		},
-		[
-			editingQuery,
-			configureQuerySettings,
-			derivedState.PRConnectedProviders,
-			derivedState.openReposOnly
-		]
+		[editingQuery, derivedState.PRConnectedProviders, derivedState.allRepos]
 	);
 
 	useMemo(() => {
@@ -319,7 +321,7 @@ export const OpenPullRequests = React.memo((props: Props) => {
 		try {
 			const q = queries[providerId][index];
 			const response: any = await dispatch(
-				getMyPullRequests(providerId, [q.query], derivedState.openReposOnly, { force: true }, true)
+				getMyPullRequests(providerId, [q.query], !derivedState.allRepos, { force: true }, true)
 			);
 			if (response && response.length) {
 				const newGroups = { ...pullRequestGroups };
@@ -417,6 +419,23 @@ export const OpenPullRequests = React.memo((props: Props) => {
 		return total;
 	}, [pullRequestGroups]);
 
+	const settingsMenuItems = [
+		{
+			label: "Only show PRs from open repos",
+			key: "repo-only",
+			checked: !derivedState.allRepos,
+			action: () =>
+				dispatch(setUserPreference(["pullRequestQueryShowAllRepos"], !derivedState.allRepos))
+		},
+		{
+			label: "Show Labels",
+			key: "show-labels",
+			checked: !derivedState.hideLabels,
+			action: () =>
+				dispatch(setUserPreference(["pullRequestQueryHideLabels"], !derivedState.hideLabels))
+		}
+	];
+
 	if (!derivedState.isPRSupportedCodeHostConnected && !hasPRSupportedRepos) return null;
 
 	// console.warn("rendering pr list...");
@@ -431,12 +450,9 @@ export const OpenPullRequests = React.memo((props: Props) => {
 					}
 					save={save}
 					onClose={() => setEditingQuery(undefined)}
-					openReposOnly={derivedState.openReposOnly}
+					openReposOnly={!derivedState.allRepos}
 					prConnectedProviders={derivedState.PRConnectedProviders}
 				/>
-			)}
-			{configureQuerySettings && (
-				<ConfigurePullRequestQuerySettings onClose={() => setConfigureQuerySettings(false)} />
 			)}
 			{(derivedState.isPRSupportedCodeHostConnected || hasPRSupportedRepos) && (
 				<>
@@ -476,13 +492,15 @@ export const OpenPullRequests = React.memo((props: Props) => {
 								delay={1}
 							/>
 						)}
-						<Icon
-							onClick={() => setConfigureQuerySettings(true)}
-							name="gear"
-							title="Configure"
-							placement="bottom"
-							delay={1}
-						/>
+						<InlineMenu
+							key="settings-menu"
+							className="subtle no-padding"
+							noFocusOnSelect
+							noChevronDown
+							items={settingsMenuItems}
+						>
+							<Icon name="gear" title="Settings" placement="bottom" delay={1} />
+						</InlineMenu>
 					</PaneHeader>
 					{props.paneState !== PaneState.Collapsed && (
 						<PaneBody>
@@ -645,7 +663,7 @@ export const OpenPullRequests = React.memo((props: Props) => {
 																	</span>
 																	{pr.labels &&
 																		pr.labels.nodes.length > 0 &&
-																		derivedState.showLabels && (
+																		!derivedState.hideLabels && (
 																			<span className="cs-tag-container">
 																				{pr.labels.nodes.map((_, index) => (
 																					<Tag

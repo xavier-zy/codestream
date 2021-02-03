@@ -84,6 +84,7 @@ interface ConnectedProps {
 	showResolved: boolean;
 	showReviews: boolean;
 	wrapComments: boolean;
+	hideTags: boolean;
 	fileNameToFilterFor?: string;
 	scmInfo?: GetFileScmInfoResponse;
 	currentBranch: string;
@@ -414,6 +415,7 @@ export class SimpleCodemarksForFile extends Component<Props, State> {
 					codemark={codemark as CodemarkPlus}
 					displayType="collapsed"
 					wrap={this.props.wrapComments}
+					hideTags={this.props.hideTags}
 					marker={{} as MarkerNotLocated}
 					highlightCodeInTextEditor
 					postAction={() => {}}
@@ -490,6 +492,7 @@ export class SimpleCodemarksForFile extends Component<Props, State> {
 						codemark={docMarker.codemark}
 						displayType="collapsed"
 						wrap={this.props.wrapComments}
+						hideTags={this.props.hideTags}
 						marker={docMarker}
 						hidden={hidden}
 						highlightCodeInTextEditor
@@ -512,6 +515,7 @@ export class SimpleCodemarksForFile extends Component<Props, State> {
 			showReviews,
 			showPRComments,
 			wrapComments,
+			hideTags,
 			codemarkSortType
 		} = this.props;
 
@@ -593,6 +597,12 @@ export class SimpleCodemarksForFile extends Component<Props, State> {
 				key: "wrap-comments",
 				checked: wrapComments,
 				action: () => setUserPreference(["codemarksWrapComments"], !wrapComments)
+			},
+			{
+				label: "Show Tags",
+				key: "show-tags",
+				checked: !hideTags,
+				action: () => setUserPreference(["codemarksHideTags"], !hideTags)
 			},
 			{
 				label: "Sort comments by...",
@@ -723,7 +733,7 @@ export class SimpleCodemarksForFile extends Component<Props, State> {
 						tabIndex={1}
 					/>
 					<InlineMenu
-						key="team-display-options"
+						key="settings-menu"
 						className="subtle no-padding"
 						noFocusOnSelect
 						noChevronDown
@@ -849,6 +859,7 @@ const mapStateToProps = (state: CodeStreamState, props): ConnectedProps => {
 		showResolved,
 		showReviews,
 		wrapComments: preferences.codemarksWrapComments || false,
+		hideTags: preferences.codemarksHideTags || false,
 		showPRComments: hasPRProvider && preferences.codemarksShowPRComments,
 		fileNameToFilterFor: editorContext.activeFile,
 		scmInfo: editorContext.scmInfo,

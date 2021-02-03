@@ -174,11 +174,6 @@ export class SimpleCodemarksForFile extends Component<Props, State> {
 		this.onFileChanged(true, this.onFileChangedError);
 	}
 
-	onFileChangedError(error: string) {
-		if (!error) return;
-		HostApi.instance.track("Spatial Error State", { "Error State": error });
-	}
-
 	componentDidUpdate(prevProps: Props) {
 		this._updateEmitter.emit();
 		const { codemarkDomain, textEditorUri, documentMarkers } = this.props;

@@ -252,11 +252,6 @@ export class SimpleInlineCodemarks extends Component<Props, State> {
 		this.scrollTo(this.props.metrics.lineHeight!);
 	}
 
-	onFileChangedError(error: string) {
-		if (!error) return;
-		HostApi.instance.track("Spatial Error State", { "Error State": error });
-	}
-
 	// componentWillReceiveProps(nextProps) {
 	// 	Object.keys(nextProps)
 	// 		.filter(key => {

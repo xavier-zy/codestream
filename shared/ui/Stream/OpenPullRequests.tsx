@@ -633,12 +633,12 @@ export const OpenPullRequests = React.memo((props: Props) => {
 															repo.name === pr.headRepository.name
 														);
 													});
-													let numComments = pr.comments ? pr.comments.totalCount : 0;
-													if (pr.reviews && pr.reviews.nodes) {
-														pr.reviews.nodes.forEach(
-															node => (numComments += node.comments.totalCount)
-														);
-													}
+													// let numComments = pr.comments ? pr.comments.totalCount : 0;
+													// if (pr.reviews && pr.reviews.nodes) {
+													// 	pr.reviews.nodes.forEach(
+													// 		node => (numComments += node.comments.totalCount)
+													// 	);
+													// }
 													return (
 														<Tooltip
 															key={"pr-tt-" + pr.id + index}
@@ -707,14 +707,14 @@ export const OpenPullRequests = React.memo((props: Props) => {
 																		delay={1}
 																	/>
 																	<Timestamp time={pr.createdAt} relative abbreviated />
-																	{numComments > 0 && (
+																	{/* numComments > 0 && (
 																		<span
 																			className="badge"
 																			style={{ margin: "0 0 0 10px", flexGrow: 0, flexShrink: 0 }}
 																		>
 																			{numComments}
 																		</span>
-																	)}
+																	) */}
 																</div>
 															</Row>
 														</Tooltip>

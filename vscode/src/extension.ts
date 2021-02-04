@@ -172,7 +172,8 @@ export async function activate(context: ExtensionContext) {
 
 	context.subscriptions.push(
 		Container.agent.onUserDidCommit(e => {
-			if (Container.config.requestFeedbackOnCommit) {
+			const preferences = Container.session.user.preferences;
+			if (!preferences || preferences.reviewCreateOnCommit !== false) {
 				Logger.log(`User committed ${e.sha} - opening feedback request form`);
 				Container.webview.newReviewRequest(undefined, "VSC Commit Detected", true);
 			}

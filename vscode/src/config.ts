@@ -22,5 +22,4 @@ export interface Config {
 	showShortcutTipOnSelection: boolean;
 	team: string;
 	traceLevel: TraceLevel;
-	requestFeedbackOnCommit: boolean;
 }

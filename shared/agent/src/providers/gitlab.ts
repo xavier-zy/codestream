@@ -1,4 +1,5 @@
 "use strict";
+import { toRepoName } from "../git/utils";
 import { flatten } from "lodash-es";
 import { Response } from "node-fetch";
 import * as paths from "path";
@@ -300,7 +301,7 @@ export class GitLabProvider extends ThirdPartyIssueProviderBase<CSGitLabProvider
 		// gitlab & enterprise can use project groups + subgroups
 		const owner = split.filter(_ => _ !== "" && _ != null);
 		if (name != null) {
-			name = name.replace(".git", "");
+			name = toRepoName(name);
 		}
 
 		return {

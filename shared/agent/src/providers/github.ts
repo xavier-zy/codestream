@@ -57,6 +57,7 @@ import {
 	ThirdPartyProviderSupportsIssues,
 	ThirdPartyProviderSupportsPullRequests
 } from "./provider";
+import { toRepoName } from "../git/utils";
 
 interface GitHubRepo {
 	id: string;
@@ -1071,7 +1072,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 		const uri = URI.parse(remote);
 		const split = uri.path.split("/");
 		const owner = split[1];
-		const name = split[2].replace(".git", "");
+		const name = toRepoName(split[2]);
 		return {
 			owner,
 			name

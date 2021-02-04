@@ -1,5 +1,6 @@
 "use strict";
 import { GitRemoteLike, GitRepository } from "git/gitService";
+import { toRepoName } from "../git/utils";
 import * as paths from "path";
 import * as qs from "querystring";
 import { URI } from "vscode-uri";
@@ -242,14 +243,14 @@ export class BitbucketServerProvider extends ThirdPartyIssueProviderBase<CSBitbu
 		// Kerberos-enabled path /kerberos-scm/*
 		if (split[1] === "scm" || split[1] === "kerberos-scm") {
 			const owner = split[2];
-			const name = split[3].replace(".git", "");
+			const name = toRepoName(split[3]);
 			return {
 				owner,
 				name
 			};
 		}
 		const owner = split[1];
-		const name = split[2].replace(".git", "");
+		const name = toRepoName(split[2]);
 		return {
 			owner,
 			name

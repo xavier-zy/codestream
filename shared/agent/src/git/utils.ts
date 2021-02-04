@@ -160,3 +160,14 @@ export function getLineNumber(diff: ParsedDiffWithMetadata, position: number): n
 	const metadata = hunk.linesWithMetadata.find(_ => _.position === position);
 	return metadata && metadata.lineNumber != null ? metadata.lineNumber : undefined;
 }
+
+/**
+ * Util for get the name of a git repo on the web. Removes ".git" if ends with it
+ *
+ * @export
+ * @param {string} name
+ * @return {string} foo in `foo.git`
+ */
+export function toRepoName(name: string) {
+	return name != null && name.toLowerCase().endsWith(".git") ? name.substr(0, name.length - 4) : name;
+}

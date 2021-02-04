@@ -118,19 +118,18 @@ export class CodemarkDetails extends React.Component<Props, State> {
 		});
 	};
 
-	resolveCodemark = async () => {
+	resolveCodemark = async (type: "resolve" | "archive") => {
 		await this.submitReply();
-		this.props.setCodemarkStatus(this.props.codemark.id, "closed");
-		if (this.props.setUserPreference)
-			this.props.setUserPreference(["defaultResolveAction"], "resolve");
-	};
-
-	resolveAndArchiveCodemark = async () => {
-		await this.submitReply();
-		this.props.setCodemarkStatus(this.props.codemark.id, "closed");
-		this.props.setCodemarkPinned(this.props.codemark, false);
-		if (this.props.setUserPreference)
-			this.props.setUserPreference(["defaultResolveAction"], "archive");
+		await this.props.setCodemarkStatus(this.props.codemark.id, "closed");
+		if (type === "archive") {
+			await this.props.setCodemarkPinned(this.props.codemark, false);
+		}
+		if (this.props.setUserPreference) this.props.setUserPreference(["defaultResolveAction"], type);
+		HostApi.instance.track("Codemark Resolved", {
+			"Codemark ID": this.props.codemark.id,
+			"Codemark Type": this.props.codemark.type,
+			Archived: type === "archive"
+		});
 	};
 
 	handleOnChange = (text: string, formatCode: boolean) => {
@@ -266,7 +265,7 @@ export class CodemarkDetails extends React.Component<Props, State> {
 													key: "resolve",
 													label: `Resolve ${this.state.text ? "with Comment" : typeLabel}`,
 													onSelect: () => this.setResolveMethod("RESOLVE"),
-													action: () => this.resolveCodemark()
+													action: () => this.resolveCodemark("resolve")
 												},
 												{
 													key: "archive",
@@ -274,7 +273,7 @@ export class CodemarkDetails extends React.Component<Props, State> {
 														this.state.text ? "with Comment" : typeLabel
 													}`,
 													onSelect: () => this.setResolveMethod("ARCHIVE"),
-													action: () => this.resolveAndArchiveCodemark()
+													action: () => this.resolveCodemark("archive")
 												}
 											]}
 											selectedKey={this.props.defaultResolveAction}

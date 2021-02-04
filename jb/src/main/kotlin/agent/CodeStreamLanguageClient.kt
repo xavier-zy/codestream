@@ -7,6 +7,7 @@ import com.codestream.editorService
 import com.codestream.extensions.workspaceFolders
 import com.codestream.gson
 import com.codestream.protocols.agent.LoginResult
+import com.codestream.reviewService
 import com.codestream.sessionService
 import com.codestream.webViewService
 import com.github.salomonbrys.kotson.fromJson
@@ -132,7 +133,7 @@ class CodeStreamLanguageClient(private val project: Project) : LanguageClient {
 
     @JsonNotification("codestream/userDidCommit")
     fun userDidCommit(notification: UserDidCommitNotification) {
-        logger.info("User did commit: ${notification.sha}")
+        project.reviewService?.createReviewFromExternalCommit()
     }
 
     @JsonNotification("codestream/restartRequired")

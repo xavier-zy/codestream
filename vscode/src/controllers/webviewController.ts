@@ -654,13 +654,11 @@ export class WebviewController implements Disposable {
 	private onConfigurationChanged(webview: WebviewLike, e: ConfigurationChangeEvent) {
 		if (
 			configuration.changed(e, configuration.name("traceLevel").value) ||
-			configuration.changed(e, configuration.name("showAvatars").value) ||
-			configuration.changed(e, configuration.name("requestFeedbackOnCommit").value)
+			configuration.changed(e, configuration.name("showAvatars").value)
 		) {
 			webview.notify(HostDidChangeConfigNotificationType, {
 				debug: Logger.isDebugging,
-				showHeadshots: Container.config.showAvatars,
-				requestFeedbackOnCommit: Container.config.requestFeedbackOnCommit
+				showHeadshots: Container.config.showAvatars
 			});
 		}
 	}
@@ -1148,7 +1146,6 @@ export class WebviewController implements Disposable {
 				email: Container.config.email,
 				serverUrl: this.session.serverUrl,
 				showHeadshots: Container.config.showAvatars,
-				requestFeedbackOnCommit: Container.config.requestFeedbackOnCommit,
 				team: Container.config.team
 			},
 			env: this.session.environment,

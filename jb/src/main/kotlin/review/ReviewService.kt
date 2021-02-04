@@ -1,9 +1,12 @@
 package com.codestream.review
 
 import com.codestream.agentService
-import com.codestream.protocols.agent.GetFileContentsAtRevisionParams
+import com.codestream.codeStream
 import com.codestream.protocols.agent.GetLocalReviewContentsParams
 import com.codestream.protocols.agent.GetReviewContentsResult
+import com.codestream.protocols.webview.ReviewNotifications
+import com.codestream.sessionService
+import com.codestream.webViewService
 import com.intellij.diff.DiffDialogHints
 import com.intellij.diff.DiffManagerEx
 import com.intellij.diff.chains.DiffRequestChain
@@ -18,6 +21,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.KeyWithDefaultValue
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
+import org.eclipse.lsp4j.Range
 import java.lang.reflect.Field
 import java.lang.reflect.Method
 
@@ -43,6 +47,7 @@ class ReviewService(private val project: Project) {
             .also { it.isAccessible = true }
     private var diffChain: DiffRequestChain? = null
     private var currentKey: String? = null
+    private var timeInMillisOflastReviewFromInternalCommit: Long? = null
 
     suspend fun showDiff(reviewId: String, repoId: String, checkpoint: Int?, path: String) {
         val agent = project.agentService ?: return
@@ -130,9 +135,27 @@ class ReviewService(private val project: Project) {
         title: String
     ) {
         val leftContent =
-            createReviewDiffContent(project, contents.repoRoot, reviewId, checkpoint, repoId, ReviewDiffSide.LEFT, oldPath ?: path, contents.left)
+            createReviewDiffContent(
+                project,
+                contents.repoRoot,
+                reviewId,
+                checkpoint,
+                repoId,
+                ReviewDiffSide.LEFT,
+                oldPath ?: path,
+                contents.left
+            )
         val rightContent =
-            createReviewDiffContent(project, contents.repoRoot, reviewId, checkpoint, repoId, ReviewDiffSide.RIGHT, path, contents.right)
+            createReviewDiffContent(
+                project,
+                contents.repoRoot,
+                reviewId,
+                checkpoint,
+                repoId,
+                ReviewDiffSide.RIGHT,
+                path,
+                contents.right
+            )
         val diffRequest = SimpleDiffRequest(title, leftContent, rightContent, oldPath ?: path, path)
         diffRequest.putUserData(REVIEW_DIFF, true)
         val file = SimpleDiffVirtualFile(diffRequest)
@@ -168,7 +191,7 @@ class ReviewService(private val project: Project) {
 
             currentKey = key
 
-            val producers = filesPath.map{
+            val producers = filesPath.map {
                 PullRequestProducer(project, repoId, it, headSha, headBranch, baseSha, baseBranch, context)
             }
 
@@ -218,6 +241,42 @@ class ReviewService(private val project: Project) {
     fun previousDiff() {
         ApplicationManager.getApplication().invokeLater {
             reviewDiffEditor?.processor?.let { goToPrevChangeMethod.invoke(it, true) }
+        }
+    }
+
+    fun createReviewFromInternalCommit() {
+        timeInMillisOflastReviewFromInternalCommit = System.currentTimeMillis()
+        ApplicationManager.getApplication().invokeLater {
+            project.codeStream?.show {
+                project.webViewService?.postNotification(
+                    ReviewNotifications.New(
+                        null,
+                        Range(),
+                        "JB Commit Dialog",
+                        true
+                    )
+                )
+            }
+        }
+    }
+
+    fun createReviewFromExternalCommit() {
+        if (project.sessionService?.userLoggedIn?.user?.preferences?.reviewCreateOnCommit == false) return
+        timeInMillisOflastReviewFromInternalCommit?.let {
+            if (System.currentTimeMillis() - it < 10 * 1000) return
+        }
+
+        ApplicationManager.getApplication().invokeLater {
+            project.codeStream?.show {
+                project.webViewService?.postNotification(
+                    ReviewNotifications.New(
+                        null,
+                        Range(),
+                        "JB Commit Detected",
+                        true
+                    )
+                )
+            }
         }
     }
 

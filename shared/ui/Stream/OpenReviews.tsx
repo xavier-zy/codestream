@@ -77,9 +77,7 @@ export const OpenReviews = React.memo(function OpenReviews(props: Props) {
 		}
 	});
 
-	const { team, teamMembers, currentUserId, feedbackRequests, queries } = derivedState;
-	const { adminIds } = team;
-
+	const { teamMembers, feedbackRequests, queries } = derivedState;
 	const sortedFeedbackRequests = React.useMemo(() => {
 		return feedbackRequests.map(frRequests => {
 			const sorted = [...frRequests];
@@ -125,15 +123,13 @@ export const OpenReviews = React.memo(function OpenReviews(props: Props) {
 					placement="bottom"
 					delay={1}
 				/>
-				{adminIds && adminIds.includes(currentUserId) && (
-					<Icon
-						onClick={() => dispatch(openModal(WebviewModals.ReviewSettings))}
-						name="gear"
-						title="Feedback Request Settings"
-						placement="bottom"
-						delay={1}
-					/>
-				)}
+				<Icon
+					onClick={() => dispatch(openModal(WebviewModals.ReviewSettings))}
+					name="gear"
+					title="Feedback Request Settings"
+					placement="bottom"
+					delay={1}
+				/>
 			</PaneHeader>
 			{props.paneState !== PaneState.Collapsed && (
 				<PaneBody>

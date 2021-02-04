@@ -178,7 +178,6 @@ export interface WebviewConfigs {
 	email?: string;
 	serverUrl: string;
 	team?: string;
-	requestFeedbackOnCommit?: boolean;
 }
 
 export interface IpcHost {

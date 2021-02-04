@@ -711,6 +711,7 @@ export interface CSMePreferences {
 	pullRequestQueryShowAllRepos?: boolean;
 	pullRequestQueryHideLabels?: boolean;
 	pullRequestView?: "auto" | "vertical" | "side-by-side";
+	reviewCreateOnCommit?: boolean;
 	issueReposDefaultBranch?: {
 		[repoId: string]: string;
 	};

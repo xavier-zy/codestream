@@ -1,19 +1,14 @@
 package com.codestream.vcs
 
-import com.codestream.codeStream
-import com.codestream.protocols.webview.ReviewNotifications
+import com.codestream.reviewService
 import com.codestream.settings.ApplicationSettingsService
-import com.codestream.settingsService
-import com.codestream.webViewService
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vcs.checkin.VcsCheckinHandlerFactory
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent
 import git4idea.GitVcs
-import org.eclipse.lsp4j.Range
 import java.awt.BorderLayout
 import javax.swing.JCheckBox
 import javax.swing.JComponent
@@ -50,19 +45,7 @@ class CodeStreamCheckinHandlerFactory : VcsCheckinHandlerFactory(GitVcs.getKey()
             override fun checkinSuccessful() {
                 val project = panel?.project ?: return
                 if (!applicationSettings.state.createReviewOnCommit) return
-
-                ApplicationManager.getApplication().invokeLater {
-                    project.codeStream?.show {
-                        project.webViewService?.postNotification(
-                            ReviewNotifications.New(
-                                null,
-                                Range(),
-                                "JB Commit Dialog",
-                                true
-                            )
-                        )
-                    }
-                }
+                project.reviewService?.createReviewFromInternalCommit()
             }
         }
     }

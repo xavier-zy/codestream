@@ -90,7 +90,8 @@ enum class NotificationDeliveryPreference(val value: String) {
 
 class CSPreferences(
     val mutedStreams: Map<String, Boolean>?,
-    val notificationDelivery: String?
+    val notificationDelivery: String?,
+    val reviewCreateOnCommit: Boolean?
 )
 
 class CSTeam(

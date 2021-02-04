@@ -37,25 +37,25 @@ export const distanceOfTimeInWords = (
 
 	if (seconds < MINUTE) {
 		// 1 minute
-		when = `${seconds} ${plural(abbreviated ? "sec" : "second", seconds)}`;
+		when = `${seconds}${abbreviated ? "s" : plural(" second", seconds)}`;
 	} else if (seconds < HOUR) {
 		// 1 hour
 		distance = Math.floor(seconds / 60);
-		when = `${distance} ${plural(abbreviated ? "min" : "minute", distance)}`;
+		when = `${distance}${abbreviated ? "m" : plural(" minute", distance)}`;
 	} else if (seconds < DAY) {
 		// 1 day
 		distance = Math.round(seconds / (60 * 60));
-		when = `${distance} ${plural(abbreviated ? "hr" : "hour", distance)}`;
+		when = `${distance}${abbreviated ? "h" : plural(" hour", distance)}`;
 	} else if (seconds < WEEK * 2) {
 		// 2 weeks
 		distance = Math.round(seconds / (60 * 60 * 24));
-		when = `${distance} ${plural("day", distance)}`;
+		when = `${distance}${abbreviated ? "d" : plural(" day", distance)}`;
 	} else if (seconds < MONTH * 1.5) {
 		// 1.5 months
 		distance = Math.round(seconds / (60 * 60 * 24 * 7));
-		when = `${distance} ${plural(abbreviated ? "wk" : "week", distance)}`;
+		when = `${distance}${abbreviated ? "w" : plural(" week", distance)}`;
 	} else {
-		return prettyDateDay(time);
+		return prettyDateDay(time, abbreviated);
 	}
 
 	// if (seconds < YEAR) {
@@ -70,31 +70,49 @@ export const distanceOfTimeInWords = (
 	if (!relativeToNow) {
 		return when;
 	} else if (isAgo) {
-		if (when === "1 day") return "yesterday";
-		else return `${when} ago`;
+		if (when === "1 day") return abbreviated ? "yest" : "yesterday";
+		else return abbreviated ? when : `${when} ago`;
 	} else {
 		return `in ${when}`;
 	}
 };
 
-const prettyDateDay = function(time) {
+const prettyDateDay = function(time, abbreviated?: boolean) {
 	if (time === 0 || time === null || time === undefined) return "";
 	var now = new Date().getTime();
 	// now = this.adjustedTime(now, options.timezone_info);
 	// time = this.adjustedTime(time, options.timezone_info);
-	var today = new Date(now);
-	var timeDay = new Date(time);
-	if (timeDay.getFullYear() === today.getFullYear()) {
+	const ELEVEN_MONTHS = 1000 * 60 * 60 * 24 * 30 * 11;
+
+	// if it's within the last 11 months, there's no need to show
+	// the year since it'll be the most recent of that month.
+	// example: in january, if the date is "Dec 20" we don't
+	// need to specify the year if it's the most recent December,
+	// even though the years are different
+	console.warn("ELEVEN: ", ELEVEN_MONTHS);
+	console.warn("NOW: ", now);
+	if (time + ELEVEN_MONTHS > now) {
 		return new Intl.DateTimeFormat("en", {
 			day: "numeric",
 			month: "short"
 		}).format(time);
+	} else {
+		if (abbreviated) {
+			return new Intl.DateTimeFormat("en", {
+				day: "numeric",
+				month: "short",
+				year: "2-digit"
+			})
+				.format(time)
+				.replace(/(\d\d)$/, `'$1`);
+		} else {
+			return new Intl.DateTimeFormat("en", {
+				day: "numeric",
+				month: "short",
+				year: "numeric"
+			}).format(time);
+		}
 	}
-	return new Intl.DateTimeFormat("en", {
-		day: "numeric",
-		month: "short",
-		year: "numeric"
-	}).format(time);
 };
 
 const prettyTime = function(time) {
@@ -159,7 +177,7 @@ export default function Timestamp(props: PropsWithChildren<Props>) {
 		);
 
 	const timeText = prettyTime(time);
-	const timeDetails = prettyDateDay(time);
+	const timeDetails = prettyDateDay(time, props.abbreviated);
 
 	if (props.dateOnly)
 		return (

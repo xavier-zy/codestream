@@ -778,7 +778,7 @@ const mapStateToProps = (state: CodeStreamState, props): ConnectedProps => {
 	const showHidden = preferences.codemarksShowArchived || false;
 	const showResolved = preferences.codemarksHideResolved ? false : true;
 	const showReviews = preferences.codemarksHideReviews ? false : true;
-	let currentBranch = "";
+	let currentBranch = scmInfo && scmInfo.scm ? scmInfo.scm.branch || "" : "";
 
 	let codemarksToRender = EMPTY_ARRAY as CodemarkPlus[];
 	if (scmInfo && codemarkDomain !== CodemarkDomainType.File) {
@@ -786,7 +786,6 @@ const mapStateToProps = (state: CodeStreamState, props): ConnectedProps => {
 		const { scm = {} as any } = scmInfo as GetFileScmInfoResponse;
 		const { repoId } = scm;
 		const currentDirectory = fs.pathDirname(scm.file || "");
-		currentBranch = scm.branch;
 		let codemarkSortFn;
 		if (codemarkSortType === CodemarkSortType.File) {
 			codemarkSortFn = (a: CodemarkPlus, b: CodemarkPlus) => {
@@ -820,6 +819,7 @@ const mapStateToProps = (state: CodeStreamState, props): ConnectedProps => {
 
 				if (
 					codemarkDomain === CodemarkDomainType.Repo ||
+					codemarkDomain === CodemarkDomainType.Branch ||
 					codemarkDomain === CodemarkDomainType.Directory
 				) {
 					if (!((codemark as any).markers || []).find(marker => marker.repoId === repoId))

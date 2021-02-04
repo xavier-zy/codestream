@@ -876,8 +876,25 @@ export class Codemark extends React.Component<Props, State> {
 		});
 	};
 
+	renderPinnedTooltip() {
+		const { pinnedReplies, pinnedAuthors } = this.props;
+		if (!pinnedReplies) return null;
+		return (
+			<>
+				{pinnedReplies.map((reply, i) => {
+					return (
+						<div key={reply.id}>
+							<HeadshotName size={16} person={pinnedAuthors[i]} />
+							<MarkdownText text={reply.text} />
+						</div>
+					);
+				})}
+			</>
+		);
+	}
+
 	renderCollapsedCodemark() {
-		const { codemark, marker, wrap, hideTags } = this.props;
+		const { codemark, marker, wrap, hideTags, pinnedReplies, pinnedAuthors } = this.props;
 
 		const lines: string | undefined = (() => {
 			if (!marker) return;
@@ -917,6 +934,14 @@ export class Codemark extends React.Component<Props, State> {
 							<MarkdownText text={codemark.title || codemark.text} inline={true} />
 							{renderedTags && <span className="cs-tag-container">{renderedTags}</span>}
 						</div>
+						{pinnedReplies && pinnedReplies.length > 0 && (
+							<Icon
+								title={this.renderPinnedTooltip()}
+								placement="topRight"
+								name="star"
+								className="subtle"
+							/>
+						)}
 						{codemark.numReplies > 0 && (
 							<span className="badge" style={{ marginLeft: "10px", flexGrow: 0, flexShrink: 0 }}>
 								{codemark.numReplies}

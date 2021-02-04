@@ -1242,7 +1242,8 @@ export const Row = styled.div`
 		padding-left: 5px;
 	}
 	&:hover .status,
-	&:hover time {
+	&:hover time,
+	&:hover .badge {
 		display: none;
 	}
 	@media only screen and (max-width: 350px) {

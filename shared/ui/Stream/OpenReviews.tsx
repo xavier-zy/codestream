@@ -47,7 +47,7 @@ export const OpenReviews = React.memo(function OpenReviews(props: Props) {
 
 		const currentUserId = session.userId!;
 		const teamMembers = userSelectors.getTeamMembers(state);
-		const feedbackRequests = queries.map(_ => {
+		const reviewGroups = queries.map(_ => {
 			const reviews = reviewSelectors.getByStatusAndUser(state, _.query, currentUserId);
 			if (_.query === "approved" || _.query === "rejected") {
 				reviews.sort((a, b) => b.modifiedAt - a.modifiedAt);
@@ -59,7 +59,7 @@ export const OpenReviews = React.memo(function OpenReviews(props: Props) {
 			team: state.teams[state.context.currentTeamId],
 			teamTagsHash: userSelectors.getTeamTagsHash(state),
 			queries,
-			feedbackRequests,
+			reviewGroups,
 			currentUserId,
 			teamMembers
 		};
@@ -77,22 +77,22 @@ export const OpenReviews = React.memo(function OpenReviews(props: Props) {
 		}
 	});
 
-	const { teamMembers, feedbackRequests, queries } = derivedState;
-	const sortedFeedbackRequests = React.useMemo(() => {
-		return feedbackRequests.map(frRequests => {
-			const sorted = [...frRequests];
+	const { teamMembers, reviewGroups, queries } = derivedState;
+	const sortedReviewGroups = React.useMemo(() => {
+		return reviewGroups.map(reviewArray => {
+			const sorted = [...reviewArray];
 			sorted.sort((a, b) => b.createdAt - a.createdAt);
 			return sorted;
 		});
-	}, [feedbackRequests]);
+	}, [reviewGroups]);
 
-	const totalFRs = React.useMemo(() => {
+	const totalReviews = React.useMemo(() => {
 		let total = 0;
-		feedbackRequests.map(_ => {
+		reviewGroups.map(_ => {
 			total += _.length;
 		});
 		return total;
-	}, [feedbackRequests]);
+	}, [reviewGroups]);
 
 	const toggleQueryHidden = (e, index) => {
 		if (e.target.closest(".actions")) return;
@@ -106,7 +106,7 @@ export const OpenReviews = React.memo(function OpenReviews(props: Props) {
 		<>
 			<PaneHeader
 				title="Feedback Requests"
-				count={totalFRs}
+				count={totalReviews}
 				id={WebviewPanels.OpenReviews}
 				isLoading={!bootstrapped}
 			>
@@ -139,7 +139,7 @@ export const OpenReviews = React.memo(function OpenReviews(props: Props) {
 							<span>Loading...</span>
 						</Row>
 					)}
-					{bootstrapped && totalFRs === 0 && (
+					{bootstrapped && totalReviews === 0 && (
 						<NoContent>
 							Lightweight, pre-PR code review. Get quick feedback on any code, even pre-commit.{" "}
 							<Link href="https://docs.codestream.com/userguide/workflow/feedback-requests">
@@ -147,11 +147,11 @@ export const OpenReviews = React.memo(function OpenReviews(props: Props) {
 							</Link>
 						</NoContent>
 					)}
-					{totalFRs > 0 && (
+					{totalReviews > 0 && (
 						<>
-							{sortedFeedbackRequests.map((frRequests, index) => {
+							{sortedReviewGroups.map((reviews, index) => {
 								const query = queries[index];
-								const count = frRequests ? frRequests.length : 0;
+								const count = reviews ? reviews.length : 0;
 								return (
 									<PaneNode key={index}>
 										<PaneNodeName
@@ -162,8 +162,8 @@ export const OpenReviews = React.memo(function OpenReviews(props: Props) {
 											isLoading={false}
 										/>
 										{!query.hidden &&
-											frRequests &&
-											frRequests.map((review, index) => {
+											reviews &&
+											reviews.map((review, index) => {
 												const creator = teamMembers.find(user => user.id === review.creatorId);
 												return (
 													<Row
@@ -212,6 +212,14 @@ export const OpenReviews = React.memo(function OpenReviews(props: Props) {
 																delay={1}
 															/>
 															<Timestamp time={review.createdAt} relative abbreviated />
+															{review.numReplies > 0 && (
+																<span
+																	className="badge"
+																	style={{ margin: "0 0 0 10px", flexGrow: 0, flexShrink: 0 }}
+																>
+																	{review.numReplies}
+																</span>
+															)}
 														</div>
 													</Row>
 												);

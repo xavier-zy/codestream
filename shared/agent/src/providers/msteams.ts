@@ -9,12 +9,12 @@ import {
 	FetchThirdPartyChannelsResponse,
 	ThirdPartyDisconnect
 } from "../protocol/agent.protocol";
-import { MSTeamsProviderInfo } from "../protocol/api.protocol";
+import { CSMSTeamsProviderInfo } from "../protocol/api.protocol";
 import { log, lspProvider } from "../system";
 import { ThirdPartyPostProviderBase } from "./provider";
 
 @lspProvider("msteams")
-export class MSTeamsProvider extends ThirdPartyPostProviderBase<MSTeamsProviderInfo> {
+export class MSTeamsProvider extends ThirdPartyPostProviderBase<CSMSTeamsProviderInfo> {
 	get displayName() {
 		return "MSTeams";
 	}
@@ -30,14 +30,14 @@ export class MSTeamsProvider extends ThirdPartyPostProviderBase<MSTeamsProviderI
 		};
 	}
 
-	private _multiProviderInfo: MSTeamsProviderInfo | undefined;
+	private _multiProviderInfo: CSMSTeamsProviderInfo | undefined;
 
 	onConnecting() {
 		void SessionContainer.instance().session.agent.sendRequest(AgentOpenUrlRequestType, {
 			url: "https://teams.microsoft.com/l/app/7cf49ab7-8b65-4407-b494-f02b525eef2b"
 		});
 	}
-	protected async onConnected(providerInfo: MSTeamsProviderInfo) {
+	protected async onConnected(providerInfo: CSMSTeamsProviderInfo) {
 		this._multiProviderInfo = providerInfo;
 	}
 

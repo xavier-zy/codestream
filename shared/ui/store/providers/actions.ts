@@ -17,6 +17,7 @@ import { CSMe } from "@codestream/protocols/api";
 import { logError } from "../../logger";
 import { setIssueProvider, openPanel } from "../context/actions";
 import { deleteForProvider } from "../activeIntegrations/actions";
+import { isOnPrem } from "../configs/reducer";
 
 export const reset = () => action("RESET");
 
@@ -34,11 +35,12 @@ export const configureAndConnectProvider = (
 	connectionLocation: ViewLocation,
 	force?: boolean
 ) => async (dispatch, getState) => {
-	const { providers } = getState();
+	const { providers, configs } = getState();
 	const provider = providers[providerId];
-	const { forEnterprise, isEnterprise, name, needsConfigure } = provider;
+	const { forEnterprise, isEnterprise, name, needsConfigure, needsConfigureForOnPrem } = provider;
+	const onprem = isOnPrem(configs);
 	connectionLocation = connectionLocation || "Integrations Panel";
-	if (needsConfigure) {
+	if (needsConfigure || (onprem && needsConfigureForOnPrem)) {
 		dispatch(openPanel(`configure-provider-${provider.name}-${provider.id}-${connectionLocation}`));
 	} else if ((forEnterprise || isEnterprise) && name !== "jiraserver") {
 		dispatch(openPanel(`configure-enterprise-${name}-${provider.id}-${connectionLocation}`));

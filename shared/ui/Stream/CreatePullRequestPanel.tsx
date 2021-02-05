@@ -50,6 +50,7 @@ import { EMPTY_STATUS } from "./StartWork";
 import Tooltip from "./Tooltip";
 import { PullRequestFilesChangedList } from "./PullRequestFilesChangedList";
 import { PRError } from "./PullRequestComponents";
+import { isOnPrem } from "../store/configs/reducer";
 
 export const ButtonRow = styled.div`
 	text-align: right;
@@ -112,7 +113,7 @@ const Step4 = props => (props.step !== 4 ? null : <div>{props.children}</div>);
 export const CreatePullRequestPanel = props => {
 	const dispatch = useDispatch();
 	const derivedState = useSelector((state: CodeStreamState) => {
-		const { providers, context } = state;
+		const { providers, context, configs } = state;
 
 		const supportedPullRequestViewProviders = ["github*com", "github/enterprise"];
 		const codeHostProviders = Object.keys(providers).filter(id =>
@@ -146,7 +147,8 @@ export const CreatePullRequestPanel = props => {
 			prLabel: getPRLabel(state),
 			currentRepo: context.currentRepo,
 			ideName: state.ide.name,
-			newPullRequestOptions: state.context.newPullRequestOptions
+			newPullRequestOptions: state.context.newPullRequestOptions,
+			isOnPrem: isOnPrem(configs)
 		};
 	});
 	const { userStatus, reviewId, prLabel } = derivedState;
@@ -923,7 +925,14 @@ export const CreatePullRequestPanel = props => {
 		const { codeHostProviders, providers } = derivedState;
 		let items = codeHostProviders.map(providerId => {
 			const provider = providers[providerId];
-			const { name, isEnterprise, host, needsConfigure, forEnterprise } = provider;
+			const {
+				name,
+				isEnterprise,
+				host,
+				needsConfigure,
+				needsConfigureForOnPrem,
+				forEnterprise
+			} = provider;
 			const display = PROVIDER_MAPPINGS[name];
 			if (!display) return null;
 
@@ -932,7 +941,7 @@ export const CreatePullRequestPanel = props => {
 				? `${display.displayName} - ${displayHost}`
 				: display.displayName;
 			let action;
-			if (needsConfigure) {
+			if (needsConfigure || (derivedState.isOnPrem && needsConfigureForOnPrem)) {
 				// otherwise, if it's a provider that needs to be pre-configured,
 				// bring up the custom popup for configuring it
 				action = () =>

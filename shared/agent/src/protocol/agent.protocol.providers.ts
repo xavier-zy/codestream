@@ -17,6 +17,7 @@ export interface ThirdPartyProviderConfig {
 	hasSharing?: boolean;
 	supportsAuth?: boolean;
 	needsConfigure?: boolean;
+	needsConfigureForOnPrem?: boolean;
 	oauthData?: { [key: string]: any };
 	scopes?: string[];
 	canFilterByAssignees?: boolean;
@@ -327,7 +328,7 @@ export interface RemoveEnterpriseProviderHostRequest {
 	teamId: string;
 }
 
-export interface EnterpriseConfigurationData {
+export interface ProviderConfigurationData {
 	host?: string;
 	baseUrl?: string;
 	token: string;

@@ -32,3 +32,9 @@ export interface CreateJiraCardResponse {
 	id: string;
 	url: string;
 }
+
+export interface JiraConfigurationData {
+	baseUrl: string;
+	token: string;
+	email: string;
+}

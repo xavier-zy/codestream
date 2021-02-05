@@ -7,7 +7,7 @@ import { URI } from "vscode-uri";
 import { Container } from "../container";
 import { Logger } from "../logger";
 import { DidChangePullRequestCommentsNotificationType } from "../protocol/agent.protocol";
-import { EnterpriseConfigurationData } from "../protocol/agent.protocol.providers";
+import { ProviderConfigurationData } from "../protocol/agent.protocol.providers";
 import { log, lspProvider } from "../system";
 import { GitHubProvider } from "./github";
 import {
@@ -181,7 +181,7 @@ export class GitHubEnterpriseProvider extends GitHubProvider {
 	}
 
 	@log()
-	async configure(request: EnterpriseConfigurationData) {
+	async configure(request: ProviderConfigurationData) {
 		await this.session.api.setThirdPartyProviderToken({
 			providerId: this.providerConfig.id,
 			host: request.host,

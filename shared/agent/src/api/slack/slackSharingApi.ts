@@ -110,7 +110,7 @@ export class SlackSharingApiProvider {
 				`SlackSharingApiProvider request was rate limited and future requests will be paused for ${retryAfter} seconds`
 			);
 		});
-		this._slackUserId = providerInfo.userId;
+		this._slackUserId = providerInfo.userId!;
 	}
 
 	protected newWebClient() {

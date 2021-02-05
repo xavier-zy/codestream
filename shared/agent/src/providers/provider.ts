@@ -366,7 +366,6 @@ export abstract class ThirdPartyProviderBase<
 			await this.refreshToken(request);
 			return;
 		}
-
 		if (this._ensuringConnection === undefined) {
 			this._ensuringConnection = this.ensureConnectedCore(request);
 		}
@@ -661,8 +660,9 @@ export abstract class ThirdPartyIssueProviderBase<
 			});
 			if (foundOneWithUrl) request.description += addressesText;
 		}
-		const codeStreamLink =
-			`https://codestream.com/?utm_source=cs&utm_medium=pr&utm_campaign=${encodeURI(request.providerId)}`;
+		const codeStreamLink = `https://codestream.com/?utm_source=cs&utm_medium=pr&utm_campaign=${encodeURI(
+			request.providerId
+		)}`;
 		let createdFrom = "";
 		switch (request.ideName) {
 			case "VSC":

@@ -8,7 +8,7 @@ import { SessionContainer } from "../container";
 import { Logger } from "../logger";
 import { Markerish, MarkerLocationManager } from "../managers/markerLocationManager";
 import { MAX_RANGE_VALUE } from "../markerLocation/calculator";
-import { DocumentMarker, EnterpriseConfigurationData } from "../protocol/agent.protocol";
+import { DocumentMarker, ProviderConfigurationData } from "../protocol/agent.protocol";
 import {
 	CodemarkType,
 	CSBitbucketProviderInfo,
@@ -177,7 +177,7 @@ export class BitbucketServerProvider extends ThirdPartyIssueProviderBase<CSBitbu
 	}
 
 	@log()
-	async configure(request: EnterpriseConfigurationData) {
+	async configure(request: ProviderConfigurationData) {
 		await this.session.api.setThirdPartyProviderToken({
 			providerId: this.providerConfig.id,
 			host: request.host,

@@ -41,6 +41,7 @@ import { Dialog } from "@codestream/webview/src/components/Dialog";
 import { PaneHeader, PaneBody, PaneState } from "@codestream/webview/src/components/Pane";
 import { StartWork } from "../StartWork";
 import { mapFilter } from "@codestream/webview/utils";
+import { isOnPrem } from "../../store/configs/reducer";
 
 interface ProviderInfo {
 	provider: ThirdPartyProviderConfig;
@@ -56,6 +57,7 @@ interface ConnectedProps {
 	disabledProviders: { [key: string]: boolean };
 	setUserPreference?: Function;
 	teamSettings: { [key: string]: any };
+	isOnPrem: boolean;
 }
 
 interface Props extends ConnectedProps {
@@ -259,7 +261,8 @@ class IssueDropdown extends React.Component<Props, State> {
 
 	async onChangeProvider(providerInfo: ProviderInfo) {
 		if (
-			providerInfo.provider.needsConfigure &&
+			(providerInfo.provider.needsConfigure ||
+				(providerInfo.provider.needsConfigureForOnPrem && this.props.isOnPrem)) &&
 			!this.providerIsConnected(providerInfo.provider.id)
 		) {
 			const { name, id } = providerInfo.provider;
@@ -354,7 +357,7 @@ class IssueDropdown extends React.Component<Props, State> {
 
 const EMPTY_HASH2 = {};
 const mapStateToProps = (state: CodeStreamState): ConnectedProps => {
-	const { users, teams, session, context, providers, preferences } = state;
+	const { users, teams, session, context, providers, preferences, configs } = state;
 	const currentIssueProviderConfig = context.issueProvider
 		? providers[context.issueProvider]
 		: undefined;
@@ -369,7 +372,8 @@ const mapStateToProps = (state: CodeStreamState): ConnectedProps => {
 		teamSettings,
 		providers,
 		issueProviderConfig: currentIssueProviderConfig,
-		disabledProviders: workPreferences.disabledProviders || EMPTY_HASH
+		disabledProviders: workPreferences.disabledProviders || EMPTY_HASH,
+		isOnPrem: isOnPrem(configs) || false
 	};
 };
 

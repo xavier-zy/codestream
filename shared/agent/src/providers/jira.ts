@@ -1,7 +1,7 @@
 "use strict";
 import { sortBy } from "lodash-es";
 import * as qs from "querystring";
-import { Container } from "../container";
+import { Container, SessionContainer } from "../container";
 import { Logger } from "../logger";
 import {
 	CreateJiraCardRequest,
@@ -12,8 +12,10 @@ import {
 	FetchThirdPartyCardsResponse,
 	JiraBoard,
 	JiraCard,
+	JiraConfigurationData,
 	JiraUser,
 	MoveThirdPartyCardRequest,
+	ProviderConfigurationData,
 	ReportingMessageType,
 	ThirdPartyProviderCard
 } from "../protocol/agent.protocol";
@@ -111,19 +113,33 @@ export class JiraProvider extends ThirdPartyIssueProviderBase<CSJiraProviderInfo
 	}
 
 	get baseUrl() {
+		if (this._providerInfo && this._providerInfo.isApiToken && this._providerInfo.data?.baseUrl) {
+			return this._providerInfo.data.baseUrl;
+		}
 		return `${super.baseUrl}${this._urlAddon}`;
 	}
 
 	get headers() {
-		return {
-			Authorization: `Bearer ${this.accessToken}`,
+		const headers: { [key: string]: string } = {
 			Accept: "application/json",
 			"Content-Type": "application/json"
 		};
+		if (this._providerInfo?.isApiToken) {
+			const email = this._providerInfo?.data?.email || SessionContainer.instance().session.email;
+			const auth = Buffer.from(`${email}:${this.accessToken}`).toString("base64");
+			headers["Authorization"] = `Basic ${auth}`; // this is lame AF
+		} else {
+			headers["Authorization"] = `Bearer ${this.accessToken}`;
+		}
+		return headers;
 	}
 
 	async onConnected() {
 		this._urlAddon = "";
+		if (this._providerInfo?.isApiToken) {
+			this._webUrl = this._providerInfo?.data?.baseUrl || "";
+			return;
+		}
 		const response = await this.get<AccessibleResourcesResponse>(
 			"/oauth/token/accessible-resources"
 		);
@@ -139,15 +155,29 @@ export class JiraProvider extends ThirdPartyIssueProviderBase<CSJiraProviderInfo
 			throw new Error("Jira access does not include any jira sites");
 		}
 
+		// FIXME: this is problematic, user may be in multiple workspaces and
+		// we're assuming the first one here
 		this._urlAddon = `/ex/jira/${response.body[0].id}`;
 		this._webUrl = response.body[0].url;
-		this.domain = response.body[0].name.replace(/ /g, "");
 
-		Logger.debug(`Jira: api url for ${this.domain} is ${this._urlAddon}`);
+		Logger.debug(`Jira: api url is ${this._urlAddon}`);
 	}
 
 	async onDisconnected() {
 		this.boards = [];
+	}
+
+	@log()
+	async configure(request: JiraConfigurationData) {
+		await this.session.api.setThirdPartyProviderToken({
+			providerId: this.providerConfig.id,
+			token: request.token,
+			data: {
+				email: request.email,
+				baseUrl: request.baseUrl
+			}
+		});
+		this.session.updateProviders();
 	}
 
 	@log()
@@ -362,7 +392,7 @@ export class JiraProvider extends ThirdPartyIssueProviderBase<CSJiraProviderInfo
 		);
 		return {
 			id: response.body.id,
-			url: `https://${this.domain!}.atlassian.net/browse/${response.body.key}`
+			url: `${this._webUrl}/browse/${response.body.key}`
 		};
 	}
 

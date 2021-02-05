@@ -441,154 +441,82 @@ export interface CSTag {
 	sortOrder?: number;
 }
 
-export interface CSAsanaProviderInfo {
-	refreshToken: string;
+export interface CSProviderInfo {
 	accessToken: string;
+	refreshToken?: string;
 	tokenError?: any;
-	expiresAt: number;
-	userId: string;
-	hosts: { [host: string]: CSAsanaProviderInfo };
-}
-
-export interface CSBitbucketProviderInfo {
-	refreshToken: string;
-	accessToken: string;
-	tokenError?: any;
-	expiresAt: number;
-	userId: string;
-	hosts: { [host: string]: CSBitbucketProviderInfo };
+	expiresAt?: number;
+	userId?: string;
+	isApiToken?: boolean;
+	hosts?: { [host: string]: CSProviderInfos };
 	data?: {
 		baseUrl?: string;
 		scopes?: string;
-	};
-}
-
-export interface CSGitHubProviderInfo {
-	accessToken: string;
-	tokenError?: any;
-	userId: string;
-	hosts: { [host: string]: CSGitHubProviderInfo };
-	data?: {
-		baseUrl?: string;
 		[key: string]: any;
 	};
 }
 
-export interface CSGitLabProviderInfo {
-	accessToken: string;
-	tokenError?: any;
-	userId: string;
-	hosts: { [host: string]: CSGitLabProviderInfo };
+export interface CSAsanaProviderInfo extends CSProviderInfo {
+	refreshToken: string;
+}
+
+export interface CSBitbucketProviderInfo extends CSProviderInfo {
+	refreshToken: string;
+}
+
+export interface CSGitHubProviderInfo extends CSProviderInfo {}
+
+export interface CSGitLabProviderInfo extends CSProviderInfo {}
+
+export interface CSJiraProviderInfo extends CSProviderInfo {
+	refreshToken: string;
 	data?: {
 		baseUrl?: string;
+		email?: string;
 	};
 }
 
-export interface CSJiraProviderInfo {
-	accessToken: string;
-	tokenError?: any;
+export interface CSMSTeamsProviderInfo extends CSProviderInfo {
 	refreshToken: string;
-	expiresAt: number;
-	hosts: { [hosts: string]: CSJiraProviderInfo };
-}
-
-export interface CSMSTeamsProviderInfo {
-	accessToken: string;
-	tokenError?: any;
 	data: {
 		expires_in: number;
 		scope: string;
 		token_type: string;
 	};
-	expiresAt: number;
-	refreshToken: string;
-
 	teamId: string;
-	userId: string;
-	hosts?: { [host: string]: CSMSTeamsProviderInfo };
 	extra?: { [host: string]: any };
 	multiple?: {
 		[teamId: string]: Omit<CSMSTeamsProviderInfo, "multiple">;
 	};
 }
 
-export interface CSJiraServerProviderInfo {
-	accessToken: string;
-	tokenError?: any;
+export interface CSJiraServerProviderInfo extends CSProviderInfo {
 	oauthTokenSecret: string;
-	hosts: { [hosts: string]: CSJiraServerProviderInfo };
 }
 
-export interface CSSlackProviderInfo {
-	accessToken: string;
-	tokenError?: any;
+export interface CSSlackProviderInfo extends CSProviderInfo {
 	teamId: string;
-	userId: string;
-	hosts?: { [host: string]: CSSlackProviderInfo };
-	data?: { [key: string]: any };
 	extra?: { [host: string]: any };
 	multiple?: {
 		[teamId: string]: Omit<CSSlackProviderInfo, "multiple">;
 	};
 }
 
-export interface MSTeamsProviderInfo {
-	accessToken: string;
-	tokenError?: any;
-	refreshToken: string;
-	expiresAt: number;
-	teamId: string;
-	userId: string;
-	hosts?: { [host: string]: MSTeamsProviderInfo };
-	data?: { [key: string]: any };
-	extra?: { [key: string]: any };
-	multiple?: {
-		[teamId: string]: Omit<MSTeamsProviderInfo, "multiple">;
-	};
-}
-
-export interface CSTrelloProviderInfo {
-	accessToken: string;
-	tokenError?: any;
+export interface CSTrelloProviderInfo extends CSProviderInfo {
 	apiKey: string;
-	userId: string;
-	hosts: { [host: string]: CSTrelloProviderInfo };
 }
 
-export interface CSYouTrackProviderInfo {
-	accessToken: string;
-	tokenError?: any;
-	userId: string;
-	hosts: { [host: string]: CSYouTrackProviderInfo };
-	data?: {
-		baseUrl?: string;
-	};
-}
+export interface CSYouTrackProviderInfo extends CSProviderInfo {}
 
-export interface CSAzureDevOpsProviderInfo {
-	accessToken: string;
-	tokenError?: any;
+export interface CSAzureDevOpsProviderInfo extends CSProviderInfo {
 	organization?: string;
-	hosts: { [host: string]: CSAzureDevOpsProviderInfo };
 }
 
-export interface CSOktaProviderInfo {
-	accessToken: string;
-	tokenError?: any;
-	hosts: { [host: string]: CSAzureDevOpsProviderInfo };
-}
+export interface CSOktaProviderInfo extends CSProviderInfo {}
 
-export interface CSClubhouseProviderInfo {
-	accessToken: string;
-	tokenError?: any;
-	hosts: { [host: string]: CSClubhouseProviderInfo };
-}
+export interface CSClubhouseProviderInfo extends CSProviderInfo {}
 
-export interface CSLinearProviderInfo {
-	accessToken: string;
-	tokenError?: any;
-	hosts: { [host: string]: CSLinearProviderInfo };
-}
+export interface CSLinearProviderInfo extends CSProviderInfo {}
 
 export type CSProviderInfos =
 	| CSAsanaProviderInfo

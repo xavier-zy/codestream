@@ -13,7 +13,7 @@ import {
 	CreateThirdPartyCardRequest,
 	DidChangePullRequestCommentsNotificationType,
 	DocumentMarker,
-	EnterpriseConfigurationData,
+	ProviderConfigurationData,
 	FetchReposResponse,
 	FetchThirdPartyBoardsRequest,
 	FetchThirdPartyBoardsResponse,
@@ -514,7 +514,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 	}
 
 	@log()
-	async configure(request: EnterpriseConfigurationData) {
+	async configure(request: ProviderConfigurationData) {
 		await this.session.api.setThirdPartyProviderToken({
 			providerId: this.providerConfig.id,
 			token: request.token,

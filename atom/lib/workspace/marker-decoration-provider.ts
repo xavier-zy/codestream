@@ -1,5 +1,9 @@
-import { DocumentMarker, FetchDocumentMarkersRequestType } from "@codestream/protocols/agent";
-import { CodemarkStatus, CodemarkType } from "@codestream/protocols/api";
+import {
+	DocumentMarker,
+	FetchDocumentMarkersRequestType,
+	ChangeDataType
+} from "@codestream/protocols/agent";
+import { CSMePreferences } from "@codestream/protocols/api";
 import {
 	CompositeDisposable,
 	DisplayMarker,
@@ -47,6 +51,12 @@ export class MarkerDecorationProvider implements Disposable {
 		() => new CompositeDisposable()
 	);
 	private disabled = false;
+	private _lastPreferences?: {
+		codemarksShowPRComments?: boolean;
+		codemarksHideReviews?: boolean;
+		codemarksHideResolved?: boolean;
+		codemarksShowArchived?: boolean;
+	};
 
 	constructor(session: WorkspaceSession, viewController: ViewController) {
 		this.session = session;
@@ -92,6 +102,13 @@ export class MarkerDecorationProvider implements Disposable {
 	}
 
 	private initialize() {
+		const preferences = (this.session.user ? this.session.user.preferences : {}) || {};
+		this._lastPreferences = {
+			codemarksShowPRComments: !!preferences.codemarksShowPRComments,
+			codemarksHideReviews: !!preferences.codemarksHideReviews,
+			codemarksHideResolved: !!preferences.codemarksHideResolved,
+			codemarksShowArchived: !!preferences.codemarksShowArchived
+		};
 		this.sessionSubscriptions.add(
 			atom.workspace.observeActiveTextEditor(this.onActiveEditor),
 			this.session.agent.onDidChangeDocumentMarkers(({ textDocument }) => {
@@ -100,6 +117,24 @@ export class MarkerDecorationProvider implements Disposable {
 						this.decorateEditor(editor);
 						break;
 					}
+				}
+			}),
+			this.session.agent.onDidChangeData(event => {
+				if (event.type === ChangeDataType.Preferences) {
+					const preferences = event.data as CSMePreferences;
+					const currentPreferences = {
+						codemarksShowPRComments: !!preferences.codemarksShowPRComments,
+						codemarksHideReviews: !!preferences.codemarksHideReviews,
+						codemarksHideResolved: !!preferences.codemarksHideResolved,
+						codemarksShowArchived: !!preferences.codemarksShowArchived
+					};
+					if (JSON.stringify(currentPreferences) !== JSON.stringify(this._lastPreferences)) {
+						// set the reset flag to true if we need to re-fetch
+						for (const editor of this.observedEditors.values()) {
+							this.decorateEditor(editor);
+						}
+					}
+					this._lastPreferences = currentPreferences;
 				}
 			})
 		);
@@ -125,7 +160,8 @@ export class MarkerDecorationProvider implements Disposable {
 
 	private async decorateEditor(editor: TextEditor) {
 		const response = await this.session.agent.request(FetchDocumentMarkersRequestType, {
-			textDocument: { uri: Convert.pathToUri(editor.getPath()!) }
+			textDocument: { uri: Convert.pathToUri(editor.getPath()!) },
+			applyFilters: true
 		});
 
 		if (response && response.markers) {
@@ -134,10 +170,10 @@ export class MarkerDecorationProvider implements Disposable {
 
 			response.markers = response.markers.filter(m => {
 				if (m.codemark == null) return false;
-				if (m.codemark.color === "none" || !m.codemark.pinned) return false;
-				if (m.codemark.type === CodemarkType.Issue) {
-					return m.codemark.status === CodemarkStatus.Open;
-				}
+				// if (m.codemark.color === "none" || !m.codemark.pinned) return false;
+				// if (m.codemark.type === CodemarkType.Issue) {
+				// return m.codemark.status === CodemarkStatus.Open;
+				// }
 				return true;
 			});
 			response.markers.map(docMarker => this.createMarker(editor, docMarker));
@@ -163,7 +199,7 @@ export class MarkerDecorationProvider implements Disposable {
 		// for now, `createMarker` is invoked with docMarkers guaranteed to have codemarks
 		const codemark = docMarker.codemark!;
 
-		let color = codemark.color || "blue";
+		let color = !codemark.pinned ? "gray" : codemark.status === "closed" ? "purple" : "green";
 		color = color === "none" ? "" : `-${color}`;
 
 		const iconPath = Convert.pathToUri(

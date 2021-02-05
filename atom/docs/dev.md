@@ -7,6 +7,9 @@
 2. `cd` into `atom`
 3. run `apm link --dev`, which tells atom to use this directory as the package source for atom windows running in dev mode.
 4. open atom in dev mode (`atom --dev path/to/project`) to debug the extension
+5. run `npm install`
+6. run `npm run build`
+7. run `npm run watch`
 
 ## For development
 

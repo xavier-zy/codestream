@@ -586,6 +586,11 @@ export class CodeStreamSession {
 		return this._environment;
 	}
 
+	private _runTimeEnvironment: string = "prod";
+	get runTimeEnvironment() {
+		return this._runTimeEnvironment;
+	}
+
 	get disableStrictSSL(): boolean {
 		return this._options.disableStrictSSL != null ? this._options.disableStrictSSL : false;
 	}
@@ -807,6 +812,7 @@ export class CodeStreamSession {
 		this._codestreamAccessToken = token.value;
 		this._teamId = (this._options as any).teamId = token.teamId;
 		this._codestreamUserId = response.user.id;
+		this._runTimeEnvironment = response.runtimeEnvironment || "prod";
 
 		const currentTeam = response.teams.find(t => t.id === this._teamId)!;
 		this.registerApiCapabilities(response.capabilities || {}, currentTeam);

@@ -94,7 +94,7 @@ export interface CSLoginResponse {
 	teamId?: string;
 	capabilities?: CSApiCapabilities;
 	features?: CSApiFeatures;
-	runTimeEnvironment?: string;
+	runtimeEnvironment?: string;
 }
 
 export interface CSRegisterRequest {

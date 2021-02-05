@@ -533,7 +533,7 @@ export class CodeStreamApiProvider implements ApiProvider {
 		this._user = response.user;
 		this._userId = response.user.id;
 		this._features = response.features;
-		this._runTimeEnvironment = response.runTimeEnvironment;
+		this._runTimeEnvironment = response.runtimeEnvironment;
 
 		const token: AccessToken = {
 			email: response.user.email,

@@ -94,7 +94,14 @@ export function BaseCodemark(props: BaseCodemarkProps) {
 	let { collapsed } = props;
 	// collapsed = false;
 
-	const resolve = () => dispatch(setCodemarkStatus(codemark.id, CodemarkStatus.Closed));
+	const resolve = () => {
+		dispatch(setCodemarkStatus(codemark.id, CodemarkStatus.Closed));
+		HostApi.instance.track("Codemark Resolved", {
+			"Codemark ID": codemark.id,
+			"Codemark Type": codemark.type,
+			Archived: false
+		});
+	};
 
 	const reopen = () => dispatch(setCodemarkStatus(codemark.id, CodemarkStatus.Open));
 

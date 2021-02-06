@@ -39,27 +39,33 @@ function isNameOption(o: ProviderPropertyOption): o is { name: string } {
 	return (o as any).name != undefined;
 }
 
-interface LabelHash {
+export interface LabelHash {
 	PullRequest: string;
+	PullRequests: string;
 	Pullrequest: string;
 	pullrequest: string;
 	PR: string;
+	PRs: string;
 	pr: string;
 }
 
 const MRLabel = {
 	PullRequest: "Merge Request",
+	PullRequests: "Merge Requests",
 	Pullrequest: "Merge request",
 	pullrequest: "merge request",
 	PR: "MR",
+	PRs: "MRs",
 	pr: "mr"
 };
 
 const PRLabel = {
 	PullRequest: "Pull Request",
+	PullRequests: "Pull Requests",
 	Pullrequest: "Pull request",
 	pullrequest: "pull request",
 	PR: "PR",
+	PRs: "PRs",
 	pr: "pr"
 };
 

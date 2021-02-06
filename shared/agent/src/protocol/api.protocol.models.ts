@@ -281,6 +281,15 @@ export interface CSPost extends CSEntity {
 	reviewCheckpoint?: number;
 	reviewId?: string;
 	files?: Attachment[];
+
+	sharedTo?: {
+		createdAt: number;
+		providerId: "slack" | "msteams";
+		workspaceName: string;
+		channelName: string;
+		channelId: string;
+		postId: string;
+	}[];
 }
 
 export interface CSRemote {

@@ -27,7 +27,7 @@ import { CodeStreamState } from "../store";
 import Codemark from "./Codemark";
 import { PostEntryPoint } from "../store/context/types";
 import { PRInfoModal } from "./SpatialView/PRInfoModal";
-import { isConnected } from "../store/providers/reducer";
+import { getPRLabel, isConnected, LabelHash } from "../store/providers/reducer";
 import * as fs from "../utilities/fs";
 import {
 	PaneHeader,
@@ -99,6 +99,7 @@ interface ConnectedProps {
 	codemarks: CodemarkPlus[];
 	count: number;
 	hiddenPaneNodes: { [nodeId: string]: boolean };
+	prLabel: LabelHash;
 }
 
 interface DispatchProps {
@@ -425,14 +426,23 @@ export class SimpleCodemarksForFile extends Component<Props, State> {
 	};
 
 	renderCodemarksFile = () => {
-		const { documentMarkers = [] } = this.props;
+		const { documentMarkers = [], prLabel } = this.props;
 		if (documentMarkers.length === 0) return this.renderNoCodemarks();
+		const external = documentMarkers.filter(m => !m.codemark);
 		const pinned = documentMarkers.filter(m => m.codemark && m.codemark.pinned);
 		const open = pinned.filter(m => m.codemark && m.codemark.status !== "closed");
 		const closed = pinned.filter(m => m.codemark && m.codemark.status === "closed");
 		const archived = documentMarkers.filter(m => m.codemark && !m.codemark.pinned);
 		return (
 			<>
+				<PaneNode>
+					<PaneNodeName
+						id="codemarks/external"
+						title={`${prLabel.PullRequest} Comments`}
+						count={external.length}
+					/>
+					{!this.props.hiddenPaneNodes["codemarks/external"] && this.renderCodemarksList(external)}
+				</PaneNode>
 				<PaneNode>
 					<PaneNodeName id="codemarks/open" title="Open" count={open.length} />
 					{!this.props.hiddenPaneNodes["codemarks/open"] && this.renderCodemarksList(open)}
@@ -871,7 +881,8 @@ const mapStateToProps = (state: CodeStreamState, props): ConnectedProps => {
 		numHidden,
 		codemarkDomain,
 		codemarkSortType,
-		hiddenPaneNodes: preferences.hiddenPaneNodes || EMPTY_HASH_2
+		hiddenPaneNodes: preferences.hiddenPaneNodes || EMPTY_HASH_2,
+		prLabel: getPRLabel(state)
 	};
 };
 export default withSearchableItems(

@@ -46,20 +46,25 @@ const positionStyleMap: { [key: string]: string } = {
 
 const buildDecoration = (position: string, type: string, color: string, _status: string) => {
 	const pngPath = Container.context.asAbsolutePath(`assets/images/marker-${type}-${color}.png`);
-	const pngBase64 = fs.readFileSync(pngPath, { encoding: "base64" });
-	const pngInlineUrl = `data:image/png;base64,${pngBase64}`;
+	Logger.warn(`READING: ${pngPath}`);
+	try {
+		const pngBase64 = fs.readFileSync(pngPath, { encoding: "base64" });
+		const pngInlineUrl = `data:image/png;base64,${pngBase64}`;
 
-	return {
-		contentText: "",
-		height: "16px",
-		width: "16px",
+		return {
+			contentText: "",
+			height: "16px",
+			width: "16px",
 
-		textDecoration: `none; background-image: url(${pngInlineUrl}); background-position: center; background-repeat: no-repeat; background-size: contain; ${positionStyleMap[position]}`
-	};
+			textDecoration: `none; background-image: url(${pngInlineUrl}); background-position: center; background-repeat: no-repeat; background-size: contain; ${positionStyleMap[position]}`
+		};
+	} catch (e) {
+		return;
+	}
 };
 
 const MarkerPositions = ["inline", "overlay"];
-const MarkerTypes = ["comment", "question", "issue", "trap", "bookmark"];
+const MarkerTypes = ["comment", "question", "issue", "trap", "bookmark", "prcomment"];
 const MarkerColors = ["blue", "green", "yellow", "orange", "red", "purple", "aqua", "gray"];
 const MarkerStatuses = ["open", "closed"];
 const MarkerHighlights: { [key: string]: string } = {
@@ -198,9 +203,11 @@ export class CodemarkDecorationProvider implements HoverProvider, Disposable {
 					for (const color of MarkerColors) {
 						for (const status of MarkerStatuses) {
 							const key = `${position}-${type}-${color}-${status}`;
-							decorationTypes[key] = window.createTextEditorDecorationType({
-								before: buildDecoration(position, type, color, status)
-							});
+							const before = buildDecoration(position, type, color, status);
+							if (before)
+								{decorationTypes[key] = window.createTextEditorDecorationType({
+									before
+								});}
 						}
 					}
 				}

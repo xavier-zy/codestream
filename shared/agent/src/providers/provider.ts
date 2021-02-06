@@ -894,7 +894,7 @@ export abstract class ThirdPartyIssueProviderBase<
 				title: comment.pullRequest.title,
 				summary: comment.text,
 				summaryMarkdown: `\n\n${Strings.escapeMarkdown(comment.text)}`,
-				type: CodemarkType.Comment
+				type: CodemarkType.PRComment
 			});
 		}
 

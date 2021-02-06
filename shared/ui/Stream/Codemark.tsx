@@ -374,17 +374,8 @@ export class Codemark extends React.Component<Props, State> {
 		return <>{blocks}</>;
 	};
 
-	renderTypeIcon() {
-		const { codemark } = this.props;
-		if (!codemark) return null;
-
-		const { externalProvider } = codemark;
-		if (externalProvider) {
-			const providerDisplay = PROVIDER_MAPPINGS[externalProvider];
-			if (providerDisplay && providerDisplay.icon)
-				return <Icon name={providerDisplay.icon} className="type-icon" />;
-		}
-		switch (codemark.type) {
+	renderTypeIcon(type) {
+		switch (type) {
 			case "question":
 				return <Icon name="question" className="type-icon" />;
 			case "bookmark":
@@ -393,6 +384,8 @@ export class Codemark extends React.Component<Props, State> {
 				return <Icon name="trap" className="type-icon" />;
 			case "issue":
 				return <Icon name="issue" className="type-icon" />;
+			case "prcomment":
+				return <Icon name="pull-request" className="type-icon" />;
 			default:
 				return <Icon name="comment" className="type-icon" />;
 		}
@@ -928,7 +921,7 @@ export class Codemark extends React.Component<Props, State> {
 					{this.renderStatus(codemark)}
 					<div style={{ display: "flex", alignItems: "flex-start" }}>
 						<span style={{ flexGrow: 0, flexShrink: 0 }} className={color}>
-							{this.renderTypeIcon()}
+							{this.renderTypeIcon(codemark.type)}
 						</span>
 						<div className="body" style={{ flexGrow: 10 }}>
 							<MarkdownText text={codemark.title || codemark.text} inline={true} />
@@ -1498,7 +1491,7 @@ export class Codemark extends React.Component<Props, State> {
 						<div className="header">
 							{!renderExpandedBody && type === "bookmark" ? (
 								<>
-									<span className={codemark.color}>{this.renderTypeIcon()}</span>
+									<span className={codemark.color}>{this.renderTypeIcon(codemark.type)}</span>
 									<MarkdownText text={codemark.title || codemark.text} inline={true} />
 									<div className="right">
 										<span onClick={this.handleMenuClick}>
@@ -1806,8 +1799,8 @@ export class Codemark extends React.Component<Props, State> {
 			//@ts-ignore
 			const range = marker.range;
 			if (range) {
-				if (range.start.line == range.end.line) return `Line ${range.start.line}`;
-				else return `Lines ${range.start.line}-${range.end.line}`;
+				if (range.start.line == range.end.line) return `Line ${range.start.line + 1}`;
+				else return `Lines ${range.start.line + 1}-${range.end.line + 1}`;
 			} else return;
 		})();
 
@@ -1837,8 +1830,8 @@ export class Codemark extends React.Component<Props, State> {
 			>
 				<div className="contents">
 					<div className="body" style={{ display: "flex", alignItems: "flex-start" }}>
-						<span style={{ flexGrow: 0, flexShrink: 0 }}>
-							<Icon name={externalContent.provider.icon || "codestream"} className="margin-right" />
+						<span style={{ flexGrow: 0, flexShrink: 0 }} className="gray">
+							{this.renderTypeIcon(marker["type"])}
 						</span>
 						<div>
 							<MarkdownText text={marker.summary} inline={true} />

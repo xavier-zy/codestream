@@ -55,6 +55,7 @@ import {
 	ShellPromptFolderRequestType,
 	ShellPromptFolderResponse,
 	ShowCodemarkNotificationType,
+	ShowPullRequestNotificationType,
 	StartWorkNotificationType,
 	UpdateConfigurationRequest,
 	UpdateConfigurationRequestType,
@@ -164,6 +165,13 @@ export class CodestreamView {
 		await this.show();
 		this.whenWebviewInitialized(() =>
 			this.sendNotification(ShowCodemarkNotificationType, { codemarkId, sourceUri })
+		);
+	}
+
+	async showPullRequest(providerId: string, id: string, commentId?: string) {
+		await this.show();
+		this.whenWebviewInitialized(() =>
+			this.sendNotification(ShowPullRequestNotificationType, { providerId, id, commentId })
 		);
 	}
 

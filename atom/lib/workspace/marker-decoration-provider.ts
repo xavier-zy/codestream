@@ -168,14 +168,14 @@ export class MarkerDecorationProvider implements Disposable {
 			this.markers.forEach(displayMarker => displayMarker.destroy());
 			this.markers.clear();
 
-			response.markers = response.markers.filter(m => {
-				if (m.codemark == null) return false;
-				// if (m.codemark.color === "none" || !m.codemark.pinned) return false;
-				// if (m.codemark.type === CodemarkType.Issue) {
-				// return m.codemark.status === CodemarkStatus.Open;
-				// }
-				return true;
-			});
+			// response.markers = response.markers.filter(m => {
+			// 	if (m.codemark == null) return false;
+			// 	// if (m.codemark.color === "none" || !m.codemark.pinned) return false;
+			// 	// if (m.codemark.type === CodemarkType.Issue) {
+			// 	// return m.codemark.status === CodemarkStatus.Open;
+			// 	// }
+			// 	return true;
+			// });
 			response.markers.map(docMarker => this.createMarker(editor, docMarker));
 		}
 	}
@@ -197,14 +197,20 @@ export class MarkerDecorationProvider implements Disposable {
 		const marker = this.getOrCreateDisplayMarker(docMarker, markerLayer);
 
 		// for now, `createMarker` is invoked with docMarkers guaranteed to have codemarks
-		const codemark = docMarker.codemark!;
+		const codemark = docMarker.codemark;
 
-		let color = !codemark.pinned ? "gray" : codemark.status === "closed" ? "purple" : "green";
-		color = color === "none" ? "" : `-${color}`;
+		let color = "";
+		let type = "";
+		if (codemark) {
+			color = !codemark.pinned ? "gray" : codemark.status === "closed" ? "purple" : "green";
+			color = color === "none" ? "" : `-${color}`;
+			type = codemark.type;
+		} else {
+			color = "-gray";
+			type = docMarker.type;
+		}
 
-		const iconPath = Convert.pathToUri(
-			asAbsolutePath(`dist/icons/marker-${codemark.type}${color}.svg`)
-		);
+		const iconPath = Convert.pathToUri(asAbsolutePath(`dist/icons/marker-${type}${color}.svg`));
 
 		const img = document.createElement("img");
 		img.src = iconPath;
@@ -212,11 +218,20 @@ export class MarkerDecorationProvider implements Disposable {
 		const item = document.createElement("div");
 		item.onclick = event => {
 			event.preventDefault();
-			this.viewController.getMainView().showCodemark(codemark.id, Editor.getUri(editor));
-			Container.session.agent.telemetry({
-				eventName: "Codemark Clicked",
-				properties: { "Codemark Location": "Source File" }
-			});
+			if (codemark) {
+				this.viewController.getMainView().showCodemark(codemark.id, Editor.getUri(editor));
+				Container.session.agent.telemetry({
+					eventName: "Codemark Clicked",
+					properties: { "Codemark Location": "Source File" }
+				});
+			} else if (docMarker.externalContent && docMarker.externalContent.provider) {
+				const { provider, externalId, externalChildId } = docMarker.externalContent;
+				if (externalId) {
+					this.viewController
+						.getMainView()
+						.showPullRequest(provider.id, externalId, externalChildId);
+				}
+			}
 		};
 
 		const docMarkerBufferRange = Convert.lsRangeToAtomRange(docMarker.range);

@@ -89,7 +89,7 @@ export class DocMarker {
 	get pinned() {
 		// internal codemarks have the pinned property set
 		// external markers (from github PRs, etc default to pinned)
-		return this._entity.codemark ? this._entity.codemark.pinned : true;
+		return this._entity.codemark ? this._entity.codemark.pinned : false;
 	}
 
 	get type(): string {

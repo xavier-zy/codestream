@@ -366,7 +366,7 @@ export class DocumentMarkerManager {
 					title: pr.title,
 					summary: summary,
 					summaryMarkdown: `${Strings.escapeMarkdown(summary, { quoted: false })}`,
-					type: CodemarkType.Comment,
+					type: CodemarkType.PRComment,
 					externalContent: {
 						provider: { name: provider.name, id: pr.providerId, icon: provider.icon },
 						externalId: pr.id,

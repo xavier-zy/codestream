@@ -135,9 +135,9 @@ export class DocumentManager implements Disposable {
 			doc = this._documents.get(upperCaseDrive);
 			if (doc !== undefined) {
 				this._normalizedUriLookup.set(uri, doc.uri);
+				return doc;
 			}
 
-			return doc;
 		}
 
 		match = escapedRegex.exec(uri);

@@ -92,7 +92,7 @@ export class DocumentManager implements Disposable {
 		// If we are on windows we have to do some drive letter manipulation to support different editor using different uri formatting
 		let match = unescapedRegex.exec(uri);
 		if (match != null) {
-			const escapedUri = uri.replace(unescapedRegex, function(
+			const escapedUriLowerCaseDrive = uri.replace(unescapedRegex, function(
 				_,
 				start: string,
 				drive: string,
@@ -100,7 +100,21 @@ export class DocumentManager implements Disposable {
 			) {
 				return `${start}${drive.toLowerCase()}%3A${end}`;
 			});
-			doc = this._documents.get(escapedUri);
+			doc = this._documents.get(escapedUriLowerCaseDrive);
+			if (doc !== undefined) {
+				this._normalizedUriLookup.set(uri, doc.uri);
+				return doc;
+			}
+
+			const unescapedUriUpperCaseDrive = uri.replace(unescapedRegex, function(
+				_,
+				start: string,
+				drive: string,
+				end: string
+			) {
+				return `${start}${drive.toUpperCase()}:${end}`;
+			});
+			doc = this._documents.get(unescapedUriUpperCaseDrive);
 			if (doc !== undefined) {
 				this._normalizedUriLookup.set(uri, doc.uri);
 			}

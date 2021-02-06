@@ -117,13 +117,26 @@ export class DocumentManager implements Disposable {
 			doc = this._documents.get(unescapedUriUpperCaseDrive);
 			if (doc !== undefined) {
 				this._normalizedUriLookup.set(uri, doc.uri);
+				return doc;
 			}
-
-			return doc;
 		}
 
 		match = unescapedRegex.exec(encodedSpacesUri);
 		if (match != null) {
+			const escapedUriLowerCaseDrive = encodedSpacesUri.replace(unescapedRegex, function(
+				_,
+				start: string,
+				drive: string,
+				end: string
+			) {
+				return `${start}${drive.toLowerCase()}%3A${end}`;
+			});
+			doc = this._documents.get(escapedUriLowerCaseDrive);
+			if (doc !== undefined) {
+				this._normalizedUriLookup.set(uri, doc.uri);
+				return doc;
+			}
+
 			const upperCaseDrive = encodedSpacesUri.replace(unescapedRegex, function(
 				_,
 				start: string,
@@ -137,7 +150,6 @@ export class DocumentManager implements Disposable {
 				this._normalizedUriLookup.set(uri, doc.uri);
 				return doc;
 			}
-
 		}
 
 		match = escapedRegex.exec(uri);

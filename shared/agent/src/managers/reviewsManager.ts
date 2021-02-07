@@ -1,6 +1,7 @@
 "use strict";
 import { applyPatch } from "diff";
 import * as path from "path";
+import { URI } from "vscode-uri";
 import { MessageType } from "../api/apiProvider";
 import { Container, SessionContainer } from "../container";
 import { EMPTY_TREE_SHA, GitRemote, GitRepository } from "../git/gitService";
@@ -35,6 +36,9 @@ import {
 	GetReviewContentsRequest,
 	GetReviewContentsRequestType,
 	GetReviewContentsResponse,
+	GetReviewCoverageRequest,
+	GetReviewCoverageRequestType,
+	GetReviewCoverageResponse,
 	GetReviewRequest,
 	GetReviewRequestType,
 	GetReviewResponse,
@@ -274,6 +278,29 @@ export class ReviewsManager extends CachedEntityManagerBase<CSReview> {
 			});
 		}
 		return { repos };
+	}
+
+	@lspHandler(GetReviewCoverageRequestType)
+	@log()
+	async getCoverage(request: GetReviewCoverageRequest): Promise<GetReviewCoverageResponse> {
+		const documentUri = URI.parse(request.textDocument.uri);
+		const filePath = documentUri.fsPath;
+		const { git } = SessionContainer.instance();
+		const repo = await git.getRepositoryByFilePath(filePath);
+		const commitShas = await git.getCommitShaByLine(filePath);
+		const reviews = (await this.getAllCached()).filter(r =>
+			r.reviewChangesets?.some(c => c.repoId === repo?.id)
+		);
+		const reviewIds = commitShas.map(
+			commitSha =>
+				reviews.find(review =>
+					review.reviewChangesets.some(ch => ch.commits.some(c => c.sha === commitSha))
+				)?.id
+		);
+
+		return {
+			reviewIds
+		};
 	}
 
 	@lspHandler(GetReviewContentsRequestType)

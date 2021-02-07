@@ -7,6 +7,7 @@ import com.codestream.extensions.file
 import com.codestream.extensions.getOffset
 import com.codestream.extensions.highlightTextAttributes
 import com.codestream.extensions.isRangeVisible
+import com.codestream.extensions.lighten
 import com.codestream.extensions.lspPosition
 import com.codestream.extensions.margins
 import com.codestream.extensions.selections
@@ -16,6 +17,7 @@ import com.codestream.extensions.visibleRanges
 import com.codestream.protocols.agent.DocumentMarker
 import com.codestream.protocols.agent.DocumentMarkersParams
 import com.codestream.protocols.agent.Marker
+import com.codestream.protocols.agent.ReviewCoverageParams
 import com.codestream.protocols.agent.TextDocument
 import com.codestream.protocols.webview.EditorContext
 import com.codestream.protocols.webview.EditorInformation
@@ -45,6 +47,7 @@ import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
+import com.intellij.openapi.editor.markup.EffectType
 import com.intellij.openapi.editor.markup.HighlighterLayer
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.editor.markup.RangeHighlighter
@@ -55,6 +58,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.KeyWithDefaultValue
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.ui.JBColor
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
@@ -69,6 +73,7 @@ import org.eclipse.lsp4j.TextDocumentContentChangeEvent
 import org.eclipse.lsp4j.TextDocumentItem
 import org.eclipse.lsp4j.TextDocumentSyncKind
 import org.eclipse.lsp4j.VersionedTextDocumentIdentifier
+import java.awt.Font
 import java.io.File
 import java.net.URI
 
@@ -610,6 +615,27 @@ class EditorService(val project: Project) {
             val start = getOffset(documentMarker.range.start)
             WriteCommandAction.runWriteCommandAction(project) {
                 document.replaceString(start, start, text)
+            }
+        }
+    }
+
+    fun reviewCoverage() = ApplicationManager.getApplication().invokeLater {
+        val editor = FileEditorManager.getInstance(project).selectedTextEditor ?: return@invokeLater
+
+        val agentService = project.agentService ?: return@invokeLater
+        val uri = editor.document.uri ?: return@invokeLater
+
+        GlobalScope.launch {
+            val result = agentService.reviewCoverage(ReviewCoverageParams(TextDocument(uri)))
+            ApplicationManager.getApplication().invokeLater {
+                result.reviewIds.forEachIndexed { index, s ->
+                    val color = if (s != null) JBColor.GREEN.lighten(50) else JBColor.RED.lighten(50)
+                    editor.markupModel.addLineHighlighter(
+                        index,
+                        HighlighterLayer.FIRST,
+                        TextAttributes(null, color, null, EffectType.ROUNDED_BOX, Font.PLAIN)
+                    )
+                }
             }
         }
     }

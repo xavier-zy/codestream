@@ -95,6 +95,8 @@
                 <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="control SLASH" second-keystroke="L"
                                    replace-all="true"/>
             </action>
+<!--            <action id="ReviewCoverage" class="com.codestream.actions.ReviewCoverage" text="Review Coverage"-->
+<!--                    description="Show code review coverage"/>-->
         </group>
 
         <action id="CodeStream.CreateReview" class="com.codestream.actions.CreateReview" text="_Request Feedback"

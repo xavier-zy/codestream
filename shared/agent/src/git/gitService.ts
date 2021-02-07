@@ -234,6 +234,19 @@ export class GitService implements IGitService, Disposable {
 		return git({ cwd: dir, stdin: stdin }, ...params, "--", filename);
 	}
 
+	async getCommitShaByLine(uriOrPath: URI | string): Promise<string[]> {
+		const [dir, filename] = Strings.splitPath(
+			typeof uriOrPath === "string" ? uriOrPath : uriOrPath.fsPath
+		);
+
+		const data = await git({ cwd: dir }, "blame", "-l", filename);
+
+		return data
+			.trim()
+			.split("\n")
+			.map(line => line.substr(0, 40));
+	}
+
 	async getFileCurrentRevision(uri: URI): Promise<string | undefined>;
 	async getFileCurrentRevision(path: string): Promise<string | undefined>;
 	async getFileCurrentRevision(uriOrPath: URI | string): Promise<string | undefined> {

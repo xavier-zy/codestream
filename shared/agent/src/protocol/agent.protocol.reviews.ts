@@ -219,6 +219,21 @@ export interface ReviewFileContents {
 	right: string;
 }
 
+export interface GetReviewCoverageRequest {
+	textDocument: TextDocumentIdentifier;
+}
+
+export interface GetReviewCoverageResponse {
+	reviewIds: (string | undefined)[];
+}
+
+export const GetReviewCoverageRequestType = new RequestType<
+	GetReviewCoverageRequest,
+	GetReviewCoverageResponse,
+	void,
+	void
+>("codestream/review/coverage");
+
 export interface ReviewRepoContents {
 	repoId: string;
 	files: ReviewFileContents[];

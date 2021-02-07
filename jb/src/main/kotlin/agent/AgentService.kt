@@ -26,6 +26,8 @@ import com.codestream.protocols.agent.InitializationOptions
 import com.codestream.protocols.agent.Post
 import com.codestream.protocols.agent.PullRequestFile
 import com.codestream.protocols.agent.Review
+import com.codestream.protocols.agent.ReviewCoverageParams
+import com.codestream.protocols.agent.ReviewCoverageResult
 import com.codestream.protocols.agent.SetServerUrlParams
 import com.codestream.protocols.agent.SetServerUrlResult
 import com.codestream.protocols.agent.Stream
@@ -312,6 +314,16 @@ class AgentService(private val project: Project) : Disposable {
         }
 
         return result
+    }
+
+    suspend fun reviewCoverage(params: ReviewCoverageParams): ReviewCoverageResult {
+        val json = remoteEndpoint
+            .request("codestream/review/coverage", params)
+            .await() as JsonObject
+        val result = gson.fromJson<ReviewCoverageResult>(json)
+
+        return result
+
     }
 
     suspend fun getStream(id: String): Stream {

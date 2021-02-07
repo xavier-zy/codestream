@@ -1,5 +1,7 @@
 package com.codestream
 
+// foo bar
+
 import com.codestream.agent.ModuleListenerImpl
 import com.codestream.editor.EditorFactoryListenerImpl
 import com.codestream.editor.FileEditorManagerListenerImpl

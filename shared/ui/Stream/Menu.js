@@ -469,8 +469,8 @@ export default class Menu extends Component {
 
 	render() {
 		this.count = 0;
-		const className = this.props.compact ? "menu-popup compact" : "menu-popup";
-
+		let className = this.props.compact ? "menu-popup compact" : "menu-popup";
+		if (this.props.wrap) className += " wrap";
 		/*
 			Using the ModalContext z-index as an override in case this is being rendered from inside a Modal,
 			where it needs a z index equivalent to the modal

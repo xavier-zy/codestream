@@ -264,14 +264,17 @@ export class CodemarkDetails extends React.Component<Props, State> {
 												{
 													key: "resolve",
 													label: `Resolve ${this.state.text ? "with Comment" : typeLabel}`,
+													subtext: "Save as documentation",
 													onSelect: () => this.setResolveMethod("RESOLVE"),
 													action: () => this.resolveCodemark("resolve")
 												},
+												{ label: "-" },
 												{
 													key: "archive",
 													label: `Resolve & Archive ${
 														this.state.text ? "with Comment" : typeLabel
 													}`,
+													subtext: "Remove glyph from editor (still searchable)",
 													onSelect: () => this.setResolveMethod("ARCHIVE"),
 													action: () => this.resolveCodemark("archive")
 												}
@@ -279,6 +282,7 @@ export class CodemarkDetails extends React.Component<Props, State> {
 											selectedKey={this.props.defaultResolveAction}
 											variant="secondary"
 											splitDropdown
+											wrap
 										/>
 									</Tooltip>
 								)}

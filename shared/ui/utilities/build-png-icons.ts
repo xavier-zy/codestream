@@ -96,7 +96,19 @@ const convertIcons = async hash => {
 };
 
 const convertEditorIcons = async () => {
-	const icons = ["comment", "issue", "bookmark", "pull-request", "prcomment", "question", "trap"];
+	// these are all the icons that are either in use in the editor gutter,
+	// including some historic icons like bookmark that we no longer allow
+	// the creation of (but some exist in production)
+	const icons = [
+		"comment",
+		"add-comment",
+		"issue",
+		"bookmark",
+		"pull-request",
+		"prcomment",
+		"question",
+		"trap"
+	];
 	const colors = ["green", "purple", "gray", "blue", "aqua", "red", "yellow", "orange"];
 	for (let index = 0; index < icons.length; index++) {
 		const icon = icons[index];

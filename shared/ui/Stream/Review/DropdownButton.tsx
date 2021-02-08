@@ -24,6 +24,7 @@ export interface DropdownButtonProps extends ButtonProps {
 		onSelect?: () => void; // callback for when you select an item with a splitDropdown
 	}[];
 	splitDropdown?: boolean;
+	wrap?: boolean;
 	selectedKey?: string;
 }
 
@@ -105,6 +106,7 @@ export function DropdownButton(props: React.PropsWithChildren<DropdownButtonProp
 					target={buttonRef.current}
 					items={items}
 					focusOnSelect={buttonRef.current}
+					wrap={props.wrap}
 				/>
 			)}
 		</Root>
@@ -122,4 +124,5 @@ const Root = styled.div<{ splitDropdown?: boolean }>`
 		// border-left: 1px solid var(--base-border-color) !important;
 		margin-left: 1px !important;
 	}
+	white-space: ${props => (props.splitDropdown ? "nowrap" : "")};
 `;

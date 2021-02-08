@@ -10,12 +10,12 @@ namespace CodeStream.VisualStudio.UnitTests.Models
         [TestMethod]
         public void CamelCaseStringEnumConverterTest()
         {
-            var foo = new Foo { Type = CodemarkType.Bookmark };
+            var foo = new Foo { Type = CodemarkType.Prcomment };
             var json = foo.ToJson();
 
             var result = json.FromJson<Foo>();
-            Assert.IsTrue(json.Contains("bookmark"));
-            Assert.AreEqual(CodemarkType.Bookmark, result.Type);
+            Assert.IsTrue(json.Contains("prcomment"));
+            Assert.AreEqual(CodemarkType.Prcomment, result.Type);
         }
 
         class Foo

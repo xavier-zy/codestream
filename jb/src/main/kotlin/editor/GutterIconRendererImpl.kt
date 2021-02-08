@@ -80,7 +80,8 @@ class GutterIconRendererImpl(val editor: Editor, val marker: DocumentMarker) : G
 
     override fun getIcon(): Icon {
         val type = marker.type.ifNullOrBlank { "comment" }
-        val color = marker.codemark?.color.ifNullOrBlank { "blue" }
+
+        val color = (marker.codemark?.color() ?: green).name
         return IconLoader.getIcon("/images/marker-$type-$color.svg")
     }
 

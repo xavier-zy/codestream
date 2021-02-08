@@ -205,7 +205,7 @@ class EditorService(val project: Project) {
         }
     }
 
-    private fun updateMarkers() {
+    fun updateMarkers() {
         for ((document, _) in managedDocuments) {
             updateMarkers(document)
         }
@@ -256,15 +256,12 @@ class EditorService(val project: Project) {
         val markers = if (uri == null || session.userLoggedIn == null || !appSettings.showMarkers) {
             emptyList()
         } else {
-            val result = agent.documentMarkers(DocumentMarkersParams(TextDocument(uri)))
+            val result = agent.documentMarkers(DocumentMarkersParams(TextDocument(uri), true))
             result.markers
         }
 
         documentMarkers[document] = markers
-
-        return markers.filter {
-            it.codemark == null || (it.codemark.status != "closed" && it.codemark.pinned == true)
-        }
+        return markers
     }
 
     private val showGutterIcons: Boolean
@@ -367,7 +364,7 @@ class EditorService(val project: Project) {
                     it.gutterIconRenderer = GutterIconRendererImpl(this, marker)
                 }
                 it.isThinErrorStripeMark = true
-                it.errorStripeMarkColor = marker.codemark?.color() ?: blue
+                it.errorStripeMarkColor = marker.codemark?.color() ?: green
                 it.errorStripeTooltip = marker.summary
                 it.putUserData(CODESTREAM_HIGHLIGHTER, true)
             }

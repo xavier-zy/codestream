@@ -132,7 +132,7 @@ class ReviewCoverageParams(val textDocument: TextDocument)
 
 class ReviewCoverageResult(val reviewIds: List<String?>)
 
-class DocumentMarkersParams(val textDocument: TextDocument)
+class DocumentMarkersParams(val textDocument: TextDocument, val applyFilters: Boolean)
 
 class DocumentMarkersResult(val markers: List<DocumentMarker>, val markersNotLocated: Any)
 

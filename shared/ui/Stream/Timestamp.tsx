@@ -89,8 +89,6 @@ const prettyDateDay = function(time, abbreviated?: boolean) {
 	// example: in january, if the date is "Dec 20" we don't
 	// need to specify the year if it's the most recent December,
 	// even though the years are different
-	console.warn("ELEVEN: ", ELEVEN_MONTHS);
-	console.warn("NOW: ", now);
 	if (time + ELEVEN_MONTHS > now) {
 		return new Intl.DateTimeFormat("en", {
 			day: "numeric",

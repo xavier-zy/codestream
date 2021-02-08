@@ -19,7 +19,7 @@ import java.awt.Cursor
 import java.awt.dnd.DragSource
 import javax.swing.Icon
 
-val ICON = IconLoader.getIcon("/images/add-comment.svg")
+val ICON = IconLoader.getIcon("/images/marker-add-comment-green.svg")
 
 class NewCodemarkGutterIconRenderer(
     val editor: Editor,

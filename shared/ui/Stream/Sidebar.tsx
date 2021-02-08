@@ -92,7 +92,7 @@ export const Sidebar = React.memo(function Sidebar() {
 	const { sidebarPanes } = derivedState;
 	const [openRepos, setOpenRepos] = useState<ReposScm[]>(EMPTY_ARRAY);
 	const [dragCombinedHeight, setDragCombinedHeight] = useState<number | undefined>(undefined);
-	const [previousSizes, setPreviousSizes] = useState(EMPTY_HASH);
+	// const [previousSizes, setPreviousSizes] = useState(EMPTY_HASH);
 	const [sizes, setSizes] = useState(EMPTY_HASH);
 	const [firstIndex, setFirstIndex] = useState<number | undefined>(undefined);
 	const [secondIndex, setSecondIndex] = useState<number | undefined>(undefined);
@@ -277,7 +277,7 @@ export const Sidebar = React.memo(function Sidebar() {
 			const firstId = positions[firstIndex].id;
 			const secondId = positions[secondIndex].id;
 			const newSizes = { ...sizes, [firstId]: firstSize, [secondId]: secondSize };
-			setPreviousSizes({ ...sizes });
+			// setPreviousSizes({ ...sizes });
 			setSizes(newSizes);
 		}
 	};

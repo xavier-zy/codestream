@@ -82,6 +82,7 @@ import { Container } from "../workspace/container";
 import { EditorObserver } from "../workspace/editor-observer";
 import { SessionStatus, SignoutReason, WorkspaceSession } from "../workspace/workspace-session";
 import { isViewVisible } from "./controller";
+import { debounce } from "lodash-es";
 
 export const CODESTREAM_VIEW_URI = "atom://codestream";
 export const DID_CHANGE_STATE = "state-changed";
@@ -99,6 +100,12 @@ export class CodestreamView {
 	private timestamp = Date.now();
 	private webviewReadyEmitter = new Echo();
 	private _webviewInitialized = false;
+	private readonly _onEditorActiveEditorChangedDebounced: (e: TextEditor | undefined) => void;
+	private readonly _onSelectionChangedDebounced: (event: {
+		editor: TextEditor;
+		range: Range;
+		cursor: Point;
+	}) => void;
 
 	constructor(session: WorkspaceSession, webviewContext: any) {
 		this.session = session;
@@ -119,6 +126,8 @@ export class CodestreamView {
 			this.initialize();
 		});
 
+		this._onEditorActiveEditorChangedDebounced = debounce(this._onEditorActiveEditorChanged, 500);
+		this._onSelectionChangedDebounced = debounce(this._onSelectionChanged, 250, { maxWait: 250 });
 		this.initializeWebview();
 	}
 
@@ -315,8 +324,10 @@ export class CodestreamView {
 
 	private _observeWorkspace() {
 		this.editorSelectionObserver = new EditorObserver();
-		this.editorSelectionObserver.onDidChangeSelection(this._onSelectionChanged);
-		this.editorSelectionObserver.onDidChangeActiveEditor(this._onEditorActiveEditorChanged);
+		this.editorSelectionObserver.onDidChangeSelection(this._onSelectionChangedDebounced);
+		this.editorSelectionObserver.onDidChangeActiveEditor(
+			this._onEditorActiveEditorChangedDebounced
+		);
 		this.editorSelectionObserver.onDidChangeVisibleRanges(editor => {
 			this.sendNotification(HostDidChangeEditorVisibleRangesNotificationType, {
 				uri: Editor.getUri(editor),

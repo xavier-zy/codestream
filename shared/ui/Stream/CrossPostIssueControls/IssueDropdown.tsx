@@ -1226,7 +1226,7 @@ export const Row = styled.div`
 		color: var(--text-color);
 		.icon {
 			margin-left: 10px;
-			display: none;
+			display: none !important;
 		}
 		padding-left: 2.5px;
 		.clickable {
@@ -1234,7 +1234,7 @@ export const Row = styled.div`
 		}
 	}
 	&:hover .icons .icon {
-		display: inline-block;
+		display: inline-block !important;
 	}
 	&:hover > div:nth-child(3) {
 		min-width: 30px;

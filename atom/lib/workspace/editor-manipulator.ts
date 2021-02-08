@@ -28,7 +28,8 @@ export class EditorManipulator implements Disposable {
 
 			if (!editor) return false;
 
-			this.scrollIntoView(editor, range.start.row, { center: false });
+			// don't automatically scroll on hover
+			// this.scrollIntoView(editor, range.start.row, { center: false });
 			const marker = editor.markBufferRange(range, {
 				invalidate: "never"
 			});

@@ -364,7 +364,7 @@ class EditorService(val project: Project) {
                     it.gutterIconRenderer = GutterIconRendererImpl(this, marker)
                 }
                 it.isThinErrorStripeMark = true
-                it.errorStripeMarkColor = marker.codemark?.color() ?: green
+                it.errorStripeMarkColor = if (marker.type == "prcomment") gray else (marker.codemark?.color() ?: green)
                 it.errorStripeTooltip = marker.summary
                 it.putUserData(CODESTREAM_HIGHLIGHTER, true)
             }

@@ -213,8 +213,6 @@ export class SimpleInlineCodemarks extends Component<Props, State> {
 
 	componentDidMount() {
 		this._mounted = true;
-		if (this.props.webviewFocused)
-			HostApi.instance.track("Page Viewed", { "Page Name": "Spatial View" });
 		const mutationObserver = new MutationObserver(() => this.repositionCodemarks());
 		mutationObserver.observe(document.getElementById("stream-root")!, {
 			childList: true,

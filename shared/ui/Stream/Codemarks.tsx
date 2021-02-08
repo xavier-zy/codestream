@@ -735,7 +735,10 @@ export class SimpleCodemarksForFile extends Component<Props, State> {
 						tabIndex={1}
 					/>
 					<Icon
-						onClick={() => this.props.openPanel(WebviewPanels.CodemarksForFile)}
+						onClick={() => {
+							this.props.openPanel(WebviewPanels.CodemarksForFile)};
+							HostApi.instance.track("Spatial View Opened");
+						}
 						name="maximize"
 						title="Spatial View"
 						placement="bottom"

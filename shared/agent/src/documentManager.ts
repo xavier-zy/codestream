@@ -10,6 +10,7 @@ import {
 	TextDocuments
 } from "vscode-languageserver";
 import { URI } from "vscode-uri";
+import path from "path";
 import { Logger } from "./logger";
 import { Disposables } from "./system";
 const escapedRegex = /(^.*?:\/\/\/)([a-z])%3A(\/.*$)/;
@@ -69,6 +70,23 @@ export class DocumentManager implements Disposable {
 		this._disposable && this._disposable.dispose();
 	}
 
+	_encodePath(fullpath: string): string {
+		let filePart = "";
+		const match = fullpath.match(/^(file:\/*)/);
+		if (match) {
+			filePart = match[1];
+			fullpath = fullpath.substring(filePart.length);
+		}
+		const parsed = path.parse(fullpath);
+		const dir = parsed.dir
+			.split(path.sep)
+			.map(part => encodeURIComponent(part))
+			.join(path.sep);
+		const name = encodeURIComponent(parsed.name);
+		const ext = encodeURIComponent(parsed.ext);
+		return `${filePart}${parsed.root}${dir}${path.sep}${name}${ext}`;
+	}
+
 	get(uri: string): TextDocument | undefined {
 		const key = this._normalizedUriLookup.get(uri);
 		if (key !== undefined) {
@@ -80,7 +98,11 @@ export class DocumentManager implements Disposable {
 
 		const decodedUri = URI.parse(uri).toString(true);
 		const encodedSpacesUri = decodedUri.replace(/ /g, "%20");
-		doc = this._documents.get(decodedUri) || this._documents.get(encodedSpacesUri);
+		const encodedPathUri = this._encodePath(decodedUri);
+		doc =
+			this._documents.get(decodedUri) ||
+			this._documents.get(encodedSpacesUri) ||
+			this._documents.get(encodedPathUri);
 		if (doc !== undefined) {
 			this._normalizedUriLookup.set(uri, doc.uri);
 		}

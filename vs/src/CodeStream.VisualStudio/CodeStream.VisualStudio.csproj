@@ -150,7 +150,10 @@
     <Compile Include="WebViewRouter.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Resources\Assets\codestream.png" />
+    <Content Include="Resources\Assets\codestream.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <IncludeInVSIX>true</IncludeInVSIX>
+    </Content>
     <Content Include="Resources\Assets\dark\add.svg" />
     <Content Include="Resources\Assets\dark\channel.svg" />
     <Content Include="Resources\Assets\dark\close-small.svg" />
@@ -166,6 +169,22 @@
     <Content Include="Resources\Assets\light\close-small.svg" />
     <Content Include="Resources\Assets\light\refresh.svg" />
     <Content Include="Resources\Assets\light\repository.svg" />
+    <Content Include="Resources\Assets\marker-add-comment-aqua.png" />
+    <Content Include="Resources\Assets\marker-add-comment-aqua.svg" />
+    <Content Include="Resources\Assets\marker-add-comment-blue.png" />
+    <Content Include="Resources\Assets\marker-add-comment-blue.svg" />
+    <Content Include="Resources\Assets\marker-add-comment-gray.png" />
+    <Content Include="Resources\Assets\marker-add-comment-gray.svg" />
+    <Content Include="Resources\Assets\marker-add-comment-green.png" />
+    <Content Include="Resources\Assets\marker-add-comment-green.svg" />
+    <Content Include="Resources\Assets\marker-add-comment-orange.png" />
+    <Content Include="Resources\Assets\marker-add-comment-orange.svg" />
+    <Content Include="Resources\Assets\marker-add-comment-purple.png" />
+    <Content Include="Resources\Assets\marker-add-comment-purple.svg" />
+    <Content Include="Resources\Assets\marker-add-comment-red.png" />
+    <Content Include="Resources\Assets\marker-add-comment-red.svg" />
+    <Content Include="Resources\Assets\marker-add-comment-yellow.png" />
+    <Content Include="Resources\Assets\marker-add-comment-yellow.svg" />
     <Content Include="Resources\Assets\marker-bookmark-aqua.svg" />
     <Content Include="Resources\Assets\marker-bookmark-blue.svg" />
     <Content Include="Resources\Assets\marker-bookmark-gray.svg" />
@@ -194,7 +213,22 @@
     <Content Include="Resources\Assets\marker-issue-red.svg" />
     <Content Include="Resources\Assets\marker-issue-yellow.svg" />
     <Content Include="Resources\Assets\marker-pr.png" />
+    <Content Include="Resources\Assets\marker-prcomment-aqua.png" />
+    <Content Include="Resources\Assets\marker-prcomment-aqua.svg" />
+    <Content Include="Resources\Assets\marker-prcomment-blue.png" />
+    <Content Include="Resources\Assets\marker-prcomment-blue.svg" />
     <Content Include="Resources\Assets\marker-prcomment-gray.png" />
+    <Content Include="Resources\Assets\marker-prcomment-gray.svg" />
+    <Content Include="Resources\Assets\marker-prcomment-green.png" />
+    <Content Include="Resources\Assets\marker-prcomment-green.svg" />
+    <Content Include="Resources\Assets\marker-prcomment-orange.png" />
+    <Content Include="Resources\Assets\marker-prcomment-orange.svg" />
+    <Content Include="Resources\Assets\marker-prcomment-purple.png" />
+    <Content Include="Resources\Assets\marker-prcomment-purple.svg" />
+    <Content Include="Resources\Assets\marker-prcomment-red.png" />
+    <Content Include="Resources\Assets\marker-prcomment-red.svg" />
+    <Content Include="Resources\Assets\marker-prcomment-yellow.png" />
+    <Content Include="Resources\Assets\marker-prcomment-yellow.svg" />
     <Content Include="Resources\Assets\marker-pull-request-aqua.png" />
     <Content Include="Resources\Assets\marker-pull-request-aqua.svg" />
     <Content Include="Resources\Assets\marker-pull-request-blue.png" />

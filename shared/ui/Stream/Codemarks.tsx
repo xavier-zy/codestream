@@ -384,9 +384,10 @@ export class SimpleCodemarksForFile extends Component<Props, State> {
 		const { codemarks, hiddenPaneNodes } = this.props;
 		if (codemarks.length === 0) return this.renderNoCodemarks();
 		// if (this.state.isLoading) return null;
-		const open = codemarks.filter(codemark => codemark.pinned && codemark.status !== "closed");
-		const closed = codemarks.filter(codemark => codemark.pinned && codemark.status === "closed");
-		const archived = codemarks.filter(codemark => !codemark.pinned);
+		const nonReviews = codemarks.filter(c => !c.reviewId);
+		const open = nonReviews.filter(c => c.pinned && c.status !== "closed");
+		const closed = nonReviews.filter(c => c.pinned && c.status === "closed");
+		const archived = nonReviews.filter(c => !c.pinned);
 		return (
 			<>
 				<PaneNode>
@@ -429,10 +430,12 @@ export class SimpleCodemarksForFile extends Component<Props, State> {
 		const { documentMarkers = [], prLabel } = this.props;
 		if (documentMarkers.length === 0) return this.renderNoCodemarks();
 		const external = documentMarkers.filter(m => !m.codemark);
-		const pinned = documentMarkers.filter(m => m.codemark && m.codemark.pinned);
+		const reviews = documentMarkers.filter(m => m.codemark && m.codemark.reviewId);
+		const nonReviews = documentMarkers.filter(m => m.codemark && !m.codemark.reviewId);
+		const pinned = nonReviews.filter(m => m.codemark && m.codemark.pinned);
 		const open = pinned.filter(m => m.codemark && m.codemark.status !== "closed");
 		const closed = pinned.filter(m => m.codemark && m.codemark.status === "closed");
-		const archived = documentMarkers.filter(m => m.codemark && !m.codemark.pinned);
+		const archived = nonReviews.filter(m => m.codemark && !m.codemark.pinned);
 		return (
 			<>
 				<PaneNode>
@@ -442,6 +445,14 @@ export class SimpleCodemarksForFile extends Component<Props, State> {
 						count={external.length}
 					/>
 					{!this.props.hiddenPaneNodes["codemarks/external"] && this.renderCodemarksList(external)}
+				</PaneNode>
+				<PaneNode>
+					<PaneNodeName
+						id="codemarks/reviews"
+						title="Feedback Request Comments"
+						count={reviews.length}
+					/>
+					{!this.props.hiddenPaneNodes["codemarks/reviews"] && this.renderCodemarksList(reviews)}
 				</PaneNode>
 				<PaneNode>
 					<PaneNodeName id="codemarks/open" title="Open" count={open.length} />

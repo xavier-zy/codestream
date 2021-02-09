@@ -502,7 +502,7 @@ export class SimpleFilterSearchPanel extends Component<Props, State> {
 			// @ts-ignore
 			const itemType = isReview ? "review" : item.type;
 			// FIXME issues have blank status by default, which we interpret as open
-			const itemStatus = itemType === "issue" ? item.status || "open" : item.status;
+			const itemStatus = item.status || "open";
 			// FIXME author is text, creatorId is an id
 			// @ts-ignore
 			const assignees = (isReview ? item.reviewers : item.assignees) || [];
@@ -770,15 +770,33 @@ export class SimpleFilterSearchPanel extends Component<Props, State> {
 
 		const filterItems = [
 			{
-				label: "Open Issues and Feedback Requests",
-				key: "open",
-				action: () => this.props.setQuery("is:open"),
+				label: "Open Issues",
+				key: "open-issues",
+				action: () => this.props.setQuery("is:open type:issue"),
 				lightningOnly: true
 			},
+			{
+				label: "Open Code Comments",
+				key: "open-comments",
+				action: () => this.props.setQuery("is:open type:comment"),
+				lightningOnly: true
+			},
+			{
+				label: "Open Feedback Requests",
+				key: "open-frs",
+				action: () => this.props.setQuery("is:open type:fr"),
+				lightningOnly: true
+			},
+			{ label: "-" },
 			{
 				label: "Your Issues",
 				key: "issues",
 				action: () => this.props.setQuery("is:issue author:@me")
+			},
+			{
+				label: "Your Code Comments",
+				key: "comments",
+				action: () => this.props.setQuery("is:comment author:@me ")
 			},
 			{
 				label: "Your Feedback Requests",
@@ -786,11 +804,7 @@ export class SimpleFilterSearchPanel extends Component<Props, State> {
 				action: () => this.props.setQuery("is:fr author:@me "),
 				lightningOnly: true
 			},
-			{
-				label: "Your Code Comments",
-				key: "comments",
-				action: () => this.props.setQuery("is:comment author:@me ")
-			},
+			{ label: "-" },
 			{
 				label: "Everything assigned to you",
 				key: "assigned",
@@ -807,6 +821,7 @@ export class SimpleFilterSearchPanel extends Component<Props, State> {
 				action: () => this.props.setQuery("impacts:@me "),
 				lightningOnly: true
 			},
+			{ label: "-" },
 			{ label: "By Tag", key: "tag", submenu: tagMenuItems },
 			{ label: "By Repo", key: "repo", submenu: repoMenuItems, lightningOnly: true },
 			{ label: "By Branch", key: "branch", submenu: branchMenuItems, lightningOnly: true },

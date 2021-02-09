@@ -683,13 +683,14 @@ export const CreatePullRequestPanel = props => {
 		if (acrossForks) return renderBaseBranchesAcrossForksDropdown();
 		if (!remoteBranches || !remoteBranches.length) return undefined;
 		const items = remoteBranches!.map(_ => {
+			const branchName = _.replace("origin/", "");
 			return {
 				label: _,
 				searchLabel: _,
 				key: _,
 				action: async () => {
-					setPrBranch(_);
-					checkPullRequestBranchPreconditions(_, reviewBranch);
+					setPrBranch(branchName);
+					checkPullRequestBranchPreconditions(branchName, reviewBranch);
 				}
 			};
 		}) as any;

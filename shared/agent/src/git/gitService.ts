@@ -822,6 +822,13 @@ export class GitService implements IGitService, Disposable {
 		remote?: boolean
 	): Promise<{ current: string; branches: string[] } | undefined> {
 		try {
+			const remotesData = await git(
+				{ cwd: repoPath },
+				"remote",
+				"show"
+			);
+			const remotes = remotesData.split("\n").filter(r => !!r);
+
 			const options = ["branch"];
 			if (remote) options.push("-r");
 			const data = await git({ cwd: repoPath }, ...options);
@@ -831,7 +838,7 @@ export class GitService implements IGitService, Disposable {
 				.map(b => b.substr(2).trim())
 				.filter(b => b.length > 0)
 				.filter(b => !b.startsWith("HEAD ->"))
-				.map(b => (remote ? b.replace(/^origin\//, "") : b));
+				.map(b => (remote && remotes.length === 1 ? b.replace(/^origin\//, "") : b));
 			const current = data.split("\n").find(b => b.startsWith("* "));
 			return { branches, current: current ? current.substr(2).trim() : "" };
 		} catch (ex) {

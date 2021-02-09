@@ -74,7 +74,7 @@ const convertIcon = async (icon, color, filename = dir + icon.name + ".png", typ
 	if (type === "png") {
 		const svgTag = `<svg fill="${color}" viewBox="${viewBox}">`;
 		const svgString = svgTag + iconPath + "</svg>";
-		imageContents = await convert(svgString, { height: 32, width: 32 });
+		imageContents = await convert(svgString, { height: argv.size, width: argv.size });
 	} else if (type === "svg") {
 		const svgTag = `<svg xmlns="http://www.w3.org/2000/svg" fill="${color}" viewBox="${viewBox}">`;
 		imageContents = `${svgTag}\n    ${iconPath}\n</svg>`;

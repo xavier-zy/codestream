@@ -37,7 +37,7 @@ export function EllipsisMenu(props: EllipsisMenuProps) {
 
 		return {
 			sidebarPanePreferences: state.preferences.sidebarPanes || EMPTY_HASH,
-			sidebarPaneOrder: state.preferences.sidebarPaneOrder || AVAILABLE_PANES,
+			sidebarPaneOrder: AVAILABLE_PANES,
 			userTeams: _sortBy(
 				Object.values(state.teams).filter(t => !t.deactivated),
 				"name"

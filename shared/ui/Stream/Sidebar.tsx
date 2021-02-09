@@ -84,7 +84,7 @@ export const Sidebar = React.memo(function Sidebar() {
 			repos,
 			removedPanes: preferences.removedPanes || EMPTY_HASH,
 			sidebarPanes: preferences.sidebarPanes || EMPTY_HASH,
-			sidebarPaneOrder: preferences.sidebarPaneOrder || AVAILABLE_PANES,
+			sidebarPaneOrder: AVAILABLE_PANES,
 			currentUserId: state.session.userId!,
 			hasPRProvider: getConnectedSupportedPullRequestHosts(state).length > 0
 		};

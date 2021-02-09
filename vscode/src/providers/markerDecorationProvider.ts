@@ -46,7 +46,6 @@ const positionStyleMap: { [key: string]: string } = {
 
 const buildDecoration = (position: string, type: string, color: string, _status: string) => {
 	const pngPath = Container.context.asAbsolutePath(`assets/images/marker-${type}-${color}.png`);
-	Logger.warn(`READING: ${pngPath}`);
 	try {
 		const pngBase64 = fs.readFileSync(pngPath, { encoding: "base64" });
 		const pngInlineUrl = `data:image/png;base64,${pngBase64}`;
@@ -204,10 +203,11 @@ export class CodemarkDecorationProvider implements HoverProvider, Disposable {
 						for (const status of MarkerStatuses) {
 							const key = `${position}-${type}-${color}-${status}`;
 							const before = buildDecoration(position, type, color, status);
-							if (before)
-								{decorationTypes[key] = window.createTextEditorDecorationType({
+							if (before) {
+								decorationTypes[key] = window.createTextEditorDecorationType({
 									before
-								});}
+								});
+							}
 						}
 					}
 				}

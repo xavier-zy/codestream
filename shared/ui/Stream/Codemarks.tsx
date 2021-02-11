@@ -871,7 +871,9 @@ const mapStateToProps = (state: CodeStreamState, props): ConnectedProps => {
 	}
 
 	const count =
-		codemarkDomain === CodemarkDomainType.File ? docMarkers.length : codemarksToRender.length;
+		codemarkDomain === CodemarkDomainType.File
+			? docMarkers.length
+			: codemarksToRender.filter(c => !c.reviewId).length;
 
 	return {
 		repos,

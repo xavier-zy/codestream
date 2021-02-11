@@ -728,8 +728,9 @@ export const PullRequestConversationTab = (props: {
 
 	const requiredApprovingReviewCount = useMemo(() => {
 		if (ghRepo.branchProtectionRules) {
-			const rules = ghRepo.branchProtectionRules.nodes.find(rule =>
-				rule.matchingRefs.nodes.find(matchingRef => matchingRef.name === pr.baseRefName)
+			const rules = ghRepo.branchProtectionRules.nodes.find(
+				rule =>
+					rule && rule.matchingRefs.nodes.find(matchingRef => matchingRef.name === pr.baseRefName)
 			);
 			return rules ? rules.requiredApprovingReviewCount : undefined;
 		}

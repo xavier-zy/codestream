@@ -212,9 +212,9 @@ export class GitService implements IGitService, Disposable {
 	): Promise<string> {
 		if (options.ref === EMPTY_TREE_SHA) return "";
 
-		const [dir, filename] = Strings.splitPath(
-			typeof uriOrPath === "string" ? uriOrPath : uriOrPath.fsPath
-		);
+		const repoAndRelativePath = await this._getRepoAndRelativePath(uriOrPath);
+		if (!repoAndRelativePath) return "";
+		const { repoPath, relativePath } = repoAndRelativePath;
 
 		const params = ["blame", "--root", "--incremental", "-w"];
 
@@ -231,7 +231,7 @@ export class GitService implements IGitService, Disposable {
 			stdin = options.contents;
 		}
 
-		return git({ cwd: dir, stdin: stdin }, ...params, "--", filename);
+		return git({ cwd: repoPath, stdin: stdin }, ...params, "--", relativePath);
 	}
 
 	async getCommitShaByLine(uriOrPath: URI | string): Promise<string[]> {
@@ -250,20 +250,19 @@ export class GitService implements IGitService, Disposable {
 	async getFileCurrentRevision(uri: URI): Promise<string | undefined>;
 	async getFileCurrentRevision(path: string): Promise<string | undefined>;
 	async getFileCurrentRevision(uriOrPath: URI | string): Promise<string | undefined> {
-		const [dir, filename] = Strings.splitPath(
-			typeof uriOrPath === "string" ? uriOrPath : uriOrPath.fsPath
-		);
+		const repoAndRelativePath = await this._getRepoAndRelativePath(uriOrPath);
+		if (!repoAndRelativePath) return undefined;
+		const { repoPath, relativePath } = repoAndRelativePath;
 
-		const data = (await git({ cwd: dir }, "log", "-n1", "--format=%H", "--", filename)).trim();
+		const data = (
+			await git({ cwd: repoPath }, "log", "-n1", "--format=%H", "--", relativePath)
+		).trim();
 		return data ? data : undefined;
 	}
 
-	async getFileContentForRevision(uri: URI, ref: string): Promise<string | undefined>;
-	async getFileContentForRevision(path: string, ref: string): Promise<string | undefined>;
-	async getFileContentForRevision(
-		uriOrPath: URI | string,
-		ref: string
-	): Promise<string | undefined> {
+	private async _getRepoAndRelativePath(
+		uriOrPath: URI | string
+	): Promise<{ repoPath: string; relativePath: string } | undefined> {
 		const fsPath = typeof uriOrPath === "string" ? uriOrPath : uriOrPath.fsPath;
 		const repo = await this.getRepositoryByFilePath(fsPath);
 		if (!repo) return undefined;
@@ -273,11 +272,27 @@ export class GitService implements IGitService, Disposable {
 			fileRelativePath = fileRelativePath.substr(1);
 		}
 
+		return {
+			repoPath: repo.path,
+			relativePath: fileRelativePath
+		};
+	}
+
+	async getFileContentForRevision(uri: URI, ref: string): Promise<string | undefined>;
+	async getFileContentForRevision(path: string, ref: string): Promise<string | undefined>;
+	async getFileContentForRevision(
+		uriOrPath: URI | string,
+		ref: string
+	): Promise<string | undefined> {
+		const repoAndRelativePath = await this._getRepoAndRelativePath(uriOrPath);
+		if (!repoAndRelativePath) return undefined;
+		const { repoPath, relativePath } = repoAndRelativePath;
+
 		try {
 			const data = await git(
-				{ cwd: repo.path, encoding: "utf8" },
+				{ cwd: repoPath, encoding: "utf8" },
 				"show",
-				`${ref}:./${fileRelativePath}`,
+				`${ref}:./${relativePath}`,
 				"--"
 			);
 			return Strings.normalizeFileContents(data);
@@ -822,11 +837,7 @@ export class GitService implements IGitService, Disposable {
 		remote?: boolean
 	): Promise<{ current: string; branches: string[] } | undefined> {
 		try {
-			const remotesData = await git(
-				{ cwd: repoPath },
-				"remote",
-				"show"
-			);
+			const remotesData = await git({ cwd: repoPath }, "remote", "show");
 			const remotes = remotesData.split("\n").filter(r => !!r);
 
 			const options = ["branch"];

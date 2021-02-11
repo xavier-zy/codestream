@@ -613,6 +613,11 @@ export abstract class ThirdPartyProviderBase<
 						}
 					}
 				}
+				if (Array.isArray(data.errorMessages)) {
+					for (const errorMessage of data.errorMessages) {
+						message += `\n${errorMessage}`;
+					}
+				}
 				if (data.error) {
 					if (data.error.message) {
 						message += `: ${data.error.message}`;

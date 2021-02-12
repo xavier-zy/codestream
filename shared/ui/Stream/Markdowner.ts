@@ -66,19 +66,19 @@ export const markdownify = (text: string, options?: MarkdownOptions) => {
 	if (text == null) return text;
 	const identifyOnlyEmoji = !options || !options.excludeOnlyEmoji;
 	try {
-		const replaced =
+		let replaced =
 			options && options.inline
 				? md.renderInline(text, { references: {} })
-				: md
-						.render(text, { references: {} })
-						.replace(/blockquote>\n/g, "blockquote>")
-						.replace(/<br>\n/g, "\n")
-						.replace(/<\/p>\n$/, "</p>")
-						.replace(/<\/p>\n/g, "</p><br/>")
-						.replace(/<ul>\n/g, "<ul>")
-						.replace(/<ol>\n/g, "<ol>")
-						.replace(/<\/li>\n/g, "</li>")
-						.replace(/<br\/><\/blockquote>/g, "</blockquote>");
+				: md.render(text, { references: {} });
+		replaced = replaced
+			.replace(/blockquote>\n/g, "blockquote>")
+			.replace(/<br>\n/g, "\n")
+			.replace(/<\/p>\n$/, "</p>")
+			.replace(/<\/p>\n/g, "</p><br/>")
+			.replace(/<ul>\n/g, "<ul>")
+			.replace(/<ol>\n/g, "<ol>")
+			.replace(/<\/li>\n/g, "</li>")
+			.replace(/<br\/><\/blockquote>/g, "</blockquote>");
 		// console.log('markdownify input/output', text, replaced);
 		if (identifyOnlyEmoji && text.trim().match(/^(:[\w_+]+:|\s)+$/))
 			return "<span class='only-emoji'>" + replaced + "</span>";

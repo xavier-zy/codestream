@@ -625,19 +625,21 @@ export const CreatePullRequestPanel = props => {
 	const fetchRepositoryForks = async () => {
 		if (!prProviderId || !prRemoteUrl) return;
 
-		const response = (await HostApi.instance.send(ExecuteThirdPartyRequestUntypedType, {
-			method: "getForkedRepos",
-			providerId: prProviderId,
-			params: { remote: prRemoteUrl }
-		})) as any;
-
-		// console.warn("GOT RESPONSE: ", response);
-		if (response) {
-			const forks = response.forks || [];
-			setForkedRepos(forks);
-			setParentRepo(response.parent);
-			setBaseForkedRepo(response.parent);
-			setHeadForkedRepo(response.parent);
+		try {
+			const response = (await HostApi.instance.send(ExecuteThirdPartyRequestUntypedType, {
+				method: "getForkedRepos",
+				providerId: prProviderId,
+				params: { remote: prRemoteUrl }
+			})) as any;
+			if (response) {
+				const forks = response.forks || [];
+				setForkedRepos(forks);
+				setParentRepo(response.parent);
+				setBaseForkedRepo(response.parent);
+				setHeadForkedRepo(response.parent);
+			}
+		} catch (ex) {
+			console.warn("getForkedRepos", ex);
 		}
 	};
 

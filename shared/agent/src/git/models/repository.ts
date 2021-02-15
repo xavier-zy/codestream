@@ -115,7 +115,6 @@ export class GitRepository {
 				providerId: string;
 				provider: ThirdPartyProvider & ThirdPartyProviderSupportsPullRequests;
 				remotes: GitRemote[];
-				remotePaths: string[] | undefined;
 		  }
 		| undefined
 	> {
@@ -132,10 +131,9 @@ export class GitRepository {
 				connectedProviders = await providerRegistry.getConnectedPullRequestProviders(user);
 			}
 
+			const projectsByRemotePath = new Map((remotes || []).map(obj => [obj.path, obj]));
 			for (const provider of connectedProviders) {
 				try {
-					const projectsByRemotePath = new Map((remotes || []).map(obj => [obj.path, obj]));
-
 					const remotePaths = await provider.getRemotePaths(this, projectsByRemotePath);
 					if (remotePaths && remotePaths.length) {
 						const providerId = provider.getConfig().id;
@@ -153,8 +151,7 @@ export class GitRepository {
 								repo: this,
 								providerId: providerId,
 								provider: provider,
-								remotes: remotes,
-								remotePaths: remotePaths
+								remotes: remotes.filter(_ => remotePaths.includes(_.path))
 							};
 						}
 					}

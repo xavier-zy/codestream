@@ -601,12 +601,11 @@ export class ReviewsManager extends CachedEntityManagerBase<CSReview> {
 				};
 			}
 
-			const remotes = await repo!.getRemotes();
 			let remoteUrl = "";
 			let providerId = "";
 
 			const connectedProviders = await providerRegistry.getConnectedPullRequestProviders(user);
-			const _projectsByRemotePath = new Map(remotes.map(obj => [obj.path, obj]));
+
 			for (const provider of connectedProviders) {
 				const id = provider.getConfig().id;
 				if (id !== request.providerId) continue;
@@ -614,38 +613,30 @@ export class ReviewsManager extends CachedEntityManagerBase<CSReview> {
 
 				const providerRepo = await repo.getPullRequestProvider(user, connectedProviders);
 
-				if (providerRepo?.provider) {
-					const remotePaths = await getRemotePaths(
-						repo,
-						provider.getIsMatchingRemotePredicate(),
-						_projectsByRemotePath
-					);
-					if (remotePaths && remotePaths.length) {
-						// just need any url here...
-						remoteUrl = "https://example.com/" + remotePaths[0];
-						const providerRepoInfo = await providerRegistry.getRepoInfo({
-							providerId: providerId,
-							remote: remoteUrl
-						});
-						if (providerRepoInfo) {
-							if (providerRepoInfo.pullRequests && request.baseRefName && request.headRefName) {
-								const existingPullRequest = providerRepoInfo.pullRequests.find(
-									(_: any) =>
-										_.baseRefName === request.baseRefName && _.headRefName === request.headRefName
-								);
-								if (existingPullRequest) {
-									return {
-										success: false,
-										error: {
-											type: "ALREADY_HAS_PULL_REQUEST",
-											url: existingPullRequest.url
-										}
-									};
-								}
+				if (providerRepo?.provider && providerRepo?.remotes?.length > 0) {
+					remoteUrl = providerRepo.remotes[0].webUrl;
+					const providerRepoInfo = await providerRegistry.getRepoInfo({
+						providerId: providerId,
+						remote: remoteUrl
+					});
+					if (providerRepoInfo) {
+						if (providerRepoInfo.pullRequests && request.baseRefName && request.headRefName) {
+							const existingPullRequest = providerRepoInfo.pullRequests.find(
+								(_: any) =>
+									_.baseRefName === request.baseRefName && _.headRefName === request.headRefName
+							);
+							if (existingPullRequest) {
+								return {
+									success: false,
+									error: {
+										type: "ALREADY_HAS_PULL_REQUEST",
+										url: existingPullRequest.url
+									}
+								};
 							}
-							// break out of providers loop
-							break;
 						}
+						// break out of providers loop
+						break;
 					}
 				}
 			}
@@ -741,8 +732,8 @@ export class ReviewsManager extends CachedEntityManagerBase<CSReview> {
 			let providerRepoDefaultBranch: string | undefined = "";
 			let baseRefName: string | undefined = request.baseRefName;
 
-			if (providerRepo?.provider) {
-				remoteUrl = "https://example.com/" + providerRepo.remotePaths[0];
+			if (providerRepo?.provider && providerRepo?.remotes?.length > 0) {
+				remoteUrl = providerRepo.remotes[0].webUrl;
 				const providerRepoInfo = await providerRegistry.getRepoInfo({
 					providerId: providerRepo.providerId,
 					remote: remoteUrl

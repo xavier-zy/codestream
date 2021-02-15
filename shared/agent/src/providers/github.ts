@@ -98,7 +98,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 		super(session, providerConfig);
 	}
 
-	async getRemotePaths(repo: any, _projectsByRemotePath: any) {
+	async getRemotePaths(repo: any, _projectsByRemotePath: any): Promise<string[] | undefined> {
 		// TODO don't need this ensureConnected -- doesn't hit api
 		await this.ensureConnected();
 		const remotePaths = await getRemotePaths(
@@ -971,9 +971,11 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 				   		id
 						name
 						nameWithOwner
+						url
 						parent {
 							id
 							nameWithOwner
+							url
 						}
 						defaultBranchRef {
 							name
@@ -1031,11 +1033,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 			// if this is a fork, get the forks of the parent
 			if (response.repository.parent && !recurseFailsafe) {
 				Logger.log("Getting parent forked repos");
-				const result = await this.getForkedRepos(
-					// this use of "example.com" is just to provide the URL parser something to parse
-					{ remote: "https://example.com/" + response.repository.parent.nameWithOwner },
-					true
-				);
+				const result = await this.getForkedRepos({ remote: response.repository.parent.url }, true);
 				return {
 					parent: result.parent,
 					forks: result.forks
@@ -2154,7 +2152,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 					for (const repo of reposResponse.repositories) {
 						if (repo.remotes) {
 							for (const remote of repo.remotes) {
-								const urlToTest = `anything://${remote.domain}/${remote.path}`;
+								const urlToTest = remote.webUrl;
 								const results = await providerRegistry.queryThirdParty({ url: urlToTest });
 								if (results && results.providerId === this.providerConfig.id) {
 									const ownerData = this.getOwnerFromRemote(urlToTest);

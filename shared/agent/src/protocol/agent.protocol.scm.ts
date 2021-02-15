@@ -174,7 +174,7 @@ export interface ReposScm {
 	/**
 	 * this has a subset of what GitRemote has
 	 */
-	remotes?: { repoPath: string; path: string; domain: string }[];
+	remotes?: { repoPath: string; path: string; domain: string; webUrl: string }[];
 	/**
 	 * If this repo has a remote that is managed and connected to a provider,
 	 * return the providerId

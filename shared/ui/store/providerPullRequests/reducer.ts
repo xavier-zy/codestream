@@ -60,9 +60,13 @@ export function reduceProviderPullRequests(
 		}
 		case ProviderPullRequestActionsTypes.AddPullRequestFiles: {
 			const newState = createNewObject(state, action);
+			const files = {
+				...newState[action.payload.providerId][action.payload.id].files
+			};
+			files[action.payload.commits] = action.payload.pullRequestFiles;
 			newState[action.payload.providerId][action.payload.id] = {
 				...newState[action.payload.providerId][action.payload.id],
-				files: action.payload.pullRequestFiles
+				files
 			};
 			return {
 				myPullRequests: { ...state.myPullRequests },

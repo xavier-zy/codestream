@@ -18,6 +18,7 @@ import { GitAuthorParser } from "./parsers/authorParser";
 import { GitBlameRevisionParser, RevisionEntry } from "./parsers/blameRevisionParser";
 import { GitBranchParser } from "./parsers/branchParser";
 import { GitLogParser } from "./parsers/logParser";
+import { GitPatchParser, ParsedDiffPatch } from "./parsers/patchParser";
 import { GitRemoteParser } from "./parsers/remoteParser";
 import { GitRepositories } from "./repositories";
 import { RepositoryLocator } from "./repositoryLocator";
@@ -345,6 +346,27 @@ export class GitService implements IGitService, Disposable {
 		} catch {
 			Logger.log("Could not fetch all remotes");
 			return false;
+		}
+	}
+
+	async getCommitChanges(
+		repoPath: string,
+		commitHash: string
+	): Promise<ParsedDiffPatch[] | undefined> {
+		try {
+			const data = await git(
+				{ cwd: repoPath },
+				"diff",
+				"--no-ext-diff",
+				`${commitHash}^!`
+			);
+
+			return GitPatchParser.parse(data);
+		} catch (err) {
+			Logger.warn(
+				`Error getting diff from ${commitHash}`
+			);
+			throw err;
 		}
 	}
 

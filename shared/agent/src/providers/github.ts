@@ -4513,6 +4513,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 							}
 							message
 							authoredDate
+							oid
 						  }
 						}
 					  }

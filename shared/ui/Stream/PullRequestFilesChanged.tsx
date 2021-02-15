@@ -57,6 +57,7 @@ interface Props extends CompareFilesProps {
 	commentMap: {
 		[path: string]: any;
 	};
+	commitBased?: boolean;
 }
 
 export const PullRequestFilesChanged = (props: Props) => {
@@ -174,7 +175,7 @@ export const PullRequestFilesChanged = (props: Props) => {
 
 				const request = {
 					baseBranch: props.baseRefName,
-					baseSha: pr ? forkPointSha : props.baseRef,
+					baseSha: pr && !props.commitBased ? forkPointSha : props.baseRef,
 					headBranch: props.headRefName,
 					headSha: props.headRef,
 					filePath: f.file,

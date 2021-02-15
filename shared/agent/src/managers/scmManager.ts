@@ -25,6 +25,10 @@ import {
 	FetchRemoteBranchRequest,
 	FetchRemoteBranchRequestType,
 	FetchRemoteBranchResponse,
+	FetchThirdPartyPullRequestFilesResponse,
+	GetCommitsFilesRequest,
+	GetCommitsFilesRequestType,
+	GetCommitsFilesResponse,
 	GetLatestCommitScmRequest,
 	GetLatestCommitScmRequestType,
 	GetLatestCommitScmResponse,
@@ -1540,5 +1544,48 @@ export class ScmManager {
 			debugger;
 		}
 		return undefined;
+	}
+
+	@log()
+	@lspHandler(GetCommitsFilesRequestType)
+	async getCommitsFiles(
+		request: GetCommitsFilesRequest
+	): Promise<GetCommitsFilesResponse[]> {
+		const changedFiles: GetCommitsFilesResponse[] = [];
+		const { git, scm: scmManager, repositoryMappings } = SessionContainer.instance();
+
+		const repo = await git.getRepositoryById(request.repoId);
+		let repoPath: string | undefined;
+		if (repo) {
+			repoPath = repo.path;
+		} else {
+			repoPath = await repositoryMappings.getByRepoId(request.repoId);
+		}
+
+		if (!repoPath) {
+			throw new Error(`Could not load repo with ID ${request.repoId}`);
+		}
+
+		if (request.commits.length === 1) {
+			const commitChanges = await git.getCommitChanges(repoPath, request.commits[0]);
+			if (commitChanges) {
+				commitChanges.map(commitChange => {
+					const filename = commitChange.newFileName ? commitChange.newFileName.replace("b/", "") : "";
+					commitChange.hunks.map(hunk => {
+						changedFiles.push({
+							sha: request.commits ? request.commits[0] : "",
+							filename,
+							status: "",
+							additions: hunk.additions,
+							changes: hunk.changes,
+							deletions: hunk.deletions,
+							patch: hunk.patch
+						});
+					});
+				});
+			}
+		}
+
+		return changedFiles;
 	}
 }

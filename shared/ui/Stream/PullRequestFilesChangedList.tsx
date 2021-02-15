@@ -133,6 +133,7 @@ interface Props extends CompareFilesProps {
 	fetch?: Function;
 	setIsLoadingMessage?: Function;
 	readOnly?: boolean;
+	commitBased?: boolean;
 }
 
 export const PullRequestFilesChangedList = (props: Props) => {
@@ -378,6 +379,7 @@ export const PullRequestFilesChangedList = (props: Props) => {
 					visitedFiles={visitedFiles}
 					toggleDirectory={toggleDirectory}
 					commentMap={commentMap}
+					commitBased={props.commitBased}
 				/>
 			) : (
 				<PRDiffHunks>

@@ -13,7 +13,9 @@ import {
 	QueryThirdPartyRequestType,
 	ExecuteThirdPartyRequestUntypedType,
 	FetchAssignableUsersRequestType,
-	FetchAssignableUsersResponse
+	FetchAssignableUsersResponse,
+	GetCommitsFilesRequestType,
+	GetCommitsFilesResponse
 } from "@codestream/protocols/agent";
 import { CodeStreamState } from "..";
 import { RequestType } from "vscode-languageserver-protocol";
@@ -40,10 +42,16 @@ export const _addPullRequestCollaborators = (providerId: string, id: string, col
 		collaborators
 	});
 
-export const _addPullRequestFiles = (providerId: string, id: string, pullRequestFiles: any) =>
+export const _addPullRequestFiles = (
+	providerId: string,
+	id: string,
+	commits: string,
+	pullRequestFiles: any
+) =>
 	action(ProviderPullRequestActionsTypes.AddPullRequestFiles, {
 		providerId,
 		id,
+		commits,
 		pullRequestFiles
 	});
 
@@ -179,27 +187,40 @@ export const clearPullRequestFiles = (providerId: string, id: string) =>
 		id
 	});
 
-export const getPullRequestFiles = (providerId: string, id: string) => async (
-	dispatch,
-	getState: () => CodeStreamState
-) => {
+export const getPullRequestFiles = (
+	providerId: string,
+	id: string,
+	commits: string[] = [],
+	repoId?: string
+) => async (dispatch, getState: () => CodeStreamState) => {
 	try {
 		const state = getState();
 		const provider = state.providerPullRequests.pullRequests[providerId];
+		const commitsIndex = JSON.stringify(commits);
 		if (provider) {
 			const pr = provider[id];
-			if (pr && pr.files && pr.files.length) {
+			if (pr && pr.files && pr.files[commitsIndex] && pr.files[commitsIndex].length) {
 				console.log(`fetched pullRequest files from store providerId=${providerId} id=${id}`);
-				return pr.files;
+				return pr.files[commitsIndex];
 			}
 		}
-		const response = await dispatch(
-			api("getPullRequestFilesChanged", {
-				pullRequestId: id
-			})
-		);
 
-		dispatch(_addPullRequestFiles(providerId, id, response));
+		let response: GetCommitsFilesResponse[];
+
+		if (repoId && commits.length > 0) {
+			response = await HostApi.instance.send(GetCommitsFilesRequestType, {
+				repoId,
+				commits
+			});
+		} else {
+			response = await dispatch(
+				api("getPullRequestFilesChanged", {
+					pullRequestId: id
+				})
+			);
+		}
+
+		dispatch(_addPullRequestFiles(providerId, id, commitsIndex, response));
 		return response;
 	} catch (error) {
 		logError(`failed to get pullRequest files: ${error}`, { providerId, id });

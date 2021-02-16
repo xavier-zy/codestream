@@ -1760,10 +1760,6 @@ export class Codemark extends React.Component<Props, State> {
 											onClick={e => {
 												e.preventDefault();
 												HostApi.instance.send(OpenUrlRequestType, { url: action.uri });
-												HostApi.instance.track("PR Comment Action", {
-													Host: marker.externalContent!.provider.name,
-													"Action Label": action.label
-												});
 											}}
 										>
 											{action.label}

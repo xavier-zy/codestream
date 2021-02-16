@@ -25,7 +25,8 @@ export const getUserProviderInfo = (user: CSMe, provider: string, teamId: string
 	const providerInfo = user.providerInfo || {};
 	const userProviderInfo = providerInfo[provider];
 	const teamProviderInfo = providerInfo[teamId] && providerInfo[teamId][provider];
-	return userProviderInfo || teamProviderInfo;
+	if (userProviderInfo && userProviderInfo.accessToken) return userProviderInfo;
+	else return teamProviderInfo;
 };
 
 export const updateProviders = (data: ProvidersState) => action(ProvidersActionsType.Update, data);

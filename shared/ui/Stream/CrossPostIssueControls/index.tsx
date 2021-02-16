@@ -396,7 +396,7 @@ class CrossPostIssueControls extends React.Component<Props, State> {
 		if (!provider.isEnterprise) return false;
 		if (!providerInfo.hosts) return false;
 		providerInfo = providerInfo.hosts[provider.id];
-		return providerInfo && !!providerInfo.accessToken;
+		return providerInfo && providerInfo.accessToken ? true : false;
 	}
 }
 

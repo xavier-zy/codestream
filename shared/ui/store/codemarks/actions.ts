@@ -6,6 +6,7 @@ import {
 	AddMarkersRequest,
 	AddMarkersRequestType,
 	UpdateCodemarkRequestType,
+	UpdatePostSharingDataRequestType,
 	DeleteCodemarkRequestType,
 	GetRangeScmInfoResponse,
 	CrossPostIssueValues,
@@ -59,7 +60,9 @@ export interface SharingNewCodemarkAttributes extends BaseNewCodemarkAttributes 
 	sharingAttributes?: {
 		providerId: string;
 		providerTeamId: string;
+		providerTeamName?: string;
 		channelId: string;
+		channelName?: string;
 	};
 	textDocuments?: TextDocumentIdentifier[];
 	entryPoint?: string;
@@ -131,16 +134,37 @@ export const createCodemark = (attributes: SharingNewCodemarkAttributes) => asyn
 				dispatch(addStreams([response.stream]));
 
 				if (attributes.sharingAttributes) {
+					const { sharingAttributes } = attributes;
 					try {
-						await HostApi.instance.send(CreateThirdPartyPostRequestType, {
-							providerId: attributes.sharingAttributes.providerId,
-							channelId: attributes.sharingAttributes.channelId,
-							providerTeamId: attributes.sharingAttributes.providerTeamId,
-							text: rest.text,
-							codemark: response.codemark,
-							remotes: attributes.remotes,
-							mentionedUserIds: attributes.mentionedUserIds
-						});
+						const { post, ts, permalink } = await HostApi.instance.send(
+							CreateThirdPartyPostRequestType,
+							{
+								providerId: sharingAttributes.providerId,
+								channelId: sharingAttributes.channelId,
+								providerTeamId: sharingAttributes.providerTeamId,
+								text: rest.text,
+								codemark: response.codemark,
+								remotes: attributes.remotes,
+								mentionedUserIds: attributes.mentionedUserIds
+							}
+						);
+						if (ts) {
+							const a = await HostApi.instance.send(UpdatePostSharingDataRequestType, {
+								postId: response.codemark.postId,
+								sharedTo: [
+									{
+										createdAt: post.createdAt,
+										providerId: sharingAttributes.providerId,
+										teamId: sharingAttributes.providerTeamId,
+										teamName: sharingAttributes.providerTeamName || "",
+										channelId: sharingAttributes.channelId,
+										channelName: sharingAttributes.channelName || "",
+										postId: ts,
+										url: permalink || ""
+									}
+								]
+							});
+						}
 						HostApi.instance.track("Shared Codemark", {
 							Destination: capitalize(
 								getConnectedProviders(getState()).find(

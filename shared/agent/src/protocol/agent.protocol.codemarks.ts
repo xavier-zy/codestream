@@ -19,7 +19,7 @@ import {
 	CSReview,
 	CSStream
 } from "./api.protocol";
-import { Attachment } from "./api.protocol.models";
+import { Attachment, ShareTarget } from "./api.protocol.models";
 
 export interface CodemarkPlus extends CSCodemark {
 	markers?: CSMarker[];

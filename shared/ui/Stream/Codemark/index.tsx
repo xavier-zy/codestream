@@ -252,7 +252,11 @@ function CodemarkForCodemark(props: PropsWithCodemark) {
 	return (
 		<>
 			{shareModalOpen && (
-				<SharingModal codemark={codemark} onClose={toggleShareModal as () => void} />
+				<SharingModal
+					codemark={codemark}
+					post={props.post}
+					onClose={toggleShareModal as () => void}
+				/>
 			)}
 			<BaseCodemark
 				{...baseProps}

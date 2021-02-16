@@ -142,6 +142,8 @@ import {
 	UpdateInvisibleResponse,
 	UpdateMarkerRequest,
 	UpdateMarkerResponse,
+	UpdatePostSharingDataRequest,
+	UpdatePostSharingDataResponse,
 	UpdatePreferencesRequest,
 	UpdatePreferencesResponse,
 	UpdatePresenceRequest,
@@ -378,6 +380,9 @@ export interface ApiProvider {
 	createPost(request: CreatePostRequest): Promise<CreatePostResponse>;
 	deletePost(request: DeletePostRequest): Promise<DeletePostResponse>;
 	editPost(request: EditPostRequest): Promise<EditPostResponse>;
+	updatePostSharingData(
+		request: UpdatePostSharingDataRequest
+	): Promise<UpdatePostSharingDataResponse>;
 	fetchPostReplies(request: FetchPostRepliesRequest): Promise<FetchPostRepliesResponse>;
 	fetchPosts(request: FetchPostsRequest): Promise<FetchPostsResponse>;
 	getPost(request: GetPostRequest): Promise<GetPostResponse>;

@@ -7,7 +7,12 @@ import Tooltip from "./Tooltip";
 import MessageInput, { AttachmentField } from "./MessageInput";
 import { findMentionedUserIds, getTeamMembers } from "../store/users/reducer";
 import CodemarkActions from "./CodemarkActions";
-import { CodemarkPlus, Capabilities } from "@codestream/protocols/agent";
+import {
+	CodemarkPlus,
+	Capabilities,
+	CreateThirdPartyPostRequestType,
+	PostPlus
+} from "@codestream/protocols/agent";
 import { createPost, setCodemarkStatus, setCodemarkPinned, setUserPreference } from "./actions";
 import { CSUser, CSMe, CSPost, CodemarkType } from "@codestream/protocols/api";
 import { getTeamProvider } from "../store/teams/reducer";
@@ -19,6 +24,7 @@ import { HostApi } from "../webview-api";
 import { DropdownButton } from "./Review/DropdownButton";
 import { Button } from "../src/components/Button";
 import { ButtonRow } from "../src/components/Dialog";
+import { getPost } from "../store/posts/reducer";
 
 interface State {
 	editingPostId?: string;
@@ -33,6 +39,7 @@ interface State {
 interface Props {
 	author: CSUser;
 	codemark: CodemarkPlus;
+	post?: PostPlus;
 	teammates: CSUser[];
 	currentUserId: string;
 	teamProvider: "codestream" | "slack" | "msteams" | string;
@@ -100,11 +107,10 @@ export class CodemarkDetails extends React.Component<Props, State> {
 	handleClickPost() {}
 
 	submitReply = async () => {
-		const { codemark } = this.props;
+		const { codemark, createPost } = this.props;
 		const { text, formatCode, attachments } = this.state;
 		const mentionedUserIds = findMentionedUserIds(this.props.teammates, text);
 		const threadId = codemark ? codemark.postId : "";
-		const { createPost } = this.props;
 		this.setState({ text: "", attachments: [] });
 		this.cacheText("");
 
@@ -119,6 +125,8 @@ export class CodemarkDetails extends React.Component<Props, State> {
 	};
 
 	resolveCodemark = async (type: "resolve" | "archive") => {
+		const { codemark, post } = this.props;
+		const { text = "" } = this.state;
 		await this.submitReply();
 		await this.props.setCodemarkStatus(this.props.codemark.id, "closed");
 		if (type === "archive") {
@@ -130,6 +138,21 @@ export class CodemarkDetails extends React.Component<Props, State> {
 			"Codemark Type": this.props.codemark.type,
 			Archived: type === "archive"
 		});
+
+		const thing = text ? "" : " this discussion";
+		const action = type === "archive" ? "resolved & archived" : "resolved";
+		const message = `_${action}${thing}_\n${text}`;
+		if (post && post.sharedTo && post.sharedTo.length > 0) {
+			for (const target of post.sharedTo) {
+				await HostApi.instance.send(CreateThirdPartyPostRequestType, {
+					providerId: target.providerId,
+					channelId: target.channelId,
+					providerTeamId: target.teamId,
+					parentPostId: target.postId,
+					text: message
+				});
+			}
+		}
 	};
 
 	handleOnChange = (text: string, formatCode: boolean) => {

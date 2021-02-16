@@ -140,14 +140,9 @@ export class MarkersManager extends EntityManagerBase<CSMarker> {
 	@lspHandler(AddMarkersRequestType)
 	protected async addMarkers(request: AddMarkersRequest): Promise<AddMarkersResponse> {
 		const markers = [];
-		for (let marker of request.newMarkers) {
+		for (const marker of request.newMarkers) {
 			const { code, documentId, range, source } = marker;
-			markers.push(await MarkersBuilder.buildCreateMarkerRequest(
-				documentId,
-				code,
-				range,
-				source
-			));
+			markers.push(await MarkersBuilder.buildCreateMarkerRequest(documentId, code, range, source));
 		}
 		return await this.session.api.addMarkers({
 			codemarkId: request.codemarkId,

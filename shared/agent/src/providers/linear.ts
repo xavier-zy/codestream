@@ -147,7 +147,7 @@ export class LinearProvider extends ThirdPartyIssueProviderBase<CSLinearProvider
 
 		const team = await this.getTeam();
 		const response = await this.query<{ data: { issues: { nodes: LinearProject[] } } }>(
-			`query GetBoards($teamId: String!) { 
+			`query GetBoards($teamId: String!) {
 				team(id: $teamId) {
 					projects {
 						nodes {

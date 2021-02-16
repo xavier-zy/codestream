@@ -34,8 +34,8 @@ export interface LoginResponse {
 	pubnubKey: string;
 	broadcasterToken: string;
 	socketCluster?: {
-		host: string,
-		port: string
+		host: string;
+		port: string;
 	};
 }
 

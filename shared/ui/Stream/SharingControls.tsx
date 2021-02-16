@@ -112,7 +112,10 @@ function useDataForTeam(providerId: string, providerTeamId: string = "") {
 export type SharingAttributes = Pick<
 	CreateThirdPartyPostRequest,
 	"providerId" | "providerTeamId" | "channelId"
->;
+> & {
+	providerTeamName?: string;
+	channelName?: string;
+};
 
 const EMPTY_HASH = {};
 export const SharingControls = React.memo(
@@ -269,7 +272,9 @@ export const SharingControls = React.memo(
 				props.onChangeValues({
 					providerId: shareTarget.providerId,
 					providerTeamId: shareTarget.teamId,
-					channelId: selectedChannel && selectedChannel.id
+					providerTeamName: shareTarget.teamName,
+					channelId: selectedChannel && selectedChannel.id,
+					channelName: selectedChannel && formatChannelName(selectedChannel)
 				});
 				dispatch(
 					setUserPreference([derivedState.currentTeamId, "lastShareAttributes"], {

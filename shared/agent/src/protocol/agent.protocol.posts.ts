@@ -19,7 +19,7 @@ import {
 	CSReview,
 	CSStream
 } from "./api.protocol";
-import { Attachment } from "./api.protocol.models";
+import { Attachment, ShareTarget } from "./api.protocol.models";
 
 export interface PostPlus extends CSPost {
 	codemark?: CodemarkPlus;
@@ -104,6 +104,8 @@ export interface CreatePostResponse {
 	markerLocations?: CSMarkerLocations[];
 	streams?: CSStream[];
 	repos?: CSRepository[];
+	ts?: string;
+	permalink?: string;
 }
 export const CreatePostRequestType = new RequestType<
 	CreatePostRequest,
@@ -234,6 +236,20 @@ export interface EditPostResponse {
 export const EditPostRequestType = new RequestType<EditPostRequest, EditPostResponse, void, void>(
 	"codestream/post/edit"
 );
+
+export interface UpdatePostSharingDataRequest {
+	postId: string;
+	sharedTo: ShareTarget[];
+}
+export interface UpdatePostSharingDataResponse {
+	post: CSPost;
+}
+export const UpdatePostSharingDataRequestType = new RequestType<
+	UpdatePostSharingDataRequest,
+	UpdatePostSharingDataResponse,
+	void,
+	void
+>("codestream/post/share-update");
 
 export interface GetPostRequest {
 	streamId: string;

@@ -61,7 +61,10 @@ import {
 	ReactToPostRequestType,
 	ReactToPostResponse,
 	ReportingMessageType,
-	ReviewPlus
+	ReviewPlus,
+	UpdatePostSharingDataRequest,
+	UpdatePostSharingDataRequestType,
+	UpdatePostSharingDataResponse
 } from "../protocol/agent.protocol";
 import {
 	CodemarkType,
@@ -1790,6 +1793,11 @@ export class PostsManager extends EntityManagerBase<CSPost> {
 		return this.session.api.editPost(request);
 	}
 
+	@lspHandler(UpdatePostSharingDataRequestType)
+	sharePost(request: UpdatePostSharingDataRequest): Promise<UpdatePostSharingDataResponse> {
+		return this.session.api.updatePostSharingData(request);
+	}
+
 	@lspHandler(MarkPostUnreadRequestType)
 	markPostUnread(request: MarkPostUnreadRequest): Promise<MarkPostUnreadResponse> {
 		return this.session.api.markPostUnread(request);
@@ -1885,7 +1893,7 @@ export class PostsManager extends EntityManagerBase<CSPost> {
 					anchorFormat: "[${text}](${url})"
 				};
 		}
-	}
+	};
 
 	createProviderCard = async (
 		providerCardRequest: {
@@ -1997,8 +2005,7 @@ export class PostsManager extends EntityManagerBase<CSPost> {
 			let response;
 			const { providerRegistry } = SessionContainer.instance();
 
-			const codeStreamLink =
-				"https://codestream.com/?utm_source=cs&utm_medium=issue&utm_campaign=";
+			const codeStreamLink = "https://codestream.com/?utm_source=cs&utm_medium=issue&utm_campaign=";
 			let createdFrom = "";
 			switch (ideName) {
 				case "VSC":
@@ -2158,7 +2165,7 @@ export class PostsManager extends EntityManagerBase<CSPost> {
 			Logger.error(error, `failed to create a ${attributes.issueProvider.name} card:`);
 			return undefined;
 		}
-	}
+	};
 }
 
 async function resolveCreatePostResponse(response: CreatePostResponse) {

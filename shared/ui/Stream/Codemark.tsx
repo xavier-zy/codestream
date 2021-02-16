@@ -277,6 +277,7 @@ export class Codemark extends React.Component<Props, State> {
 			return (
 				<SharingModal
 					codemark={this.props.codemark!}
+					post={this.props.post}
 					onClose={() => this.setState({ shareModalOpen: false })}
 				/>
 			);
@@ -1081,6 +1082,32 @@ export class Codemark extends React.Component<Props, State> {
 		return null;
 	};
 
+	renderShares = () => {
+		const { post } = this.props;
+
+		if (post && post.sharedTo && post.sharedTo.length > 0) {
+			return (
+				<div className="related">
+					<div className="related-label">Shared To</div>
+					{post.sharedTo.map(target => {
+						const providerDisplay = PROVIDER_MAPPINGS[target.providerId];
+						return (
+							<Link className="external-link" href={target.url}>
+								{providerDisplay && providerDisplay.icon && (
+									<span>
+										<Icon name={providerDisplay.icon} />
+									</span>
+								)}
+								{target.channelName}
+							</Link>
+						);
+					})}
+				</div>
+			);
+		}
+		return null;
+	};
+
 	copyPermalink = () => {
 		if (this.permalinkRef.current) {
 			this.permalinkRef.current.select();
@@ -1568,6 +1595,7 @@ export class Codemark extends React.Component<Props, State> {
 							postAction={this.props.postAction}
 							displayType={this.props.displayType}
 							skipMarkers={this.skipMarkers}
+							post={this.props.post}
 						>
 							<div className="description">
 								{/* this.renderVisibilitySelected() */}
@@ -1604,6 +1632,7 @@ export class Codemark extends React.Component<Props, State> {
 								{this.props.post && <Reactions className="no-pad-left" post={this.props.post} />}
 								{this.renderExternalLink(codemark)}
 								{this.renderRelatedCodemarks()}
+								{this.renderShares()}
 								{this.renderPinnedRepliesSelected()}
 							</div>
 						</CodemarkDetails>

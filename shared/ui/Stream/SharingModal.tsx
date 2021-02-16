@@ -9,7 +9,8 @@ import { Button } from "../src/components/Button";
 import {
 	CodemarkPlus,
 	CreateThirdPartyPostRequestType,
-	ReviewPlus
+	ReviewPlus,
+	UpdatePostSharingDataRequestType
 } from "@codestream/protocols/agent";
 import { HostApi } from "..";
 import { useSelector, useStore } from "react-redux";
@@ -22,6 +23,8 @@ import { logError } from "../logger";
 import { useMarkdownifyToHtml } from "./Markdowner";
 import { getConnectedProviders } from "../store/providers/reducer";
 import { capitalize } from "../utils";
+import { CSPost } from "@codestream/protocols/api";
+import { Dialog } from "../src/components/Dialog";
 
 const StyledCard = styled(Card)``;
 
@@ -91,6 +94,7 @@ type FormStateType = "not-ready" | "ready" | "submitted" | "failure" | "success"
 
 interface SharingModalProps extends ModalProps {
 	codemark?: CodemarkPlus;
+	post?: CSPost;
 	review?: ReviewPlus;
 }
 
@@ -100,8 +104,7 @@ export function SharingModal(props: SharingModalProps) {
 		text: string;
 		title: string;
 		createdAt: number;
-	} = props.codemark ||
-		props.review || { creatorId: "", text: "", title: "", createdAt: 0 };
+	} = props.codemark || props.review || { creatorId: "", text: "", title: "", createdAt: 0 };
 	const shareTargetType = props.codemark ? "Codemark" : props.review ? "Review" : "";
 
 	const { author, mentionedUserIds } = useSelector((state: CodeStreamState) => ({
@@ -140,7 +143,7 @@ export function SharingModal(props: SharingModalProps) {
 		e.preventDefault();
 		setState({ name: "submitted" });
 		try {
-			await HostApi.instance.send(CreateThirdPartyPostRequestType, {
+			const { post, ts, permalink } = await HostApi.instance.send(CreateThirdPartyPostRequestType, {
 				providerId: valuesRef.current!.providerId,
 				channelId: valuesRef.current!.channelId,
 				providerTeamId: valuesRef.current!.providerTeamId,
@@ -149,6 +152,26 @@ export function SharingModal(props: SharingModalProps) {
 				review: props.review,
 				mentionedUserIds
 			});
+			if (props.post && ts) {
+				const newTarget = {
+					createdAt: post.createdAt,
+					providerId: valuesRef.current!.providerId,
+					teamId: valuesRef.current!.providerTeamId,
+					teamName: valuesRef.current!.providerTeamName || "",
+					channelId: valuesRef.current!.channelId,
+					channelName: valuesRef.current!.channelName || "",
+					postId: ts,
+					url: permalink || ""
+				};
+
+				const sharedTo = props.post.sharedTo || [];
+				sharedTo.push(newTarget);
+
+				const a = await HostApi.instance.send(UpdatePostSharingDataRequestType, {
+					postId: props.post.id,
+					sharedTo
+				});
+			}
 			HostApi.instance.track(`Shared ${shareTargetType}`, {
 				Destination: getProviderName(valuesRef.current!.providerId),
 				[`${shareTargetType} Status`]: "Existing"
@@ -165,63 +188,61 @@ export function SharingModal(props: SharingModalProps) {
 	const markdownifyToHtml = useMarkdownifyToHtml();
 
 	return (
-		<Modal onClose={props.onClose}>
-			<VerticallyCentered>
-				<StyledBox title="Share">
-					{state.name === "success" && (
+		<Modal translucent onClose={props.onClose}>
+			<Dialog wide title="Share">
+				{state.name === "success" && (
+					<>
+						<SuccessMessage>{shareTargetType} shared successfully!</SuccessMessage>
+						<Spacer />
+					</>
+				)}
+				{state.name === "failure" && (
+					<>
+						<ErrorMessage>
+							There was an error sharing the {shareTargetType}. {state.message}
+						</ErrorMessage>
+						<Spacer />
+					</>
+				)}
+				<StyledCard>
+					<CardBody>
+						<CardHeader>
+							<AuthorInfo>
+								<Headshot person={author} /> {author.username}{" "}
+								<Timestamp relative time={shareTarget.createdAt} />
+							</AuthorInfo>
+						</CardHeader>
+						<CardTitle>
+							<LinkifiedText
+								dangerouslySetInnerHTML={{
+									__html: markdownifyToHtml(shareTarget.title || shareTarget.text)
+								}}
+							/>
+						</CardTitle>
+					</CardBody>
+				</StyledCard>
+				<SharingControls onChangeValues={handleValues} />
+				<Spacer />
+				<ButtonRow>
+					{state.name === "success" ? (
+						<Button onClick={props.onClose}>Close</Button>
+					) : (
 						<>
-							<SuccessMessage>{shareTargetType} shared successfully!</SuccessMessage>
-							<Spacer />
+							<Button variant="secondary" onClick={props.onClose}>
+								Cancel
+							</Button>
+							<Button
+								variant="primary"
+								onClick={handleClickShare}
+								disabled={state.name === "not-ready"}
+								isLoading={state.name === "submitted"}
+							>
+								Share
+							</Button>
 						</>
 					)}
-					{state.name === "failure" && (
-						<>
-							<ErrorMessage>
-								There was an error sharing the {shareTargetType}. {state.message}
-							</ErrorMessage>
-							<Spacer />
-						</>
-					)}
-					<StyledCard>
-						<CardBody>
-							<CardHeader>
-								<AuthorInfo>
-									<Headshot person={author} /> {author.username}{" "}
-									<Timestamp relative time={shareTarget.createdAt} />
-								</AuthorInfo>
-							</CardHeader>
-							<CardTitle>
-								<LinkifiedText
-									dangerouslySetInnerHTML={{
-										__html: markdownifyToHtml(shareTarget.title || shareTarget.text)
-									}}
-								/>
-							</CardTitle>
-						</CardBody>
-					</StyledCard>
-					<SharingControls onChangeValues={handleValues} />
-					<Spacer />
-					<ButtonRow>
-						{state.name === "success" ? (
-							<Button onClick={props.onClose}>Close</Button>
-						) : (
-							<>
-								<Button variant="secondary" onClick={props.onClose}>
-									Cancel
-								</Button>
-								<Button
-									variant="primary"
-									onClick={handleClickShare}
-									disabled={state.name === "not-ready"}
-									isLoading={state.name === "submitted"}
-								>
-									Share
-								</Button>
-							</>
-						)}
-					</ButtonRow>
-				</StyledBox>
-			</VerticallyCentered>
+				</ButtonRow>
+			</Dialog>
 		</Modal>
 	);
 }

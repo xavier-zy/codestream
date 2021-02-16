@@ -266,6 +266,14 @@ export interface CSEditPostResponse {
 	post: { [key: string]: any };
 }
 
+export interface CSUpdatePostSharingDataRequest {
+	[key: string]: any;
+}
+
+export interface CSUpdatePostSharingDataResponse {
+	post: { [key: string]: any };
+}
+
 export interface CSReactions {
 	[emoji: string]: boolean;
 }

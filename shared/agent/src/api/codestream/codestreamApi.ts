@@ -25,7 +25,8 @@ import {
 	DidChangeDataNotificationType,
 	ReportingMessageType,
 	RepoScmStatus,
-	UpdateInvisibleRequest
+	UpdateInvisibleRequest,
+	UpdatePostSharingDataRequest
 } from "../../protocol/agent.protocol";
 import {
 	AccessToken,
@@ -237,6 +238,8 @@ import {
 	CSUpdateCodemarkResponse,
 	CSUpdateMarkerRequest,
 	CSUpdateMarkerResponse,
+	CSUpdatePostSharingDataRequest,
+	CSUpdatePostSharingDataResponse,
 	CSUpdatePresenceRequest,
 	CSUpdatePresenceResponse,
 	CSUpdateReviewRequest,
@@ -1163,6 +1166,19 @@ export class CodeStreamApiProvider implements ApiProvider {
 			request,
 			this._token
 		);
+		const [post] = await SessionContainer.instance().posts.resolve({
+			type: MessageType.Streams,
+			data: [response.post]
+		});
+		return { ...response, post };
+	}
+
+	@log()
+	async updatePostSharingData(request: UpdatePostSharingDataRequest) {
+		const response = await this.put<
+			CSUpdatePostSharingDataRequest,
+			CSUpdatePostSharingDataResponse
+		>(`/posts/${request.postId}`, request, this._token);
 		const [post] = await SessionContainer.instance().posts.resolve({
 			type: MessageType.Streams,
 			data: [response.post]

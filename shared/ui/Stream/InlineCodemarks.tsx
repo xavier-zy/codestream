@@ -125,6 +125,7 @@ interface Props {
 	webviewFocused: boolean;
 	currentReviewId?: string;
 	currentPullRequestId?: string;
+	currentPullRequestProviderId?: string;
 	lightningCodeReviewsEnabled: boolean;
 	activePanel: WebviewPanels;
 	supportsIntegrations: boolean;
@@ -252,7 +253,7 @@ export class SimpleInlineCodemarks extends Component<Props, State> {
 
 	onFileChangedError(error: string) {
 		// unused
-   }
+	}
 
 	// componentWillReceiveProps(nextProps) {
 	// 	Object.keys(nextProps)
@@ -1190,7 +1191,12 @@ export class SimpleInlineCodemarks extends Component<Props, State> {
 	}
 
 	render() {
-		const { currentReviewId, currentPullRequestId, composeCodemarkActive } = this.props;
+		const {
+			currentReviewId,
+			currentPullRequestId,
+			currentPullRequestProviderId,
+			composeCodemarkActive
+		} = this.props;
 
 		const composeOpen = composeCodemarkActive ? true : false;
 		return (
@@ -1199,7 +1205,25 @@ export class SimpleInlineCodemarks extends Component<Props, State> {
 					{currentReviewId ? (
 						<ReviewNav reviewId={currentReviewId} composeOpen={composeOpen} />
 					) : currentPullRequestId ? (
-						<PullRequest />
+						currentPullRequestProviderId === "github*com" ||
+						currentPullRequestProviderId === "github/enterprise" ? (
+							<PullRequest />
+						) : (
+							<div id="oops">
+								<form className="standard-form">
+									<fieldset className="form-body">
+										<div className="border-bottom-box">
+											<p>
+												<h3>Oops</h3>
+												<br />
+												Sorry we don't support viewing pull requests for that provider yet
+												<br />
+											</p>
+										</div>
+									</fieldset>
+								</form>
+							</div>
+						)
 					) : (
 						this.renderHeader()
 					)}
@@ -1383,6 +1407,9 @@ const mapStateToProps = (state: CodeStreamState) => {
 		currentStreamId: context.currentStreamId,
 		currentReviewId: context.currentReviewId,
 		currentPullRequestId: context.currentPullRequest ? context.currentPullRequest.id : undefined,
+		currentPullRequestProviderId: context.currentPullRequest
+			? context.currentPullRequest.providerId
+			: undefined,
 		team: teams[context.currentTeamId],
 		viewInline: context.codemarksFileViewStyle === "inline",
 		viewHeadshots: configs.showHeadshots,

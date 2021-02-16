@@ -59,6 +59,7 @@ const MRLabel = {
 	PullRequests: "Merge Requests",
 	Pullrequest: "Merge request",
 	pullrequest: "merge request",
+	pullrequests: "merge requests",
 	PR: "MR",
 	PRs: "MRs",
 	pr: "mr"
@@ -69,6 +70,7 @@ const PRLabel = {
 	PullRequests: "Pull Requests",
 	Pullrequest: "Pull request",
 	pullrequest: "pull request",
+	pullrequests: "pull requests",
 	PR: "PR",
 	PRs: "PRs",
 	pr: "pr"

@@ -108,7 +108,7 @@ export class SimpleStream extends PureComponent {
 	componentDidMount() {
 		const { isFirstPageview, onboardingTestGroup } = this.props;
 
-		if (isFirstPageview && onboardingTestGroup === "tour") {
+		if (isFirstPageview && (onboardingTestGroup === "tour" || onboardingTestGroup === "educate")) {
 			this.props.openPanel(WebviewPanels.Onboard);
 		}
 		this.props.setIsFirstPageview(false);
@@ -695,7 +695,7 @@ const mapStateToProps = state => {
 		postStreamId: postStream.id,
 		composeCodemarkActive: context.composeCodemarkActive,
 		isFirstPageview: context.isFirstPageview,
-		onboardingTestGroup: getTestGroup(state, "onboard")
+		onboardingTestGroup: getTestGroup(state, "onboard-edu")
 	};
 };
 

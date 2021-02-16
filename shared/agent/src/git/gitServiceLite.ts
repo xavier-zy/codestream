@@ -121,40 +121,7 @@ export class GitServiceLite {
 				return undefined;
 			}
 
-			try {
-				cwd = this._normalizePath(cwd);
-				let relative = path.relative(repoRoot, cwd);
-				let isParentOrSelf =
-					!relative || (!relative.startsWith("..") && !path.isAbsolute(relative));
-				if (isParentOrSelf) {
-					Logger.log(`getRepoRoot: ${repoRoot} is parent of ${cwd} or itself - returning`);
-					return repoRoot;
-				}
-
-				Logger.log(
-					`getRepoRoot: ${repoRoot} is neither parent of ${cwd} nor itself - finding symlink`
-				);
-				const realCwd = this._normalizePath(fs.realpathSync(cwd));
-				Logger.log(`getRepoRoot: ${cwd} -> ${realCwd}`);
-				relative = path.relative(realCwd, repoRoot);
-				isParentOrSelf = !relative || (!relative.startsWith("..") && !path.isAbsolute(relative));
-				if (!isParentOrSelf) {
-					Logger.log(
-						`getRepoRoot: ${repoRoot} is neither parent of ${realCwd} nor itself - returning`
-					);
-					return repoRoot;
-				}
-
-				const symlinkRepoRoot = this._normalizePath(path.resolve(cwd, relative));
-				Logger.log(
-					`getRepoRoot: found symlink repo root ${symlinkRepoRoot} -> ${repoRoot} - returning`
-				);
-
-				return symlinkRepoRoot;
-			} catch (ex) {
-				Logger.warn(ex);
-				return repoRoot;
-			}
+			return this.getRepoRootPreservingSymlink(cwd, repoRoot);
 		} catch (ex) {
 			// If we can't find the git executable, rethrow
 			if (/spawn (.*)? ENOENT/.test(ex.message)) {
@@ -162,6 +129,44 @@ export class GitServiceLite {
 			}
 
 			return undefined;
+		}
+	}
+
+	getRepoRootPreservingSymlink(possiblySymlinkedPath: string, repoRoot: string): string {
+		try {
+			possiblySymlinkedPath = this._normalizePath(possiblySymlinkedPath);
+			let relative = path.relative(repoRoot, possiblySymlinkedPath);
+			let isParentOrSelf = !relative || (!relative.startsWith("..") && !path.isAbsolute(relative));
+			if (isParentOrSelf) {
+				Logger.debug(
+					`getRepoRootPreservingSymlink: ${repoRoot} is parent of ${possiblySymlinkedPath} or itself`
+				);
+				return repoRoot;
+			}
+
+			Logger.debug(
+				`getRepoRootPreservingSymlink: ${repoRoot} is neither parent of ${possiblySymlinkedPath} nor itself`
+			);
+			const realPath = this._normalizePath(fs.realpathSync(possiblySymlinkedPath));
+			Logger.debug(`getRepoRootPreservingSymlink: ${possiblySymlinkedPath} -> ${realPath}`);
+			relative = path.relative(realPath, repoRoot);
+			isParentOrSelf = !relative || (!relative.startsWith("..") && !path.isAbsolute(relative));
+			if (!isParentOrSelf) {
+				Logger.debug(
+					`getRepoRootPreservingSymlink: ${repoRoot} is neither parent of ${realPath} nor itself`
+				);
+				return repoRoot;
+			}
+
+			const symlinkRepoRoot = this._normalizePath(path.resolve(possiblySymlinkedPath, relative));
+			Logger.log(
+				`getRepoRootPreservingSymlink: found symlink repo root ${symlinkRepoRoot} -> ${repoRoot}`
+			);
+
+			return symlinkRepoRoot;
+		} catch (ex) {
+			Logger.warn(ex);
+			return repoRoot;
 		}
 	}
 

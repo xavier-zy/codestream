@@ -49,10 +49,6 @@ export interface IGitService extends Disposable {
 	getFileCurrentRevision(path: string): Promise<string | undefined>;
 	// getFileCurrentSha(uriOrPath: Uri | string): Promise<string | undefined>;
 
-	getFileForRevision(uri: URI, ref: string): Promise<string | undefined>;
-	getFileForRevision(path: string, ref: string): Promise<string | undefined>;
-	// getFileRevision(uriOrPath: Uri | string, ref: string): Promise<string | undefined>;
-
 	getFileContentForRevision(uri: URI, ref: string): Promise<string | undefined>;
 	getFileContentForRevision(path: string, ref: string): Promise<string | undefined>;
 	// getFileRevisionContent(uriOrPath: Uri | string, ref: string): Promise<string | undefined>;
@@ -85,10 +81,6 @@ export interface IGitService extends Disposable {
 
 	isValidReference(repoUri: URI, ref: string): Promise<boolean>;
 	isValidReference(repoPath: string, ref: string): Promise<boolean>;
-
-	resolveRef(uri: URI, ref: string): Promise<string | undefined>;
-	resolveRef(path: string, ref: string): Promise<string | undefined>;
-	//   resolveRef(uriOrPath: Uri | string, ref: string): Promise<string | undefined> {
 
 	getCommittersForRepo(repoPath: string, since: number): Promise<{ [email: string]: string }>;
 	getLastCommittersForRepo(
@@ -268,13 +260,18 @@ export class GitService implements IGitService, Disposable {
 		const repo = await this.getRepositoryByFilePath(fsPath);
 		if (!repo) return undefined;
 
-		let fileRelativePath = Strings.normalizePath(path.relative(repo.path, fsPath));
+		const possiblySymlinkedRepoRoot = this._gitServiceLite.getRepoRootPreservingSymlink(
+			fsPath,
+			repo.path
+		);
+
+		let fileRelativePath = Strings.normalizePath(path.relative(possiblySymlinkedRepoRoot, fsPath));
 		if (fileRelativePath[0] === "/") {
 			fileRelativePath = fileRelativePath.substr(1);
 		}
 
 		return {
-			repoPath: repo.path,
+			repoPath: possiblySymlinkedRepoRoot,
 			relativePath: fileRelativePath
 		};
 	}
@@ -375,25 +372,27 @@ export class GitService implements IGitService, Disposable {
 		finalCommitHash: string,
 		filePath: string,
 		fetchIfCommitNotFound: boolean = false,
-		conetxtLines: number = 3
+		contextLines: number = 3
 	): Promise<ParsedDiff | undefined> {
-		const [dir, filename] = Strings.splitPath(filePath);
+		const repoAndRelativePath = await this._getRepoAndRelativePath(filePath);
+		if (!repoAndRelativePath) return undefined;
+		const { repoPath, relativePath } = repoAndRelativePath;
 		let data;
 		try {
 			data = await git(
-				{ cwd: dir },
+				{ cwd: repoPath },
 				"diff",
 				"--no-ext-diff",
-				`-U${conetxtLines}`,
+				`-U${contextLines}`,
 				initialCommitHash,
 				finalCommitHash,
 				"--",
-				filename
+				relativePath
 			);
 		} catch (err) {
 			if (fetchIfCommitNotFound) {
 				Logger.log("Commit not found - fetching all remotes");
-				const didFetch = await this.fetchAllRemotes(dir);
+				const didFetch = await this.fetchAllRemotes(repoPath);
 				if (didFetch) {
 					return this.getDiffBetweenCommits(initialCommitHash, finalCommitHash, filePath, false);
 				}
@@ -401,26 +400,9 @@ export class GitService implements IGitService, Disposable {
 
 			Logger.error(err);
 			Logger.warn(
-				`Error getting diff from ${initialCommitHash} to ${finalCommitHash} for ${filename}`
+				`Error getting diff from ${initialCommitHash} to ${finalCommitHash} for ${relativePath}`
 			);
 			return;
-		}
-
-		const patches = parsePatch(data);
-		if (patches.length > 1) {
-			Logger.warn("Parsed diff generated multiple patches");
-		}
-		return patches[0];
-	}
-
-	async getDiffFromHead(filePath: string): Promise<ParsedDiff> {
-		const [dir, filename] = Strings.splitPath(filePath);
-		let data;
-		try {
-			data = await git({ cwd: dir }, "diff", "--no-ext-diff", "HEAD", "--", filename);
-		} catch (err) {
-			Logger.warn(`Error getting diff from HEAD to working directory for ${filename}`);
-			throw err;
 		}
 
 		const patches = parsePatch(data);
@@ -512,52 +494,6 @@ export class GitService implements IGitService, Disposable {
 		}
 
 		return data;
-	}
-
-	async getFileForRevision(uri: URI, ref: string): Promise<string | undefined>;
-	async getFileForRevision(path: string, ref: string): Promise<string | undefined>;
-	async getFileForRevision(uriOrPath: URI | string, ref: string): Promise<string | undefined> {
-		const [dir, filename] = Strings.splitPath(
-			typeof uriOrPath === "string" ? uriOrPath : uriOrPath.fsPath
-		);
-
-		let data: string | undefined;
-		try {
-			data = await git({ cwd: dir, encoding: "binary" }, "show", `${ref}:./${filename}`);
-		} catch (ex) {
-			const msg = ex && ex.toString();
-			if (!GitWarnings.notFound.test(msg) && GitWarnings.foundButNotInRevision.test(msg)) throw ex;
-		}
-
-		if (!data) return undefined;
-
-		const suffix = Strings.sanitizeForFileSystem(ref.substr(0, 8)).substr(0, 50);
-		const ext = path.extname(filename);
-
-		const tmp = await import(/* webpackChunkName: "tmp", webpackMode: "eager" */ "tmp");
-		return new Promise<string>((resolve, reject) => {
-			tmp.file(
-				{ prefix: `${path.basename(filename, ext)}-${suffix}__`, postfix: ext },
-				(err, destination, fd, cleanupCallback) => {
-					if (err) {
-						reject(err);
-						return;
-					}
-
-					fs.appendFile(destination, data, { encoding: "binary" }, err => {
-						if (err) {
-							reject(err);
-							return;
-						}
-
-						const ReadOnly = 0o100444; // 33060 0b1000000100100100
-						fs.chmod(destination, ReadOnly, err => {
-							resolve(destination);
-						});
-					});
-				}
-			);
-		});
 	}
 
 	async getHeadRevision(repoPath: string, reference: string): Promise<string | undefined> {
@@ -711,71 +647,6 @@ export class GitService implements IGitService, Disposable {
 		const filePath = typeof uriOrPath === "string" ? uriOrPath : uriOrPath.fsPath;
 
 		return this._gitServiceLite.getRepoRoot(filePath);
-	}
-
-	private async _getRepoRoot(filePath: string): Promise<string | undefined> {
-		let cwd;
-		if (fs.existsSync(filePath) && fs.lstatSync(filePath).isDirectory()) {
-			cwd = filePath;
-		} else {
-			[cwd] = Strings.splitPath(filePath);
-
-			if (!fs.existsSync(cwd)) {
-				Logger.log(`getRepoRoot: ${cwd} doesn't exist. Returning undefined`);
-				return undefined;
-			}
-		}
-
-		try {
-			const data = (await git({ cwd: cwd }, "rev-parse", "--show-toplevel")).trim();
-			const repoRoot = data === "" ? undefined : this._normalizePath(data);
-
-			if (repoRoot === undefined) {
-				return undefined;
-			}
-
-			try {
-				cwd = this._normalizePath(cwd);
-				let relative = path.relative(repoRoot, cwd);
-				let isParentOrSelf =
-					!relative || (!relative.startsWith("..") && !path.isAbsolute(relative));
-				if (isParentOrSelf) {
-					Logger.log(`getRepoRoot: ${repoRoot} is parent of ${cwd} or itself - returning`);
-					return repoRoot;
-				}
-
-				Logger.log(
-					`getRepoRoot: ${repoRoot} is neither parent of ${cwd} nor itself - finding symlink`
-				);
-				const realCwd = this._normalizePath(fs.realpathSync(cwd));
-				Logger.log(`getRepoRoot: ${cwd} -> ${realCwd}`);
-				relative = path.relative(realCwd, repoRoot);
-				isParentOrSelf = !relative || (!relative.startsWith("..") && !path.isAbsolute(relative));
-				if (!isParentOrSelf) {
-					Logger.log(
-						`getRepoRoot: ${repoRoot} is neither parent of ${realCwd} nor itself - returning`
-					);
-					return repoRoot;
-				}
-
-				const symlinkRepoRoot = this._normalizePath(path.resolve(cwd, relative));
-				Logger.log(
-					`getRepoRoot: found symlink repo root ${symlinkRepoRoot} -> ${repoRoot} - returning`
-				);
-
-				return symlinkRepoRoot;
-			} catch (ex) {
-				Logger.warn(ex);
-				return repoRoot;
-			}
-		} catch (ex) {
-			// If we can't find the git executable, rethrow
-			if (/spawn (.*)? ENOENT/.test(ex.message)) {
-				throw ex;
-			}
-
-			return undefined;
-		}
 	}
 
 	async getCommit(repoUri: URI, ref: string): Promise<GitCommit | undefined>;
@@ -1406,21 +1277,6 @@ export class GitService implements IGitService, Disposable {
 			return true;
 		} catch {
 			return false;
-		}
-	}
-
-	async resolveRef(uri: URI, ref: string): Promise<string | undefined>;
-	async resolveRef(path: string, ref: string): Promise<string | undefined>;
-	async resolveRef(uriOrPath: URI | string, ref: string): Promise<string | undefined> {
-		const [dir, filename] = Strings.splitPath(
-			typeof uriOrPath === "string" ? uriOrPath : uriOrPath.fsPath
-		);
-
-		try {
-			const data = await git({ cwd: dir }, "log", "-M", "-n1", "--format=%H", ref, "--", filename);
-			return data.trim();
-		} catch {
-			return undefined;
 		}
 	}
 

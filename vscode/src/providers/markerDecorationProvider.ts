@@ -386,10 +386,15 @@ export class CodemarkDecorationProvider implements HoverProvider, Disposable {
 			if (!this._suspended) {
 				// && marker.codemarkId != null) {
 				// Determine if the marker needs to be inline (i.e. part of the content or overlayed)
-				const position =
-					editor.document.lineAt(start).firstNonWhitespaceCharacterIndex === 0
+				let position = "inline";
+				try {
+					position = editor.document.lineAt(start).firstNonWhitespaceCharacterIndex === 0
 						? "inline"
 						: "overlay";
+				} catch (e) {
+					Logger.error(e);
+				}
+
 				const key = `${position}-${marker.type}-${marker.color}-${marker.status}`;
 				if (!decorations[key]) {
 					decorations[key] = [];

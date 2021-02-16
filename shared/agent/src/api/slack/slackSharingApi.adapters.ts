@@ -1012,7 +1012,7 @@ export function toSlackReviewPostBlocks(
 		elements: [
 			{
 				type: "mrkdwn",
-				text: `${creatorName}is requesting a review`
+				text: `${creatorName}is requesting feedback`
 			}
 		]
 	});

@@ -149,7 +149,7 @@ export const createCodemark = (attributes: SharingNewCodemarkAttributes) => asyn
 							}
 						);
 						if (ts) {
-							const a = await HostApi.instance.send(UpdatePostSharingDataRequestType, {
+							await HostApi.instance.send(UpdatePostSharingDataRequestType, {
 								postId: response.codemark.postId,
 								sharedTo: [
 									{

@@ -10,7 +10,8 @@ import {
 	RepoScmStatus,
 	GetReviewRequestType,
 	FetchReviewsRequestType,
-	UpdateReviewResponse
+	UpdateReviewResponse,
+	UpdatePostSharingDataRequestType
 } from "@codestream/protocols/agent";
 import { logError } from "@codestream/webview/logger";
 import { addStreams } from "../streams/actions";
@@ -73,7 +74,9 @@ export interface NewReviewAttributes {
 	sharingAttributes?: {
 		providerId: string;
 		providerTeamId: string;
+		providerTeamName?: string;
 		channelId: string;
+		channelName?: string;
 	};
 	mentionedUserIds?: string[];
 	addedUsers?: string[];
@@ -106,15 +109,36 @@ export const createReview = (attributes: NewReviewAttributes) => async (
 			dispatch(addPosts([response.post]));
 
 			if (attributes.sharingAttributes) {
+				const { sharingAttributes } = attributes;
 				try {
-					await HostApi.instance.send(CreateThirdPartyPostRequestType, {
-						providerId: attributes.sharingAttributes.providerId,
-						channelId: attributes.sharingAttributes.channelId,
-						providerTeamId: attributes.sharingAttributes.providerTeamId,
-						text: rest.text,
-						review: response.review,
-						mentionedUserIds: attributes.mentionedUserIds
-					});
+					const { post, ts, permalink } = await HostApi.instance.send(
+						CreateThirdPartyPostRequestType,
+						{
+							providerId: attributes.sharingAttributes.providerId,
+							channelId: attributes.sharingAttributes.channelId,
+							providerTeamId: attributes.sharingAttributes.providerTeamId,
+							text: rest.text,
+							review: response.review,
+							mentionedUserIds: attributes.mentionedUserIds
+						}
+					);
+					if (ts) {
+						await HostApi.instance.send(UpdatePostSharingDataRequestType, {
+							postId: response.post.id,
+							sharedTo: [
+								{
+									createdAt: post.createdAt,
+									providerId: sharingAttributes.providerId,
+									teamId: sharingAttributes.providerTeamId,
+									teamName: sharingAttributes.providerTeamName || "",
+									channelId: sharingAttributes.channelId,
+									channelName: sharingAttributes.channelName || "",
+									postId: ts,
+									url: permalink || ""
+								}
+							]
+						});
+					}
 					HostApi.instance.track("Shared Review", {
 						Destination: capitalize(
 							getConnectedProviders(getState()).find(

@@ -34,7 +34,9 @@ import {
 	UpdateStatusRequestType,
 	UpdateInvisibleRequestType,
 	SetCodemarkPinnedRequestType,
-	CodemarkPlus
+	CodemarkPlus,
+	GetPostRequestType,
+	CreateThirdPartyPostRequestType
 } from "@codestream/protocols/agent";
 import { CSPost, StreamType, CSReviewStatus } from "@codestream/protocols/api";
 import { logError } from "../logger";
@@ -75,6 +77,7 @@ import { getFileScmError } from "../store/editorContext/reducer";
 import { PostEntryPoint } from "../store/context/types";
 import { middlewareInjector } from "../store/middleware-injector";
 import { PostsActionsType } from "../store/posts/types";
+import { getPost } from "../store/posts/reducer";
 
 export {
 	openPanel,
@@ -922,7 +925,7 @@ export const setReviewStatus = (reviewId: string, status: CSReviewStatus) => asy
 			createPost(
 				response.review.streamId,
 				response.review.postId,
-				`/me ${describeStatusChange(status)} this review`
+				`/me ${describeStatusChange(status)} this feedback request`
 			)
 		);
 		try {
@@ -932,6 +935,24 @@ export const setReviewStatus = (reviewId: string, status: CSReviewStatus) => asy
 			});
 		} catch (err) {
 			logError(`failed to track review status change: ${err}`, { reviewId, status });
+		}
+
+		const message = `_${describeStatusChange(status)} this feedback request_`;
+
+		const { post } = await HostApi.instance.send(GetPostRequestType, {
+			postId: response.review.postId,
+			streamId: response.review.streamId
+		});
+		if (post && post.sharedTo && post.sharedTo.length > 0) {
+			for (const target of post.sharedTo) {
+				await HostApi.instance.send(CreateThirdPartyPostRequestType, {
+					providerId: target.providerId,
+					channelId: target.channelId,
+					providerTeamId: target.teamId,
+					parentPostId: target.postId,
+					text: message
+				});
+			}
 		}
 
 		return dispatch(updateReviews([response.review]));

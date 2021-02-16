@@ -162,7 +162,7 @@ export const IntegrationsPanel = () => {
 					return (
 						<ProviderDropdown key={providerId} items={items} variant="success">
 							{display.icon && <Icon name={display.icon} />}
-							{shareTarget.teamName}
+							{display.displayName} - {shareTarget.teamName}
 						</ProviderDropdown>
 					);
 				});
@@ -279,7 +279,7 @@ export const IntegrationsPanel = () => {
 						onClick={() => dispatch(connectProvider(providerId, "Integrations Panel"))}
 					>
 						{display.icon && <Icon name={display.icon} />}
-						{`Add ${display.groupName}`}
+						{`Add ${display.displayName} ${display.groupName}`}
 					</Provider>
 				);
 			} else

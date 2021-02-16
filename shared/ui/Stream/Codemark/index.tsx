@@ -46,12 +46,15 @@ const PinnedReplies = (props: { replyIds: string[]; streamId: string }) => {
 
 	return (
 		<>
-			{posts.map(post => (
-				<PinnedReply key={post.id}>
-					<Icon name="star" />
-					<PinnedReplyText text={post.text} />
-				</PinnedReply>
-			))}
+			{posts.map(post => {
+				if (!post) return null;
+				return (
+					<PinnedReply key={post.id}>
+						<Icon name="star" />
+						<PinnedReplyText text={post.text} />
+					</PinnedReply>
+				);
+			})}
 		</>
 	);
 };

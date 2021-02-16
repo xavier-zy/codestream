@@ -821,7 +821,7 @@ class ReviewForm extends React.Component<Props, State> {
 						editingReview.reviewChangesets.map(_ => (_.checkpoint === undefined ? 0 : _.checkpoint))
 					) + 1;
 
-				if (this.props.isAmending) {
+				if (this.props.isAmending && repoStatus) {
 					// if we're amending, don't edit the text of the review,
 					// but pass in an arg so that a reply can be created
 					delete attributes.text;
@@ -861,7 +861,7 @@ class ReviewForm extends React.Component<Props, State> {
 						this.props.onClose();
 					}
 				}
-			} else if (this.props.createPostAndReview) {
+			} else if (this.props.createPostAndReview && repoStatus) {
 				const { scm } = repoStatus;
 				const authorsById = {};
 				reviewerEmails.forEach(email => {
@@ -1372,6 +1372,7 @@ class ReviewForm extends React.Component<Props, State> {
 	};
 
 	setChangeStart = (sha: string, callback?) => {
+		if (!this.state.repoStatus) return;
 		const { scm } = this.state.repoStatus;
 		if (!scm) return;
 		const { commits } = scm;

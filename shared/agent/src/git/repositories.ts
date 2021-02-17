@@ -364,6 +364,8 @@ export class GitRepositories {
 		repos: { repoId: string; path: string }[]
 	): Promise<{ [key: string]: boolean }> {
 		const found: { [key: string]: boolean } = {};
+		const remoteToRepoMap = await this.getKnownRepositories();
+
 		for (const r in repos) {
 			const repo = repos[r];
 
@@ -372,13 +374,24 @@ export class GitRepositories {
 				name: path.basename(repo.path)
 			});
 
+			const reposWithIds: GitRepository[] = [];
+			for (const foundRepo of repositories) {
+				const repoWithId = await new GitRepository(
+					foundRepo.path,
+					foundRepo.root,
+					foundRepo.folder,
+					false
+				).withKnownRepo(remoteToRepoMap);
+				reposWithIds.push(repoWithId);
+			}
+
 			Logger.debug(
 				`setKnownRepositoryCore: repositorySearch found ${
-					repositories.length
-				} repos (${repositories?.map(_ => _.path)})`
+					reposWithIds.length
+				} repos (${reposWithIds?.map(_ => _.path)})`
 			);
 
-			for (const r of repositories) {
+			for (const r of reposWithIds) {
 				if (!r.id) {
 					Logger.debug(`setKnownRepositoryCore: Skipping ${r.path} (no id)`);
 					continue;

@@ -761,7 +761,6 @@ const BaseReview = (props: BaseReviewProps) => {
 							{props.headerError.message}
 							{canLocateRepo && singleRepo && (
 								<>
-									<br />
 									<LocateRepoButton
 										repoId={singleRepo.id}
 										repoName={singleRepo.repoName}

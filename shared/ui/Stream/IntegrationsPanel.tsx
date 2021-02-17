@@ -310,9 +310,9 @@ export const IntegrationsPanel = () => {
 			<IntegrationGroups>
 				{Object.keys(derivedState.providers).length === 0 && (
 					<>
-						<h2>HTTPS Required</h2>
+						<h2>No Integrations Available</h2>
 						<p>
-							CodeStream integrations require a secure connection to your CodeStream server. Please
+							This version of CodeStream On-Prem is not configured for any integrations. Please
 							contact your on-prem CodeStream administrator.
 						</p>
 						<div style={{ textAlign: "center", marginBottom: "20px" }}>

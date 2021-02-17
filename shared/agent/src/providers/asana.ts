@@ -47,7 +47,8 @@ export class AsanaProvider extends ThirdPartyIssueProviderBase<CSAsanaProviderIn
 		};
 	}
 
-	async onConnected() {
+	async onConnected(providerInfo?: CSAsanaProviderInfo) {
+		super.onConnected(providerInfo);
 		this._asanaUser = await this.getMe();
 	}
 

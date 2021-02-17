@@ -181,7 +181,8 @@ export class BitbucketProvider extends ThirdPartyIssueProviderBase<CSBitbucketPr
 		};
 	}
 
-	async onConnected() {
+	async onConnected(providerInfo?: CSBitbucketProviderInfo) {
+		super.onConnected(providerInfo);
 		this._bitbucketUserId = await this.getMemberId();
 		this._knownRepos = new Map<string, BitbucketRepo>();
 	}

@@ -36,10 +36,9 @@ export type jsonCallback = (
 // HACK: override some private methods of the oauth node module library,
 // eventually, this should all go away once Jira Server supports Personal Access Tokens
 class OAuthExtended extends OAuth {
-
 	_agent: Https.Agent | Http.Agent | undefined;
 
-	setAgent (agent: Https.Agent | Http.Agent) {
+	setAgent(agent: Https.Agent | Http.Agent) {
 		this._agent = agent;
 	}
 
@@ -178,8 +177,6 @@ export class JiraServerProvider extends ThirdPartyIssueProviderBase<CSJiraServer
 	get headers() {
 		return {};
 	}
-
-	async onConnected() {}
 
 	async onDisconnected() {
 		this.boards = [];

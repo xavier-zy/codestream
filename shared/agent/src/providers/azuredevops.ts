@@ -63,8 +63,6 @@ export class AzureDevOpsProvider extends ThirdPartyIssueProviderBase<CSAzureDevO
 		};
 	}
 
-	async onConnected() {}
-
 	@log()
 	async getBoards(request: FetchThirdPartyBoardsRequest): Promise<FetchThirdPartyBoardsResponse> {
 		await this.ensureConnected();

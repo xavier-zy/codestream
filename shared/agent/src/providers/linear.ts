@@ -40,7 +40,8 @@ export class LinearProvider extends ThirdPartyIssueProviderBase<CSLinearProvider
 		};
 	}
 
-	async onConnected() {
+	async onConnected(providerInfo?: CSLinearProviderInfo) {
+		super.onConnected(providerInfo);
 		this._linearUserInfo = await this.getMemberInfo();
 	}
 

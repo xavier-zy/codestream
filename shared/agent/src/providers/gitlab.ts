@@ -91,7 +91,8 @@ export class GitLabProvider extends ThirdPartyIssueProviderBase<CSGitLabProvider
 		};
 	}
 
-	async onConnected() {
+	async onConnected(providerInfo?: CSGitLabProviderInfo) {
+		super.onConnected(providerInfo);
 		this._gitlabUserId = await this.getMemberId();
 		this._projectsByRemotePath = new Map<string, GitLabProject>();
 	}

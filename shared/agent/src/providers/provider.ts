@@ -211,41 +211,7 @@ export abstract class ThirdPartyProviderBase<
 	constructor(
 		public readonly session: CodeStreamSession,
 		protected readonly providerConfig: ThirdPartyProviderConfig
-	) {
-		// if we are connecting with https, and if strictSSL is disabled for CodeStream,
-		// assume OK to have it disabled for third-party providers as well,
-		// with the one exception of on-prem CodeStream, for whom it is only disabled
-		// for self-hosted providers ...
-		// ... so in this case, establish our own HTTPS agent
-		const info = url.parse(this.baseUrl);
-		if (
-			info.protocol === "https:" &&
-			session.disableStrictSSL &&
-			(session.runTimeEnvironment !== "onprem" ||
-				providerConfig.forEnterprise ||
-				providerConfig.isEnterprise)
-		) {
-			Logger.log(
-				`${providerConfig.name} provider will use a custom HTTPS agent with strictSSL disabled`
-			);
-			this._httpsAgent = new HttpsAgent({
-				rejectUnauthorized: false
-			});
-		}
-
-		if (
-			info.protocol === "https:" &&
-			(providerConfig.forEnterprise || providerConfig.isEnterprise) &&
-			session.disableStrictSSL
-		) {
-			Logger.log(
-				`${providerConfig.name} provider will use a custom HTTPS agent with strictSSL disabled`
-			);
-			this._httpsAgent = new HttpsAgent({
-				rejectUnauthorized: false
-			});
-		}
-	}
+	) {}
 
 	async ensureInitialized() {}
 
@@ -358,7 +324,28 @@ export abstract class ThirdPartyProviderBase<
 		this.resetReady();
 	}
 
-	protected async onConnected(providerInfo?: TProviderInfo) {}
+	protected async onConnected(providerInfo?: TProviderInfo) {
+		// if we are connecting with https, and if strictSSL is disabled for CodeStream,
+		// assume OK to have it disabled for third-party providers as well,
+		// with the one exception of on-prem CodeStream, for whom it is only disabled
+		// for self-hosted providers ...
+		// ... so in this case, establish our own HTTPS agent
+		const info = url.parse(this.baseUrl);
+		if (
+			info.protocol === "https:" &&
+			this.session.disableStrictSSL &&
+			(this.session.runTimeEnvironment !== "onprem" ||
+				this.providerConfig.forEnterprise ||
+				this.providerConfig.isEnterprise)
+		) {
+			Logger.log(
+				`${this.providerConfig.name} provider (id:"${this.providerConfig.id}") will use a custom HTTPS agent with strictSSL disabled`
+			);
+			this._httpsAgent = new HttpsAgent({
+				rejectUnauthorized: false
+			});
+		}
+	}
 
 	async configure(data: { [key: string]: any }) {}
 

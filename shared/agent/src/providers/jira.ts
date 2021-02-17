@@ -134,7 +134,8 @@ export class JiraProvider extends ThirdPartyIssueProviderBase<CSJiraProviderInfo
 		return headers;
 	}
 
-	async onConnected() {
+	async onConnected(providerInfo?: CSJiraProviderInfo) {
+		super.onConnected(providerInfo);
 		this._urlAddon = "";
 		if (this._providerInfo?.isApiToken) {
 			this._webUrl = this._providerInfo?.data?.baseUrl || "";

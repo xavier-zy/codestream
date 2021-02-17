@@ -57,8 +57,6 @@ export class YouTrackProvider extends ThirdPartyIssueProviderBase<CSYouTrackProv
 		return `${this.myUrl}${this.apiPath}`;
 	}
 
-	async onConnected() {}
-
 	@log()
 	async getBoards(request: FetchThirdPartyBoardsRequest): Promise<FetchThirdPartyBoardsResponse> {
 		// have to force connection here because we need accessToken to even create our request

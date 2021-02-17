@@ -222,6 +222,10 @@ export class SlackSharingApiProvider {
 			let text = request.text;
 			const meMessage = meMessageRegex.test(text);
 
+			const sleep = (miliseconds: number) => {
+				return new Promise(resolve => setTimeout(resolve, miliseconds));
+			};
+
 			if (text) {
 				text = toSlackPostText(text, userMaps, request.mentionedUserIds);
 			}
@@ -315,6 +319,8 @@ export class SlackSharingApiProvider {
 			const { ok, error, message } = response as WebAPICallResult & { message?: any; ts?: any };
 			if (!ok) throw new Error(error);
 
+			sleep(1000); // wait for slack to be able to be called about this message
+
 			const permalinkResponse = await this.slackApiCall("chat.getPermalink", {
 				channel: channelId,
 				message_ts: message.ts
@@ -327,8 +333,12 @@ export class SlackSharingApiProvider {
 				const { ok, error, permalink } = permalinkResponse as WebAPICallResult & {
 					permalink: string;
 				};
-				if (!ok) throw new Error(error);
-				thePermalink = permalink;
+				if (!ok) {
+					const cc = Logger.getCorrelationContext();
+					Logger.warn(cc, `Unable to get permalink for ${channelId} ${message.ts}: ${error}`);
+				} else {
+					thePermalink = permalink;
+				}
 			}
 
 			const post = await fromSlackPost(

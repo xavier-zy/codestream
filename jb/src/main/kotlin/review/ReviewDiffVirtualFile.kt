@@ -17,9 +17,8 @@ class ReviewDiffVirtualFile : LightVirtualFile {
     }
 
     companion object {
-        fun create(fullPath: String, side: ReviewDiffSide, path: String, content: String, canCreateMarker: Boolean): ReviewDiffVirtualFile {
-            val type = FileTypeManager.getInstance().getFileTypeByFileName(fullPath)
-            return ReviewDiffVirtualFile(fullPath, side, path, type, content, canCreateMarker)
+        fun create(fullPath: String, side: ReviewDiffSide, path: String, content: String, fileType: FileType, canCreateMarker: Boolean): ReviewDiffVirtualFile {
+            return ReviewDiffVirtualFile(fullPath, side, path, fileType, content, canCreateMarker)
         }
     }
 

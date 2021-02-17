@@ -63,7 +63,7 @@ fun createDiffContent(
 
     // Borrowed from com.intellij.diff.DiffContentFactoryImpl
     val document = ReadAction.compute<Document, RuntimeException> {
-        val file = ReviewDiffVirtualFile.create(fullPath, side, path, correctedText, canCreateMarker)
+        val file = ReviewDiffVirtualFile.create(fullPath, side, path, correctedText, fileType, canCreateMarker)
         file.isWritable = false
         OutsidersPsiFileSupport.markFile(file, repoRoot?.let{ File(it).resolve(path).path })
         val document = FileDocumentManager.getInstance().getDocument(file) ?: return@compute null

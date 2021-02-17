@@ -147,10 +147,14 @@ class NotificationComponent(val project: Project) {
                 session.getUser(post.creatorId)?.username ?: "Someone"
             else "Someone"
 
-        val text = if (post.text.startsWith("/me ")) {
+        var text = if (post.text.startsWith("/me ")) {
             post.text.replaceFirst("/me", sender)
         } else {
             post.text
+        }
+
+        if (review != null) {
+            text = text.replaceFirst("this", review.title)
         }
 
         val telemetryContent = when {

@@ -3,6 +3,7 @@ package com.codestream.editor
 import com.codestream.agentService
 import com.codestream.codeStream
 import com.codestream.editorService
+import com.codestream.extensions.file
 import com.codestream.extensions.ifNullOrBlank
 import com.codestream.extensions.uri
 import com.codestream.protocols.CodemarkType
@@ -10,6 +11,7 @@ import com.codestream.protocols.agent.DocumentMarker
 import com.codestream.protocols.agent.TelemetryParams
 import com.codestream.protocols.webview.CodemarkNotifications
 import com.codestream.protocols.webview.PullRequestNotifications
+import com.codestream.review.ReviewDiffVirtualFile
 import com.codestream.webViewService
 import com.intellij.codeInsight.highlighting.TooltipLinkHandler
 import com.intellij.openapi.actionSystem.AnAction
@@ -166,8 +168,9 @@ class GutterIconAction(val editor: Editor, val marker: DocumentMarker) : AnActio
                         it.externalChildId
                     )
                 )
+
+                telemetryPr(project, editor.document.file is ReviewDiffVirtualFile, provider.id)
             }
-            telemetry(project, TelemetryEvent.PR_CLICKED)
         }
     }
 }
@@ -203,7 +206,8 @@ class GutterPullRequestTooltipLinkHandler : TooltipLinkHandler() {
                 prData[2]
             )
         )
-        telemetry(project, TelemetryEvent.CODEMARK_CLICKED)
+
+        telemetryPr(project, editor.document.file is ReviewDiffVirtualFile, prData[0])
 
         return super.handleLink(prLink, editor)
     }
@@ -242,8 +246,20 @@ class GutterCodemarkLinkTooltipLinkHandler : TooltipLinkHandler() {
 }
 
 private enum class TelemetryEvent(val value: String, val properties: Map<String, String>) {
-    CODEMARK_CLICKED("Codemark Clicked", mapOf("Codemark Location" to "Source File")),
-    PR_CLICKED("PR Comment Clicked", mapOf("Codemark Location" to "Source File"))
+    CODEMARK_CLICKED("Codemark Clicked", mapOf("Codemark Location" to "Source File"))
+}
+
+private fun telemetryPr(project: Project, isDiff: Boolean, host: String) {
+    var codemarkLocation = "Source Gutter"
+    if (isDiff) {
+        codemarkLocation = "Diff Gutter"
+    }
+
+    val params = TelemetryParams(
+        "PR Comment Clicked",
+        mapOf("Host" to host, "Codemark Location" to codemarkLocation)
+    )
+    project.agentService?.agent?.telemetry(params)
 }
 
 private fun telemetry(project: Project, event: TelemetryEvent) {

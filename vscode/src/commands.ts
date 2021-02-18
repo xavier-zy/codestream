@@ -479,9 +479,18 @@ export class Commands implements Disposable {
 	async openPullRequest(args: OpenPullRequestCommandArgs): Promise<void> {
 		if (args === undefined) return;
 
-		Container.agent.telemetry.track("PullRequest Clicked", {
-			"PullRequest Location": "Source File"
-		});
+		const trackParams: {[k: string]: any} = {
+			Host: args.providerId
+		};
+		const editor = window.activeTextEditor;
+		if (editor && editor.document.uri.scheme === "file"){
+			trackParams["PullRequest Location"] = "Source Gutter";
+		}
+		if (editor && editor.document.uri.scheme === "codestream-diff"){
+			trackParams["PullRequest Location"] = "Diff Gutter";
+		}
+
+		Container.agent.telemetry.track("PR Comment Clicked", trackParams);
 
 		return Container.webview.openPullRequest(args.providerId, args.pullRequestId, args.commentId);
 	}

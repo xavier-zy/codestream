@@ -484,10 +484,10 @@ export class Commands implements Disposable {
 		};
 		const editor = window.activeTextEditor;
 		if (editor && editor.document.uri.scheme === "file"){
-			trackParams["PullRequest Location"] = "Source Gutter";
+			trackParams["Comment Location"] = "Source Gutter";
 		}
 		if (editor && editor.document.uri.scheme === "codestream-diff"){
-			trackParams["PullRequest Location"] = "Diff Gutter";
+			trackParams["Comment Location"] = "Diff Gutter";
 		}
 
 		Container.agent.telemetry.track("PR Comment Clicked", trackParams);

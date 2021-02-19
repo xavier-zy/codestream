@@ -243,6 +243,17 @@ namespace CodeStream.VisualStudio.Core.Extensions {
 			TryCreateCaretPosition(wpfTextView, out Position caretPosition);
 
 			System.Diagnostics.Debug.WriteLine($"Range Start={selectionRange.Start.Line},{selectionRange.Start.Character} End={selectionRange.End.Line},{selectionRange.End.Character} Caret={caretPosition.Line},{caretPosition.Character} HasSelected={!wpfTextView.Selection.IsEmpty}");
+
+			// if we dont have a selection, but we do have a cursor, treat the cursor as the range 
+			if (selectionRange != null && caretPosition != null &&
+				selectionRange?.Start.Line == 0 && selectionRange?.Start.Character == 0 &&
+				selectionRange?.End.Line == 0 && selectionRange?.End.Character == 0 &&
+				(caretPosition.Line >= 0 || caretPosition.Character >= 0)) {
+				selectionRange = new Range() {
+					Start = new Position(caretPosition.Line, caretPosition.Character),
+					End = new Position(caretPosition.Line, caretPosition.Character + 1)
+				};
+			}
 			return new EditorState(selectionRange, caretPosition, selectedText);
 		}
 

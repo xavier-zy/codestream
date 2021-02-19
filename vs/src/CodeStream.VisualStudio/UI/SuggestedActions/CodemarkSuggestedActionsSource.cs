@@ -89,15 +89,15 @@ namespace CodeStream.VisualStudio.UI.SuggestedActions {
 			try {
 				if (wpfTextView == null) return Enumerable.Empty<SuggestedActionSet>();
 
-				var editorState = wpfTextView.GetEditorState();
+
 				System.Diagnostics.Debug.WriteLine($"GetSuggestedActions");
 				return new[] {
 					new SuggestedActionSet(
 						actions: new ISuggestedAction[] {
-							new CodemarkCommentSuggestedAction(_componentModel, wpfTextView, _virtualTextDocument, editorState),
-							new CodemarkIssueSuggestedAction(_componentModel, wpfTextView, _virtualTextDocument, editorState),
-							new CodemarkPermalinkSuggestedAction(_componentModel, wpfTextView, _virtualTextDocument, editorState),
-							new CreateReviewSuggestedAction(_componentModel, wpfTextView, _virtualTextDocument, editorState)
+							new CodemarkCommentSuggestedAction(_componentModel, wpfTextView, _virtualTextDocument),
+							new CodemarkIssueSuggestedAction(_componentModel, wpfTextView, _virtualTextDocument),
+							new CodemarkPermalinkSuggestedAction(_componentModel, wpfTextView, _virtualTextDocument),
+							new CreateReviewSuggestedAction(_componentModel, wpfTextView, _virtualTextDocument)
 						},
 						categoryName: null,
 						title: null,
@@ -120,35 +120,34 @@ namespace CodeStream.VisualStudio.UI.SuggestedActions {
 	}
 
 	internal class CodemarkCommentSuggestedAction : CodemarkSuggestedActionBase {
-		public CodemarkCommentSuggestedAction(IComponentModel componentModel, IWpfTextView wpfTextView, IVirtualTextDocument textDocument, EditorState textSelection) : base(componentModel, wpfTextView, textDocument, textSelection) { }
+		public CodemarkCommentSuggestedAction(IComponentModel componentModel, IWpfTextView wpfTextView, IVirtualTextDocument textDocument) : base(componentModel, wpfTextView, textDocument) { }
 		protected override CodemarkType CodemarkType => CodemarkType.Comment;
 		public override string DisplayText { get; } = $"Add Comment";
 	}
 
 	internal class CodemarkIssueSuggestedAction : CodemarkSuggestedActionBase {
-		public CodemarkIssueSuggestedAction(IComponentModel componentModel, IWpfTextView wpfTextView, IVirtualTextDocument textDocument, EditorState textSelection) : base(componentModel, wpfTextView, textDocument, textSelection) { }
+		public CodemarkIssueSuggestedAction(IComponentModel componentModel, IWpfTextView wpfTextView, IVirtualTextDocument textDocument) : base(componentModel, wpfTextView, textDocument) { }
 		protected override CodemarkType CodemarkType => CodemarkType.Issue;
 		public override string DisplayText { get; } = $"Create Issue";
 	}
 
 	internal class CodemarkPermalinkSuggestedAction : CodemarkSuggestedActionBase {
-		public CodemarkPermalinkSuggestedAction(IComponentModel componentModel, IWpfTextView wpfTextView, IVirtualTextDocument textDocument, EditorState textSelection) : base(componentModel, wpfTextView, textDocument, textSelection) { }
+		public CodemarkPermalinkSuggestedAction(IComponentModel componentModel, IWpfTextView wpfTextView, IVirtualTextDocument textDocument) : base(componentModel, wpfTextView, textDocument) { }
 		protected override CodemarkType CodemarkType => CodemarkType.Link;
 		public override string DisplayText { get; } = $"Get Permalink";
 	}
 
 	internal class CreateReviewSuggestedAction : ISuggestedAction {
 		private readonly IComponentModel _componentModel;
-		private readonly EditorState _textSelection;
+		private readonly IWpfTextView _wpfTextView;
 		private readonly IVirtualTextDocument _virtualTextDocument;
-		
-		public CreateReviewSuggestedAction(IComponentModel componentModel, IWpfTextView wpfTextView, IVirtualTextDocument virtualTextDocument,
-			EditorState textSelection){
+
+		public CreateReviewSuggestedAction(IComponentModel componentModel, IWpfTextView wpfTextView, IVirtualTextDocument virtualTextDocument) {
 			_componentModel = componentModel;
+			_wpfTextView = wpfTextView;
 			_virtualTextDocument = virtualTextDocument;
-			_textSelection = textSelection;
 		}
-		
+
 		public string DisplayText { get; } = $"Request Feedback";
 
 		public bool HasActionSets => false;
@@ -224,16 +223,14 @@ namespace CodeStream.VisualStudio.UI.SuggestedActions {
 		private static readonly ILogger Log = LogManager.ForContext<CodemarkSuggestedActionBase>();
 
 		private readonly IWpfTextView _wpfTextView;
-		private readonly EditorState _textSelection;
 		private readonly IVirtualTextDocument _virtualTextDocument;
 		protected IComponentModel ComponentModel { get; private set; }
 		protected abstract CodemarkType CodemarkType { get; }
 
-		protected CodemarkSuggestedActionBase(IComponentModel componentModel, IWpfTextView wpfTextView, IVirtualTextDocument virtualTextDocument, EditorState textSelection) {
+		protected CodemarkSuggestedActionBase(IComponentModel componentModel, IWpfTextView wpfTextView, IVirtualTextDocument virtualTextDocument) {
 			ComponentModel = componentModel;
 			_wpfTextView = wpfTextView;
 			_virtualTextDocument = virtualTextDocument;
-			_textSelection = textSelection;
 		}
 
 		public Task<IEnumerable<SuggestedActionSet>> GetActionSetsAsync(CancellationToken cancellationToken) {
@@ -260,14 +257,16 @@ namespace CodeStream.VisualStudio.UI.SuggestedActions {
 					}
 					var sessionService = ComponentModel.GetService<ISessionService>();
 					if (sessionService.WebViewDidInitialize == true) {
-						_ = codeStreamService.NewCodemarkAsync(_virtualTextDocument.Uri, _textSelection.Range, CodemarkType, "Lightbulb Menu", cancellationToken: cancellationToken);
+						var editorState = _wpfTextView.GetEditorState();
+						_ = codeStreamService.NewCodemarkAsync(_virtualTextDocument.Uri, editorState?.Range, CodemarkType, "Lightbulb Menu", cancellationToken: cancellationToken);
 					}
 					else {
 						var eventAggregator = ComponentModel.GetService<IEventAggregator>();
 						IDisposable d = null;
 						d = eventAggregator.GetEvent<WebviewDidInitializeEvent>().Subscribe(e => {
 							try {
-								_ = codeStreamService.NewCodemarkAsync(_virtualTextDocument.Uri, _textSelection.Range, CodemarkType, "Lightbulb Menu", cancellationToken: cancellationToken); d.Dispose();
+								var editorState = _wpfTextView.GetEditorState();
+								_ = codeStreamService.NewCodemarkAsync(_virtualTextDocument.Uri, editorState?.Range, CodemarkType, "Lightbulb Menu", cancellationToken: cancellationToken); d.Dispose();
 							}
 							catch (Exception ex) {
 								Log.Error(ex, $"{nameof(CodemarkSuggestedActionBase)} event");

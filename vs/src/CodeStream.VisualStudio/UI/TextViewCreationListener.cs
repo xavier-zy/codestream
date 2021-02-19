@@ -252,7 +252,7 @@ namespace CodeStream.VisualStudio.UI {
 									wpfTextView.LayoutChanged -= OnTextViewLayoutChanged;
 									wpfTextView.Caret.PositionChanged -= Caret_PositionChanged;
 									wpfTextView.GotAggregateFocus -= TextView_GotAggregateFocus;
-									wpfTextView.Selection.SelectionChanged += Selection_SelectionChanged;
+									wpfTextView.Selection.SelectionChanged -= Selection_SelectionChanged;
 									wpfTextView.ZoomLevelChanged -= OnZoomLevelChanged;
 
 									wpfTextView.Properties.RemovePropertySafe(PropertyNames.TextViewDocument);
@@ -362,9 +362,7 @@ namespace CodeStream.VisualStudio.UI {
 		}
 
 		private void SetZoomLevelCore(double zoomLevel, IMetricsBase metrics) {
-			using (metrics?.Measure($"{nameof(SetZoomLevelCore)}")) {
-				if (!SessionService.IsWebViewVisible) return;
-
+			using (metrics?.Measure($"{nameof(SetZoomLevelCore)}")) {			
 				CodeStreamService?.BrowserService?.SetZoomInBackground(zoomLevel);
 			}
 		}
@@ -392,7 +390,7 @@ namespace CodeStream.VisualStudio.UI {
 		private void ChangeActiveEditor(IWpfTextView wpfTextView, IMetricsBase metrics = null) {
 			try {
 				using (metrics?.Measure($"{nameof(ChangeActiveEditor)}")) {
-					if (wpfTextView == null || !SessionService.IsWebViewVisible) return;
+					if (wpfTextView == null) return;
 					if (!wpfTextView.Properties.TryGetProperty(PropertyNames.TextViewDocument, out IVirtualTextDocument virtualTextDocument)) return;
 					if (virtualTextDocument == null) return;
 
@@ -418,7 +416,7 @@ namespace CodeStream.VisualStudio.UI {
 				wpfTextView.Properties.TryDisposeProperty<HighlightAdornmentManager>(PropertyNames.AdornmentManager);
 				wpfTextView.LayoutChanged -= OnTextViewLayoutChanged;
 				wpfTextView.Caret.PositionChanged -= Caret_PositionChanged;
-				wpfTextView.Selection.SelectionChanged += Selection_SelectionChanged;
+				wpfTextView.Selection.SelectionChanged -= Selection_SelectionChanged;
 				wpfTextView.GotAggregateFocus -= TextView_GotAggregateFocus;
 
 				if (wpfTextView.Properties.TryGetProperty(PropertyNames.DocumentMarkerManager,
@@ -504,7 +502,7 @@ namespace CodeStream.VisualStudio.UI {
 		#region EventHandlers
 
 		private void Caret_PositionChanged(object sender, CaretPositionChangedEventArgs e) {
-			if (e.TextView == null || !SessionService.IsReady || !SessionService.IsWebViewVisible || !SessionService.IsCodemarksForFileVisible) return;
+			if (e.TextView == null || !SessionService.IsReady) return;
 			var wpfTextView = e.TextView as IWpfTextView;
 			if (wpfTextView == null) return;
 
@@ -515,12 +513,13 @@ namespace CodeStream.VisualStudio.UI {
 		}
 
 		private void Selection_SelectionChanged(object sender, EventArgs e) {
-			if (!SessionService.IsReady || !SessionService.IsWebViewVisible) return;
+			if (!SessionService.IsReady) return;
 
 			var textSelection = sender as ITextSelection;
 			if (textSelection == null || textSelection.IsEmpty) return;
 
 			var wpfTextView = textSelection.TextView as IWpfTextView;
+
 
 			wpfTextView
 				.Properties
@@ -532,6 +531,7 @@ namespace CodeStream.VisualStudio.UI {
 			if (!(sender is IWpfTextView wpfTextView)) return;
 
 			if (_focusedWpfTextView == null || _focusedWpfTextView != wpfTextView) {
+
 				ChangeActiveEditor(wpfTextView, null);
 				_focusedWpfTextView = wpfTextView;
 
@@ -550,7 +550,7 @@ namespace CodeStream.VisualStudio.UI {
 				var triggerTextViewLayoutChanged = (e.VerticalTranslation ||
 													e.NewViewState.ViewportTop != e.OldViewState.ViewportTop ||
 													e.NewViewState.ViewportBottom != e.OldViewState.ViewportBottom) &&
-												   SessionService.IsWebViewVisible && SessionService.IsCodemarksForFileVisible;
+												   SessionService.IsWebViewVisible;
 
 				var requiresMarkerCheck = false;
 				if (wpfTextView.Properties.TryGetProperty(PropertyNames.DocumentMarkerManager, out DocumentMarkerManager documentMarkerManager) && documentMarkerManager != null) {
@@ -620,7 +620,7 @@ namespace CodeStream.VisualStudio.UI {
 					if (e == null || e.EventArgs == null) return;
 
 					var wpfTextView = e.WpfTextView;
-					if (wpfTextView == null || !SessionService.IsReady || !SessionService.IsWebViewVisible || !SessionService.IsCodemarksForFileVisible) return;
+					if (wpfTextView == null || !SessionService.IsReady) return;
 					if (!wpfTextView.Properties.TryGetProperty(PropertyNames.TextViewDocument, out IVirtualTextDocument virtualTextDocument)) return;
 					if (virtualTextDocument == null) return;
 

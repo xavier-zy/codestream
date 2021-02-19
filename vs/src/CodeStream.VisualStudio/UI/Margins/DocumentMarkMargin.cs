@@ -162,9 +162,8 @@ namespace CodeStream.VisualStudio.UI.Margins {
 
 		public void OnTextViewLayoutChanged(object sender, TextViewLayoutChangedEventArgs e) {
 			ThreadHelper.ThrowIfNotOnUIThread();
-
-			// no need to update when we're in 'spatial' view since it's not shown
-			if (_sessionService.IsCodemarksForFileVisible && _sessionService.IsWebViewVisible && _settingsManager.AutoHideMarkers) return;
+			
+			if (_settingsManager.AutoHideMarkers) return;
 
 			if (Visibility == Visibility.Hidden || Visibility == Visibility.Collapsed) return;
 
@@ -189,12 +188,12 @@ namespace CodeStream.VisualStudio.UI.Margins {
 
 		public void SetAutoHideMarkers(bool autoHideMarkers) {
 			if (autoHideMarkers == true) {
-				if (_sessionService.IsCodemarksForFileVisible && _sessionService.IsWebViewVisible) {
+				if ( _sessionService.IsWebViewVisible) {
 					TryHideMargin();
 				}
 			}
 			else {
-				if (_sessionService.IsCodemarksForFileVisible && _sessionService.IsWebViewVisible) {
+				if (_sessionService.IsWebViewVisible) {
 					TryShowMargin();
 				}
 			}

@@ -1,5 +1,9 @@
 # Change Log
 
+## [10.6.1] - 2021-2-19
+
+- Fixes an issue where a codemark is being created against the wrong file/location when the panel is not pinned
+
 ## [10.6.0] - 2021-2-19
 
 ### Added

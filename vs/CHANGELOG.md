@@ -20,6 +20,7 @@
 - Fixes an issue with the Slack integration not appearing as a green tile on the Integrations page immediately after connecting
 - Fixes an issue with the Locate button not working in a feedback request when you don't have the given repo open
 - Fixes an issue with commenting on code in files that are symlinks
+- Fixes an issue where a codemark is being created against the wrong file/location when the panel is not pinned
 
 ## [10.5.1] - 2021-2-10
 

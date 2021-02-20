@@ -627,6 +627,7 @@ export class SimpleCodemarksForFile extends Component<Props, State> {
 			{ label: "-" },
 			{
 				label: "Sort comments by...",
+				subtext: "Only applies to file filter",
 				key: "sort-codemarks",
 				checked: false,
 				submenu: [
@@ -810,31 +811,6 @@ const mapStateToProps = (state: CodeStreamState, props): ConnectedProps => {
 		const { scm = {} as any } = scmInfo as GetFileScmInfoResponse;
 		const { repoId } = scm;
 		const currentDirectory = fs.pathDirname(scm.file || "");
-		let codemarkSortFn;
-		if (codemarkSortType === CodemarkSortType.File) {
-			codemarkSortFn = (a: CodemarkPlus, b: CodemarkPlus) => {
-				let marker1File = "0";
-				let marker2File = "0";
-				let markerA: CSMarker | undefined;
-				let markerB: CSMarker | undefined;
-				if (a.markers && a.markers.length) {
-					markerA = a.markers[0];
-					marker1File = markerA.file || "0";
-				}
-				if (b.markers && b.markers.length) {
-					markerB = b.markers[0];
-					marker2File = markerB.file || "0";
-				}
-
-				return (
-					marker1File.localeCompare(marker2File, undefined, { caseFirst: "lower" }) ||
-					SimpleCodemarksForFile.getMarkerStartLine(markerA) -
-						SimpleCodemarksForFile.getMarkerStartLine(markerB)
-				);
-			};
-		} else {
-			codemarkSortFn = (a: CodemarkPlus, b: CodemarkPlus) => b.createdAt - a.createdAt;
-		}
 
 		codemarksToRender = getActiveCodemarks(state)
 			.filter(codemark => {
@@ -867,7 +843,7 @@ const mapStateToProps = (state: CodeStreamState, props): ConnectedProps => {
 				}
 				return true;
 			})
-			.sort((a: CodemarkPlus, b: CodemarkPlus) => codemarkSortFn(a, b));
+			.sort((a: CodemarkPlus, b: CodemarkPlus) => b.createdAt - a.createdAt);
 	}
 
 	const count =

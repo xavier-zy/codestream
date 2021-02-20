@@ -12,7 +12,6 @@ import {
 	MarkerNotLocated,
 	CodemarkPlus
 } from "@codestream/protocols/agent";
-import { Range } from "vscode-languageserver-types";
 import { fetchDocumentMarkers } from "../store/documentMarkers/actions";
 import {
 	ScmError,
@@ -37,18 +36,13 @@ import {
 	PaneNode,
 	PaneNodeName
 } from "../src/components/Pane";
-import { Modal } from "./Modal";
-import { Dialog, ButtonRow } from "../src/components/Dialog";
-import { Checkbox } from "../src/components/Checkbox";
-import { Button } from "../src/components/Button";
 import { Link } from "./Link";
-import { setUserPreference, setUserPreferences } from "./actions";
+import { setUserPreference } from "./actions";
 import { InlineMenu } from "../src/components/controls/InlineMenu";
 import { withSearchableItems, WithSearchableItemsProps } from "./withSearchableItems";
 import { ReposState } from "../store/repos/types";
 import { getActiveCodemarks } from "../store/codemarks/reducer";
 import { CSMarker } from "@codestream/protocols/api";
-import { PanelHeader } from "../src/components/PanelHeader";
 
 export enum CodemarkDomainType {
 	File = "file",
@@ -181,26 +175,9 @@ export class SimpleCodemarksForFile extends Component<Props, State> {
 
 	componentDidUpdate(prevProps: Props) {
 		this._updateEmitter.emit();
-		const { codemarkDomain, textEditorUri, documentMarkers } = this.props;
-		// if (codemarkDomain !== CodemarkDomainType.Team) {
+		const { textEditorUri } = this.props;
 		if (String(textEditorUri).length > 0 && prevProps.textEditorUri !== textEditorUri) {
 			this.onFileChanged(false, this.onFileChangedError);
-		}
-		// }
-		if (
-			documentMarkers &&
-			prevProps.documentMarkers &&
-			documentMarkers.length > prevProps.documentMarkers.length
-		) {
-			for (var i = prevProps.documentMarkers.length; i < documentMarkers.length; i++) {
-				const { codemark } = documentMarkers[i];
-				if (codemark) {
-					setTimeout(() => {
-						const el = document.getElementById(`codemark-${codemark.id}`);
-						if (el) el.classList.add("highlight-pulse");
-					}, 500);
-				}
-			}
 		}
 	}
 
@@ -236,7 +213,7 @@ export class SimpleCodemarksForFile extends Component<Props, State> {
 		}
 
 		let scmInfo = this.props.scmInfo;
-		if (!scmInfo) {
+		if (!scmInfo || scmInfo.uri !== textEditorUri) {
 			this.setState({ isLoading: true });
 			scmInfo = await HostApi.instance.send(GetFileScmInfoRequestType, {
 				uri: textEditorUri
@@ -778,6 +755,8 @@ export class SimpleCodemarksForFile extends Component<Props, State> {
 const EMPTY_ARRAY = [];
 const EMPTY_HASH_2 = {};
 
+let MOST_RECENT_SCM_INFO: GetFileScmInfoResponse | undefined = undefined;
+
 const mapStateToProps = (state: CodeStreamState, props): ConnectedProps => {
 	const { context, repos, editorContext, documentMarkers, preferences, teams } = state;
 
@@ -794,7 +773,11 @@ const mapStateToProps = (state: CodeStreamState, props): ConnectedProps => {
 	let repoName = "";
 	const scmInfo = editorContext.scmInfo;
 	if (scmInfo && scmInfo.scm) {
-		const { repoId } = scmInfo.scm;
+		MOST_RECENT_SCM_INFO = scmInfo;
+	}
+
+	if (MOST_RECENT_SCM_INFO && MOST_RECENT_SCM_INFO.scm) {
+		const { repoId } = MOST_RECENT_SCM_INFO.scm;
 		if (repoId && repos[repoId]) repoName = repos[repoId].name;
 	}
 
@@ -803,12 +786,13 @@ const mapStateToProps = (state: CodeStreamState, props): ConnectedProps => {
 	const showHidden = preferences.codemarksShowArchived || false;
 	const showResolved = preferences.codemarksHideResolved ? false : true;
 	const showReviews = preferences.codemarksHideReviews ? false : true;
-	let currentBranch = scmInfo && scmInfo.scm ? scmInfo.scm.branch || "" : "";
+	let currentBranch =
+		MOST_RECENT_SCM_INFO && MOST_RECENT_SCM_INFO.scm ? MOST_RECENT_SCM_INFO.scm.branch || "" : "";
 
 	let codemarksToRender = EMPTY_ARRAY as CodemarkPlus[];
-	if (scmInfo && codemarkDomain !== CodemarkDomainType.File) {
+	if (MOST_RECENT_SCM_INFO && codemarkDomain !== CodemarkDomainType.File) {
 		const { items = [] } = props;
-		const { scm = {} as any } = scmInfo as GetFileScmInfoResponse;
+		const { scm = {} as any } = MOST_RECENT_SCM_INFO as GetFileScmInfoResponse;
 		const { repoId } = scm;
 		const currentDirectory = fs.pathDirname(scm.file || "");
 
@@ -864,7 +848,7 @@ const mapStateToProps = (state: CodeStreamState, props): ConnectedProps => {
 		hideTags: preferences.codemarksHideTags || false,
 		showPRComments: hasPRProvider && preferences.codemarksShowPRComments,
 		fileNameToFilterFor: editorContext.activeFile,
-		scmInfo: editorContext.scmInfo,
+		scmInfo: MOST_RECENT_SCM_INFO,
 		currentBranch,
 		textEditorUri: editorContext.textEditorUri,
 		documentMarkers: docMarkers,

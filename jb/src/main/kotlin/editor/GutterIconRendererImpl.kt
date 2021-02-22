@@ -71,8 +71,16 @@ class GutterIconRendererImpl(val editor: Editor, val marker: DocumentMarker) : G
             if (marker.title !== null) {
                 tooltip += "${marker.title} "
             }
-            tooltip += "\n\n<a href='#pr/show/${marker.externalContent.provider?.id}" +
-                "/${marker.externalContent.externalId}/${marker.externalContent.externalChildId}'>View Comment</a>"
+            if (marker.externalContent.actions !== null) {
+                marker.externalContent.actions.map{
+                    tooltip += "\n\n<a href='${it.uri}'>${it.label}</a>"
+                }
+            }
+            if (marker.externalContent.provider?.id == "github*com" ||
+                marker.externalContent.provider?.id == "github/enterprise") {
+                tooltip += "\n\n<a href='#pr/show/${marker.externalContent.provider?.id}" +
+                    "/${marker.externalContent.externalId}/${marker.externalContent.externalChildId}'>View Comment</a>"
+            }
             tooltip += "<hr style='margin-top: 3px; margin-bottom: 3px;'>"
             tooltip += "<a href='#codemark/link/${CodemarkType.COMMENT},${rangeString}'>Add Comment</a>"
         }

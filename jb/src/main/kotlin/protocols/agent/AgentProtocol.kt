@@ -151,7 +151,13 @@ class DocumentMarker(
 class DocumentMarkerExternalContent(
     val provider: DocumentMarkerExternalContentProvider?,
     val externalId: String,
-    val externalChildId: String?
+    val externalChildId: String?,
+    val actions: List<DocumentMarkerExternalActions>?
+)
+
+class DocumentMarkerExternalActions(
+    val label: String,
+    val uri: String
 )
 
 class DocumentMarkerExternalContentProvider(

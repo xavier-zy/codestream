@@ -496,17 +496,32 @@ export class CodemarkDecorationProvider implements HoverProvider, Disposable {
 							sourceUri: uri
 						};
 
-						const typeString = Strings.toTitleCase(m.type);
+						let typeString = "Comment";
+						if (m.type === "prcomment") {
+							if (["gitlab*com", "gitlab/enterprise"].includes(m.externalContent.provider.id)) {
+								typeString = "MR Comment";
+							} else {
+								typeString = "PR Comment";
+							}
+						}
 						message += `__${m.creatorName}__, ${m.fromNow()} \n\n ${
 							m.summaryMarkdown
 						} \n\n __PULL REQUEST__\n\n`;
 						if (externalContent.provider.id === "github*com") {
 							message += "  $(github-inverted) ";
 						}
-						message += ` ${m.title} \n\n`;
-						message += ` \n\n[__View ${typeString} \u2197__](command:codestream.openPullRequest?${encodeURIComponent(
-							JSON.stringify(viewCommandArgs)
-						)} "View ${typeString}")`;
+						message += ` ${m.title ? m.title : "PR title is \"undefined\""} \n\n`;
+						if (["github*com", "github/enterprise"].includes(m.externalContent.provider.id)) {
+							message += ` \n\n[__View ${typeString} \u2197__](command:codestream.openPullRequest?${encodeURIComponent(
+								JSON.stringify(viewCommandArgs)
+							)} "View ${typeString}")`;
+						}
+
+						if (m.externalContent.actions && m.externalContent.actions.length) {
+							m.externalContent.actions.map(action => {
+								message += ` \n\n  [${action.label}](${action.uri})`;
+							});
+						}
 
 						// TODO: Add actions from the external content
 						// message += `__${m.creatorName}__, ${m.fromNow()} &nbsp; _(${m.formatDate()})_ ${

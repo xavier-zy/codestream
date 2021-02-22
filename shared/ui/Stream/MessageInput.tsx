@@ -94,6 +94,7 @@ interface State {
 	insertPrefix: string;
 	isPreviewing: boolean;
 	isDropTarget: boolean;
+	isPasteEvent: boolean;
 }
 
 interface ConnectedProps {
@@ -160,7 +161,8 @@ export class MessageInput extends React.Component<Props, State> {
 			formatCode: false,
 			insertPrefix: "",
 			isPreviewing: false,
-			isDropTarget: false
+			isDropTarget: false,
+			isPasteEvent: false
 		};
 	}
 
@@ -173,9 +175,11 @@ export class MessageInput extends React.Component<Props, State> {
 		if (this._contentEditable) {
 			this._contentEditable.htmlEl.addEventListener("paste", e => {
 				e.preventDefault();
+				this.setState({ isPasteEvent: true });
 				let text = e.clipboardData!.getData("text/plain");
 				text = asPastedText(text);
 				document.execCommand("insertText", false, text);
+				this.setState({ isPasteEvent: false });
 				// const text = e.clipboardData!.getData("text/plain");
 				// document.execCommand("insertHTML", false, text.replace(/\n/g, "<br>"));
 				if (this.props.onPaste) {
@@ -225,10 +229,18 @@ export class MessageInput extends React.Component<Props, State> {
 		this.disposables.forEach(d => d.dispose());
 	}
 
+	onChangeWrapper(text: string, formatCode: boolean) {
+		if (!this.props.onChange) return;
+		if (this.state.isPasteEvent) {
+			text = text.replace(/```\s*?```/g, "```");
+		}
+		this.props.onChange(text, formatCode);
+	}
+
 	quotePost() {
 		if (this._contentEditable) {
 			this._contentEditable.htmlEl.innerHTML = "";
-			this.props.onChange && this.props.onChange("", false);
+			this.onChangeWrapper("", false);
 		}
 		this.focus(() => {
 			const post = this.props.quotePost!;
@@ -601,8 +613,7 @@ export class MessageInput extends React.Component<Props, State> {
 		}
 
 		// track newPostText as the user types
-		this.props.onChange &&
-			this.props.onChange(this._contentEditable!.htmlEl.innerHTML, this.state.formatCode);
+		this.onChangeWrapper(this._contentEditable!.htmlEl.innerHTML, this.state.formatCode);
 		this.setState({
 			// autoMentions: this.state.autoMentions.filter(mention => newPostText.includes(mention)), // TODO
 			cursorPosition: getCurrentCursorPosition("input-div")
@@ -681,9 +692,7 @@ export class MessageInput extends React.Component<Props, State> {
 			sel.modify("move", "forward", "character");
 			// window.getSelection().empty();
 			// this.focus();
-
-			this.props.onChange &&
-				this.props.onChange(this._contentEditable!.htmlEl.innerHTML, this.state.formatCode);
+			this.onChangeWrapper(this._contentEditable!.htmlEl.innerHTML, this.state.formatCode);
 			this.setState({
 				cursorPosition: getCurrentCursorPosition("input-div")
 			});
@@ -723,8 +732,7 @@ export class MessageInput extends React.Component<Props, State> {
 			// window.getSelection().empty();
 			// this.focus();
 
-			this.props.onChange &&
-				this.props.onChange(this._contentEditable.htmlEl.innerHTML, this.state.formatCode);
+			this.onChangeWrapper(this._contentEditable.htmlEl.innerHTML, this.state.formatCode);
 			this.setState({
 				cursorPosition: getCurrentCursorPosition("input-div")
 			});
@@ -1282,8 +1290,7 @@ export class MessageInput extends React.Component<Props, State> {
 		this.focus(() => {
 			this.setCurrentCursorPosition(this.state.cursorPosition);
 			this.setState({ formatCode });
-			this.props.onChange &&
-				this.props.onChange(this._contentEditable!.htmlEl.innerHTML, formatCode);
+			this.onChangeWrapper(this._contentEditable!.htmlEl.innerHTML, formatCode);
 		});
 	};
 
@@ -1564,4 +1571,7 @@ const mapStateToProps = (
 	};
 };
 
-export default connect(mapStateToProps, { ...actions })(MessageInput);
+export default connect(
+	mapStateToProps,
+	{ ...actions }
+)(MessageInput);

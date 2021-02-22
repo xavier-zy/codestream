@@ -153,6 +153,7 @@ export interface ThirdPartyProvider {
 	readonly name: string;
 	readonly displayName: string;
 	readonly icon: string;
+	hasTokenError?: boolean;
 	connect(): Promise<void>;
 	configure(data: { [key: string]: any }): Promise<void>;
 	disconnect(request: ThirdPartyDisconnect): Promise<void>;
@@ -290,6 +291,10 @@ export abstract class ThirdPartyProviderBase<
 		}
 
 		return false;
+	}
+
+	get hasTokenError() {
+		return this._providerInfo?.tokenError != null;
 	}
 
 	getConnectionData() {

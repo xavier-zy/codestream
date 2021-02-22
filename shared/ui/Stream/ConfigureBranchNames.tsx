@@ -6,6 +6,7 @@ import styled from "styled-components";
 import { Button } from "../src/components/Button";
 import { UpdateTeamSettingsRequestType } from "@codestream/protocols/agent";
 import { Dialog, ButtonRow } from "../src/components/Dialog";
+import { Checkbox } from "../src/components/Checkbox";
 
 const Root = styled.div`
 	h3 {
@@ -25,16 +26,14 @@ export const ConfigureBranchNames = (props: { onClose: Function }) => {
 			teamId,
 			branchMaxLength: settings.branchMaxLength,
 			branchTicketTemplate: settings.branchTicketTemplate,
-			branchDescriptionTemplate: settings.branchDescriptionTemplate
+			branchPreserveCase: settings.branchPreserveCase
 		};
 	});
 
 	const [branchMaxLength, setBranchMaxLength] = useState(derivedState.branchMaxLength || 40);
+	const [branchPreserveCase, setBranchPreserveCase] = useState(!!derivedState.branchPreserveCase);
 	const [branchTicketTemplate, setBranchTicketTemplate] = useState(
 		derivedState.branchTicketTemplate
-	);
-	const [branchDescriptionTemplate, setBranchDescriptionTemplate] = useState(
-		derivedState.branchDescriptionTemplate
 	);
 
 	const save = async () => {
@@ -42,7 +41,7 @@ export const ConfigureBranchNames = (props: { onClose: Function }) => {
 			teamId: derivedState.teamId,
 			// we need to replace . with * to allow for the creation of deeply-nested
 			// team settings, since that's how they're stored in mongo
-			settings: { branchMaxLength, branchTicketTemplate, branchDescriptionTemplate }
+			settings: { branchMaxLength, branchTicketTemplate, branchPreserveCase }
 		});
 		props.onClose();
 	};
@@ -81,18 +80,6 @@ export const ConfigureBranchNames = (props: { onClose: Function }) => {
 								placeholder="Example: feature/jira-{id}"
 							/>
 						</div>
-						{/*<br />
-						<div id="controls">
-							<h3>When creating a branch from a description:</h3>
-							<input
-								name="branchDescriptionTemplate"
-								value={branchDescriptionTemplate}
-								className="input-text control"
-								type="text"
-								onChange={e => setBranchDescriptionTemplate(e.target.value)}
-								placeholder="Example: feature/{username}/{title}"
-							/>
-						</div>*/}
 						<div style={{ margin: "30px 0 30px 0" }}>
 							<h3>Available tokens:</h3>
 							<Token text="username" tip="Your CodeStream username" />
@@ -111,6 +98,16 @@ export const ConfigureBranchNames = (props: { onClose: Function }) => {
 								type="text"
 								onChange={e => setBranchMaxLength(e.target.value.replace(/\D/g, ""))}
 							/>
+						</div>
+						<div style={{ height: "20px" }} />
+						<div id="controls">
+							<Checkbox
+								name="preserve-case"
+								checked={!branchPreserveCase}
+								onChange={() => setBranchPreserveCase(!branchPreserveCase)}
+							>
+								Lowercase Branch Names
+							</Checkbox>
 						</div>
 						<div style={{ height: "20px" }} />
 						<ButtonRow>

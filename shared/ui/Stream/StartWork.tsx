@@ -445,6 +445,7 @@ export const StartWork = (props: Props) => {
 			branchMaxLength: settings.branchMaxLength || 40,
 			defaultBranchTicketTemplate,
 			branchTicketTemplate: settings.branchTicketTemplate || defaultBranchTicketTemplate,
+			branchPreserveCase: settings.branchPreserveCase,
 			createBranch: Object.keys(workPrefs).includes("createBranch") ? workPrefs.createBranch : true,
 			moveCard: Object.keys(workPrefs).includes("moveCard") ? workPrefs.moveCard : true,
 			updateSlack: isConnectedToSlack ? updateSlack : false,
@@ -547,17 +548,19 @@ export const StartWork = (props: Props) => {
 			providerToken = card.providerToken;
 		}
 
-		return template
+		const str = template
 			.replace(/\{id\}/g, tokenId)
 			.replace(/\{username\}/g, derivedState.currentUserName)
 			.replace(/\{team\}/g, derivedState.teamName)
 			.replace(/\{date\}/g, dateToken())
-			.replace(/\{title\}/g, title.toLowerCase())
+			.replace(/\{title\}/g, title)
 			.replace(/\{provider\}/g, providerToken)
 			.replace(/["\\|<>\*\?:]/g, "")
 			.trim()
 			.replace(/[\s]+/g, "-")
 			.substr(0, derivedState.branchMaxLength);
+
+		return derivedState.branchPreserveCase ? str : str.toLowerCase();
 	};
 
 	const fetchBranchCommitsStatus = async () => {
@@ -670,7 +673,13 @@ export const StartWork = (props: Props) => {
 			replaceTicketTokens(derivedState.branchTicketTemplate, card, label) ||
 			replaceTicketTokens(derivedState.defaultBranchTicketTemplate, card, label)
 		);
-	}, [label, card, customBranchName, derivedState.branchTicketTemplate]);
+	}, [
+		label,
+		card,
+		customBranchName,
+		derivedState.branchTicketTemplate,
+		derivedState.branchPreserveCase
+	]);
 
 	const branch = React.useMemo(() => {
 		if (customBranchName) return customBranchName;
@@ -679,7 +688,13 @@ export const StartWork = (props: Props) => {
 			replaceTicketTokens(derivedState.branchTicketTemplate, card, label) ||
 			replaceTicketTokens(derivedState.defaultBranchTicketTemplate, card, label)
 		);
-	}, [label, card, customBranchName, derivedState.branchTicketTemplate]);
+	}, [
+		label,
+		card,
+		customBranchName,
+		derivedState.branchTicketTemplate,
+		derivedState.branchPreserveCase
+	]);
 
 	const save = async () => {
 		setLoading(true);

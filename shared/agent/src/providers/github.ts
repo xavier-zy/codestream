@@ -8,7 +8,7 @@ import { CodeStreamSession } from "session";
 import { URI } from "vscode-uri";
 import { InternalError, ReportSuppressedMessages } from "../agentError";
 import { SessionContainer } from "../container";
-import { Logger, TraceLevel } from "../logger";
+import { Logger } from "../logger";
 import {
 	CreateThirdPartyCardRequest,
 	DidChangePullRequestCommentsNotificationType,
@@ -243,6 +243,12 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 		) {
 			return ReportSuppressedMessages.ConnectionError;
 		} else if (
+			(ex?.response?.message || ex?.message || "").indexOf(
+				"enabled OAuth App access restrictions"
+			) > -1
+		) {
+			return ReportSuppressedMessages.OAuthAppAccessRestrictionError;
+		} else if (
 			(ex.response && ex.response.message === "Bad credentials") ||
 			(ex.response &&
 				ex.response.errors instanceof Array &&
@@ -276,7 +282,11 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 							tokenError: {
 								error: ex,
 								occurredAt: Date.now(),
-								isConnectionError: exType === ReportSuppressedMessages.ConnectionError
+								isConnectionError: exType === ReportSuppressedMessages.ConnectionError,
+								providerMessage:
+									exType === ReportSuppressedMessages.OAuthAppAccessRestrictionError
+										? ex?.response?.message || ex?.message
+										: null
 							}
 						}
 					});

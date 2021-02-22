@@ -26,13 +26,17 @@ export class ServerError extends AgentError {
 }
 
 export enum ReportSuppressedMessages {
-	AccessTokenInvalid = "Access token invalid",	// for errors with access tokens, that are probably permanent
-	ConnectionError = "Connection error",			// for connection errors, probably related to the url
-	NetworkError = "Network error"					// for network errors that are probably temporary
+	/* for errors with access tokens, that are probably permanent */
+	AccessTokenInvalid = "Access token invalid",
+	/* for connection errors, probably related to the url*/
+	ConnectionError = "Connection error",
+	/* for network errors that are probably temporary */
+	NetworkError = "Network error",
+	/* OAuth app access restrictions */
+	OAuthAppAccessRestrictionError = "OAuth app access restriction error"
 }
 
 export class InternalError extends AgentError {
-
 	public suppressReporting: boolean;
 
 	constructor(message: string, info: any = {}) {

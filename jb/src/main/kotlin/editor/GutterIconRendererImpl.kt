@@ -257,7 +257,7 @@ private fun telemetryPr(project: Project, isDiff: Boolean, host: String) {
 
     val params = TelemetryParams(
         "PR Comment Clicked",
-        mapOf("Host" to host, "Codemark Location" to codemarkLocation)
+        mapOf("Host" to host, "Comment Location" to codemarkLocation)
     )
     project.agentService?.agent?.telemetry(params)
 }

@@ -247,13 +247,16 @@ export const PullRequest = () => {
 				derivedState.currentPullRequestProviderId!,
 				derivedState.currentPullRequestId!
 			)
-		)) as any;
+		)) as {
+			error?: {
+				message: string;
+			};
+		};
 		setGeneralError("");
-		if (response.error) {
-			// FIXME do something with it
+		if (response.error && response.error.message) {
 			setIsLoadingPR(false);
 			setIsLoadingMessage("");
-			setGeneralError(response.error);
+			setGeneralError(response.error.message);
 		} else {
 			_assignState(response);
 		}
@@ -592,13 +595,13 @@ export const PullRequest = () => {
 		breakpoint: breakpoints[derivedState.viewPreference]
 	});
 
-	console.warn("PR: ", pr);
-	// console.warn("REPO: ", ghRepo);
 	if (!pr) {
 		if (generalError) {
 			return (
 				<div style={{ display: "flex", height: "100vh", alignItems: "center" }}>
-					<div style={{ textAlign: "center" }}>Error: {generalError}</div>
+					<div style={{ textAlign: "center", width: "100%" }}>
+						Error Loading Pull Request: {generalError}
+					</div>
 				</div>
 			);
 		} else {
@@ -612,8 +615,6 @@ export const PullRequest = () => {
 		const statusIcon = pr.state === "OPEN" || pr.state === "CLOSED" ? "pull-request" : "git-merge";
 		const action = pr.merged ? "merged " : "wants to merge ";
 
-		// console.log(pr.files);
-		// console.log(pr.commits);
 		return (
 			<ThemeProvider theme={addViewPreferencesToTheme}>
 				<Root className="panel full-height">

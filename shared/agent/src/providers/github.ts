@@ -673,8 +673,8 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 		}
 
 		let response = {} as FetchThirdPartyPullRequestResponse;
-		let repoOwner: string;
-		let repoName: string;
+		let repoOwner: string | undefined = undefined;
+		let repoName: string | undefined = undefined;
 		let allTimelineItems: any = [];
 		try {
 			let timelineQueryResponse;
@@ -693,57 +693,69 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 					repoName,
 					pullRequestNumber,
 					timelineQueryResponse &&
-						timelineQueryResponse.repository.pullRequest &&
-						timelineQueryResponse.repository.pullRequest.timelineItems.pageInfo &&
-						timelineQueryResponse.repository.pullRequest.timelineItems.pageInfo.endCursor
+						timelineQueryResponse?.repository?.pullRequest?.timelineItems?.pageInfo?.endCursor
 				);
 				if (timelineQueryResponse === undefined) break;
 				response = timelineQueryResponse;
 
-				allTimelineItems = allTimelineItems.concat(
-					timelineQueryResponse.repository.pullRequest.timelineItems.nodes
-				);
-			} while (timelineQueryResponse.repository.pullRequest.timelineItems.pageInfo.hasNextPage);
-		} catch (ex) {
-			Logger.error(ex);
-		}
-		if (response?.repository?.pullRequest) {
-			const { repos } = SessionContainer.instance();
-			const prRepo = await this.getPullRequestRepo(
-				await repos.get(),
-				response.repository.pullRequest
+				if (timelineQueryResponse?.repository?.pullRequest?.timelineItems?.nodes) {
+					allTimelineItems = allTimelineItems.concat(
+						timelineQueryResponse.repository.pullRequest.timelineItems.nodes
+					);
+				}
+			} while (
+				timelineQueryResponse?.repository?.pullRequest?.timelineItems?.pageInfo?.hasNextPage ===
+				true
 			);
 
-			if (prRepo?.id) {
-				try {
-					const prForkPointSha = await scmManager.getForkPointRequestType({
-						repoId: prRepo.id,
-						baseSha: response.repository.pullRequest.baseRefOid,
-						headSha: response.repository.pullRequest.headRefOid
-					});
+			if (response?.repository?.pullRequest) {
+				const { repos } = SessionContainer.instance();
+				const prRepo = await this.getPullRequestRepo(
+					await repos.get(),
+					response.repository.pullRequest
+				);
 
-					response.repository.pullRequest.forkPointSha = prForkPointSha?.sha;
-				} catch (err) {
-					Logger.error(err, `Could not find forkPoint for repoId=${prRepo.id}`);
+				if (prRepo?.id) {
+					try {
+						const prForkPointSha = await scmManager.getForkPointRequestType({
+							repoId: prRepo.id,
+							baseSha: response.repository.pullRequest.baseRefOid,
+							headSha: response.repository.pullRequest.headRefOid
+						});
+
+						response.repository.pullRequest.forkPointSha = prForkPointSha?.sha;
+					} catch (err) {
+						Logger.error(err, `Could not find forkPoint for repoId=${prRepo.id}`);
+					}
 				}
+
+				if (response.repository.pullRequest.timelineItems != null) {
+					response.repository.pullRequest.timelineItems.nodes = allTimelineItems;
+				}
+				response.repository.pullRequest.repoUrl = response.repository.url;
+				response.repository.pullRequest.baseUrl = response.repository.url.replace(
+					response.repository.resourcePath,
+					""
+				);
+
+				response.repository.repoOwner = repoOwner!;
+				response.repository.repoName = repoName!;
+
+				response.repository.pullRequest.providerId = this.providerConfig.id;
+				response.repository.providerId = this.providerConfig.id;
+
+				this._pullRequestCache.set(request.pullRequestId, response);
 			}
+		} catch (ex) {
+			Logger.error(ex, "getPullRequest", {
+				request: request
+			});
+			return {
+				error: {
+					message: ex.message
+				}
+			} as any;
 		}
-		if (response?.repository?.pullRequest?.timelineItems != null) {
-			response.repository.pullRequest.timelineItems.nodes = allTimelineItems;
-		}
-		response.repository.pullRequest.repoUrl = response.repository.url;
-		response.repository.pullRequest.baseUrl = response.repository.url.replace(
-			response.repository.resourcePath,
-			""
-		);
-
-		response.repository.repoOwner = repoOwner!;
-		response.repository.repoName = repoName!;
-
-		response.repository.pullRequest.providerId = this.providerConfig.id;
-		response.repository.providerId = this.providerConfig.id;
-
-		this._pullRequestCache.set(request.pullRequestId, response);
 		return response;
 	}
 

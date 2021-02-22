@@ -609,6 +609,9 @@ interface RateLimit {
 }
 
 export interface FetchThirdPartyPullRequestResponse {
+	error?: {
+		message: string;
+	};
 	rateLimit: RateLimit;
 	repository: FetchThirdPartyPullRequestRepository;
 	viewer: {

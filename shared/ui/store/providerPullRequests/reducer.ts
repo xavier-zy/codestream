@@ -358,7 +358,9 @@ export const getProviderPullRequestRepo = createSelector(
 		let currentRepo: CSRepository | undefined = undefined;
 
 		try {
-			if (!currentPr || !currentPr.conversations) return undefined;
+			if (!currentPr || !currentPr.conversations || !currentPr.conversations.repository) {
+				return undefined;
+			}
 			const repoName = currentPr.conversations.repository.repoName.toLowerCase();
 			const repoUrl = currentPr.conversations.repository.url.toLowerCase();
 

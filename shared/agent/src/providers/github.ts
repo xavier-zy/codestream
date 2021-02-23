@@ -58,6 +58,7 @@ import {
 	ThirdPartyProviderSupportsPullRequests
 } from "./provider";
 import { toRepoName } from "../git/utils";
+import { performance } from "perf_hooks";
 
 interface GitHubRepo {
 	id: string;
@@ -266,11 +267,12 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 			throw new InternalError(ReportSuppressedMessages.AccessTokenInvalid);
 		}
 
+		const starting = performance.now();
 		let response;
 		try {
-			response = await (await this.client()).request<any>(query, variables);
+			response = await (await this.client()).request<T>(query, variables);
 		} catch (ex) {
-			Logger.warn("GitHub query caught:", ex);
+			Logger.warn(`GitHub query caught (elapsed=${performance.now() - starting}ms):`, ex);
 			const exType = this._isSuppressedException(ex);
 			if (exType !== undefined) {
 				if (exType !== ReportSuppressedMessages.NetworkError) {

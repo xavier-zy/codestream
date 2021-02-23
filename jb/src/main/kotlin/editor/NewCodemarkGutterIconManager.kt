@@ -1,5 +1,7 @@
 package com.codestream.editor
 
+import com.codestream.extensions.file
+import com.codestream.review.ReviewDiffVirtualFile
 import com.codestream.settings.ApplicationSettingsService
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.editor.Editor
@@ -19,12 +21,13 @@ import kotlin.math.min
 class NewCodemarkGutterIconManager(val editor: Editor) : EditorMouseMotionListener, SelectionListener {
 
     val settingsService = ServiceManager.getService(ApplicationSettingsService::class.java)
+    private val isCSDiff = editor.document.file is ReviewDiffVirtualFile
 
     init {
         editor.selectionModel.addSelectionListener(this)
         val appSettings = ServiceManager.getService(ApplicationSettingsService::class.java)
         editor.addEditorMouseMotionListener(this)
-        if (appSettings.showNewCodemarkGutterIconOnHover) {
+        if (isCSDiff && appSettings.showNewCodemarkGutterIconOnHover) {
             (editor as EditorEx).gutterComponentEx.setInitialIconAreaWidth(20)
         }
     }
@@ -44,7 +47,7 @@ class NewCodemarkGutterIconManager(val editor: Editor) : EditorMouseMotionListen
             val line = editor.xyToLogicalPosition(e.mouseEvent.point).line
             if (line != lastHighlightedLine && !editor.selectionModel.hasSelection() && line < editor.document.lineCount) {
                 disableCurrentRenderer()
-                if (settingsService.state.showNewCodemarkGutterIconOnHover) enableRenderer(line)
+                if (isCSDiff && settingsService.state.showNewCodemarkGutterIconOnHover) enableRenderer(line)
             }
         } else if (!editor.selectionModel.hasSelection()) {
             disableCurrentRenderer()

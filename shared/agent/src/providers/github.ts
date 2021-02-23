@@ -4397,11 +4397,8 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 			// MORE here: https://github.community/t/bug-v4-graphql-api-trouble-retrieving-pull-request-review-comments/13708/2
 
 			if (
-				response.repository.pullRequest.timelineItems.nodes &&
-				response.repository &&
-				response.repository.pullRequest &&
-				response.repository.pullRequest.reviewThreads &&
-				response.repository.pullRequest.reviewThreads.edges
+				response?.repository?.pullRequest?.timelineItems?.nodes &&
+				response?.repository?.pullRequest?.reviewThreads?.edges
 			) {
 				// find all the PullRequestReview timelineItems as we will attach
 				// additional data to them
@@ -4461,8 +4458,8 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 			// note the graphql for this.. it's the _first_ X not the _last_ X
 			// you'd think last would mean the last as in most recent, but it's actually the opposite
 			if (
-				response.repository.pullRequest.reviews &&
-				response.repository.pullRequest.reviews.nodes
+				response?.repository?.pullRequest?.reviews &&
+				response?.repository?.pullRequest?.reviews?.nodes
 			) {
 				// here we're looking for your last pending review as you can only have 1 pending review
 				// per user per PR
@@ -4474,7 +4471,9 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 					response.repository.pullRequest.pendingReview = myPendingReview;
 				}
 			}
-			response.repository.pullRequest.viewer = { ...response.viewer };
+			if (response?.repository?.pullRequest) {
+				response.repository.pullRequest.viewer = { ...response.viewer };
+			}
 
 			Logger.debug(
 				`pullRequestTimelineQuery rateLimit=${JSON.stringify(response.rateLimit)} cursor=${cursor}`

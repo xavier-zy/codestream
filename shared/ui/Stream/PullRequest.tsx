@@ -212,8 +212,9 @@ export const PullRequest = () => {
 		}
 	`;
 
-	const _assignState = pr => {
-		if (!pr) return;
+	const _assignState = (pr, src?: string) => {
+		if (!pr || !pr.repository) return;
+		console.warn("_assignState src", src);
 		setGhRepo(pr.repository);
 		setPr(pr.repository.pullRequest);
 		setTitle(pr.repository.pullRequest.title);
@@ -228,8 +229,8 @@ export const PullRequest = () => {
 			derivedState.providerPullRequests[derivedState.currentPullRequestProviderId!];
 		if (providerPullRequests) {
 			let data = providerPullRequests[derivedState.currentPullRequestId!];
-			if (data) {
-				_assignState(data.conversations);
+			if (data && data.conversations) {
+				_assignState(data.conversations, "useEffect");
 			}
 		}
 	}, [
@@ -257,8 +258,9 @@ export const PullRequest = () => {
 			setIsLoadingPR(false);
 			setIsLoadingMessage("");
 			setGeneralError(response.error.message);
+			console.error(response.error.message);
 		} else {
-			_assignState(response);
+			_assignState(response, "initialFetch");
 		}
 	};
 
@@ -276,7 +278,7 @@ export const PullRequest = () => {
 				derivedState.currentPullRequestId!
 			)
 		)) as any;
-		_assignState(response);
+		_assignState(response, "fetch");
 	};
 
 	/**
@@ -294,7 +296,7 @@ export const PullRequest = () => {
 				derivedState.currentPullRequestId!
 			)
 		)) as any;
-		_assignState(response);
+		_assignState(response, "reload");
 
 		// just clear the files and commits data -- it will be fetched if necessary (since it has its own api call)
 		dispatch(
@@ -599,8 +601,12 @@ export const PullRequest = () => {
 		if (generalError) {
 			return (
 				<div style={{ display: "flex", height: "100vh", alignItems: "center" }}>
-					<div style={{ textAlign: "center", width: "100%" }}>
-						Error Loading Pull Request: {generalError}
+					<div style={{ textAlign: "left", width: "100%" }}>
+						Error Loading Pull Request:
+						<br />
+						<div style={{ overflow: "auto", width: "100%", height: "7vh" }}>
+							{generalError.replace(/\\t/g, "     ").replace(/\\n/g, "")}
+						</div>
 					</div>
 				</div>
 			);

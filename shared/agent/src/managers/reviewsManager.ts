@@ -1,5 +1,4 @@
 "use strict";
-import { applyPatch } from "diff";
 import * as path from "path";
 import { URI } from "vscode-uri";
 import { MessageType } from "../api/apiProvider";
@@ -403,6 +402,7 @@ export class ReviewsManager extends CachedEntityManagerBase<CSReview> {
 		const leftDiff = diff.leftDiffs.find(
 			d => d.newFileName === fileInfo.oldFile || d.oldFileName === fileInfo.oldFile
 		);
+
 		const leftBaseRelativePath =
 			(leftDiff && leftDiff.oldFileName !== "/dev/null" && leftDiff.oldFileName) ||
 			fileInfo.oldFile;
@@ -426,21 +426,14 @@ export class ReviewsManager extends CachedEntityManagerBase<CSReview> {
 		const leftBaseContents = isNewFile
 			? ""
 			: (await git.getFileContentForRevision(leftBasePath, diff.leftBaseSha)) || "";
-		const normalizedLeftBaseContents = Strings.normalizeFileContents(leftBaseContents);
-		const leftContents =
-			leftDiff !== undefined
-				? applyPatch(normalizedLeftBaseContents, leftDiff)
-				: normalizedLeftBaseContents;
+		const leftContents = Strings.applyPatchToNormalizedContents(leftBaseContents, leftDiff);
+
 		const rightBaseContents = isNewFile
 			? ""
 			: diff.leftBaseSha === diff.rightBaseSha
 			? leftBaseContents
 			: (await git.getFileContentForRevision(rightBasePath, diff.rightBaseSha)) || "";
-		const normalizedRightBaseContents = Strings.normalizeFileContents(rightBaseContents);
-		const rightContents =
-			rightDiff !== undefined
-				? applyPatch(normalizedRightBaseContents, rightDiff)
-				: normalizedRightBaseContents;
+		const rightContents = Strings.applyPatchToNormalizedContents(rightBaseContents, rightDiff);
 
 		return {
 			repoRoot: repo.path,

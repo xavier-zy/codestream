@@ -1,5 +1,6 @@
 "use strict";
 import { createHash, HexBase64Latin1Encoding } from "crypto";
+import { applyPatch, ParsedDiff } from "diff";
 import * as eol from "eol";
 import * as path from "path";
 import { isWindows } from "../git/shell";
@@ -352,13 +353,22 @@ export namespace Strings {
 		return false;
 	}
 
-	export function normalizeFileContents(contents: string): string {
+	export function normalizeFileContents(
+		contents: string,
+		options?: { preserveEof: boolean }
+	): string {
 		if (!contents) return contents;
 		// if there is a BOM at the beginning, strip it
 		if (contents.charCodeAt(0) === 65279) {
 			contents = contents.substring(1);
 		}
-		return stripEof(eol.auto(contents));
+
+		const normalizedEolContents = eol.auto(contents);
+		if (options?.preserveEof) {
+			return normalizedEolContents;
+		} else {
+			return stripEof(normalizedEolContents);
+		}
 	}
 
 	function stripEof(x: any) {
@@ -373,6 +383,27 @@ export namespace Strings {
 			x = x.slice(0, x.length - 1);
 		}
 		return x;
+	}
+
+	export function applyPatchToNormalizedContents(
+		baseContents: string,
+		patch: ParsedDiff | undefined
+	) {
+		const normalizedEolBaseContents = Strings.normalizeFileContents(baseContents, {
+			// Diffs from git may expect a trailing newline, so we need to preserve it
+			preserveEof: true
+		});
+		let patchedContents = normalizedEolBaseContents;
+		if (patch !== undefined) {
+			patchedContents = applyPatch(normalizedEolBaseContents, patch);
+			// @ts-ignore applyPatch returns false if patch is not compatible
+			if (patchedContents === false) {
+				// In-memory diffs may have been generated from contents where the trailing newline was trimmed
+				const normalizeEolEofBaseContents = Strings.normalizeFileContents(baseContents);
+				patchedContents = applyPatch(normalizeEolEofBaseContents, patch);
+			}
+		}
+		return patchedContents;
 	}
 
 	/** converts an absolute file system path to a file uri

@@ -1,7 +1,4 @@
-<p align="center" style="background:#0099EF;">  
-  <img src="https://raw.githubusercontent.com/TeamCodeStream/codestream-guide/develop/docs/src/assets/images/Devies100px.png" alt="Devie Award" style="width:60px;vertical-align:middle;" />
-&nbsp;Winner of the 2021 Devie Award for <b>Best Coding Tool</b>&nbsp; <a href="https://www.codestream.com/blog/winner-of-the-2021-devie-for-best-coding-tool-codestream" style="background:#fff; padding:2px 4px; font-size:.9em; border-radius:3px">Learn More</a>
-</p>
+[![Devie Award](https://raw.githubusercontent.com/TeamCodeStream/codestream-guide/develop/docs/src/assets/images/devie_banner.png)](https://www.codestream.com/blog/winner-of-the-2021-devie-for-best-coding-tool-codestream)
 
 # CodeStream
 

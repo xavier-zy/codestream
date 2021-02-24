@@ -585,10 +585,12 @@ export abstract class ThirdPartyProviderBase<
 	private async handleErrorResponse(response: Response): Promise<Error> {
 		let message = response.statusText;
 		let data;
-		Logger.debug("Error Response: ", JSON.stringify(response, null, 4));
+		Logger.debug("handleErrorResponse: ", JSON.stringify(response, null, 4));
 		if (response.status >= 400 && response.status < 500) {
 			try {
 				data = await response.json();
+				// warn as not to trigger a sentry but still have it be in the user's log
+				Logger.warn(`handleErrorResponse:json: ${data}`);
 				if (data.code) {
 					message += `(${data.code})`;
 				}
@@ -602,6 +604,13 @@ export abstract class ThirdPartyProviderBase<
 					for (const error of data.errors) {
 						if (error.message) {
 							message += `\n${error.message}`;
+						}
+						// GitHub will return these properties
+						else if (error.resource && error.field && error.code) {
+							message += `\n${error.resource} field ${error.field} ${error.code}`;
+						} else {
+							// else give _something_ to the user
+							message += `\n${JSON.stringify(error)}`;
 						}
 					}
 				}

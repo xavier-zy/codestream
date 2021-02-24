@@ -104,6 +104,8 @@ export class GitHubEnterpriseProvider extends GitHubProvider {
 
 		if (!(await this.isPRApiCompatible())) return undefined;
 
+		let owner;
+		let name;
 		try {
 			const repoInfo = await this.getRepoInfo({ remote: request.remote });
 			if (repoInfo && repoInfo.error) {
@@ -111,7 +113,7 @@ export class GitHubEnterpriseProvider extends GitHubProvider {
 					error: repoInfo.error
 				};
 			}
-			const { owner, name } = this.getOwnerFromRemote(request.remote);
+			({ owner, name } = this.getOwnerFromRemote(request.remote));
 
 			const createPullRequestResponse = await this.post<
 				GitHubEnterpriseCreatePullRequestRequest,
@@ -130,8 +132,10 @@ export class GitHubEnterpriseProvider extends GitHubProvider {
 				title: title
 			};
 		} catch (ex) {
-			Logger.error(ex, `${this.displayName}: createPullRequest`, {
+			Logger.error(ex, `${this.displayName}: createPullRequest request`, {
 				remote: request.remote,
+				owner: owner,
+				name: name,
 				head: request.headRefName,
 				base: request.baseRefName
 			});

@@ -134,11 +134,22 @@ export const isConnectedSelectorFriendly = (
 		const providerName = option.name;
 		const info = getUserProviderInfo(currentUser, providerName, currentTeamId);
 		switch (providerName) {
-			case "jiraserver":
 			case "github_enterprise":
 			case "gitlab_enterprise":
 			case "bitbucket_server": {
-				// enterprise/on-prem providers need the `hosts` validated
+				// these providers now only depend on having a personal access token
+				if (info != undefined) {
+					const isConnected = info.accessToken != undefined;
+					if (isConnected && accessTokenError) {
+						// see comment on accessTokenError in the method parameters, above
+						accessTokenError.accessTokenError = info.tokenError;
+					}
+					return isConnected;
+				}
+				return false;
+			}
+			case "jiraserver": {
+				// jiraserver is now the only enterprise/on-prem provider that actually uses hosts
 				return (
 					info != undefined &&
 					info.hosts != undefined &&

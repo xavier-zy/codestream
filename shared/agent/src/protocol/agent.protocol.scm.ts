@@ -481,6 +481,7 @@ export interface FetchForkPointRequest {
 	repoId: string;
 	baseSha: string;
 	headSha: string;
+	ref?: string;
 }
 
 export interface FetchForkPointResponse {

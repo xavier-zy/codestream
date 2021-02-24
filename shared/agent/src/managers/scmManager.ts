@@ -1503,6 +1503,9 @@ export class ScmManager {
 			};
 		}
 		try {
+			if (repo && request.ref) {
+				await git.fetchReference(repo, request.ref);
+			}
 			const shas = [request.baseSha, request.headSha];
 			const results = await Promise.all(
 				shas.map(sha => git.isValidReference(repoPath as string, sha))
@@ -1548,9 +1551,7 @@ export class ScmManager {
 
 	@log()
 	@lspHandler(GetCommitsFilesRequestType)
-	async getCommitsFiles(
-		request: GetCommitsFilesRequest
-	): Promise<GetCommitsFilesResponse[]> {
+	async getCommitsFiles(request: GetCommitsFilesRequest): Promise<GetCommitsFilesResponse[]> {
 		const changedFiles: GetCommitsFilesResponse[] = [];
 		const { git, scm: scmManager, repositoryMappings } = SessionContainer.instance();
 
@@ -1570,7 +1571,9 @@ export class ScmManager {
 			const commitChanges = await git.getCommitChanges(repoPath, request.commits[0]);
 			if (commitChanges) {
 				commitChanges.map(commitChange => {
-					const filename = commitChange.newFileName ? commitChange.newFileName.replace("b/", "") : "";
+					const filename = commitChange.newFileName
+						? commitChange.newFileName.replace("b/", "")
+						: "";
 					commitChange.hunks.map(hunk => {
 						changedFiles.push({
 							sha: request.commits ? request.commits[0] : "",

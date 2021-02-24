@@ -351,18 +351,11 @@ export class GitService implements IGitService, Disposable {
 		commitHash: string
 	): Promise<ParsedDiffPatch[] | undefined> {
 		try {
-			const data = await git(
-				{ cwd: repoPath },
-				"diff",
-				"--no-ext-diff",
-				`${commitHash}^!`
-			);
+			const data = await git({ cwd: repoPath }, "diff", "--no-ext-diff", `${commitHash}^!`);
 
 			return GitPatchParser.parse(data);
 		} catch (err) {
-			Logger.warn(
-				`Error getting diff from ${commitHash}`
-			);
+			Logger.warn(`Error getting diff from ${commitHash}`);
 			throw err;
 		}
 	}
@@ -647,6 +640,18 @@ export class GitService implements IGitService, Disposable {
 		const filePath = typeof uriOrPath === "string" ? uriOrPath : uriOrPath.fsPath;
 
 		return this._gitServiceLite.getRepoRoot(filePath);
+	}
+
+	async fetchReference(repo: GitRepository, ref: string): Promise<void> {
+		const remotes = await repo.getWeightedRemotes();
+		for (const remote of remotes) {
+			try {
+				await git({ cwd: repo.path }, "fetch", remote.name, ref);
+				Logger.log(`Fetched ref ${ref} from ${remote.name} in ${repo.path}`);
+				return;
+			} catch (ignore) {}
+		}
+		Logger.log(`Could not find ref ${ref} in any remote of ${repo.path}`);
 	}
 
 	async getCommit(repoUri: URI, ref: string): Promise<GitCommit | undefined>;

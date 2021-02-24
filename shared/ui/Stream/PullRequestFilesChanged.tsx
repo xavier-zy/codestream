@@ -130,7 +130,9 @@ export const PullRequestFilesChanged = (props: Props) => {
 					forkPointResponse = await HostApi.instance.send(FetchForkPointRequestType, {
 						repoId: derivedState.currentRepo!.id!,
 						baseSha: props.baseRef,
-						headSha: props.headRef
+						headSha: props.headRef,
+						// TODO check ref format for GitLab and Bitbucket
+						ref: props.pr && `refs/pull/${props.pr.number}/head`
 					});
 				} catch (ex) {
 					console.error(ex);
@@ -153,7 +155,9 @@ export const PullRequestFilesChanged = (props: Props) => {
 					const forkPointResponse = await HostApi.instance.send(FetchForkPointRequestType, {
 						repoId: derivedState.currentRepo!.id!,
 						baseSha: props.pr.baseRefOid,
-						headSha: props.pr.headRefOid
+						headSha: props.pr.headRefOid,
+						// TODO check ref format for GitLab and Bitbucket
+						ref: props.pr && `refs/pull/${props.pr.number}/head`
 					});
 					handleForkPointResponse(forkPointResponse);
 				} catch (err) {

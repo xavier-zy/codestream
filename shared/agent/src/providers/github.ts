@@ -275,10 +275,8 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 			Logger.warn(`GitHub query caught (elapsed=${performance.now() - starting}ms):`, ex);
 			const exType = this._isSuppressedException(ex);
 			if (exType !== undefined) {
-				if (exType !== ReportSuppressedMessages.NetworkError) {
-					this.trySetThirdPartyProviderInfo(ex, exType);
-					delete this._client;
-				}
+				this.trySetThirdPartyProviderInfo(ex, exType);
+
 				// this throws the error but won't log to sentry (for ordinary network errors that seem temporary)
 				throw new InternalError(exType, { error: ex });
 			} else {
@@ -4656,7 +4654,6 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 		if (!ex) return;
 
 		exType = exType || this._isSuppressedException(ex);
-
 		if (exType !== undefined && exType !== ReportSuppressedMessages.NetworkError) {
 			// we know about this error, and we want to give the user a chance to correct it
 			// (but throwing up a banner), rather than logging the error to sentry
@@ -4672,6 +4669,9 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 					}
 				}
 			});
+			if (this._client) {
+				delete this._client;
+			}
 		}
 	}
 

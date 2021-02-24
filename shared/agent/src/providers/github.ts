@@ -276,22 +276,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 			const exType = this._isSuppressedException(ex);
 			if (exType !== undefined) {
 				if (exType !== ReportSuppressedMessages.NetworkError) {
-					// we know about this error, and we want to give the user a chance to correct it
-					// (but throwing up a banner), rather than logging the error to sentry
-					this.session.api.setThirdPartyProviderInfo({
-						providerId: this.providerConfig.id,
-						data: {
-							tokenError: {
-								error: ex,
-								occurredAt: Date.now(),
-								isConnectionError: exType === ReportSuppressedMessages.ConnectionError,
-								providerMessage:
-									exType === ReportSuppressedMessages.OAuthAppAccessRestrictionError
-										? ex?.response?.message || ex?.message
-										: null
-							}
-						}
-					});
+					this.trySetThirdPartyProviderInfo(ex, exType);
 					delete this._client;
 				}
 				// this throws the error but won't log to sentry (for ordinary network errors that seem temporary)
@@ -4665,6 +4650,35 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 
 			throw ex;
 		}
+	}
+
+	private trySetThirdPartyProviderInfo(ex: Error, exType?: ReportSuppressedMessages | undefined) {
+		if (!ex) return;
+
+		exType = exType || this._isSuppressedException(ex);
+
+		if (exType !== undefined && exType !== ReportSuppressedMessages.NetworkError) {
+			// we know about this error, and we want to give the user a chance to correct it
+			// (but throwing up a banner), rather than logging the error to sentry
+			this.session.api.setThirdPartyProviderInfo({
+				providerId: this.providerConfig.id,
+				data: {
+					tokenError: {
+						error: ex,
+						occurredAt: Date.now(),
+						isConnectionError: exType === ReportSuppressedMessages.ConnectionError,
+						providerMessage:
+							exType === ReportSuppressedMessages.OAuthAppAccessRestrictionError ? ex.message : null
+					}
+				}
+			});
+		}
+	}
+
+	protected async handleErrorResponse(response: Response): Promise<Error> {
+		const ex = await super.handleErrorResponse(response);
+		this.trySetThirdPartyProviderInfo(ex);
+		return ex;
 	}
 }
 

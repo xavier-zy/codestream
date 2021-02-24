@@ -582,7 +582,7 @@ export abstract class ThirdPartyProviderBase<
 		}
 	}
 
-	private async handleErrorResponse(response: Response): Promise<Error> {
+	protected async handleErrorResponse(response: Response): Promise<Error> {
 		let message = response.statusText;
 		let data;
 		Logger.debug("handleErrorResponse: ", JSON.stringify(response, null, 4));
@@ -590,7 +590,9 @@ export abstract class ThirdPartyProviderBase<
 			try {
 				data = await response.json();
 				// warn as not to trigger a sentry but still have it be in the user's log
-				Logger.warn(`handleErrorResponse:json: ${data}`);
+				try {
+					Logger.warn(`handleErrorResponse:json: ${JSON.stringify(data, null, 4)}`);
+				} catch {}
 				if (data.code) {
 					message += `(${data.code})`;
 				}

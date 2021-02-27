@@ -91,6 +91,7 @@ export class CodemarkCodeLensProvider implements CodeLensProvider, Disposable {
 
 		this._enabledDisposable = Disposable.from(
 			languages.registerCodeLensProvider(CodemarkCodeLensProvider.selector, this),
+			languages.registerCodeLensProvider({ scheme: "codestream-diff" }, this),
 			Container.session.onDidChangeTextDocumentMarkers(this.onMarkersChanged, this)
 		);
 	}
@@ -115,12 +116,36 @@ export class CodemarkCodeLensProvider implements CodeLensProvider, Disposable {
 		const markers = await this.getMarkers(uri);
 		if (markers == null || markers.length === 0) return [];
 
-		const lenses = markers.map<CodeLens>(m => {
-			if (m.codemarkId == null) {
-				// TODO: Add action for external content
+		const lenses = markers
+			.filter(m => m.type === "apm")
+			.map<CodeLens>(m => {
+				if (m.codemarkId == null) {
+					// TODO: Add action for external content
+					return new CodeLens(m.range, {
+						title: `Env: prod | Past: 1 hour | Reqs: ${Math.floor(
+							Math.random() * 10000
+						)} | Avg: ${Math.floor(Math.random() * 20) / 10}ms | Errors: ${Math.floor(
+							Math.random() * 5
+						)}`,
+						tooltip: "foo",
+						command: undefined!
+					});
+				}
+
+				const args: OpenCodemarkCommandArgs = {
+					codemarkId: m.codemarkId,
+					sourceUri: uri
+				};
+
 				return new CodeLens(m.range, {
-					title: `// ${m.creatorName}: ${Strings.truncate(m.summary, 60)}`,
-					command: undefined!
+					title: `Env: prod | Past: 1 hour | Reqs: ${Math.floor(
+						Math.random() * 10000
+					)} | Avg: ${Math.floor(Math.random() * 20) / 10}ms | Errors: ${Math.floor(
+						Math.random() * 5
+					)}`,
+					tooltip: "foo",
+					command: "codestream.openCodemark",
+					arguments: [args]
 				});
 			}
 

@@ -57,6 +57,12 @@ const OutlineMenu = styled(InlineMenu)`
 	margin: 0 5px;
 `;
 
+const Metric = styled.div`
+	font-size: 11px;
+	text-align: center;
+	padding 0 5px;
+`;
+
 let hasRenderedOnce = false;
 const EMPTY_HASH = {};
 const EMPTY_HASH_2 = {};
@@ -89,15 +95,15 @@ export const APM = React.memo((props: Props) => {
 
 	const envMenuItems = [
 		{
-			label: "env.staging",
+			label: "staging",
 			key: "staging"
 		},
 		{
-			label: "env.prod",
+			label: "prod",
 			key: "prod"
 		},
 		{
-			label: "env.dev",
+			label: "dev",
 			key: "dev"
 		}
 	];
@@ -146,17 +152,17 @@ export const APM = React.memo((props: Props) => {
 							key="team-display-options"
 							className="subtle no-padding"
 							noFocusOnSelect
-							items={timeMenuItems}
+							items={envMenuItems}
 						>
-							Past 1 Hour
+							Env: prod
 						</OutlineMenu>
 						<OutlineMenu
 							key="team-display-options"
 							className="subtle no-padding"
 							noFocusOnSelect
-							items={envMenuItems}
+							items={timeMenuItems}
 						>
-							env:shop.ist
+							Past 1 Hour
 						</OutlineMenu>
 					</>
 				}
@@ -174,25 +180,41 @@ export const APM = React.memo((props: Props) => {
 			</PaneHeader>
 			{props.paneState !== PaneState.Collapsed && (
 				<PaneBody>
+					<Row className={"pr-row"}>
+						<div></div>
+						<div></div>
+						<div style={{ display: "flex" }}>
+							<Metric>Pages</Metric>
+							<Metric>Response</Metric>
+							<Metric>Throughput</Metric>
+							<Metric>Errors</Metric>
+						</div>
+					</Row>
 					<PaneNodeName id="apm/web" title="Web" />
 					{!hiddenPaneNodes["apm/web"] && (
 						<>
 							<Row className={"pr-row"}>
 								<div>
-									<Tag tag={{ color: "yellow" }} />
+									<Icon name="star" />
 								</div>
 								<div>ngenix</div>
-								<div>
-									<Tag className="wide" tag={{ label: "1 ALERT", color: "red" }} />
+								<div style={{ display: "flex" }}>
+									<Metric>8324</Metric>
+									<Metric>0.33ms</Metric>
+									<Metric>16 req/s</Metric>
+									<Metric>3.4%</Metric>
 								</div>
 							</Row>
 							<Row className={"pr-row"}>
 								<div>
-									<Tag tag={{ color: "blue" }} />
+									<Icon name="star" />
 								</div>
 								<div>apache</div>
-								<div>
-									<Tag className="wide" tag={{ label: "1 ALERT", color: "red" }} />
+								<div style={{ display: "flex" }}>
+									<Metric>372</Metric>
+									<Metric>0.23ms</Metric>
+									<Metric>10 req/s</Metric>
+									<Metric>4.2%</Metric>
 								</div>
 							</Row>
 						</>
@@ -202,7 +224,7 @@ export const APM = React.memo((props: Props) => {
 						<>
 							<Row className={"pr-row"}>
 								<div>
-									<Tag tag={{ color: "green" }} />
+									<Icon name="star" />
 								</div>
 								<div>master-db</div>
 								<div>
@@ -211,10 +233,15 @@ export const APM = React.memo((props: Props) => {
 							</Row>
 							<Row className={"pr-row"}>
 								<div>
-									<Tag tag={{ color: "red" }} />
+									<Icon name="star" />
 								</div>
 								<div>ctx-pshard-go</div>
-								<div></div>
+								<div style={{ display: "flex" }}>
+									<Metric>872</Metric>
+									<Metric>0.75ms</Metric>
+									<Metric>19 req/s</Metric>
+									<Metric>2.1%</Metric>
+								</div>
 							</Row>
 						</>
 					)}
@@ -223,7 +250,7 @@ export const APM = React.memo((props: Props) => {
 						<>
 							<Row className={"pr-row"}>
 								<div>
-									<Tag tag={{ color: "gray" }} />
+									<Icon name="star" />
 								</div>
 								<div>redis</div>
 								<div></div>
@@ -235,7 +262,7 @@ export const APM = React.memo((props: Props) => {
 						<>
 							<Row className={"pr-row"}>
 								<div>
-									<Tag tag={{ color: "blue" }} />
+									<Icon name="star" />
 								</div>
 								<div>aws.lambda</div>
 								<div></div>
@@ -247,7 +274,7 @@ export const APM = React.memo((props: Props) => {
 						<>
 							<Row className={"pr-row"}>
 								<div>
-									<Tag tag={{ color: "aqua" }} />
+									<Icon name="star" />
 								</div>
 								<div>metric-query</div>
 								<div>
@@ -256,7 +283,7 @@ export const APM = React.memo((props: Props) => {
 							</Row>
 							<Row className={"pr-row"}>
 								<div>
-									<Tag tag={{ color: "orange" }} />
+									<Icon name="star" />
 								</div>
 								<div>h5s3</div>
 								<div>
@@ -265,7 +292,7 @@ export const APM = React.memo((props: Props) => {
 							</Row>
 							<Row className={"pr-row"}>
 								<div>
-									<Tag tag={{ color: "purple" }} />
+									<Icon name="star" />
 								</div>
 								<div>synthtracer</div>
 								<div></div>

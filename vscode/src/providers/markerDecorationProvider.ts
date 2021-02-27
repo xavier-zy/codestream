@@ -360,6 +360,8 @@ export class CodemarkDecorationProvider implements HoverProvider, Disposable {
 			const start = marker.range.start.line;
 			if (starts.has(start)) continue;
 
+			if (marker.type === "apm") continue;
+
 			if (marker.type === "trap") {
 				const trapKey = `trap-highlight-${marker.color}`;
 				if (!decorations[trapKey]) {

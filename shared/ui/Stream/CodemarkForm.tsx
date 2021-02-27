@@ -2116,7 +2116,9 @@ class CodemarkForm extends React.Component<Props, State> {
 	};
 
 	handleDragEnter = () => this.setState({ isDragging: this.state.isDragging + 1 });
+
 	handleDragLeave = () => this.setState({ isDragging: this.state.isDragging - 1 });
+
 	handleDrop = () => this.setState({ isDragging: 0 });
 
 	renderCodemarkForm() {

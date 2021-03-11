@@ -65,7 +65,8 @@ export enum WebviewPanels {
 	WorkInProgress = "work-in-progress",
 	Onboard = "onboard",
 	Commits = "commits",
-	APM = "apm"
+	APM = "apm",
+	NewRelicCreateAccount = "new-relic-create-account"
 }
 
 // this is for mixpanel and maps the values from WebviewPanels to their

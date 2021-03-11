@@ -233,7 +233,7 @@ const OutlineBox = styled.div`
 	padding: 50px 0;
 `;
 
-const DialogRow = styled.div`
+export const DialogRow = styled.div`
 	display: flex;
 	padding: 10px 0;
 	&:first-child {
@@ -354,7 +354,7 @@ export const Onboard = React.memo(function Onboard() {
 		);
 
 		return {
-			tourType: "educate", //getTestGroup(state, "onboard") || "educate",
+			tourType: "onboard", //getTestGroup(state, "onboard") || "educate",
 			currentStep: state.context.onboardStep,
 			providers: state.providers,
 			connectedProviders,
@@ -526,7 +526,7 @@ export const Onboard = React.memo(function Onboard() {
 						) : (
 							<>
 								<ConnectCodeHostProvider className={className(1)} skip={skip} />
-								<ConnectIssueProvider className={className(2)} skip={skip} />
+								<ConnectAPMProvider className={className(2)} skip={skip} />
 								<ConnectMessagingProvider
 									className={className(3)}
 									skip={skip}
@@ -930,6 +930,58 @@ const ConnectIssueProvider = (props: { className: string; skip: Function }) => {
 					<Sep />
 					<IntegrationButtons noBorder noPadding>
 						<ProviderButtons providerIds={derivedState.issueProviders} />
+					</IntegrationButtons>
+				</Dialog>
+				<SkipLink onClick={() => props.skip()}>I'll do this later</SkipLink>
+			</div>
+		</Step>
+	);
+};
+
+const ConnectAPMProvider = (props: { className: string; skip: Function }) => {
+	const dispatch = useDispatch();
+	return (
+		<Step className={props.className}>
+			<div className="body">
+				<h3>
+					<Icon name="newrelic" />
+					<br />
+					Connect to New Relic
+				</h3>
+				<p className="explainer">Visualize production data in your editor</p>
+				<Dialog>
+					<DialogRow>
+						<Icon name="check" />
+						<div>View and monitor services in any environment</div>
+					</DialogRow>
+					<DialogRow>
+						<Icon name="check" />
+						<div>
+							See method-level average execution time, exception rate and execution frequency
+						</div>
+					</DialogRow>
+					<DialogRow>
+						<Icon name="check" />
+						<div>Enrich code review context with production data and insights</div>
+					</DialogRow>
+					<Sep />
+					<IntegrationButtons noBorder noPadding>
+						<Provider
+							key="newrelic"
+							onClick={() => dispatch(openPanel(WebviewPanels.NewRelicCreateAccount))}
+						>
+							<Icon name="newrelic" />
+							Create Account
+						</Provider>
+						<Provider
+							key="newrelic"
+							onClick={() =>
+								dispatch(openPanel(`configure-provider-newrelic-newrelic-Integrations Panel`))
+							}
+						>
+							<Icon name="newrelic" />
+							Sign In
+						</Provider>
 					</IntegrationButtons>
 				</Dialog>
 				<SkipLink onClick={() => props.skip()}>I'll do this later</SkipLink>

@@ -61,10 +61,10 @@ export const DragHeaderContext = React.createContext({
 });
 
 export const AVAILABLE_PANES = [
-	WebviewPanels.OpenPullRequests,
-	WebviewPanels.OpenReviews,
 	WebviewPanels.APM,
 	WebviewPanels.CodemarksForFile,
+	WebviewPanels.OpenPullRequests,
+	WebviewPanels.OpenReviews,
 	WebviewPanels.WorkInProgress,
 	WebviewPanels.Tasks,
 	WebviewPanels.Team

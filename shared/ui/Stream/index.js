@@ -87,6 +87,7 @@ import { PRInfoModal } from "./SpatialView/PRInfoModal";
 import { GlobalNav } from "./GlobalNav";
 import { CheckEmailVsGit } from "./CheckEmailVsGit";
 import { EnjoyingCodeStream } from "./EnjoyingCodeStream";
+import { NewRelicCreateAccount } from "../Authentication/NewRelicCreateAccount";
 import { getTestGroup } from "../store/context/reducer";
 
 const EMAIL_MATCH_REGEX = new RegExp(
@@ -381,6 +382,7 @@ export class SimpleStream extends PureComponent {
 					activePanel !== WebviewPanels.Onboard &&
 					activePanel !== WebviewPanels.CodemarksForFile && (
 						<Modal translucent>
+							{activePanel === WebviewPanels.NewRelicCreateAccount && <NewRelicCreateAccount />}
 							{activePanel === WebviewPanels.Tester && <Tester />}
 							{activePanel === WebviewPanels.FilterSearch && <FilterSearchPanel />}
 							{activePanel === WebviewPanels.Activity && <ActivityPanel />}

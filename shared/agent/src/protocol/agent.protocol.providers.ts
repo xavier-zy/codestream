@@ -15,6 +15,7 @@ export interface ThirdPartyProviderConfig {
 	hasCodeHosting?: boolean;
 	hasIssues?: boolean;
 	hasSharing?: boolean;
+	hasAPM?: boolean;
 	supportsAuth?: boolean;
 	needsConfigure?: boolean;
 	needsConfigureForOnPrem?: boolean;

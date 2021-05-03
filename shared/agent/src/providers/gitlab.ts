@@ -1390,12 +1390,10 @@ export class GitLabProvider extends ThirdPartyIssueProviderBase<CSGitLabProvider
 				providerVersion
 			);
 
-			if (response.project.mergeRequest.description) {
-				response.project.mergeRequest.description = this.enhanceDescription(
-					response.project.mergeRequest.description,
-					projectFullPath
-				);
-			}
+			response.project.mergeRequest.description = this.enhanceMarkdownBlock(
+				response.project.mergeRequest.description,
+				projectFullPath
+			);
 
 			this._pullRequestCache.set(request.pullRequestId, response);
 		} catch (ex) {
@@ -1412,8 +1410,9 @@ export class GitLabProvider extends ThirdPartyIssueProviderBase<CSGitLabProvider
 		return response;
 	}
 
-	private async enhanceDiscussions(
+	private enhanceDiscussions(
 		nodes: DiscussionNode[],
+		projectFullPath: string,
 		parsedPatches: Map<string, ParsedDiffWithMetadata>,
 		filesChanged: FetchThirdPartyPullRequestFilesResponse[]
 	) {
@@ -1422,7 +1421,7 @@ export class GitLabProvider extends ThirdPartyIssueProviderBase<CSGitLabProvider
 		nodes.forEach((discussionNode: DiscussionNode) => {
 			if (discussionNode.notes?.nodes?.length) {
 				discussionNode.notes.nodes.forEach((note: any) => {
-					this.enhanceNote(note, parsedPatches, filesChanged);
+					this.enhanceNote(note, projectFullPath, parsedPatches, filesChanged);
 				});
 				discussionNode.notes.nodes[0].replies = discussionNode.notes.nodes.filter(
 					(dn: DiscussionNode) => dn.id != discussionNode.notes?.nodes[0].id
@@ -1433,8 +1432,9 @@ export class GitLabProvider extends ThirdPartyIssueProviderBase<CSGitLabProvider
 		});
 	}
 
-	private async enhanceNote(
+	private enhanceNote(
 		note: Note,
+		projectFullPath: string,
 		parsedPatches: Map<string, ParsedDiffWithMetadata>,
 		filesChanged: FetchThirdPartyPullRequestFilesResponse[]
 	) {
@@ -1445,6 +1445,16 @@ export class GitLabProvider extends ThirdPartyIssueProviderBase<CSGitLabProvider
 				.replace("gid://gitlab/IndividualNoteDiscussion/", "");
 
 			this.toAuthorAbsolutePath(note.author);
+		}
+
+		if (note.body != null) {
+			note.body = this.enhanceMarkdownBlock(note.body, projectFullPath);
+		}
+		if (note.bodyText != null) {
+			note.bodyText = this.enhanceMarkdownBlock(note.bodyText, projectFullPath);
+		}
+		if (note.bodyHtml != null) {
+			note.bodyHtml = this.enhanceHtmlBlock(note.bodyHtml, projectFullPath);
 		}
 		if (note.position?.newPath && filesChanged?.length) {
 			try {
@@ -1484,7 +1494,7 @@ export class GitLabProvider extends ThirdPartyIssueProviderBase<CSGitLabProvider
 
 	private async mapPullRequestModel(
 		response: GitLabMergeRequestWrapper,
-		filesChanged: any[],
+		filesChanged: FetchThirdPartyPullRequestFilesResponse[],
 		glId: GitLabId,
 		currentUser: GitLabCurrentUser
 	) {
@@ -1508,6 +1518,7 @@ export class GitLabProvider extends ThirdPartyIssueProviderBase<CSGitLabProvider
 
 		this.enhanceDiscussions(
 			response.project.mergeRequest.discussions.nodes,
+			response.project.mergeRequest.repository.nameWithOwner,
 			new Map<string, ParsedDiffWithMetadata>(),
 			filesChanged
 		);
@@ -1755,6 +1766,7 @@ export class GitLabProvider extends ThirdPartyIssueProviderBase<CSGitLabProvider
 			if (filesChanged?.length) {
 				this.enhanceDiscussions(
 					commentsAsDiscussionNodes,
+					projectFullPath,
 					new Map<string, ParsedDiffWithMetadata>(),
 					filesChanged
 				);
@@ -2088,7 +2100,7 @@ export class GitLabProvider extends ThirdPartyIssueProviderBase<CSGitLabProvider
 							updatedAt: Dates.toUtcIsoNow(),
 							title: body.title,
 							workInProgress: body.work_in_progress,
-							description: this.enhanceDescription(request.description, projectFullPath),
+							description: this.enhanceMarkdownBlock(request.description, projectFullPath),
 							targetBranch: body.target_branch,
 							assignees: {
 								nodes: body.assignees.map((assignee: any) => {
@@ -3374,6 +3386,7 @@ export class GitLabProvider extends ThirdPartyIssueProviderBase<CSGitLabProvider
 				if (filesChanged?.length) {
 					this.enhanceDiscussions(
 						lastDiscussions,
+						projectFullPath,
 						new Map<string, ParsedDiffWithMetadata>(),
 						filesChanged
 					);
@@ -3515,21 +3528,49 @@ export class GitLabProvider extends ThirdPartyIssueProviderBase<CSGitLabProvider
 	}
 
 	/**
-	 * Adds fully-qualified URLs for a merge request description's markdown.
+	 * Adds fully-qualified URLs to a text property.
 	 * Only required when sending to the webview
 	 *
 	 * @private
-	 * @param {string} description
+	 * @param {string} str
 	 * @param {string} projectFullPath
-	 * @return {*}
+	 * @return {string}
 	 * @memberof GitLabProvider
 	 */
-	private enhanceDescription(description: string, projectFullPath: string) {
-		if (!description || !projectFullPath) return description;
+	private enhanceMarkdownBlock(str: string, projectFullPath: string): string {
+		if (!str || !projectFullPath) return str;
 
-		return description.replace(/\[.+?\]\((\/uploads\/.+?)\)/g, (match, group1) => {
+		return str.replace(/\[.+?\]\((\/uploads\/.+?)\)/g, (match, group1) => {
 			return match.replace(group1, `${this.baseWebUrl}/${projectFullPath}${group1}`);
 		});
+	}
+	/**
+	 * Adds fully-qualified URLs to an html property.
+	 * Only required when sending to the webview
+	 * @private
+	 * @param {string} str
+	 * @param {string} projectFullPath
+	 * @return {string}
+	 * @memberof GitLabProvider
+	 */
+	private enhanceHtmlBlock(str: string, projectFullPath: string): string {
+		if (!str || !projectFullPath) return str;
+
+		// gitlab's images look like <img src="base64enCoded" data-src="actualImagePath.jpg" />
+		// we need to adjust them and add an optional base url
+		// we don't care about the original <img> tag since this will later
+		// get converted into markdown which only supports a limited set of <img> attrs
+		const result = str.replace(
+			/<img\s[^>]*?data\-src\s*=\s*['\"]([^'\"]*?)['\"][^>]*?>/g,
+			(match, group1) => {
+				if (group1[0] === "/" && group1.indexOf("/uploads/") > -1) {
+					return `<img src="${this.baseWebUrl}${group1}" />`;
+				}
+				return `<img src="${group1}" />`;
+			}
+		);
+
+		return result;
 	}
 
 	private avatarUrl(url: string) {

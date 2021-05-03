@@ -26,6 +26,7 @@ import com.codestream.reviewService
 import com.codestream.settings.ApplicationSettingsService
 import com.codestream.settingsService
 import com.codestream.system.SPACE_ENCODED
+import com.codestream.system.sanitizeURI
 import com.codestream.webViewService
 import com.github.salomonbrys.kotson.fromJson
 import com.github.salomonbrys.kotson.get
@@ -182,21 +183,21 @@ class WebViewRouter(val project: Project) {
 
     private suspend fun editorRangeReveal(message: WebViewMessage): EditorRangeRevealResponse {
         val request = gson.fromJson<EditorRangeRevealRequest>(message.params!!)
-        val success = project.editorService?.reveal(request.uri, request.range, request.atTop)
+        val success = project.editorService?.reveal(sanitizeURI(request.uri)!!, request.range, request.atTop)
             ?: false
         return EditorRangeRevealResponse(success)
     }
 
     private suspend fun editorRangeSelect(message: WebViewMessage): EditorRangeSelectResponse {
         val request = gson.fromJson<EditorRangeSelectRequest>(message.params!!)
-        val success = project.editorService?.select(request.uri, request.selection, request.preserveFocus ?: false)
+        val success = project.editorService?.select(sanitizeURI(request.uri)!!, request.selection, request.preserveFocus ?: false)
             ?: false
         return EditorRangeSelectResponse(success)
     }
 
     private fun editorScrollTo(message: WebViewMessage) {
         val request = gson.fromJson<EditorScrollToRequest>(message.params!!)
-        project.editorService?.scroll(request.uri, request.position, request.atTop)
+        project.editorService?.scroll(sanitizeURI(request.uri)!!, request.position, request.atTop)
     }
 
     private suspend fun shellPromptFolder(message: WebViewMessage): ShellPromptFolderResponse {

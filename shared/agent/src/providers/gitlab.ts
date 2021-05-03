@@ -1428,6 +1428,9 @@ export class GitLabProvider extends ThirdPartyIssueProviderBase<CSGitLabProvider
 				) as any;
 				// remove all the replies from the parent (they're now on replies)
 				discussionNode.notes.nodes.length = 1;
+				discussionNode.notes.nodes[0].replies?.forEach(reply => {
+					reply.position = discussionNode.notes!.nodes[0].position;
+				});
 			}
 		});
 	}
@@ -3758,12 +3761,36 @@ export class GitLabProvider extends ThirdPartyIssueProviderBase<CSGitLabProvider
 						break;
 					}
 					if (node.notes && node.notes.nodes.length) {
-						node.notes.nodes = node.notes.nodes.filter(_ => _.id !== directive.data.id);
-						for (const notesWithReplies of node.notes.nodes) {
-							if (notesWithReplies.replies) {
-								notesWithReplies.replies = notesWithReplies.replies.filter(
-									_ => _.id !== directive.data.id
-								);
+						const index = node.notes.nodes.findIndex(_ => _.id === directive.data.id);
+						if (index === 0) {
+							if (node.notes.nodes[0].replies && node.notes.nodes[0].replies.length) {
+								if (node.notes.nodes[0].replies) {
+									// attach the position object on the root to all the replies
+									for (const reply of node.notes.nodes[0].replies) {
+										if (!reply) continue;
+										reply.position = node.notes.nodes[0].position;
+									}
+								}
+								// get the original replies
+								const originalReplies = node.notes.nodes[0].replies;
+								// remove the first reply (it will become the "root" node)
+								const shifted = node.notes.nodes[0].replies?.splice(0, 1);
+								// take old first reply and set it as the first note node
+								node.notes.nodes.splice(0, 1, shifted[0] as any);
+								// attach the modified replies back to the new "root" node
+								node.notes.nodes[0].replies = originalReplies || [];
+							} else {
+								// not one of the replies, it's the root, just remove it
+								node.notes.nodes = node.notes.nodes.filter(_ => _.id !== directive.data.id);
+							}
+						} else {
+							node.notes.nodes = node.notes.nodes.filter(_ => _.id !== directive.data.id);
+							for (const notesWithReplies of node.notes.nodes) {
+								if (notesWithReplies.replies && notesWithReplies.replies.length) {
+									notesWithReplies.replies = notesWithReplies.replies.filter(
+										_ => _.id !== directive.data.id
+									);
+								}
 							}
 						}
 					}

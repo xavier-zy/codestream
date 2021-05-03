@@ -21,12 +21,14 @@ import com.intellij.ui.jcef.JBCefBrowser
 import org.apache.commons.io.FileUtils
 import java.io.File
 import java.nio.charset.Charset
+import java.util.concurrent.CompletableFuture
 import javax.swing.UIManager
 
 class WebViewService(val project: Project) : Disposable {
     private val utf8 = Charset.forName("UTF-8")
     private val logger = Logger.getInstance(WebViewService::class.java)
     private val router = WebViewRouter(project)
+    private val webViewCreation = CompletableFuture<Unit>()
     private lateinit var tempDir: File
     private lateinit var extractedHtmlFile: File
 
@@ -42,6 +44,7 @@ class WebViewService(val project: Project) : Disposable {
         logger.info("Initializing WebViewService for project ${project.basePath}")
         ApplicationManager.getApplication().invokeLater {
             webView = createWebView(router)
+            webViewCreation.complete(Unit)
         }
 
         extractAssets()
@@ -53,6 +56,11 @@ class WebViewService(val project: Project) : Disposable {
                 webView.loadUrl(htmlFile.url)
             }
         }
+    }
+
+    fun onDidCreateWebview(cb: () -> Unit) {
+        if (webViewCreation.isDone) cb()
+        else webViewCreation.thenRun(cb)
     }
 
     fun onDidInitialize(cb: () -> Unit) {

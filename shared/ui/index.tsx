@@ -43,6 +43,7 @@ import {
 } from "@codestream/protocols/agent";
 import { CSApiCapabilities, CodemarkType, CSMe } from "@codestream/protocols/api";
 import translations from "./translations/en";
+// import translationsEs from "./translations/es";
 import { apiUpgradeRecommended, apiUpgradeRequired } from "./store/apiVersioning/actions";
 import { getCodemark } from "./store/codemarks/reducer";
 import { getReview } from "./store/reviews/reducer";
@@ -97,8 +98,18 @@ export async function initialize(selector: string) {
 
 	listenForEvents(store);
 
+	const locale = "en";
+	const messages: any = translations;
+	// try {
+	// 	const userLocale = navigator && navigator.language?.split(/-|_/)[0];
+	// 	if (userLocale === "es") {
+	// 		locale = userLocale;
+	// 		messages = translationsEs;
+	// 	}
+	// } catch(ex) { console.warn(ex);}
+
 	render(
-		<Container store={store} i18n={{ locale: "en", messages: translations }} />,
+		<Container store={store} i18n={{ locale: locale, messages: messages }} />,
 		document.querySelector(selector)
 	);
 

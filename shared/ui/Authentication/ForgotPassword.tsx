@@ -80,7 +80,10 @@ function Form(props: { email?: string; onComplete: Function }) {
 						<FormattedMessage id="signUp.passwordReset" defaultMessage="Password Reset" />
 					</h3>
 					<p>
-						<FormattedMessage id="signUp.passwordResetEnterEmail" defaultMessage="Enter your email address and we will send you a link to reset your password." />
+						<FormattedMessage
+							id="signUp.passwordResetEnterEmail"
+							defaultMessage="Enter your email address and we will send you a link to reset your password."
+						/>
 					</p>
 					<div id="controls">
 						<div className="control-group">

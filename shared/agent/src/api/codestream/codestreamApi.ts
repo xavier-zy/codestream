@@ -604,7 +604,7 @@ export class CodeStreamApiProvider implements ApiProvider {
 			httpsAgent,
 			strictSSL: this._strictSSL,
 			socketCluster: this._socketCluster,
-			supportsEcho: !!session.apiCapabilities.echoes || false
+			supportsEcho: session.isOnPrem && (!!session.apiCapabilities.echoes || false)
 		});
 		this._events.onDidReceiveMessage(this.onPubnubMessageReceived, this);
 

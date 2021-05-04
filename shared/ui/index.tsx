@@ -157,7 +157,7 @@ function listenForEvents(store) {
 		if (e.status === ConnectionStatus.Reconnected) {
 			store.dispatch(online());
 		} else {
-			store.dispatch(offline());
+			store.dispatch(offline(e.code));
 		}
 	});
 

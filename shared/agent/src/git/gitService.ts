@@ -1289,7 +1289,7 @@ export class GitService implements IGitService, Disposable {
 				// normalize the part of the repo that could be wrong (repo path)
 				const newFilePath = fileOrFolderPath
 					.replace(/\\/g, "/")
-					.replace(new RegExp(repoRoot, "i"), repoRoot);
+					.replace(new RegExp(repoRoot.replace(/\+/g, "\\+"), "i"), repoRoot);
 				if (newFilePath !== fileOrFolderPath.replace(/\\/g, "/")) {
 					Logger.warn(
 						`getRepositoryByFilePath: Possible repo casing issue newPath=${newFilePath} vs. fileOrFolderPath=${fileOrFolderPath}`

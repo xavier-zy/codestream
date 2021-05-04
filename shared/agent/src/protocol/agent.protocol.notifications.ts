@@ -27,6 +27,13 @@ export const RestartRequiredNotificationType = new NotificationType<
 	void
 >("codestream/restartRequired");
 
+export enum ConnectionCode {
+	"BroadcasterConnectionLost" = "BCOM-1001",
+	"ApiBroadcasterConnectionFailure" = "BCOM-1002",
+	"ApiBroadcasterAcknowledgementFailure" = "BCOM-1003",
+	"EchoTimeout" = "BCOM-1004"
+}
+
 export enum ConnectionStatus {
 	Disconnected = "disconnected",
 	Reconnected = "reconnected",
@@ -36,6 +43,7 @@ export enum ConnectionStatus {
 export interface DidChangeConnectionStatusNotification {
 	reset?: boolean;
 	status: ConnectionStatus;
+	code?: string;
 }
 
 export const DidChangeConnectionStatusNotificationType = new NotificationType<

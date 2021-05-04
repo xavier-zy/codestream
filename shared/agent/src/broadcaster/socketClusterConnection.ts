@@ -237,7 +237,8 @@ export class SocketClusterConnection implements BroadcasterConnection {
 				...options
 			});
 		} catch (error) {
-			this._debug("Error fetching history, will confirm good connection");
+			const message = error instanceof Error ? error.message : JSON.stringify(error);
+			this._debug(`Error fetching history (${message}), will confirm good connection`);
 			this._confirmConnection();
 			throw error;
 		}
@@ -253,7 +254,7 @@ export class SocketClusterConnection implements BroadcasterConnection {
 		(async () => {
 			try {
 				for await (const data of this._socket!.subscribe(channel)) {
-					this._handleMessage(data);
+					this._handleMessage(data, channel);
 				}
 			} catch (error) {
 				this._debug("Failed to subscribe to", channel);
@@ -263,12 +264,15 @@ export class SocketClusterConnection implements BroadcasterConnection {
 	}
 
 	// handle a message coming in on any channel
-	_handleMessage(message: any) {
+	_handleMessage(message: any, channel: string) {
 		const receivedAt = Date.now();
-		this._debug("Message received at", receivedAt);
+		if (channel !== "echo") {
+			this._debug("Message received at", receivedAt);
+		}
 		const messageEvent: MessageEvent = {
 			receivedAt,
-			message
+			message,
+			channel
 		};
 		if (this._messageCallback) {
 			this._messageCallback(messageEvent);
@@ -276,6 +280,7 @@ export class SocketClusterConnection implements BroadcasterConnection {
 	}
 
 	_handleSubscribe(channel: string) {
+		this._debug(`Subscription event for channel ${channel}`);
 		if (!this._connected) {
 			this._debug(`Ignoring subscription event for ${channel}, connection is still pending`);
 			// ignore any subscribe events while our connection is not confirmed,

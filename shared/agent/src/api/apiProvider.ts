@@ -225,7 +225,8 @@ export enum MessageType {
 	Streams = "streams",
 	Teams = "teams",
 	Unreads = "unreads",
-	Users = "users"
+	Users = "users",
+	Echo = "echo"
 }
 
 export interface CompaniesRTMessage {
@@ -293,6 +294,10 @@ export interface UsersRTMessage {
 	data: CSUser[];
 }
 
+export interface EchoMessage {
+	type: MessageType.Echo;
+}
+
 export interface RawRTMessage {
 	type: MessageType;
 	data?: any;
@@ -311,7 +316,8 @@ export type RTMessage =
 	| StreamsRTMessage
 	| TeamsRTMessage
 	| UnreadsRTMessage
-	| UsersRTMessage;
+	| UsersRTMessage
+	| EchoMessage;
 
 export interface ApiProvider {
 	onDidReceiveMessage: Event<RTMessage>;

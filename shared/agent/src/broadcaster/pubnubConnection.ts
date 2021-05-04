@@ -165,7 +165,8 @@ export class PubnubConnection implements BroadcasterConnection {
 		this._debug(`Message received on ${event.channel} at ${receivedAt}`);
 		const messageEvent: MessageEvent = {
 			receivedAt,
-			message: event.message
+			message: event.message,
+			channel: event.channel
 		};
 		if (this._messageCallback) {
 			this._messageCallback(messageEvent);

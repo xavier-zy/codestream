@@ -595,6 +595,7 @@ export class CodeStreamApiProvider implements ApiProvider {
 			this._httpsAgent instanceof HttpsAgent || this._httpsAgent instanceof HttpsProxyAgent
 				? this._httpsAgent
 				: undefined;
+		const session = SessionContainer.instance().session;
 		this._events = new BroadcasterEvents({
 			accessToken: this._token!,
 			pubnubSubscribeKey: this._pubnubSubscribeKey,
@@ -602,7 +603,8 @@ export class CodeStreamApiProvider implements ApiProvider {
 			api: this,
 			httpsAgent,
 			strictSSL: this._strictSSL,
-			socketCluster: this._socketCluster
+			socketCluster: this._socketCluster,
+			supportsEcho: !!session.apiCapabilities.echoes || false
 		});
 		this._events.onDidReceiveMessage(this.onPubnubMessageReceived, this);
 
@@ -851,10 +853,12 @@ export class CodeStreamApiProvider implements ApiProvider {
 		}
 		const update = await this.put<{ status: { [teamId: string]: CSMeStatus } }, any>(
 			"/users/me",
-			{ status: {
+			{
+				status: {
 					...currentStatus,
 					...request.status
-				} },
+				}
+			},
 			this._token
 		);
 		const [user] = (await SessionContainer.instance().users.resolve({

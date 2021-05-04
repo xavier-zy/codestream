@@ -68,6 +68,7 @@ export interface BroadcasterStatus {
 export interface MessageEvent {
 	receivedAt: number;
 	message: any;
+	channel: string;
 }
 
 interface PartialMessage {
@@ -279,20 +280,25 @@ export class Broadcaster {
 			// simulating offline condition, ignore messages
 			return;
 		}
+
 		// track the last time a message was received, each time we encounter a disconnected situation,
 		// we'll fetch the message history from this point going forward
-		this._debug("Broadcaster message received at: " + event.receivedAt);
+		if (event.channel !== "echo") {
+			this._debug("Broadcaster message received at: " + event.receivedAt);
+		}
 		if (event.receivedAt > this._lastMessageReceivedAt && !this._subscriptionsPending) {
 			this._lastMessageReceivedAt = event.receivedAt;
-			this._debug(`_lastMessageReceivedAt updated to ${this._lastMessageReceivedAt}`);
+			if (event.channel !== "echo") {
+				this._debug(`_lastMessageReceivedAt updated to ${this._lastMessageReceivedAt}`);
+			}
 		}
 
-		this._processMessages([event.message]);
+		this._processMessages([event.message], event.channel);
 	}
 
 	// process a received message by checking if we've already received the message, and handling
 	// any messages that were split into parts
-	_processMessages(messages: { messageId?: string; [key: string]: any }[]) {
+	_processMessages(messages: { messageId?: string; [key: string]: any }[], channel?: string) {
 		const outputMessages: { [key: string]: any }[] = [];
 		// we avoid sending duplicate messages up the chain by maintaining a list of the messages
 		// we've already received, dropping duplicates to the floor
@@ -307,7 +313,9 @@ export class Broadcaster {
 					outputMessages.push(fullMessage);
 				}
 			} else {
-				this._debug(`Message ${messageId} was already received and processed, dropping`);
+				if (channel !== "echo") {
+					this._debug(`Message ${messageId} was already received and processed, dropping`);
+				}
 			}
 		});
 		this.cleanUpMessagesReceived();
@@ -379,10 +387,11 @@ export class Broadcaster {
 		const numAdded = this.addChannels(channels);
 		if (numAdded > 0) {
 			// this says we need to notify the client when we get fully connected
+			this._debug("Channels were added, will need a connected message");
 			this._needConnectedMessage = true;
 		}
 		this._subscriptionsPending = true;
-		this._debug("Channels were added, ensuring subscription to all channels...");
+		this._debug("Ensuring subscription to all channels...");
 		this.subscribeAll();
 	}
 
@@ -395,9 +404,6 @@ export class Broadcaster {
 			this._debug("No unsubscribed channels, we are fully subscribed");
 			return this.subscribed();
 		}
-
-		this._debug("Broadcaster subscribing to: " + JSON.stringify(channels));
-		this._broadcasterConnection!.subscribe(channels);
 
 		// remove these channel from list of active failures, since we are trying again
 		channels.forEach(channel => {
@@ -629,8 +635,10 @@ export class Broadcaster {
 	private async subscriptionTimeout() {
 		delete this._statusTimeout;
 		const failedChannels = this.getUnsubscribedChannels();
-		this._debug("Subscription timed out for: " + JSON.stringify(failedChannels));
-		await this.subscriptionFailure(failedChannels);
+		if (failedChannels.length > 0) {
+			this._debug("Subscription timed out for: " + JSON.stringify(failedChannels));
+			await this.subscriptionFailure(failedChannels);
+		}
 	}
 
 	// we never successfully subscribed to one or more channels requested, enter into a failure
@@ -773,7 +781,6 @@ export class Broadcaster {
 			this._subscriptions[channel].subscribed = false;
 		});
 		this._debug("Resubscribing to: " + JSON.stringify(channels));
-		// this._pubnub!.unsubscribeAll();
 		this._subscriptionsPending = true;
 		// also drain the queue and add any queued channels to the list, since we're
 		// starting from scratch on all of them anyway

@@ -25,6 +25,7 @@ const messageToType: {
 		| MessageType.Streams
 		| MessageType.Teams
 		| MessageType.Users
+		| MessageType.Echo
 		| undefined;
 } = {
 	codemark: MessageType.Codemarks,
@@ -45,7 +46,8 @@ const messageToType: {
 	team: MessageType.Teams,
 	teams: MessageType.Teams,
 	user: MessageType.Users,
-	users: MessageType.Users
+	users: MessageType.Users,
+	echo: MessageType.Echo
 };
 
 export interface BroadcasterEventsInitializer {
@@ -60,6 +62,7 @@ export interface BroadcasterEventsInitializer {
 	};
 	strictSSL: boolean;
 	httpsAgent?: HttpsAgent | HttpsProxyAgent;
+	supportsEcho?: boolean;
 }
 
 export class BroadcasterEvents implements Disposable {
@@ -96,10 +99,17 @@ export class BroadcasterEvents implements Disposable {
 			`team-${this._options.api.teamId}`
 		];
 
+		/*
 		// this should be deprecated
 		for (const streamId of streamIds || []) {
 			channels.push(`stream-${streamId}`);
 			this._subscribedStreamIds.add(streamId);
+		}
+		*/
+
+		// for on-prem, we receive periodic "echoes" to test real-time connectivity
+		if (this._options.supportsEcho) {
+			channels.push("echo");
 		}
 
 		this._broadcaster.subscribe(channels);

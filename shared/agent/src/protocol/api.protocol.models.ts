@@ -650,7 +650,9 @@ export interface CSMePreferences {
 	skipEmailingAuthors?: boolean;
 	skipPostCreationModal?: boolean;
 	pullRequestFilesChangedMode?: "files" | "tree" | "hunks";
-	pullRequestQueries?: PullRequestQuery[];
+	pullRequestQueries?: {
+		[teamId: string]: PullRequestQuery[];
+	};
 	fetchRequestQueries?: FetchRequestQuery[];
 	pullRequestQueryShowAllRepos?: boolean;
 	pullRequestQueryHideLabels?: boolean;

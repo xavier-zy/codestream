@@ -423,6 +423,7 @@ export const IssueList = React.memo((props: React.PropsWithChildren<IssueListPro
 		return {
 			status,
 			currentUser,
+			currentTeamId: state.context.currentTeamId,
 			startWorkPreferences,
 			providerIds,
 			csIssues,
@@ -448,13 +449,15 @@ export const IssueList = React.memo((props: React.PropsWithChildren<IssueListPro
 	const [startWorkCard, setStartWorkCard] = React.useState<any>(undefined);
 
 	const getFilterLists = (providerId: string) => {
-		const prefs = derivedState.startWorkPreferences[providerId] || {};
+		const providerPrefs = derivedState.startWorkPreferences[providerId] || {};
+		const prefs = providerPrefs[derivedState.currentTeamId] || {};
 		const lists = prefs.filterLists ? { ...prefs.filterLists } : EMPTY_HASH;
 		return lists;
 	};
 
 	const getFilterBoards = (providerId: string) => {
-		const prefs = derivedState.startWorkPreferences[providerId] || {};
+		const providerPrefs = derivedState.startWorkPreferences[providerId] || {};
+		const prefs = providerPrefs[derivedState.currentTeamId] || {};
 		const boards = prefs.filterBoards ? { ...prefs.filterBoards } : EMPTY_HASH;
 		return boards;
 	};
@@ -462,7 +465,8 @@ export const IssueList = React.memo((props: React.PropsWithChildren<IssueListPro
 	// the keys are the filter text (e.g. "assignee:@me milestone:jan")
 	// and the values are the optional label that the user created
 	const getFilterCustom = (providerId: string) => {
-		const prefs = derivedState.startWorkPreferences[providerId] || {};
+		const providerPrefs = derivedState.startWorkPreferences[providerId] || {};
+		const prefs = providerPrefs[derivedState.currentTeamId] || {};
 		const custom =
 			prefs.filterCustom && prefs.filterCustom.filters
 				? { ...prefs.filterCustom }
@@ -486,7 +490,7 @@ export const IssueList = React.memo((props: React.PropsWithChildren<IssueListPro
 	const updateDataState = (providerId, data) => dispatch(updateForProvider(providerId, data));
 
 	const setPreference = (providerId, key, value) => {
-		dispatch(setUserPreference(["startWork", providerId, key], value));
+		dispatch(setUserPreference(["startWork", providerId, derivedState.currentTeamId, key], value));
 	};
 
 	React.useEffect(() => {

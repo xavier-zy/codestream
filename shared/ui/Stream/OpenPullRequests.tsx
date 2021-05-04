@@ -271,7 +271,7 @@ export const OpenPullRequests = React.memo((props: Props) => {
 	);
 
 	const saveQueries = (providerId, queries) => {
-		dispatch(setUserPreference(["pullRequestQueries", providerId], [...queries]));
+		dispatch(setUserPreference(["pullRequestQueries", derivedState.teamId, providerId], [...queries]));
 	};
 
 	const fetchPRs = useCallback(
@@ -377,9 +377,10 @@ export const OpenPullRequests = React.memo((props: Props) => {
 
 	useEffect(() => {
 		if (!mountedRef.current) return;
+		const prQueries = derivedState.pullRequestQueries;
 		const newQueries = {
 			...defaultQueries,
-			...(derivedState.pullRequestQueries || {})
+			...( (derivedState.pullRequestQueries && derivedState.pullRequestQueries[derivedState.teamId]) || {})
 		};
 		// need to check if it was new/editing pullRequestQueries or just updating other preferences
 		if (!isEqual(queries, newQueries)) {
@@ -396,7 +397,7 @@ export const OpenPullRequests = React.memo((props: Props) => {
 			if (defaultQueriesResponse) {
 				const queries = {
 					...defaultQueriesResponse,
-					...(derivedState.pullRequestQueries || {})
+					...((derivedState.pullRequestQueries && derivedState.pullRequestQueries[derivedState.teamId]) || {})
 				};
 				let results = {};
 				// massage the data for any old data formats

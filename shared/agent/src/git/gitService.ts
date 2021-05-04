@@ -1278,7 +1278,9 @@ export class GitService implements IGitService, Disposable {
 		if (fs.existsSync(fileOrFolderPath) && fs.lstatSync(fileOrFolderPath).isDirectory()) {
 			const normalizedFsPath = Strings.normalizePath(fileOrFolderPath);
 			const allRepos = await this.getRepositories();
-			repo = Array.from(allRepos).find(r => r.path === normalizedFsPath || r.path === fileOrFolderPath);
+			repo = Array.from(allRepos).find(
+				r => r.path === normalizedFsPath || r.path === fileOrFolderPath
+			);
 		} else {
 			// do NOT allow folders to get into this path, any folder not already tracked
 			// will traverse _up_ looking for additional git repos.
@@ -1289,7 +1291,7 @@ export class GitService implements IGitService, Disposable {
 				// normalize the part of the repo that could be wrong (repo path)
 				const newFilePath = fileOrFolderPath
 					.replace(/\\/g, "/")
-					.replace(new RegExp(repoRoot.replace(/\+/g, "\\+"), "i"), repoRoot);
+					.replace(new RegExp(Strings.escapeRegExp(repoRoot), "i"), repoRoot);
 				if (newFilePath !== fileOrFolderPath.replace(/\\/g, "/")) {
 					Logger.warn(
 						`getRepositoryByFilePath: Possible repo casing issue newPath=${newFilePath} vs. fileOrFolderPath=${fileOrFolderPath}`

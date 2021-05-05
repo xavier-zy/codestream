@@ -404,7 +404,9 @@ export const Timeline = (props: Props) => {
 							<MarkdownText
 								text={
 									note.bodyHtml
-										? note.bodyHtml.replace(/\<table /g, '<table class="gitlab-table" ')
+										? note.bodyHtml
+												.replace(/\<p /g, '<table class="gitlab-table" ')
+												.replace(/\<pre.+?\>/g, "<pre>")
 										: note.body
 								}
 								isHtml={note.bodyHtml != null}

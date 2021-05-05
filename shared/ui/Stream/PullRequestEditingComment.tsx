@@ -1,6 +1,5 @@
 import React, { useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { CodeStreamState } from "../store";
+import { useDispatch } from "react-redux";
 import styled from "styled-components";
 import { PRButtonRow } from "./PullRequestComponents";
 import {
@@ -11,6 +10,7 @@ import MessageInput from "./MessageInput";
 import { Button } from "../src/components/Button";
 import { confirmPopup } from "./Confirm";
 import { api } from "../store/providerPullRequests/actions";
+import { replaceHtml } from "../utils";
 
 interface Props {
 	pr: FetchThirdPartyPullRequestPullRequest | GitLabMergeRequest;
@@ -47,7 +47,7 @@ export const PullRequestEditingComment = styled((props: Props) => {
 						pullRequestId: "idComputed" in pr ? pr.idComputed : pr.id,
 						id,
 						isPending: props.isPending,
-						body: text
+						body: replaceHtml(text)
 					}
 				)
 			);

@@ -395,6 +395,7 @@ export const Timeline = (props: Props) => {
 							setIsLoadingMessage={setIsLoadingMessage}
 							id={note.id}
 							type={"ISSUE"}
+							isPending={note.state === "PENDING"}
 							text={pendingComments[note.id]}
 							done={() => doneEditingComment(note.id)}
 						/>

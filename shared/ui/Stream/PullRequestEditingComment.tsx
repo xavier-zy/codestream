@@ -17,6 +17,7 @@ interface Props {
 	setIsLoadingMessage: Function;
 	className?: string;
 	id: string;
+	isPending: boolean;
 	type: "PR" | "ISSUE" | "REVIEW" | "REVIEW_COMMENT";
 	done: Function;
 	text: string;
@@ -45,6 +46,7 @@ export const PullRequestEditingComment = styled((props: Props) => {
 					{
 						pullRequestId: "idComputed" in pr ? pr.idComputed : pr.id,
 						id,
+						isPending: props.isPending,
 						body: text
 					}
 				)
@@ -83,13 +85,6 @@ export const PullRequestEditingComment = styled((props: Props) => {
 				]
 			});
 		}
-	};
-
-	const map = {
-		OFF_TOPIC: "off-topic",
-		SPAM: "spam",
-		TOO_HEATED: "too heated",
-		RESOLVED: "resolved"
 	};
 
 	return (

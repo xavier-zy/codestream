@@ -2286,8 +2286,6 @@ export class GitLabProvider extends ThirdPartyIssueProviderBase<CSGitLabProvider
 		type: string;
 		pullRequestId: string;
 	}): Promise<Directives | undefined> {
-		const { id } = this.parseId(request.pullRequestId);
-
 		const noteId = request.id;
 		const response = await this.mutate<any>(
 			`
@@ -2339,8 +2337,12 @@ export class GitLabProvider extends ThirdPartyIssueProviderBase<CSGitLabProvider
 	async updateReviewComment(request: {
 		id: string;
 		body: string;
+		isPending: boolean;
 		pullRequestId: string;
 	}): Promise<Directives> {
+		if (!request.isPending) {
+			return this.updateIssueComment(request);
+		}
 		const { id, iid, projectFullPath } = this.parseId(request.pullRequestId);
 
 		const comment = await this.gitLabReviewStore.updateComment(
@@ -3297,15 +3299,19 @@ export class GitLabProvider extends ThirdPartyIssueProviderBase<CSGitLabProvider
 	async updateIssueComment(request: {
 		id: string;
 		body: string;
+		isPending: boolean;
 		pullRequestId: string;
 	}): Promise<Directives> {
 		// detect if this review comment
-		if (request.id.indexOf("gitlab") === -1) {
+		if (request.isPending) {
 			return this.updateReviewComment(request);
 		}
-		const { id } = this.parseId(request.pullRequestId);
+		const providerVersion = await this.getVersion();
+		// newwer mutations use a custom NoteID type
 		const response = await this.mutate<any>(
-			`mutation UpdateNote($id: NoteID!, $body: String!) {
+			`mutation UpdateNote($id: ${
+				semver.lt(providerVersion.version, "13.6.4") ? "ID" : "NoteID"
+			}!, $body: String!) {
 			updateNote(input: {id: $id, body: $body}) {
 			  clientMutationId
 			  note {
@@ -3994,7 +4000,7 @@ class GitLabReviewStore {
 	async updateComment(id: GitLabId, commentId: string, text: string) {
 		const review = await this.get(id);
 		if (review) {
-			const comment = review.comments.find(_ => _.id === commentId);
+			const comment = review.comments?.find(_ => _.id === commentId);
 			if (comment) {
 				comment.text = text;
 				const { textFiles } = SessionContainer.instance();

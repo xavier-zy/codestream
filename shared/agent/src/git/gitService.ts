@@ -39,6 +39,7 @@ export interface TrackingBranch {
 }
 
 export const EMPTY_TREE_SHA = "4b825dc642cb6eb9a060e54bf8d69288fbee4904";
+const FORMAT_SEPARATOR = "--0--";
 
 export interface IGitService extends Disposable {
 	getFileAuthors(uri: URI, options?: BlameOptions): Promise<GitAuthor[]>;
@@ -1362,13 +1363,18 @@ export class GitService implements IGitService, Disposable {
 			// and then filter out noreply.github.com (what else?)
 			const timeAgo = new Date().getTime() / 1000 - since;
 			data = (
-				await git({ cwd: repoPath }, "log", "--pretty=format:%an--0--%aE", `--since=${timeAgo}`)
+				await git(
+					{ cwd: repoPath },
+					"log",
+					`--pretty=format:%an${FORMAT_SEPARATOR}%aE`,
+					`--since=${timeAgo}`
+				)
 			)
 				.split("\n")
 				.map(line => line.trim())
 				.filter(line => !line.match(/noreply/))
 				.forEach(line => {
-					const [name, email] = line.split("--0--");
+					const [name, email] = line.split(FORMAT_SEPARATOR);
 					result[email.trim()] = name.trim();
 				});
 		} catch {}
@@ -1389,7 +1395,7 @@ export class GitService implements IGitService, Disposable {
 			const data = await git(
 				{ cwd: repoPath },
 				"log",
-				'--pretty=format:"%an--0--%aE"',
+				`--pretty=format:%an${FORMAT_SEPARATOR}%aE`,
 				`--since=${timeAgo}`
 			);
 
@@ -1399,7 +1405,7 @@ export class GitService implements IGitService, Disposable {
 				.map(line => line.trim())
 				.filter(line => !line.match(/noreply/))
 				.forEach(line => {
-					const [name, email] = line.split("--0--");
+					const [name, email] = line.split(FORMAT_SEPARATOR);
 					if (!result.find(author => author.email === email)) {
 						result.push({ name, email });
 					}

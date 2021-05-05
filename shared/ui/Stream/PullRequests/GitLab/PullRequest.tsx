@@ -644,10 +644,13 @@ export const PullRequest = () => {
 
 	const closeRight = () => setRightOpen(false);
 
+	// hijacks links to user profiles which have HREFs like "/ppezaris"
 	const hijackUserLinks = event => {
-		if (event?.target?.dataset?.referenceType === "user" && event?.target?.dataset?.user) {
+		const href: string = event?.target?.getAttribute("HREF");
+		const dataset = event?.target?.dataset;
+		if (href && dataset?.referenceType === "user" && dataset?.user) {
 			event.preventDefault();
-			const url = pr.baseWebUrl + "/" + event.target.getAttribute("HREF");
+			const url = href.toLowerCase().startsWith("http") ? href : `${pr.baseWebUrl}/${href}`;
 			HostApi.instance.send(OpenUrlRequestType, { url });
 		}
 	};

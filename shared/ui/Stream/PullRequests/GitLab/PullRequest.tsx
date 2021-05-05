@@ -248,6 +248,18 @@ export const FlexRow = styled.div`
 		width: 100% !important;
 		height: 75px;
 	}
+	.action-button-wrapper {
+		align-items: center;
+		display: flex;
+		flex-wrap: no-wrap;	
+		@media only screen and (max-width: 350px) {
+			flex-wrap: wrap;
+			justify-content: center;
+			.action-button {
+				margin-top: 10px;
+			}
+		}
+	}
 `;
 
 const Description = styled.div`
@@ -644,10 +656,13 @@ export const PullRequest = () => {
 
 	const closeRight = () => setRightOpen(false);
 
+	// hijacks links to user profiles which have HREFs like "/ppezaris"
 	const hijackUserLinks = event => {
-		if (event?.target?.dataset?.referenceType === "user" && event?.target?.dataset?.user) {
+		const href: string = event?.target?.getAttribute("HREF");
+		const dataset = event?.target?.dataset;
+		if (href && dataset?.referenceType === "user" && dataset?.user) {
 			event.preventDefault();
-			const url = pr.baseWebUrl + "/" + event.target.getAttribute("HREF");
+			const url = href.toLowerCase().startsWith("http") ? href : `${pr.baseWebUrl}/${href}`;
 			HostApi.instance.send(OpenUrlRequestType, { url });
 		}
 	};

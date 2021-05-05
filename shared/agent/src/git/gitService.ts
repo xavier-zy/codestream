@@ -39,6 +39,7 @@ export interface TrackingBranch {
 }
 
 export const EMPTY_TREE_SHA = "4b825dc642cb6eb9a060e54bf8d69288fbee4904";
+const FORMAT_SEPARATOR = "--0--";
 
 export interface IGitService extends Disposable {
 	getFileAuthors(uri: URI, options?: BlameOptions): Promise<GitAuthor[]>;
@@ -676,7 +677,7 @@ export class GitService implements IGitService, Disposable {
 				"log",
 				"-M",
 				"-n1",
-				`--format='${GitLogParser.defaultFormat}'`,
+				"--format=${GitLogParser.defaultFormat}",
 				ref,
 				"--"
 			);
@@ -804,7 +805,7 @@ export class GitService implements IGitService, Disposable {
 				{ cwd: repo.path },
 				"log",
 				`-n${limit}`,
-				`--format='${GitLogParser.defaultFormat}'`,
+				"--format=${GitLogParser.defaultFormat}",
 				"--"
 			);
 			return GitLogParser.parse(commitsData.trim(), repo.path);
@@ -825,7 +826,7 @@ export class GitService implements IGitService, Disposable {
 				"log",
 				branch,
 				"-n100",
-				`--format='${GitLogParser.defaultFormat}'`,
+				"--format=${GitLogParser.defaultFormat}",
 				"--"
 			);
 			const commits = GitLogParser.parse(commitsData.trim(), repoPath);
@@ -928,7 +929,7 @@ export class GitService implements IGitService, Disposable {
 					{ cwd: repoPath },
 					"log",
 					"@{push}..",
-					`--format='${GitLogParser.defaultFormat}'`,
+					"--format=${GitLogParser.defaultFormat}",
 					"--"
 				);
 				const commits = GitLogParser.parse(data.trim(), repoPath);
@@ -1362,13 +1363,18 @@ export class GitService implements IGitService, Disposable {
 			// and then filter out noreply.github.com (what else?)
 			const timeAgo = new Date().getTime() / 1000 - since;
 			data = (
-				await git({ cwd: repoPath }, "log", "--pretty=format:'%an|%aE'", `--since=${timeAgo}`)
+				await git(
+					{ cwd: repoPath },
+					"log",
+					`--pretty=format:%an${FORMAT_SEPARATOR}%aE`,
+					`--since=${timeAgo}`
+				)
 			)
 				.split("\n")
 				.map(line => line.trim())
 				.filter(line => !line.match(/noreply/))
 				.forEach(line => {
-					const [name, email] = line.split("|");
+					const [name, email] = line.split(FORMAT_SEPARATOR);
 					result[email.trim()] = name.trim();
 				});
 		} catch {}
@@ -1386,12 +1392,20 @@ export class GitService implements IGitService, Disposable {
 			// git log --pretty=format:"%an|%aE" | sort -u
 			// and then filter out noreply.github.com (what else?)
 			const timeAgo = new Date().getTime() / 1000 - since;
-			(await git({ cwd: repoPath }, "log", "--pretty=format:'%an|%aE'", `--since=${timeAgo}`))
+			const data = await git(
+				{ cwd: repoPath },
+				"log",
+				`--pretty=format:%an${FORMAT_SEPARATOR}%aE`,
+				`--since=${timeAgo}`
+			);
+
+			data
+				.trim()
 				.split("\n")
 				.map(line => line.trim())
 				.filter(line => !line.match(/noreply/))
 				.forEach(line => {
-					const [name, email] = line.split("|");
+					const [name, email] = line.split(FORMAT_SEPARATOR);
 					if (!result.find(author => author.email === email)) {
 						result.push({ name, email });
 					}
@@ -1488,7 +1502,7 @@ export class GitService implements IGitService, Disposable {
 			sha,
 			`-n${limit}`,
 			"--skip=1",
-			`--format='${GitLogParser.defaultFormat}'`,
+			"--format=${GitLogParser.defaultFormat}",
 			"--"
 		);
 		const commits = GitLogParser.parse(commitsData.trim(), repoPath);

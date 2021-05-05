@@ -677,7 +677,7 @@ export class GitService implements IGitService, Disposable {
 				"log",
 				"-M",
 				"-n1",
-				"--format=${GitLogParser.defaultFormat}",
+				`--format=${GitLogParser.defaultFormat}`,
 				ref,
 				"--"
 			);
@@ -805,7 +805,7 @@ export class GitService implements IGitService, Disposable {
 				{ cwd: repo.path },
 				"log",
 				`-n${limit}`,
-				"--format=${GitLogParser.defaultFormat}",
+				`--format=${GitLogParser.defaultFormat}`,
 				"--"
 			);
 			return GitLogParser.parse(commitsData.trim(), repo.path);
@@ -826,7 +826,7 @@ export class GitService implements IGitService, Disposable {
 				"log",
 				branch,
 				"-n100",
-				"--format=${GitLogParser.defaultFormat}",
+				`--format=${GitLogParser.defaultFormat}`,
 				"--"
 			);
 			const commits = GitLogParser.parse(commitsData.trim(), repoPath);
@@ -929,7 +929,7 @@ export class GitService implements IGitService, Disposable {
 					{ cwd: repoPath },
 					"log",
 					"@{push}..",
-					"--format=${GitLogParser.defaultFormat}",
+					`--format=${GitLogParser.defaultFormat}`,
 					"--"
 				);
 				const commits = GitLogParser.parse(data.trim(), repoPath);
@@ -1502,7 +1502,7 @@ export class GitService implements IGitService, Disposable {
 			sha,
 			`-n${limit}`,
 			"--skip=1",
-			"--format=${GitLogParser.defaultFormat}",
+			`--format=${GitLogParser.defaultFormat}`,
 			"--"
 		);
 		const commits = GitLogParser.parse(commitsData.trim(), repoPath);

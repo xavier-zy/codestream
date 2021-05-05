@@ -49,7 +49,7 @@ export const PipelineBox = (props: { pr: GitLabMergeRequest; setIsLoadingMessage
 	) {
 		return (
 			<OutlineBox>
-				<FlexRow>
+				<FlexRow style={{ flexWrap: "nowrap" }}>
 					<Icon name="sync" className="spin row-icon" />
 					<div className="pad-left">
 						Checking pipeline status{" "}
@@ -66,11 +66,32 @@ export const PipelineBox = (props: { pr: GitLabMergeRequest; setIsLoadingMessage
 	const iconWrapper = iconForStatus[pipeline.status.toLowerCase()] || { icon: "clock" };
 	return (
 		<OutlineBox>
-			<FlexRow>
+			<FlexRow style={{ flexWrap: "nowrap" }}>
 				<Link href={pipeline.webUrl} className="row-icon">
 					<Icon name={iconWrapper.icon} className="bigger" />
 				</Link>
 				<div>
+					{pipeline.stages && (
+						<div className="float-right">
+							{pipeline.stages.nodes.map(_ => {
+								const iconWrapper = iconForStatus[_.detailedStatus.label] || { icon: "clock" };
+
+								return (
+									<Tooltip
+										placement="top"
+										delay={1}
+										trigger={["hover"]}
+										overlayStyle={{ zIndex: "3000" }}
+										title={`${_.name}: ${_.detailedStatus.tooltip}`}
+									>
+									<span>
+										<Icon name={iconWrapper.icon} style={{ paddingRight: "5px" }} />
+									</span>
+									</Tooltip>
+								);
+							})}
+						</div>
+					)}
 					Merge request pipeline{" "}
 					<Link href={pipeline.webUrl}>
 						#{pipeline.id.replace("gid://gitlab/Ci::Pipeline/", "")}
@@ -80,27 +101,6 @@ export const PipelineBox = (props: { pr: GitLabMergeRequest; setIsLoadingMessage
 						{pipeline.sha!.substring(0, 8)}
 					</Link>
 				</div>
-				{pipeline.stages && (
-					<div className="pad-left" style={{ flex: "auto", textAlign: "right" }}>
-						{pipeline.stages.nodes.map(_ => {
-							const iconWrapper = iconForStatus[_.detailedStatus.label] || { icon: "clock" };
-
-							return (
-								<Tooltip
-									placement="top"
-									delay={1}
-									trigger={["hover"]}
-									overlayStyle={{ zIndex: "3000" }}
-									title={`${_.name}: ${_.detailedStatus.tooltip}`}
-								>
-									<span>
-										<Icon name={iconWrapper.icon} style={{ paddingRight: "5px" }} />
-									</span>
-								</Tooltip>
-							);
-						})}
-					</div>
-				)}
 			</FlexRow>
 		</OutlineBox>
 	);

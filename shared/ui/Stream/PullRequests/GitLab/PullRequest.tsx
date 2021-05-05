@@ -248,6 +248,18 @@ export const FlexRow = styled.div`
 		width: 100% !important;
 		height: 75px;
 	}
+	.action-button-wrapper {
+		align-items: center;
+		display: flex;
+		flex-wrap: no-wrap;	
+		@media only screen and (max-width: 350px) {
+			flex-wrap: wrap;
+			justify-content: center;
+			.action-button {
+				margin-top: 10px;
+			}
+		}
+	}
 `;
 
 const Description = styled.div`

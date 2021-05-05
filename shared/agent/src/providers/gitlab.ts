@@ -3306,6 +3306,7 @@ export class GitLabProvider extends ThirdPartyIssueProviderBase<CSGitLabProvider
 		if (request.isPending) {
 			return this.updateReviewComment(request);
 		}
+		const { projectFullPath } = this.parseId(request.pullRequestId);
 		const providerVersion = await this.getVersion();
 		// newwer mutations use a custom NoteID type
 		const response = await this.mutate<any>(
@@ -3342,7 +3343,12 @@ export class GitLabProvider extends ThirdPartyIssueProviderBase<CSGitLabProvider
 				},
 				{
 					type: "updateDiscussionNote",
-					data: response.updateNote.note
+					data: this.enhanceNote(
+						response.updateNote.note as Note,
+						projectFullPath,
+						new Map<string, ParsedDiffWithMetadata>(),
+						[]
+					)
 				}
 			]
 		});

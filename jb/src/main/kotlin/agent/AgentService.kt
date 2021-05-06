@@ -49,6 +49,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.SystemInfo
 import git4idea.config.GitExecutableManager
 import git4idea.config.GitVcsApplicationSettings
 import git4idea.config.GitVcsSettings
@@ -247,7 +248,11 @@ class AgentService(private val project: Project) : Disposable {
                 GlobalScope.launch {
                     restart(true)
                     onDidStart {
-                        agent.telemetry(TelemetryParams("Agent Restarted"))
+                        agent.telemetry(TelemetryParams("Agent Restarted", mapOf(
+                            "Exit Code" to code,
+                            "OS Name" to SystemInfo.OS_NAME,
+                            "OS Version" to SystemInfo.OS_VERSION,
+                            "OS ARch" to SystemInfo.OS_ARCH)))
                     }
                 }
             }

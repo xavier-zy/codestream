@@ -73,6 +73,7 @@ export const ChangesetFileList = (props: {
 			repos: state.repos,
 			changesets,
 			filesChangedMode: preferences.reviewFilesChangedMode || "files",
+			isInJetBrains: state.ide.name === "JETBRAINS",
 			openFirstDiff:
 				state.context.currentReviewOptions && state.context.currentReviewOptions.openFirstDiff,
 			maxCheckpoint:
@@ -210,8 +211,8 @@ export const ChangesetFileList = (props: {
 			}`;
 			const selected = (derivedState.matchFile || "") == uri;
 			const visited = visitedFiles[visitedKey];
-			if (selected && !visited) {
-				// visitFile(visitedKey, index);
+			if (selected && !visited && derivedState.isInJetBrains) {
+				visitFile(visitedKey, index);
 			}
 
 			let icon;

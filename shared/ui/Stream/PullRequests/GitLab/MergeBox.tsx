@@ -119,7 +119,7 @@ export const MergeBox = props => {
 	if (derivedState?.pr?.mergedAt) {
 		return (
 			<OutlineBox>
-				<FlexRow>
+				<FlexRow style={{ flexWrap: "nowrap" }}>
 					<Icon name="check-circle" className="bigger green-color" />
 					<div className="pad-left">
 						Merged at <Timestamp time={derivedState.pr.mergedAt!} />
@@ -132,11 +132,13 @@ export const MergeBox = props => {
 	if (!props.pr.diffRefs || !props.pr.diffRefs.headSha) {
 		return (
 			<OutlineBox>
-				<FlexRow>
-					<Icon name="alert" className="bigger" />
-					<Button className="action-button" variant="secondary" disabled>
-						Merge
-					</Button>
+				<FlexRow style={{ flexWrap: "nowrap" }}>
+					<div className="action-button-wrapper">
+						<Icon name="alert" className="bigger" />
+						<Button className="action-button" variant="secondary" disabled>
+							Merge
+						</Button>
+					</div>
 					<div className="pad-left">
 						Source branch does not exist. Please restore it or use a different source branch{" "}
 						<Tooltip
@@ -154,11 +156,13 @@ export const MergeBox = props => {
 	if (derivedState.pr?.userPermissions?.canMerge === false) {
 		return (
 			<OutlineBox>
-				<FlexRow>
-					<Icon name="check-circle" className="bigger green-color" />
-					<Button className="action-button disabled" variant="neutral" disabled={true}>
-						Merge
-					</Button>
+				<FlexRow style={{ flexWrap: "nowrap" }}>
+					<div className="action-button-wrapper">
+						<Icon name="check-circle" className="bigger green-color" />
+						<Button className="action-button disabled" variant="neutral" disabled={true}>
+							Merge
+						</Button>
+					</div>
 					<div className="pad-left">
 						Ask someone with write access to this repository to merge this request
 					</div>
@@ -170,19 +174,23 @@ export const MergeBox = props => {
 	if (props.pr.workInProgress) {
 		return (
 			<OutlineBox>
-				<FlexRow>
-					<Icon name="alert" className="bigger" />
-					<Button className="action-button" variant="secondary" disabled>
-						Merge
-					</Button>
-					<div className="pad-left">
-						<b>This merge request is still a draft</b>
-						<br />
-						Draft merge requests can't be merged.
+				<FlexRow style={{ flexWrap: "nowrap" }}>
+					<div className="action-button-wrapper">
+						<Icon name="alert" className="bigger" />
+						<Button className="action-button" variant="secondary" disabled>
+							Merge
+						</Button>
 					</div>
-					<div className="pad-left">
-						<Button onClick={toggleWorkInProgress}>Mark as ready</Button>
-					</div>
+					<FlexRow style={{ padding: "0" }}>
+						<div className="pad-left">
+							<b>This merge request is still a draft</b>
+							<br />
+							Draft merge requests can't be merged.
+						</div>
+						<div className="pad-left">
+							<Button onClick={toggleWorkInProgress}>Mark as ready</Button>
+						</div>
+					</FlexRow>
 				</FlexRow>
 			</OutlineBox>
 		);
@@ -195,11 +203,13 @@ export const MergeBox = props => {
 	) {
 		return (
 			<OutlineBox>
-				<FlexRow>
-					<Icon name="check-circle" className="bigger" />
-					<Button className="action-button disabled" variant="neutral" disabled={true}>
-						Merge
-					</Button>
+				<FlexRow style={{ flexWrap: "nowrap" }}>
+					<div className="action-button-wrapper">
+						<Icon name="check-circle" className="bigger" />
+						<Button className="action-button disabled" variant="neutral" disabled={true}>
+							Merge
+						</Button>
+					</div>
 					<div className="pad-left">
 						Before this can be merged, one or more threads must be resolved.
 					</div>
@@ -215,11 +225,13 @@ export const MergeBox = props => {
 	) {
 		return (
 			<OutlineBox>
-				<FlexRow>
-					<Icon name="alert" className="bigger" />
-					<Button className="action-button disabled" variant="neutral" disabled={true}>
-						Merge
-					</Button>
+				<FlexRow style={{ flexWrap: "nowrap" }}>
+					<div className="action-button-wrapper">
+						<Icon name="alert" className="bigger" />
+						<Button className="action-button disabled" variant="neutral" disabled={true}>
+							Merge
+						</Button>
+					</div>
 					<div className="pad-left">
 						A CI/CD pipeline must run and be successful before merge.
 						<Link
@@ -240,11 +252,13 @@ export const MergeBox = props => {
 	) {
 		return (
 			<OutlineBox>
-				<FlexRow>
-					<Icon name="alert" className="bigger" />
-					<Button className="action-button disabled" variant="neutral" disabled={true}>
-						Merge
-					</Button>
+				<FlexRow style={{ flexWrap: "nowrap" }}>
+					<div className="action-button-wrapper">
+						<Icon name="alert" className="bigger" />
+						<Button className="action-button disabled" variant="neutral" disabled={true}>
+							Merge
+						</Button>
+					</div>
 					<div className="pad-left">
 						{derivedState.pipeline.status === "FAILED" && (
 							<>
@@ -268,7 +282,7 @@ export const MergeBox = props => {
 	) {
 		return (
 			<OutlineBox>
-				<FlexRow>
+				<FlexRow style={{ flexWrap: "nowrap" }}>
 					<Icon name="check-circle" className="bigger" />
 					<div className="pad-left">Set to be merged automatically when the pipeline succeeds</div>
 					<div className="pad-left">

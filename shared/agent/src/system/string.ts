@@ -17,6 +17,10 @@ export namespace Strings {
 		Backslash = 92
 	}
 
+	export function escapeRegExp(s: string) {
+		return s.replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&");
+	}
+
 	export function escapeHtml(s: string) {
 		return s
 			.replace(/&/g, "&amp;")

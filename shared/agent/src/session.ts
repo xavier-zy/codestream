@@ -44,8 +44,10 @@ import {
 	CodeStreamEnvironmentInfo,
 	ConfirmRegistrationRequest,
 	ConfirmRegistrationRequestType,
+	ConnectionCode,
 	ConnectionStatus,
 	DidChangeApiVersionCompatibilityNotificationType,
+	DidChangeConnectionStatusNotification,
 	DidChangeConnectionStatusNotificationType,
 	DidChangeDataNotificationType,
 	DidChangeServerUrlNotificationType,
@@ -234,6 +236,11 @@ export class CodeStreamSession {
 	private uiState: string | undefined;
 	private _documentEventHandler: DocumentEventHandler | undefined;
 
+	private _activeServerAlerts: string[] = [];
+	private _broadcasterRecoveryTimer: NodeJS.Timer | undefined;
+	private _echoTimer: NodeJS.Timer | undefined;
+	private _echoDidTimeout: boolean = false;
+
 	// HACK in certain scenarios the agent may want to use more performance-intensive
 	// operations when handling document change and saves. This is true for when
 	// a user is looking at the review screen, where we need to be able to live-update
@@ -330,6 +337,39 @@ export class CodeStreamSession {
 					this._codestreamAccessToken
 				) {
 					this._didEncounterMaintenanceMode();
+				}
+
+				const alerts = context.response?.headers.get("X-CS-API-Alerts");
+				if (alerts) {
+					Logger.warn(`API Server posted these alerts: ${alerts}`);
+					this._activeServerAlerts = alerts.split(",");
+
+					if (this.inBroadcasterFailureMode()) {
+						Logger.warn(
+							"Broadcaster failure detected, sending notification that we are reconnecting..."
+						);
+						const code = this._activeServerAlerts.includes("broadcasterConnectionFailure")
+							? ConnectionCode.ApiBroadcasterConnectionFailure
+							: ConnectionCode.ApiBroadcasterAcknowledgementFailure;
+						this.agent.sendNotification(DidChangeConnectionStatusNotificationType, {
+							status: ConnectionStatus.Reconnecting,
+							code
+						});
+						if (!this._broadcasterRecoveryTimer) {
+							Logger.log("Will check for recovery in 30s...");
+							this._broadcasterRecoveryTimer = setTimeout(() => {
+								delete this._broadcasterRecoveryTimer;
+								Logger.log("Calling API server to detect broadcaster recovery");
+								this.api.fetch("/no-auth/capabilities");
+							}, 30000);
+						}
+					}
+				} else if (this._activeServerAlerts.length > 0) {
+					Logger.log("API server cleared all active alerts");
+					this._activeServerAlerts = [];
+					this.agent.sendNotification(DidChangeConnectionStatusNotificationType, {
+						status: ConnectionStatus.Reconnected
+					});
 				}
 			}
 		});
@@ -450,6 +490,22 @@ export class CodeStreamSession {
 	}
 
 	private async onRTMessageReceived(e: RTMessage) {
+		// if we are in broadcaster failure mode, and we received an RT message, we'll immediately
+		// ping the server to see if the broadcaster failure mode has gone away
+		if (this.inBroadcasterFailureMode()) {
+			Logger.log(
+				"In broadcaster failure mode but we received an RT message, will ping server for status..."
+			);
+			// clear out any existing timer
+			if (this._broadcasterRecoveryTimer) {
+				clearTimeout(this._broadcasterRecoveryTimer);
+				delete this._broadcasterRecoveryTimer;
+			}
+			// the API server will respond with headers that tell us whether we are still
+			// in broadcast failure mode
+			this.api.fetch("/no-auth/capabilities");
+		}
+
 		switch (e.type) {
 			case MessageType.Codemarks:
 				const codemarks = await SessionContainer.instance().codemarks.enrichCodemarks(e.data);
@@ -470,7 +526,11 @@ export class CodeStreamSession {
 					void SessionContainer.instance().session.reset();
 				}
 
-				this.agent.sendNotification(DidChangeConnectionStatusNotificationType, e.data);
+				const data = { ...e.data } as DidChangeConnectionStatusNotification;
+				if (data.status === ConnectionStatus.Reconnecting) {
+					data.code = ConnectionCode.BroadcasterConnectionLost;
+				}
+				this.agent.sendNotification(DidChangeConnectionStatusNotificationType, data);
 				break;
 			case MessageType.MarkerLocations:
 				this._onDidChangeMarkerLocations.fire(e.data);
@@ -548,6 +608,9 @@ export class CodeStreamSession {
 					type: ChangeDataType.Users,
 					data: e.data
 				});
+				break;
+			case MessageType.Echo:
+				this.echoReceived();
 				break;
 		}
 	}
@@ -961,6 +1024,10 @@ export class CodeStreamSession {
 			this.api.updateUser({ timeZone });
 		}
 
+		if (this.isOnPrem && this.apiCapabilities.echoes) {
+			this.listenForEchoes();
+		}
+
 		return loginResponse;
 	}
 
@@ -1293,6 +1360,47 @@ export class CodeStreamSession {
 			this.agent.sendNotification(UserDidCommitNotificationType, {
 				sha: commit.ref
 			});
+		}
+	}
+
+	inBroadcasterFailureMode() {
+		return (
+			this._activeServerAlerts.includes("broadcasterConnectionFailure") ||
+			this._activeServerAlerts.includes("broadcasterAcknowledgementFailure")
+		);
+	}
+
+	listenForEchoes() {
+		this._echoTimer = setTimeout(this.echoTimeout.bind(this), 10000);
+	}
+
+	echoTimeout() {
+		Logger.warn(
+			"Have not received an echo for 10 seconds, setting connection status to Reconnecting"
+		);
+		this.agent.sendNotification(DidChangeConnectionStatusNotificationType, {
+			status: ConnectionStatus.Reconnecting,
+			code: ConnectionCode.EchoTimeout
+		});
+		this._echoDidTimeout = true;
+		if (this.isOnPrem && this.apiCapabilities.echoes) {
+			this.listenForEchoes();
+		}
+	}
+
+	echoReceived() {
+		if (this._echoTimer) {
+			clearTimeout(this._echoTimer);
+		}
+		if (this._echoDidTimeout) {
+			Logger.log("Echo received after a timeout, setting connection status to Reconnecting");
+			this.agent.sendNotification(DidChangeConnectionStatusNotificationType, {
+				status: ConnectionStatus.Reconnected
+			});
+			this._echoDidTimeout = false;
+		}
+		if (this.isOnPrem && this.apiCapabilities.echoes) {
+			this.listenForEchoes();
 		}
 	}
 

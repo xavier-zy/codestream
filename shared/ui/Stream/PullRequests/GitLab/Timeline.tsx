@@ -395,6 +395,7 @@ export const Timeline = (props: Props) => {
 							setIsLoadingMessage={setIsLoadingMessage}
 							id={note.id}
 							type={"ISSUE"}
+							isPending={note.state === "PENDING"}
 							text={pendingComments[note.id]}
 							done={() => doneEditingComment(note.id)}
 						/>
@@ -403,7 +404,9 @@ export const Timeline = (props: Props) => {
 							<MarkdownText
 								text={
 									note.bodyHtml
-										? note.bodyHtml.replace(/\<table /g, '<table class="gitlab-table" ')
+										? note.bodyHtml
+												.replace(/\<p /g, '<table class="gitlab-table" ')
+												.replace(/\<pre.+?\>/g, "<pre>")
 										: note.body
 								}
 								isHtml={note.bodyHtml != null}

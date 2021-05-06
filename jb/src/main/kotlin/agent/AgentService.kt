@@ -35,6 +35,7 @@ import com.codestream.protocols.agent.ReviewCoverageResult
 import com.codestream.protocols.agent.SetServerUrlParams
 import com.codestream.protocols.agent.SetServerUrlResult
 import com.codestream.protocols.agent.Stream
+import com.codestream.protocols.agent.TelemetryParams
 import com.codestream.protocols.agent.getPullRequestFilesChangedParams
 import com.codestream.protocols.agent.getPullRequestFilesParams
 import com.codestream.settings.ApplicationSettingsService
@@ -48,6 +49,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.SystemInfo
 import git4idea.config.GitExecutableManager
 import git4idea.config.GitVcsApplicationSettings
 import git4idea.config.GitVcsSettings
@@ -83,6 +85,7 @@ class AgentService(private val project: Project) : Disposable {
 
     private val logger = Logger.getInstance(AgentService::class.java)
     private var initialization = CompletableFuture<Unit>()
+    private var isDisposing = false
 
     lateinit var initializeResult: InitializeResult
     lateinit var agent: CodeStreamLanguageServer
@@ -158,17 +161,18 @@ class AgentService(private val project: Project) : Disposable {
 
     override fun dispose() {
         logger.info("Shutting down CodeStream LSP agent")
+        isDisposing = true
         onDidStart { agent.exit() }
     }
 
-    suspend fun restart() {
+    suspend fun restart(autoSignIn: Boolean = false) {
         logger.info("Restarting CodeStream LSP agent")
         if (initialization.isDone) {
             initialization = CompletableFuture()
         }
-        agent.shutdown().await()
-        agent.exit()
-        initAgent(false)
+        try { agent.shutdown().await() } catch (ex: Exception) { logger.warn(ex) }
+        try { agent.exit() } catch (ex: Exception) { logger.warn(ex) }
+        initAgent(autoSignIn)
         _restartObservers.forEach { it() }
     }
 
@@ -239,6 +243,19 @@ class AgentService(private val project: Project) : Disposable {
         Thread(Runnable {
             val code = process.waitFor()
             logger.info("LSP agent terminated with exit code $code")
+            if (!isDisposing) {
+                logger.info("Restarting LSP agent")
+                GlobalScope.launch {
+                    restart(true)
+                    onDidStart {
+                        agent.telemetry(TelemetryParams("Agent Restarted", mapOf(
+                            "Exit Code" to code,
+                            "OS Name" to SystemInfo.OS_NAME,
+                            "OS Version" to SystemInfo.OS_VERSION,
+                            "OS Arch" to SystemInfo.OS_ARCH)))
+                    }
+                }
+            }
         }).start()
     }
 

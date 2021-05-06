@@ -34,6 +34,7 @@ import {
 	GitLabLabel,
 	GitLabMergeRequest,
 	GitLabMergeRequestWrapper,
+	Note,
 	ThirdPartyProviderConfig
 } from "../protocol/agent.protocol";
 import { CSGitLabProviderInfo } from "../protocol/api.protocol";
@@ -1359,7 +1360,6 @@ export class GitLabProvider extends ThirdPartyIssueProviderBase<CSGitLabProvider
 
 			await this.mapPullRequestModel(
 				response,
-				mergeRequestFullId,
 				filesChanged,
 				new GitLabId(projectFullPath, iid),
 				currentUser
@@ -1390,12 +1390,10 @@ export class GitLabProvider extends ThirdPartyIssueProviderBase<CSGitLabProvider
 				providerVersion
 			);
 
-			if (response.project.mergeRequest.description) {
-				response.project.mergeRequest.description = this.enhanceDescription(
-					response.project.mergeRequest.description,
-					projectFullPath
-				);
-			}
+			response.project.mergeRequest.description = this.enhanceMarkdownBlock(
+				response.project.mergeRequest.description,
+				projectFullPath
+			);
 
 			this._pullRequestCache.set(request.pullRequestId, response);
 		} catch (ex) {
@@ -1412,29 +1410,64 @@ export class GitLabProvider extends ThirdPartyIssueProviderBase<CSGitLabProvider
 		return response;
 	}
 
-	private async mapToDiscussionNode(
-		n: any,
-		mergeRequestFullId: string,
+	private enhanceDiscussions(
+		nodes: DiscussionNode[],
+		projectFullPath: string,
 		parsedPatches: Map<string, ParsedDiffWithMetadata>,
-		filesChanged: any[]
+		filesChanged: FetchThirdPartyPullRequestFilesResponse[]
 	) {
-		if (n.discussion && n.discussion.id) {
+		if (!nodes) return;
+
+		nodes.forEach((discussionNode: DiscussionNode) => {
+			if (discussionNode.notes?.nodes?.length) {
+				discussionNode.notes.nodes.forEach((note: any) => {
+					this.enhanceNote(note, projectFullPath, parsedPatches, filesChanged);
+				});
+				discussionNode.notes.nodes[0].replies = discussionNode.notes.nodes.filter(
+					(dn: DiscussionNode) => dn.id != discussionNode.notes?.nodes[0].id
+				) as any;
+				// remove all the replies from the parent (they're now on replies)
+				discussionNode.notes.nodes.length = 1;
+				discussionNode.notes.nodes[0].replies?.forEach(reply => {
+					reply.position = discussionNode.notes!.nodes[0].position;
+				});
+			}
+		});
+	}
+
+	private enhanceNote(
+		note: Note,
+		projectFullPath: string,
+		parsedPatches: Map<string, ParsedDiffWithMetadata>,
+		filesChanged: FetchThirdPartyPullRequestFilesResponse[]
+	) {
+		if (note.discussion && note.discussion.id) {
 			// HACK hijack the "databaseId" that github uses
-			n.databaseId = n.discussion.id
+			note.databaseId = note.discussion.id
 				.replace("gid://gitlab/DiffDiscussion/", "")
 				.replace("gid://gitlab/IndividualNoteDiscussion/", "");
-			n.mergeRequestIdComputed = mergeRequestFullId;
-			this.toAuthorAbsolutePath(n.author);
+
+			this.toAuthorAbsolutePath(note.author);
 		}
-		if (n.position?.diffRefs && n.position?.newPath && filesChanged?.length) {
+
+		if (note.body != null) {
+			note.body = this.enhanceMarkdownBlock(note.body, projectFullPath);
+		}
+		if (note.bodyText != null) {
+			note.bodyText = this.enhanceMarkdownBlock(note.bodyText, projectFullPath);
+		}
+		if (note.bodyHtml != null) {
+			note.bodyHtml = this.enhanceHtmlBlock(note.bodyHtml, projectFullPath);
+		}
+		if (note.position?.newPath && filesChanged?.length) {
 			try {
-				let processedPatch = parsedPatches.get(n.position.newPath);
+				let processedPatch = parsedPatches.get(note.position.newPath);
 				if (!processedPatch) {
-					const found = filesChanged.find(_ => _.filename === n.position.newPath);
+					const found = filesChanged.find(_ => _.filename === note.position.newPath);
 					if (found?.patch) {
 						processedPatch = translatePositionToLineNumber(parsePatch(found.patch)[0]);
 						if (processedPatch) {
-							parsedPatches.set(n.position.newPath, processedPatch);
+							parsedPatches.set(note.position.newPath, processedPatch);
 						}
 					}
 				}
@@ -1443,14 +1476,14 @@ export class GitLabProvider extends ThirdPartyIssueProviderBase<CSGitLabProvider
 						.filter(
 							_ =>
 								_.lineNumber &&
-								_.lineNumber <= n.position.newLine &&
-								_.lineNumber >= n.position.newLine - 7
+								_.lineNumber <= note.position.newLine &&
+								_.lineNumber >= note.position.newLine - 7
 						)
 						.map(_ => _.line);
 					const length = lines?.length || 1;
-					const start = n.position.newLine + 1 - length;
-					const header = `@@ -${start},${length} +${start},${n.position.newLine} @@`;
-					n.position.patch = header + "\n" + lines?.join("\n");
+					const start = note.position.newLine + 1 - length;
+					const header = `@@ -${start},${length} +${start},${note.position.newLine} @@`;
+					note.position.patch = header + "\n" + lines?.join("\n");
 				}
 			} catch (ex) {
 				Logger.warn("getMergeRequest diffs", {
@@ -1459,31 +1492,15 @@ export class GitLabProvider extends ThirdPartyIssueProviderBase<CSGitLabProvider
 			}
 		}
 
-		return n;
+		return note;
 	}
 
 	private async mapPullRequestModel(
-		response: any,
-		mergeRequestFullId: string,
-		filesChanged: any[],
+		response: GitLabMergeRequestWrapper,
+		filesChanged: FetchThirdPartyPullRequestFilesResponse[],
 		glId: GitLabId,
 		currentUser: GitLabCurrentUser
 	) {
-		const parsedPatches = new Map<string, ParsedDiffWithMetadata>();
-		// massage into replies
-		response.project.mergeRequest.discussions.nodes.forEach((_: DiscussionNode) => {
-			if (_.notes && _.notes.nodes && _.notes.nodes.length) {
-				_.notes.nodes.forEach((n: any) => {
-					this.mapToDiscussionNode(n, mergeRequestFullId, parsedPatches, filesChanged);
-				});
-				_.notes.nodes[0].replies = _.notes.nodes.filter(
-					(x: any) => x.id != _.notes?.nodes[0].id
-				) as any;
-				// remove all the replies from the parent (they're now on replies)
-				_.notes.nodes.length = 1;
-			}
-		});
-
 		// add reviews
 		const pendingReview = await this.gitLabReviewStore.get(glId);
 		if (pendingReview?.comments?.length) {
@@ -1501,6 +1518,13 @@ export class GitLabProvider extends ThirdPartyIssueProviderBase<CSGitLabProvider
 				}
 			};
 		}
+
+		this.enhanceDiscussions(
+			response.project.mergeRequest.discussions.nodes,
+			response.project.mergeRequest.repository.nameWithOwner,
+			new Map<string, ParsedDiffWithMetadata>(),
+			filesChanged
+		);
 	}
 
 	@log()
@@ -1735,15 +1759,26 @@ export class GitLabProvider extends ThirdPartyIssueProviderBase<CSGitLabProvider
 		const pendingReview = await this.gitLabReviewStore.get(new GitLabId(projectFullPath, iid));
 		if (pendingReview?.comments?.length) {
 			const currentUser = await this.getCurrentUser();
-			directives.push({
-				type: "addNodes",
-				data: pendingReview.comments.map(_ => {
-					return this.gitLabReviewStore.mapToDiscussionNode(_, currentUser);
-				})
-			});
 			const commentsAsDiscussionNodes = pendingReview.comments.map(_ => {
 				return this.gitLabReviewStore.mapToDiscussionNode(_, currentUser);
 			});
+
+			const { filesChanged } = await this.getPullRequestFilesChangedCore({
+				pullRequestId: request.pullRequestId
+			});
+			if (filesChanged?.length) {
+				this.enhanceDiscussions(
+					commentsAsDiscussionNodes,
+					projectFullPath,
+					new Map<string, ParsedDiffWithMetadata>(),
+					filesChanged
+				);
+			}
+			directives.push({
+				type: "addNodes",
+				data: commentsAsDiscussionNodes
+			});
+
 			directives.push({
 				type: "addPendingReview",
 				data: {
@@ -2068,7 +2103,7 @@ export class GitLabProvider extends ThirdPartyIssueProviderBase<CSGitLabProvider
 							updatedAt: Dates.toUtcIsoNow(),
 							title: body.title,
 							workInProgress: body.work_in_progress,
-							description: this.enhanceDescription(request.description, projectFullPath),
+							description: this.enhanceMarkdownBlock(request.description, projectFullPath),
 							targetBranch: body.target_branch,
 							assignees: {
 								nodes: body.assignees.map((assignee: any) => {
@@ -2251,8 +2286,6 @@ export class GitLabProvider extends ThirdPartyIssueProviderBase<CSGitLabProvider
 		type: string;
 		pullRequestId: string;
 	}): Promise<Directives | undefined> {
-		const { id } = this.parseId(request.pullRequestId);
-
 		const noteId = request.id;
 		const response = await this.mutate<any>(
 			`
@@ -2304,8 +2337,12 @@ export class GitLabProvider extends ThirdPartyIssueProviderBase<CSGitLabProvider
 	async updateReviewComment(request: {
 		id: string;
 		body: string;
+		isPending: boolean;
 		pullRequestId: string;
 	}): Promise<Directives> {
+		if (!request.isPending) {
+			return this.updateIssueComment(request);
+		}
 		const { id, iid, projectFullPath } = this.parseId(request.pullRequestId);
 
 		const comment = await this.gitLabReviewStore.updateComment(
@@ -3262,15 +3299,20 @@ export class GitLabProvider extends ThirdPartyIssueProviderBase<CSGitLabProvider
 	async updateIssueComment(request: {
 		id: string;
 		body: string;
+		isPending: boolean;
 		pullRequestId: string;
 	}): Promise<Directives> {
 		// detect if this review comment
-		if (request.id.indexOf("gitlab") === -1) {
+		if (request.isPending) {
 			return this.updateReviewComment(request);
 		}
-		const { id } = this.parseId(request.pullRequestId);
+		const { projectFullPath } = this.parseId(request.pullRequestId);
+		const providerVersion = await this.getVersion();
+		// newwer mutations use a custom NoteID type
 		const response = await this.mutate<any>(
-			`mutation UpdateNote($id: NoteID!, $body: String!) {
+			`mutation UpdateNote($id: ${
+				semver.lt(providerVersion.version, "13.6.4") ? "ID" : "NoteID"
+			}!, $body: String!) {
 			updateNote(input: {id: $id, body: $body}) {
 			  clientMutationId
 			  note {
@@ -3301,7 +3343,12 @@ export class GitLabProvider extends ThirdPartyIssueProviderBase<CSGitLabProvider
 				},
 				{
 					type: "updateDiscussionNote",
-					data: response.updateNote.note
+					data: this.enhanceNote(
+						response.updateNote.note as Note,
+						projectFullPath,
+						new Map<string, ParsedDiffWithMetadata>(),
+						[]
+					)
 				}
 			]
 		});
@@ -3345,6 +3392,24 @@ export class GitLabProvider extends ThirdPartyIssueProviderBase<CSGitLabProvider
 			last: last
 		})) as GitLabMergeRequestWrapper).project?.mergeRequest.discussions.nodes;
 		this.ensureAvatarAbsolutePathRecurse(lastDiscussions);
+
+		if (lastDiscussions?.length) {
+			try {
+				const { filesChanged } = await this.getPullRequestFilesChangedCore({
+					pullRequestId: JSON.stringify({ full: `${projectFullPath}!${iid}` })
+				});
+				if (filesChanged?.length) {
+					this.enhanceDiscussions(
+						lastDiscussions,
+						projectFullPath,
+						new Map<string, ParsedDiffWithMetadata>(),
+						filesChanged
+					);
+				}
+			} catch (ex) {
+				Logger.warn("failed to attach patch diffs", ex);
+			}
+		}
 		return lastDiscussions;
 	}
 
@@ -3478,21 +3543,49 @@ export class GitLabProvider extends ThirdPartyIssueProviderBase<CSGitLabProvider
 	}
 
 	/**
-	 * Adds fully-qualified URLs for a merge request description's markdown.
+	 * Adds fully-qualified URLs to a text property.
 	 * Only required when sending to the webview
 	 *
 	 * @private
-	 * @param {string} description
+	 * @param {string} str
 	 * @param {string} projectFullPath
-	 * @return {*}
+	 * @return {string}
 	 * @memberof GitLabProvider
 	 */
-	private enhanceDescription(description: string, projectFullPath: string) {
-		if (!description || !projectFullPath) return description;
+	private enhanceMarkdownBlock(str: string, projectFullPath: string): string {
+		if (!str || !projectFullPath) return str;
 
-		return description.replace(/\[.+?\]\((\/uploads\/.+?)\)/g, (match, group1) => {
+		return str.replace(/\[.+?\]\((\/uploads\/.+?)\)/g, (match, group1) => {
 			return match.replace(group1, `${this.baseWebUrl}/${projectFullPath}${group1}`);
 		});
+	}
+	/**
+	 * Adds fully-qualified URLs to an html property.
+	 * Only required when sending to the webview
+	 * @private
+	 * @param {string} str
+	 * @param {string} projectFullPath
+	 * @return {string}
+	 * @memberof GitLabProvider
+	 */
+	private enhanceHtmlBlock(str: string, projectFullPath: string): string {
+		if (!str || !projectFullPath) return str;
+
+		// gitlab's images look like <img src="base64enCoded" data-src="actualImagePath.jpg" />
+		// we need to adjust them and add an optional base url
+		// we don't care about the original <img> tag since this will later
+		// get converted into markdown which only supports a limited set of <img> attrs
+		const result = str.replace(
+			/<img\s[^>]*?data\-src\s*=\s*['\"]([^'\"]*?)['\"][^>]*?>/g,
+			(match, group1) => {
+				if (group1[0] === "/" && group1.indexOf("/uploads/") > -1) {
+					return `<img src="${this.baseWebUrl}${group1}" />`;
+				}
+				return `<img src="${group1}" />`;
+			}
+		);
+
+		return result;
 	}
 
 	private avatarUrl(url: string) {
@@ -3680,12 +3773,36 @@ export class GitLabProvider extends ThirdPartyIssueProviderBase<CSGitLabProvider
 						break;
 					}
 					if (node.notes && node.notes.nodes.length) {
-						node.notes.nodes = node.notes.nodes.filter(_ => _.id !== directive.data.id);
-						for (const notesWithReplies of node.notes.nodes) {
-							if (notesWithReplies.replies) {
-								notesWithReplies.replies = notesWithReplies.replies.filter(
-									_ => _.id !== directive.data.id
-								);
+						const index = node.notes.nodes.findIndex(_ => _.id === directive.data.id);
+						if (index === 0) {
+							if (node.notes.nodes[0].replies && node.notes.nodes[0].replies.length) {
+								if (node.notes.nodes[0].replies) {
+									// attach the position object on the root to all the replies
+									for (const reply of node.notes.nodes[0].replies) {
+										if (!reply) continue;
+										reply.position = node.notes.nodes[0].position;
+									}
+								}
+								// get the original replies
+								const originalReplies = node.notes.nodes[0].replies;
+								// remove the first reply (it will become the "root" node)
+								const shifted = node.notes.nodes[0].replies?.splice(0, 1);
+								// take old first reply and set it as the first note node
+								node.notes.nodes.splice(0, 1, shifted[0] as any);
+								// attach the modified replies back to the new "root" node
+								node.notes.nodes[0].replies = originalReplies || [];
+							} else {
+								// not one of the replies, it's the root, just remove it
+								node.notes.nodes = node.notes.nodes.filter(_ => _.id !== directive.data.id);
+							}
+						} else {
+							node.notes.nodes = node.notes.nodes.filter(_ => _.id !== directive.data.id);
+							for (const notesWithReplies of node.notes.nodes) {
+								if (notesWithReplies.replies && notesWithReplies.replies.length) {
+									notesWithReplies.replies = notesWithReplies.replies.filter(
+										_ => _.id !== directive.data.id
+									);
+								}
 							}
 						}
 					}
@@ -3889,7 +4006,7 @@ class GitLabReviewStore {
 	async updateComment(id: GitLabId, commentId: string, text: string) {
 		const review = await this.get(id);
 		if (review) {
-			const comment = review.comments.find(_ => _.id === commentId);
+			const comment = review.comments?.find(_ => _.id === commentId);
 			if (comment) {
 				comment.text = text;
 				const { textFiles } = SessionContainer.instance();
@@ -3944,7 +4061,7 @@ class GitLabReviewStore {
 
 	mapToDiscussionNode(_: any, user: GitLabCurrentUser): DiscussionNode {
 		const id = (_.id || new Date().getTime()).toString();
-		return {
+		const dn = {
 			_pending: true,
 			id: id,
 			createdAt: _.createdAt,
@@ -3987,6 +4104,8 @@ class GitLabReviewStore {
 				]
 			}
 		};
+
+		return dn;
 	}
 }
 

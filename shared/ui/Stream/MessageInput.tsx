@@ -159,16 +159,25 @@ export class MessageInput extends React.Component<Props, State> {
 		// so that HTML doesn't get pasted into the input field. without this,
 		// HTML would be rendered as HTML when pasted
 		if (this._contentEditable) {
-			this._contentEditable.htmlEl.addEventListener("paste", e => {
+			this._contentEditable.htmlEl.addEventListener("paste", async (e: ClipboardEvent) => {
 				e.preventDefault();
 				this.setState({ isPasteEvent: true });
 				let text = e.clipboardData!.getData("text/plain");
 				text = asPastedText(text);
-				document.execCommand("insertText", false, text);
+				// cache the files as they will be lost with our insertText hack below
+				const files = e.clipboardData?.files;
+				// HACK. workaround for issue here: https://github.com/microsoft/vscode/issues/122438
+				await new Promise(resolve => {
+					setTimeout(() => {
+						document.execCommand("insertText", false, text);
+						resolve(true);
+					}, 1);
+				});
+
 				this.setState({ isPasteEvent: false });
-				// const text = e.clipboardData!.getData("text/plain");
-				// document.execCommand("insertHTML", false, text.replace(/\n/g, "<br>"));
-				this.handlePaste(e);
+				if (files?.length) {
+					this.attachFiles(files);
+				}
 			});
 			this.disposables.push(
 				KeystrokeDispatcher.onKeyDown(
@@ -303,12 +312,6 @@ export class MessageInput extends React.Component<Props, State> {
 				})}
 			</div>
 		);
-	};
-
-	handlePaste = e => {
-		if (!e.clipboardData || !e.clipboardData.files || !e.clipboardData.files.length) return;
-
-		this.attachFiles(e.clipboardData.files);
 	};
 
 	replaceAttachment = (attachment, index) => {
@@ -1507,7 +1510,4 @@ const mapStateToProps = (
 	};
 };
 
-export default connect(
-	mapStateToProps,
-	{ ...actions }
-)(MessageInput);
+export default connect(mapStateToProps, { ...actions })(MessageInput);

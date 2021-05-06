@@ -92,6 +92,7 @@ export class SocketClusterHistory {
 			if (error instanceof Error && error.message === "RESET") {
 				return false;
 			} else {
+				const message = error instanceof Error ? error.message : JSON.stringify(error);
 				throw error;
 			}
 		}
@@ -110,8 +111,7 @@ export class SocketClusterHistory {
 		let response: any;
 		try {
 			response = await this._socket!.invoke("history", historyMessage);
-		}
-		catch (error) {
+		} catch (error) {
 			const message = error instanceof Error ? error.message : JSON.stringify(error);
 			throw new Error(`history fetch error: ${message}`);
 		}
@@ -119,7 +119,7 @@ export class SocketClusterHistory {
 		await this.handleHistory(response as SocketClusterHistoryAPIOutput);
 	}
 
-	private async handleHistory (output: SocketClusterHistoryAPIOutput) {
+	private async handleHistory(output: SocketClusterHistoryAPIOutput) {
 		if (output.requestId !== this._requestId) {
 			return;
 		}

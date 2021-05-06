@@ -188,6 +188,7 @@ export const PullRequestCodeComment = (props: PropsWithChildren<Props>) => {
 								pr={pr}
 								setIsLoadingMessage={setIsLoadingMessage}
 								id={comment.id}
+								isPending={comment.state === "PENDING"}
 								type={"REVIEW_COMMENT"}
 								text={pendingComments[comment.id]}
 								done={() => doneEditingComment(comment.id)}
@@ -259,6 +260,7 @@ export const PullRequestCodeComment = (props: PropsWithChildren<Props>) => {
 										pr={pr}
 										setIsLoadingMessage={setIsLoadingMessage}
 										id={c.id}
+										isPending={c.state === "PENDING"}
 										type={"REVIEW_COMMENT"}
 										text={pendingComments[c.id]}
 										done={() => doneEditingComment(c.id)}

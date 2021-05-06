@@ -152,6 +152,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 								setIsLoadingMessage={setIsLoadingMessage}
 								id={pr.id}
 								type={"PR"}
+								isPending={false}
 								text={pendingComments[pr.id]}
 								done={() => doneEditingComment(pr.id)}
 							/>
@@ -218,6 +219,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 														setIsLoadingMessage={setIsLoadingMessage}
 														id={item.id}
 														type={"ISSUE"}
+														isPending={item.state === "PENDING"}
 														text={pendingComments[item.id]}
 														done={() => doneEditingComment(item.id)}
 													/>
@@ -302,6 +304,7 @@ export const PullRequestTimelineItems = (props: PropsWithChildren<Props>) => {
 															setIsLoadingMessage={setIsLoadingMessage}
 															id={item.id}
 															type={"REVIEW"}
+															isPending={item.state === "PENDING"}
 															text={pendingComments[item.id]}
 															done={() => doneEditingComment(item.id)}
 														/>

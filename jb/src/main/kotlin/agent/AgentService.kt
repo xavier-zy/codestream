@@ -252,7 +252,7 @@ class AgentService(private val project: Project) : Disposable {
                             "Exit Code" to code,
                             "OS Name" to SystemInfo.OS_NAME,
                             "OS Version" to SystemInfo.OS_VERSION,
-                            "OS ARch" to SystemInfo.OS_ARCH)))
+                            "OS Arch" to SystemInfo.OS_ARCH)))
                     }
                 }
             }

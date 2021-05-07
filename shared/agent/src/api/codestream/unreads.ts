@@ -44,7 +44,7 @@ export class CodeStreamUnreads {
 		return this.values();
 	}
 
-	async update(posts: CSPost[]) {
+	async update(posts: CSPost[], oldPosts: (CSPost | undefined)[]) {
 		// Don't increment unreads for deleted, edited (if edited it isn't the first time its been seen), has replies (same as edited), or was posted by the current user
 		posts = posts.filter(
 			p =>
@@ -70,6 +70,8 @@ export class CodeStreamUnreads {
 		).streams;
 
 		for (const [streamId, posts] of Object.entries(grouped)) {
+			const oldPostsByStream = oldPosts.filter(oldPost => oldPost && oldPost.streamId === streamId);
+
 			const { preferences } = await this._api.getPreferences();
 			if (preferences.mutedStreams && preferences.mutedStreams[streamId]) continue;
 
@@ -84,7 +86,7 @@ export class CodeStreamUnreads {
 				`Before: mentions=${this._mentions[streamId]}, unreads=${this._unreads[streamId]}`
 			);
 
-			this.computeForPosts(posts, this._api.userId, stream);
+			this.computeForPosts(posts, this._api.userId, stream, oldPostsByStream as CSPost[]);
 
 			if (this._lastReads[streamId] === undefined) {
 				this._lastReads[streamId] = Number(posts[0].seqNum) - 1;
@@ -186,15 +188,24 @@ export class CodeStreamUnreads {
 		this._onDidChange.fire(values);
 	}
 
-	private computeForPosts(posts: CSPost[], userId: string, stream?: CSStream) {
+	private computeForPosts(posts: CSPost[], userId: string, stream?: CSStream, oldPosts?: CSPost[]) {
 		for (const post of posts) {
-			if (
-				(stream && stream.type) === StreamType.Direct ||
-				(post.mentionedUserIds || []).includes(userId)
-			) {
-				this._mentions[post.streamId]++;
+			const oldPost = oldPosts ? oldPosts.find(oldPost => oldPost.id === post.id) : null;
+			const oldMention = ((oldPost && oldPost.mentionedUserIds) || []).includes(userId);
+			const newMention = (post.mentionedUserIds || []).includes(userId);
+			const isDirect = stream && stream.type === StreamType.Direct;
+			if (!oldPost || isDirect) {
+				if (isDirect || newMention) {
+					this._mentions[post.streamId]++;
+				}
+				this._unreads[post.streamId]++;
+			} else {
+				if (!oldMention && newMention) {
+					this._mentions[post.streamId]++;
+				} else if (oldMention && !newMention && this._mentions[post.streamId] > 0) {
+					this._mentions[post.streamId]--;
+				}
 			}
-			this._unreads[post.streamId]++;
 		}
 	}
 

@@ -652,11 +652,18 @@ export class CodeStreamApiProvider implements ApiProvider {
 
 				break;
 			case MessageType.Posts:
+				const ids = (e.data as CSPost[]).map(o => o.id);
+				const oldPosts = await Promise.all(
+					ids.map(async id => {
+						const post = await SessionContainer.instance().posts.getByIdFromCache(id);
+						return post ? ({ ...post } as CSPost) : undefined;
+					})
+				);
 				e.data = await SessionContainer.instance().posts.resolve(e, { onlyIfNeeded: false });
 				if (e.data == null || e.data.length === 0) return;
 
 				if (this._unreads !== undefined) {
-					this._unreads.update(e.data as CSPost[]);
+					this._unreads.update(e.data as CSPost[], oldPosts);
 				}
 				break;
 			case MessageType.Repositories:

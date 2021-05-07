@@ -1,6 +1,6 @@
 # Change Log
 
-## [11.0.6 - 2021-5-6
+## [11.0.6 - 2021-5-7
 
 ### Added
 
@@ -12,6 +12,7 @@
 
 ### Fixed
 
+- Addresses [#551](https://github.com/TeamCodeStream/CodeStream/issues/551) &mdash; Error compiling Less stylesheet
 - Fixes an issue where an apostrophe would get added to the end of email addresses suggested as reviewers in feedback requests
 - Fixes an issue with the display of images in comments on a GitLab merge request
 - Fixes an issue preventing you from being able to paste when editing most content types on CodeStream

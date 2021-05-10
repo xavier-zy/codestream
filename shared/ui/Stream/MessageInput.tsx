@@ -431,7 +431,7 @@ export class MessageInput extends React.Component<Props, State> {
 		}
 		if (chars < 0) chars = 0;
 
-		const inputDiv = document.getElementById("input-div");
+		const inputDiv = this._contentEditable.htmlEl;
 		if (inputDiv) {
 			inputDiv.focus();
 			const selection = window.getSelection()!;

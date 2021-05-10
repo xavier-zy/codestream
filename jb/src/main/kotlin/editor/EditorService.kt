@@ -100,9 +100,12 @@ class EditorService(val project: Project) {
     private var codeStreamVisible = project.codeStream?.isVisible ?: false
 
     fun add(editor: Editor) {
+        val document = editor.document
         val reviewFile = editor.document.file as? ReviewDiffVirtualFile
-        reviewFile?.let {
-            if (!it.canCreateMarker || it.side == ReviewDiffSide.LEFT) return
+        if (reviewFile != null) {
+            if (!reviewFile.canCreateMarker || reviewFile.side == ReviewDiffSide.LEFT) return
+        } else {
+            if (document.uri?.startsWith("file://") != true) return
         }
 
         val agentService = project.agentService ?: return
@@ -112,10 +115,10 @@ class EditorService(val project: Project) {
         editor.scrollingModel.addVisibleAreaListener(VisibleAreaListenerImpl(project))
         NewCodemarkGutterIconManager(editor)
 
-        val document = editor.document
+        // Enable LSP document management only for local files
+        if (reviewFile != null) return
         agentService.onDidStart {
             synchronized(managedDocuments) {
-                if (document.uri?.startsWith("file://") != true) return@synchronized
                 if (!managedDocuments.contains(document)) {
                     managedDocuments[document] = DocumentVersion()
                     agentService.agent.textDocumentService.didOpen(

@@ -19,7 +19,6 @@ import {
 import { CSMe, CSYouTrackProviderInfo } from "../protocol/api.protocol";
 import { log, lspProvider } from "../system";
 import { ThirdPartyIssueProviderBase } from "./provider";
-import * as url from "url";
 
 @lspProvider("youtrack")
 export class YouTrackProvider extends ThirdPartyIssueProviderBase<CSYouTrackProviderInfo> {
@@ -51,17 +50,7 @@ export class YouTrackProvider extends ThirdPartyIssueProviderBase<CSYouTrackProv
 	}
 
 	get apiPath() {
-		let baseUrl =
-			(this._providerInfo && this._providerInfo.data && this._providerInfo.data.baseUrl) || "";
-		let parsedUrl;
-		try {
-			parsedUrl = url.parse(baseUrl);
-		} catch {}
-		if (parsedUrl && parsedUrl.host?.match(/myjetbrains\.com$/)) {
-			return "/youtrack/api";
-		} else {
-			return "/api";
-		}
+		return "/youtrack/api";
 	}
 
 	get baseUrl() {

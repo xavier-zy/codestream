@@ -20,6 +20,8 @@ export const GitWarnings = {
 	unknownRevision: /ambiguous argument \'.*?\': unknown revision or path not in the working tree/
 };
 
+const SupressedGitWarnings = [GitWarnings.noUpstream];
+
 // A map of running git commands -- avoids running duplicate overlaping commands
 const pendingCommands: Map<string, Promise<string>> = new Map();
 
@@ -79,12 +81,14 @@ export async function git(
 		if (msg) {
 			for (const warning of Object.values(GitWarnings)) {
 				if (warning.test(msg)) {
-					Logger.warn(
-						"git",
-						...args,
-						`  cwd='${options.cwd}'\n\n  `,
-						msg.replace(/\r?\n|\r/g, " ")
-					);
+					if (!SupressedGitWarnings.includes(warning)) {
+						Logger.warn(
+							"git",
+							...args,
+							`  cwd='${options.cwd}'\n\n  `,
+							msg.replace(/\r?\n|\r/g, " ")
+						);
+					}
 					return "";
 				}
 			}

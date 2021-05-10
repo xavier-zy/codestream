@@ -33,7 +33,8 @@ const mapStateToProps = state => {
 		apiVersioning: state.apiVersioning,
 		ide: state.ide && state.ide.name ? state.ide.name : undefined,
 		serverUrl: state.configs.serverUrl,
-		isOnPrem: state.configs.isOnPrem
+		isOnPrem: state.configs.isOnPrem,
+		offline: state.connectivity.offline
 	};
 };
 
@@ -227,6 +228,21 @@ const Root = connect(mapStateToProps)(props => {
 					);
 				})}
 			</Dismissable>
+		);
+	}
+	if (props.offline) {
+		return (
+			<RoadBlock title="Can't Connect">
+				<br />
+				We're having problems connecting to CodeStream. Hold tight, we'll keep trying.
+				{props.isOnPrem && (
+					<div>
+						<br />
+						If your CodeStream server is behind a firewall, make sure you're connected to your VPN.
+					</div>
+				)}
+				<br />
+			</RoadBlock>
 		);
 	}
 

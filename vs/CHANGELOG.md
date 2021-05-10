@@ -1,6 +1,6 @@
 # Change Log
 
-## [11.0.6 - 2021-5-7
+## [11.0.6] - 2021-5-7
 
 ### Added
 
@@ -20,7 +20,7 @@
 - Fixes an issue where you couldn't edit a merge request comment from Diff Hunks view
 - Fixes an issue with the responsiveness of the display of the Merge and Pipeline boxes in a merge request
 
-## [11.0.5 - 2021-4-29
+## [11.0.5] - 2021-4-29
 
 ### Added
 

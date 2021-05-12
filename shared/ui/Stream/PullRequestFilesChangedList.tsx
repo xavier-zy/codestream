@@ -135,6 +135,7 @@ interface Props extends CompareFilesProps {
 	commitBased?: boolean;
 	accessRawDiffs?: boolean;
 	setAccessRawDiffs?: Function;
+	initialScrollPosition?: number;
 }
 
 export const PullRequestFilesChangedList = (props: Props) => {
@@ -155,6 +156,7 @@ export const PullRequestFilesChangedList = (props: Props) => {
 		};
 	});
 
+	const [initialScrollPosition, setInitialScrollPosition] = useState(props.initialScrollPosition);
 	const [finishReviewOpen, setFinishReviewOpen] = useState(false);
 	const [errorMessage, setErrorMessage] = React.useState<string | React.ReactNode>("");
 
@@ -209,6 +211,13 @@ export const PullRequestFilesChangedList = (props: Props) => {
 				console.warn("Error parsing JSON data: ", response.contents);
 			} finally {
 				setIsLoadingVisited(false);
+				if (initialScrollPosition) {
+					requestAnimationFrame(() => {
+						const container = document.getElementById("pr-scroll-container");
+						if (container) container.scrollTo({ top: props.initialScrollPosition });
+						setInitialScrollPosition(0);
+					});
+				}
 			}
 		})();
 	}, [pr, filesChanged]);

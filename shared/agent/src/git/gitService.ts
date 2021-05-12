@@ -315,8 +315,9 @@ export class GitService implements IGitService, Disposable {
 	private async _getDefaultBranch(repoPath: string, remote: string): Promise<string | undefined> {
 		try {
 			Logger.debug("IN GDB: " + remote);
+			const throwRawExceptions = remote !== "upstream";
 			const data = await git(
-				{ cwd: repoPath, env: { GIT_TERMINAL_PROMPT: "0" }, throwRawExceptions: true },
+				{ cwd: repoPath, env: { GIT_TERMINAL_PROMPT: "0" }, throwRawExceptions },
 				"remote",
 				"show",
 				remote

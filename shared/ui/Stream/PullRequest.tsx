@@ -106,6 +106,7 @@ interface ReposScmPlusName extends ReposScm {
 }
 
 const EMPTY_HASH = {};
+const EMPTY_HASH2 = {};
 const EMPTY_ARRAY = [];
 
 export type autoCheckedMergeabilityStatus = "UNCHECKED" | "CHECKED" | "UNKNOWN";
@@ -158,6 +159,7 @@ export const PullRequest = () => {
 	}, [derivedState.currentPullRequestCommentId]);
 
 	const [activeTab, setActiveTab] = useState(1);
+	const [scrollPosition, setScrollPosition] = useState(EMPTY_HASH2);
 	const [ghRepo, setGhRepo] = useState<any>(EMPTY_HASH);
 	const [isLoadingPR, setIsLoadingPR] = useState(false);
 	const [isLoadingMessage, setIsLoadingMessage] = useState("");
@@ -172,6 +174,13 @@ export const PullRequest = () => {
 	const [autoCheckedMergeability, setAutoCheckedMergeability] = useState<
 		autoCheckedMergeabilityStatus
 	>("UNCHECKED");
+
+	const switchActiveTab = tab => {
+		// remember the scroll position of the tab we just left
+		const container = document.getElementById("pr-scroll-container");
+		if (container) setScrollPosition({ ...scrollPosition, [activeTab]: container.scrollTop });
+		setActiveTab(tab);
+	};
 
 	const exit = async () => {
 		await dispatch(clearCurrentPullRequest());
@@ -618,7 +627,7 @@ export const PullRequest = () => {
 									variant="success"
 									size="compact"
 									onClick={() => {
-										setActiveTab(4);
+										switchActiveTab(4);
 									}}
 								>
 									Add <span className="wide-text">your</span> review
@@ -695,7 +704,9 @@ export const PullRequest = () => {
 										</PRBranch>
 									</Link>
 									{" from "}
-									<Link href={`${pr.headRepository?.url}/tree/${encodeURIComponent(pr.headRefName)}`}>
+									<Link
+										href={`${pr.headRepository?.url}/tree/${encodeURIComponent(pr.headRefName)}`}
+									>
 										<PRBranch>{pr.headRefName}</PRBranch>
 									</Link>{" "}
 									<Icon
@@ -815,24 +826,24 @@ export const PullRequest = () => {
 								</PRError>
 							)}
 						<Tabs style={{ marginTop: 0 }}>
-							<Tab onClick={e => setActiveTab(1)} active={activeTab == 1}>
+							<Tab onClick={e => switchActiveTab(1)} active={activeTab == 1}>
 								<Icon name="comment" />
 								<span className="wide-text">Conversation</span>
 								<PRBadge>{numComments}</PRBadge>
 							</Tab>
-							<Tab onClick={e => setActiveTab(2)} active={activeTab == 2}>
+							<Tab onClick={e => switchActiveTab(2)} active={activeTab == 2}>
 								<Icon name="git-commit" />
 								<span className="wide-text">Commits</span>
 								<PRBadge>{pr.commits.totalCount}</PRBadge>
 							</Tab>
 							{/*
-		<Tab onClick={e => setActiveTab(3)} active={activeTab == 3}>
+		<Tab onClick={e => switchActiveTab(3)} active={activeTab == 3}>
 			<Icon name="check" />
 			<span className="wide-text">Checks</span>
 			<PRBadge>{pr.numChecks}</PRBadge>
 		</Tab>
 		 */}
-							<Tab onClick={e => setActiveTab(4)} active={activeTab == 4}>
+							<Tab onClick={e => switchActiveTab(4)} active={activeTab == 4}>
 								<Icon name="plus-minus" />
 								<span className="wide-text">Files Changed</span>
 								<PRBadge>{pr.files.totalCount}</PRBadge>
@@ -884,20 +895,32 @@ export const PullRequest = () => {
 					</PRHeader>
 					{!derivedState.composeCodemarkActive && (
 						<ScrollBox>
-							<div className="channel-list vscroll" style={{ paddingTop: "10px" }}>
+							<div
+								className="channel-list vscroll"
+								id="pr-scroll-container"
+								style={{ paddingTop: "10px" }}
+							>
 								{activeTab === 1 && (
 									<PullRequestConversationTab
 										ghRepo={ghRepo}
 										autoCheckedMergeability={autoCheckedMergeability}
 										checkMergeabilityStatus={checkMergeabilityStatus}
 										setIsLoadingMessage={setIsLoadingMessage}
+										initialScrollPosition={scrollPosition[1]}
 									/>
 								)}
-								{activeTab === 2 && <PullRequestCommitsTab pr={pr} ghRepo={ghRepo} />}
+								{activeTab === 2 && (
+									<PullRequestCommitsTab
+										pr={pr}
+										ghRepo={ghRepo}
+										initialScrollPosition={scrollPosition[2]}
+									/>
+								)}
 								{activeTab === 4 && (
 									<PullRequestFilesChangedTab
 										key="files-changed"
 										pr={pr}
+										initialScrollPosition={scrollPosition[4]}
 										setIsLoadingMessage={setIsLoadingMessage}
 									/>
 								)}

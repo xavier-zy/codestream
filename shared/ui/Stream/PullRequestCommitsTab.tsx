@@ -145,6 +145,13 @@ export const PullRequestCommitsTab = props => {
 
 		setCommits(commitsByDay);
 		setIsLoading(false);
+
+		if (props.initialScrollPosition) {
+			requestAnimationFrame(() => {
+				const container = document.getElementById("pr-scroll-container");
+				if (container) container.scrollTo({ top: props.initialScrollPosition });
+			});
+		}
 	};
 
 	const getData = async (options?: { force: true }) => {

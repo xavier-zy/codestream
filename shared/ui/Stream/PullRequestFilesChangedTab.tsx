@@ -40,6 +40,7 @@ interface DropdownItem {
 export const PullRequestFilesChangedTab = (props: {
 	pr: FetchThirdPartyPullRequestPullRequest;
 	setIsLoadingMessage: Function;
+	initialScrollPosition?: number;
 }) => {
 	const { pr } = props;
 	const dispatch = useDispatch();
@@ -301,6 +302,7 @@ export const PullRequestFilesChangedTab = (props: {
 				commitBased={commitBased}
 				accessRawDiffs={accessRawDiffs}
 				setAccessRawDiffs={setAccessRawDiffs}
+				initialScrollPosition={props.initialScrollPosition}
 			/>
 		</div>
 	);

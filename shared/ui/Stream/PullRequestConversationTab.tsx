@@ -63,6 +63,7 @@ import { ColorDonut, PullRequestReviewStatus } from "./PullRequestReviewStatus";
 import { autoCheckedMergeabilityStatus } from "./PullRequest";
 import cx from "classnames";
 import { getPRLabel } from "../store/providers/reducer";
+import { useDidMount } from "../utilities/hooks";
 
 export const Circle = styled.div`
 	width: 12px;
@@ -202,6 +203,7 @@ export const PullRequestConversationTab = (props: {
 	ghRepo: any;
 	checkMergeabilityStatus: Function;
 	autoCheckedMergeability: autoCheckedMergeabilityStatus;
+	initialScrollPosition: number;
 }) => {
 	const { ghRepo, setIsLoadingMessage } = props;
 	const dispatch = useDispatch();
@@ -254,6 +256,13 @@ export const PullRequestConversationTab = (props: {
 		insertNewline = functions.insertNewlineAtCursor;
 		focusOnMessageInput = functions.focus;
 	};
+
+	useDidMount(() => {
+		if (props.initialScrollPosition) {
+			const container = document.getElementById("pr-scroll-container");
+			if (container) container.scrollTo({ top: props.initialScrollPosition });
+		}
+	});
 
 	const quote = text => {
 		if (!insertText) return;
@@ -857,14 +866,18 @@ export const PullRequestConversationTab = (props: {
 				{!pr.merged && pr.mergeable === "MERGEABLE" && pr.state !== "CLOSED" && (
 					<PRTimelineItem>
 						<PRAction>
-							Add more commits by pushing to the <Link href={`${pr.headRepository?.url}/tree/${encodeURIComponent(pr.headRefName)}`}><PRBranch>{pr.headRefName}</PRBranch></Link> branch{" "}
+							Add more commits by pushing to the{" "}
+							<Link href={`${pr.headRepository?.url}/tree/${encodeURIComponent(pr.headRefName)}`}>
+								<PRBranch>{pr.headRefName}</PRBranch>
+							</Link>{" "}
+							branch{" "}
 							{pr.headRepositoryOwner?.login && pr.headRepository?.name && (
 								<>
 									on{" "}
 									<Link href={pr.headRepository?.url}>
-									<PRBranch>
-										{pr.headRepositoryOwner.login}/{pr.headRepository.name}
-									</PRBranch>
+										<PRBranch>
+											{pr.headRepositoryOwner.login}/{pr.headRepository.name}
+										</PRBranch>
 									</Link>
 								</>
 							)}

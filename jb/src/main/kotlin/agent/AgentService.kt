@@ -86,6 +86,7 @@ class AgentService(private val project: Project) : Disposable {
     private val logger = Logger.getInstance(AgentService::class.java)
     private var initialization = CompletableFuture<Unit>()
     private var isDisposing = false
+    private var isRestarting = false
 
     lateinit var initializeResult: InitializeResult
     lateinit var agent: CodeStreamLanguageServer
@@ -167,12 +168,14 @@ class AgentService(private val project: Project) : Disposable {
 
     suspend fun restart(autoSignIn: Boolean = false) {
         logger.info("Restarting CodeStream LSP agent")
+        isRestarting = true
         if (initialization.isDone) {
             initialization = CompletableFuture()
         }
         try { agent.shutdown().await() } catch (ex: Exception) { logger.warn(ex) }
         try { agent.exit() } catch (ex: Exception) { logger.warn(ex) }
         initAgent(autoSignIn)
+        isRestarting = false
         _restartObservers.forEach { it() }
     }
 
@@ -243,8 +246,8 @@ class AgentService(private val project: Project) : Disposable {
         Thread(Runnable {
             val code = process.waitFor()
             logger.info("LSP agent terminated with exit code $code")
-            if (!isDisposing) {
-                logger.info("Restarting LSP agent")
+            if (!isDisposing && !isRestarting) {
+                logger.info("LSP agent will be restarted")
                 GlobalScope.launch {
                     restart(true)
                     onDidStart {

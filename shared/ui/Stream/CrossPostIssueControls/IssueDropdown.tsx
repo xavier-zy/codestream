@@ -949,7 +949,7 @@ export const IssueList = React.memo((props: React.PropsWithChildren<IssueListPro
 		return (
 			<Modal translucent>
 				<Dialog title="Create a Custom Filter" onClose={closeCustomFilter}>
-					<form className="standard-form">
+					<div className="standard-form">
 						<fieldset className="form-body">
 							{!validQuery && (
 								<ErrorMessage>
@@ -1032,7 +1032,7 @@ export const IssueList = React.memo((props: React.PropsWithChildren<IssueListPro
 								</div>
 							)}
 						</fieldset>
-					</form>
+					</div>
 				</Dialog>
 			</Modal>
 		);

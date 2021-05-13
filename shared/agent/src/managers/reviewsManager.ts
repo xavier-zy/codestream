@@ -362,7 +362,9 @@ export class ReviewsManager extends CachedEntityManagerBase<CSReview> {
 			return {
 				repoRoot: repo?.path,
 				left: firstContents.left,
-				right: latestContents.right
+				right: latestContents.right,
+				leftPath: firstContents.leftPath,
+				rightPath: latestContents.rightPath
 			};
 		} else if (checkpoint === 0) {
 			return this.getContentsForCheckpoint(reviewId, repoId, 0, path);
@@ -460,7 +462,9 @@ export class ReviewsManager extends CachedEntityManagerBase<CSReview> {
 		return {
 			repoRoot: repo.path,
 			left: leftContents,
-			right: rightContents
+			right: rightContents,
+			leftPath: leftBaseRelativePath,
+			rightPath: rightBaseRelativePath
 		};
 	}
 

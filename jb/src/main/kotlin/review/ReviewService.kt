@@ -10,6 +10,7 @@ import com.codestream.webViewService
 import com.intellij.diff.DiffDialogHints
 import com.intellij.diff.DiffManagerEx
 import com.intellij.diff.chains.DiffRequestChain
+import com.intellij.diff.editor.ChainDiffVirtualFile
 import com.intellij.diff.editor.DiffRequestProcessorEditor
 import com.intellij.diff.editor.SimpleDiffVirtualFile
 import com.intellij.diff.impl.CacheDiffRequestChainProcessor
@@ -67,23 +68,17 @@ class ReviewService(private val project: Project) {
                 ReviewDiffRequestProducer(project, review, repoId, it, checkpoint)
             }
 
-            diffChain = ReviewDiffRequestChain(producers).also { chain ->
+            val myDiffChain = ReviewDiffRequestChain(producers).also { chain ->
                 chain.putUserData(REVIEW_DIFF, true)
                 chain.index = producers.indexOfFirst {
                     it.repoId == repoId && it.path == path
                 }
             }
-
-            val registryValue = Registry.get("show.diff.as.editor.tab")
-            val original = registryValue.asBoolean()
+            diffChain = myDiffChain
 
             ApplicationManager.getApplication().invokeLater {
-                try {
-                    registryValue.setValue(true)
-                    DiffManagerEx.getInstance().showDiffBuiltin(project, diffChain!!, DiffDialogHints.FRAME)
-                } finally {
-                    registryValue.setValue(original)
-                }
+                val diffFile = ChainDiffVirtualFile(myDiffChain, "Feedback Request")
+                FileEditorManager.getInstance(project).openFile(diffFile, true)
             }
         }
 
@@ -195,12 +190,13 @@ class ReviewService(private val project: Project) {
                 PullRequestProducer(project, repoId, it, headSha, headBranch, baseSha, baseBranch, context)
             }
 
-            diffChain = PullRequestChain(producers).also { chain ->
+            val myDiffChain = PullRequestChain(producers).also { chain ->
                 chain.putUserData(REVIEW_DIFF, true)
                 chain.index = producers.indexOfFirst {
                     it.filePath == filePath
                 }
             }
+            diffChain = myDiffChain
 
             val registryValue = Registry.get("show.diff.as.editor.tab")
             val original = registryValue.asBoolean()
@@ -208,7 +204,7 @@ class ReviewService(private val project: Project) {
             ApplicationManager.getApplication().invokeLater {
                 try {
                     registryValue.setValue(true)
-                    DiffManagerEx.getInstance().showDiffBuiltin(project, diffChain!!, DiffDialogHints.FRAME)
+                    DiffManagerEx.getInstance().showDiffBuiltin(project, myDiffChain, DiffDialogHints.FRAME)
                 } finally {
                     registryValue.setValue(original)
                 }

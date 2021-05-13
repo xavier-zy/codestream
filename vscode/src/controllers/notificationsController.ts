@@ -143,7 +143,7 @@ export class NotificationsController implements Disposable {
 		const emote = post.text.startsWith("/me ");
 		const colon = emote ? "" : ":";
 		let text = post.text.replace(/^\/me /, "");
-		text = review ? text.replace("this", review.title) : text;
+		text = review ? text.replace(/(approved|rejected) this/i, `$1 ${review.title}`) : text;
 		if (mentioned && sender !== undefined) {
 			const match = vslsUrlRegex.exec(text);
 			if (match != null) {

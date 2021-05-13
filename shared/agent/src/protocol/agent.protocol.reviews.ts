@@ -189,6 +189,8 @@ export interface GetReviewContentsResponse {
 	repoRoot?: string;
 	left?: string;
 	right?: string;
+	leftPath?: string;
+	rightPath?: string;
 	fileNotIncludedInReview?: boolean;
 	error?: string;
 }

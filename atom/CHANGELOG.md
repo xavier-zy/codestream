@@ -1,6 +1,25 @@
 # Change Log
 
-## [11.0.6 - 2021-5-7
+## [11.0.7] - 2021-5-13
+
+### Added
+
+- The Pull/Merge Requests section of the CodeStream pane now refreshes every 5 minutes to pick up changes
+
+### Changed
+
+- Addresses [#506](https://github.com/TeamCodeStream/CodeStream/issues/506) &mdash; Don't reset scroll position when switching tabs in a PR
+- Custom queries for either GitHub PRs or GitHub issues now requires [at least one qualifier](https://docs.codestream.com/userguide/faq/custom-queries/) that will prevent the query from return results across all of GitHub
+- The banner indicating connectivity issues has been replaced with the blanket that covers the entire CodeStream pane
+
+### Fixed
+
+- Addresses [#546](https://github.com/TeamCodeStream/CodeStream/issues/546) &mdash; Cannot open GitHub Enterprise 2.22 PRs
+- Addresses [#565](https://github.com/TeamCodeStream/CodeStream/issues/565) &mdash; Toast notifications (and log) replace "this" with feedback request name
+- Fixes an issue where an @mention in a codemark shared to Slack would register twice in the count in the badge on the Activty Feed
+- Fixes an issue where adding an emoji to a merge request comment would sometimes add it at the start of the comment regardless of the cursor position
+
+## [11.0.6] - 2021-5-7
 
 ### Added
 

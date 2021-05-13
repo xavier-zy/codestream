@@ -180,7 +180,8 @@ class NotificationComponent(val project: Project) {
         }
 
         if (review != null) {
-            text = text.replaceFirst("this", review.title)
+            text = text.replaceFirst("approved this", "approved " + review.title)
+            text = text.replaceFirst("reopened this", "reopened " + review.title)
         }
 
         val telemetryContent = when {

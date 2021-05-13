@@ -1,3 +1,23 @@
+<h4 id="11_0_6">11.0.6</h4>
+<h5>Added</h5>
+<ul>
+    <li>The Pull/Merge Requests section of the CodeStream pane now refreshes every 5 minutes to pick up changes</li>
+</ul>
+<h5>Changed</h5>
+<ul>
+    <li>Addresses <a href="https://github.com/TeamCodeStream/CodeStream/issues/506">#506</a> - Don't reset scroll position when switching tabs in a PR
+    <li>Custom queries for either GitHub PRs or GitHub issues now requires [at least one qualifier](https://docs.codestream.com/userguide/faq/custom-queries/) that will prevent the query from return results across all of GitHub</li>
+    <li>The banner indicating connectivity issues has been replaced with the blanket that covers the entire CodeStream pane</li>
+</ul>
+<h5>Fixed</h5>
+<ul>
+    <li>Addresses <a href="https://github.com/TeamCodeStream/CodeStream/issues/546">#546</a> - Cannot open GitHub Enterprise 2.22 PRs
+    <li>Addresses <a href="https://github.com/TeamCodeStream/CodeStream/issues/565">#565</a> - Toast notifications (and log) replace "this" with feedback request name
+    <li>Fixes an issue where creating an additional CodeStream team would result in an endless spinner</li>
+    <li>Fixes an IndexOutOfBoundsException exception</li>
+    <li>Fixes an issue where an @mention in a codemark shared to Slack would register twice in the count in the badge on the Activty Feed</li>
+    <li>Fixes an issue where adding an emoji to a merge request comment would sometimes add it at the start of the comment regardless of the cursor position</li>
+</ul>
 <h4 id="11_0_5">11.0.5</h4>
 <h5>Added</h5>
 <ul>

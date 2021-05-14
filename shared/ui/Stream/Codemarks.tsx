@@ -10,7 +10,9 @@ import {
 	GetFileScmInfoResponse,
 	GetFileScmInfoRequestType,
 	MarkerNotLocated,
-	CodemarkPlus
+	CodemarkPlus,
+	DidChangeDataNotificationType,
+	ChangeDataType
 } from "@codestream/protocols/agent";
 import { fetchDocumentMarkers } from "../store/documentMarkers/actions";
 import {
@@ -163,7 +165,14 @@ export class SimpleCodemarksForFile extends Component<Props, State> {
 						HostApi.instance.emit(NewCodemarkNotificationType.method, e);
 					});
 				}
-			})
+			}),
+			HostApi.instance.on(DidChangeDataNotificationType, async (e: any) => {
+				if (
+					e.type === ChangeDataType.Commits && e.data && e.data.type === "change"
+				) {
+					this.onFileChanged(false, this.onFileChangedError, true);
+				}
+			}),
 		);
 
 		this.onFileChanged(true, this.onFileChangedError);
@@ -188,7 +197,8 @@ export class SimpleCodemarksForFile extends Component<Props, State> {
 
 	async onFileChanged(
 		isInitialRender = false,
-		renderErrorCallback: ((error: string) => void) | undefined = undefined
+		renderErrorCallback: ((error: string) => void) | undefined = undefined,
+		checkBranchUpdate = false
 	) {
 		const { textEditorUri, setEditorContext } = this.props;
 
@@ -213,7 +223,7 @@ export class SimpleCodemarksForFile extends Component<Props, State> {
 		}
 
 		let scmInfo = this.props.scmInfo;
-		if (!scmInfo || scmInfo.uri !== textEditorUri) {
+		if (!scmInfo || scmInfo.uri !== textEditorUri || checkBranchUpdate) {
 			this.setState({ isLoading: true });
 			scmInfo = await HostApi.instance.send(GetFileScmInfoRequestType, {
 				uri: textEditorUri

@@ -17,11 +17,11 @@ export const GitWarnings = {
 	foundButNotInRevision: /Path \'.*?\' exists on disk, but not in/,
 	headNotABranch: /HEAD does not point to a branch/,
 	noUpstream: /no upstream configured for branch \'(.*?)\'/,
+	upstreamNotARepo: /'upstream' does not appear to be a git repository/,
 	unknownRevision: /ambiguous argument \'.*?\': unknown revision or path not in the working tree/
 };
 
-const SupressedGitWarnings = [GitWarnings.noUpstream];
-
+export const SupressedGitWarnings = [GitWarnings.noUpstream, GitWarnings.upstreamNotARepo];
 // A map of running git commands -- avoids running duplicate overlaping commands
 const pendingCommands: Map<string, Promise<string>> = new Map();
 

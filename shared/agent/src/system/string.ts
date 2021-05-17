@@ -295,7 +295,7 @@ export namespace Strings {
 			// Ignore combining characters
 			if (code >= 0x300 && code <= 0x36f) continue;
 
-			// https://stackoverflow.com/questions/30757193/find-out-if-character-in-string-is-emoji
+			// code is adapted from https://stackoverflow.com/questions/30757193/find-out-if-character-in-string-is-emoji
 			if (
 				(code >= 0x1f600 && code <= 0x1f64f) || // Emoticons
 				(code >= 0x1f300 && code <= 0x1f5ff) || // Misc Symbols and Pictographs
@@ -431,7 +431,7 @@ export namespace Strings {
 
 	/** converts an absolute file system path to a file uri
 	 * @param  {string} str
-	 * @remarks see https://stackoverflow.com/questions/20619488/how-to-convert-local-file-path-to-a-file-url-safely-in-node-js
+	 * @remarks this code adapted from https://stackoverflow.com/questions/20619488/how-to-convert-local-file-path-to-a-file-url-safely-in-node-js
 	 */
 	export function pathToFileURL(str: string) {
 		/*

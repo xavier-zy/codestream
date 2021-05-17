@@ -79,7 +79,9 @@ export const PullRequestFilesChangedTab = (props: {
 	};
 
 	const _mapCommitsData = data => {
-		setPrCommits(data);
+		setPrCommits(data.sort(
+			(a,b) => (new Date(a.authoredDate).getTime()) - (new Date(b.authoredDate).getTime())
+		));
 	};
 
 	useEffect(() => {

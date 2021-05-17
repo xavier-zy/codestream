@@ -1,6 +1,6 @@
 import { logError } from "@codestream/webview/logger";
 import { Link } from "@codestream/webview/Stream/Link";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { FormattedMessage } from "react-intl";
 import { useDispatch, useSelector } from "react-redux";
 import { CodeStreamState } from "../store";
@@ -521,6 +521,17 @@ export const StartWork = (props: Props) => {
 		fetchBranchCommitsStatus();
 	}, [fromBranch]);
 
+	const cardDescription = useMemo(() => {
+		let description = "";
+		if (card && card.body) {
+			description = card.body.replace(/\[Open in IDE\].*/, "");
+			if (card.provider.id === "github*com" || card.provider.id === "github/enterprise") {
+				description = description.replace(/<!--[\s\S]*?-->/, "")
+			}
+		}
+		return description;
+	}, [card]);
+
 	const setMoveCard = value => dispatch(setUserPreference(["startWork", "moveCard"], value));
 	const setCreateBranch = value =>
 		dispatch(setUserPreference(["startWork", "createBranch"], value));
@@ -979,7 +990,7 @@ export const StartWork = (props: Props) => {
 									)}
 									{card && card.body && (
 										<CardDescription>
-											<MarkdownText text={card.body.replace(/\[Open in IDE\].*/, "")} />
+											<MarkdownText text={cardDescription} />
 										</CardDescription>
 									)}
 									{card && card.title && <HR />}

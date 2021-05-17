@@ -3,6 +3,7 @@ import { ChildProcess, execFile } from "child_process";
 import * as fs from "fs";
 import * as path from "path";
 import { Logger } from "../logger";
+import { SupressedGitWarnings } from "./git";
 
 export const isWindows = process.platform === "win32";
 
@@ -151,11 +152,13 @@ export function runCommand(command: string, args: any[], options: CommandOptions
 					);
 				}
 
-				Logger.warn(
-					`Error(${opts.cwd}): ${command} ${args.join(" ")})\n    (${err.code}) ${
-						err.message
-					}\n${stderr}`
-				);
+				if (!SupressedGitWarnings.find( _ => _.test(err.message))) {
+					Logger.warn(
+						`Error(${opts.cwd}): ${command} ${args.join(" ")})\n    (${err.code}) ${
+							err.message
+						}\n${stderr}`
+					);
+				}
 				reject(err);
 			}
 		);

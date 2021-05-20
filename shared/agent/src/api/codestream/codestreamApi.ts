@@ -16,9 +16,12 @@ import { Container, SessionContainer } from "../../container";
 import { Logger } from "../../logger";
 import { isDirective, resolve, safeDecode, safeEncode } from "../../managers/operations";
 import {
-	AccessToken,
 	AddBlameMapRequest,
 	AddBlameMapRequestType,
+	SaveProviderConfigRequestType
+} from "../../protocol/agent.protocol";
+import {
+	AccessToken,
 	AddEnterpriseProviderHostRequest,
 	AddEnterpriseProviderHostResponse,
 	AddMarkersResponse,
@@ -2171,10 +2174,17 @@ export class CodeStreamApiProvider implements ApiProvider {
 			if (!provider) throw new Error(`provider ${request.providerId} not found`);
 			const providerConfig = provider.getConfig();
 
+			let key =
+				"1$" + Strings.md5(`${this.baseUrl}|${this.teamId}|${this.userId}|${provider.name}`);
+			await SessionContainer.instance().session.agent.sendRequest(SaveProviderConfigRequestType, {
+				key: key,
+				value: request.token
+			});
+
 			const params: ThirdPartyProviderSetTokenRequestData = {
 				teamId: this.teamId,
 				host: request.host,
-				token: request.token,
+				token: "n/a",
 				data: request.data
 			};
 
@@ -2192,6 +2202,11 @@ export class CodeStreamApiProvider implements ApiProvider {
 				type: MessageType.Users,
 				data: [response.user]
 			})) as CSUser[];
+
+			const me = users.find(_ => _.id == this._userId) as CSMe;
+			if (me && me.providerInfo) {
+				me.providerInfo[this.teamId][provider.name]!.accessToken = request.token;
+			}
 			Container.instance().agent.sendNotification(DidChangeDataNotificationType, {
 				type: ChangeDataType.Users,
 				data: users

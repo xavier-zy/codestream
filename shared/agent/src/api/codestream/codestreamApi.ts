@@ -2217,6 +2217,24 @@ export class CodeStreamApiProvider implements ApiProvider {
 		}
 	}
 
+	async unsetThirdPartyProviderToken(
+		request: ThirdPartyProviderUnsetTokenRequest
+	): Promise<boolean> {
+		const providerName = request.providerName;
+		if (!providerName) throw new Error(`provider ${providerName} not found`);
+
+		const params: ThirdPartyProviderSetTokenRequestData = {
+			teamId: this.teamId,
+			token: request.token
+		};
+
+		const response = await this.put<ThirdPartyProviderSetTokenRequestData, { user: any }>(
+			`/provider-set-token/${providerName}`,
+			params,
+			this._token
+		);
+		return response != null;
+	}
 	@log()
 	async setThirdPartyProviderInfo(request: {
 		providerId: string;

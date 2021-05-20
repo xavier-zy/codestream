@@ -965,7 +965,9 @@ export class CodeStreamSession {
 					try {
 						const key =
 							"1$" +
-							Strings.md5(`${serverUrl}|${this.teamId}|${this._codestreamUserId}|${providerName}`);
+							providerName +
+							"|" +
+							Strings.md5(`${serverUrl}|${this.teamId}|${this._codestreamUserId}}`);
 						if (
 							response.user.providerInfo[this.teamId] &&
 							response.user.providerInfo[this.teamId][providerName]?.accessToken != "n/a"

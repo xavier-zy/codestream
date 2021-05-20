@@ -296,10 +296,6 @@ export class ThirdPartyProviderRegistry {
 			throw new Error(`No registered provider for '${request.providerId}'`);
 		}
 		await provider.connect();
-		await provider.configure({
-			token: provider.accessToken,
-			data: {}
-		});
 
 		return {};
 	}

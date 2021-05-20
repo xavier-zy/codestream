@@ -334,6 +334,10 @@ export abstract class ThirdPartyProviderBase<
 			});
 		});
 
+		await this.configure({
+			token: this.accessToken
+		});
+
 		this._readyPromise = this.onConnected(this._providerInfo);
 		await this._readyPromise;
 		this.resetReady();
@@ -375,7 +379,15 @@ export abstract class ThirdPartyProviderBase<
 		}
 	}
 
-	async configure(data: { [key: string]: any }) {}
+	async configure(data: { [key: string]: any }) {
+		if (data.token) {
+			await this.session.api.setThirdPartyProviderToken({
+				providerId: this.providerConfig.id,
+				token: data.token
+			});
+			this.session.updateProviders();
+		}
+	}
 
 	protected async onConfigured() {}
 

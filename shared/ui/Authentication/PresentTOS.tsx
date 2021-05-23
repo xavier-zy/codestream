@@ -66,9 +66,9 @@ export const PresentTOS = () => {
 
 	const handleScroll = event => {
 		const { target } = event;
-		const atBottom = target.scrollHeight - target.scrollTop === target.clientHeight;
-		console.warn("AB: ", atBottom);
-		if (atBottom) setScrolledFarEnough(true);
+		const offBottom = target.scrollHeight - target.scrollTop - target.clientHeight;
+		console.warn("OffBottom: ", offBottom);
+		if (offBottom < 30) setScrolledFarEnough(true);
 	};
 
 	const accept = async (event: React.SyntheticEvent) => {

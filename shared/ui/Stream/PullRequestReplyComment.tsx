@@ -19,6 +19,7 @@ interface Props {
 	parentId?: string;
 	isOpen: boolean;
 	__onDidRender: Function;
+	onSubmitAction?: Function;
 }
 
 export const PullRequestReplyComment = styled((props: Props) => {
@@ -95,7 +96,10 @@ export const PullRequestReplyComment = styled((props: Props) => {
 					text={text}
 					placeholder="Reply..."
 					onChange={value => setText(value)}
-					onSubmit={handleComment}
+					onSubmit={async () => {
+						await handleComment();
+						props.onSubmitAction && props.onSubmitAction();
+					}}
 					setIsPreviewing={value => setIsPreviewing(value)}
 					__onDidRender={stuff => props.__onDidRender(stuff)}
 				/>
@@ -106,7 +110,10 @@ export const PullRequestReplyComment = styled((props: Props) => {
 						Cancel
 					</Button>
 
-					<Button variant="primary" isLoading={isSubmitting} onClick={handleComment}>
+					<Button variant="primary" isLoading={isSubmitting} onClick={async () => {
+						await handleComment();
+						props.onSubmitAction && props.onSubmitAction();
+					}}>
 						Comment
 					</Button>
 				</PRButtonRow>

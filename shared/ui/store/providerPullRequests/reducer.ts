@@ -227,13 +227,13 @@ export function reduceProviderPullRequests(
 						} else if (directive.type === "addReply") {
 							if (
 								directive.data.discussion.id &&
-								directive.data.discussion.id.indexOf('gitlab/Discussion') > -1
+								directive.data.discussion.id.indexOf("gitlab/Discussion") > -1
 							) {
-								const discussionId = directive.data.discussion.id.split('/').slice(-1)[0]
+								const discussionId = directive.data.discussion.id.split("/").slice(-1)[0]
 								const nodeToUpdate = pr.discussions.nodes.find(
 									(_: DiscussionNode) => {
-										const discussionNodeId = _.id.split('/').slice(-1)[0];
-										return _.id.indexOf('gitlab/IndividualNoteDiscussion') > -1 &&
+										const discussionNodeId = _.id.split("/").slice(-1)[0];
+										return _.id.indexOf("gitlab/IndividualNoteDiscussion") > -1 &&
 											discussionId === discussionNodeId
 									}
 								)

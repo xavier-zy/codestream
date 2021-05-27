@@ -926,7 +926,6 @@ export const PullRequest = () => {
 										filter={filter}
 										setIsLoadingMessage={setIsLoadingMessage}
 										collapseAll={collapseAll}
-										reloadMr={reload}
 									/>
 									{order === "oldest" && bottomComment}
 								</>

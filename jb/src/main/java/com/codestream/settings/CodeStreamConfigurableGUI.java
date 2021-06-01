@@ -19,7 +19,6 @@ public class CodeStreamConfigurableGUI {
     private JCheckBox showMarkers;
     private JComboBox proxySupport;
     private JCheckBox proxyStrictSSL;
-    private JCheckBox jcef;
     private JCheckBox showNewCodemarkGutterIconOnHover;
 
     public JPanel getRootPanel() {
@@ -68,10 +67,6 @@ public class CodeStreamConfigurableGUI {
 
     public JCheckBox getProxyStrictSSL() {
         return proxyStrictSSL;
-    }
-
-    public JCheckBox getJcef() {
-        return jcef;
     }
 
     private void createUIComponents() {

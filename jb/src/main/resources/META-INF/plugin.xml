@@ -13,7 +13,6 @@
         <statusBarWidgetProvider implementation="com.codestream.widgets.CodeStreamStatusBarWidgetProvider"/>
 
         <applicationService serviceImplementation="com.codestream.settings.ApplicationSettingsService"/>
-        <applicationService serviceImplementation="com.codestream.webview.JxBrowserEngineService"/>
 
         <projectService serviceImplementation="com.codestream.agent.AgentService"/>
         <projectService serviceImplementation="com.codestream.authentication.AuthenticationService"/>

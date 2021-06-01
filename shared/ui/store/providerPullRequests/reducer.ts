@@ -1,3 +1,4 @@
+import { first } from "lodash-es";
 import { ActionType, Index } from "../common";
 import * as actions from "./actions";
 import { clearCurrentPullRequest, setCurrentPullRequest } from "../context/actions";
@@ -224,6 +225,34 @@ export function reduceProviderPullRequests(
 								pr.reactionGroups.push({ content: directive.data.name, data: [directive.data] });
 							}
 						} else if (directive.type === "addReply") {
+							if (
+								directive.data.discussion.id &&
+								directive.data.discussion.id.indexOf("gitlab/Discussion") > -1
+							) {
+								const discussionId = directive.data.discussion.id.split("/").slice(-1)[0];
+								const nodeToUpdate = pr.discussions.nodes.find((_: DiscussionNode) => {
+									const idAsString = _.id + "";
+									const discussionNodeId = idAsString.split("/").slice(-1)[0];
+									return (
+										idAsString.indexOf("gitlab/IndividualNoteDiscussion") > -1 &&
+										discussionId === discussionNodeId
+									);
+								});
+
+								if (nodeToUpdate) {
+									nodeToUpdate.id = directive.data.discussion.id;
+									nodeToUpdate.replyId = directive.data.discussion.id;
+									nodeToUpdate.resolvable = true;
+									const firstNode = nodeToUpdate?.notes?.nodes[0];
+									if (firstNode) {
+										firstNode.id = firstNode.id.replace("/Note/", "/DiscussionNote/");
+										firstNode.resolvable = true;
+										firstNode.discussion.id = directive.data.discussion.id;
+										firstNode.discussion.replyId = directive.data.discussion.replyId;
+									}
+								}
+							}
+
 							const discussionNode = pr.discussions.nodes.find(
 								(_: DiscussionNode) => _.id === directive.data.discussion.id
 							);

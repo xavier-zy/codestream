@@ -224,9 +224,7 @@ export class SimpleCodemarksForFile extends Component<Props, State> {
 
 		let scmInfo = this.props.scmInfo;
 		if (!scmInfo ||
-			(scmInfo.uri !== textEditorUri &&
-				(codemarkDomain === CodemarkDomainType.File || codemarkDomain === CodemarkDomainType.Directory)
-			) ||
+			(scmInfo.uri !== textEditorUri && codemarkDomain !== CodemarkDomainType.Team) ||
 			checkBranchUpdate
 		) {
 			this.setState({ isLoading: true });

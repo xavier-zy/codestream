@@ -171,6 +171,7 @@ interface State {
 	title: string;
 	titleTouched: boolean;
 	text: string;
+	textTouched: boolean;
 	// for amending
 	replyText: string;
 	assignees: { value: any; label: string }[] | { value: any; label: string };
@@ -255,6 +256,7 @@ class ReviewForm extends React.Component<Props, State> {
 	private _sharingAttributes?: SharingAttributes;
 	private _disposableDidChangeDataNotification: { dispose(): void } | undefined = undefined;
 	private ignoredFiles = ignore();
+	private _dismissAutoFRTimeout?: any;
 
 	constructor(props: Props) {
 		super(props);
@@ -262,6 +264,7 @@ class ReviewForm extends React.Component<Props, State> {
 			title: "",
 			titleTouched: false,
 			text: "",
+			textTouched: false,
 			replyText: "",
 			assignees: [],
 			assigneesDisabled: false,
@@ -276,8 +279,8 @@ class ReviewForm extends React.Component<Props, State> {
 			selectedTags: {},
 			repoName: "",
 			excludedFiles: {},
-			includeSaved: true,
-			includeStaged: true,
+			includeSaved: !props.currentReviewOptions?.includeLatestCommit,
+			includeStaged: !props.currentReviewOptions?.includeLatestCommit,
 			excludeCommit: {},
 			startCommit: "",
 			prevEndCommit: "",
@@ -444,6 +447,15 @@ class ReviewForm extends React.Component<Props, State> {
 				isAutoFREnabled &&
 				(isCreatingReviewOnCommit || !createReviewOnCommit);
 			this.setState({ showCreateReviewOnCommitToggle: showCreateReviewOnCommitToggle });
+
+			if (isCreatingReviewOnCommit) {
+				this._dismissAutoFRTimeout = setTimeout(() => {
+					const { titleTouched, textTouched, reviewersTouched } = this.state;
+					if (!titleTouched && !textTouched && !reviewersTouched) {
+						this.props.closePanel();
+					}
+				}, 15 * 60 * 1000);
+			}
 		}
 
 		if (isAmending) this.getScmInfoForRepo();
@@ -451,13 +463,13 @@ class ReviewForm extends React.Component<Props, State> {
 			const currentRepoUri = currentRepoPath ? path.join("file://", currentRepoPath) : undefined;
 			this.getScmInfoForURI(currentRepoUri || textEditorUri, () => {
 				this.props.setCurrentRepo();
-				HostApi.instance.send(TelemetryRequestType, {
-					eventName: "Review Form Opened",
-					properties: {
-						"Repo Open": this.state.openRepos && this.state.openRepos.length > 0,
-						"Suggested Reviewers": this.state.reviewerEmails && this.state.reviewerEmails.length > 0
-					}
-				});
+				//HostApi.instance.send(TelemetryRequestType, {
+				//	eventName: "Review Form Opened",
+				//	properties: {
+				//		"Repo Open": this.state.openRepos && this.state.openRepos.length > 0,
+				//		"Suggested Reviewers": this.state.reviewerEmails && this.state.reviewerEmails.length > 0
+				//	}
+				//});
 			});
 		}
 
@@ -473,6 +485,7 @@ class ReviewForm extends React.Component<Props, State> {
 	}
 
 	componentWillUnmount = () => {
+		clearTimeout(this._dismissAutoFRTimeout);
 		this._disposableDidChangeDataNotification &&
 			this._disposableDidChangeDataNotification.dispose();
 	};
@@ -552,7 +565,8 @@ class ReviewForm extends React.Component<Props, State> {
 					if (
 						e.type === ChangeDataType.Documents &&
 						e.data &&
-						(e.data as DocumentData).reason === "saved"
+						(e.data as DocumentData).reason === "saved" &&
+						(this.state.includeSaved || this.state.includeStaged)
 					) {
 						update = true;
 					} else if (
@@ -560,7 +574,8 @@ class ReviewForm extends React.Component<Props, State> {
 						e.data.repo &&
 						this.state.repoStatus &&
 						this.state.repoStatus.scm &&
-						this.state.repoStatus.scm.repoId === e.data.repo.id
+						this.state.repoStatus.scm.repoId === e.data.repo.id &&
+						!this.props.currentReviewOptions?.includeLatestCommit
 					) {
 						// listen only for changes related to the repo we are looking at
 						update = true;
@@ -1087,7 +1102,7 @@ class ReviewForm extends React.Component<Props, State> {
 	};
 
 	handleChange = text => {
-		this.setState({ text });
+		this.setState({ text, textTouched: true });
 	};
 
 	handleChangeReply = replyText => {
@@ -1285,7 +1300,7 @@ class ReviewForm extends React.Component<Props, State> {
 	}
 
 	confirmCancel = (callbackOrEventArgs?: Function | Object) => {
-		const { titleTouched, text, reviewersTouched } = this.state;
+		const { titleTouched, textTouched, reviewersTouched } = this.state;
 
 		const finish = () => {
 			const isEditing = this.props.isEditing;
@@ -1297,7 +1312,7 @@ class ReviewForm extends React.Component<Props, State> {
 		};
 
 		// if the user has made any changes in the form, confirm before closing
-		if (titleTouched || text.length || reviewersTouched) {
+		if (titleTouched || textTouched || reviewersTouched) {
 			confirmPopup({
 				title: "Are you sure?",
 				message: "Changes will not be saved.",

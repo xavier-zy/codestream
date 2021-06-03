@@ -1,5 +1,5 @@
 /**
- adapted from https://github.com/kpdecker/jsdiff/blob/master/src/patch/parse.js
+ Portions adapted from https://github.com/kpdecker/jsdiff/blob/532bcf9315a39518a772e47d912fb0d22b1aa701/src/patch/parse.js which carries this notice:
   
  Software License Agreement (BSD License)
 
@@ -33,6 +33,10 @@ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF 
 IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
 OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+ */
+
+/**
+ * Modifications Copyright CodeStream Inc. under the Apache 2.0 License (Apache-2.0)
  */
 "use strict";
 import { Hunk, ParsedDiff } from "diff";

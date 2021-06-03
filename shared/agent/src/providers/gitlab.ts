@@ -39,7 +39,7 @@ import {
 } from "../protocol/agent.protocol";
 import { CSGitLabProviderInfo } from "../protocol/api.protocol";
 import { CodeStreamSession } from "../session";
-import { log, lspProvider, Dates, Strings } from "../system";
+import { Dates, log, lspProvider, Strings } from "../system";
 import { gate } from "../system/decorators/gate";
 import { Directive, Directives } from "./directives";
 import mergeRequestNoteMutation from "./gitlab/createMergeRequestNote.graphql";
@@ -781,7 +781,7 @@ export class GitLabProvider extends ThirdPartyIssueProviderBase<CSGitLabProvider
 		);
 
 		let items;
-		let promises: Promise<ApiResponse<any>>[] = [];
+		const promises: Promise<ApiResponse<any>>[] = [];
 		const createQueryString = (query: string) =>
 			query
 				.trim()
@@ -931,7 +931,9 @@ export class GitLabProvider extends ThirdPartyIssueProviderBase<CSGitLabProvider
 				}
 			});
 		} catch (ex) {
-			Logger.warn(ex, "getVersion");
+			Logger.warn(`${this.providerConfig.id} getVersion`, {
+				error: ex
+			});
 			version = this.DEFAULT_VERSION;
 		}
 
@@ -1111,7 +1113,7 @@ export class GitLabProvider extends ThirdPartyIssueProviderBase<CSGitLabProvider
 
 			// NOTE we are running TWO queries since they're kind of heavy and some GL instances
 			// have been known to crash. oops.
-			let response0 = await this.query(queryText0, args);
+			const response0 = await this.query(queryText0, args);
 			discussions = discussions.concat(response0.project.mergeRequest.discussions.nodes);
 			if (response0.project.mergeRequest.discussions.pageInfo?.hasNextPage) {
 				let after = response0.project.mergeRequest.discussions.pageInfo.endCursor;
@@ -1561,7 +1563,7 @@ export class GitLabProvider extends ThirdPartyIssueProviderBase<CSGitLabProvider
 					createdAt
 				  }
 				  id
-				  resolvable				   
+				  resolvable
 				  updatedAt
 				  userPermissions {
 					adminNote
@@ -1729,6 +1731,7 @@ export class GitLabProvider extends ThirdPartyIssueProviderBase<CSGitLabProvider
 		filePath?: string;
 		oldLineNumber?: number | undefined;
 		startLine?: number;
+		endLine?: number;
 		position?: number;
 		leftSha?: string;
 		sha?: string;
@@ -3255,7 +3258,7 @@ export class GitLabProvider extends ThirdPartyIssueProviderBase<CSGitLabProvider
 		// data we need.
 		const uri = URI.parse(request.url);
 		const path = uri.path.split("/");
-		let id = [];
+		const id = [];
 		// both are valid
 		// http://gitlab.codestream.us/my-group/my-subgroup/baz/-/merge_requests/1
 		// http://gitlab.codestream.us/project/repo/-/merge_requests/1
@@ -3358,11 +3361,11 @@ export class GitLabProvider extends ThirdPartyIssueProviderBase<CSGitLabProvider
 		const { projectFullPath, iid } = this.parseId(request.pullRequestId);
 
 		const response = await this.query<any>(
-			` 
+			`
 			query GetUpdatedAt($fullPath: ID!, $iid: String!) {
-				project(fullPath: $fullPath) {		 
+				project(fullPath: $fullPath) {
 					mergeRequest(iid: $iid) {
-						updatedAt 
+						updatedAt
 					}
 				}
 			}
@@ -3746,6 +3749,33 @@ export class GitLabProvider extends ThirdPartyIssueProviderBase<CSGitLabProvider
 					pr.reactionGroups.push({ content: directive.data.name, data: [directive.data] });
 				}
 			} else if (directive.type === "addReply") {
+				if (
+					directive.data.discussion.id &&
+					directive.data.discussion.id.indexOf("gitlab/Discussion") > -1
+				) {
+					const discussionId = directive.data.discussion.id.split("/").slice(-1)[0];
+					const nodeToUpdate = pr.discussions.nodes.find((_: DiscussionNode) => {
+						const idAsString = _.id + "";
+						const discussionNodeId = idAsString.split("/").slice(-1)[0];
+						return (
+							idAsString.indexOf("gitlab/IndividualNoteDiscussion") > -1 &&
+							discussionId === discussionNodeId
+						);
+					});
+
+					if (nodeToUpdate) {
+						nodeToUpdate.id = directive.data.discussion.id;
+						nodeToUpdate.replyId = directive.data.discussion.id;
+						nodeToUpdate.resolvable = true;
+						const firstNode = nodeToUpdate?.notes?.nodes[0];
+						if (firstNode) {
+							firstNode.id = firstNode.id.replace("/Note/", "/DiscussionNote/");
+							firstNode.resolvable = true;
+							firstNode.discussion.id = directive.data.discussion.id;
+							firstNode.discussion.replyId = directive.data.discussion.replyId;
+						}
+					}
+				}
 				const discussionNode = pr.discussions.nodes.find(
 					(_: DiscussionNode) => _.id === directive.data.discussion.id
 				);
@@ -3851,7 +3881,7 @@ export class GitLabProvider extends ThirdPartyIssueProviderBase<CSGitLabProvider
 						if (key === "notes") {
 							for (const note of directive.data.notes.nodes) {
 								if (node.notes) {
-									let existingNote = node.notes.nodes.find(_ => _.id === note.id);
+									const existingNote = node.notes.nodes.find(_ => _.id === note.id);
 									if (existingNote) {
 										for (const k in note) {
 											(existingNote as any)[k] = note[k];
@@ -3950,7 +3980,11 @@ class GitLabReviewStore {
 				})
 			)?.contents;
 			const data = JSON.parse(current || "{}") || ({} as GitLabReview);
-			comment = { ...comment, id: new Date().getTime().toString() };
+			comment = {
+				...comment,
+				startLine: comment.endLine ? comment.endLine : comment.startLine,
+				id: new Date().getTime().toString()
+			};
 			if (data && data.comments) {
 				data.comments.push(comment);
 			} else {

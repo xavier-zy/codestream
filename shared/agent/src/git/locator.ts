@@ -1,6 +1,6 @@
 "use strict";
 /**
-adapted from https://github.com/eamodio/vscode-gitlens
+Portions adapted from https://github.com/eamodio/vscode-gitlens/blob/91df7e7756bc061b3306eee03ea4505df240f12f/src/git/locator.ts which carries this notice:
 
 The MIT License (MIT)
 
@@ -23,10 +23,11 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-
-Copyright (c) 2018-2021 CodeStream Inc.
-
 */
+
+/**
+ * Modifications Copyright CodeStream Inc. under the Apache 2.0 License (Apache-2.0)
+ */
 import * as paths from "path";
 import { findExecutable, runCommand } from "./shell";
 

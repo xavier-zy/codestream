@@ -2,7 +2,7 @@
 import { Iterables } from "./iterable";
 
 /**
-adapted from https://github.com/Microsoft/vscode/blob/b3e6d5bb039a4a9362b52a2c8726267ca68cf64e/src/vs/base/common/map.ts#L352
+Portions adapted from https://github.com/Microsoft/vscode/blob/b3e6d5bb039a4a9362b52a2c8726267ca68cf64e/src/vs/base/common/map.ts#L352 which carries this notice:
 
 MIT License
 
@@ -29,6 +29,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
+/**
+ * Modifications Copyright CodeStream Inc. under the Apache 2.0 License (Apache-2.0)
+ */
 export interface IKeyIterator {
 	reset(key: string): this;
 	next(): this;

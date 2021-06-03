@@ -1,6 +1,6 @@
 "use strict";
 /**
-adapted from https://github.com/eamodio/vscode-gitlens
+Portions adapted from https://github.com/eamodio/vscode-gitlens/blob/12a93fe5f609f0bb154dca1a8d09ac3e980b9b3b/src/system/string.ts which carries this notice:
 
 The MIT License (MIT)
 
@@ -23,12 +23,16 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-
 */
+
+/**
+ * Modifications Copyright CodeStream Inc. under the Apache 2.0 License (Apache-2.0)
+ */
 import { createHash, HexBase64Latin1Encoding } from "crypto";
 import { applyPatch, ParsedDiff } from "diff";
 import * as eol from "eol";
 import * as path from "path";
+import { URL } from "url";
 import { isWindows } from "../git/shell";
 
 export namespace Strings {
@@ -321,7 +325,6 @@ export namespace Strings {
 			// Ignore combining characters
 			if (code >= 0x300 && code <= 0x36f) continue;
 
-			// code is adapted from https://stackoverflow.com/questions/30757193/find-out-if-character-in-string-is-emoji
 			if (
 				(code >= 0x1f600 && code <= 0x1f64f) || // Emoticons
 				(code >= 0x1f300 && code <= 0x1f5ff) || // Misc Symbols and Pictographs
@@ -455,24 +458,7 @@ export namespace Strings {
 		return patchedContents;
 	}
 
-	/** converts an absolute file system path to a file uri
-	 * @param  {string} str
-	 * @remarks adapted from https://stackoverflow.com/questions/20619488/how-to-convert-local-file-path-to-a-file-url-safely-in-node-js
-	 */
 	export function pathToFileURL(str: string) {
-		/*
-		once we're using node v10.12.0 we can use this
-		const url = require('url');
-		url.pathToFileURL(path)
-		*/
-
-		let pathName = path.resolve(str).replace(/\\/g, "/");
-
-		// Windows drive letter must be prefixed with a slash
-		if (pathName[0] !== "/") {
-			pathName = `/${pathName}`;
-		}
-
-		return encodeURI(`file://${pathName}`);
+		return encodeURI(new URL(`file:///${path.resolve(str)}`).href);
 	}
 }

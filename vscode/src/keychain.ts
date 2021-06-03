@@ -1,5 +1,5 @@
 /*
-adapted from https://github.com/microsoft/vscode-pull-request-github/blob/df0b143714b6a17d74f8e22dddb0863d7e71fdb8/src/authentication/keychain.ts
+Portions adapted from https://github.com/microsoft/vscode-pull-request-github/blob/df0b143714b6a17d74f8e22dddb0863d7e71fdb8/src/authentication/keychain.ts which carries this notice:
 
 MIT License
 
@@ -22,9 +22,11 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+*/
 
+/**
+ * Modifications Copyright CodeStream Inc. under the Apache 2.0 License (Apache-2.0)
  */
-
 // keytar depends on a native module shipped in vscode, so this is
 // how we load it
 import * as keytarType from "keytar";

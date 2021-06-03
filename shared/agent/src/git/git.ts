@@ -1,6 +1,6 @@
 "use strict";
 /**
-adapted from https://github.com/eamodio/vscode-gitlens
+Portions adapted from https://github.com/eamodio/vscode-gitlens/blob/12a93fe5f609f0bb154dca1a8d09ac3e980b9b3b/src/git/git.ts which carries this notice:
 
 The MIT License (MIT)
 
@@ -24,6 +24,10 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
+
+/**
+ * Modifications Copyright CodeStream Inc. under the Apache 2.0 License (Apache-2.0)
+ */
 import { Logger } from "../logger";
 import { Strings } from "../system";
 import { findGitPath, GitLocation } from "./locator";
@@ -83,7 +87,6 @@ export async function git(
 	if (promise === undefined) {
 		Logger.log(`GIT: Running${command}`);
 		// Fixes https://github.com/eamodio/vscode-gitlens/issues/73 & https://github.com/eamodio/vscode-gitlens/issues/161
-		// adapted from https://stackoverflow.com/questions/4144417/how-to-handle-asian-characters-in-file-names-in-git-on-os-x
 		args.splice(0, 0, "-c", "core.quotepath=false", "-c", "color.ui=false");
 		if (isWslGit()) {
 			args.unshift("-d", wslDistro(), "git");

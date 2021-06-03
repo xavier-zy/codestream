@@ -1,4 +1,4 @@
-# adapted from https://github.com/doblak/ps-clean/blob/master/DeleteObjBinFolders.ps1
+# Portions adapted from https://github.com/doblak/ps-clean/blob/aee1da1f396bd2c50b3658cebaf026ce2b1c3a3c/DeleteObjBinFolders.ps1 which carries this notice:
 
 # The MIT License (MIT)
 
@@ -20,6 +20,8 @@
 # COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
 # IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+# Modifications Copyright CodeStream Inc. under the Apache 2.0 License (Apache-2.0)
 
 [CmdletBinding(SupportsShouldProcess)]
 Param()

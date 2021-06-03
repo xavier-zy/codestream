@@ -1,6 +1,6 @@
 "use strict";
 /**
-adapted from https://github.com/eamodio/vscode-gitlens
+Portions adapted from https://github.com/eamodio/vscode-gitlens/blob/12a93fe5f609f0bb154dca1a8d09ac3e980b9b3b/src/system/object.ts which carries this notice:
 
 The MIT License (MIT)
 
@@ -24,6 +24,10 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
+
+/**
+ * Modifications Copyright CodeStream Inc. under the Apache 2.0 License (Apache-2.0)
+ */
 export namespace Objects {
 	export function entries<T>(o: { [key: string]: T }): IterableIterator<[string, T]>;
 	export function entries<T>(o: { [key: number]: T }): IterableIterator<[string, T]>;

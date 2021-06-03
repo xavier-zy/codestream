@@ -6,7 +6,7 @@ const MillisecondsPerMinute = 60000; // 60 * 1000
 const MillisecondsPerDay = 86400000; // 24 * 60 * 60 * 1000
 
 /**
-adapted from https://github.com/date-fns/date-fns/blob/601bc8e5708cbaebee5389bdaf51c2b4b33b73c4/src/locale/en/build_distance_in_words_locale/index.js
+Portions adapted from https://github.com/date-fns/date-fns/blob/601bc8e5708cbaebee5389bdaf51c2b4b33b73c4/src/locale/en/build_distance_in_words_locale/index.js which carries this notice:
 
 The MIT License (MIT)
 
@@ -18,6 +18,10 @@ The above copyright notice and this permission notice shall be included in all c
 
 THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
+
+/**
+ * Modifications Copyright CodeStream Inc. under the Apache 2.0 License (Apache-2.0)
+ */
 function buildDistanceInWordsLocale() {
 	const distanceInWordsLocale: { [key: string]: string | { one: string; other: string } } = {
 		lessThanXSeconds: {
@@ -128,7 +132,7 @@ patch.distanceInWords = buildDistanceInWordsLocale();
 const formatterOptions = { addSuffix: true, locale: patch };
 
 /**
-adapted from https://github.com/eamodio/vscode-gitlens
+Portions adapted from hhttps://github.com/eamodio/vscode-gitlens/blob/88e0a1b45a9b6f53b6865798e745037207f8c2da/src/system/date.ts which carries this notice:
 
 The MIT License (MIT)
 

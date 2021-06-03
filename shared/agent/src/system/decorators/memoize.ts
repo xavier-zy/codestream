@@ -1,6 +1,6 @@
 "use strict";
 /**
-adapted from https://github.com/eamodio/vscode-gitlens
+Portions adapted from https://github.com/eamodio/vscode-gitlens/blob/042f703791c21d22d1c7f7f791769287d6c5995c/src/system/decorators/memoize.ts which carries this notice:
 
 The MIT License (MIT)
 
@@ -25,6 +25,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
+/**
+ * Modifications Copyright CodeStream Inc. under the Apache 2.0 License (Apache-2.0)
+ */
 export function memoize(target: any, key: string, descriptor: any) {
 	let fn: Function | undefined;
 	let fnKey: string | undefined;

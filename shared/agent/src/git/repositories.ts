@@ -472,7 +472,7 @@ export class GitRepositories {
 
 			try {
 				/**
-				 *  adapted from https://github.com/eamodio/vscode-gitlens/blob/master/src/git/models/repository.ts#L133
+				 *  Portions adapted from https://github.com/eamodio/vscode-gitlens/blob/e2a6ae1317ce348985314e18c3d5ed257f0ef357/src/git/models/repository.ts#L133 which carries this notice:
 				 * 	The MIT License (MIT)
 
 					Copyright (c) 2016-2021 Eric Amodio
@@ -494,6 +494,9 @@ export class GitRepositories {
 					LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 					OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 					SOFTWARE.
+				 */
+				/**
+				 * Modifications Copyright CodeStream Inc. under the Apache 2.0 License (Apache-2.0)
 				 */
 				// FETCH_HEAD can also be modified with other git commands, creating an infinite loop, watch out!
 

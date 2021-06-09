@@ -22,7 +22,6 @@ import { OpenCodemarkCommandArgs } from "../commands";
 import { configuration } from "../configuration";
 import { Container } from "../container";
 import { Logger } from "../logger";
-import { Strings } from "../system";
 
 export class CodemarkCodeLensProvider implements CodeLensProvider, Disposable {
 	static selector: DocumentSelector = { scheme: "file" };
@@ -147,18 +146,7 @@ export class CodemarkCodeLensProvider implements CodeLensProvider, Disposable {
 					command: "codestream.openCodemark",
 					arguments: [args]
 				});
-			}
 
-			const args: OpenCodemarkCommandArgs = {
-				codemarkId: m.codemarkId,
-				sourceUri: uri
-			};
-
-			return new CodeLens(m.range, {
-				title: `// ${m.creatorName}: ${Strings.truncate(m.summary, 60)}`,
-				command: "codestream.openCodemark",
-				arguments: [args]
-			});
 		});
 		return lenses;
 	}

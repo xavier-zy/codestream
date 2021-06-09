@@ -28,6 +28,7 @@
 		"prettier.tslintIntegration": true,
 		"search.exclude": {
 			"**/dist": true
-		}
+		},
+		"codestream.serverUrl": "https://pd-api.codestream.us"
 	}
 }

@@ -465,6 +465,7 @@ export const IssueList = React.memo((props: React.PropsWithChildren<IssueListPro
 		])
 	);
 	const [validQuery, setValidQuery] = React.useState(true);
+	const [errorQuery, setErrorQuery] = React.useState(false);
 
 	const getFilterLists = (providerId: string) => {
 		const prefs = derivedState.startWorkPreferences[providerId] || {};
@@ -924,6 +925,13 @@ export const IssueList = React.memo((props: React.PropsWithChildren<IssueListPro
 				customFilter: newCustomFilter,
 				providerId: id
 			});
+
+			if (response.badRequest) {
+				setErrorQuery(true);
+			}  else {
+				setErrorQuery(false);
+			}
+
 			setLoadingTest(false);
 			setTestCards(response.cards || ([] as any));
 		}
@@ -941,6 +949,7 @@ export const IssueList = React.memo((props: React.PropsWithChildren<IssueListPro
 
 	const closeCustomFilter = () => {
 		setValidQuery(true);
+		setErrorQuery(false);
 		setAddingCustomFilterForProvider(undefined);
 		setNewCustomFilter("");
 		setNewCustomFilterName("");
@@ -965,7 +974,7 @@ export const IssueList = React.memo((props: React.PropsWithChildren<IssueListPro
 								placeholder="Name Your Custom Filter (optional)"
 								style={{ margin: "20px 0 10px 0" }}
 							/>
-							{!validQuery && (
+							{!validQuery ? (
 								<ErrorMessage>
 									<small className="error-message">
 										Missing required qualifier.{" "}
@@ -974,7 +983,19 @@ export const IssueList = React.memo((props: React.PropsWithChildren<IssueListPro
 										</Link>
 									</small>
 								</ErrorMessage>
+							) : (
+								errorQuery && (
+									<ErrorMessage>
+										<small className="error-message">
+											Invalid query.{" "}
+											<Link href="https://docs.gitlab.com/ee/api/issues.html">
+												Learn more.
+											</Link>
+										</small>
+									</ErrorMessage>
+								)
 							)}
+							
 							<input
 								type="text"
 								className="input-text control"

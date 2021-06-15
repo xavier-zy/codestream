@@ -926,7 +926,7 @@ export const IssueList = React.memo((props: React.PropsWithChildren<IssueListPro
 				providerId: id
 			});
 
-			if (response.badRequest) {
+			if (response.error) {
 				setErrorQuery(true);
 			}  else {
 				setErrorQuery(false);

@@ -103,7 +103,14 @@ export class GitHubEnterpriseProvider extends GitHubProvider {
 			try {
 				const version = await this.getVersion();
 				const [major, minor, patch] = version.asArray;
-				this._isPRCreationApiCompatible = major > 2 || (major === 2 && minor >= 19 && patch >= 6);
+
+				if (major > 2) {
+					this._isPRCreationApiCompatible = true;
+				} else if (major === 2 && minor === 19) {
+					this._isPRCreationApiCompatible = patch >= 6;
+				} else {
+					this._isPRCreationApiCompatible = major === 2 && minor > 19;
+				}
 			} catch (ex) {
 				this._isPRCreationApiCompatible = false;
 				Logger.warn(ex);

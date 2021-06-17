@@ -4,10 +4,14 @@
 
 ### Added
 
+- Adds the ability to create a custom filer in the Issues section for GitLab
 - The Pull/Merge Requests section of the CodeStream pane now refreshes every 5 minutes to pick up changes
 
 ### Changed
 
+- Adds confirmation when user cancels a pending pull/merge request review
+- Live View is now free for all teams
+- Adds copy to the Issues section when there are no results to display
 - Updated terms-of-service acceptance flow
 - You can now reply to any top-level comment in a merge request, regardless of whether or not it was started as a thread
 - Form that automatically pops up to request feedback when you commit is now dismissed after 15 minutes of inactivity
@@ -19,6 +23,7 @@
 
 ### Fixed
 
+- Fixes an issue with emoji not rendering in labels for pull requests
 - Addresses [#590](https://github.com/TeamCodeStream/CodeStream/issues/590) &mdash; Commit selection is reset for a Gitlab MR after posting a comment
 - Addresses [#522](https://github.com/TeamCodeStream/CodeStream/issues/522) &mdash; Support multi-line comments in GL MR
 - Addresses [#400](https://github.com/TeamCodeStream/CodeStream/issues/400) &mdash; Agent is detected as a new process by Intego NetBarrier every time IntelliJ starts

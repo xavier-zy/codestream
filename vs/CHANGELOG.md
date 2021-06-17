@@ -1,6 +1,22 @@
 # Change Log
 
-## [11.0.10] - 2021-6-4
+## [11.0.11] - 2021-6-17
+
+### Added
+
+- Adds the ability to create a custom filer in the Issues section for GitLab
+
+### Changed
+
+- Adds confirmation when user cancels a pending pull/merge request review
+- Live View is now free for all teams
+- Adds copy to the Issues section when there are no results to display
+
+### Fixed
+
+- Fixes an issue with emoji not rendering in labels for pull requests
+
+## [11.0.10] - 2021-6-7
 
 ### Changed
 

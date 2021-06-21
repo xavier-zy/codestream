@@ -294,7 +294,7 @@ export class GitLabProvider extends ThirdPartyIssueProviderBase<CSGitLabProvider
 	async getCards(request: FetchThirdPartyCardsRequest): Promise<FetchThirdPartyCardsResponse> {
 		await this.ensureConnected();
 
-		const url = request.customFilter ? "/issues?" + request.customFilter : "/issues";
+		const url = request.customFilter ? "/issues?" + request.customFilter : "/issues?state=opened";
 
 		try {
 			const response = await this.get<any[]>(url);

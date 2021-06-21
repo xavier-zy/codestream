@@ -5,7 +5,7 @@
 		},
 		{
 			"path": "./shared/ui"
-		}
+		},
 		{
 			"path": "./shared/agent"
 		}

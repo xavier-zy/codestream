@@ -549,11 +549,11 @@ class CodemarkForm extends React.Component<Props, State> {
 
 					let prRange;
 					switch (codeBlock.scm.branch) {
-						case textEditorUriContext.baseBranch:
-							prRange = changedPrLine.baseLinesChanged;
-							break;
 						case textEditorUriContext.headBranch:
 							prRange = changedPrLine.headLinesChanged;
+							break;
+						case textEditorUriContext.baseBranch:
+							prRange = changedPrLine.baseLinesChanged;
 							break;
 						default:
 							return false;

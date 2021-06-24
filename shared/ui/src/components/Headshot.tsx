@@ -220,7 +220,10 @@ export const PRHeadshot = styled((props: PRHeadshotProps) => {
 		let initials = "";
 		const login = props.person.login || props.person.user?.login || "";
 		if (login) {
-			initials = login.replace(/(\w)\w*/g, "$1").replace(/\s/g, "");
+			initials = login
+				.replace(/[\-\_]+/g, " ")
+				.replace(/(\w)\w*/g, "$1")
+				.replace(/\s/g, "");
 			if (initials.length > 2) initials = initials.substring(0, 2);
 		}
 		return (

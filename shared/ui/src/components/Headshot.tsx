@@ -225,6 +225,8 @@ export const PRHeadshot = styled((props: PRHeadshotProps) => {
 				.replace(/(\w)\w*/g, "$1")
 				.replace(/\s/g, "");
 			if (initials.length > 2) initials = initials.substring(0, 2);
+
+			initials = initials.toLocaleUpperCase();
 		}
 		return (
 			<Root

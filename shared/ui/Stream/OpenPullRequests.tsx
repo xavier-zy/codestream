@@ -825,6 +825,7 @@ export const OpenPullRequests = React.memo((props: Props) => {
 													{selected && <Icon name="arrow-right" className="selected-icon" />}
 													<PRHeadshot
 														person={{
+															login: pr.author.login,
 															avatarUrl: pr.author.avatar_url
 														}}
 													/>

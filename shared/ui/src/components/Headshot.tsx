@@ -192,7 +192,11 @@ export function CodeStreamHeadshot(props: Omit<HeadshotProps, "person">) {
 
 export interface PRHeadshotProps {
 	person: {
+		login?: string;
 		avatarUrl: string;
+		user?: {
+			login: string;
+		};
 	};
 	size?: number;
 	hardRightBorder?: boolean;
@@ -206,9 +210,41 @@ export const PRHeadshot = styled((props: PRHeadshotProps) => {
 	const size = props.size || 16;
 	if (!props.person) return null;
 
+	const [imageError, setImageError] = useState(false);
+
+	useEffect(() => {
+		setImageError(false);
+	}, [props.person.avatarUrl]);
+
+	if (imageError) {
+		let initials = "";
+		const login = props.person.login || props.person.user?.login || "";
+		if (login) {
+			initials = login.replace(/(\w)\w*/g, "$1").replace(/\s/g, "");
+			if (initials.length > 2) initials = initials.substring(0, 2);
+		}
+		return (
+			<Root
+				size={size}
+				hardRightBorder={props.hardRightBorder}
+				onClick={props.onClick}
+				display={props.display}
+			>
+				<Initials hardRightBorder={props.hardRightBorder} size={size} color={Colors[1]}>
+					{initials}
+				</Initials>
+				{props.addThumbsUp && (
+					<ThumbsUp>
+						<Icon name="thumbsup" />
+					</ThumbsUp>
+				)}
+			</Root>
+		);
+	}
+
 	return (
 		<Root display={props.display} size={size} className={props.className} onClick={props.onClick}>
-			<Image size={size} src={props.person.avatarUrl} />
+			<Image size={size} src={props.person.avatarUrl} onError={() => setImageError(true)} />
 		</Root>
 	);
 })``;

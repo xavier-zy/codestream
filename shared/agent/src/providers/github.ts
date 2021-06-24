@@ -1968,7 +1968,14 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 				}
 			  }`;
 		}
+
+		Logger.log(`commenting:createPullRequestReviewComment`, {
+			query: query,
+			request: request
+		});
+
 		void (await this.mutate<any>(query, request));
+
 		const ownerData = await this.getRepoOwnerFromPullRequestId(request.pullRequestId);
 		const graphResults = await this.fetchUpdatedReviewCommentData(ownerData);
 
@@ -2707,13 +2714,13 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 			};
 		};
 
-		let reviewTimelineItem =
+		const reviewTimelineItem =
 			existingReview &&
 			existingReview.pullRequestReviewId &&
 			updatedPullRequest.repository.pullRequest.timelineItems.nodes.find(
 				_ => _.id === existingReview!.pullRequestReviewId
 			);
-		Logger.log(reviewTimelineItem);
+
 		return this.handleResponse(request.pullRequestId, {
 			directives: [
 				{
@@ -3936,7 +3943,9 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 			}
 		}
 
-		Logger.log(`createCommitComment`, {
+		Logger.log(`commenting:createCommitComment`, {
+			ownerData: ownerData,
+			request: request,
 			payload: payload
 		});
 

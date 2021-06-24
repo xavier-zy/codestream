@@ -5,6 +5,7 @@ import { GitRemoteLike } from "../git/gitService";
 import { ProviderConfigurationData } from "../protocol/agent.protocol.providers";
 import { log, lspProvider } from "../system";
 import { GitLabProvider } from "./gitlab";
+import { toRepoName } from "../git/utils";
 
 @lspProvider("gitlab_enterprise")
 export class GitLabEnterpriseProvider extends GitLabProvider {
@@ -70,5 +71,29 @@ export class GitLabEnterpriseProvider extends GitLabProvider {
 			}
 		});
 		this.session.updateProviders();
+	}
+
+	protected getOwnerFromRemote(remote: string): { owner: string; name: string } {
+		const uri = URI.parse(remote);
+		const split = uri.path.split("/");
+
+		// the project name is the last item
+		let name = split.pop();
+		// gitlab & enterprise can use project groups + subgroups
+		const owner = split.filter(_ => _ !== "" && _ != null);
+		if (name != null) {
+			name = toRepoName(name);
+		}
+
+		// for special cases when there is a /gitlab/ subdirectory as part
+		// of the installation, we ignore that part
+		if (owner && owner[0] && owner[0].toLowerCase() === "gitlab") {
+			owner.shift();
+		}
+
+		return {
+			owner: owner.join("/"),
+			name: name!
+		};
 	}
 }

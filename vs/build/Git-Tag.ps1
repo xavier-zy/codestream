@@ -26,6 +26,7 @@ if ($WhatIfPreference.IsPresent -eq $True) {
 else {
     iex $gitCommand
     if ($LastExitCode -ne $null -and $LastExitCode -ne 0) {
+		Write-Error "Did you remember to cherry-pick the Auto Bump commit?"
 		exit 1
 	}
 
@@ -33,6 +34,7 @@ else {
 
     iex $gitPushCommand
     if ($LastExitCode -ne $null -and $LastExitCode -ne 0) {
+		Write-Error "Did you remember to cherry-pick the Auto Bump commit?"
 		exit 1
 	}
     Write-Host "git push complete"

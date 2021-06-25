@@ -7,8 +7,6 @@ import com.codestream.protocols.agent.GetReviewContentsResult
 import com.codestream.protocols.webview.ReviewNotifications
 import com.codestream.sessionService
 import com.codestream.webViewService
-import com.intellij.diff.DiffDialogHints
-import com.intellij.diff.DiffManagerEx
 import com.intellij.diff.chains.DiffRequestChain
 import com.intellij.diff.editor.ChainDiffVirtualFile
 import com.intellij.diff.editor.DiffRequestProcessorEditor
@@ -22,7 +20,6 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.KeyWithDefaultValue
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import org.eclipse.lsp4j.Range
 import java.lang.reflect.Field

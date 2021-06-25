@@ -44,6 +44,7 @@ class CodeStreamConfigurable : SearchableConfigurable {
             state.autoHideMarkers = gui.autoHideMarkers.isSelected
             state.proxySupport = gui.proxySupport.selectedItem as ProxySupport
             state.proxyStrictSSL = gui.proxyStrictSSL.isSelected
+            state.jcef = gui.jcef.isSelected
         }
     }
 
@@ -65,6 +66,7 @@ class CodeStreamConfigurable : SearchableConfigurable {
                 autoHideMarkers.isSelected = it.autoHideMarkers
                 proxySupport.selectedItem = it.proxySupport
                 proxyStrictSSL.isSelected = it.proxyStrictSSL
+                jcef.isSelected = it.jcef
             }
         }
 

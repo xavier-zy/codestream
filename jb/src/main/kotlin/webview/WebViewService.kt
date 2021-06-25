@@ -146,15 +146,32 @@ class WebViewService(val project: Project) : Disposable {
     }
 
     private fun createWebView(router: WebViewRouter): WebView {
-        return if (JBCefApp.isSupported()) {
-            logger.info("JCEF enabled")
-            val jbCefBrowser = JBCefBrowser()
-            JBCefWebView(jbCefBrowser, router).also {
-                webviewTelemetry("JCEF")
+        val appSettings = ServiceManager.getService(ApplicationSettingsService::class.java)
+        return try {
+            if (!ENV_DISABLE_JCEF && appSettings.jcef && JBCefApp.isSupported()) {
+                logger.info("JCEF enabled")
+                val jbCefBrowser = JBCefBrowser()
+                JBCefWebView(jbCefBrowser, router).also {
+                    webviewTelemetry("JCEF")
+                }
+            } else {
+                logger.info("JCEF disabled - falling back to JxBrowser")
+                val engine = ServiceManager.getService(JxBrowserEngineService::class.java)
+                JxBrowserWebView(engine.newBrowser(), router).also {
+                    if (JBCefApp.isSupported()) {
+                        webviewTelemetry("JxBrowser - user selection")
+                    } else {
+                        webviewTelemetry("JxBrowser - JCEF not supported")
+                    }
+                }
+
             }
-        } else {
-            logger.info("JCEF not supported")
-            JBCefNotAvailable()
+        } catch (ex: Exception) {
+            logger.warn("Error initializing JCEF - falling back to JxBrowser", ex)
+            val engine = ServiceManager.getService(JxBrowserEngineService::class.java)
+            JxBrowserWebView(engine.newBrowser(), router).also {
+                webviewTelemetry("JxBrowser - JCEF failed")
+            }
         }
     }
 

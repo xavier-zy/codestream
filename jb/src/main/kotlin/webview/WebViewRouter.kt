@@ -43,6 +43,7 @@ import com.intellij.openapi.fileChooser.FileChooser
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.teamdev.jxbrowser.js.JsAccessible
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.launch
@@ -54,6 +55,7 @@ class WebViewRouter(val project: Project) {
     val isReady get() = _isReady
     val initialization = CompletableFuture<Unit>()
 
+    @JsAccessible
     fun handle(rawMessage: String, origin: String?) = GlobalScope.launch {
         val message = parse(rawMessage)
 

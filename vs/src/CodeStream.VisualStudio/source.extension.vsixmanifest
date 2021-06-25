@@ -13,9 +13,9 @@
   <Installation Experimental="false" AllUsers="true">
     <!-- Targetting the first release after Preview 3 which is: 15.0.15	Release	July 10, 2018  -->
     <!-- See: https://docs.microsoft.com/en-us/visualstudio/install/visual-studio-build-numbers-and-release-dates?view=vs-2017 -->
-    <InstallationTarget Id="Microsoft.VisualStudio.Community" Version="[15.0.27413.43, 17.0]" />
-    <InstallationTarget Id="Microsoft.VisualStudio.Pro" Version="[15.0.27413.43, 17.0]" />
-    <InstallationTarget Id="Microsoft.VisualStudio.Enterprise" Version="[15.0.27413.43, 17.0]" />
+    <InstallationTarget Id="Microsoft.VisualStudio.Community" Version="[15.0.27413.43, 17.0)" />
+    <InstallationTarget Id="Microsoft.VisualStudio.Pro" Version="[15.0.27413.43, 17.0)" />
+    <InstallationTarget Id="Microsoft.VisualStudio.Enterprise" Version="[15.0.27413.43, 17.0)" />
   </Installation>
   <Dependencies>
     <Dependency Id="Microsoft.Framework.NDP" DisplayName="Microsoft .NET Framework" d:Source="Manual" Version="[4.5,)" />

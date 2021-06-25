@@ -203,16 +203,16 @@ class ReviewService(private val project: Project) {
             }
             diffChain = myDiffChain
 
-            val registryValue = Registry.get("show.diff.as.editor.tab")
-            val original = registryValue.asBoolean()
+            val providerId = context?.pullRequest?.providerId ?: ""
+            val tabName = when {
+                providerId.contains("github", true) -> "Pull Request"
+                providerId.contains("gitlab", true) -> "Merge Request"
+                else -> "Diff"
+            }
 
             ApplicationManager.getApplication().invokeLater {
-                try {
-                    registryValue.setValue(true)
-                    DiffManagerEx.getInstance().showDiffBuiltin(project, myDiffChain, DiffDialogHints.FRAME)
-                } finally {
-                    registryValue.setValue(original)
-                }
+                val diffFile = ChainDiffVirtualFile(myDiffChain, tabName)
+                FileEditorManager.getInstance(project).openFile(diffFile, true)
             }
         }
 

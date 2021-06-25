@@ -50,7 +50,6 @@ class ReviewService(private val project: Project) {
             .also { it.isAccessible = true }
     private var diffChain: DiffRequestChain? = null
     private var currentKey: String? = null
-    private var timeInMillisOflastReviewFromInternalCommit: Long? = null
 
     suspend fun showDiff(reviewId: String, repoId: String, checkpoint: Int?, path: String) {
         val agent = project.agentService ?: return
@@ -246,27 +245,8 @@ class ReviewService(private val project: Project) {
         }
     }
 
-    fun createReviewFromInternalCommit() {
-        timeInMillisOflastReviewFromInternalCommit = System.currentTimeMillis()
-        ApplicationManager.getApplication().invokeLater {
-            project.codeStream?.show {
-                project.webViewService?.postNotification(
-                    ReviewNotifications.New(
-                        null,
-                        Range(),
-                        "JB Commit Dialog",
-                        true
-                    )
-                )
-            }
-        }
-    }
-
     fun createReviewFromExternalCommit() {
         if (project.sessionService?.userLoggedIn?.user?.preferences?.reviewCreateOnCommit == false) return
-        timeInMillisOflastReviewFromInternalCommit?.let {
-            if (System.currentTimeMillis() - it < 10 * 1000) return
-        }
 
         ApplicationManager.getApplication().invokeLater {
             project.codeStream?.show {

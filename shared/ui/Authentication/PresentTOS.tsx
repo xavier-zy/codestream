@@ -114,12 +114,10 @@ export const PresentTOS = () => {
 			<Title>CodeStream Terms of Service</Title>
 			<Terms onScroll={handleScroll}>
 				<p>
-					CodeStream, Inc. (“CodeStream”) and New Relic, Inc. (“New Relic”) are excited to announce
-					that have entered into a definitive agreement for the acquisition of CodeStream.
-					Contingent upon the successful completion of the transaction and effective as of
-					immediately prior to the closing(the “Transaction Effective Date”), you agree to: (i) the
-					New Relic Terms of Service for CodeStream, (ii) to the sharing and sale of the Personal
-					Data collected pursuant to the{" "}
+					New Relic, Inc. (“New Relic”) has acquired CodeStream, Inc. (“CodeStream”) as of June 8,
+					2021 (“Transaction Effective Date”). You you agree to: (i) the New Relic Terms of Service
+					for CodeStream, and (ii) to the sharing and sale of the Personal Data collected prior to
+					June 8, 2021 pursuant to the{" "}
 					<Link href="https://codestream.com/privacy-policy-02-2019">
 						CodeStream Privacy Notice
 					</Link>{" "}

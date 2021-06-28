@@ -12,7 +12,7 @@ CodeStream is a developer collaboration platform that integrates essential dev t
 
 ### Requirements
 
-- CodeStream requires a current version of [Visual Studio Code](https://code.visualstudio.com/), and is also available for [JetBrains](https://plugins.jetbrains.com/plugin/12206-codestream), [Visual Studio](https://marketplace.visualstudio.com/items?itemName=CodeStream.codestream-vs) or [Atom](https://atom.io/packages/codestream).
+- CodeStream requires a current version of [Visual Studio Code](https://code.visualstudio.com/), and is also available for [JetBrains](https://plugins.jetbrains.com/plugin/12206-codestream) or [Visual Studio](https://marketplace.visualstudio.com/items?itemName=CodeStream.codestream-vs).
 - Your repository must be managed by Git, or a Git hosting service like GitHub.
 
 # Create and Review GitHub and GitLab Pull Requests in VS Code

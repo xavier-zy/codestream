@@ -22,6 +22,7 @@ import cx from "classnames";
 import { getConnectedSupportedPullRequestHosts } from "../store/providers/reducer";
 import { getPreferences } from "../store/users/reducer";
 import { getRepos } from "../store/repos/reducer";
+import { NewRelic } from "./NewRelic";
 
 const PADDING_TOP = 25;
 
@@ -65,7 +66,8 @@ export const AVAILABLE_PANES = [
 	WebviewPanels.CodemarksForFile,
 	WebviewPanels.WorkInProgress,
 	WebviewPanels.Tasks,
-	WebviewPanels.Team
+	WebviewPanels.Team,
+	WebviewPanels.NewRelic
 ];
 
 export const COLLAPSED_SIZE = 22;
@@ -356,6 +358,8 @@ export const Sidebar = React.memo(function Sidebar() {
 				return <Codemarks paneState={paneState} />;
 			case WebviewPanels.Team:
 				return <TeamPanel paneState={paneState} />;
+			case WebviewPanels.NewRelic:
+				return <NewRelic paneState={paneState} />;
 		}
 		return null;
 	};

@@ -92,6 +92,7 @@ export * from "./msteams";
 export * from "./okta";
 export * from "./clubhouse";
 export * from "./linear";
+export * from "./newrelic";
 
 const PR_QUERIES: {
 	[Identifier: string]: {

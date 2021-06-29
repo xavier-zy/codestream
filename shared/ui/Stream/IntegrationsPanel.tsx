@@ -93,7 +93,8 @@ export const IntegrationsPanel = () => {
 					"bitbucket",
 					"bitbucket_server",
 					"gitlab",
-					"gitlab_enterprise"
+					"gitlab_enterprise",
+					"newrelic"
 				].includes(providers[id].name)
 			)
 			.filter(id => !connectedProviders.includes(id))

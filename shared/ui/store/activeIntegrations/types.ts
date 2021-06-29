@@ -90,6 +90,8 @@ export interface LinearIntegrationData extends ActiveIntegrationData {
 	currentTeam?: LinearTeam;
 }
 
+export interface NewRelicIntegrationData extends ActiveIntegrationData {}
+
 export interface ActiveIntegrationsState extends Index<ActiveIntegrationData> {}
 
 export enum ActiveIntegrationsActionType {

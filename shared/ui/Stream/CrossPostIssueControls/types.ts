@@ -196,7 +196,12 @@ export const PROVIDER_MAPPINGS: { [provider: string]: ProviderDisplay } = {
 		supportsStartWork: true
 	},
 	slack: { displayName: "Slack", icon: "slack", groupName: "Workspace" },
-	msteams: { displayName: "Microsoft Teams", icon: "msteams", groupName: "Organization" }
+	msteams: { displayName: "Microsoft Teams", icon: "msteams", groupName: "Organization" },
+	newrelic: {
+		displayName: "New Relic",
+		icon: "newrelic",
+		getUrl: "http://newrelic.com"
+	}
 	//okta: { displayName: "Okta", icon: "okta" } -- suppress display under "Active Integrations"
 };
 

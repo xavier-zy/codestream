@@ -407,6 +407,7 @@ export const Timeline = (props: Props) => {
 										? note.bodyHtml
 												.replace(/\<table /g, '<table class="gitlab-table" ')
 												.replace(/\<pre.+?\>/g, "<pre>")
+												.replace(/(?=((?!<\/a).)*<img.+?<\/a>)href="/g, `href=\"${pr.baseWebUrl}`)
 										: note.body
 								}
 								isHtml={note.bodyHtml != null}

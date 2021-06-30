@@ -191,9 +191,11 @@ export const EditPullRequest = props => {
 					if (derivedState.pullRequestQueries || defaultQueries[connectedProvider.id]) {
 						const options = { force: true, alreadyLoading: false };
 
-						const providerQuery: PullRequestQuery[] = derivedState.pullRequestQueries
-							? derivedState.pullRequestQueries[connectedProvider.id]
-							: defaultQueries[connectedProvider.id];
+						const providerQuery: PullRequestQuery[] =
+							derivedState.pullRequestQueries &&
+							derivedState.pullRequestQueries[connectedProvider.id]
+								? derivedState.pullRequestQueries[connectedProvider.id]
+								: defaultQueries[connectedProvider.id];
 						const queryStrings = Object.values(providerQuery).map(_ => _.query);
 
 						await dispatch(

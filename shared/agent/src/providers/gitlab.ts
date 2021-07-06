@@ -294,7 +294,9 @@ export class GitLabProvider extends ThirdPartyIssueProviderBase<CSGitLabProvider
 	async getCards(request: FetchThirdPartyCardsRequest): Promise<FetchThirdPartyCardsResponse> {
 		await this.ensureConnected();
 
-		const url = request.customFilter ? "/issues?" + request.customFilter : "/issues?state=opened&scope=assigned_to_me";
+		const url = request.customFilter
+			? "/issues?" + request.customFilter
+			: "/issues?state=opened&scope=assigned_to_me";
 
 		try {
 			const response = await this.get<any[]>(url);
@@ -781,7 +783,7 @@ export class GitLabProvider extends ThirdPartyIssueProviderBase<CSGitLabProvider
 		void (await this.ensureConnected());
 		const currentUser = await this.getCurrentUser();
 		const currentVersion = await this.getVersion();
-		if (!currentVersion.isDefault && semver.lt(currentVersion.version, "12.0.0")) {
+		if (!currentVersion.isDefault && semver.lt(currentVersion.version, "12.10.0")) {
 			// InternalErrors don't get sent to sentry
 			throw new InternalError(`${this.displayName} ${currentVersion.version} is not yet supported`);
 		}

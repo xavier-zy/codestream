@@ -950,10 +950,10 @@ export class PostsManager extends EntityManagerBase<CSPost> {
 				throw new Error(errorMessage);
 			}
 			const startHunk = diff.hunks.find(
-				_ => startLine >= _.newStart && startLine <= _.newStart + _.newLines
+				_ => startLine >= _.newStart && startLine < _.newStart + _.newLines
 			);
 			const endHunk = diff.hunks.find(
-				_ => endLine >= _.newStart && endLine <= _.newStart + _.newLines
+				_ => endLine >= _.newStart && endLine < _.newStart + _.newLines
 			);
 
 			let fileWithUrl;
@@ -988,8 +988,8 @@ export class PostsManager extends EntityManagerBase<CSPost> {
 			}
 
 			let result: Promise<Directives>;
-			// only fall in here if we don't have a start OR we dont have both
-			if (!startHunk || (!startHunk && !endHunk)) {
+			// only fall in here if we don't have a start OR we have a range and we don't have both
+			if ((startLine !== endLine && (!startHunk || !endHunk)) || !startHunk) {
 				// if we couldn't find a hunk, we're going to go down the path of using
 				// a "code fence" aka ``` for showing the code comment
 				Logger.warn(
@@ -1041,7 +1041,7 @@ export class PostsManager extends EntityManagerBase<CSPost> {
 							filePath: parsedUri.path,
 							startLine: startLine,
 							endLine: endLine,
-							position: lineWithMetadata.position,
+							position: lineWithMetadata.position
 						}
 					});
 				} else {

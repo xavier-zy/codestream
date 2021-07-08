@@ -293,10 +293,31 @@ export class GitLabProvider extends ThirdPartyIssueProviderBase<CSGitLabProvider
 	@log()
 	async getCards(request: FetchThirdPartyCardsRequest): Promise<FetchThirdPartyCardsResponse> {
 		await this.ensureConnected();
+		let filter = request.customFilter
+			? JSON.parse(JSON.stringify(qs.parse(request.customFilter)))
+			: undefined;
 
-		const url = request.customFilter
-			? "/issues?" + request.customFilter
-			: "/issues?state=opened&scope=assigned_to_me";
+		if (
+			filter &&
+			!(filter.hasOwnProperty("project_id") || filter.hasOwnProperty("group_id")) &&
+			!filter.hasOwnProperty("scope")
+		) {
+			filter["scope"] = "all";
+		}
+		let url;
+		if (filter?.hasOwnProperty("project_id")) {
+			const projectId = filter["project_id"];
+			delete filter["project_id"];
+			url = `/projects/${projectId}/issues?${qs.stringify(filter)}`;
+		} else if (filter?.hasOwnProperty("group_id")) {
+			const groupId = filter["group_id"];
+			delete filter["group_id"];
+			url = `/groups/${groupId}/issues?${qs.stringify(filter)}`;
+		} else {
+			url = filter
+				? "/issues?" + qs.stringify(filter)
+				: "/issues?state=opened&scope=assigned_to_me";
+		}
 
 		try {
 			const response = await this.get<any[]>(url);

@@ -154,8 +154,8 @@ export const setCurrentPullRequest = (
 	source?: string
 ) => action(ContextActionsType.SetCurrentPullRequest, { providerId, id, commentId, source });
 
-export const setCurrentErrorInboxOptions = (stack?: string, source?: string) =>
-	action(ContextActionsType.SetCurrentErrorInboxOptions, { stack });
+export const setCurrentErrorInboxOptions = (stack?: string, customAttributes?: string, source?: string) =>
+	action(ContextActionsType.SetCurrentErrorInboxOptions, { stack, customAttributes });
 
 export const setNewPullRequestOptions = (options?: { branch: NewPullRequestBranch }) =>
 	action(ContextActionsType.SetNewPullRequestOptions, { options });

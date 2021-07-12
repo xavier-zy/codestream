@@ -93,7 +93,7 @@ export interface ContextState extends WebviewContext {
 
 	pullRequestCheckoutBranch: boolean;
 	newPullRequestOptions?: { branch: NewPullRequestBranch };
-	errorInboxOptions?: { stack?: string };
+	errorInboxOptions?: { stack?: string, customAttributes?: string };
 }
 
 export type ChatProviderAccess = "strict" | "permissive";

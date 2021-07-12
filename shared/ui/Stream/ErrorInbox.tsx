@@ -32,8 +32,11 @@ export const ErrorInboxPanel = () => {
 		// from the queryString this is a stringified array of strings
 		return {
 			stack: state.context.errorInboxOptions?.stack
-				? JSON.parse(state.context.errorInboxOptions?.stack)
-				: []
+				? JSON.parse(state.context.errorInboxOptions.stack!)
+				: [],
+			customAttributes: state.context.errorInboxOptions?.customAttributes
+				? JSON.parse(state.context.errorInboxOptions.customAttributes!)
+				: {}
 		};
 	});
 
@@ -44,14 +47,14 @@ export const ErrorInboxPanel = () => {
 			</PanelHeader>
 			<div style={{ padding: "20px" }}>
 				<Content>
-					<ErrorInbox stack={derivedState.stack} />
+					<ErrorInbox stack={derivedState.stack} customAttributes={derivedState.customAttributes} />
 				</Content>
 			</div>
 		</Dialog>
 	);
 };
 
-export const ErrorInbox = (props: { stack?: string[] }) => {
+export const ErrorInbox = (props: { stack?: string[], customAttributes?: any }) => {
 	const rootRef = React.useRef(null);
 
 	return (
@@ -59,9 +62,19 @@ export const ErrorInbox = (props: { stack?: string[] }) => {
 			{props.stack && (
 				<div
 					dangerouslySetInnerHTML={{
-						__html: props.stack.map(_ => `<div style="float:right;">${_}</div>`).join("")
+						__html: props.stack.map(_ => `<div>${_}</div>`).join("")
 					}}
 				></div>
+			)}
+			<div><h4>Custom attributes</h4></div>
+			{props.customAttributes && (
+				<div>
+					<dl
+						dangerouslySetInnerHTML={{
+							__html: Object.keys(props.customAttributes).map(_ => `<dt>${_}</dt><dd>${props.customAttributes[_]}</dd>`).join("")
+						}}
+					></dl>
+				</div>
 			)}
 		</Root>
 	);

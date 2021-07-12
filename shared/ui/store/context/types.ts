@@ -40,6 +40,7 @@ export enum ContextActionsType {
 	SetCurrentRepo = "@context/SetCurrentRepo",
 	SetCreatePullRequest = "@context/SetCreatePullRequest",
 	SetCurrentPullRequest = "@context/SetCurrentPullRequest",
+	SetCurrentErrorInboxOptions = "@context/SetCurrentErrorInboxOptions",
 	SetCurrentPullRequestAndBranch = "@context/SetCurrentPullRequestAndBranch",
 	SetNewPullRequestOptions = "@context/SetNewPullRequestOptions",
 	SetStartWorkCard = "@context/SetStartWorkCard",
@@ -92,6 +93,7 @@ export interface ContextState extends WebviewContext {
 
 	pullRequestCheckoutBranch: boolean;
 	newPullRequestOptions?: { branch: NewPullRequestBranch };
+	errorInboxOptions?: { stack?: string };
 }
 
 export type ChatProviderAccess = "strict" | "permissive";

@@ -95,7 +95,8 @@ export enum RouteControllerType {
 	Navigate = "navigate",
 	Search = "search",
 	PullRequest = "pullRequest",
-	StartWork = "startWork"
+	StartWork = "startWork",
+	ErrorInbox = "errorinbox"
 }
 export enum RouteActionType {
 	Open = "open"
@@ -113,6 +114,7 @@ export const HostDidReceiveRequestNotificationType = new NotificationType<
 >(`${IpcRoutes.Webview}/request/parse`);
 
 export interface HostDidChangeWorkspaceFoldersNotification {}
-export const HostDidChangeWorkspaceFoldersNotificationType = new NotificationType<HostDidChangeWorkspaceFoldersNotification, void>(
-	"${IpcRoutes.Webview}/didChangeWorkspaceFolders"
-);
+export const HostDidChangeWorkspaceFoldersNotificationType = new NotificationType<
+	HostDidChangeWorkspaceFoldersNotification,
+	void
+>("${IpcRoutes.Webview}/didChangeWorkspaceFolders");

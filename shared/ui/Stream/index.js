@@ -88,6 +88,7 @@ import {
 import { last as _last, findLastIndex } from "lodash-es";
 import { Keybindings } from "./Keybindings";
 import { FlowPanel, VideoLink } from "./Flow";
+import { ErrorInboxPanel } from "./ErrorInbox";
 import { PRInfoModal } from "./SpatialView/PRInfoModal";
 import { GlobalNav } from "./GlobalNav";
 import { CheckEmailVsGit } from "./CheckEmailVsGit";
@@ -432,6 +433,7 @@ export class SimpleStream extends PureComponent {
 									setMultiLocation={this.setMultiLocation}
 								/>
 							)}
+							{activePanel === WebviewPanels.ErrorInbox && <ErrorInboxPanel />}
 							{activePanel === WebviewPanels.Flow && <FlowPanel />}
 							{activePanel === WebviewPanels.NewReview && <ReviewForm />}
 							{activePanel === WebviewPanels.Integrations && <IntegrationsPanel />}

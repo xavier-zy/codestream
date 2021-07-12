@@ -47,7 +47,8 @@ const initialState: ContextState = {
 	showFeedbackSmiley: true,
 	route: { name: Route.NewUser, params: {} },
 	spatialViewShowPRComments: false,
-	composeCodemarkActive: undefined
+	composeCodemarkActive: undefined,
+	errorInboxOptions: undefined
 };
 
 export function reduceContext(
@@ -161,6 +162,12 @@ export function reduceContext(
 			return {
 				...state,
 				newPullRequestOptions: action.payload.options
+			};
+		}
+		case ContextActionsType.SetCurrentErrorInboxOptions: {
+			return {
+				...state,
+				errorInboxOptions: action.payload
 			};
 		}
 		case ContextActionsType.SetStartWorkCard:

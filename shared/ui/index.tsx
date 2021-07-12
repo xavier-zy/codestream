@@ -70,7 +70,8 @@ import {
 	setCurrentPullRequest,
 	setStartWorkCard,
 	closeAllPanels,
-	clearCurrentPullRequest
+	clearCurrentPullRequest,
+	setCurrentErrorInboxOptions
 } from "./store/context/actions";
 import { URI } from "vscode-uri";
 import { moveCursorToLine } from "./Stream/api-functions";
@@ -421,6 +422,17 @@ function listenForEvents(store) {
 							}
 							break;
 						}
+					}
+				}
+				break;
+			}
+			case RouteControllerType.ErrorInbox: {
+				switch (route.action) {
+					case "open": {
+						store.dispatch(closeAllPanels());
+						store.dispatch(setCurrentErrorInboxOptions(route.query.stack));
+						store.dispatch(openPanel(WebviewPanels.ErrorInbox));
+						break;
 					}
 				}
 				break;

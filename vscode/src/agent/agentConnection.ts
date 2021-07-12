@@ -1,4 +1,5 @@
 "use strict";
+import * as fs from "fs";
 import {
 	AgentInitializeResult,
 	ApiRequestType,
@@ -251,15 +252,48 @@ export class CodeStreamAgentConnection implements Disposable {
 		const env = process.env;
 		const breakOnStart = (env && env.CODESTREAM_AGENT_BREAK_ON_START) === "true";
 
+		const envValues: {
+			[Identifier: string]: string | "NEW_RELIC_APP_NAME" | "NEW_RELIC_LICENSE_KEY";
+		} = {};
+
+		if (env && env.CODESTREAM_ENV) {
+			try {
+				// https://docs.newrelic.com/docs/agents/nodejs-agent/installation-configuration/nodejs-agent-configuration/#environment
+				const data = fs.readFileSync(env.CODESTREAM_ENV, "utf8");
+				if (data) {
+					data.split("\n").forEach((_: string) => {
+						const split = _.split("=");
+						envValues[split[0]] = (split[1] || "").replace(/"/g, "").replace(/'/g, "");
+					});
+					console.log(data);
+				}
+			} catch (err) {
+				console.error(err);
+			}
+		}
+
 		this._serverOptions = {
 			run: {
 				module: context.asAbsolutePath("dist/agent.js"),
 				transport: TransportKind.ipc
+				// will need this eventually...
+				// options: {
+				// 	env: {
+				// 		NEW_RELIC_APP_NAME: "XXX,
+				// 		NEW_RELIC_LICENSE_KEY: "XXX"
+				// 	}
+				// }
 			},
 			debug: {
 				module: context.asAbsolutePath("../shared/agent/dist/agent.js"),
 				transport: TransportKind.ipc,
 				options: {
+					env: {
+						...envValues,
+						...{
+							NEW_RELIC_LOG_LEVEL: "trace"
+						}
+					},
 					execArgv: ["--nolazy", breakOnStart ? "--inspect-brk=6009" : "--inspect=6009"]
 				}
 			}

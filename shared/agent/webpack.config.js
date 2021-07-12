@@ -132,7 +132,7 @@ module.exports = function(env, argv) {
 			exprContextCritical: false
 		},
 		resolve: {
-			extensions: [".ts", ".tsx", ".js", ".jsx"]
+			extensions: [".ts", ".tsx", ".js", ".jsx", ".json"]
 		},
 		plugins: plugins,
 		stats: {

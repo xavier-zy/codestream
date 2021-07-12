@@ -1,4 +1,7 @@
 "use strict";
+// must be first
+import * as NewRelic from "newrelic";
+
 import * as fs from "fs";
 import {
 	CancellationToken,
@@ -249,7 +252,9 @@ export class CodeStreamAgent implements Disposable {
 		type: NT,
 		params: NotificationParamsOf<NT>
 	): void {
-		return this._connection.sendNotification(type, params);
+		return NewRelic.startWebTransaction(type.method, () => {
+			return this._connection.sendNotification(type, params);
+		});
 	}
 
 	@log({
@@ -267,7 +272,9 @@ export class CodeStreamAgent implements Disposable {
 		params: RequestParamsOf<RT>,
 		token?: CancellationToken
 	): Thenable<RequestResponseOf<RT>> {
-		return this._connection.sendRequest(type, params, token);
+		return NewRelic.startWebTransaction(type.method, () => {
+			return this._connection.sendRequest(type, params, token);
+		});
 	}
 
 	error(exception: Error): void;

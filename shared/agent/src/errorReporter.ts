@@ -15,12 +15,50 @@ import {
 import { CodeStreamSession, SessionStatus } from "./session";
 import { lsp, lspHandler } from "./system";
 import { Logger } from "./logger";
+import * as NewRelic from "newrelic";
+
+interface IErrorReporterProvider {
+	reportMessage(request: ReportMessageRequest): void;
+	reportBreadcrumb(request: ReportBreadcrumbRequest): void;
+	webviewError(request: WebviewErrorRequest): void;
+}
+
+abstract class ErrorReporterProviderBase {
+	protected _errorCache = new Set<string>();
+}
 
 @lsp
 export class ErrorReporter {
-	private _errorCache = new Set<string>();
+	private readonly _errorProviders: IErrorReporterProvider[];
 
 	constructor(session: CodeStreamSession) {
+		// use both error providers for now
+		this._errorProviders = [
+			new SentryErrorReporterProvider(session),
+			new NewRelicErrorReporterProvider(session)
+		];
+	}
+
+	@lspHandler(ReportMessageRequestType)
+	reportMessage(request: ReportMessageRequest) {
+		this._errorProviders.forEach(_ => _.reportMessage(request));
+	}
+
+	@lspHandler(ReportBreadcrumbRequestType)
+	reportBreadcrumb(request: ReportBreadcrumbRequest) {
+		this._errorProviders.forEach(_ => _.reportBreadcrumb(request));
+	}
+
+	@lspHandler(WebviewErrorRequestType)
+	webviewError(request: WebviewErrorRequest) {
+		this._errorProviders.forEach(_ => _.webviewError(request));
+	}
+}
+
+class SentryErrorReporterProvider extends ErrorReporterProviderBase
+	implements IErrorReporterProvider {
+	constructor(session: CodeStreamSession) {
+		super();
 		if (session.isProductionCloud) {
 			Logger.log("Initializing Sentry...");
 			Sentry.init({
@@ -94,8 +132,10 @@ export class ErrorReporter {
 			Logger.log("Not initializing Sentry, this is not production");
 		}
 	}
+	webviewError(request: WebviewErrorRequest): void {
+		Logger.log(`Webview error: ${request.error.message}\n${request.error.stack}`);
+	}
 
-	@lspHandler(ReportMessageRequestType)
 	reportMessage(request: ReportMessageRequest) {
 		const key = `${request.message}`;
 		if (this._errorCache.has(key)) {
@@ -116,8 +156,6 @@ export class ErrorReporter {
 			}
 		});
 	}
-
-	@lspHandler(ReportBreadcrumbRequestType)
 	reportBreadcrumb(request: ReportBreadcrumbRequest) {
 		Sentry.addBreadcrumb({
 			message: request.message,
@@ -126,9 +164,47 @@ export class ErrorReporter {
 			category: request.category
 		});
 	}
+}
 
-	@lspHandler(WebviewErrorRequestType)
-	webviewError(request: WebviewErrorRequest) {
-		Logger.log(`Webview error: ${request.error.message}\n${request.error.stack}`);
+class NewRelicErrorReporterProvider extends ErrorReporterProviderBase
+	implements IErrorReporterProvider {
+	constructor(session: CodeStreamSession) {
+		super();
+	}
+
+	reportMessage(request: ReportMessageRequest) {
+		const key = `${request.message}`;
+		if (this._errorCache.has(key)) {
+			Logger.warn("Ignoring duplicate error", {
+				key: key
+			});
+			return;
+		}
+
+		this._errorCache.add(key);
+		NewRelic.noticeError(new Error(request.message), {
+			type: request.type,
+			source: request.source
+		});
+	}
+
+	webviewError(request: WebviewErrorRequest): void {
+		if (request.foo) {
+			try {
+				// [BC] this _might_ lose the stack -- can we get a re-hydrated Error obj in the request?
+				throw request.error.message;
+			} catch (e) {
+				NewRelic.noticeError(e, {
+					message: request.error.message,
+					stack: request.error.stack
+				});
+			}
+		} else {
+			Logger.log(`Webview error: ${request.error.message}\n${request.error.stack}`);
+		}
+	}
+
+	reportBreadcrumb(request: ReportBreadcrumbRequest) {
+		// noop
 	}
 }

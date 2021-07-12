@@ -17,7 +17,11 @@ import { getCodeCollisions } from "../store/users/reducer";
 import CancelButton from "./CancelButton";
 import { UserStatus } from "../src/components/UserStatus";
 import { ModifiedRepos } from "./ModifiedRepos";
-import { UpdateUserRequestType, DeleteUserRequestType } from "@codestream/protocols/agent";
+import {
+	UpdateUserRequestType,
+	DeleteUserRequestType,
+	WebviewErrorRequestType
+} from "@codestream/protocols/agent";
 import Menu from "./Menu";
 import { confirmPopup } from "./Confirm";
 import { logout } from "../store/session/actions";
@@ -137,6 +141,7 @@ export const ProfilePanel = () => {
 		);
 	}
 
+	const [sendLove, setSendLove] = React.useState({ text: "Send love", disabled: false });
 	const [editingTimeZone, setEditingTimeZone] = React.useState();
 	const timeZoneItems = timeZoneList.map(timeZone => ({
 		label: timeZone,
@@ -288,6 +293,33 @@ export const ProfilePanel = () => {
 							<StyledUserStatus user={person} />
 						</Row>
 					)}
+					{isMe &&
+						person.email &&
+						(person.email.indexOf("@codestream.com") > -1 ||
+							person.email.indexOf("@newrelic.com") > -1) && (
+							<Row>
+								<MetaLabel>Fun</MetaLabel>
+								<Button
+									variant="success"
+									disabled={sendLove.disabled}
+									onClick={async e => {
+										await HostApi.instance.send(WebviewErrorRequestType, {
+											error: {
+												message: "webviewTest",
+												stack: ""
+											},
+											foo: true
+										});
+										setSendLove({ text: "Just kidding, you sent an error!", disabled: true });
+										setTimeout(() => {
+											setSendLove({ text: "Send more love", disabled: false });
+										}, 10000);
+									}}
+								>
+									{sendLove.text}
+								</Button>
+							</Row>
+						)}
 					<MetaLabel>Local Modifications</MetaLabel>
 					<ModifiedRepos id={person.id} showModifiedAt />
 					{isMe && (

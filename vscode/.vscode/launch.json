@@ -9,7 +9,8 @@
 			"args": ["--extensionDevelopmentPath=${workspaceFolder}"],
 			"env": {
 				"VSCODE_DEBUGGING_EXTENSION": "codestream",
-				"CODESTREAM_AGENT_BREAK_ON_START": "false"
+				"CODESTREAM_AGENT_BREAK_ON_START": "false",
+				"CODESTREAM_ENV": "${workspaceFolder}/../.env"
 			},
 			"cwd": "${workspaceFolder}",
 			"outFiles": ["${workspaceFolder}/dist/**/*.js"],
@@ -25,7 +26,8 @@
 			"args": ["--extensionDevelopmentPath=${workspaceFolder}"],
 			"env": {
 				"VSCODE_DEBUGGING_EXTENSION": "codestream",
-				"CODESTREAM_AGENT_BREAK_ON_START": "true"
+				"CODESTREAM_AGENT_BREAK_ON_START": "true",
+				"CODESTREAM_ENV": "${workspaceFolder}/../.env"
 			},
 			"cwd": "${workspaceFolder}",
 			"outFiles": ["${workspaceFolder}/dist/**/*.js"],
@@ -40,7 +42,8 @@
 			"runtimeExecutable": "${execPath}",
 			"args": ["--extensionDevelopmentPath=${workspaceFolder}"],
 			"env": {
-				"VSCODE_DEBUGGING_EXTENSION": "codestream"
+				"VSCODE_DEBUGGING_EXTENSION": "codestream",
+				"CODESTREAM_ENV": "${workspaceFolder}/../.env"
 			},
 			"cwd": "${workspaceFolder}",
 			"outFiles": ["${workspaceFolder}/dist/**/*.js"],
@@ -56,7 +59,8 @@
 			"runtimeExecutable": "${execPath}",
 			"args": ["--extensionDevelopmentPath=${workspaceFolder}"],
 			"env": {
-				"VSCODE_DEBUGGING_EXTENSION": "codestream"
+				"VSCODE_DEBUGGING_EXTENSION": "codestream",
+				"CODESTREAM_ENV": "${workspaceFolder}/../.env"
 			},
 			"cwd": "${workspaceFolder}",
 			"outFiles": ["${workspaceFolder}/dist/**/*.js"],

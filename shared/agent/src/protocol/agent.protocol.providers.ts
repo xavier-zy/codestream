@@ -841,6 +841,7 @@ export const ProviderTokenRequestType = new RequestType<ProviderTokenRequest, vo
 
 export interface WebviewErrorRequest {
 	error: { message: string; stack: string };
+	foo?: boolean;
 }
 
 export const WebviewErrorRequestType = new RequestType<WebviewErrorRequest, void, void, void>(

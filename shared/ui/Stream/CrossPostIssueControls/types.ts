@@ -79,7 +79,7 @@ export const PROVIDER_MAPPINGS: { [provider: string]: ProviderDisplay } = {
 		hasCustomFilters: true,
 		customFilterExample: "Example: is:open milestone:jan assignee:@me",
 		customFilterHelp:
-			'See <a href="https://docs.github.com/en/github/searching-for-information-on-github/searching-issues-and-pull-requests">Searching issues</a> for a detailed list of qualifiers.',
+			'See <a href="https://docs.github.com/en/github/searching-for-information-on-github/searching-issues-and-pull-requests">Searching issues</a> for a detailed list of qualifiers. ',
 		customPullRequestFilterHelpLink:
 			"https://docs.github.com/en/github/searching-for-information-on-github/searching-issues-and-pull-requests",
 		customPullRequestFilterExample:
@@ -99,7 +99,7 @@ export const PROVIDER_MAPPINGS: { [provider: string]: ProviderDisplay } = {
 		hasCustomFilters: true,
 		customFilterExample: "Example: is:open milestone:jan assignee:@me",
 		customFilterHelp:
-			'See <a href="https://docs.github.com/en/github/searching-for-information-on-github/searching-issues-and-pull-requests">Searching issues</a> for a detailed list of qualifiers.',
+			'See <a href="https://docs.github.com/en/github/searching-for-information-on-github/searching-issues-and-pull-requests">Searching issues</a> for a detailed list of qualifiers. ',
 		customPullRequestFilterExample:
 			"The variable @me can be used to specify the logged in user within a search. ",
 		customPullRequestFilterHelpLink:
@@ -115,9 +115,9 @@ export const PROVIDER_MAPPINGS: { [provider: string]: ProviderDisplay } = {
 		cardLabel: "issue",
 		hasCustomFilters: true,
 		customFilterExample:
-			"Example: <code>scope=created_by_me&labels=bug,duplicate&project_id=22</code> ",
+			"Example: <code>scope=assigned_to_me&project_id=22</code> ",
 		customFilterHelp:
-			'See <a href="https://docs.codestream.com/userguide/faq/custom-queries-gl">this article</a> for search syntax and the available parameters. By default, filters return all issues using <code>scope=all</code>. To overwrite this behavior, use the <code>scope=X</code> parameter. To search issues for a project, use parameter <code>project_id=X</code>. Use an <code>&</code> between parameters in the query.',
+			'See <a href="https://docs.codestream.com/userguide/faq/custom-queries-gl">this article</a> for search syntax and the available parameters. To search issues for a project, use parameter <code>project_id=X</code>. Use an <code>&</code> between parameters in the query. ',
 		customPullRequestFilterExample: 'Example: "state:opened scope:created_by_me" ',
 		customPullRequestFilterHelpLink: "https://docs.gitlab.com/ee/api/merge_requests.html",
 		supportsStartWork: true,
@@ -134,9 +134,9 @@ export const PROVIDER_MAPPINGS: { [provider: string]: ProviderDisplay } = {
 		cardLabel: "issue",
 		hasCustomFilters: true,
 		customFilterExample:
-			"Example: <code>scope=created_by_me&labels=bug,duplicate&project_id=22</code> ",
+			"Example: <code>scope=assigned_to_me&project_id=22</code> ",
 		customFilterHelp:
-			'See <a href="https://docs.codestream.com/userguide/faq/custom-queries-gl">this article</a> for search syntax and the available parameters. By default, filters return all issues using <code>scope=all</code>. To overwrite this behavior, use the <code>scope=X</code> parameter. To search issues for a project, use parameter <code>project_id=X</code>. Use an <code>&</code> between parameters in the query.',
+			'See <a href="https://docs.codestream.com/userguide/faq/custom-queries-gl">this article</a> for search syntax and the available parameters. To search issues for a project, use parameter <code>project_id=X</code>. Use an <code>&</code> between parameters in the query. ',
 		customPullRequestFilterExample: 'Example: "state:opened scope:created_by_me" ',
 		customPullRequestFilterHelpLink: "https://docs.gitlab.com/ee/api/merge_requests.html",
 		supportsStartWork: true,
@@ -153,7 +153,7 @@ export const PROVIDER_MAPPINGS: { [provider: string]: ProviderDisplay } = {
 		hasCustomFilters: true,
 		customFilterExample: "Example: assignee=currentuser() AND status!=Closed",
 		customFilterHelp:
-			'See <a href="https://confluence.atlassian.com/jirasoftwareserver/advanced-searching-939938733.html">Jira Advanced Searching</a> for documentation on JQL.',
+			'See <a href="https://confluence.atlassian.com/jirasoftwareserver/advanced-searching-939938733.html">Jira Advanced Searching</a> for documentation on JQL. ',
 		hasCardBasedWorkflow: true
 	},
 	jiraserver: {
@@ -167,7 +167,7 @@ export const PROVIDER_MAPPINGS: { [provider: string]: ProviderDisplay } = {
 		hasCustomFilters: true,
 		customFilterExample: "Example: assignee=currentuser() AND status!=Closed",
 		customFilterHelp:
-			'See <a href="https://confluence.atlassian.com/jirasoftwareserver/advanced-searching-939938733.html">Jira Advanced Searching</a> for documentation on JQL.',
+			'See <a href="https://confluence.atlassian.com/jirasoftwareserver/advanced-searching-939938733.html">Jira Advanced Searching</a> for documentation on JQL. ',
 		hasCardBasedWorkflow: true
 	},
 	trello: {

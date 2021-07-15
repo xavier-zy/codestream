@@ -301,20 +301,20 @@ export class GitLabProvider extends ThirdPartyIssueProviderBase<CSGitLabProvider
 
 		// Replace @me
 		if (
-			filter.hasOwnProperty("assignee_username") &&
+			filter?.hasOwnProperty("assignee_username") &&
 			filter["assignee_username"] === "@me" &&
 			currentUser
 		)
 			filter["assignee_username"] = currentUser.login;
 		if (
-			filter.hasOwnProperty("author_username") &&
+			filter?.hasOwnProperty("author_username") &&
 			filter["author_username"] === "@me" &&
 			currentUser
 		)
 			filter["author_username"] = currentUser.login;
-		if (filter.hasOwnProperty("assignee_id") && filter["assignee_id"] === "@me" && currentUser)
+		if (filter?.hasOwnProperty("assignee_id") && filter["assignee_id"] === "@me" && currentUser)
 			filter["assignee_id"] = currentUser.id;
-		if (filter.hasOwnProperty("author_id") && filter["author_id"] === "@me" && currentUser)
+		if (filter?.hasOwnProperty("author_id") && filter["author_id"] === "@me" && currentUser)
 			filter["author_id"] = currentUser.id;
 
 		if (

@@ -12,6 +12,7 @@ import { FilesManager } from "./managers/filesManager";
 import { IgnoreFilesManager } from "./managers/ignoreFilesManager";
 import { MarkerLocationManager } from "./managers/markerLocationManager";
 import { MarkersManager } from "./managers/markersManager";
+import { NRManager } from "./managers/NRManager";
 import { PostsManager } from "./managers/postsManager";
 import { RepositoryMappingManager } from "./managers/repositoryMappingManager";
 import { ReposManager } from "./managers/reposManager";
@@ -120,6 +121,11 @@ class SessionServiceContainer {
 		return this._reviews;
 	}
 
+	private readonly _nr: NRManager;
+	get nr() {
+		return this._nr;
+	}
+
 	constructor(public readonly session: CodeStreamSession) {
 		const cinstance = Container.instance();
 		this._git = new GitService(session, cinstance.repositoryLocator, cinstance.gitServiceLite);
@@ -140,6 +146,7 @@ class SessionServiceContainer {
 		this._ignoreFiles = new IgnoreFilesManager(session);
 		this._textFiles = new TextFilesManager(session);
 		this._reviews = new ReviewsManager(session);
+		this._nr = new NRManager(session);
 	}
 }
 

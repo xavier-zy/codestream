@@ -37,6 +37,8 @@ export * from "./agent.protocol.okta";
 export * from "./agent.protocol.clubhouse";
 export * from "./agent.protocol.linear";
 
+export * from "./agent.protocol.nr";
+
 export interface Document {
 	uri: string;
 	isDirty?: boolean;

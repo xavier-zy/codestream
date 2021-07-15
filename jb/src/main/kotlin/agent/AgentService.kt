@@ -29,6 +29,8 @@ import com.codestream.protocols.agent.Ide
 import com.codestream.protocols.agent.InitializationOptions
 import com.codestream.protocols.agent.Post
 import com.codestream.protocols.agent.PullRequestFile
+import com.codestream.protocols.agent.ResolveStackTraceLineParams
+import com.codestream.protocols.agent.ResolveStackTraceLineResult
 import com.codestream.protocols.agent.Review
 import com.codestream.protocols.agent.ReviewCoverageParams
 import com.codestream.protocols.agent.ReviewCoverageResult
@@ -461,6 +463,13 @@ class AgentService(private val project: Project) : Disposable {
     suspend fun followReview(params: FollowReviewParams): FollowReviewResult {
         val json = remoteEndpoint
             .request("codestream/review/follow", params)
+            .await() as JsonObject
+        return gson.fromJson(json)
+    }
+
+    suspend fun resolveStackTraceLine(params: ResolveStackTraceLineParams): ResolveStackTraceLineResult {
+        val json = remoteEndpoint
+            .request("codestream/nr/resolveStackTraceLine", params)
             .await() as JsonObject
         return gson.fromJson(json)
     }

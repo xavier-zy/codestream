@@ -403,3 +403,18 @@ class FollowReviewParams(
 )
 
 class FollowReviewResult()
+
+class ResolveStackTraceLineParams(
+    val rawLine: String,
+    val repoRemote: String,
+    val sha: String
+)
+
+class ResolveStackTraceLineResult(
+    val repoId: String?,
+    val fileRelativePath: String?,
+    val fileFullPath: String?,
+    val line: Int?,
+    val column: Int?,
+    val error: String?
+)

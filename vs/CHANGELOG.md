@@ -1,5 +1,16 @@
 # Change Log
 
+## [11.0.13] - 2021-7-15
+
+### Added
+
+- Adds the ability to [filter GitLab custom issue queries](https://guide.codestream.us/userguide/faq/custom-queries-gl/) by project and group
+
+### Fixed
+
+- Addresses [#596](https://github.com/TeamCodeStream/CodeStream/issues/596) &mdash; Error with renamed file in a PR review
+- Fixes an issue where commenting outside of the changeset, but very close to it, in a PR results in an error
+
 ## [11.0.12] - 2021-6-30
 
 ### Changed

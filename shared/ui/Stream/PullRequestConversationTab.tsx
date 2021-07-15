@@ -48,7 +48,7 @@ import {
 	PRCommentCardRow
 } from "./PullRequestComponents";
 import { PullRequestTimelineItems, GHOST } from "./PullRequestTimelineItems";
-import { DropdownButton } from "./Review/DropdownButton";
+import { DropdownButton } from "./DropdownButton";
 import { InlineMenu } from "../src/components/controls/InlineMenu";
 import { LoadingMessage } from "../src/components/LoadingMessage";
 import styled from "styled-components";

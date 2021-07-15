@@ -37,6 +37,7 @@ export enum ContextActionsType {
 	RepositionCodemark = "@context/RepositionCodemark",
 	SetCurrentReview = "@context/SetCurrentReview",
 	SetCurrentReviewOptions = "@context/SetCurrentReviewOptions",
+	SetCurrentCodeError = "@context/SetCurrentCodeError",
 	SetCurrentRepo = "@context/SetCurrentRepo",
 	SetCreatePullRequest = "@context/SetCreatePullRequest",
 	SetCurrentPullRequest = "@context/SetCurrentPullRequest",
@@ -93,7 +94,7 @@ export interface ContextState extends WebviewContext {
 
 	pullRequestCheckoutBranch: boolean;
 	newPullRequestOptions?: { branch: NewPullRequestBranch };
-	errorInboxOptions?: { stack?: string, customAttributes?: string };
+	errorInboxOptions?: { stack?: string; customAttributes?: string };
 }
 
 export type ChatProviderAccess = "strict" | "permissive";

@@ -147,11 +147,13 @@ export namespace Editor {
 		}
 
 		const editor = await findOrOpenEditor(uri, { preserveFocus: true }, lastActive);
+console.warn("editor?", !!editor);
 		if (editor === undefined) return false;
 
+console.warn("SETTING DECORATIONS:", range);
 		editor.setDecorations(highlightDecorationType, clear ? [] : [range]);
 		// Don't reveal on highlight right now -- webview probably needs a flag to control this
-		// editor.revealRange(range, TextEditorRevealType.Default);
+		editor.revealRange(range, TextEditorRevealType.Default);
 		return true;
 	}
 
@@ -196,7 +198,7 @@ export namespace Editor {
 		lastActive: TextEditor | undefined,
 		options: { atTop?: boolean } = {}
 	): Promise<void> {
-		const editor = findEditor(uri, lastActive);
+		const editor = await findOrOpenEditor(uri, lastActive);
 		if (editor === undefined) return;
 
 		const revealType = options.atTop

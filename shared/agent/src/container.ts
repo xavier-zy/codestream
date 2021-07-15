@@ -17,6 +17,7 @@ import { PostsManager } from "./managers/postsManager";
 import { RepositoryMappingManager } from "./managers/repositoryMappingManager";
 import { ReposManager } from "./managers/reposManager";
 import { ReviewsManager } from "./managers/reviewsManager";
+import { CodeErrorsManager } from "./managers/codeErrorsManager";
 import { ScmManager } from "./managers/scmManager";
 import { ServerManager } from "./managers/serverManager";
 import { StreamsManager } from "./managers/streamsManager";
@@ -121,6 +122,11 @@ class SessionServiceContainer {
 		return this._reviews;
 	}
 
+	private readonly _codeErrors: CodeErrorsManager;
+	get codeErrors() {
+		return this._codeErrors;
+	}
+
 	private readonly _nr: NRManager;
 	get nr() {
 		return this._nr;
@@ -146,6 +152,7 @@ class SessionServiceContainer {
 		this._ignoreFiles = new IgnoreFilesManager(session);
 		this._textFiles = new TextFilesManager(session);
 		this._reviews = new ReviewsManager(session);
+		this._codeErrors = new CodeErrorsManager(session);
 		this._nr = new NRManager(session);
 	}
 }

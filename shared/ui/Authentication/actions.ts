@@ -23,7 +23,8 @@ import {
 	goToSetPassword,
 	setCurrentCodemark,
 	setCurrentReview,
-	goToCompanyCreation
+	goToCompanyCreation,
+	setCurrentCodeError
 } from "../store/context/actions";
 import { fetchCodemarks } from "../Stream/actions";
 import { getCodemark } from "../store/codemarks/reducer";
@@ -245,6 +246,8 @@ export const onLogin = (response: LoginSuccessResponse, isFirstPageview?: boolea
 		}
 	} else if (response.state.reviewId) {
 		dispatch(setCurrentReview(response.state.reviewId));
+	} else if (response.state.codeErrorId) {
+		dispatch(setCurrentCodeError(response.state.codeErrorId));
 	}
 };
 

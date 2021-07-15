@@ -61,7 +61,7 @@ import { PullRequestBottomComment } from "../../PullRequestBottomComment";
 import { GetReposScmResponse } from "../../../protocols/agent/agent.protocol";
 import { PRHeadshotName } from "@codestream/webview/src/components/HeadshotName";
 import { PRHeadshot } from "@codestream/webview/src/components/Headshot";
-import { DropdownButton } from "../../Review/DropdownButton";
+import { DropdownButton } from "../../DropdownButton";
 import { ApproveBox } from "./ApproveBox";
 import { MergeBox } from "./MergeBox";
 import { ReactAndDisplayOptions } from "./ReactAndDisplayOptions";

@@ -16,6 +16,7 @@ import {
 	RouteActionType,
 	ShowCodemarkNotificationType,
 	ShowReviewNotificationType,
+	ShowCodeErrorNotificationType,
 	ShowStreamNotificationType,
 	WebviewDidInitializeNotificationType,
 	WebviewPanels,
@@ -47,6 +48,7 @@ import translations from "./translations/en";
 import { apiUpgradeRecommended, apiUpgradeRequired } from "./store/apiVersioning/actions";
 import { getCodemark } from "./store/codemarks/reducer";
 import { getReview } from "./store/reviews/reducer";
+import { getCodeError } from "./store/codeErrors/reducer";
 import { fetchCodemarks, openPanel } from "./Stream/actions";
 import { ContextState } from "./store/context/types";
 import { CodemarksState } from "./store/codemarks/types";
@@ -67,6 +69,7 @@ import {
 	setCurrentStream,
 	setCurrentCodemark,
 	setCurrentReview,
+	setCurrentCodeError,
 	setCurrentPullRequest,
 	setStartWorkCard,
 	closeAllPanels,
@@ -79,6 +82,7 @@ import { setMaintenanceMode } from "./store/session/actions";
 import { updateModifiedReposDebounced } from "./store/users/actions";
 import { logWarning } from "./logger";
 import { fetchReview } from "./store/reviews/actions";
+import { fetchCodeError } from "./store/codeErrors/actions";
 import { openPullRequestByUrl } from "./store/providerPullRequests/actions";
 import { updateCapabilities } from "./store/capabilities/actions";
 import { confirmPopup } from "./Stream/Confirm";
@@ -361,6 +365,16 @@ function listenForEvents(store) {
 		store.dispatch(setCurrentReview(e.reviewId, { openFirstDiff: e.openFirstDiff }));
 	});
 
+	api.on(ShowCodeErrorNotificationType, async e => {
+		const { codeErrors } = store.getState();
+		const codeError = getCodeError(codeErrors, e.codeErrorId);
+		if (!codeError) {
+			await store.dispatch(fetchCodeError(e.codeErrorId));
+		}
+		store.dispatch(clearCurrentPullRequest());
+		store.dispatch(setCurrentCodeError(e.codeErrorId));
+	});
+
 	api.on(ShowPullRequestNotificationType, async e => {
 		store.dispatch(setCurrentReview());
 		if (e.url) {
@@ -426,11 +440,34 @@ function listenForEvents(store) {
 				}
 				break;
 			}
+			case RouteControllerType.CodeError: {
+				if (route.action) {
+					switch (route.action) {
+						case "open": {
+							if (route.id) {
+								if (confirmSwitchToTeam(store, route.query, "code error", route.id)) return;
+
+								const { codeErrors } = store.getState();
+								const codeError = getCodeError(codeErrors, route.id);
+								store.dispatch(closeAllPanels());
+								if (!codeError) {
+									await store.dispatch(fetchCodeError(route.id));
+								}
+								store.dispatch(setCurrentCodeError(route.id));
+							}
+							break;
+						}
+					}
+				}
+				break;
+			}
 			case RouteControllerType.ErrorInbox: {
 				switch (route.action) {
 					case "open": {
 						store.dispatch(closeAllPanels());
-						store.dispatch(setCurrentErrorInboxOptions(route.query.stack, route.query.customAttributes));
+						store.dispatch(
+							setCurrentErrorInboxOptions(route.query.stack, route.query.customAttributes)
+						);
 						store.dispatch(openPanel(WebviewPanels.ErrorInbox));
 						break;
 					}
@@ -596,7 +633,11 @@ const confirmSwitchToTeam = function(
 	if (teamId && teamId !== currentTeamId) {
 		if (currentUser?.teamIds.includes(teamId)) {
 			const switchInfo =
-				type === "feedback request" ? { reviewId: itemId } : { codemarkId: itemId };
+				type === "feedback request"
+					? { reviewId: itemId }
+					: type === "code error"
+					? { codeErrorId: itemId }
+					: { codemarkId: itemId };
 			confirmPopup({
 				title: "Switch organizations?",
 				message: (

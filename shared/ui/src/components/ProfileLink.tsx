@@ -3,7 +3,11 @@ import { connect } from "react-redux";
 import { openModal, setProfileUser } from "../../store/context/actions";
 import { WebviewModals } from "@codestream/protocols/webview";
 import styled from "styled-components";
-import { setCurrentCodemark, setCurrentReview } from "../../store/context/actions";
+import {
+	setCurrentCodemark,
+	setCurrentReview,
+	setCurrentCodeError
+} from "../../store/context/actions";
 
 interface Props {
 	id: string;
@@ -13,6 +17,7 @@ interface Props {
 	setProfileUser?: Function;
 	setCurrentCodemark?: Function;
 	setCurrentReview?: Function;
+	setCurrentCodeError?: Function;
 }
 
 const ProfileLink = styled((props: Props) => {
@@ -21,6 +26,7 @@ const ProfileLink = styled((props: Props) => {
 		props.setProfileUser && props.setProfileUser(props.id);
 		props.setCurrentCodemark && props.setCurrentCodemark();
 		props.setCurrentReview && props.setCurrentReview();
+		props.setCurrentCodeError && props.setCurrentCodeError();
 	};
 	if (!props.id) return <>props.children</>;
 	return <span {...{ onClickCapture: onClick, className: props.className }}>{props.children}</span>;
@@ -33,7 +39,8 @@ const Component = connect(mapStateToProps, {
 	openModal,
 	setProfileUser,
 	setCurrentCodemark,
-	setCurrentReview
+	setCurrentReview,
+	setCurrentCodeError
 })(ProfileLink);
 
 export { Component as ProfileLink };

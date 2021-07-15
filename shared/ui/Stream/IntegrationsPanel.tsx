@@ -18,7 +18,7 @@ import {
 } from "./actions";
 import Icon from "./Icon";
 import { Button } from "../src/components/Button";
-import { DropdownButton } from "./Review/DropdownButton";
+import { DropdownButton } from "./DropdownButton";
 import { PrePRProviderInfoModal } from "./PrePRProviderInfoModal";
 import { Dialog } from "../src/components/Dialog";
 

@@ -275,3 +275,8 @@ export const closeDiff = () => async dispatch => {
 	// if (response.success)
 	// return dispatch()
 };
+
+export interface NewCodeErrorAttributes {
+	title: string;
+	stackTrace: string;
+}

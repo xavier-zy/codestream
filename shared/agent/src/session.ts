@@ -576,6 +576,12 @@ export class CodeStreamSession {
 					data: e.data
 				});
 				break;
+			case MessageType.CodeErrors:
+				this.agent.sendNotification(DidChangeDataNotificationType, {
+					type: ChangeDataType.CodeErrors,
+					data: e.data
+				});
+				break;
 			case MessageType.Streams:
 				this._onDidChangeStreams.fire(e.data);
 				this.agent.sendNotification(DidChangeDataNotificationType, {
@@ -1013,7 +1019,8 @@ export class CodeStreamSession {
 				teamId: this._teamId!,
 				userId: response.user.id,
 				codemarkId: options.codemarkId,
-				reviewId: options.reviewId
+				reviewId: options.reviewId,
+				codeErrorId: options.codeErrorId
 			}
 		};
 

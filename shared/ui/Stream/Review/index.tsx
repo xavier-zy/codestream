@@ -76,7 +76,7 @@ import {
 	markItemRead
 } from "../actions";
 import { getThreadPosts } from "@codestream/webview/store/posts/reducer";
-import { DropdownButton } from "./DropdownButton";
+import { DropdownButton } from "../DropdownButton";
 import Tag from "../Tag";
 import { RepliesToPost } from "../Posts/RepliesToPost";
 import { ChangesetFileList } from "./ChangesetFileList";

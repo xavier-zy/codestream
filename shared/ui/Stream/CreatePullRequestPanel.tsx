@@ -9,7 +9,7 @@ import { logError } from "../logger";
 import { FormattedMessage } from "react-intl";
 import cx from "classnames";
 import { Link } from "./Link";
-import { DropdownButton } from "./Review/DropdownButton";
+import { DropdownButton } from "./DropdownButton";
 import { LoadingMessage } from "../src/components/LoadingMessage";
 import {
 	CreatePullRequestRequestType,

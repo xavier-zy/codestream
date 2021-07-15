@@ -8,9 +8,11 @@ import {
 } from "./agent.protocol.codemarks";
 import { ThirdPartyProviderUser } from "./agent.protocol.providers";
 import { CreateReviewRequest, ReviewPlus } from "./agent.protocol.reviews";
+import { CreateCodeErrorRequest, CodeErrorPlus } from "./agent.protocol.codeErrors";
 import {
 	CodemarkType,
 	CSCodemark,
+	CSCodeError,
 	CSMarker,
 	CSMarkerLocations,
 	CSPost,
@@ -24,6 +26,7 @@ import { Attachment, ShareTarget } from "./api.protocol.models";
 export interface PostPlus extends CSPost {
 	codemark?: CodemarkPlus;
 	review?: CSReview;
+	codeError?: CSCodeError;
 	hasMarkers?: boolean;
 }
 
@@ -49,6 +52,8 @@ export interface CreateSharedExternalPostRequest {
 	codemark?: CodemarkPlus;
 	// ...or a review
 	review?: ReviewPlus;
+	// ...or a "code error"
+	codeError?: CodeErrorPlus;
 	crossPostIssueValues?: CrossPostIssueValues;
 }
 
@@ -66,6 +71,7 @@ export interface CreatePostRequest {
 	parentPostId?: string;
 	codemark?: CreateCodemarkRequest;
 	review?: CreateReviewRequest;
+	codeError?: CreateCodeErrorRequest;
 	entryPoint?: string;
 	crossPostIssueValues?: CrossPostIssueValues;
 	dontSendEmail?: boolean;
@@ -100,6 +106,7 @@ export interface CreatePostResponse {
 	post: PostPlus;
 	review?: ReviewPlus;
 	codemark?: CodemarkPlus;
+	codeError?: CodeErrorPlus;
 	markers?: CSMarker[];
 	markerLocations?: CSMarkerLocations[];
 	streams?: CSStream[];
@@ -179,6 +186,7 @@ export interface FetchPostsResponse {
 	codemarks?: CodemarkPlus[];
 	markers?: CSMarker[];
 	reviews?: CSReview[];
+	codeErrors?: CSCodeError[];
 	more?: boolean;
 }
 export const FetchPostsRequestType = new RequestType<
@@ -197,6 +205,7 @@ export interface FetchActivityResponse {
 	posts: PostPlus[];
 	codemarks: CodemarkPlus[];
 	reviews: CSReview[];
+	codeErrors: CSCodeError[];
 	records: string[];
 	more?: boolean;
 }

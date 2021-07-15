@@ -6,6 +6,7 @@ import { CodemarkPlus } from "./agent.protocol.codemarks";
 import { ThirdPartyProviders } from "./agent.protocol.providers";
 import {
 	CSApiCapabilities,
+	CSCodeError,
 	CSCompany,
 	CSLastReadItems,
 	CSLastReads,
@@ -53,6 +54,7 @@ export const DidChangeConnectionStatusNotificationType = new NotificationType<
 
 export enum ChangeDataType {
 	Codemarks = "codemarks",
+	CodeErrors = "codeErrors",
 	Commits = "commits",
 	Companies = "companies",
 	Documents = "documents",
@@ -120,6 +122,11 @@ export interface RepositoriesChangedNotification {
 export interface ReviewsChangedNotification {
 	type: ChangeDataType.Reviews;
 	data: CSReview[];
+}
+
+export interface CodeErrorsChangedNotification {
+	type: ChangeDataType.CodeErrors;
+	data: CSCodeError[];
 }
 
 export interface StreamsChangedNotification {
@@ -208,6 +215,7 @@ export type DidChangeDataNotification =
 	| PullRequestsChangedNotification
 	| RepositoriesChangedNotification
 	| ReviewsChangedNotification
+	| CodeErrorsChangedNotification
 	| StreamsChangedNotification
 	| TeamsChangedNotification
 	| UnreadsChangedNotification

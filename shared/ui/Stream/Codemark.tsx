@@ -75,7 +75,7 @@ import { Link } from "./Link";
 import { getDocumentFromMarker } from "./api-functions";
 import { SharingModal } from "./SharingModal";
 import { getReview } from "../store/reviews/reducer";
-import { DropdownButton } from "./Review/DropdownButton";
+import { DropdownButton } from "./DropdownButton";
 import { isFeatureEnabled } from "../store/apiVersioning/reducer";
 import { HeadshotName } from "../src/components/HeadshotName";
 import { PRCodeCommentPatch } from "./PullRequestComponents";

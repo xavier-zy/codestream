@@ -42,6 +42,7 @@ export function GlobalNav() {
 			collisions: getCodeCollisions(state),
 			composeCodemarkActive: state.context.composeCodemarkActive,
 			currentReviewId: state.context.currentReviewId,
+			currentCodeErrorId: state.context.currentCodeErrorId,
 			currentCodemarkId: state.context.currentCodemarkId,
 			currentPullRequestId: state.context.currentPullRequest
 				? state.context.currentPullRequest.id
@@ -60,6 +61,7 @@ export function GlobalNav() {
 		collisions,
 		currentCodemarkId,
 		currentReviewId,
+		currentCodeErrorId,
 		currentPullRequestId
 	} = derivedState;
 
@@ -371,6 +373,7 @@ export function GlobalNav() {
 		collisions.nav,
 		derivedState.composeCodemarkActive,
 		currentReviewId,
+		currentCodeErrorId,
 		currentPullRequestId,
 		currentCodemarkId,
 		plusMenuOpen,

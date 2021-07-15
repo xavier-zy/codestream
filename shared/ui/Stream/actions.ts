@@ -50,6 +50,11 @@ import {
 } from "../store/codemarks/actions";
 import { createReview, NewReviewAttributes, updateReviews } from "../store/reviews/actions";
 import {
+	createCodeError,
+	NewCodeErrorAttributes,
+	updateCodeErrors
+} from "../store/codeErrors/actions";
+import {
 	closePanel,
 	openPanel,
 	openModal,
@@ -277,6 +282,18 @@ export const createPostAndReview = (
 				getTeamMembers(getState()),
 				attributes.text || ""
 			).concat(attributes.reviewers)
+		})
+	);
+};
+
+export const createPostAndCodeError = (
+	attributes: NewCodeErrorAttributes,
+	entryPoint?: PostEntryPoint
+) => async (dispatch, getState: () => CodeStreamState) => {
+	return dispatch(
+		createCodeError({
+			...attributes,
+			entryPoint: entryPoint
 		})
 	);
 };

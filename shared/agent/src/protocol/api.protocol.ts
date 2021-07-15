@@ -1,6 +1,5 @@
 "use strict";
 import { CodeStreamEnvironmentInfo } from "./agent.protocol";
-import { CreateReviewChangesetsRequest } from "./agent.protocol.reviews";
 import { RepoScmStatus } from "./agent.protocol.scm";
 import {
 	Attachment,
@@ -10,6 +9,8 @@ import {
 	CSApiFeatures,
 	CSChannelStream,
 	CSCodemark,
+	CSCodeError,
+	CSCodeErrorStatus,
 	CSCompany,
 	CSDirectStream,
 	CSFileStream,
@@ -24,6 +25,7 @@ import {
 	CSReviewChangeset,
 	CSReviewDiffs,
 	CSReviewStatus,
+	CSStackTraceInfo,
 	CSStream,
 	CSTag,
 	CSTeam,
@@ -194,6 +196,7 @@ export interface CSCreatePostResponse {
 	streams?: CSStream[];
 	repos?: CSRepository[];
 	reviews?: CSReview[];
+	codeErrors?: CSCodeError[];
 }
 
 export interface CSCreateRepoRequest {
@@ -354,6 +357,7 @@ export interface CSGetMarkersResponse {
 	markerLocations: CSMarkerLocation[];
 	codemarks: CSCodemark[];
 	reviews: CSReview[];
+	codeErrors: CSCodeError[];
 }
 
 export interface CSGetPostResponse {
@@ -364,6 +368,7 @@ export interface CSGetPostsResponse {
 	posts: CSPost[];
 	codemarks?: CSCodemark[];
 	reviews?: CSReview[];
+	codeErrors?: CSCodeError[];
 	markers?: CSMarker[];
 	more?: boolean;
 }
@@ -586,15 +591,6 @@ export interface CSCreateReviewRequest {
 	// threadUrl?: string;
 }
 
-export interface CSCreateReviewResponse {
-	review: CSReview;
-	reviewChangesets: CSReviewChangeset[];
-	streams?: CSStream[];
-	repos?: CSRepository[];
-}
-
-export interface CSCreateChangeSetRequest {}
-
 export interface CSGetReviewRequest {
 	id: string;
 }
@@ -613,6 +609,58 @@ export interface CSGetReviewsRequest {
 
 export interface CSGetReviewsResponse {
 	reviews: CSReview[];
+	posts?: CSPost[];
+	markers?: CSMarker[];
+}
+
+export interface CSCreateCodeErrorResponse {
+	codeError: CSCodeError;
+	streams?: CSStream[];
+	repos?: CSRepository[];
+}
+
+export interface CSCreateCodeErrorRequest {
+	teamId: string;
+	stackTrace: string;
+	stackInfo?: CSStackTraceInfo;
+	streamId?: string;
+	postId?: string;
+	parentPostId?: string;
+	status?: string;
+	assignees?: string[];
+	followerIds?: string[];
+	codeAuthorIds?: string[];
+
+	markers?: CSCreateMarkerRequest[];
+	remotes?: string[];
+}
+
+export interface CSCreateCodeErrorResponse {
+	codeError: CSCodeError;
+	streams?: CSStream[];
+	repos?: CSRepository[];
+}
+
+export interface CSCreateChangeSetRequest {}
+
+export interface CSGetCodeErrorRequest {
+	id: string;
+}
+
+export interface CSGetCodeErrorResponse {
+	codeError: CSCodeError;
+	post: CSPost;
+	markers?: CSMarker[];
+}
+
+export interface CSGetCodeErrorsRequest {
+	teamId: string;
+	streamId?: string;
+	ids?: string[];
+}
+
+export interface CSGetCodeErrorsResponse {
+	codeErrors: CSCodeError[];
 	posts?: CSPost[];
 	markers?: CSMarker[];
 }
@@ -670,10 +718,25 @@ export interface CSUpdateReviewResponse {
 	review: CSReview;
 }
 
+export interface CSUpdateCodeErrorRequest {
+	// edit the status, title or text
+	status?: CSCodeErrorStatus;
+	stackTrace?: string;
+}
+
+export interface CSUpdateCodeErrorResponse {
+	codeError: CSCodeError;
+}
+
 export interface CSDeleteReviewRequest {
 	id: string;
 }
 export interface CSDeleteReviewResponse {}
+
+export interface CSDeleteCodeErrorRequest {
+	id: string;
+}
+export interface CSDeleteCodeErrorResponse {}
 
 export interface CSUpdateMarkerRequest {
 	commitHashWhenCreated?: string;

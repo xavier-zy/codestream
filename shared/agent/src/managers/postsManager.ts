@@ -20,6 +20,7 @@ import {
 	CodemarkPlus,
 	CodeStreamDiffUriData,
 	CreateCodemarkRequest,
+	CreateCodeErrorRequest,
 	CreatePassthroughCodemarkResponse,
 	CreatePostRequest,
 	CreatePostRequestType,
@@ -30,6 +31,9 @@ import {
 	CreateShareableCodemarkRequest,
 	CreateShareableCodemarkRequestType,
 	CreateShareableCodemarkResponse,
+	CreateShareableCodeErrorRequest,
+	CreateShareableCodeErrorRequestType,
+	CreateShareableCodeErrorResponse,
 	CreateShareableReviewRequest,
 	CreateShareableReviewRequestType,
 	CreateShareableReviewResponse,
@@ -73,6 +77,7 @@ import {
 import {
 	CodemarkType,
 	CSChannelStream,
+	CSCodeError,
 	CSCreateCodemarkResponse,
 	CSDirectStream,
 	CSMarker,
@@ -82,6 +87,7 @@ import {
 	CSStream,
 	CSTransformedReviewChangeset,
 	FileStatus,
+	isCSCodeError,
 	isCSReview,
 	ProviderType,
 	StreamType
@@ -547,11 +553,26 @@ function trackPostCreation(
 										"Parent Type": "Review.Codemark"
 									};
 									telemetry.track({ eventName: "Reply Created", properties: postProperties });
+								}
+								if (parentPost.codemarkId && grandParentPost && grandParentPost.codeErrorId) {
+									// reply to a codemark in a code error
+									const postProperties = {
+										"Parent ID": parentPost.codemarkId,
+										"Parent Type": "CodeError.Codemark"
+									};
+									telemetry.track({ eventName: "Reply Created", properties: postProperties });
 								} else if (grandParentPost && grandParentPost.reviewId) {
 									// reply to a reply in a review
 									const postProperties = {
 										"Parent ID": grandParentPost.reviewId,
 										"Parent Type": "Review.Reply"
+									};
+									telemetry.track({ eventName: "Reply Created", properties: postProperties });
+								} else if (grandParentPost && grandParentPost.codeErrorId) {
+									// reply to a reply in a code error
+									const postProperties = {
+										"Parent ID": grandParentPost.codeErrorId,
+										"Parent Type": "CodeError.Reply"
 									};
 									telemetry.track({ eventName: "Reply Created", properties: postProperties });
 								}
@@ -560,6 +581,13 @@ function trackPostCreation(
 								const postProperties = {
 									"Parent ID": parentPost.reviewId,
 									"Parent Type": "Review"
+								};
+								telemetry.track({ eventName: "Reply Created", properties: postProperties });
+							} else if (parentPost.codeErrorId) {
+								// reply to a code error
+								const postProperties = {
+									"Parent ID": parentPost.codeErrorId,
+									"Parent Type": "CodeError"
 								};
 								telemetry.track({ eventName: "Reply Created", properties: postProperties });
 							} else if (parentPost.codemarkId) {
@@ -625,7 +653,35 @@ export function trackReviewPostCreation(
 	});
 }
 
-function getGitError(textDocument?: TextDocumentIdentifier) {
+export function trackCodeErrorPostCreation(
+	codeError: CSCodeError,
+	entryPoint?: string,
+	addedUsers?: string[]
+) {
+	process.nextTick(() => {
+		try {
+			const telemetry = Container.instance().telemetry;
+			const codeErrorProperties: {
+				[key: string]: any;
+			} = {
+				"Code Error ID": codeError.id,
+				"Entry Point": entryPoint,
+				Assignees: codeError.assignees.length,
+				// rounds to 4 places
+				"Invitee Assignees": addedUsers ? addedUsers.length : 0
+			};
+
+			telemetry.track({
+				eventName: "Code Error Created",
+				properties: codeErrorProperties
+			});
+		} catch (ex) {
+			Logger.error(ex);
+		}
+	});
+}
+
+function getGitError(textDocument?: TextDocumentIdentifier): Promise<string | void> {
 	return new Promise(resolve => {
 		if (textDocument) {
 			fs.access(URI.parse(textDocument.uri).fsPath, async error => {
@@ -744,7 +800,8 @@ export class PostsManager extends EntityManagerBase<CSPost> {
 			codemarks: codemarksManager,
 			markers: markersManager,
 			posts: postsManager,
-			reviews: reviewsManager
+			reviews: reviewsManager,
+			codeErrors: codeErrorsManager
 		} = SessionContainer.instance();
 
 		const markers = response.markers ?? [];
@@ -762,19 +819,23 @@ export class PostsManager extends EntityManagerBase<CSPost> {
 
 		const codemarks: CodemarkPlus[] = [];
 		const reviews: CSReview[] = [];
+		const codeErrors: CSCodeError[] = [];
 
 		const markersByCodemark = groupBy(markers, "codemarkId");
 
 		let records = await Arrays.filterMapAsync(
-			[...(response.codemarks ?? []), ...(response.reviews ?? [])],
+			[...(response.codemarks ?? []), ...(response.reviews ?? []), ...(response.codeErrors ?? [])],
 			async object => {
 				if (object.deactivated) return;
 
-				if (isCSReview(object)) {
+				if (isCSCodeError(object)) {
+					codeErrorsManager.cacheSet(object);
+					codeErrors.push(object);
+				} else if (isCSReview(object)) {
 					reviewsManager.cacheSet(object);
 					reviews.push(object);
 				} else {
-					if (object.reviewId != null) return;
+					if (object.reviewId != null || object.codeErrorId != null) return;
 					codemarksManager.cacheSet(object);
 					codemarks.push({
 						...object,
@@ -812,15 +873,18 @@ export class PostsManager extends EntityManagerBase<CSPost> {
 		return {
 			codemarks,
 			reviews,
+			codeErrors,
 			posts: await this.enrichPosts(posts),
 			records: this.createRecords(records),
 			more: response.more
 		};
 	}
 
-	private createRecords(records: (CSReview | CodemarkPlus)[]): string[] {
+	private createRecords(records: (CSCodeError | CSReview | CodemarkPlus)[]): string[] {
 		return records.map(r => {
-			if (isCSReview(r)) {
+			if (isCSCodeError(r)) {
+				return `codeError|${r.id}`;
+			} else if (isCSReview(r)) {
 				return `review|${r.id}`;
 			}
 
@@ -831,6 +895,7 @@ export class PostsManager extends EntityManagerBase<CSPost> {
 	private async enrichPost(post: CSPost): Promise<PostPlus> {
 		let codemark;
 		let review;
+		let codeError;
 		let hasMarkers = false;
 		if (post.codemarkId) {
 			try {
@@ -847,8 +912,13 @@ export class PostsManager extends EntityManagerBase<CSPost> {
 				review = await SessionContainer.instance().reviews.getById(post.reviewId);
 			} catch (error) {}
 		}
+		if (post.codeErrorId) {
+			try {
+				codeError = await SessionContainer.instance().codeErrors.getById(post.codeErrorId);
+			} catch (error) {}
+		}
 
-		return { ...post, codemark: codemark, hasMarkers: hasMarkers, review };
+		return { ...post, codemark: codemark, hasMarkers: hasMarkers, review, codeError };
 	}
 
 	async enrichPosts(posts: CSPost[]): Promise<PostPlus[]> {
@@ -1327,6 +1397,51 @@ export class PostsManager extends EntityManagerBase<CSPost> {
 		};
 	}
 
+	// this is what the webview will call to create codeErrors in the sharing model
+	@lspHandler(CreateShareableCodeErrorRequestType)
+	@log()
+	async createSharingCodeErrorPost(
+		request: CreateShareableCodeErrorRequest
+	): Promise<CreateShareableCodeErrorResponse> {
+		const codeErrorRequest: CreateCodeErrorRequest = {
+			...request.attributes,
+			markers: []
+		};
+
+		let codeError: CSCodeError | undefined;
+		let stream = await SessionContainer.instance().streams.getTeamStream();
+
+		const response = await this.session.api.createPost({
+			codeError: codeErrorRequest,
+			text: "",
+			streamId: stream.id,
+			dontSendEmail: false,
+			mentionedUserIds: request.mentionedUserIds,
+			addedUsers: request.addedUsers
+		});
+
+		codeError = response.codeError!;
+
+		trackCodeErrorPostCreation(codeError, request.entryPoint, request.addedUsers);
+		await resolveCreatePostResponse(response!);
+
+		let replyPostResponse: CreatePostResponse | undefined = undefined;
+		if (request.replyPost) {
+			replyPostResponse = await this.session.api.createPost({
+				streamId: stream.id,
+				text: request.replyPost.text,
+				parentPostId: response.post.id
+			});
+		}
+
+		return {
+			stream,
+			post: await this.enrichPost(response!.post),
+			codeError,
+			replyPost: replyPostResponse?.post
+		};
+	}
+
 	async buildChangeset(
 		repoChange: CSRepoChange,
 		amendingReviewId?: string
@@ -1711,6 +1826,7 @@ export class PostsManager extends EntityManagerBase<CSPost> {
 		if (this.session.api.providerType !== ProviderType.CodeStream) {
 			response = await this.session.api.createExternalPost({
 				...request,
+				text: request.text || "",
 				remotes: request.codemark && request.codemark.remotes,
 				codemarkResponse: codemarkResponse
 			});

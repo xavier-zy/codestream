@@ -22,6 +22,7 @@ const messageToType: {
 		| MessageType.Posts
 		| MessageType.Repositories
 		| MessageType.Reviews
+		| MessageType.CodeErrors
 		| MessageType.Streams
 		| MessageType.Teams
 		| MessageType.Users
@@ -30,6 +31,8 @@ const messageToType: {
 } = {
 	codemark: MessageType.Codemarks,
 	codemarks: MessageType.Codemarks,
+	codeError: MessageType.CodeErrors,
+	codeErrors: MessageType.CodeErrors,
 	company: MessageType.Companies,
 	companies: MessageType.Companies,
 	marker: MessageType.Markers,

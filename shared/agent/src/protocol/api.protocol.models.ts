@@ -27,6 +27,7 @@ export enum CodemarkType {
 	Trap = "trap",
 	Link = "link",
 	Review = "review",
+	CodeError = "codeError",
 	Reaction = "reaction",
 	PRComment = "prcomment"
 }
@@ -91,6 +92,9 @@ export interface CSCodemark extends CSEntity {
 
 	// review this codemark is in reply to
 	reviewId?: string;
+
+	// code error this codemark is in reply to
+	codeErrorId?: string;
 }
 
 export interface CSMarkerIdentifier {
@@ -273,6 +277,54 @@ export interface CSReview extends CSEntity {
 	pullRequestProviderId?: string;
 }
 
+export function isCSCodeError(object: any): object is CSCodeError {
+	const maybeCodeError: Partial<CSCodeError> = object;
+	return maybeCodeError.assignees != null && maybeCodeError.stackTrace != null;
+}
+
+export interface CSCodeErrorResolutions {
+	[userId: string]: { resolvedAt: number };
+}
+
+export type CSCodeErrorStatus = "resolved" | "open";
+
+export interface CSStackTraceLine {
+	fileRelativePath?: string;
+	fileFullPath?: string;
+	line?: number;
+	column?: number;
+	error?: string;
+}
+
+export interface CSStackTraceInfo {
+	repoId?: string;
+	sha?: string;
+	lines: CSStackTraceLine[];
+	error?: string;
+}
+
+export interface CSCodeError extends CSEntity {
+	title: string;
+	stackTrace: string;
+	stackInfo?: CSStackTraceInfo;
+	assignees: string[];
+
+	// an array of people who have resolved the code error
+	resolvedBy?: CSCodeErrorResolutions;
+
+	teamId: string;
+	streamId: string;
+	postId: string;
+	fileStreamIds: string[];
+	status: CSCodeErrorStatus;
+	numReplies: number;
+	lastActivityAt: number;
+	followerIds?: string[];
+	codeAuthorIds?: string[];
+	permalink?: string;
+	resolvedAt?: number;
+}
+
 export interface Attachment {
 	mimetype: string;
 	name: string;
@@ -298,6 +350,7 @@ export interface CSPost extends CSEntity {
 	reviewId?: string;
 	files?: Attachment[];
 	sharedTo?: ShareTarget[];
+	codeErrorId?: string;
 }
 
 export interface CSRemote {
@@ -574,6 +627,7 @@ export interface CSUser extends CSEntity {
 	timeZone: string;
 	totalPosts: number;
 	totalReviews: number;
+	totalCodeErrors: number;
 	numUsersInvited: number;
 	username: string;
 	providerIdentities?: string[];

@@ -31,6 +31,8 @@ import {
 	CreateRepoResponse,
 	DeleteCodemarkRequest,
 	DeleteCodemarkResponse,
+	DeleteCodeErrorRequest,
+	DeleteCodeErrorResponse,
 	DeleteMarkerRequest,
 	DeleteMarkerResponse,
 	DeletePostRequest,
@@ -43,6 +45,8 @@ import {
 	EditPostResponse,
 	FetchCodemarksRequest,
 	FetchCodemarksResponse,
+	FetchCodeErrorsRequest,
+	FetchCodeErrorsResponse,
 	FetchCompaniesRequest,
 	FetchCompaniesResponse,
 	FetchFileStreamsRequest,
@@ -73,10 +77,14 @@ import {
 	FetchUsersResponse,
 	FollowCodemarkRequest,
 	FollowCodemarkResponse,
+	FollowCodeErrorRequest,
+	FollowCodeErrorResponse,
 	FollowReviewRequest,
 	FollowReviewResponse,
 	GetCodemarkRequest,
 	GetCodemarkResponse,
+	GetCodeErrorRequest,
+	GetCodeErrorResponse,
 	GetCompanyRequest,
 	GetCompanyResponse,
 	GetMarkerRequest,
@@ -140,6 +148,8 @@ import {
 	Unreads,
 	UpdateCodemarkRequest,
 	UpdateCodemarkResponse,
+	UpdateCodeErrorRequest,
+	UpdateCodeErrorResponse,
 	UpdateInvisibleRequest,
 	UpdateInvisibleResponse,
 	UpdateMarkerRequest,
@@ -165,6 +175,7 @@ import {
 	CSApiFeatures,
 	CSChannelStream,
 	CSCodemark,
+	CSCodeError,
 	CSCompany,
 	CSDirectStream,
 	CSLoginResponse,
@@ -191,6 +202,7 @@ interface BasicLoginOptions {
 	teamId?: string;
 	codemarkId?: string;
 	reviewId?: string;
+	codeErrorId?: string;
 }
 
 export interface CredentialsLoginOptions extends BasicLoginOptions {
@@ -222,6 +234,7 @@ export enum MessageType {
 	Preferences = "preferences",
 	Repositories = "repos",
 	Reviews = "reviews",
+	CodeErrors = "codeErrors",
 	Streams = "streams",
 	Teams = "teams",
 	Unreads = "unreads",
@@ -274,6 +287,11 @@ export interface ReviewsRTMessage {
 	data: CSReview[];
 }
 
+export interface CodeErrorsRTMessage {
+	type: MessageType.CodeErrors;
+	data: CSCodeError[];
+}
+
 export interface StreamsRTMessage {
 	type: MessageType.Streams;
 	data: (CSChannelStream | CSDirectStream)[];
@@ -313,6 +331,7 @@ export type RTMessage =
 	| PreferencesRTMessage
 	| RepositoriesRTMessage
 	| ReviewsRTMessage
+	| CodeErrorsRTMessage
 	| StreamsRTMessage
 	| TeamsRTMessage
 	| UnreadsRTMessage
@@ -363,6 +382,7 @@ export interface ApiProvider {
 	updateCodemark(request: UpdateCodemarkRequest): Promise<UpdateCodemarkResponse>;
 	followCodemark(request: FollowCodemarkRequest): Promise<FollowCodemarkResponse>;
 	followReview(request: FollowReviewRequest): Promise<FollowReviewResponse>;
+	followCodeError(request: FollowCodeErrorRequest): Promise<FollowCodeErrorResponse>;
 
 	createCodemarkPermalink(
 		request: CreateCodemarkPermalinkRequest
@@ -420,6 +440,11 @@ export interface ApiProvider {
 	fetchReviewCheckpointDiffs(
 		request: FetchReviewCheckpointDiffsRequest
 	): Promise<FetchReviewCheckpointDiffsResponse>;
+
+	fetchCodeErrors(request: FetchCodeErrorsRequest): Promise<FetchCodeErrorsResponse>;
+	getCodeError(request: GetCodeErrorRequest): Promise<GetCodeErrorResponse>;
+	updateCodeError(request: UpdateCodeErrorRequest): Promise<UpdateCodeErrorResponse>;
+	deleteCodeError(request: DeleteCodeErrorRequest): Promise<DeleteCodeErrorResponse>;
 
 	createChannelStream(request: CreateChannelStreamRequest): Promise<CreateChannelStreamResponse>;
 	createDirectStream(request: CreateDirectStreamRequest): Promise<CreateDirectStreamResponse>;

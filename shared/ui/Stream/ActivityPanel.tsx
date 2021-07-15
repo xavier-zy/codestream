@@ -8,7 +8,12 @@ import * as userSelectors from "../store/users/reducer";
 import styled from "styled-components";
 import { includes as _includes, sortBy as _sortBy, last as _last } from "lodash-es";
 import { CodeStreamState } from "../store";
-import { setCurrentCodemark, setCurrentReview, closeAllPanels } from "../store/context/actions";
+import {
+	setCurrentCodemark,
+	setCurrentReview,
+	setCurrentCodeError,
+	closeAllPanels
+} from "../store/context/actions";
 import { getActivity } from "../store/activityFeed/reducer";
 import { useDidMount, useIntersectionObserver, usePrevious } from "../utilities/hooks";
 import { HostApi } from "../webview-api";
@@ -28,7 +33,13 @@ import { addOlderActivity } from "../store/activityFeed/actions";
 import { saveCodemarks } from "../store/codemarks/actions";
 import { safe, emptyArray } from "../utils";
 import { markStreamRead, setUserPreference } from "./actions";
-import { CSUser, CSReview, ActivityFilter, RepoSetting } from "@codestream/protocols/api";
+import {
+	CSUser,
+	CSReview,
+	ActivityFilter,
+	RepoSetting,
+	CSCodeError
+} from "@codestream/protocols/api";
 import { resetLastReads } from "../store/unreads/actions";
 import { PanelHeader } from "../src/components/PanelHeader";
 import { getPost, getThreadPosts } from "../store/posts/reducer";
@@ -36,7 +47,9 @@ import Menu from "./Menu";
 import { FormattedPlural } from "react-intl";
 import { Codemark } from "./Codemark/index";
 import { Review } from "./Review";
+import { CodeError } from "./CodeError";
 import { saveReviews } from "../store/reviews/actions";
+import { saveCodeErrors } from "../store/codeErrors/actions";
 import { Reply } from "./Posts/Reply";
 import { LoadingMessage } from "../src/components/LoadingMessage";
 import { Headshot } from "../src/components/Headshot";
@@ -256,6 +269,7 @@ export const ActivityPanel = () => {
 		dispatch(savePosts(response.posts));
 		dispatch(saveCodemarks(response.codemarks));
 		dispatch(saveReviews(response.reviews));
+		dispatch(saveCodeErrors(response.codeErrors));
 		dispatch(
 			addOlderActivity({
 				activities: response.records,
@@ -578,6 +592,61 @@ export const ActivityPanel = () => {
 											return;
 
 										dispatch(setCurrentReview(record.id));
+									}}
+									renderFooter={Footer => (
+										<Footer
+											style={{ borderTop: "none", paddingLeft: 0, paddingRight: 0, marginTop: 0 }}
+										>
+											<RepliesForActivity parentPost={post} />
+										</Footer>
+									)}
+								/>
+							)}
+						</ActivityItem>
+					</ActivityWrapper>
+				);
+			}
+
+			if (type === "codeError") {
+				if (
+					derivedState.codemarkTypeFilter != "all" &&
+					"codeError" !== derivedState.codemarkTypeFilter
+				)
+					return null;
+
+				const repo = null;
+
+				return (
+					<ActivityWrapper key={record.id}>
+						<ActivityVerb>
+							<ProfileLink id={person.id}>
+								<Headshot size={24} person={person} />
+							</ProfileLink>
+							<div>
+								<b>{person.username}</b>{" "}
+								<span className="verb">
+									started a conversation about a code error {repo && <>in {repo}</>}
+								</span>{" "}
+								<Timestamp relative time={record.createdAt} className="no-padding" />
+							</div>
+						</ActivityVerb>
+						<ActivityItem streamId={record.streamId} postId={record.postId}>
+							{({ className, post }) => (
+								<CodeError
+									className={className}
+									codeError={record as CSCodeError}
+									collapsed
+									hoverEffect
+									onClick={e => {
+										const target = e.target;
+										if (
+											target &&
+											// @ts-ignore
+											(target.closest(".emoji-mart") || target.closest(".reactions"))
+										)
+											return;
+										console.warn("SETTING CURRENT CODE ERROR TO: " + record.id);
+										dispatch(setCurrentCodeError(record.id));
 									}}
 									renderFooter={Footer => (
 										<Footer

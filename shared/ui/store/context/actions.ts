@@ -36,6 +36,7 @@ export const closeAllPanels = () => dispatch => {
 	dispatch(openPanel(WebviewPanels.Sidebar));
 	dispatch(setCurrentCodemark());
 	dispatch(setCurrentReview());
+	dispatch(setCurrentCodeError());
 	dispatch(clearCurrentPullRequest());
 };
 
@@ -43,6 +44,7 @@ export const closeAllModals = () => dispatch => {
 	dispatch(closeModal());
 	dispatch(setCurrentCodemark());
 	dispatch(setCurrentReview());
+	dispatch(setCurrentCodeError());
 	dispatch(clearCurrentPullRequest());
 };
 
@@ -141,6 +143,13 @@ export const setCurrentReview = (reviewId?: string, options?: { openFirstDiff?: 
 export const setCurrentReviewOptions = (options: any) =>
 	action(ContextActionsType.SetCurrentReviewOptions, { options });
 
+export const _setCurrentCodeError = (codeErrorId?: string) =>
+	action(ContextActionsType.SetCurrentCodeError, { codeErrorId });
+
+export const setCurrentCodeError = (codeErrorId?: string) => (dispatch, getState) => {
+	return dispatch(_setCurrentCodeError(codeErrorId));
+};
+
 export const setCurrentRepo = (id?: string, path?: string) =>
 	action(ContextActionsType.SetCurrentRepo, { id, path });
 
@@ -154,8 +163,11 @@ export const setCurrentPullRequest = (
 	source?: string
 ) => action(ContextActionsType.SetCurrentPullRequest, { providerId, id, commentId, source });
 
-export const setCurrentErrorInboxOptions = (stack?: string, customAttributes?: string, source?: string) =>
-	action(ContextActionsType.SetCurrentErrorInboxOptions, { stack, customAttributes });
+export const setCurrentErrorInboxOptions = (
+	stack?: string,
+	customAttributes?: string,
+	source?: string
+) => action(ContextActionsType.SetCurrentErrorInboxOptions, { stack, customAttributes });
 
 export const setNewPullRequestOptions = (options?: { branch: NewPullRequestBranch }) =>
 	action(ContextActionsType.SetNewPullRequestOptions, { options });

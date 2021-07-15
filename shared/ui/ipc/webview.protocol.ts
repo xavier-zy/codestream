@@ -33,6 +33,14 @@ export const ShowReviewNotificationType = new NotificationType<ShowReviewNotific
 );
 
 // TODO: This should be a request to the webview -- not a notification
+export interface ShowCodeErrorNotification {
+	codeErrorId: string;
+}
+export const ShowCodeErrorNotificationType = new NotificationType<ShowCodeErrorNotification, void>(
+	`${IpcRoutes.Webview}/codeError/show`
+);
+
+// TODO: This should be a request to the webview -- not a notification
 export interface ShowPullRequestwNotification {
 	providerId: string;
 	id: string;

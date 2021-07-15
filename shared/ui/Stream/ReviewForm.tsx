@@ -90,7 +90,7 @@ import {
 	setNewPostEntry
 } from "@codestream/webview/store/context/actions";
 import styled from "styled-components";
-import { DropdownButton } from "./Review/DropdownButton";
+import { DropdownButton } from "./DropdownButton";
 import { getTeamSetting } from "../store/teams/reducer";
 import { ChangesetFileList } from "./Review/ChangesetFileList";
 import { Meta, MetaLabel, MetaDescriptionForAssignees } from "./Codemark/BaseCodemark";

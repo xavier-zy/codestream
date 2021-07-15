@@ -564,6 +564,7 @@ export function fromSlackUser(user: any, teamId: string): CSUser {
 		teamIds: [teamId],
 		timeZone: user.tz,
 		// TODO: ???
+		totalCodeErrors: 0,
 		totalPosts: 0,
 		totalReviews: 0,
 		numUsersInvited: 0,

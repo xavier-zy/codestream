@@ -50,6 +50,7 @@ export interface TokenLoginRequest {
 	team?: string;
 	codemarkId?: string;
 	reviewId?: string;
+	codeErrorId?: string;
 }
 
 export const TokenLoginRequestType = new RequestType<TokenLoginRequest, LoginResponse, void, void>(

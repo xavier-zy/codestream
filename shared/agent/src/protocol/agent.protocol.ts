@@ -17,6 +17,7 @@ export * from "./agent.protocol.posts";
 export * from "./agent.protocol.repos";
 export * from "./agent.protocol.textFiles";
 export * from "./agent.protocol.reviews";
+export * from "./agent.protocol.codeErrors";
 export * from "./agent.protocol.streams";
 export * from "./agent.protocol.teams";
 export * from "./agent.protocol.users";
@@ -141,6 +142,7 @@ export interface AgentState {
 	userId: string;
 	codemarkId?: string;
 	reviewId?: string;
+	codeErrorId?: string;
 }
 
 export interface AgentInitializeResult extends InitializeResult {

@@ -73,6 +73,7 @@ import {
 } from "@codestream/protocols/agent";
 import { getFileScmError } from "../store/editorContext/reducer";
 import { CodemarkView } from "./CodemarkView";
+import { CodeErrorView } from "./CodeErrorView";
 import { Review } from "./Review";
 import { Link } from "./Link";
 import {
@@ -83,11 +84,13 @@ import {
 	setCurrentReviewOptions,
 	setCurrentPullRequest,
 	setNewPullRequestOptions,
-	setCurrentCodemark
+	setCurrentCodemark,
+	setCurrentCodeError
 } from "../store/context/actions";
 import { last as _last, findLastIndex } from "lodash-es";
 import { Keybindings } from "./Keybindings";
 import { FlowPanel, VideoLink } from "./Flow";
+import { CodeErrorForm } from "./CodeErrorForm";
 import { ErrorInboxPanel } from "./ErrorInbox";
 import { PRInfoModal } from "./SpatialView/PRInfoModal";
 import { GlobalNav } from "./GlobalNav";
@@ -255,7 +258,9 @@ export class SimpleStream extends PureComponent {
 		const isConfigurationPanel =
 			activePanel && activePanel.match(/^configure\-(provider|enterprise)-/);
 		// if we're conducting a review, we need the compose functionality of spatial view
-		if (this.props.currentReviewId) activePanel = WebviewPanels.CodemarksForFile;
+		if (this.props.currentReviewId) {
+			activePanel = WebviewPanels.CodemarksForFile;
+		}
 		if (this.props.currentPullRequestId) activePanel = WebviewPanels.CodemarksForFile;
 		if (!isConfigurationPanel && this.props.composeCodemarkActive) {
 			// don't override the activePanel if user is trying to configure a provider
@@ -433,7 +438,7 @@ export class SimpleStream extends PureComponent {
 									setMultiLocation={this.setMultiLocation}
 								/>
 							)}
-							{activePanel === WebviewPanels.ErrorInbox && <ErrorInboxPanel />}
+							{activePanel === WebviewPanels.ErrorInbox && <CodeErrorForm />}
 							{activePanel === WebviewPanels.Flow && <FlowPanel />}
 							{activePanel === WebviewPanels.NewReview && <ReviewForm />}
 							{activePanel === WebviewPanels.Integrations && <IntegrationsPanel />}
@@ -468,6 +473,11 @@ export class SimpleStream extends PureComponent {
 				{this.props.currentCodemarkId && (
 					<Modal translucent onClose={() => this.props.setCurrentCodemark()}>
 						<CodemarkView />
+					</Modal>
+				)}
+				{this.props.currentCodeErrorId && (
+					<Modal onClose={() => this.props.setCurrentCodeError()}>
+						<CodeErrorView />
 					</Modal>
 				)}
 			</div>
@@ -703,6 +713,7 @@ const mapStateToProps = state => {
 		currentCodemarkId: context.currentCodemarkId,
 		currentMarkerId: context.currentMarkerId,
 		currentReviewId: context.currentReviewId,
+		currentCodeErrorId: context.currentCodeErrorId,
 		// even though we don't use hasFocus, leave this in here because of a re-render
 		// call from Modal.tsx -Pez
 		hasFocus: context.hasFocus,
@@ -728,6 +739,7 @@ export default connect(mapStateToProps, {
 	setNewPullRequestOptions,
 	setCurrentStream,
 	setCurrentCodemark,
+	setCurrentCodeError,
 	editCodemark,
 	setNewPostEntry,
 	setIsFirstPageview

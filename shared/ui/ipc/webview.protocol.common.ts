@@ -126,6 +126,7 @@ export interface WebviewContext {
 		includeLatestCommit?: boolean;
 		openFirstDiff?: boolean;
 	};
+	currentCodeErrorId?: string;
 	createPullRequestReviewId?: string;
 	createPullRequestOptions?: NewPullRequestBranch;
 	currentPullRequest?:

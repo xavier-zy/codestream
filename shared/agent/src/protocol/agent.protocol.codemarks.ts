@@ -9,6 +9,7 @@ import {
 import {
 	CSChannelStream,
 	CSCodemark,
+	CSCodeError,
 	CSCreateCodemarkRequest,
 	CSDirectStream,
 	CSLocationArray,
@@ -31,6 +32,8 @@ export interface CreateCodemarkRequest extends Omit<CSCreateCodemarkRequest, "te
 	markers?: CreateMarkerRequest[];
 	// codemarks can be part of a review
 	reviewId?: string;
+	// ... or a "code error"
+	codeErrorId?: string;
 	// if part of a review, it can be a change request
 	isChangeRequest?: boolean;
 }

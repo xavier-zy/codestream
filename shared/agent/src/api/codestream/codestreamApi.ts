@@ -64,6 +64,7 @@ import {
 	CreateTeamRequestType,
 	CreateTeamTagRequestType,
 	DeleteCodemarkRequest,
+	DeleteCodeErrorRequest,
 	DeletePostRequest,
 	DeleteReviewRequest,
 	DeleteTeamTagRequestType,
@@ -71,6 +72,8 @@ import {
 	DeleteUserResponse,
 	EditPostRequest,
 	FetchCodemarksRequest,
+	FetchCodeErrorsRequest,
+	FetchCodeErrorsResponse,
 	FetchCompaniesRequest,
 	FetchCompaniesResponse,
 	FetchFileStreamsRequest,
@@ -90,9 +93,13 @@ import {
 	FetchUsersRequest,
 	FollowCodemarkRequest,
 	FollowCodemarkResponse,
+	FollowCodeErrorRequest,
+	FollowCodeErrorResponse,
 	FollowReviewRequest,
 	FollowReviewResponse,
 	GetCodemarkRequest,
+	GetCodeErrorRequest,
+	GetCodeErrorResponse,
 	GetCompanyRequest,
 	GetCompanyResponse,
 	GetMarkerRequest,
@@ -138,6 +145,7 @@ import {
 	UnarchiveStreamRequest,
 	Unreads,
 	UpdateCodemarkRequest,
+	UpdateCodeErrorRequest,
 	UpdateMarkerRequest,
 	UpdatePreferencesRequest,
 	UpdatePresenceRequest,
@@ -194,6 +202,9 @@ import {
 	CSGetApiCapabilitiesResponse,
 	CSGetCodemarkResponse,
 	CSGetCodemarksResponse,
+	CSGetCodeErrorResponse,
+	CSGetCodeErrorsRequest,
+	CSGetCodeErrorsResponse,
 	CSGetCompaniesResponse,
 	CSGetCompanyResponse,
 	CSGetInviteInfoRequest,
@@ -253,6 +264,8 @@ import {
 	CSTrackProviderPostRequest,
 	CSUpdateCodemarkRequest,
 	CSUpdateCodemarkResponse,
+	CSUpdateCodeErrorRequest,
+	CSUpdateCodeErrorResponse,
 	CSUpdateMarkerRequest,
 	CSUpdateMarkerResponse,
 	CSUpdatePostSharingDataRequest,
@@ -704,6 +717,11 @@ export class CodeStreamApiProvider implements ApiProvider {
 				if (e.data == null || e.data.length === 0) return;
 				break;
 			}
+			case MessageType.CodeErrors: {
+				e.data = await SessionContainer.instance().codeErrors.resolve(e, { onlyIfNeeded: false });
+				if (e.data == null || e.data.length === 0) return;
+				break;
+			}
 			case MessageType.Streams:
 				e.data = await SessionContainer.instance().streams.resolve(e, { onlyIfNeeded: false });
 				if (e.data == null || e.data.length === 0) return;
@@ -1134,6 +1152,16 @@ export class CodeStreamApiProvider implements ApiProvider {
 	}
 
 	@log()
+	followCodeError(request: FollowCodeErrorRequest) {
+		const pathType = request.value ? "follow" : "unfollow";
+		return this.put<FollowCodeErrorRequest, FollowCodeErrorResponse>(
+			`/code-errors/${pathType}/${request.id}`,
+			request,
+			this._token
+		);
+	}
+
+	@log()
 	setCodemarkStatus(request: SetCodemarkStatusRequest) {
 		return this.updateCodemark(request);
 	}
@@ -1400,8 +1428,28 @@ export class CodeStreamApiProvider implements ApiProvider {
 	}
 
 	@log()
+	fetchCodeErrors(request: FetchCodeErrorsRequest): Promise<FetchCodeErrorsResponse> {
+		const params: CSGetCodeErrorsRequest = {
+			teamId: this.teamId
+		};
+		if (request.codeErrorIds?.length ?? 0 > 0) {
+			params.ids = request.codeErrorIds;
+		}
+		if (request.streamId != null) {
+			params.streamId = request.streamId;
+		}
+
+		return this.get<CSGetCodeErrorsResponse>(`/code-errors?${qs.stringify(params)}`, this._token);
+	}
+
+	@log()
 	getReview(request: GetReviewRequest): Promise<GetReviewResponse> {
 		return this.get<CSGetReviewResponse>(`/reviews/${request.reviewId}`, this._token);
+	}
+
+	@log()
+	getCodeError(request: GetCodeErrorRequest): Promise<GetCodeErrorResponse> {
+		return this.get<CSGetCodeErrorResponse>(`/code-errors/${request.codeErrorId}`, this._token);
 	}
 
 	@log()
@@ -1438,8 +1486,24 @@ export class CodeStreamApiProvider implements ApiProvider {
 	}
 
 	@log()
+	updateCodeError(request: UpdateCodeErrorRequest) {
+		const { id, ...params } = request;
+		return this.put<CSUpdateCodeErrorRequest, CSUpdateCodeErrorResponse>(
+			`/code-errors/${id}`,
+			params,
+			this._token
+		);
+	}
+
+	@log()
 	async deleteReview(request: DeleteReviewRequest) {
 		await this.delete(`/reviews/${request.id}`, this._token);
+		return {};
+	}
+
+	@log()
+	async deleteCodeError(request: DeleteCodeErrorRequest) {
+		await this.delete(`/code-errors/${request.id}`, this._token);
 		return {};
 	}
 

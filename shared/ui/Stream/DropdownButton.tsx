@@ -1,8 +1,8 @@
 import React, { useEffect } from "react";
-import { Button, getButtonProps, ButtonProps } from "../../src/components/Button";
+import { Button, getButtonProps, ButtonProps } from "../src/components/Button";
 import styled from "styled-components";
-import Icon from "../Icon";
-import Menu from "../Menu";
+import Icon from "./Icon";
+import Menu from "./Menu";
 import { mapFilter } from "@codestream/webview/utils";
 
 // This implementation isn't quite ideal.

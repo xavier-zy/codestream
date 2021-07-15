@@ -1,16 +1,16 @@
 {
 	"folders": [
 		{
-			"path": "./vscode"
+			"path": "vscode"
 		},
 		{
-			"path": "./shared/ui"
+			"path": "shared/ui"
 		},
 		{
-			"path": "./shared/agent"
+			"path": "shared/agent"
 		},
 		{
-			"path": "../gore"
+			"path": "../sandboxes/csdemo/codestream-server"
 		}
 	],
 	"launch": {

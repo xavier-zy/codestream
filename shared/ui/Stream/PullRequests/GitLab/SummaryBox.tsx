@@ -6,7 +6,7 @@ import { OutlineBox, FlexRow } from "./PullRequest";
 import { CodeStreamState } from "@codestream/webview/store";
 import { Link } from "../../Link";
 import styled from "styled-components";
-import { DropdownButton } from "../../Review/DropdownButton";
+import { DropdownButton } from "../../DropdownButton";
 import { PRBranch, PRBranchTruncated } from "../../PullRequestComponents";
 import copy from "copy-to-clipboard";
 import Tooltip from "../../Tooltip";

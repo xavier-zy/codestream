@@ -1,5 +1,5 @@
 import { getProviderPullRequestRepo } from "@codestream/webview/store/providerPullRequests/reducer";
-import { DropdownButton } from "@codestream/webview/Stream/Review/DropdownButton";
+import { DropdownButton } from "@codestream/webview/Stream/DropdownButton";
 import { distanceOfTimeInWords } from "@codestream/webview/Stream/Timestamp";
 import React, { useState, useEffect, useMemo } from "react";
 import { useDidMount } from "../utilities/hooks";

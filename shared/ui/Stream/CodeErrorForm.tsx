@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Content } from "../src/components/Carousel";
 import styled from "styled-components";
 import { PanelHeader } from "../src/components/PanelHeader";
@@ -136,6 +136,19 @@ export const CodeErrorForm = (props: Props = {}) => {
 	useDidMount(() => {
 		setResolvedStackPromise(resolveStackTrace(repo, sha, parsedStack));
 	});
+
+	useEffect(() => {
+		// jump to first line of stack (the line that generated the error) when we've got the stack data
+		if (!resolvedStackPromise) return;
+		(async function() {
+			const resolvedStack = await resolvedStackPromise;
+			if (resolvedStack) {
+				if (!resolvedStack.error && resolvedStack.lines[1] && !resolvedStack.lines[1].error) {
+					await dispatch(jumpToStackLine(resolvedStack.lines[1], sha));
+				}
+			}
+		})();
+	}, [resolvedStackPromise]);
 
 	const onClickStackLine = async (event, lineNum) => {
 		event && event.preventDefault();

@@ -74,6 +74,11 @@ export const CodeErrorForm = (props: Props = {}) => {
 		const codeError =
 			props.editingCodeError || (props.codeErrorId && codeErrors[props.codeErrorId]);
 		const stack = codeError?.stackTrace || errorInboxOptions.stack;
+		const url =
+			codeError?.providerUrl ||
+			/*errorInboxOptions.url ||*/
+			// for now
+			"https://one.newrelic.com/launcher/errors-inbox.launcher?platform[accountId]=3236402&platform[timeRange][duration]=604800000&platform[$isFallbackTimeRange]=false&pane=eyJuZXJkbGV0SWQiOiJlcnJvcnMtaW5ib3guaG9tZSIsIndvcmtsb2FkSWQiOiJNekl6TmpRd01ueE9VakY4VjA5U1MweFBRVVI4TkRnek1EUSIsImZpbHRlcnMiOiIoYGVycm9yLmdyb3VwLm1ldGFkYXRhLnN0YXRlYCA9ICdVbnJlc29sdmVkJykifQ==&cards[0]=eyJuZXJkbGV0SWQiOiJlcnJvcnMtaW5ib3guZXJyb3ItZ3JvdXAtZGV0YWlscyIsImVycm9yR3JvdXBHdWlkIjoiTXpJek5qUXdNbnhGVWxSOFJWSlNYMGRTVDFWUWZHTTVaREF4TWpRd0xUYzBaV010TXpRNE55MDVOakl3TFRnelpURXhNMk16TkRjMVpnIiwid29ya2xvYWRJZCI6Ik16SXpOalF3TW54T1VqRjhWMDlTUzB4UFFVUjhORGd6TURRIn0=&state=b61b6194-9a5a-ca5b-a415-ee97bb4f9653";
 		const { customAttributes } = errorInboxOptions;
 		const parsedStack: string[] = stack ? JSON.parse(stack) : [];
 		const stackInfo = stack ? parseStack(parsedStack) : { calls: [] };
@@ -85,7 +90,8 @@ export const CodeErrorForm = (props: Props = {}) => {
 			parsedStack,
 			stackInfo,
 			customAttributes: attrs,
-			codeError
+			codeError,
+			url
 		};
 	});
 
@@ -130,7 +136,7 @@ export const CodeErrorForm = (props: Props = {}) => {
 		}
 	};
 
-	const { stack, parsedStack, customAttributes, currentUser } = derivedState;
+	const { stack, parsedStack, customAttributes, currentUser, url } = derivedState;
 	const { repo, branch, sha } = customAttributes;
 
 	useDidMount(() => {
@@ -169,7 +175,8 @@ export const CodeErrorForm = (props: Props = {}) => {
 		const codeError: NewCodeErrorAttributes = {
 			title,
 			stackTrace: parsedStack.join("\n"),
-			stackInfo
+			stackInfo,
+			providerUrl: url
 		};
 		if (replyText) {
 			codeError.replyPost = { text: replyText };
@@ -195,7 +202,9 @@ export const CodeErrorForm = (props: Props = {}) => {
 										</div>
 										<div style={{ marginTop: "-1px" }}>
 											<b>{currentUser.username}</b>
-											<span className="subhead">is starting a conversation about a code error</span>
+											<span className="subhead">
+												is starting a conversation about a <a href={url}>code error</a>
+											</span>
 											{repo && (
 												<>
 													<span className="subhead">in&nbsp;</span>
@@ -239,7 +248,7 @@ export const CodeErrorForm = (props: Props = {}) => {
 									{stack && (
 										<>
 											<div>
-												<h4>Stack trace</h4>
+												<h4>STACK TRACE</h4>
 											</div>
 											{parsedStack.map((line, i) => (
 												<div onClick={e => onClickStackLine(e, i)}>

@@ -325,6 +325,7 @@ const BaseCodeError = (props: BaseCodeErrorProps) => {
 
 	const onClickStackLine = async (event, lineNum) => {
 		event && event.preventDefault();
+		if (props.collapsed) return;
 		const { stackInfo } = props.codeError;
 		if (
 			stackInfo &&
@@ -337,6 +338,15 @@ const BaseCodeError = (props: BaseCodeErrorProps) => {
 	};
 
 	const stackTraceLines = props.codeError.stackTrace.split("\n");
+
+	useDidMount(() => {
+		if (!props.collapsed) {
+			const { stackInfo } = props.codeError;
+			if (stackInfo && stackInfo.lines && stackInfo.lines[1] && !stackInfo.lines[1].error) {
+				dispatch(jumpToStackLine(stackInfo.lines[1], stackInfo.sha!));
+			}
+		}
+	});
 
 	return (
 		<MinimumWidthCard {...getCardProps(props)} noCard={!props.collapsed}>
@@ -368,6 +378,9 @@ const BaseCodeError = (props: BaseCodeErrorProps) => {
 					<Meta>
 						<MarkdownText text={props.codeError.title} />
 					</Meta>
+					{!props.collapsed && props.codeError.providerUrl && (
+						<Link href={props.codeError.providerUrl}>Open in New Relic</Link>
+					)}
 					{props.codeError.stackTrace && (
 						<Meta>
 							<MetaLabel>Stack Trace</MetaLabel>

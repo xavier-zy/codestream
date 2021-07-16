@@ -623,6 +623,7 @@ export interface CSCreateCodeErrorRequest {
 	teamId: string;
 	stackTrace: string;
 	stackInfo?: CSStackTraceInfo;
+	providerUrl?: string;
 	streamId?: string;
 	postId?: string;
 	parentPostId?: string;

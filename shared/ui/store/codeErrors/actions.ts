@@ -54,6 +54,7 @@ export interface NewCodeErrorAttributes {
 		mentionedUserIds?: string[];
 	};
 	stackInfo?: ResolveStackTraceResponse;
+	providerUrl?: string;
 }
 
 export interface CreateCodeErrorError {

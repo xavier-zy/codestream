@@ -466,7 +466,11 @@ function listenForEvents(store) {
 					case "open": {
 						store.dispatch(closeAllPanels());
 						store.dispatch(
-							setCurrentErrorInboxOptions(route.query.stack, route.query.customAttributes)
+							setCurrentErrorInboxOptions(
+								route.query.stack,
+								route.query.customAttributes,
+								route.query.url
+							)
 						);
 						store.dispatch(openPanel(WebviewPanels.ErrorInbox));
 						break;

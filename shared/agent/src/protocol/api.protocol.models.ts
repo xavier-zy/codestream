@@ -307,6 +307,7 @@ export interface CSCodeError extends CSEntity {
 	title: string;
 	stackTrace: string;
 	stackInfo?: CSStackTraceInfo;
+	providerUrl?: string;
 	assignees: string[];
 
 	// an array of people who have resolved the code error

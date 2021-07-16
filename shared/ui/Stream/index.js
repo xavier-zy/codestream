@@ -93,7 +93,6 @@ import { last as _last, findLastIndex } from "lodash-es";
 import { Keybindings } from "./Keybindings";
 import { FlowPanel, VideoLink } from "./Flow";
 import { CodeErrorForm } from "./CodeErrorForm";
-import { ErrorInboxPanel } from "./ErrorInbox";
 import { InstrumentationPanel } from "./InstrumentationPanel";
 import { PRInfoModal } from "./SpatialView/PRInfoModal";
 import { GlobalNav } from "./GlobalNav";

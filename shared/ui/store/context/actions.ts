@@ -170,8 +170,8 @@ export const setCurrentPullRequest = (
 export const setCurrentErrorInboxOptions = (
 	stack?: string,
 	customAttributes?: string,
-	source?: string
-) => action(ContextActionsType.SetCurrentErrorInboxOptions, { stack, customAttributes });
+	url?: string
+) => action(ContextActionsType.SetCurrentErrorInboxOptions, { stack, customAttributes, url });
 
 export const setCurrentInstrumentationOptions = (options?: any) =>
 	action(ContextActionsType.SetCurrentInstrumentationOptions, { options });

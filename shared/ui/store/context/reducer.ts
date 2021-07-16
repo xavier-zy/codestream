@@ -48,7 +48,8 @@ const initialState: ContextState = {
 	route: { name: Route.NewUser, params: {} },
 	spatialViewShowPRComments: false,
 	composeCodemarkActive: undefined,
-	errorInboxOptions: undefined
+	errorInboxOptions: undefined,
+	currentInstrumentation: undefined
 };
 
 export function reduceContext(
@@ -170,6 +171,12 @@ export function reduceContext(
 			return {
 				...state,
 				errorInboxOptions: action.payload
+			};
+		}
+		case ContextActionsType.SetCurrentInstrumentationOptions: {
+			return {
+				...state,
+				currentInstrumentation: action.payload.options
 			};
 		}
 		case ContextActionsType.SetStartWorkCard:

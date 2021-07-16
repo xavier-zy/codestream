@@ -60,6 +60,7 @@ import {
 	NewCodemarkNotificationType,
 	NewReviewNotificationType,
 	NewPullRequestNotificationType,
+	InstrumentationOpenType,
 	EditorSelectRangeRequestType,
 	StartWorkNotificationType,
 	WebviewPanels,
@@ -85,13 +86,15 @@ import {
 	setCurrentPullRequest,
 	setNewPullRequestOptions,
 	setCurrentCodemark,
-	setCurrentCodeError
+	setCurrentCodeError,
+	setCurrentInstrumentationOptions
 } from "../store/context/actions";
 import { last as _last, findLastIndex } from "lodash-es";
 import { Keybindings } from "./Keybindings";
 import { FlowPanel, VideoLink } from "./Flow";
 import { CodeErrorForm } from "./CodeErrorForm";
 import { ErrorInboxPanel } from "./ErrorInbox";
+import { InstrumentationPanel } from "./InstrumentationPanel";
 import { PRInfoModal } from "./SpatialView/PRInfoModal";
 import { GlobalNav } from "./GlobalNav";
 import { CheckEmailVsGit } from "./CheckEmailVsGit";
@@ -136,6 +139,9 @@ export class SimpleStream extends PureComponent {
 		);
 		this.disposables.push(
 			HostApi.instance.on(NewPullRequestNotificationType, this.handleNewPullRequestRequest, this)
+		);
+		this.disposables.push(
+			HostApi.instance.on(InstrumentationOpenType, this.handleInstrumentationOpenType, this)
 		);
 	}
 
@@ -187,6 +193,19 @@ export class SimpleStream extends PureComponent {
 		this.props.setCurrentPullRequest("");
 		this.props.setNewPullRequestOptions({ branch: e.branch });
 		this.props.openPanel(WebviewPanels.NewPullRequest);
+	}
+
+	handleInstrumentationOpenType(e) {
+		if (e.source) {
+			// this can come externally (from an IDE)
+			this.props.setNewPostEntry(e.source);
+		}
+
+		this.props.setCurrentReview("");
+		this.props.setCurrentPullRequest("");
+
+		this.props.setCurrentInstrumentationOptions({ name: e.name });
+		this.props.openPanel(WebviewPanels.Instrumentation);
 	}
 
 	// for performance debugging purposes
@@ -439,6 +458,7 @@ export class SimpleStream extends PureComponent {
 								/>
 							)}
 							{activePanel === WebviewPanels.ErrorInbox && <CodeErrorForm />}
+							{activePanel === WebviewPanels.Instrumentation && <InstrumentationPanel />}
 							{activePanel === WebviewPanels.Flow && <FlowPanel />}
 							{activePanel === WebviewPanels.NewReview && <ReviewForm />}
 							{activePanel === WebviewPanels.Integrations && <IntegrationsPanel />}
@@ -742,5 +762,6 @@ export default connect(mapStateToProps, {
 	setCurrentCodeError,
 	editCodemark,
 	setNewPostEntry,
-	setIsFirstPageview
+	setIsFirstPageview,
+	setCurrentInstrumentationOptions
 })(injectIntl(SimpleStream));

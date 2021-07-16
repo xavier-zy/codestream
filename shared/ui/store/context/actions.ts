@@ -38,6 +38,8 @@ export const closeAllPanels = () => dispatch => {
 	dispatch(setCurrentReview());
 	dispatch(setCurrentCodeError());
 	dispatch(clearCurrentPullRequest());
+	dispatch(clearCurrentErrorInboxOptions());
+	dispatch(clearCurrentInstrumentationOptions());
 };
 
 export const closeAllModals = () => dispatch => {
@@ -46,6 +48,8 @@ export const closeAllModals = () => dispatch => {
 	dispatch(setCurrentReview());
 	dispatch(setCurrentCodeError());
 	dispatch(clearCurrentPullRequest());
+	dispatch(clearCurrentErrorInboxOptions());
+	dispatch(clearCurrentInstrumentationOptions());
 };
 
 export const focus = () => action(ContextActionsType.SetFocusState, true);
@@ -169,8 +173,17 @@ export const setCurrentErrorInboxOptions = (
 	source?: string
 ) => action(ContextActionsType.SetCurrentErrorInboxOptions, { stack, customAttributes });
 
+export const setCurrentInstrumentationOptions = (options?: any) =>
+	action(ContextActionsType.SetCurrentInstrumentationOptions, { options });
+
 export const setNewPullRequestOptions = (options?: { branch: NewPullRequestBranch }) =>
 	action(ContextActionsType.SetNewPullRequestOptions, { options });
+
+export const clearCurrentErrorInboxOptions = () =>
+	action(ContextActionsType.SetCurrentErrorInboxOptions, {});
+
+export const clearCurrentInstrumentationOptions = () =>
+	action(ContextActionsType.SetCurrentInstrumentationOptions, { options: {} });
 
 export const clearCurrentPullRequest = () =>
 	action(ContextActionsType.SetCurrentPullRequest, {

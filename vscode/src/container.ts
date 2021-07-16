@@ -2,6 +2,7 @@
 import { ReviewDiffContentProvider } from "providers/diffContentProvider";
 import { ExtensionContext, workspace } from "vscode";
 import { WebviewLike } from "webviews/webviewLike";
+import { InstrumentationDecorationProvider } from "providers/instrumentationDecorationProvider";
 import { BaseAgentOptions, CodeStreamAgentConnection } from "./agent/agentConnection";
 import { CodeStreamSession } from "./api/session";
 import { Commands } from "./commands";
@@ -48,6 +49,9 @@ export class Container {
 		context.subscriptions.push((this._codeLens = new CodemarkCodeLensProvider()));
 		context.subscriptions.push((this._diffContents = new ReviewDiffContentProvider()));
 		context.subscriptions.push((this._markerDecorations = new CodemarkDecorationProvider()));
+		context.subscriptions.push(
+			(this._instrumentationDecorationProvider = new InstrumentationDecorationProvider())
+		);
 		context.subscriptions.push(new CodemarkPatchContentProvider());
 		context.subscriptions.push((this._selectionDecoration = new SelectionDecorationProvider()));
 		context.subscriptions.push((this._statusBar = new StatusBarController()));
@@ -140,6 +144,11 @@ export class Container {
 	private static _markerDecorations: CodemarkDecorationProvider;
 	static get markerDecorations() {
 		return this._markerDecorations;
+	}
+
+	private static _instrumentationDecorationProvider: InstrumentationDecorationProvider;
+	static get instrumentationDecorationProvider() {
+		return this._instrumentationDecorationProvider;
 	}
 
 	private static _notifications: NotificationsController;

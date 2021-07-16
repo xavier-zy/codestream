@@ -21,4 +21,5 @@ export interface Config {
 	showMarkerGlyphs: boolean;
 	showShortcutTipOnSelection: boolean;
 	traceLevel: TraceLevel;
+	showInstrumentationGlyphs?: boolean;
 }

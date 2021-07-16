@@ -135,3 +135,18 @@ export const ShowPreviousChangedFileNotificationType = new NotificationType<
 	ShowPreviousChangedFileNotification,
 	void
 >(`${IpcRoutes.Webview}/showChangedFile/previous`);
+
+export interface InstrumentationOpen {
+	uri?: string;
+	range?: Range;
+	/** the name of the instrumentation */
+	name?: string;
+	/**
+	 * for telemetry
+	 */
+	source?: string;
+}
+
+export const InstrumentationOpenType = new NotificationType<InstrumentationOpen, void>(
+	`${IpcRoutes.Webview}/instrumentation/open`
+);

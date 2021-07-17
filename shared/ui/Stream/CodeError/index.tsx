@@ -375,9 +375,11 @@ const BaseCodeError = (props: BaseCodeErrorProps) => {
 				)}
 
 				<MetaSection>
-					<Meta>
-						<MarkdownText text={props.codeError.title} />
-					</Meta>
+					{!props.collapsed && (
+						<Meta>
+							<MarkdownText text={props.codeError.title} />
+						</Meta>
+					)}
 					{!props.collapsed && props.codeError.providerUrl && (
 						<Link href={props.codeError.providerUrl}>Open in New Relic</Link>
 					)}

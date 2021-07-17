@@ -645,7 +645,6 @@ export const ActivityPanel = () => {
 											(target.closest(".emoji-mart") || target.closest(".reactions"))
 										)
 											return;
-										console.warn("SETTING CURRENT CODE ERROR TO: " + record.id);
 										dispatch(setCurrentCodeError(record.id));
 									}}
 									renderFooter={Footer => (

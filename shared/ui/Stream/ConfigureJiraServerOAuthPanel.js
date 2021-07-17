@@ -95,8 +95,6 @@ export class ConfigureJiraServerOAuthPanel extends Component {
 	render() {
 		const { providerId } = this.props;
 		const inactive = false;
-		console.warn("LOOKING FOR " + providerId);
-		console.warn("PROVIDERS ARE", this.props.providers);
 		const { name } = this.props.providers[providerId] || {};
 		const providerName = PROVIDER_MAPPINGS[name] ? PROVIDER_MAPPINGS[name].displayName : "";
 		const placeholder = PROVIDER_MAPPINGS[name] ? PROVIDER_MAPPINGS[name].urlPlaceholder : "";

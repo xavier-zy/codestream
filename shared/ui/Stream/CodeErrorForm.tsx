@@ -53,6 +53,7 @@ interface StackInfo {
 interface Props {
 	codeErrorId?: string;
 	editingCodeError?: CSCodeError;
+	isEditing?: boolean;
 }
 
 const parseStack = (stack: string[]): StackInfo => {

@@ -7,6 +7,7 @@ import ScrollBox from "./ScrollBox";
 import { CreateCodemarkIcons } from "./CreateCodemarkIcons";
 import Tooltip from "./Tooltip"; // careful with tooltips on codemarks; they are not performant
 import { ReviewNav } from "./ReviewNav";
+import { CodeErrorNav } from "./CodeErrorNav";
 import Feedback from "./Feedback";
 import cx from "classnames";
 import {
@@ -124,6 +125,7 @@ interface Props {
 	isInVscode: boolean;
 	webviewFocused: boolean;
 	currentReviewId?: string;
+	currentCodeErrorId?: string;
 	currentPullRequestId?: string;
 	currentPullRequestProviderId?: string;
 	lightningCodeReviewsEnabled: boolean;
@@ -533,11 +535,13 @@ export class SimpleInlineCodemarks extends Component<Props, State> {
 		const {
 			textEditorUri,
 			currentReviewId,
+			currentCodeErrorId,
 			currentPullRequestId,
 			composeCodemarkActive
 		} = this.props;
 
-		if (composeCodemarkActive || currentReviewId || currentPullRequestId) return null;
+		if (composeCodemarkActive || currentReviewId || currentCodeErrorId || currentPullRequestId)
+			return null;
 
 		if (textEditorUri === undefined) {
 			return (
@@ -650,11 +654,12 @@ export class SimpleInlineCodemarks extends Component<Props, State> {
 			documentMarkers,
 			metrics,
 			currentReviewId,
-			currentPullRequestId
+			currentPullRequestId,
+			currentCodeErrorId
 		} = this.props;
 		const { numLinesVisible } = this.state;
 
-		if (currentReviewId || currentPullRequestId) return null;
+		if (currentReviewId || currentPullRequestId || currentCodeErrorId) return null;
 
 		const numVisibleRanges = textEditorVisibleRanges.length;
 
@@ -1162,12 +1167,19 @@ export class SimpleInlineCodemarks extends Component<Props, State> {
 	}
 
 	close() {
-		const { currentReviewId, currentPullRequestId, composeCodemarkActive } = this.props;
+		const {
+			currentReviewId,
+			currentPullRequestId,
+			currentCodeErrorId,
+			composeCodemarkActive
+		} = this.props;
 		if (currentReviewId) {
 			HostApi.instance.send(ReviewCloseDiffRequestType, {});
 			this.props.closeAllModals();
 		} else if (currentPullRequestId) {
 			HostApi.instance.send(LocalFilesCloseDiffRequestType, {});
+			this.props.closeAllModals();
+		} else if (currentCodeErrorId) {
 			this.props.closeAllModals();
 		} else if (composeCodemarkActive) {
 			this.closeCodemarkForm();
@@ -1180,6 +1192,7 @@ export class SimpleInlineCodemarks extends Component<Props, State> {
 		const {
 			currentReviewId,
 			currentPullRequestId,
+			currentCodeErrorId,
 			currentPullRequestProviderId,
 			composeCodemarkActive
 		} = this.props;
@@ -1194,11 +1207,13 @@ export class SimpleInlineCodemarks extends Component<Props, State> {
 				noScroll
 				noPadding
 				onClose={isGitLabPR ? undefined : () => this.close()}
-				sidebarBackground={!!currentReviewId}
+				sidebarBackground={!!currentReviewId && !!currentCodeErrorId}
 			>
 				<div style={{ overflow: isGitLabPR ? "visible" : "hidden" }}>
 					{currentReviewId ? (
 						<ReviewNav reviewId={currentReviewId} composeOpen={composeOpen} />
+					) : currentCodeErrorId ? (
+						<CodeErrorNav codeErrorId={currentCodeErrorId} composeOpen={composeOpen} />
 					) : currentPullRequestId ? (
 						currentPullRequestProviderId === "github*com" ||
 						currentPullRequestProviderId === "github/enterprise" ? (
@@ -1230,7 +1245,10 @@ export class SimpleInlineCodemarks extends Component<Props, State> {
 						<PRInfoModal onClose={() => this.setState({ showPRInfoModal: false })} />
 					)}
 					{this.state.isLoading ? null : this.renderCodemarks()}
-					{!currentReviewId && !currentPullRequestId && this.renderViewSelectors()}
+					{!currentReviewId &&
+						!currentCodeErrorId &&
+						!currentPullRequestId &&
+						this.renderViewSelectors()}
 				</div>
 			</Modal>
 		);
@@ -1408,6 +1426,7 @@ const mapStateToProps = (state: CodeStreamState) => {
 		hasPRProvider,
 		currentStreamId: context.currentStreamId,
 		currentReviewId: context.currentReviewId,
+		currentCodeErrorId: context.currentCodeErrorId,
 		currentPullRequestId: context.currentPullRequest ? context.currentPullRequest.id : undefined,
 		currentPullRequestProviderId: context.currentPullRequest
 			? context.currentPullRequest.providerId

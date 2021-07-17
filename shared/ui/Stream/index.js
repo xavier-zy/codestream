@@ -276,7 +276,7 @@ export class SimpleStream extends PureComponent {
 		const isConfigurationPanel =
 			activePanel && activePanel.match(/^configure\-(provider|enterprise)-/);
 		// if we're conducting a review, we need the compose functionality of spatial view
-		if (this.props.currentReviewId) {
+		if (this.props.currentReviewId || this.props.currentCodeErrorId) {
 			activePanel = WebviewPanels.CodemarksForFile;
 		}
 		if (this.props.currentPullRequestId) activePanel = WebviewPanels.CodemarksForFile;
@@ -348,12 +348,9 @@ export class SimpleStream extends PureComponent {
 				<OfflineBanner />
 				<PRProviderErrorBanner />
 				<ModalRoot />
-
 				{/* don't want to show the check email if you're onboarding */}
 				{activePanel === WebviewPanels.Sidebar && <CheckEmailVsGit />}
-
 				{/*<EnjoyingCodeStream />*/}
-
 				{this.state.propsForPrePRProviderInfoModal && (
 					<PrePRProviderInfoModal {...this.state.propsForPrePRProviderInfoModal} />
 				)}
@@ -494,7 +491,7 @@ export class SimpleStream extends PureComponent {
 						<CodemarkView />
 					</Modal>
 				)}
-				{this.props.currentCodeErrorId && (
+				{false && this.props.currentCodeErrorId && (
 					<Modal onClose={() => this.props.setCurrentCodeError()}>
 						<CodeErrorView />
 					</Modal>

@@ -65,7 +65,8 @@ export enum WebviewPanels {
 	Onboard = "onboard",
 	Commits = "commits",
 	ErrorInbox = "errorinbox",
-	Instrumentation = "instrumentation"
+	Instrumentation = "instrumentation",
+	CodeError = "code-error"
 }
 
 // this is for mixpanel and maps the values from WebviewPanels to their

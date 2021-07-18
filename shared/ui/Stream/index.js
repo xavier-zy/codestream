@@ -101,6 +101,9 @@ import { EnjoyingCodeStream } from "./EnjoyingCodeStream";
 import { getTestGroup } from "../store/context/reducer";
 import { PresentTOS } from "../Authentication/PresentTOS";
 
+import { Loading } from "../Container/Loading";
+import { DelayedRender } from "../Container/DelayedRender";
+
 const EMAIL_MATCH_REGEX = new RegExp(
 	"[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*",
 	"g"
@@ -453,7 +456,14 @@ export class SimpleStream extends PureComponent {
 									setMultiLocation={this.setMultiLocation}
 								/>
 							)}
-							{activePanel === WebviewPanels.ErrorInbox && <CodeErrorForm />}
+							{/*{activePanel === WebviewPanels.ErrorInbox && <CodeErrorForm />} */}
+							{activePanel === WebviewPanels.CodeError && (
+								<>
+									<DelayedRender>
+										<Loading />
+									</DelayedRender>
+								</>
+							)}
 							{activePanel === WebviewPanels.Instrumentation && <InstrumentationPanel />}
 							{activePanel === WebviewPanels.Flow && <FlowPanel />}
 							{activePanel === WebviewPanels.NewReview && <ReviewForm />}

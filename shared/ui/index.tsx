@@ -40,7 +40,8 @@ import {
 	GetDocumentFromMarkerRequestType,
 	DidEncounterMaintenanceModeNotificationType,
 	VerifyConnectivityRequestType,
-	ExecuteThirdPartyRequestUntypedType
+	ExecuteThirdPartyRequestUntypedType,
+	ResolveStackTraceResponse
 } from "@codestream/protocols/agent";
 import { CSApiCapabilities, CodemarkType, CSMe } from "@codestream/protocols/api";
 import translations from "./translations/en";
@@ -49,7 +50,7 @@ import { apiUpgradeRecommended, apiUpgradeRequired } from "./store/apiVersioning
 import { getCodemark } from "./store/codemarks/reducer";
 import { getReview } from "./store/reviews/reducer";
 import { getCodeError } from "./store/codeErrors/reducer";
-import { fetchCodemarks, openPanel } from "./Stream/actions";
+import { createPostAndCodeError, fetchCodemarks, openPanel } from "./Stream/actions";
 import { ContextState } from "./store/context/types";
 import { CodemarksState } from "./store/codemarks/types";
 import { EditorContextState } from "./store/editorContext/types";
@@ -82,7 +83,11 @@ import { setMaintenanceMode } from "./store/session/actions";
 import { updateModifiedReposDebounced } from "./store/users/actions";
 import { logWarning } from "./logger";
 import { fetchReview } from "./store/reviews/actions";
-import { fetchCodeError } from "./store/codeErrors/actions";
+import {
+	fetchCodeError,
+	NewCodeErrorAttributes,
+	resolveStackTrace
+} from "./store/codeErrors/actions";
 import { openPullRequestByUrl } from "./store/providerPullRequests/actions";
 import { updateCapabilities } from "./store/capabilities/actions";
 import { confirmPopup } from "./Stream/Confirm";
@@ -465,14 +470,24 @@ function listenForEvents(store) {
 				switch (route.action) {
 					case "open": {
 						store.dispatch(closeAllPanels());
-						store.dispatch(
-							setCurrentErrorInboxOptions(
-								route.query.stack,
-								route.query.customAttributes,
-								route.query.url
-							)
-						);
-						store.dispatch(openPanel(WebviewPanels.ErrorInbox));
+						const parsedStack: string[] = route.query.stack ? JSON.parse(route.query.stack) : [];
+						const { repo, sha } = JSON.parse(route.query.customAttributes);
+						store.dispatch(openPanel(WebviewPanels.CodeError));
+
+						resolveStackTrace(repo, sha, parsedStack).then(async (_: ResolveStackTraceResponse) => {
+							const codeError: NewCodeErrorAttributes = {
+								// what for this?
+								title: parsedStack[0],
+								stackTrace: parsedStack.join("\n"),
+								stackInfo: _,
+								providerUrl: route.query.url
+							};
+							const response = (await store.dispatch(createPostAndCodeError(codeError))) as any;
+							console.warn(response);
+							store.dispatch(closeAllPanels());
+							store.dispatch(setCurrentCodeError(response.codeError.id));
+							store.dispatch(openPanel(WebviewPanels.CodemarksForFile));
+						});
 						break;
 					}
 				}

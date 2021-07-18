@@ -79,12 +79,15 @@ import { FormattedMessage } from "react-intl";
 import { Link } from "./Link";
 import { confirmPopup } from "./Confirm";
 import { openPanel, openModal, setUserPreference, markItemRead } from "./actions";
+import { fetchCodeError } from "../store/codeErrors/actions";
 import CancelButton from "./CancelButton";
 import { VideoLink } from "./Flow";
 import { PanelHeader } from "../src/components/PanelHeader";
 import { ReposState } from "../store/repos/types";
 import { getDocumentFromMarker } from "./api-functions";
 import { getPRLabel, LabelHash } from "../store/providers/reducer";
+import { contextType } from "react-gravatar";
+import { CodeErrorsState } from "../store/codeErrors/types";
 
 export interface ICrossPostIssueContext {
 	setSelectedAssignees(any: any): void;
@@ -150,6 +153,7 @@ interface ConnectedProps {
 	shouldShare: boolean;
 	currentTeamId: string;
 	currentReviewId?: string;
+	currentCodeErrorId?: string;
 	isCurrentUserAdmin?: boolean;
 	blameMap?: { [email: string]: string };
 	activePanel?: WebviewPanels;
@@ -159,6 +163,7 @@ interface ConnectedProps {
 	textEditorUriHasPullRequestContext: boolean;
 	repos: ReposState;
 	prLabel: LabelHash;
+	codeErrors: CodeErrorsState;
 }
 
 interface State {
@@ -216,6 +221,7 @@ interface State {
 	changedPrLines: GetShaDiffsRangesResponse[];
 	isPreviewing?: boolean;
 	isDragging: number;
+	currentCodeErrorId?: string;
 }
 
 function merge(defaults: Partial<State>, codemark: CSCodemark): State {
@@ -827,6 +833,18 @@ class CodemarkForm extends React.Component<Props, State> {
 				const { review } = response;
 				parentPostId = review.postId;
 				this.props.markItemRead(review.id, review.numReplies + 1);
+			} catch (error) {
+				// FIXME what do we do if we don't find the review?
+			}
+		}
+
+		if (this.props.currentCodeErrorId) {
+			try {
+				fetchCodeError(this.props.currentCodeErrorId);
+				const codeError = this.props.codeErrors.codeErrors[this.props.currentCodeErrorId];
+
+				parentPostId = codeError.postId;
+				//this.props.markItemRead(review.id, review.numReplies + 1);
 			} catch (error) {
 				// FIXME what do we do if we don't find the review?
 			}
@@ -2016,7 +2034,9 @@ class CodemarkForm extends React.Component<Props, State> {
 					<CancelButton onClick={this.cancelCompose} incrementKeystrokeLevel={true} />
 					<PanelHeader
 						title={
-							this.props.currentReviewId
+							this.props.currentCodeErrorId
+								? "Add Comment to Code Error"
+								: this.props.currentReviewId
 								? "Add Comment to Review"
 								: this.props.textEditorUriHasPullRequestContext
 								? "Add Comment to Pull Request"
@@ -2524,7 +2544,8 @@ const mapStateToProps = (state: CodeStreamState): ConnectedProps => {
 		preferences,
 		providers,
 		codemarks,
-		repos
+		repos,
+		codeErrors
 	} = state;
 	const user = users[session.userId!] as CSMe;
 	const channel = context.currentStreamId
@@ -2587,8 +2608,10 @@ const mapStateToProps = (state: CodeStreamState): ConnectedProps => {
 		codemarkState: codemarks,
 		multipleMarkersEnabled: isFeatureEnabled(state, "multipleMarkers"),
 		currentReviewId: context.currentReviewId,
+		currentCodeErrorId: context.currentCodeErrorId,
 		inviteUsersOnTheFly,
-		prLabel: getPRLabel(state)
+		prLabel: getPRLabel(state),
+		codeErrors: codeErrors
 	};
 };
 
@@ -2596,7 +2619,8 @@ const ConnectedCodemarkForm = connect(mapStateToProps, {
 	openPanel,
 	openModal,
 	markItemRead,
-	setUserPreference
+	setUserPreference,
+	fetchCodeError
 })(CodemarkForm);
 
 export { ConnectedCodemarkForm as CodemarkForm };

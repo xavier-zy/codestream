@@ -74,12 +74,11 @@ export const createCodeError = (attributes: NewCodeErrorAttributes) => async (
 			replyPost: attributes.replyPost
 		});
 		if (response) {
-			const result = dispatch(addCodeErrors([response.codeError]));
+			dispatch(addCodeErrors([response.codeError]));
 			dispatch(addStreams([response.stream]));
 			dispatch(addPosts([response.post]));
-
-			return result;
 		}
+		return response;
 	} catch (error) {
 		logError("Error creating a code error", { message: error.toString() });
 		throw { reason: "create", message: error.toString() } as CreateCodeErrorError;

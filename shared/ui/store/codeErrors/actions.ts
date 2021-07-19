@@ -187,3 +187,7 @@ export const jumpToStackLine = (stackLine: CSStackTraceLine, sha: string) => asy
 		highlight: true
 	});
 };
+
+export const updateCodeError = request => async dispatch => {
+	return HostApi.instance.send(UpdateCodeErrorRequestType, request);
+};

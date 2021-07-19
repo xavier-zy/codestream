@@ -86,7 +86,8 @@ import { fetchReview } from "./store/reviews/actions";
 import {
 	fetchCodeError,
 	NewCodeErrorAttributes,
-	resolveStackTrace
+	resolveStackTrace,
+	updateCodeError
 } from "./store/codeErrors/actions";
 import { openPullRequestByUrl } from "./store/providerPullRequests/actions";
 import { updateCapabilities } from "./store/capabilities/actions";
@@ -471,23 +472,24 @@ function listenForEvents(store) {
 					case "open": {
 						store.dispatch(closeAllPanels());
 						const parsedStack: string[] = route.query.stack ? JSON.parse(route.query.stack) : [];
+						const title = parsedStack[0]
+							? parsedStack[0].startsWith("Error: ")
+								? parsedStack[0].substring(7)
+								: parsedStack[0]
+							: "";
 						const { repo, sha } = JSON.parse(route.query.customAttributes);
 						store.dispatch(openPanel(WebviewPanels.CodeError));
-
-						resolveStackTrace(repo, sha, parsedStack).then(async (_: ResolveStackTraceResponse) => {
-							const codeError: NewCodeErrorAttributes = {
-								// what for this?
-								title: parsedStack[0],
-								stackTrace: parsedStack.join("\n"),
-								stackInfo: _,
-								providerUrl: route.query.url
-							};
-							const response = (await store.dispatch(createPostAndCodeError(codeError))) as any;
-							console.warn(response);
-							store.dispatch(closeAllPanels());
-							store.dispatch(setCurrentCodeError(response.codeError.id));
-							store.dispatch(openPanel(WebviewPanels.CodemarksForFile));
-						});
+						const codeError: NewCodeErrorAttributes = {
+							title,
+							stackTrace: parsedStack.join("\n"),
+							providerUrl: route.query.url
+						};
+						const response = (await store.dispatch(createPostAndCodeError(codeError))) as any;
+						store.dispatch(closeAllPanels());
+						store.dispatch(setCurrentCodeError(response.codeError.id));
+						store.dispatch(openPanel(WebviewPanels.CodemarksForFile));
+						const stackInfo = await resolveStackTrace(repo, sha, parsedStack);
+						store.dispatch(updateCodeError({ id: response.codeError.id, stackInfo }));
 						break;
 					}
 				}

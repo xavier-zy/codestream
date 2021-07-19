@@ -198,7 +198,8 @@ export class NRManager {
 		arrayOfFiles = arrayOfFiles || [];
 		const files = fs.readdirSync(dirPath);
 		for (const file of files) {
-			if (!file.match("/node_modules")) {
+			// For demo purposes!!!
+			if (!file.match(/node_modules/)) {
 				const filePath = path.join(dirPath, file);
 				if (fs.statSync(filePath).isDirectory()) {
 					arrayOfFiles = this.getAllFiles(filePath, arrayOfFiles);
@@ -207,7 +208,6 @@ export class NRManager {
 				}
 			}
 		}
-
 		return arrayOfFiles;
 	}
 }

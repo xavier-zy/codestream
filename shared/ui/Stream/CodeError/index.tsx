@@ -1,4 +1,4 @@
-import React, { PropsWithChildren } from "react";
+import React, { PropsWithChildren, useEffect } from "react";
 import cx from "classnames";
 import {
 	CardBody,
@@ -309,24 +309,25 @@ export const BaseCodeErrorMenu = (props: BaseCodeErrorMenuProps) => {
 };
 
 const BaseCodeError = (props: BaseCodeErrorProps) => {
-	const { codeError } = props;
-
 	const dispatch = useDispatch();
 	const derivedState = useSelector((state: CodeStreamState) => {
+		const codeError = state.codeErrors[props.codeError.id] || props.codeError;
 		const codeAuthorId = (props.codeError.codeAuthorIds || [])[0];
 		return {
 			providers: state.providers,
 			isInVscode: state.ide.name === "VSC",
 			author: state.users[props.codeError.creatorId],
-			codeAuthor: state.users[codeAuthorId || props.codeError.creatorId]
+			codeAuthor: state.users[codeAuthorId || props.codeError.creatorId],
+			codeError
 		};
 	}, shallowEqual);
 	const renderedFooter = props.renderFooter && props.renderFooter(CardFooter, ComposeWrapper);
+	const { codeError } = derivedState;
 
 	const onClickStackLine = async (event, lineNum) => {
 		event && event.preventDefault();
 		if (props.collapsed) return;
-		const { stackInfo } = props.codeError;
+		const { stackInfo } = codeError;
 		if (
 			stackInfo &&
 			stackInfo.lines &&
@@ -337,16 +338,16 @@ const BaseCodeError = (props: BaseCodeErrorProps) => {
 		}
 	};
 
-	const stackTraceLines = props.codeError.stackTrace.split("\n");
+	const stackTraceLines = codeError.stackTrace.split("\n");
 
-	useDidMount(() => {
+	useEffect(() => {
 		if (!props.collapsed) {
-			const { stackInfo } = props.codeError;
+			const { stackInfo } = codeError;
 			if (stackInfo && stackInfo.lines && stackInfo.lines[1] && !stackInfo.lines[1].error) {
 				dispatch(jumpToStackLine(stackInfo.lines[1], stackInfo.sha!));
 			}
 		}
-	});
+	}, [codeError]);
 
 	return (
 		<MinimumWidthCard {...getCardProps(props)} noCard={!props.collapsed}>
@@ -375,15 +376,10 @@ const BaseCodeError = (props: BaseCodeErrorProps) => {
 				)}
 
 				<MetaSection>
-					{!props.collapsed && (
-						<Meta>
-							<MarkdownText text={props.codeError.title} />
-						</Meta>
+					{!props.collapsed && codeError.providerUrl && (
+						<Link href={codeError.providerUrl}>Open in New Relic</Link>
 					)}
-					{!props.collapsed && props.codeError.providerUrl && (
-						<Link href={props.codeError.providerUrl}>Open in New Relic</Link>
-					)}
-					{props.codeError.stackTrace && (
+					{codeError.stackTrace && (
 						<Meta>
 							<MetaLabel>Stack Trace</MetaLabel>
 							{stackTraceLines.map((line, i) => (

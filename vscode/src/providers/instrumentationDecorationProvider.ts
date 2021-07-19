@@ -72,7 +72,7 @@ export class InstrumentationDecorationProvider implements HoverProvider, vscode.
 			Container.session.onDidChangeSessionStatus(this.onSessionStatusChanged, this)
 		);
 
-		this.regex = /NewRelic\.([a-zA-Z_]+)\((["'][\w\-\_]+["'])/g;
+		this.regex = /[Nn]ew[\-_]?[Rr]elic\.([a-zA-Z_]+)\((["'][\w\-\_]+["'])/g;
 		const decorationTypes: { [key: string]: TextEditorDecorationType } = Object.create(null);
 
 		// window.onDidChangeVisibleTextEditors(this.onEditorVisibilityChanged, this);
@@ -345,7 +345,10 @@ export class InstrumentationDecorationProvider implements HoverProvider, vscode.
 					val: v,
 					start: range.start.line
 				});
-				editor!.setDecorations(v, [range]);
+
+				editor!.setDecorations(v, [
+					new vscode.Range(range.start.line, 0, range.end.line, range.end.character)
+				]);
 				// }
 				found = true;
 

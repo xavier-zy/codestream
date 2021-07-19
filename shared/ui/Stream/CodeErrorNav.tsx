@@ -164,6 +164,9 @@ export function CodeErrorNav(props: Props) {
 	const { codeError } = derivedState;
 
 	const exit = async () => {
+		// NOTE: this doesn't appear to actually be getting hit.
+		// the close method in <Modal> which calls InlineCodemarks is what runs
+
 		// clear out the current code error (set to blank) in the webview
 		await dispatch(setCurrentCodeError());
 	};

@@ -1000,7 +1000,9 @@ class CodemarkForm extends React.Component<Props, State> {
 			}
 		}
 
-		if (this.props.textEditorUriHasPullRequestContext) {
+		if (this.props.currentCodeErrorId) {
+			// do something cool?
+		} else if (this.props.textEditorUriHasPullRequestContext) {
 			// do something cool?
 		} else if (
 			!this.props.isEditing &&
@@ -1268,6 +1270,8 @@ class CodemarkForm extends React.Component<Props, State> {
 		if (this.state.isPreviewing) return null;
 		if (this.props.isEditing) return null;
 		if (this.props.currentReviewId) return null;
+		if (this.props.currentCodeErrorId) return null;
+
 		// don't show the sharing controls for these types of diffs
 		if (this.props.textEditorUri && this.props.textEditorUri.match("codestream-diff://-[0-9]+-"))
 			return null;
@@ -2035,7 +2039,7 @@ class CodemarkForm extends React.Component<Props, State> {
 					<PanelHeader
 						title={
 							this.props.currentCodeErrorId
-								? "Add Comment to Code Error"
+								? "Add Comment to Error"
 								: this.props.currentReviewId
 								? "Add Comment to Review"
 								: this.props.textEditorUriHasPullRequestContext
@@ -2442,7 +2446,9 @@ class CodemarkForm extends React.Component<Props, State> {
 										paddingRight: "10px",
 										// fixed width to handle the isLoading case
 										width:
-											this.props.currentReviewId || this.props.textEditorUriHasPullRequestContext
+											this.props.currentReviewId ||
+											this.props.textEditorUriHasPullRequestContext ||
+											this.props.currentCodeErrorId
 												? "auto"
 												: "80px",
 										marginRight: 0
@@ -2471,6 +2477,8 @@ class CodemarkForm extends React.Component<Props, State> {
 										? this.props.prLabel.AddSingleComment
 										: this.props.editingCodemark
 										? "Save"
+										: this.props.currentCodeErrorId
+										? "Add Comment to Error"
 										: "Submit"}
 								</Button>
 							</Tooltip>

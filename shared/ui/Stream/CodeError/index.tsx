@@ -96,11 +96,6 @@ export interface BaseCodeErrorMenuProps {
 	collapsed?: boolean;
 }
 
-const Clickable = styled(Link)`
-	display: inline-block;
-	padding-top: 2px;
-`;
-
 const ComposeWrapper = styled.div.attrs(() => ({
 	className: "compose codemark-compose"
 }))`
@@ -122,23 +117,10 @@ export const Description = styled.div`
 	margin-bottom: 15px;
 `;
 
-export const MetaCheckboxWithHoverIcon = styled.div`
-	display: flex;
-	.icon {
-		margin: 3px 0 0 8px;
-		display: none !important;
-	}
-	&:hover .icon {
-		display: inline-block !important;
-	}
-`;
-
-export const MetaIcons = styled.span`
-	margin-left: 5px;
-	display: inline-block;
-	height: 14px;
-	.icon {
-		margin-left: 5px;
+const ClickLine = styled.div`
+	cursor: pointer;
+	:hover {
+		color: var(--text-color-highlight);
 	}
 `;
 
@@ -383,9 +365,9 @@ const BaseCodeError = (props: BaseCodeErrorProps) => {
 						<Meta>
 							<MetaLabel>Stack Trace</MetaLabel>
 							{stackTraceLines.map((line, i) => (
-								<div onClick={e => onClickStackLine(e, i)}>
+								<ClickLine onClick={e => onClickStackLine(e, i)}>
 									<span>{line}</span>
-								</div>
+								</ClickLine>
 							))}
 						</Meta>
 					)}

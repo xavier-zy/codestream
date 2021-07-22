@@ -2,7 +2,11 @@ import React from "react";
 import styled from "styled-components";
 import { Button } from "../src/components/Button";
 import { useDispatch, useSelector, shallowEqual } from "react-redux";
-import { setCurrentCodeError } from "@codestream/webview/store/context/actions";
+import {
+	closeAllModals,
+	closeAllPanels,
+	setCurrentCodeError
+} from "@codestream/webview/store/context/actions";
 import { useDidMount } from "@codestream/webview/utilities/hooks";
 import { fetchCodeError } from "@codestream/webview/store/codeErrors/actions";
 import { CodeStreamState } from "../store";
@@ -18,13 +22,17 @@ import { CodeErrorForm } from "./CodeErrorForm";
 import { isFeatureEnabled } from "../store/apiVersioning/reducer";
 import { getPRLabel } from "../store/providers/reducer";
 import { getSidebarLocation } from "../store/editorContext/reducer";
+import Icon from "./Icon";
+import { DropdownButton } from "./DropdownButton";
+import { Link } from "./Link";
+import Tooltip from "./Tooltip";
 
 const NavHeader = styled.div`
 	// flex-grow: 0;
 	// flex-shrink: 0;
 	// display: flex;
 	// align-items: flex-start;
-	padding: 35px 10px 10px 15px;
+	padding: 25px 10px 10px 15px;
 	// justify-content: center;
 	width: 100%;
 	${Header} {
@@ -117,6 +125,7 @@ const Root = styled.div`
 			display: none;
 		}
 	}
+
 `;
 
 export const ComposeArea = styled.div<{ side: "right" | "left" }>`
@@ -164,9 +173,6 @@ export function CodeErrorNav(props: Props) {
 	const { codeError } = derivedState;
 
 	const exit = async () => {
-		// NOTE: this doesn't appear to actually be getting hit.
-		// the close method in <Modal> which calls InlineCodemarks is what runs
-
 		// clear out the current code error (set to blank) in the webview
 		await dispatch(setCurrentCodeError());
 	};
@@ -232,6 +238,59 @@ export function CodeErrorNav(props: Props) {
 	}
 	return (
 		<Root>
+			<div
+				style={{
+					display: "flex",
+					alignItems: "center",
+					width: "100%"
+				}}
+			>
+				<div style={{ flexGrow: 10 }}>
+					<div
+						style={{
+							display: "inline-block",
+							width: "10px",
+							height: "10px",
+							backgroundColor: "gray",
+							margin: "0 5px 0 20px"
+						}}
+					/>
+					CodeStream-Local-Colin API Server
+				</div>
+				{/* <Icon name="add-comment" title="Help us improve" placement="bottom" delay={1} /> */}
+				{codeError.providerUrl && (
+					<span style={{ padding: "0 10px", marginLeft: "auto", flexGrow: 0 }}>
+						<Tooltip title="Open on New Relic One" placement="bottom" delay={1}>
+							<span>
+								<Link className="external-link" href={codeError.providerUrl}>
+									<Icon name="link-external" />
+									View Details
+								</Link>
+							</span>
+						</Tooltip>
+					</span>
+				)}
+				<div
+					style={{
+						width: "1px",
+						height: "16px",
+						background: "var(--base-border-color)",
+						display: "inline-block",
+						margin: "0 10px 0 0",
+						flexGrow: 0
+					}}
+				/>
+				<div style={{ marginLeft: "auto", marginRight: "13px", whiteSpace: "nowrap", flexGrow: 0 }}>
+					<Icon
+						className="clickable"
+						name="x"
+						onClick={exit}
+						title="Close View"
+						placement="bottomRight"
+						delay={1}
+					/>
+				</div>
+			</div>
 			<NavHeader id="nav-header">
 				<BaseCodeErrorHeader codeError={codeError} collapsed={false} setIsEditing={setIsEditing}>
 					<></>

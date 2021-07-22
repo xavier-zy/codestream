@@ -21,6 +21,7 @@ export interface DropdownButtonItems {
 	icon?: any;
 	checked?: boolean;
 	onSelect?: () => void; // callback for when you select an item with a splitDropdown
+	type?: string;
 }
 
 export interface DropdownButtonProps extends ButtonProps {

@@ -10,6 +10,15 @@ interface MenuItem {
 	default?: boolean;
 	checked?: boolean;
 	subtle?: string;
+	type?: string;
+	subtext?: string;
+	subtextNoPadding?: string;
+	placeholder?: string;
+	floatRight?: any;
+	icon?: any;
+	noHover?: boolean;
+	disabled?: boolean;
+	searchLabel?: string;
 }
 
 export interface InlineMenuProps {
@@ -114,7 +123,7 @@ export function InlineMenu(props: InlineMenuProps) {
 				{!props.noChevronDown && (
 					<span style={{ whiteSpace: "nowrap" }}>
 						&#65279;
-						<Icon name="chevron-down" />
+						<Icon name="chevron-down-thin" />
 					</span>
 				)}
 			</TextButton>

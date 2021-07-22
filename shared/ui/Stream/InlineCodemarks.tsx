@@ -1209,8 +1209,8 @@ export class SimpleInlineCodemarks extends Component<Props, State> {
 			<Modal
 				noScroll
 				noPadding
-				onClose={isGitLabPR ? undefined : () => this.close()}
-				sidebarBackground={!!currentReviewId && !!currentCodeErrorId}
+				onClose={isGitLabPR || currentCodeErrorId ? undefined : () => this.close()}
+				sidebarBackground={!!currentReviewId || !!currentCodeErrorId}
 			>
 				<div style={{ overflow: isGitLabPR ? "visible" : "hidden" }}>
 					{currentReviewId ? (

@@ -110,7 +110,7 @@ import { Attachments } from "../Attachments";
 import { PRSelectorButtons } from "../PullRequestComponents";
 import { PRProgress, PRProgressFill, PRProgressLine } from "../PullRequestFilesChangedList";
 
-interface RepoMetadata {
+export interface RepoMetadata {
 	repoName: string;
 	branch: string;
 }
@@ -187,7 +187,7 @@ const ComposeWrapper = styled.div.attrs(() => ({
 	}
 `;
 
-const RepoInfo = styled.span`
+export const RepoInfo = styled.span`
 	span {
 		color: var(--text-color-highlight);
 		display: inline-block;

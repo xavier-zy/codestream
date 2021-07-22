@@ -36,7 +36,6 @@ import { DelayedRender } from "@codestream/webview/Container/DelayedRender";
 import { getCodeError } from "@codestream/webview/store/codeErrors/reducer";
 import MessageInput, { AttachmentField } from "../MessageInput";
 import styled from "styled-components";
-import Button from "../Button";
 import { getTeamMates, findMentionedUserIds } from "@codestream/webview/store/users/reducer";
 import { createPost, markItemRead } from "../actions";
 import { getThreadPosts } from "@codestream/webview/store/posts/reducer";
@@ -53,6 +52,13 @@ import { Loading } from "@codestream/webview/Container/Loading";
 import { getPost } from "../../store/posts/reducer";
 import { AddReactionIcon, Reactions } from "../Reactions";
 import { Attachments } from "../Attachments";
+import { HeadshotName } from "@codestream/webview/src/components/HeadshotName";
+import { RepoInfo, RepoMetadata } from "../Review";
+import Timestamp from "../Timestamp";
+import { Button } from "@codestream/webview/src/components/Button";
+import { ButtonRow } from "@codestream/webview/src/components/Dialog";
+import { Headshot } from "@codestream/webview/src/components/Headshot";
+import { InlineMenu } from "@codestream/webview/src/components/controls/InlineMenu";
 
 interface SimpleError {
 	/**
@@ -68,6 +74,7 @@ interface SimpleError {
 export interface BaseCodeErrorProps extends CardProps {
 	codeError: CSCodeError;
 	post?: CSPost;
+	repoInfo?: RepoMetadata;
 	headerError?: SimpleError;
 	currentUserId?: string;
 	collapsed?: boolean;
@@ -119,32 +126,165 @@ export const Description = styled.div`
 
 const ClickLine = styled.div`
 	cursor: pointer;
+	color: var(--text-color);
 	:hover {
 		color: var(--text-color-highlight);
+		opacity: 1;
 	}
+	opacity: 0.7;
+	&.selected {
+		color: var(--text-color-highlight);
+		opacity: 1;
+	}
+`;
+
+const DataRow = styled.div`
+	display: flex;
+	align-items: center;
+`;
+const DataLabel = styled.div`
+	margin-right: 5px;
+`;
+const DataValue = styled.div`
+	color: var(--text-color-subtle);
 `;
 
 // if child props are passed in, we assume they are the action buttons/menu for the header
 export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeaderProps>) => {
 	const { codeError, collapsed } = props;
 
+	const [resolveMethod, setResolveMethod] = React.useState("resolve");
+	const resolveCodeError = (status: string) => {};
+
+	const [assignee, setAssignee] = React.useState("pez@codestream.com");
+
 	return (
-		<Header>
-			<Icon name="alert" className="type" />
-			<BigTitle>
-				<HeaderActions>
-					{props.post && <AddReactionIcon post={props.post} className="in-review" />}
-					{props.children || (
-						<BaseCodeErrorMenu
-							codeError={codeError}
-							collapsed={collapsed}
-							setIsEditing={props.setIsEditing}
-						/>
-					)}
-				</HeaderActions>
-				<MarkdownText text={codeError.title} />
-			</BigTitle>
-		</Header>
+		<>
+			<Header>
+				<Icon name="alert" className="type" />
+				<BigTitle>
+					<HeaderActions>
+						{props.post && <AddReactionIcon post={props.post} className="in-review" />}
+						{props.children || (
+							<BaseCodeErrorMenu
+								codeError={codeError}
+								collapsed={collapsed}
+								setIsEditing={props.setIsEditing}
+							/>
+						)}
+
+						<div
+							style={{
+								display: "flex",
+								width: "100%",
+								alignItems: "center"
+							}}
+						>
+							<div style={{ marginLeft: "auto", display: "flex", alignItems: "center" }}>
+								<DropdownButton
+									items={[
+										{
+											key: "resolve",
+											label: `Resolve`,
+											onSelect: () => setResolveMethod("RESOLVE"),
+											action: () => resolveCodeError("resolve")
+										},
+										{ label: "-" },
+										{
+											key: "ignore",
+											label: `Ignore`,
+											onSelect: () => setResolveMethod("IGNORE"),
+											action: () => resolveCodeError("ignore")
+										}
+									]}
+									selectedKey={"resolve"}
+									variant="secondary"
+									size="compact"
+									wrap
+								>
+									Unresolved
+								</DropdownButton>
+								<div style={{ display: "inline-block", width: "10px" }} />
+								<InlineMenu
+									items={[
+										{ type: "search", label: "", placeholder: "User name" },
+										{ label: "-" },
+										{
+											label: (
+												<span style={{ fontSize: "10px", fontWeight: "bold", opacity: 0.7 }}>
+													CURRENT ASSIGNEE
+												</span>
+											),
+											noHover: true,
+											disabled: true
+										},
+										{
+											icon: (
+												<Headshot
+													size={16}
+													display="inline-block"
+													person={{ email: "pez@codestream.com" }}
+												/>
+											),
+											key: "pez",
+											label: `Peter Pezaris`,
+											searchLabel: "Peter Pezaris",
+											subtext: "ppezaris@newrelic.com",
+											floatRight: { label: <Icon name="x" /> },
+											action: () => setAssignee("pez@codestream.com")
+										},
+										{ label: "-" },
+										{
+											label: (
+												<span style={{ fontSize: "10px", fontWeight: "bold", opacity: 0.7 }}>
+													SUGGESTIONS FROM GIT
+												</span>
+											),
+											noHover: true,
+											disabled: true
+										},
+										{
+											key: "colin",
+											label: `Colin Stryker`,
+											searchLabel: "Colin Stryker",
+											subtextNoPadding: "cstryker@newrelic.com",
+											action: () => setAssignee("cstryker@newrelic.com")
+										},
+										{
+											key: "dave",
+											label: `David Hersh`,
+											searchLabel: "David Hersh",
+											subtextNoPadding: "dhersh@newrelic.com",
+											action: () => setAssignee("dhersh@newrelic.com")
+										},
+										{ label: "-" },
+										{
+											label: (
+												<span style={{ fontSize: "10px", fontWeight: "bold", opacity: 0.7 }}>
+													OTHER TEAMMATES
+												</span>
+											),
+											noHover: true,
+											disabled: true
+										},
+										{
+											key: "brian",
+											label: `Brian Canzanella`,
+											searchLabel: "Brian Canzanella",
+											subtextNoPadding: "bcanzanella@newrelic.com",
+											action: () => setAssignee("bcanzanella@newrelic.com")
+										}
+									]}
+								>
+									<Headshot size={20} display="inline-block" person={{ email: assignee }} />
+								</InlineMenu>
+							</div>
+						</div>
+					</HeaderActions>
+					<MarkdownText text={codeError.title} />
+				</BigTitle>
+			</Header>
+		</>
 	);
 };
 
@@ -306,6 +446,8 @@ const BaseCodeError = (props: BaseCodeErrorProps) => {
 	const renderedFooter = props.renderFooter && props.renderFooter(CardFooter, ComposeWrapper);
 	const { codeError } = derivedState;
 
+	const [currentSelectedLine, setCurrentSelectedLine] = React.useState(0);
+
 	const onClickStackLine = async (event, lineNum) => {
 		event && event.preventDefault();
 		if (props.collapsed) return;
@@ -316,6 +458,7 @@ const BaseCodeError = (props: BaseCodeErrorProps) => {
 			stackInfo.lines[lineNum] &&
 			!stackInfo.lines[lineNum].error
 		) {
+			setCurrentSelectedLine(lineNum);
 			await dispatch(jumpToStackLine(stackInfo.lines[lineNum], stackInfo.sha!));
 		}
 	};
@@ -357,18 +500,58 @@ const BaseCodeError = (props: BaseCodeErrorProps) => {
 					</div>
 				)}
 
+				{!props.collapsed && (
+					<>
+						<DataRow>
+							<DataLabel>Timestamp:</DataLabel>
+							<DataValue>
+								<Timestamp className="no-padding" time={props.codeError.createdAt} />
+							</DataValue>
+						</DataRow>
+						<DataRow>
+							<DataLabel>URL host:</DataLabel>
+							<DataValue>localhost.codestream.us:12079</DataValue>
+						</DataRow>
+						<DataRow>
+							<DataLabel>URL path:</DataLabel>
+							<DataValue>/posts</DataValue>
+						</DataRow>
+						{props.repoInfo && (
+							<DataRow>
+								<DataLabel>Repo:</DataLabel>
+								<DataValue>
+									<span className="monospace">{props.repoInfo.repoName}</span>
+								</DataValue>
+							</DataRow>
+						)}
+						{props.repoInfo && (
+							<DataRow>
+								<DataLabel>Build:</DataLabel>
+								<DataValue>
+									<span className="monospace">{props.repoInfo.branch.substr(0, 8)}</span>
+								</DataValue>
+							</DataRow>
+						)}
+					</>
+				)}
+
 				<MetaSection>
-					{!props.collapsed && codeError.providerUrl && (
-						<Link href={codeError.providerUrl}>Open in New Relic</Link>
-					)}
 					{codeError.stackTrace && (
 						<Meta>
 							<MetaLabel>Stack Trace</MetaLabel>
-							{stackTraceLines.map((line, i) => (
-								<ClickLine onClick={e => onClickStackLine(e, i)}>
-									<span>{line}</span>
-								</ClickLine>
-							))}
+							{stackTraceLines.map((line, i) => {
+								const className = i === currentSelectedLine ? "monospace selected" : "monospace";
+								const mline = line
+									.replace(/.*codestream-server\//, "")
+									.replace(/\)/, "")
+									.replace(/\s\s\s\s+/g, "     ");
+								console.warn("LINE IS: ", line);
+								return (
+									<ClickLine className={className} onClick={e => onClickStackLine(e, i)}>
+										<span>{mline}</span>
+									</ClickLine>
+								);
+							})}
 						</Meta>
 					)}
 					{props.post && (
@@ -414,7 +597,7 @@ const renderMetaSectionCollapsed = (props: BaseCodeErrorProps) => {
 };
 
 const ReplyInput = (props: {
-	codeErrorId: string;
+	codeError: CSCodeError;
 	parentPostId: string;
 	streamId: string;
 	numReplies: number;
@@ -431,7 +614,7 @@ const ReplyInput = (props: {
 		if (text.length === 0) return;
 
 		setIsLoading(true);
-		dispatch(markItemRead(props.codeErrorId, props.numReplies + 1));
+		dispatch(markItemRead(props.codeError.id, props.numReplies + 1));
 		if (isChangeRequest) {
 			await dispatch(
 				createCodemark({
@@ -474,45 +657,31 @@ const ReplyInput = (props: {
 			<MessageInput
 				multiCompose
 				text={text}
-				placeholder="Add Comment..."
+				placeholder="Add a comment..."
 				onChange={setText}
 				onSubmit={submit}
 				attachments={attachments}
 				attachmentContainerType="reply"
 				setAttachments={setAttachments}
 			/>
-			<div style={{ display: "flex", flexWrap: "wrap" }}>
-				<div style={{ textAlign: "right", flexGrow: 1 }}>
-					<Tooltip
-						title={
-							<span>
-								Submit Comment
-								<span className="keybinding extra-pad">
-									{navigator.appVersion.includes("Macintosh") ? "⌘" : "Ctrl"} ENTER
-								</span>
+			<ButtonRow style={{ marginTop: 0 }}>
+				<Tooltip
+					title={
+						<span>
+							Submit Comment
+							<span className="keybinding extra-pad">
+								{navigator.appVersion.includes("Macintosh") ? "⌘" : "Ctrl"} ENTER
 							</span>
-						}
-						placement="bottomRight"
-						delay={1}
-					>
-						<Button
-							style={{
-								// fixed width to handle the isLoading case
-								width: "100px",
-								margin: "10px 0",
-								float: "right"
-							}}
-							className={cx("control-button", { cancel: text.length === 0 })}
-							type="submit"
-							disabled={text.length === 0}
-							onClick={submit}
-							loading={isLoading}
-						>
-							{isChangeRequest ? "Request Change" : "Add Comment"}
-						</Button>
-					</Tooltip>
-				</div>
-			</div>
+						</span>
+					}
+					placement="bottomRight"
+					delay={1}
+				>
+					<Button disabled={text.length === 0} onClick={submit} isLoading={isLoading}>
+						Submit
+					</Button>
+				</Tooltip>
+			</ButtonRow>
 		</>
 	);
 };
@@ -593,7 +762,7 @@ const CodeErrorForCodeError = (props: PropsWithCodeError) => {
 					{InputContainer && (
 						<InputContainer>
 							<ReplyInput
-								codeErrorId={codeError.id}
+								codeError={codeError}
 								parentPostId={codeError.postId}
 								streamId={codeError.streamId}
 								numReplies={codeError.numReplies}
@@ -604,6 +773,16 @@ const CodeErrorForCodeError = (props: PropsWithCodeError) => {
 			);
 		});
 
+	const repoInfo = React.useMemo(() => {
+		const { stackInfo } = codeError;
+		if (stackInfo && stackInfo.repoId) {
+			const repo = derivedState.repos[stackInfo.repoId];
+			return { repoName: repo.name, branch: stackInfo.sha! };
+		} else {
+			return undefined;
+		}
+	}, [codeError, derivedState.repos]);
+
 	if (isEditing) {
 		return <CodeErrorForm editingCodeError={props.codeError} />;
 	} else {
@@ -612,6 +791,7 @@ const CodeErrorForCodeError = (props: PropsWithCodeError) => {
 				{...baseProps}
 				codeError={props.codeError}
 				post={derivedState.post}
+				repoInfo={repoInfo}
 				isFollowing={derivedState.userIsFollowing}
 				currentUserId={derivedState.currentUser.id}
 				renderFooter={renderFooter}

@@ -67,7 +67,8 @@ export const providerDisplayNamesByNameKey = new Map<string, string>([
 	["msteams", "Microsoft Teams"],
 	["okta", "Okta"],
 	["clubhouse", "Clubhouse"],
-	["linear", "Linear"]
+	["linear", "Linear"],
+	["newrelic", "New Relic"]
 ]);
 
 export interface ThirdPartyProviderSupportsIssues {

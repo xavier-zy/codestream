@@ -590,6 +590,8 @@ export interface CSClubhouseProviderInfo extends CSProviderInfo {}
 
 export interface CSLinearProviderInfo extends CSProviderInfo {}
 
+export interface CSNewRelicProviderInfo extends CSProviderInfo {}
+
 export type CSProviderInfos =
 	| CSAsanaProviderInfo
 	| CSBitbucketProviderInfo
@@ -604,7 +606,8 @@ export type CSProviderInfos =
 	| CSAzureDevOpsProviderInfo
 	| CSOktaProviderInfo
 	| CSClubhouseProviderInfo
-	| CSLinearProviderInfo;
+	| CSLinearProviderInfo
+	| CSNewRelicProviderInfo;
 
 type Filter<T, U> = T extends U ? T : never;
 export type CSRefreshableProviderInfos = Filter<CSProviderInfos, { refreshToken: string }>;
@@ -779,6 +782,7 @@ type CSMeProviderInfo = { slack?: CSSlackProviderInfo } & {
 		youtrack?: CSYouTrackProviderInfo;
 		azuredevops?: CSAzureDevOpsProviderInfo;
 		okta?: CSOktaProviderInfo;
+		newrelic?: CSNewRelicProviderInfo;
 		[key: string]: CSProviderInfos | undefined;
 	};
 };

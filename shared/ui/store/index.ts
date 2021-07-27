@@ -59,6 +59,8 @@ import { DocumentsState } from "./documents/types";
 import { reduceReviews } from "./reviews/reducer";
 import { reduceProviderPullRequests } from "./providerPullRequests/reducer";
 import { ProviderPullRequestsState } from "./providerPullRequests/types";
+import { reduceNewRelicData } from "./newrelic/reducer";
+import { NewRelicDataState } from "./newrelic/types";
 
 const pluginVersion = (state = "", action) => {
 	if (action.type === "@pluginVersion/Set") return action.payload;
@@ -94,7 +96,8 @@ const reducer = combineReducers({
 	versioning: reduceVersioning,
 	apiVersioning: reduceApiVersioning,
 	providerPullRequests: reduceProviderPullRequests,
-	codeErrors: reduceCodeErrors
+	codeErrors: reduceCodeErrors,
+	newRelicData: reduceNewRelicData
 });
 
 export function createCodeStreamStore(
@@ -143,4 +146,5 @@ export interface CodeStreamState {
 	users: UsersState;
 	versioning: VersioningState;
 	codeErrors: CodeErrorsState;
+	newRelicData: NewRelicDataState;
 }

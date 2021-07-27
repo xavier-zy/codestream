@@ -47,7 +47,8 @@ export enum ContextActionsType {
 	SetNewPullRequestOptions = "@context/SetNewPullRequestOptions",
 	SetStartWorkCard = "@context/SetStartWorkCard",
 	SetOnboardStep = "@context/SetOnboardStep",
-	SetIsFirstPageview = "@context/SetIsFirstPageview"
+	SetIsFirstPageview = "@context/SetIsFirstPageview",
+	SetNewRelicData = "@context/SetNewRelicData"
 }
 
 /**

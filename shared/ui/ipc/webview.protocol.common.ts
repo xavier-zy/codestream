@@ -66,7 +66,8 @@ export enum WebviewPanels {
 	Commits = "commits",
 	ErrorInbox = "errorinbox",
 	Instrumentation = "instrumentation",
-	CodeError = "code-error"
+	CodeError = "code-error",
+	NewRelic = "newrelic"
 }
 
 // this is for mixpanel and maps the values from WebviewPanels to their

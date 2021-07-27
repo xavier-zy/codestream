@@ -846,3 +846,22 @@ export interface WebviewErrorRequest {
 export const WebviewErrorRequestType = new RequestType<WebviewErrorRequest, void, void, void>(
 	`codestream/webview/error`
 );
+
+export interface NewRelicData {
+	[key: string]: any;
+}
+
+export interface GetNewRelicDataRequest {
+	query: string;
+}
+
+export interface GetNewRelicDataResponse {
+	data: NewRelicData;
+}
+
+export const GetNewRelicDataRequestType = new RequestType<
+	GetNewRelicDataRequest,
+	GetNewRelicDataResponse,
+	void,
+	void
+>("codestream/newrelic/data");

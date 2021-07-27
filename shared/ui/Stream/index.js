@@ -44,6 +44,7 @@ import ConfigureJiraPanel from "./ConfigureJiraPanel";
 import ConfigureJiraServerPanel from "./ConfigureJiraServerPanel";
 import ConfigureJiraServerOAuthPanel from "./ConfigureJiraServerOAuthPanel";
 import ConfigureEnterprisePanel from "./ConfigureEnterprisePanel";
+import ConfigureNewRelicPanel from "./ConfigureNewRelicPanel";
 import ConfigureTokenProviderPanel from "./ConfigureTokenProviderPanel";
 import { PrePRProviderInfoModal } from "./PrePRProviderInfoModal";
 import * as actions from "./actions";
@@ -339,7 +340,7 @@ export class SimpleStream extends PureComponent {
 		const enterpriseProvider = activePanel.startsWith("configure-enterprise-");
 		const [, , providerName, providerId, origin] = configureProviderInfo || [];
 		const customConfigureProvider = providerName
-			? ["azuredevops", "youtrack", "jiraserver", "jiraserverold", "jira"].find(
+			? ["azuredevops", "youtrack", "jiraserver", "jiraserverold", "jira", "newrelic"].find(
 					name => name === providerName
 			  )
 			: null;
@@ -481,6 +482,9 @@ export class SimpleStream extends PureComponent {
 							)}
 							{customConfigureProvider === "youtrack" && (
 								<ConfigureYouTrackPanel providerId={providerId} originLocation={origin} />
+							)}
+							{customConfigureProvider === "newrelic" && (
+								<ConfigureNewRelicPanel providerId={providerId} originLocation={origin} />
 							)}
 							{customConfigureProvider === "azuredevops" && (
 								<ConfigureAzureDevOpsPanel providerId={providerId} originLocation={origin} />

@@ -37,6 +37,7 @@ export * from "./agent.protocol.azuredevops";
 export * from "./agent.protocol.okta";
 export * from "./agent.protocol.clubhouse";
 export * from "./agent.protocol.linear";
+export * from "./agent.protocol.newrelic";
 
 export * from "./agent.protocol.nr";
 

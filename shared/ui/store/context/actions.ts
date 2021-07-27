@@ -3,8 +3,14 @@ import { logError } from "../../logger";
 import { setUserPreference } from "../../Stream/actions";
 import { action } from "../common";
 import { ContextActionsType, ContextState, PostEntryPoint, Route } from "./types";
-import { WebviewPanels, WebviewModals, NewPullRequestBranch } from "@codestream/protocols/webview";
+import {
+	WebviewPanels,
+	WebviewModals,
+	NewPullRequestBranch,
+	HostDidReceiveRequestNotificationType
+} from "@codestream/protocols/webview";
 import { CodemarkType } from "@codestream/protocols/api";
+import { HostApi } from "@codestream/webview/webview-api";
 
 export const reset = () => action("RESET");
 
@@ -263,3 +269,16 @@ export const goToSetPassword = params =>
 
 export const goToOktaConfig = params =>
 	action(ContextActionsType.SetRoute, { name: Route.OktaConfig, params });
+
+export const handlePendingProtocolHandlerUrl = (url: string | undefined) => (
+	dispatch,
+	getState
+) => {
+	HostApi.instance.emit(HostDidReceiveRequestNotificationType.method, { url: url });
+};
+
+export const setPendingProtocolHandlerUrl = (params: { url?: string } = {}) =>
+	action(ContextActionsType.SetPendingProtocolHandlerUrl, { url: params.url });
+
+export const clearPendingProtocolHandlerUrl = (params = {}) =>
+	action(ContextActionsType.SetPendingProtocolHandlerUrl, { url: undefined });

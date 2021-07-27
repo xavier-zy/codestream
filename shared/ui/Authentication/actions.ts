@@ -24,7 +24,9 @@ import {
 	setCurrentCodemark,
 	setCurrentReview,
 	goToCompanyCreation,
-	setCurrentCodeError
+	setCurrentCodeError,
+	handlePendingProtocolHandlerUrl,
+	clearPendingProtocolHandlerUrl
 } from "../store/context/actions";
 import { fetchCodemarks } from "../Stream/actions";
 import { getCodemark } from "../store/codemarks/reducer";
@@ -248,6 +250,12 @@ export const onLogin = (response: LoginSuccessResponse, isFirstPageview?: boolea
 		dispatch(setCurrentReview(response.state.reviewId));
 	} else if (response.state.codeErrorId) {
 		dispatch(setCurrentCodeError(response.state.codeErrorId));
+	}
+
+	const { context } = getState();
+	if (context.pendingProtocolHandlerUrl) {
+		await dispatch(handlePendingProtocolHandlerUrl(context.pendingProtocolHandlerUrl));
+		dispatch(clearPendingProtocolHandlerUrl());
 	}
 };
 

@@ -152,6 +152,7 @@ export interface WebviewContext {
 	activePanel?: WebviewPanels;
 	startWorkCard?: any;
 	onboardStep: number;
+	pendingProtocolHandlerUrl?: string;
 }
 
 export interface SessionState {

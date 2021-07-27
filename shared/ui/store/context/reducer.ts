@@ -211,6 +211,9 @@ export function reduceContext(
 			return state;
 		}
 
+		case ContextActionsType.SetPendingProtocolHandlerUrl:
+			return { ...state, pendingProtocolHandlerUrl: action.payload.url };
+
 		case "RESET":
 			return {
 				...initialState,

@@ -75,7 +75,8 @@ import {
 	setStartWorkCard,
 	closeAllPanels,
 	clearCurrentPullRequest,
-	setCurrentErrorInboxOptions
+	setCurrentErrorInboxOptions,
+	setPendingProtocolHandlerUrl
 } from "./store/context/actions";
 import { URI } from "vscode-uri";
 import { moveCursorToLine } from "./Stream/api-functions";
@@ -392,6 +393,13 @@ function listenForEvents(store) {
 
 	api.on(HostDidReceiveRequestNotificationType, async e => {
 		if (!e) return;
+
+		// if the user isn't logged in we'll queue this url
+		// up for post-login processing
+		if (!store.getState().session.userId) {
+			store.dispatch(setPendingProtocolHandlerUrl({ url: e.url }));
+			return;
+		}
 
 		const route = parseProtocol(e.url);
 		if (!route || !route.controller) return;

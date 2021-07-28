@@ -394,13 +394,6 @@ function listenForEvents(store) {
 	api.on(HostDidReceiveRequestNotificationType, async e => {
 		if (!e) return;
 
-		// if the user isn't logged in we'll queue this url
-		// up for post-login processing
-		if (!store.getState().session.userId) {
-			store.dispatch(setPendingProtocolHandlerUrl({ url: e.url }));
-			return;
-		}
-
 		const route = parseProtocol(e.url);
 		if (!route || !route.controller) return;
 
@@ -479,6 +472,13 @@ function listenForEvents(store) {
 				switch (route.action) {
 					case "open": {
 						store.dispatch(closeAllPanels());
+
+						// if the user isn't logged in we'll queue this url
+						// up for post-login processing
+						if (!store.getState().session.userId) {
+							store.dispatch(setPendingProtocolHandlerUrl({ url: e.url }));
+							break;
+						}
 						const parsedStack: string[] = route.query.stack ? JSON.parse(route.query.stack) : [];
 						const title = parsedStack[0]
 							? parsedStack[0].startsWith("Error: ")
@@ -486,7 +486,6 @@ function listenForEvents(store) {
 								: parsedStack[0]
 							: "";
 						const { repo, sha } = JSON.parse(route.query.customAttributes);
-						store.dispatch(openPanel(WebviewPanels.CodeError));
 						const codeError: NewCodeErrorAttributes = {
 							title,
 							stackTrace: parsedStack.join("\n"),

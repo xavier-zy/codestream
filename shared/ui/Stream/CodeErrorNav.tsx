@@ -2,17 +2,13 @@ import React from "react";
 import styled from "styled-components";
 import { Button } from "../src/components/Button";
 import { useDispatch, useSelector, shallowEqual } from "react-redux";
-import {
-	closeAllModals,
-	closeAllPanels,
-	setCurrentCodeError
-} from "@codestream/webview/store/context/actions";
+import { closeAllPanels, setCurrentCodeError } from "@codestream/webview/store/context/actions";
 import { useDidMount } from "@codestream/webview/utilities/hooks";
 import { fetchCodeError } from "@codestream/webview/store/codeErrors/actions";
 import { CodeStreamState } from "../store";
 import { getCodeError } from "../store/codeErrors/reducer";
 import { MinimumWidthCard, Meta, BigTitle, Header } from "./Codemark/BaseCodemark";
-import { markItemRead } from "./actions";
+import { closePanel, markItemRead } from "./actions";
 import { Dispatch } from "../store/common";
 import { CodeError, BaseCodeErrorHeader, ExpandedAuthor, Description } from "./CodeError";
 import ScrollBox from "./ScrollBox";
@@ -20,12 +16,14 @@ import { Modal } from "./Modal";
 import KeystrokeDispatcher from "../utilities/keystroke-dispatcher";
 import { CodeErrorForm } from "./CodeErrorForm";
 import { isFeatureEnabled } from "../store/apiVersioning/reducer";
-import { getPRLabel } from "../store/providers/reducer";
 import { getSidebarLocation } from "../store/editorContext/reducer";
 import Icon from "./Icon";
 import { DropdownButton } from "./DropdownButton";
 import { Link } from "./Link";
 import Tooltip from "./Tooltip";
+import { isConnected } from "../store/providers/reducer";
+import { ConfigureNewRelic } from "./ConfigureNewRelic";
+import { DidDetectUnreviewedCommitsNotificationType } from "@codestream/protocols/agent";
 
 const NavHeader = styled.div`
 	// flex-grow: 0;
@@ -151,7 +149,7 @@ export const StyledCodeError = styled.div``;
 export type Props = React.PropsWithChildren<{ codeErrorId: string; composeOpen: boolean }>;
 
 export function CodeErrorNav(props: Props) {
-	const dispatch = useDispatch<Dispatch>();
+	const dispatch = useDispatch<Dispatch | any>();
 	const derivedState = useSelector((state: CodeStreamState) => {
 		const codeError = getCodeError(state.codeErrors, props.codeErrorId);
 
@@ -163,18 +161,20 @@ export function CodeErrorNav(props: Props) {
 			isInVscode: state.ide.name === "VSC",
 			isMine: currentUserId === (codeError ? codeError.creatorId : ""),
 			sidebarLocation: getSidebarLocation(state),
-			prLabel: getPRLabel(state)
+			isConnectedToNewRelic: isConnected(state, { id: "newrelic*com" })
 		};
 	}, shallowEqual);
 
 	const [isEditing, setIsEditing] = React.useState(false);
 	const [notFound, setNotFound] = React.useState(false);
+	const [lastUpdated, setLastUpdated] = React.useState(new Date());
 
 	const { codeError } = derivedState;
 
 	const exit = async () => {
 		// clear out the current code error (set to blank) in the webview
 		await dispatch(setCurrentCodeError());
+		dispatch(closePanel());
 	};
 
 	const showCodeError = async () => {
@@ -245,7 +245,7 @@ export function CodeErrorNav(props: Props) {
 					width: "100%"
 				}}
 			>
-				<div style={{ flexGrow: 10 }}>
+				{/* <div style={{ flexGrow: 10 }}>
 					<div
 						style={{
 							display: "inline-block",
@@ -255,8 +255,8 @@ export function CodeErrorNav(props: Props) {
 							margin: "0 5px 0 20px"
 						}}
 					/>
-					CodeStream-Local-Colin API Server
-				</div>
+				  CodeStream-Local-Colin API Server  
+				</div> */}
 				{/* <Icon name="add-comment" title="Help us improve" placement="bottom" delay={1} /> */}
 				{codeError.providerUrl && (
 					<span style={{ padding: "0 10px", marginLeft: "auto", flexGrow: 0 }}>
@@ -291,28 +291,56 @@ export function CodeErrorNav(props: Props) {
 					/>
 				</div>
 			</div>
-			<NavHeader id="nav-header">
-				<BaseCodeErrorHeader codeError={codeError} collapsed={false} setIsEditing={setIsEditing}>
-					<></>
-				</BaseCodeErrorHeader>
-			</NavHeader>
-			{props.composeOpen ? null : (
-				<div className="scroll-container">
-					<ScrollBox>
-						<div
-							className="vscroll"
-							id="code-error-container"
-							style={{
-								padding: "0 20px 60px 40px",
-								width: "100%"
-							}}
-						>
-							<StyledCodeError className="pulse">
-								<CodeError codeError={codeError} />
-							</StyledCodeError>
-						</div>
-					</ScrollBox>
+			{!derivedState.isConnectedToNewRelic && (
+				<div className="embedded-panel">
+					<ConfigureNewRelic
+						headerChildren={
+							<div className="panel-header" style={{ background: "none" }}>
+								<span className="panel-title">Connect to New Relic</span>
+							</div>
+						}
+						showSignupUrl={false}
+						providerId={"newrelic*com"}
+						onClose={e => {
+							dispatch(closeAllPanels());
+						}}
+						onSubmited={e => {
+							// TODO something here?
+							setLastUpdated(new Date());
+						}}
+					/>
 				</div>
+			)}
+			{derivedState.isConnectedToNewRelic && (
+				<>
+					<NavHeader id="nav-header">
+						<BaseCodeErrorHeader
+							codeError={codeError}
+							collapsed={false}
+							setIsEditing={setIsEditing}
+						>
+							<></>
+						</BaseCodeErrorHeader>
+					</NavHeader>
+					{props.composeOpen ? null : (
+						<div className="scroll-container">
+							<ScrollBox>
+								<div
+									className="vscroll"
+									id="code-error-container"
+									style={{
+										padding: "0 20px 60px 40px",
+										width: "100%"
+									}}
+								>
+									<StyledCodeError className="pulse">
+										<CodeError codeError={codeError} />
+									</StyledCodeError>
+								</div>
+							</ScrollBox>
+						</div>
+					)}
+				</>
 			)}
 		</Root>
 	);

@@ -85,6 +85,11 @@ export const IntegrationsPanel = () => {
 		const currentUserIsAdmin = (team.adminIds || []).includes(user.id);
 
 		const connectedProviders = Object.keys(providers).filter(id => isConnected(state, { id }));
+		const observabilityProviders = Object.keys(providers)
+			.filter(id => ["newrelic"].includes(providers[id].name))
+			.filter(id => !connectedProviders.includes(id))
+			.sort((a, b) => providers[a].name.localeCompare(providers[b].name));
+
 		const codeHostProviders = Object.keys(providers)
 			.filter(id =>
 				[
@@ -93,8 +98,7 @@ export const IntegrationsPanel = () => {
 					"bitbucket",
 					"bitbucket_server",
 					"gitlab",
-					"gitlab_enterprise",
-					"newrelic"
+					"gitlab_enterprise"
 				].includes(providers[id].name)
 			)
 			.filter(id => !connectedProviders.includes(id))
@@ -116,6 +120,7 @@ export const IntegrationsPanel = () => {
 			webviewFocused: state.context.hasFocus,
 			providers,
 			codeHostProviders,
+			observabilityProviders,
 			issueProviders,
 			messagingProviders,
 			connectedProviders,
@@ -327,6 +332,15 @@ export const IntegrationsPanel = () => {
 								</IntegrationButtons>
 							</>
 						)}
+						{derivedState.observabilityProviders.length > 0 && (
+							<>
+								<h2>Observability</h2>
+								<IntegrationButtons>
+									{renderProviders(derivedState.observabilityProviders)}
+								</IntegrationButtons>
+							</>
+						)}
+
 						<h2>Code Host &amp; Issue Providers</h2>
 						<IntegrationButtons>
 							{renderProviders(derivedState.codeHostProviders)}

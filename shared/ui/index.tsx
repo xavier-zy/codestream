@@ -501,10 +501,18 @@ function listenForEvents(store) {
 						};
 						const response = (await store.dispatch(createPostAndCodeError(codeError))) as any;
 						store.dispatch(closeAllPanels());
-						store.dispatch(setCurrentCodeError(response.codeError.id));
-						store.dispatch(openPanel(WebviewPanels.CodemarksForFile));
 						const stackInfo = await resolveStackTrace(repo, sha, parsedStack);
+						store.dispatch(
+							setCurrentCodeError(response.codeError.id, {
+								repo: repo,
+								sha: sha,
+								parsedStack: parsedStack,
+								error: stackInfo?.error
+							})
+						);
+
 						store.dispatch(updateCodeError({ id: response.codeError.id, stackInfo }));
+						store.dispatch(openPanel(WebviewPanels.CodemarksForFile));
 						break;
 					}
 				}

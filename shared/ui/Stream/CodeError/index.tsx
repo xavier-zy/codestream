@@ -86,6 +86,7 @@ export interface BaseCodeErrorProps extends CardProps {
 	) => React.ReactNode;
 	setIsEditing: Function;
 	onRequiresCheckPreconditions?: Function;
+	stackFrameClickDisabled?: boolean;
 }
 
 export interface BaseCodeErrorHeaderProps {
@@ -122,6 +123,11 @@ export const ExpandedAuthor = styled.div`
 
 export const Description = styled.div`
 	margin-bottom: 15px;
+`;
+
+const DisabledClickLine = styled.div`
+	color: var(--text-color);
+	opacity: 0.7;
 `;
 
 const ClickLine = styled.div`
@@ -590,8 +596,11 @@ const BaseCodeError = (props: BaseCodeErrorProps) => {
 									.replace(/.*codestream-server\//, "")
 									.replace(/\)/, "")
 									.replace(/\s\s\s\s+/g, "     ");
-								console.warn("LINE IS: ", line);
-								return (
+								return props.stackFrameClickDisabled ? (
+									<DisabledClickLine className="monospace">
+										<span>{mline}</span>
+									</DisabledClickLine>
+								) : (
 									<ClickLine className={className} onClick={e => onClickStackLine(e, i)}>
 										<span>{mline}</span>
 									</ClickLine>
@@ -733,7 +742,7 @@ const ReplyInput = (props: {
 
 type FromBaseCodeErrorProps = Pick<
 	BaseCodeErrorProps,
-	"collapsed" | "hoverEffect" | "onClick" | "className" | "renderFooter"
+	"collapsed" | "hoverEffect" | "onClick" | "className" | "renderFooter" | "stackFrameClickDisabled"
 >;
 
 interface PropsWithId extends FromBaseCodeErrorProps {

@@ -85,6 +85,24 @@ const Root = styled.div`
 
 `;
 
+export const CodeErrorErrorBox = styled.div`
+	margin: 10px 10px 20px 0;
+	border: 1px solid rgba(249, 197, 19, 0.6);
+	background: rgba(255, 223, 0, 0.1);
+	border-radius: 5px;
+	padding: 10px;
+	display: flex;
+	align-items: center;
+	.icon.alert {
+		display: inline-block;
+		transform: scale(1.5);
+		margin: 0 10px;
+	}
+	.message {
+		margin-left: 10px;
+	}
+`;
+
 export const StyledCodeError = styled.div``;
 
 export type Props = React.PropsWithChildren<{ codeErrorId: string; composeOpen: boolean }>;
@@ -93,13 +111,13 @@ export function CodeErrorNav(props: Props) {
 	const dispatch = useDispatch<Dispatch | any>();
 	const derivedState = useSelector((state: CodeStreamState) => {
 		const codeError = getCodeError(state.codeErrors, props.codeErrorId);
-
 		const currentUserId = state.session.userId || "";
 
 		return {
+			currentCodeErrorId: state.context.currentCodeErrorId,
+			currentCodeErrorData: state.context.currentCodeErrorData,
 			codeError,
 			currentCodemarkId: state.context.currentCodemarkId,
-			isInVscode: state.ide.name === "VSC",
 			isMine: currentUserId === (codeError ? codeError.creatorId : ""),
 			sidebarLocation: getSidebarLocation(state),
 			isConnectedToNewRelic: isConnected(state, { id: "newrelic*com" })
@@ -116,10 +134,6 @@ export function CodeErrorNav(props: Props) {
 		// clear out the current code error (set to blank) in the webview
 		await dispatch(setCurrentCodeError());
 		dispatch(closePanel());
-	};
-
-	const showCodeError = async () => {
-		await dispatch(setCurrentCodeError(codeError && codeError.id));
 	};
 
 	const unreadEnabled = useSelector((state: CodeStreamState) =>
@@ -172,6 +186,7 @@ export function CodeErrorNav(props: Props) {
 				</MinimumWidthCard>
 			</Modal>
 		);
+
 	if (derivedState.currentCodemarkId) return null;
 
 	if (isEditing) {
@@ -247,8 +262,17 @@ export function CodeErrorNav(props: Props) {
 										width: "100%"
 									}}
 								>
+									{derivedState.currentCodeErrorData?.error && (
+										<CodeErrorErrorBox>
+											<Icon name="alert" className="alert" />
+											<div className="message">{derivedState.currentCodeErrorData.error}</div>
+										</CodeErrorErrorBox>
+									)}
 									<StyledCodeError className="pulse">
-										<CodeError codeError={codeError} />
+										<CodeError
+											codeError={codeError}
+											stackFrameClickDisabled={!!derivedState.currentCodeErrorData?.error}
+										/>
 									</StyledCodeError>
 								</div>
 							</ScrollBox>

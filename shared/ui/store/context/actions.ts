@@ -155,11 +155,11 @@ export const setCurrentReview = (reviewId?: string, options?: { openFirstDiff?: 
 export const setCurrentReviewOptions = (options: any) =>
 	action(ContextActionsType.SetCurrentReviewOptions, { options });
 
-export const _setCurrentCodeError = (codeErrorId?: string) =>
-	action(ContextActionsType.SetCurrentCodeError, { codeErrorId });
+export const _setCurrentCodeError = (codeErrorId?: string, data?: any) =>
+	action(ContextActionsType.SetCurrentCodeError, { codeErrorId, data });
 
-export const setCurrentCodeError = (codeErrorId?: string) => (dispatch, getState) => {
-	return dispatch(_setCurrentCodeError(codeErrorId));
+export const setCurrentCodeError = (codeErrorId?: string, data?: any) => (dispatch, getState) => {
+	return dispatch(_setCurrentCodeError(codeErrorId, data));
 };
 
 export const setCurrentRepo = (id?: string, path?: string) =>

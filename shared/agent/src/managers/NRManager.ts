@@ -54,8 +54,17 @@ export class NRManager {
 		// …v/sandboxes/csbe/codestream-server/api_server/modules/codemarks/codemark_creator.js:21:9
 		const response: ResolveStackTraceResponse = { lines: [] };
 		const matchingRepo = await this.getMatchingRepo(repoRemote);
-		if (!matchingRepo)
-			return { ...response, error: `Unable to find repo with remote ${repoRemote}` };
+		if (!matchingRepo) {
+			// Repo **codestream-server** not found in your editor. Open it in order to navigate the stack trace.
+			let repoName = repoRemote;
+			try {
+				repoName = repoRemote.split("/").reverse()[0];
+			} catch {}
+			return {
+				...response,
+				error: `Repo ${repoName} not found in your editor. Open it in order to navigate the stack trace.`
+			};
+		}
 		response.repoId = matchingRepo.id;
 		response.sha = sha;
 

@@ -131,6 +131,12 @@ export interface WebviewContext {
 		openFirstDiff?: boolean;
 	};
 	currentCodeErrorId?: string;
+	currentCodeErrorData?: {
+		repo?: string;
+		sha?: string;
+		parsedStack?: any;
+		error?: string;
+	};
 	createPullRequestReviewId?: string;
 	createPullRequestOptions?: NewPullRequestBranch;
 	currentPullRequest?:

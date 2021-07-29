@@ -149,6 +149,22 @@ const DataValue = styled.div`
 	color: var(--text-color-subtle);
 `;
 
+const ApmServiceTitle = styled.span`
+	a {
+		color: var(--text-color);
+		text-decoration: none;
+	}
+	.open-external {
+		margin-left: 5px;
+		font-size: 12px;
+		visibility: hidden;
+		color: var(--text-color-highlight);
+	}
+	&:hover .open-external {
+		visibility: visible;
+	}
+`;
+
 // if child props are passed in, we assume they are the action buttons/menu for the header
 export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeaderProps>) => {
 	const { codeError, collapsed } = props;
@@ -162,6 +178,7 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 		<>
 			<div style={{ display: "flex", justifyContent: "space-between", marginBottom: "10px" }}>
 				<div>
+					{/* TODO get actual service status + color */}
 					<div
 						style={{
 							display: "inline-block",
@@ -171,7 +188,15 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 							margin: "0 5px 0 6px"
 						}}
 					/>
-					<Link href="#">CodeStream-Local-Colin API Server</Link> <Icon name="link-external"></Icon>
+					<ApmServiceTitle>
+						<Tooltip title="Open on New Relic" placement="bottom" delay={3}>
+							<span>
+								{/* TODO get actual service name*/}
+								<Link href="#">CodeStream-Local-Colin API Server</Link>{" "}
+								<Icon name="link-external" className="open-external"></Icon>
+							</span>
+						</Tooltip>
+					</ApmServiceTitle>
 				</div>
 
 				<div style={{ marginLeft: "auto", alignItems: "center" }}>
@@ -287,7 +312,16 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 							/>
 						)}
 					</HeaderActions>
-					<MarkdownText text={codeError.title} />
+					<ApmServiceTitle>
+						<Tooltip title="Open Error on New Relic" placement="bottom" delay={3}>
+							<span>
+								{/* TODO get the actual class of error here */}
+								{/* {codeError.title} */}
+								<Link href="#">Error</Link>{" "}
+								<Icon name="link-external" className="open-external"></Icon>
+							</span>
+						</Tooltip>
+					</ApmServiceTitle>
 				</BigTitle>
 			</Header>
 		</>
@@ -543,7 +577,7 @@ const BaseCodeError = (props: BaseCodeErrorProps) => {
 
 				<MetaSection>
 					{codeError.stackTrace && (
-						<Meta>
+						<Meta style={{ maxHeight: "350px", overflowY: "auto" }}>
 							<MetaLabel>Stack Trace</MetaLabel>
 							{stackTraceLines.map((line, i) => {
 								const className = i === currentSelectedLine ? "monospace selected" : "monospace";

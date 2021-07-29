@@ -243,19 +243,6 @@ export function CodeErrorNav(props: Props) {
 					width: "100%"
 				}}
 			>
-				{/* <Icon name="add-comment" title="Help us improve" placement="bottom" delay={1} /> */}
-				{/* {codeError.providerUrl && (
-					<span style={{ padding: "0 10px", marginLeft: "auto", flexGrow: 0 }}>
-						<Tooltip title="Open on New Relic One" placement="bottom" delay={1}>
-							<span>
-								<Link className="external-link" href={codeError.providerUrl}>
-									<Icon name="link-external" />
-									View Details
-								</Link>
-							</span>
-						</Tooltip>
-					</span>
-				)} */}
 				<div
 					style={{
 						width: "1px",

@@ -262,10 +262,15 @@ export function CodeErrorNav(props: Props) {
 										width: "100%"
 									}}
 								>
-									{derivedState.currentCodeErrorData?.error && (
+									{derivedState.currentCodeErrorData && derivedState.currentCodeErrorData.error && (
 										<CodeErrorErrorBox>
 											<Icon name="alert" className="alert" />
-											<div className="message">{derivedState.currentCodeErrorData.error}</div>
+											<div
+												className="message"
+												dangerouslySetInnerHTML={{
+													__html: derivedState.currentCodeErrorData.error.replace(/\n/g, "<br />")
+												}}
+											></div>
 										</CodeErrorErrorBox>
 									)}
 									<StyledCodeError className="pulse">

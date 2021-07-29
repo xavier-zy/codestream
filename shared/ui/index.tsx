@@ -502,12 +502,18 @@ function listenForEvents(store) {
 						const response = (await store.dispatch(createPostAndCodeError(codeError))) as any;
 						store.dispatch(closeAllPanels());
 						const stackInfo = await resolveStackTrace(repo, sha, parsedStack);
+						let error = stackInfo?.error;
+						if (stackInfo?.lines) {
+							if (stackInfo.lines.filter(_ => _.error).length === stackInfo.lines.length) {
+								error = `Your version of the code doesn't match production. Fetch the following commit to better investigate the error.\n${sha}`;
+							}
+						}
 						store.dispatch(
 							setCurrentCodeError(response.codeError.id, {
 								repo: repo,
 								sha: sha,
 								parsedStack: parsedStack,
-								error: stackInfo?.error
+								error: error
 							})
 						);
 

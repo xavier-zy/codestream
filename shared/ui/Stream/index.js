@@ -275,7 +275,7 @@ export class SimpleStream extends PureComponent {
 
 		if (activePanel === WebviewPanels.LandingRedirect) activePanel = WebviewPanels.Sidebar;
 
-		if (isFirstPageview) return null;
+		if (isFirstPageview && !this.props.pendingProtocolHandlerUrl) return null;
 
 		const isConfigurationPanel =
 			activePanel && activePanel.match(/^configure\-(provider|enterprise)-/);
@@ -757,7 +757,8 @@ const mapStateToProps = state => {
 		composeCodemarkActive: context.composeCodemarkActive,
 		isFirstPageview: context.isFirstPageview,
 		onboardingTestGroup: getTestGroup(state, "onboard-edu"),
-		acceptedTOS: preferences.acceptedTOS
+		acceptedTOS: preferences.acceptedTOS,
+		pendingProtocolHandlerUrl: context.pendingProtocolHandlerUrl
 	};
 };
 

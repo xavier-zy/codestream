@@ -334,7 +334,7 @@ export const Signup = (props: Props) => {
 		authenticationProviders["gitlab*com"] ||
 		authenticationProviders["bitbucket*org"];
 
-	if (!derivedState.acceptedTOS) return <PresentTOS />;
+	// if (!derivedState.acceptedTOS) return <PresentTOS />;
 
 	return (
 		<div className="onboarding-page">
@@ -509,7 +509,7 @@ export const Signup = (props: Props) => {
 					)}
 					<div id="controls">
 						<div className="footer">
-							<small className="fine-print" style={{ display: "none" }}>
+							<small className="fine-print">
 								<FormattedMessage id="signUp.legal.start" />{" "}
 								<FormattedMessage id="signUp.legal.terms">
 									{text => <Link href="https://codestream.com/terms">{text}</Link>}

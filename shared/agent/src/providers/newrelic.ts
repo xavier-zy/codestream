@@ -20,7 +20,6 @@ import { CodeStreamSession } from "../session";
 @lspProvider("newrelic")
 export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProviderInfo> {
 	constructor(session: CodeStreamSession, config: ThirdPartyProviderConfig) {
-		console.warn("HERE IS MY CONFIG:", config);
 		super(session, config);
 	}
 
@@ -82,7 +81,6 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 
 	@log()
 	async configure(request: NewRelicConfigurationData) {
-		console.warn("COLIN: CONFIGURE NEWRELIC REQUEST:", request);
 		await this.session.api.setThirdPartyProviderToken({
 			providerId: this.providerConfig.id,
 			token: request.apiKey,
@@ -139,7 +137,6 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 	async getNewRelicData(request: GetNewRelicDataRequest): Promise<GetNewRelicDataResponse> {
 		try {
 			await this.ensureConnected();
-			console.warn("COLIN: PROVIDER INFO:", this._providerInfo);
 			const accountId = this._providerInfo?.data?.accountId;
 			if (!accountId) {
 				throw new Error("must provide an accountId");
@@ -158,7 +155,6 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 `;
 			//{"query":"{  actor {    account(id: ${accountId}) {    nrql(query: \"${request.query}\") {        results     }    }  }}", "variables":""}`;
 			const response = await this.query(query);
-			console.warn("COLIN RESULTS:", JSON.stringify(response, undefined, 5));
 			const results = response?.actor?.account?.nrql?.results;
 			if (results) {
 				return { data: results as GetNewRelicDataResponse };
@@ -166,17 +162,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				Logger.warn("Invalid NRQL results:", results);
 				throw new Error("Invalid NRQL results");
 			}
-			/*
-			const response = await this.get<GetNewRelicDataResponse>(
-				this.graphQlBaseUrl,
-				{},
-				{ useAbsoluteUrl: true, rawBody: query }
-			);
-			console.warn("BODY:", response.body);
-			return response.body;
-			*/
 		} catch (ex) {
-			console.warn("CAUGHT:", ex);
 			return { data: {} };
 		}
 	}

@@ -23,8 +23,6 @@ export const NewRelic = React.memo((props: Props) => {
 		return { newRelicIsConnected, newRelicData: data };
 	}, shallowEqual);
 
-	console.warn("COLIN derivedState:", derivedState);
-
 	const [loading, setLoading] = useState(false);
 	const [query, setQuery] = useState("");
 	const [unexpectedError, setUnexpectedError] = useState(false);
@@ -35,10 +33,8 @@ export const NewRelic = React.memo((props: Props) => {
 
 		setLoading(true);
 		try {
-			console.warn("COLIN: RUNNING NRQL:", query);
 			dispatch(runNRQL(query));
 		} catch (error) {
-			console.warn("DID CATCH", error);
 			setUnexpectedError(true);
 		}
 		// @ts-ignore

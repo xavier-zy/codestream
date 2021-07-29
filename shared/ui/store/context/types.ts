@@ -49,7 +49,8 @@ export enum ContextActionsType {
 	SetOnboardStep = "@context/SetOnboardStep",
 	SetIsFirstPageview = "@context/SetIsFirstPageview",
 	SetNewRelicData = "@context/SetNewRelicData",
-	SetPendingProtocolHandlerUrl = "@context/SetPendingProtocolHandlerUrl"
+	SetPendingProtocolHandlerUrl = "@context/SetPendingProtocolHandlerUrl",
+	SetWantNewRelicOptions = "@context/SetWantNewRelicOptions"
 }
 
 /**
@@ -99,6 +100,8 @@ export interface ContextState extends WebviewContext {
 	newPullRequestOptions?: { branch: NewPullRequestBranch };
 	currentInstrumentation?: any;
 	errorInboxOptions?: { stack?: string; customAttributes?: string; url?: string };
+
+	wantNewRelicOptions?: { repoId?: string; path?: string };
 }
 
 export type ChatProviderAccess = "strict" | "permissive";

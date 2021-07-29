@@ -6,6 +6,18 @@ import path from "path";
 import { Container, SessionContainer } from "../container";
 import { calculateLocation, MAX_RANGE_VALUE } from "../markerLocation/calculator";
 import {
+	AddNewRelicIncludeRequest,
+	AddNewRelicIncludeRequestType,
+	AddNewRelicIncludeResponse,
+	CreateNewRelicConfigFileRequest,
+	CreateNewRelicConfigFileRequestType,
+	CreateNewRelicConfigFileResponse,
+	FindCandidateMainFilesRequest,
+	FindCandidateMainFilesRequestType,
+	FindCandidateMainFilesResponse,
+	InstallNewRelicRequest,
+	InstallNewRelicRequestType,
+	InstallNewRelicResponse,
 	ResolveStackTracePositionRequest,
 	ResolveStackTracePositionRequestType,
 	ResolveStackTracePositionResponse,
@@ -20,6 +32,13 @@ import { lsp, lspHandler } from "../system/decorators/lsp";
 import { Strings } from "../system/string";
 import { xfs } from "../xfs";
 import { GitRepository } from "../git/models/models";
+import { spawnSync } from "child_process";
+
+interface CandidateFiles {
+	packageJson: string | null;
+	indexFiles: string[];
+	jsFiles: string[];
+}
 
 @lsp
 export class NRManager {
@@ -59,6 +78,66 @@ export class NRManager {
 		column
 	}: ResolveStackTracePositionRequest): Promise<ResolveStackTracePositionResponse> {
 		return this.getCurrentStackTracePosition(sha, filePath, line, column);
+	}
+
+	@log()
+	@lspHandler(FindCandidateMainFilesRequestType)
+	async findCandidateMainFiles({
+		type,
+		path
+	}: FindCandidateMainFilesRequest): Promise<FindCandidateMainFilesResponse> {
+		switch (type) {
+			case "nodejs": {
+				return this.findNodeJSCandidateMainFiles(path);
+			}
+			default:
+				return { error: "unknown type: " + type, files: [] };
+		}
+	}
+
+	@log()
+	@lspHandler(InstallNewRelicRequestType)
+	async installNewRelic({ type, cwd }: InstallNewRelicRequest): Promise<InstallNewRelicResponse> {
+		switch (type) {
+			case "nodejs": {
+				return this.installNodeJSNewRelic(cwd);
+			}
+			default:
+				return { error: "unknown type: " + type };
+		}
+	}
+
+	@log()
+	@lspHandler(CreateNewRelicConfigFileRequestType)
+	async createNewRelicConfigFile({
+		type,
+		filePath,
+		licenseKey,
+		appName
+	}: CreateNewRelicConfigFileRequest): Promise<CreateNewRelicConfigFileResponse> {
+		switch (type) {
+			case "nodejs": {
+				return this.createNodeJSNewRelicConfigFile(filePath, licenseKey, appName);
+			}
+			default:
+				return { error: "unknown type: " + type };
+		}
+	}
+
+	@log()
+	@lspHandler(AddNewRelicIncludeRequestType)
+	async addNewRelicInclude({
+		type,
+		file,
+		dir
+	}: AddNewRelicIncludeRequest): Promise<AddNewRelicIncludeResponse> {
+		switch (type) {
+			case "nodejs": {
+				return this.addNodeJSNewRelicInclude(file, dir);
+			}
+			default:
+				return { error: "unknown type: " + type };
+		}
 	}
 
 	private getBestMatchingPath(pathSuffix: string, allFilePaths: string[]) {
@@ -209,5 +288,127 @@ export class NRManager {
 			}
 		}
 		return arrayOfFiles;
+	}
+
+	private findNodeJSCandidateMainFiles(dirPath: string) {
+		const files: CandidateFiles = {
+			packageJson: null,
+			indexFiles: [],
+			jsFiles: []
+		};
+
+		const packageJson = path.join(dirPath, "package.json");
+		if (fs.existsSync(packageJson)) {
+			const json = fs.readFileSync(packageJson, { encoding: "utf8" });
+			let data;
+			try {
+				data = JSON.parse(json);
+			} catch (error) {}
+			if (data && data.main) {
+				const mainFile = path.join(dirPath, data.main);
+				if (fs.existsSync(mainFile)) {
+					files.packageJson = data.main;
+				}
+			}
+		}
+
+		this._findNodeJSCandidateMainFiles(dirPath, dirPath, files, 0, 2);
+
+		const arrayOfFiles: string[] = [];
+		if (files.packageJson) {
+			arrayOfFiles.push(files.packageJson);
+		}
+
+		return { files: [...arrayOfFiles, ...files.indexFiles, ...files.jsFiles] };
+	}
+
+	private _findNodeJSCandidateMainFiles(
+		dirPath: string,
+		mainPath: string,
+		files: CandidateFiles,
+		depth: number,
+		maxDepth: number
+	) {
+		const allFiles = fs.readdirSync(dirPath);
+		for (const file of allFiles) {
+			// For demo purposes!!!
+			if (!file.match(/node_modules/)) {
+				const filePath = path.join(dirPath, file);
+				if (fs.statSync(filePath).isDirectory() && (!maxDepth || depth !== maxDepth)) {
+					this._findNodeJSCandidateMainFiles(filePath, mainPath, files, depth + 1, maxDepth);
+				} else if (path.basename(filePath) === "index.js") {
+					files.indexFiles.push(filePath.substring(mainPath.length + 1));
+				} else if (path.extname(filePath) === ".js") {
+					files.jsFiles.push(filePath.substring(mainPath.length + 1));
+				}
+			}
+		}
+
+		return files;
+	}
+
+	private async installNodeJSNewRelic(cwd: string): Promise<InstallNewRelicResponse> {
+		// FIXME does this work in windows???
+		return new Promise(resolve => {
+			try {
+				const result = spawnSync("npm", ["install", "--save", "newrelic"], {
+					cwd
+					/* This is what Colin needs to run this as a demo locally
+					shell: "/bin/zsh",
+					env: {
+						PATH: `${process.env.PATH}:/Users/cstryker/dev/sandboxes/csbe/node/bin`
+					}
+					*/
+				});
+				if (result.error) {
+					resolve({ error: `unable to execute npm install: ${result.error.message}` });
+				} else {
+					resolve({});
+				}
+			} catch (error) {
+				const msg = error instanceof Error ? error.message : JSON.stringify(error);
+				resolve({ error: `exception throw executing npm install: ${msg}` });
+			}
+		});
+	}
+
+	private async createNodeJSNewRelicConfigFile(
+		filePath: string,
+		licenseKey: string,
+		appName: string
+	): Promise<CreateNewRelicConfigFileResponse> {
+		try {
+			const configFile = path.join(filePath, "node_modules", "newrelic", "newrelic.js");
+			if (!fs.existsSync(configFile)) {
+				return { error: `could not find default config file: ${configFile}` };
+			}
+			let config = fs.readFileSync(configFile, "utf8");
+			config = config
+				.replace("license_key: 'license key here'", `license_key: '${licenseKey}'`)
+				.replace("app_name: ['My Application']", `app_name: ['${appName}']`);
+
+			const newConfigFile = path.join(filePath, "newrelic.js");
+			fs.writeFileSync(newConfigFile, config, { encoding: "utf8" });
+			return {};
+		} catch (error) {
+			const msg = error instanceof Error ? error.message : JSON.stringify(error);
+			return { error: `caught ${msg}` };
+		}
+	}
+
+	private async addNodeJSNewRelicInclude(
+		file: string,
+		dir: string
+	): Promise<AddNewRelicIncludeResponse> {
+		try {
+			const fullPath = path.join(dir, file);
+			let contents = fs.readFileSync(fullPath, "utf8");
+			contents = `require("newrelic");\n\n${contents}`;
+			fs.writeFileSync(fullPath, contents, { encoding: "utf8" });
+			return {};
+		} catch (error) {
+			const msg = error instanceof Error ? error.message : JSON.stringify(error);
+			return { error: `caught ${msg}` };
+		}
 	}
 }

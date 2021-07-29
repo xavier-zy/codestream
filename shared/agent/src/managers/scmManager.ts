@@ -158,7 +158,11 @@ export class ScmManager {
 		let branches: (string | undefined)[] = [];
 		let remotes: GitRemote[][] = [];
 		let user: CSMe | undefined = undefined;
+
 		let withSubDirectoriesDepth: number | undefined = undefined;
+
+		const { repoIdentifier } = SessionContainer.instance();
+
 		try {
 			const { git } = SessionContainer.instance();
 			repositories = Array.from(await git.getRepositories());
@@ -214,6 +218,12 @@ export class ScmManager {
 					withSubDirectoriesDepth
 				)
 			);
+		}
+
+		if (request && request.guessProjectTypes) {
+			response.repositories.forEach(repo => {
+				repo.projectType = repoIdentifier.identifyRepo(repo);
+			});
 		}
 
 		return response;

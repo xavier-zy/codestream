@@ -49,7 +49,8 @@ const initialState: ContextState = {
 	spatialViewShowPRComments: false,
 	composeCodemarkActive: undefined,
 	errorInboxOptions: undefined,
-	currentInstrumentation: undefined
+	currentInstrumentation: undefined,
+	wantNewRelicOptions: undefined
 };
 
 export function reduceContext(
@@ -177,6 +178,12 @@ export function reduceContext(
 			return {
 				...state,
 				currentInstrumentation: action.payload.options
+			};
+		}
+		case ContextActionsType.SetWantNewRelicOptions: {
+			return {
+				...state,
+				wantNewRelicOptions: action.payload
 			};
 		}
 		case ContextActionsType.SetStartWorkCard:

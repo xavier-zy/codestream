@@ -19,6 +19,7 @@ import {
 	ShowCodeErrorNotificationType,
 	ShowStreamNotificationType,
 	WebviewDidInitializeNotificationType,
+	WebviewModals,
 	WebviewPanels,
 	HostDidChangeVisibleEditorsNotificationType,
 	ShowPullRequestNotificationType,
@@ -41,7 +42,9 @@ import {
 	DidEncounterMaintenanceModeNotificationType,
 	VerifyConnectivityRequestType,
 	ExecuteThirdPartyRequestUntypedType,
-	ResolveStackTraceResponse
+	ResolveStackTraceResponse,
+	GetReposScmRequestType,
+	RepoProjectType
 } from "@codestream/protocols/agent";
 import { CSApiCapabilities, CodemarkType, CSMe } from "@codestream/protocols/api";
 import translations from "./translations/en";
@@ -55,6 +58,7 @@ import { ContextState } from "./store/context/types";
 import { CodemarksState } from "./store/codemarks/types";
 import { EditorContextState } from "./store/editorContext/types";
 import { updateProviders } from "./store/providers/actions";
+import { isConnected } from "./store/providers/reducer";
 import { apiCapabilitiesUpdated } from "./store/apiVersioning/actions";
 import { bootstrap, reset } from "./store/actions";
 import { online, offline, errorOccurred } from "./store/connectivity/actions";
@@ -75,8 +79,9 @@ import {
 	setStartWorkCard,
 	closeAllPanels,
 	clearCurrentPullRequest,
-	setCurrentErrorInboxOptions,
-	setPendingProtocolHandlerUrl
+	setPendingProtocolHandlerUrl,
+	openModal,
+	setWantNewRelicOptions
 } from "./store/context/actions";
 import { URI } from "vscode-uri";
 import { moveCursorToLine } from "./Stream/api-functions";
@@ -148,6 +153,9 @@ export async function initialize(selector: string) {
 			);
 		}
 	}
+
+	// ask the agent to identify any open repos, and see if we can do any NR magic
+	checkForNewRelicInterest(store);
 }
 
 // TODO: type up the store state
@@ -714,4 +722,23 @@ const confirmSwitchToTeam = function(
 		}
 	}
 	return false;
+};
+
+// ask the agent to identify any open repos, and see if we can do any NR magic
+const checkForNewRelicInterest = async function(store) {
+	if (!isConnected(store.getState(), { id: "newrelic*com" })) return;
+
+	const reposResponse = await HostApi.instance.send(GetReposScmRequestType, {
+		inEditorOnly: true,
+		guessProjectTypes: true
+	});
+	if (!reposResponse.error) {
+		const nodeJSRepo = reposResponse.repositories!.find(
+			repo => repo.projectType === RepoProjectType.NodeJS
+		);
+		if (nodeJSRepo && nodeJSRepo.id) {
+			await store.dispatch(setWantNewRelicOptions(nodeJSRepo.id, nodeJSRepo.path));
+			store.dispatch(openModal(WebviewModals.AddNewRelic));
+		}
+	}
 };

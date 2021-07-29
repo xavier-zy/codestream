@@ -156,6 +156,11 @@ export const GetRepoScmStatusesRequestType = new RequestType<
 	void
 >("codestream/scm/repo/statuses");
 
+export enum RepoProjectType {
+	Unknown = "Unknown",
+	NodeJS = "NodeJS"
+}
+
 export interface ReposScm {
 	id?: string;
 	path: string;
@@ -181,6 +186,11 @@ export interface ReposScm {
 	 * return the providerId
 	 */
 	providerId?: string;
+	/**
+	 * Project type (NodeJS, Ruby, Python)
+	 */
+	projectType?: RepoProjectType;
+
 	directories?: DirectoryTree;
 }
 
@@ -223,6 +233,11 @@ export interface GetReposScmRequest {
 	 * @memberof GetReposScmRequest
 	 */
 	withSubDirectoriesDepth?: number;
+
+	/**
+	 * Set this flag to have the agent try to guess what kind of project the repo represents
+	 */
+	guessProjectTypes?: boolean;
 }
 
 export interface GetReposScmResponse {

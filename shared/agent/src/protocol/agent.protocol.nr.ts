@@ -37,3 +37,71 @@ export const ResolveStackTracePositionRequestType = new RequestType<
 	void,
 	void
 >("codestream/nr/resolveStackTracePosition");
+
+export interface FindCandidateMainFilesRequest {
+	type: string;
+	path: string;
+}
+
+export interface FindCandidateMainFilesResponse {
+	error?: string;
+	files: string[];
+}
+
+export const FindCandidateMainFilesRequestType = new RequestType<
+	FindCandidateMainFilesRequest,
+	FindCandidateMainFilesResponse,
+	void,
+	void
+>("codestream/nr/findCandidateMainFiles");
+
+export interface InstallNewRelicRequest {
+	type: string;
+	cwd: string;
+}
+
+export interface InstallNewRelicResponse {
+	error?: string;
+}
+
+export const InstallNewRelicRequestType = new RequestType<
+	InstallNewRelicRequest,
+	InstallNewRelicResponse,
+	void,
+	void
+>("codestream/nr/installNewRelic");
+
+export interface CreateNewRelicConfigFileRequest {
+	type: string;
+	filePath: string;
+	licenseKey: string;
+	appName: string;
+}
+
+export interface CreateNewRelicConfigFileResponse {
+	error?: string;
+}
+
+export const CreateNewRelicConfigFileRequestType = new RequestType<
+	CreateNewRelicConfigFileRequest,
+	CreateNewRelicConfigFileResponse,
+	void,
+	void
+>("codestream/nr/createNewRelicConfigFile");
+
+export interface AddNewRelicIncludeRequest {
+	type: string;
+	file: string;
+	dir: string;
+}
+
+export interface AddNewRelicIncludeResponse {
+	error?: string;
+}
+
+export const AddNewRelicIncludeRequestType = new RequestType<
+	AddNewRelicIncludeRequest,
+	AddNewRelicIncludeResponse,
+	void,
+	void
+>("codestream/nr/addNewRelicInclude");

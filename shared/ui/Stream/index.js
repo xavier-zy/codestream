@@ -19,6 +19,7 @@ import { ChangeTeamName } from "./ChangeTeamName";
 import { ChangeCompanyName } from "./ChangeCompanyName";
 import { BlameMap } from "./BlameMap";
 import { Team } from "./Team";
+import { AddNewRelic } from "./AddNewRelic";
 import { TeamSetup } from "./TeamSetup";
 import { Invite } from "./Invite";
 import { CreatePullRequestPanel } from "./CreatePullRequestPanel";
@@ -384,6 +385,7 @@ export class SimpleStream extends PureComponent {
 						{activeModal === WebviewModals.BlameMap && <BlameMap />}
 						{activeModal === WebviewModals.Invite && <Invite />}
 						{activeModal === WebviewModals.Team && <Team />}
+						{activeModal === WebviewModals.AddNewRelic && <AddNewRelic />}
 						{activeModal === WebviewModals.TeamSetup && <TeamSetup />}
 						{activeModal === WebviewModals.Keybindings && (
 							<Keybindings onClick={this.props.closeModal}>

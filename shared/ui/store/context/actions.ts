@@ -46,6 +46,7 @@ export const closeAllPanels = () => dispatch => {
 	dispatch(clearCurrentPullRequest());
 	dispatch(clearCurrentErrorInboxOptions());
 	dispatch(clearCurrentInstrumentationOptions());
+	dispatch(clearWantNewRelicOptions());
 };
 
 export const closeAllModals = () => dispatch => {
@@ -56,6 +57,7 @@ export const closeAllModals = () => dispatch => {
 	dispatch(clearCurrentPullRequest());
 	dispatch(clearCurrentErrorInboxOptions());
 	dispatch(clearCurrentInstrumentationOptions());
+	dispatch(clearWantNewRelicOptions());
 };
 
 export const focus = () => action(ContextActionsType.SetFocusState, true);
@@ -182,6 +184,9 @@ export const setCurrentErrorInboxOptions = (
 export const setCurrentInstrumentationOptions = (options?: any) =>
 	action(ContextActionsType.SetCurrentInstrumentationOptions, { options });
 
+export const setWantNewRelicOptions = (repoId?: string, path?: string) =>
+	action(ContextActionsType.SetWantNewRelicOptions, { repoId, path });
+
 export const setNewPullRequestOptions = (options?: { branch: NewPullRequestBranch }) =>
 	action(ContextActionsType.SetNewPullRequestOptions, { options });
 
@@ -190,6 +195,8 @@ export const clearCurrentErrorInboxOptions = () =>
 
 export const clearCurrentInstrumentationOptions = () =>
 	action(ContextActionsType.SetCurrentInstrumentationOptions, { options: {} });
+
+export const clearWantNewRelicOptions = () => action(ContextActionsType.SetWantNewRelicOptions, {});
 
 export const clearCurrentPullRequest = () =>
 	action(ContextActionsType.SetCurrentPullRequest, {

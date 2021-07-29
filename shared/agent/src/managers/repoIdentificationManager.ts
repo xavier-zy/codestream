@@ -10,22 +10,20 @@ import { ReposScm /*, RepoProjectType*/ } from "../protocol/agent.protocol";
 export class RepoIdentificationManager {
 	constructor(readonly session: CodeStreamSession) {}
 
-	// identifyRepo(repo: ReposScm): RepoProjectType {
-	// 	if (this.repoIsNodeJS(repo)) {
-	// 		return RepoProjectType.NodeJS;
-	// 	} else {
-	// 		return RepoProjectType.Unknown;
-	// 	}
-	// }
+	identifyRepo(repo: ReposScm): RepoProjectType {
+		if (this.repoIsNodeJS(repo)) {
+			return RepoProjectType.NodeJS;
+		} else {
+			return RepoProjectType.Unknown;
+		}
+	}
 
-	// private repoIsNodeJS(repo: ReposScm): boolean {
-	// 	console.warn("COLIN: READING FROM REPO PATH:", repo.path);
-	// 	const files = fs.readdirSync(repo.path);
-	// 	console.warn("COLIN: files:", files);
-	// 	return !!files.find(file => {
-	// 		const filePath = path.join(repo.path, file);
-	// 		const isDir = fs.statSync(filePath).isDirectory();
-	// 		return (isDir && file === "node_modules") || (!isDir && file === "package.json");
-	// 	});
-	// }
+	private repoIsNodeJS(repo: ReposScm): boolean {
+		const files = fs.readdirSync(repo.path);
+		return !!files.find(file => {
+			const filePath = path.join(repo.path, file);
+			const isDir = fs.statSync(filePath).isDirectory();
+			return (isDir && file === "node_modules") || (!isDir && file === "package.json");
+		});
+	}
 }

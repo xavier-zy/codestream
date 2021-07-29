@@ -112,7 +112,8 @@ export enum WebviewModals {
 	Invite = "invite",
 	BlameMap = "blame-map",
 	Team = "people",
-	Profile = "profile"
+	Profile = "profile",
+	AddNewRelic = "add-new-relic"
 }
 
 export interface WebviewContext {

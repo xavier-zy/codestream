@@ -160,6 +160,120 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 
 	return (
 		<>
+			<div style={{ display: "flex", justifyContent: "space-between", marginBottom: "10px" }}>
+				<div>
+					<div
+						style={{
+							display: "inline-block",
+							width: "10px",
+							height: "10px",
+							backgroundColor: "gray",
+							margin: "0 5px 0 6px"
+						}}
+					/>
+					<Link href="#">CodeStream-Local-Colin API Server</Link> <Icon name="link-external"></Icon>
+				</div>
+
+				<div style={{ marginLeft: "auto", alignItems: "center" }}>
+					<DropdownButton
+						items={[
+							{
+								key: "resolve",
+								label: `Resolve`,
+								onSelect: () => setResolveMethod("RESOLVE"),
+								action: () => resolveCodeError("resolve")
+							},
+							{ label: "-" },
+							{
+								key: "ignore",
+								label: `Ignore`,
+								onSelect: () => setResolveMethod("IGNORE"),
+								action: () => resolveCodeError("ignore")
+							}
+						]}
+						selectedKey={"resolve"}
+						variant="secondary"
+						size="compact"
+						wrap
+					>
+						Unresolved
+					</DropdownButton>
+					<div style={{ display: "inline-block", width: "10px" }} />
+					<InlineMenu
+						items={[
+							{ type: "search", label: "", placeholder: "User name" },
+							{ label: "-" },
+							{
+								label: (
+									<span style={{ fontSize: "10px", fontWeight: "bold", opacity: 0.7 }}>
+										CURRENT ASSIGNEE
+									</span>
+								),
+								noHover: true,
+								disabled: true
+							},
+							{
+								icon: (
+									<Headshot
+										size={16}
+										display="inline-block"
+										person={{ email: "pez@codestream.com" }}
+									/>
+								),
+								key: "pez",
+								label: `Peter Pezaris`,
+								searchLabel: "Peter Pezaris",
+								subtext: "ppezaris@newrelic.com",
+								floatRight: { label: <Icon name="x" /> },
+								action: () => setAssignee("pez@codestream.com")
+							},
+							{ label: "-" },
+							{
+								label: (
+									<span style={{ fontSize: "10px", fontWeight: "bold", opacity: 0.7 }}>
+										SUGGESTIONS FROM GIT
+									</span>
+								),
+								noHover: true,
+								disabled: true
+							},
+							{
+								key: "colin",
+								label: `Colin Stryker`,
+								searchLabel: "Colin Stryker",
+								subtextNoPadding: "cstryker@newrelic.com",
+								action: () => setAssignee("cstryker@newrelic.com")
+							},
+							{
+								key: "dave",
+								label: `David Hersh`,
+								searchLabel: "David Hersh",
+								subtextNoPadding: "dhersh@newrelic.com",
+								action: () => setAssignee("dhersh@newrelic.com")
+							},
+							{ label: "-" },
+							{
+								label: (
+									<span style={{ fontSize: "10px", fontWeight: "bold", opacity: 0.7 }}>
+										OTHER TEAMMATES
+									</span>
+								),
+								noHover: true,
+								disabled: true
+							},
+							{
+								key: "brian",
+								label: `Brian Canzanella`,
+								searchLabel: "Brian Canzanella",
+								subtextNoPadding: "bcanzanella@newrelic.com",
+								action: () => setAssignee("bcanzanella@newrelic.com")
+							}
+						]}
+					>
+						<Headshot size={20} display="inline-block" person={{ email: assignee }} />
+					</InlineMenu>
+				</div>
+			</div>
 			<Header>
 				<Icon name="alert" className="type" />
 				<BigTitle>
@@ -172,114 +286,6 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 								setIsEditing={props.setIsEditing}
 							/>
 						)}
-
-						<div
-							style={{
-								display: "flex",
-								width: "100%",
-								alignItems: "center"
-							}}
-						>
-							<div style={{ marginLeft: "auto", display: "flex", alignItems: "center" }}>
-								<DropdownButton
-									items={[
-										{
-											key: "resolve",
-											label: `Resolve`,
-											onSelect: () => setResolveMethod("RESOLVE"),
-											action: () => resolveCodeError("resolve")
-										},
-										{ label: "-" },
-										{
-											key: "ignore",
-											label: `Ignore`,
-											onSelect: () => setResolveMethod("IGNORE"),
-											action: () => resolveCodeError("ignore")
-										}
-									]}
-									selectedKey={"resolve"}
-									variant="secondary"
-									size="compact"
-									wrap
-								>
-									Unresolved
-								</DropdownButton>
-								<div style={{ display: "inline-block", width: "10px" }} />
-								<InlineMenu
-									items={[
-										{ type: "search", label: "", placeholder: "User name" },
-										{ label: "-" },
-										{
-											label: (
-												<span style={{ fontSize: "10px", fontWeight: "bold", opacity: 0.7 }}>
-													CURRENT ASSIGNEE
-												</span>
-											),
-											noHover: true,
-											disabled: true
-										},
-										{
-											icon: (
-												<Headshot
-													size={16}
-													display="inline-block"
-													person={{ email: "pez@codestream.com" }}
-												/>
-											),
-											key: "pez",
-											label: `Peter Pezaris`,
-											searchLabel: "Peter Pezaris",
-											subtext: "ppezaris@newrelic.com",
-											floatRight: { label: <Icon name="x" /> },
-											action: () => setAssignee("pez@codestream.com")
-										},
-										{ label: "-" },
-										{
-											label: (
-												<span style={{ fontSize: "10px", fontWeight: "bold", opacity: 0.7 }}>
-													SUGGESTIONS FROM GIT
-												</span>
-											),
-											noHover: true,
-											disabled: true
-										},
-										{
-											key: "colin",
-											label: `Colin Stryker`,
-											searchLabel: "Colin Stryker",
-											subtextNoPadding: "cstryker@newrelic.com",
-											action: () => setAssignee("cstryker@newrelic.com")
-										},
-										{
-											key: "dave",
-											label: `David Hersh`,
-											searchLabel: "David Hersh",
-											subtextNoPadding: "dhersh@newrelic.com",
-											action: () => setAssignee("dhersh@newrelic.com")
-										},
-										{ label: "-" },
-										{
-											label: (
-												<span style={{ fontSize: "10px", fontWeight: "bold", opacity: 0.7 }}>
-													OTHER TEAMMATES
-												</span>
-											),
-											noHover: true,
-											disabled: true
-										},
-										{
-											key: "brian",
-											label: `Brian Canzanella`,
-											searchLabel: "Brian Canzanella",
-											subtextNoPadding: "bcanzanella@newrelic.com",
-											action: () => setAssignee("bcanzanella@newrelic.com")
-										}
-									]}
-								>
-									<Headshot size={20} display="inline-block" person={{ email: assignee }} />
-								</InlineMenu>
-							</div>
-						</div>
 					</HeaderActions>
 					<MarkdownText text={codeError.title} />
 				</BigTitle>

@@ -18,19 +18,17 @@ import { CodeErrorForm } from "./CodeErrorForm";
 import { isFeatureEnabled } from "../store/apiVersioning/reducer";
 import { getSidebarLocation } from "../store/editorContext/reducer";
 import Icon from "./Icon";
-import { DropdownButton } from "./DropdownButton";
 import { Link } from "./Link";
 import Tooltip from "./Tooltip";
 import { isConnected } from "../store/providers/reducer";
 import { ConfigureNewRelic } from "./ConfigureNewRelic";
-import { DidDetectUnreviewedCommitsNotificationType } from "@codestream/protocols/agent";
 
 const NavHeader = styled.div`
 	// flex-grow: 0;
 	// flex-shrink: 0;
 	// display: flex;
 	// align-items: flex-start;
-	padding: 25px 10px 10px 15px;
+	padding: 15px 10px 10px 15px;
 	// justify-content: center;
 	width: 100%;
 	${Header} {
@@ -245,20 +243,8 @@ export function CodeErrorNav(props: Props) {
 					width: "100%"
 				}}
 			>
-				{/* <div style={{ flexGrow: 10 }}>
-					<div
-						style={{
-							display: "inline-block",
-							width: "10px",
-							height: "10px",
-							backgroundColor: "gray",
-							margin: "0 5px 0 20px"
-						}}
-					/>
-				  CodeStream-Local-Colin API Server  
-				</div> */}
 				{/* <Icon name="add-comment" title="Help us improve" placement="bottom" delay={1} /> */}
-				{codeError.providerUrl && (
+				{/* {codeError.providerUrl && (
 					<span style={{ padding: "0 10px", marginLeft: "auto", flexGrow: 0 }}>
 						<Tooltip title="Open on New Relic One" placement="bottom" delay={1}>
 							<span>
@@ -269,7 +255,7 @@ export function CodeErrorNav(props: Props) {
 							</span>
 						</Tooltip>
 					</span>
-				)}
+				)} */}
 				<div
 					style={{
 						width: "1px",

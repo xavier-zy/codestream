@@ -33,12 +33,16 @@ import { Strings } from "../system/string";
 import { xfs } from "../xfs";
 import { GitRepository } from "../git/models/models";
 import { spawnSync } from "child_process";
+import { Logger } from "../logger";
 
 interface CandidateFiles {
 	packageJson: string | null;
 	indexFiles: string[];
 	jsFiles: string[];
 }
+
+const MISSING_SHA_MESSAGE =
+	"Your version of the code doesn't match production. Fetch the following commit to better investigate the error.\n${sha}";
 
 @lsp
 export class NRManager {
@@ -65,6 +69,34 @@ export class NRManager {
 				error: `Repo ${repoName} not found in your editor. Open it in order to navigate the stack trace.`
 			};
 		}
+		try {
+			const { git } = SessionContainer.instance();
+			// ensure this sha is actually valid for this repo
+			if (!(await git.isValidReference(matchingRepo.path, sha))) {
+				// if not found, attempt to fetch all
+				Logger.log(`NRManager sha (${sha}) not found. fetching...`);
+				await git.fetchAllRemotes(matchingRepo.path);
+
+				if (!(await git.isValidReference(matchingRepo.path, sha))) {
+					// if still not there, we can't continue
+					Logger.log(`NRManager sha (${sha}) not found after fetch`);
+					return {
+						...response,
+						error: Strings.interpolate(MISSING_SHA_MESSAGE, { sha: sha })
+					};
+				}
+			}
+		} catch (ex) {
+			Logger.warn("NRManager issue locating sha", {
+				repoRemote: repoRemote,
+				sha: sha
+			});
+			return {
+				...response,
+				error: Strings.interpolate(MISSING_SHA_MESSAGE, { sha: sha })
+			};
+		}
+
 		response.repoId = matchingRepo.id;
 		response.sha = sha;
 
@@ -73,6 +105,14 @@ export class NRManager {
 		for (const rawLine of stackTrace) {
 			const line = await this.resolveStackTraceLine(rawLine, sha, allFilePaths, matchingRepo);
 			response.lines.push(line);
+		}
+
+		if (response.lines.filter(_ => _.error).length === response.lines.length) {
+			// if there was an error on all lines (for some reason)
+			return {
+				...response,
+				error: Strings.interpolate(MISSING_SHA_MESSAGE, { sha: sha })
+			};
 		}
 
 		return response;

@@ -195,7 +195,7 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 						}}
 					/>
 					<ApmServiceTitle>
-						<Tooltip title="Open on New Relic" placement="bottom" delay={3}>
+						<Tooltip title="Open on New Relic" placement="bottom" delay={1}>
 							<span>
 								{/* TODO get actual service name and link */}
 								<Link href="#">
@@ -324,7 +324,7 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 						{props.post && <AddReactionIcon post={props.post} className="in-review" />}
 					</HeaderActions>
 					<ApmServiceTitle>
-						<Tooltip title="Open Error on New Relic" placement="bottom" delay={3}>
+						<Tooltip title="Open Error on New Relic" placement="bottom" delay={1}>
 							<span>
 								{/* TODO get the actual class of error here */}
 								{/* {codeError.title} */}

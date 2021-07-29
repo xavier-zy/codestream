@@ -3,8 +3,8 @@
 import * as fs from "fs";
 import path from "path";
 import { CodeStreamSession } from "../session";
-import { lsp, lspHandler } from "../system/decorators/lsp";
-import { ReposScm /*, RepoProjectType*/ } from "../protocol/agent.protocol";
+import { lsp } from "../system/decorators/lsp";
+import { ReposScm, RepoProjectType } from "../protocol/agent.protocol";
 
 @lsp
 export class RepoIdentificationManager {

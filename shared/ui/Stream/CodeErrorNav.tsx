@@ -18,8 +18,6 @@ import { CodeErrorForm } from "./CodeErrorForm";
 import { isFeatureEnabled } from "../store/apiVersioning/reducer";
 import { getSidebarLocation } from "../store/editorContext/reducer";
 import Icon from "./Icon";
-import { Link } from "./Link";
-import Tooltip from "./Tooltip";
 import { isConnected } from "../store/providers/reducer";
 import { ConfigureNewRelic } from "./ConfigureNewRelic";
 
@@ -39,48 +37,11 @@ const NavHeader = styled.div`
 	}
 `;
 
-const Nav = styled.div`
-	white-space: nowrap;
-	margin-left: auto;
-	margin: 15px 0 5px 20px;
-	z-index: 50;
-	&.pulse {
-		opacity: 1 !important;
-	}
-	.btn-group {
-		display: inline-block;
-		margin-left: 8px;
-		transition: transform 0.1s;
-		transform-origin: 50% 0%;
-		&:last-child {
-			transform-origin: 100% 0%;
-		}
-		button {
-			margin-left: 10px;
-			&:first-child {
-				margin-left: 0;
-			}
-			.narrow-icon {
-				// display: none;
-				margin-right: 5px;
-			}
-		}
-	}
-`;
-const ClearModal = styled.div`
-	position: absolute;
-	z-index: 51;
-	width: 100%;
-	height: 100%;
-	top: 0;
-	left: 0;
-`;
 const Root = styled.div`
 	max-height: 100%;
 	display: flex;
 	flex-direction: column;
 	&.tour-on {
-		${Nav},
 		${Meta},
 		${Description},
 		${ExpandedAuthor},
@@ -122,24 +83,6 @@ const Root = styled.div`
 		}
 	}
 
-`;
-
-export const ComposeArea = styled.div<{ side: "right" | "left" }>`
-	width: 35px;
-	height: 100%;
-	position: fixed;
-	left: ${props => (props.side === "right" ? "-36px" : "auto")};
-	right: ${props => (props.side === "left" ? "-36px" : "auto")};
-	top: 0;
-	transition: left 0.1s;
-	// background: var(--base-background-color);
-	// border-right: 1px solid var(--base-border-color);
-	background: var(--button-background-color);
-	&.pulse {
-		left: ${props => (props.side === "right" ? "0" : "auto")};
-		right: ${props => (props.side === "left" ? "0" : "auto")};
-		z-index: 5;
-	}
 `;
 
 export const StyledCodeError = styled.div``;
@@ -243,7 +186,7 @@ export function CodeErrorNav(props: Props) {
 					width: "100%"
 				}}
 			>
-				<div
+				{/* <div
 					style={{
 						width: "1px",
 						height: "16px",
@@ -252,7 +195,7 @@ export function CodeErrorNav(props: Props) {
 						margin: "0 10px 0 0",
 						flexGrow: 0
 					}}
-				/>
+				/> */}
 				<div style={{ marginLeft: "auto", marginRight: "13px", whiteSpace: "nowrap", flexGrow: 0 }}>
 					<Icon
 						className="clickable"
@@ -291,9 +234,7 @@ export function CodeErrorNav(props: Props) {
 							codeError={codeError}
 							collapsed={false}
 							setIsEditing={setIsEditing}
-						>
-							<></>
-						</BaseCodeErrorHeader>
+						></BaseCodeErrorHeader>
 					</NavHeader>
 					{props.composeOpen ? null : (
 						<div className="scroll-container">

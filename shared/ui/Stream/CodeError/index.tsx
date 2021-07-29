@@ -191,8 +191,10 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 					<ApmServiceTitle>
 						<Tooltip title="Open on New Relic" placement="bottom" delay={3}>
 							<span>
-								{/* TODO get actual service name*/}
-								<Link href="#">CodeStream-Local-Colin API Server</Link>{" "}
+								{/* TODO get actual service name and link */}
+								<Link href="#">
+									Jumpstore CommunicationAPI (Service Fabric - Stateless ASP.NET Core)
+								</Link>{" "}
 								<Icon name="link-external" className="open-external"></Icon>
 							</span>
 						</Tooltip>
@@ -297,12 +299,7 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 					>
 						<Headshot size={20} display="inline-block" person={{ email: assignee }} />
 					</InlineMenu>
-				</div>
-			</div>
-			<Header>
-				<Icon name="alert" className="type" />
-				<BigTitle>
-					<HeaderActions>
+					<>
 						{props.post && <AddReactionIcon post={props.post} className="in-review" />}
 						{props.children || (
 							<BaseCodeErrorMenu
@@ -311,6 +308,14 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 								setIsEditing={props.setIsEditing}
 							/>
 						)}
+					</>
+				</div>
+			</div>
+			<Header>
+				<Icon name="alert" className="type" />
+				<BigTitle>
+					<HeaderActions>
+						{props.post && <AddReactionIcon post={props.post} className="in-review" />}
 					</HeaderActions>
 					<ApmServiceTitle>
 						<Tooltip title="Open Error on New Relic" placement="bottom" delay={3}>

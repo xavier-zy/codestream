@@ -7,6 +7,7 @@ import styled from "styled-components";
 import { Spacer } from "./SpatialView/PRInfoModal";
 import { Button } from "../src/components/Button";
 import {
+	CodeErrorPlus,
 	CodemarkPlus,
 	CreateThirdPartyPostRequestType,
 	ReviewPlus,
@@ -96,15 +97,18 @@ interface SharingModalProps extends ModalProps {
 	codemark?: CodemarkPlus;
 	post?: CSPost;
 	review?: ReviewPlus;
+	codeError?: CodeErrorPlus;
 }
 
 export function SharingModal(props: SharingModalProps) {
 	const shareTarget: {
 		creatorId: string;
-		text: string;
+		text?: string;
 		title: string;
 		createdAt: number;
-	} = props.codemark || props.review || { creatorId: "", text: "", title: "", createdAt: 0 };
+	} = props.codemark ||
+		props.review ||
+		props.codeError || { creatorId: "", text: "", title: "", createdAt: 0 };
 	const shareTargetType = props.codemark ? "Codemark" : props.review ? "Review" : "";
 
 	const { author, mentionedUserIds } = useSelector((state: CodeStreamState) => ({
@@ -147,9 +151,10 @@ export function SharingModal(props: SharingModalProps) {
 				providerId: valuesRef.current!.providerId,
 				channelId: valuesRef.current!.channelId,
 				providerTeamId: valuesRef.current!.providerTeamId,
-				text: shareTarget.text,
+				text: props.codeError ? shareTarget.title : shareTarget.text!,
 				codemark: props.codemark,
 				review: props.review,
+				codeError: props.codeError,
 				mentionedUserIds
 			});
 			if (props.post && ts) {
@@ -215,7 +220,7 @@ export function SharingModal(props: SharingModalProps) {
 						<CardTitle>
 							<LinkifiedText
 								dangerouslySetInnerHTML={{
-									__html: markdownifyToHtml(shareTarget.title || shareTarget.text)
+									__html: markdownifyToHtml(shareTarget.title || shareTarget.text || "")
 								}}
 							/>
 						</CardTitle>

@@ -1,9 +1,9 @@
 "use strict";
 import { RequestType } from "vscode-languageserver-protocol";
 import { CrossPostIssueValues } from "./agent.protocol";
+import { CodeErrorPlus } from "./agent.protocol.codeErrors";
 import { CodemarkPlus } from "./agent.protocol.codemarks";
 import { ReviewPlus } from "./agent.protocol.reviews";
-import { CSMarkerLocations } from "./api.protocol";
 
 export interface ThirdPartyProviderConfig {
 	id: string;
@@ -220,6 +220,7 @@ export interface CreateThirdPartyPostRequest {
 	memberIds?: any;
 	codemark?: CodemarkPlus;
 	review?: ReviewPlus;
+	codeError?: CodeErrorPlus;
 	remotes?: string[];
 	entryPoint?: string;
 	crossPostIssueValues?: CrossPostIssueValues;

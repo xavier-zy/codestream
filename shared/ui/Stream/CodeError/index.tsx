@@ -59,6 +59,8 @@ import { Button } from "@codestream/webview/src/components/Button";
 import { ButtonRow } from "@codestream/webview/src/components/Dialog";
 import { Headshot } from "@codestream/webview/src/components/Headshot";
 import { InlineMenu } from "@codestream/webview/src/components/controls/InlineMenu";
+import { SharingModal } from "../SharingModal";
+import { PROVIDER_MAPPINGS } from "../CrossPostIssueControls/types";
 
 interface SimpleError {
 	/**
@@ -362,10 +364,17 @@ export const BaseCodeErrorMenu = (props: BaseCodeErrorMenuProps) => {
 		target: undefined
 	});
 
+	const [shareModalOpen, setShareModalOpen] = React.useReducer(open => !open, false);
+
 	const permalinkRef = React.useRef<HTMLTextAreaElement>(null);
 
 	const menuItems = React.useMemo(() => {
 		const items: any[] = [
+			{
+				label: "Share",
+				key: "share",
+				action: () => setShareModalOpen(true)
+			},
 			{
 				label: "Copy link",
 				key: "copy-permalink",
@@ -395,39 +404,41 @@ export const BaseCodeErrorMenu = (props: BaseCodeErrorMenuProps) => {
 		];
 
 		if (codeError.creatorId === derivedState.currentUser.id) {
-			items.push(
-				{
-					label: "Edit",
-					key: "edit",
-					action: () => props.setIsEditing(true)
-				},
-				{
-					label: "Delete",
-					action: () => {
-						confirmPopup({
-							title: "Are you sure?",
-							message: "Deleting a code error cannot be undone.",
-							centered: true,
-							buttons: [
-								{ label: "Go Back", className: "control-button" },
-								{
-									label: "Delete Code Error",
-									className: "delete",
-									wait: true,
-									action: () => {
-										dispatch(deleteCodeError(codeError.id));
-										dispatch(setCurrentCodeError());
-									}
+			items.push({
+				label: "Delete",
+				action: () => {
+					confirmPopup({
+						title: "Are you sure?",
+						message: "Deleting a code error cannot be undone.",
+						centered: true,
+						buttons: [
+							{ label: "Go Back", className: "control-button" },
+							{
+								label: "Delete Code Error",
+								className: "delete",
+								wait: true,
+								action: () => {
+									dispatch(deleteCodeError(codeError.id));
+									dispatch(setCurrentCodeError());
 								}
-							]
-						});
-					}
+							}
+						]
+					});
 				}
-			);
+			});
 		}
 
 		return items;
 	}, [codeError, collapsed]);
+
+	if (shareModalOpen)
+		return (
+			<SharingModal
+				codeError={props.codeError!}
+				post={derivedState.post}
+				onClose={() => setShareModalOpen(false)}
+			/>
+		);
 
 	if (collapsed) {
 		return (
@@ -616,6 +627,28 @@ const BaseCodeError = (props: BaseCodeErrorProps) => {
 					{!props.collapsed && props.post && <Attachments post={props.post as CSPost} />}
 				</MetaSection>
 				{props.collapsed && renderMetaSectionCollapsed(props)}
+				{!props.collapsed &&
+					props &&
+					props.post &&
+					props.post.sharedTo &&
+					props.post.sharedTo.length > 0 && (
+						<div className="related">
+							<div className="related-label">Shared To</div>
+							{props.post.sharedTo.map(target => {
+								const providerDisplay = PROVIDER_MAPPINGS[target.providerId];
+								return (
+									<Link className="external-link" href={target.url}>
+										{providerDisplay && providerDisplay.icon && (
+											<span>
+												<Icon name={providerDisplay.icon} />
+											</span>
+										)}
+										{target.channelName}
+									</Link>
+								);
+							})}
+						</div>
+					)}
 			</CardBody>
 			{renderedFooter}
 		</MinimumWidthCard>
@@ -787,6 +820,7 @@ const CodeErrorForCodeError = (props: PropsWithCodeError) => {
 		type: ""
 	});
 	const [isEditing, setIsEditing] = React.useState(false);
+	const [shareModalOpen, setShareModalOpen] = React.useReducer(open => !open, false);
 
 	const webviewFocused = useSelector((state: CodeStreamState) => state.context.hasFocus);
 	useDidMount(() => {
@@ -841,17 +875,26 @@ const CodeErrorForCodeError = (props: PropsWithCodeError) => {
 		return <CodeErrorForm editingCodeError={props.codeError} />;
 	} else {
 		return (
-			<BaseCodeError
-				{...baseProps}
-				codeError={props.codeError}
-				post={derivedState.post}
-				repoInfo={repoInfo}
-				isFollowing={derivedState.userIsFollowing}
-				currentUserId={derivedState.currentUser.id}
-				renderFooter={renderFooter}
-				setIsEditing={setIsEditing}
-				headerError={preconditionError}
-			/>
+			<>
+				{shareModalOpen && (
+					<SharingModal
+						codeError={props.codeError}
+						post={derivedState.post}
+						onClose={() => setShareModalOpen(false)}
+					/>
+				)}
+				<BaseCodeError
+					{...baseProps}
+					codeError={props.codeError}
+					post={derivedState.post}
+					repoInfo={repoInfo}
+					isFollowing={derivedState.userIsFollowing}
+					currentUserId={derivedState.currentUser.id}
+					renderFooter={renderFooter}
+					setIsEditing={setIsEditing}
+					headerError={preconditionError}
+				/>
+			</>
 		);
 	}
 };

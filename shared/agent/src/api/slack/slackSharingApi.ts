@@ -8,7 +8,7 @@ import {
 	WebClient,
 	WebClientEvent
 } from "@slack/web-api";
-import { Agent as HttpsAgent, request } from "https";
+import { Agent as HttpsAgent } from "https";
 import HttpsProxyAgent from "https-proxy-agent";
 import { uniq } from "lodash-es";
 import { Container, SessionContainer } from "../../container";
@@ -27,8 +27,6 @@ import {
 	CSChannelStream,
 	CSDirectStream,
 	CSGetMeResponse,
-	CSMarker,
-	CSMe,
 	CSRepository,
 	CSSlackProviderInfo,
 	CSTeam,
@@ -48,6 +46,7 @@ import {
 	fromSlackPost,
 	fromSlackPostId,
 	fromSlackUser,
+	toSlackCodeErrorPostBlocks,
 	toSlackPostBlocks,
 	toSlackPostText,
 	toSlackReviewPostBlocks,
@@ -304,6 +303,11 @@ export class SlackSharingApiProvider {
 				// Set the fallback (notification) content for the message
 				text = `${review.title || ""}${review.title && review.text ? `\n\n` : ""}${review.text ||
 					""}`;
+			} else if (request.codeError != null) {
+				const codeError = request.codeError;
+				blocks = toSlackCodeErrorPostBlocks(codeError, userMaps, repoHash, this._slackUserId);
+				// Set the fallback (notification) content for the message
+				text = `${codeError.title}`;
 			}
 
 			const response = await this.slackApiCall("chat.postMessage", {

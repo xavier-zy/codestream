@@ -75,11 +75,7 @@ export const CodeErrorForm = (props: Props = {}) => {
 		const codeError =
 			props.editingCodeError || (props.codeErrorId && codeErrors[props.codeErrorId]);
 		const stack = codeError?.stackTrace || errorInboxOptions.stack;
-		const url =
-			codeError?.providerUrl ||
-			/*errorInboxOptions.url ||*/
-			// for now
-			"https://one.newrelic.com/launcher/errors-inbox.launcher?platform[accountId]=3236402&platform[timeRange][duration]=604800000&platform[$isFallbackTimeRange]=false&pane=eyJuZXJkbGV0SWQiOiJlcnJvcnMtaW5ib3guaG9tZSIsIndvcmtsb2FkSWQiOiJNekl6TmpRd01ueE9VakY4VjA5U1MweFBRVVI4TkRnek1EUSIsImZpbHRlcnMiOiIoYGVycm9yLmdyb3VwLm1ldGFkYXRhLnN0YXRlYCA9ICdVbnJlc29sdmVkJykifQ==&cards[0]=eyJuZXJkbGV0SWQiOiJlcnJvcnMtaW5ib3guZXJyb3ItZ3JvdXAtZGV0YWlscyIsImVycm9yR3JvdXBHdWlkIjoiTXpJek5qUXdNbnhGVWxSOFJWSlNYMGRTVDFWUWZHTTVaREF4TWpRd0xUYzBaV010TXpRNE55MDVOakl3TFRnelpURXhNMk16TkRjMVpnIiwid29ya2xvYWRJZCI6Ik16SXpOalF3TW54T1VqRjhWMDlTUzB4UFFVUjhORGd6TURRIn0=&state=b61b6194-9a5a-ca5b-a415-ee97bb4f9653";
+		const url = codeError?.providerUrl;
 		const { customAttributes } = errorInboxOptions;
 		const parsedStack: string[] = stack ? JSON.parse(stack) : [];
 		const stackInfo = stack ? parseStack(parsedStack) : { calls: [] };
@@ -141,7 +137,9 @@ export const CodeErrorForm = (props: Props = {}) => {
 	const { repo, branch, sha } = customAttributes;
 
 	useDidMount(() => {
-		setResolvedStackPromise(resolveStackTrace(repo, sha, parsedStack));
+		if (repo && sha) {
+			setResolvedStackPromise(resolveStackTrace(repo, sha, parsedStack));
+		}
 	});
 
 	useEffect(() => {
@@ -150,8 +148,12 @@ export const CodeErrorForm = (props: Props = {}) => {
 		(async function() {
 			const resolvedStack = await resolvedStackPromise;
 			if (resolvedStack) {
-				if (!resolvedStack.error && resolvedStack.lines[1] && !resolvedStack.lines[1].error) {
-					await dispatch(jumpToStackLine(resolvedStack.lines[1], sha));
+				if (
+					!resolvedStack.error &&
+					resolvedStack.lines[0] &&
+					!resolvedStack.lines[0].line !== undefined
+				) {
+					await dispatch(jumpToStackLine(resolvedStack.lines[0], sha));
 				}
 			}
 		})();
@@ -160,11 +162,7 @@ export const CodeErrorForm = (props: Props = {}) => {
 	const onClickStackLine = async (event, lineNum) => {
 		event && event.preventDefault();
 		const resolvedStack = await resolvedStackPromise;
-		if (
-			!resolvedStack.error &&
-			resolvedStack.lines[lineNum] &&
-			!resolvedStack.lines[lineNum].error
-		) {
+		if (!resolvedStack.error && resolvedStack.lines[lineNum].line !== undefined) {
 			await dispatch(jumpToStackLine(resolvedStack.lines[lineNum], sha));
 		}
 	};

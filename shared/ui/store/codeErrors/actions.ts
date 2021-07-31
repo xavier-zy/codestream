@@ -175,7 +175,10 @@ export const jumpToStackLine = (stackLine: CSStackTraceLine, sha: string) => asy
 		line: stackLine.line!,
 		column: stackLine.column!
 	});
-	if (currentPosition.error) return;
+	if (currentPosition.error) {
+		logError(`Unable to jump to stack trace line: ${currentPosition.error}`);
+		return;
+	}
 
 	const { line, column } = currentPosition;
 	const start = Position.create(line! - 1, column! - 1);

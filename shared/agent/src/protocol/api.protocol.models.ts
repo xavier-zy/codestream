@@ -291,6 +291,8 @@ export type CSCodeErrorStatus = "resolved" | "open";
 export interface CSStackTraceLine {
 	fileRelativePath?: string;
 	fileFullPath?: string;
+	method?: string;
+	arguments?: string[];
 	line?: number;
 	column?: number;
 	error?: string;
@@ -300,6 +302,7 @@ export interface CSStackTraceInfo {
 	repoId?: string;
 	sha?: string;
 	lines: CSStackTraceLine[];
+	header?: string;
 	error?: string;
 }
 

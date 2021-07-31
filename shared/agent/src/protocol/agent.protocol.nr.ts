@@ -3,6 +3,19 @@
 import { RequestType } from "vscode-languageserver-protocol";
 import { CSStackTraceInfo } from "./api.protocol.models";
 
+export interface ParseStackTraceRequest {
+	stackTrace: string | string[];
+}
+
+export interface ParseStackTraceResponse extends CSStackTraceInfo {}
+
+export const ParseStackTraceRequestType = new RequestType<
+	ParseStackTraceRequest,
+	ParseStackTraceResponse,
+	void,
+	void
+>("codestream/nr/parseStackTrace");
+
 export interface ResolveStackTraceRequest {
 	stackTrace: string[];
 	repoRemote: string;

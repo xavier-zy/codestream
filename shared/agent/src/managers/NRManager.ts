@@ -18,6 +18,9 @@ import {
 	InstallNewRelicRequest,
 	InstallNewRelicRequestType,
 	InstallNewRelicResponse,
+	ParseStackTraceRequest,
+	ParseStackTraceRequestType,
+	ParseStackTraceResponse,
 	ResolveStackTracePositionRequest,
 	ResolveStackTracePositionRequestType,
 	ResolveStackTracePositionResponse,
@@ -25,7 +28,7 @@ import {
 	ResolveStackTraceRequestType,
 	ResolveStackTraceResponse
 } from "../protocol/agent.protocol";
-import { CSStackTraceLine } from "../protocol/api.protocol.models";
+import { CSStackTraceInfo, CSStackTraceLine } from "../protocol/api.protocol.models";
 import { CodeStreamSession } from "../session";
 import { log } from "../system/decorators/log";
 import { lsp, lspHandler } from "../system/decorators/lsp";
@@ -34,12 +37,38 @@ import { xfs } from "../xfs";
 import { GitRepository } from "../git/models/models";
 import { spawnSync } from "child_process";
 import { Logger } from "../logger";
+import { Parser as javascriptParser } from "./stackTraceParsers/javascriptStackTraceParser";
+import { Parser as rubyParser } from "./stackTraceParsers/rubyStackTraceParser";
+import { Parser as phpParser } from "./stackTraceParsers/phpStackTraceParser";
+import { Parser as pythonParser } from "./stackTraceParsers/pythonStackTraceParser";
+import { Parser as csharpParser } from "./stackTraceParsers/csharpStackTraceParser";
+import { Parser as javaParser } from "./stackTraceParsers/javaStackTraceParser";
 
 interface CandidateFiles {
 	packageJson: string | null;
 	indexFiles: string[];
 	jsFiles: string[];
 }
+
+const ExtensionToLanguageMap: { [key: string]: string } = {
+	js: "javascript",
+	rb: "ruby",
+	php: "php",
+	cs: "c#",
+	py: "python",
+	java: "java"
+};
+
+type Parser = (stack: string) => CSStackTraceInfo;
+
+const StackTraceParsers: { [key: string]: Parser } = {
+	javascript: javascriptParser,
+	ruby: rubyParser,
+	php: phpParser,
+	"c#": csharpParser,
+	python: pythonParser,
+	java: javaParser
+};
 
 const MISSING_SHA_MESSAGE =
 	"Your version of the code doesn't match production. Fetch the following commit to better investigate the error.\n${sha}";
@@ -48,6 +77,41 @@ const MISSING_SHA_MESSAGE =
 export class NRManager {
 	constructor(readonly session: CodeStreamSession) {}
 
+	// returns info gleaned from parsing a stack trace
+	@log()
+	@lspHandler(ParseStackTraceRequestType)
+	async parseStackTrace({ stackTrace }: ParseStackTraceRequest): Promise<ParseStackTraceResponse> {
+		const lines: string[] = typeof stackTrace === "string" ? stackTrace.split("\n") : stackTrace;
+		const whole = lines.join("\n");
+
+		// TODO: once we are fetching these stack traces from NR, or once we know the NR entity that was
+		// associated with generating the stack trace and can thereby infer the language, we can probably
+		// avoid having to determine the language
+
+		// take an educated guess on the language, based on a simple search for file extension,
+		// before attempting to parse accoding to the generating language
+		let lang = this.guessStackTraceLanguage(lines);
+		if (lang) {
+			return StackTraceParsers[lang](whole);
+		}
+
+		// otherwise we'll go through each in turn and try to parse anyway?
+		for (lang in StackTraceParsers) {
+			let info;
+			try {
+				info = StackTraceParsers[lang](whole);
+			} catch (error) {
+				continue;
+			}
+			return info;
+		}
+
+		throw new Error("unable to parse stack trace, no meaningful data could be extracted");
+	}
+
+	// parses the passed stack, tries to determine if any of the user's open repos match it, and if so,
+	// given the commit hash of the code for which the stack trace was generated, tries to match each line
+	// of the stack trace with a line in the user's repo, given that the user may be on a different commit
 	@log()
 	@lspHandler(ResolveStackTraceRequestType)
 	async resolveStackTrace({
@@ -102,12 +166,10 @@ export class NRManager {
 
 		const allFilePaths = this.getAllFiles(matchingRepo.path);
 
-		for (const rawLine of stackTrace) {
-			const line = await this.resolveStackTraceLine(rawLine, sha, allFilePaths, matchingRepo);
-			response.lines.push(line);
-		}
-
-		if (response.lines.filter(_ => _.error).length === response.lines.length) {
+		const stackTraceInfo = await this.parseStackTrace({ stackTrace });
+		if (stackTraceInfo.error) {
+			return stackTraceInfo;
+		} else if (!stackTraceInfo.lines.find(line => !line.error)) {
 			// if there was an error on all lines (for some reason)
 			return {
 				...response,
@@ -115,7 +177,14 @@ export class NRManager {
 			};
 		}
 
-		return response;
+		for (const line of stackTraceInfo.lines) {
+			await this.resolveStackTraceLine(line, sha, allFilePaths, matchingRepo);
+		}
+
+		return {
+			...response,
+			...stackTraceInfo
+		};
 	}
 
 	@log()
@@ -204,7 +273,7 @@ export class NRManager {
 				.reverse();
 
 			for (let i = 0; i < pathSuffixParts.length; i++) {
-				if (pathSuffixParts[i] !== filePathParts[i]) {
+				if (!pathSuffixParts[i] || pathSuffixParts[i] !== filePathParts[i]) {
 					if (i > bestMatchingScore) {
 						bestMatchingScore = i;
 						bestMatchingFilePath = filePath;
@@ -238,22 +307,20 @@ export class NRManager {
 	}
 
 	private async resolveStackTraceLine(
-		rawLine: string,
+		line: CSStackTraceLine,
 		sha: string,
 		allFilePaths: string[],
 		matchingRepo: GitRepository
 	): Promise<CSStackTraceLine> {
-		const [pathSuffix, line, column] = rawLine.split(":");
-
-		const bestMatchingFilePath = this.getBestMatchingPath(pathSuffix, allFilePaths);
+		const bestMatchingFilePath = this.getBestMatchingPath(line.fileFullPath!, allFilePaths);
 		if (!bestMatchingFilePath)
-			return { error: `Unable to find matching file for path suffix ${pathSuffix}` };
+			return { error: `Unable to find matching file for path suffix ${line.fileFullPath!}` };
 
 		const position = await this.getCurrentStackTracePosition(
 			sha,
 			bestMatchingFilePath,
-			parseInt(line, 10),
-			parseInt(column, 10)
+			line.line!,
+			line.column!
 		);
 		if (position.error) {
 			return { error: position.error };
@@ -267,6 +334,26 @@ export class NRManager {
 		};
 	}
 
+	private guessStackTraceLanguage(stackTrace: string[]) {
+		const langsRepresented: { [key: string]: number } = {};
+		let mostRepresented: string = "";
+		stackTrace.forEach(line => {
+			const extRe = new RegExp(
+				`\/.+\.(${Object.keys(ExtensionToLanguageMap).join("|")})[^a-zA-Z0-9]`
+			);
+			const match = line.match(extRe);
+			if (match && match[1]) {
+				const lang = match[1];
+				langsRepresented[lang] = langsRepresented[lang] || 0;
+				langsRepresented[lang]++;
+				if (langsRepresented[lang] > (langsRepresented[mostRepresented] || 0)) {
+					mostRepresented = lang;
+				}
+			}
+		});
+		return mostRepresented ? ExtensionToLanguageMap[mostRepresented] : null;
+	}
+
 	private async getCurrentStackTracePosition(
 		sha: string,
 		filePath: string,
@@ -278,7 +365,7 @@ export class NRManager {
 
 		const diffToHead = await git.getDiffBetweenCommits(sha, "HEAD", filePath, true);
 
-		if (!diffToHead) return { error: `Unable to calculated diff from ${sha} to HEAD` };
+		if (!diffToHead) return { error: `Unable to calculate diff from ${sha} to HEAD` };
 
 		const currentCommitLocation = await calculateLocation(
 			{
@@ -327,7 +414,7 @@ export class NRManager {
 		const files = fs.readdirSync(dirPath);
 		for (const file of files) {
 			// For demo purposes!!!
-			if (!file.match(/node_modules/)) {
+			if (file !== "node_modules" && file !== ".git") {
 				const filePath = path.join(dirPath, file);
 				if (fs.statSync(filePath).isDirectory()) {
 					arrayOfFiles = this.getAllFiles(filePath, arrayOfFiles);

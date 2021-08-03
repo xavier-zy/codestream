@@ -205,7 +205,7 @@ export const PROVIDER_MAPPINGS: { [provider: string]: ProviderDisplay } = {
 	newrelic: {
 		displayName: "New Relic",
 		icon: "newrelic",
-		getUrl: "http://newrelic.com"
+		getUrl: "https://newrelic.com"
 	}
 };
 

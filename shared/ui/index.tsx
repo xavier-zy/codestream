@@ -499,11 +499,10 @@ function listenForEvents(store) {
 						// stack info is considered ephemeral, since it only applies to the current user in the current state
 						// resolved line number that gives the full path and line of the
 						const stackInfo = await resolveStackTrace(repo, sha, parsedStack);
-						if (stackInfo.error) return;
 						const codeError: NewCodeErrorAttributes = {
 							title: stackInfo.resolvedStackInfo!.header || "",
 							stackTrace: parsedStack.join("\n"),
-							stackInfo: stackInfo.parsedStackInfo, // storing the permanently parsed stack info
+							stackInfo: stackInfo.error ? { ...stackInfo, lines: [] } : stackInfo.parsedStackInfo, // storing the permanently parsed stack info
 							providerUrl: route.query.url
 						};
 						const response = (await store.dispatch(createPostAndCodeError(codeError))) as any;

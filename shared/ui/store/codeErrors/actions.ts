@@ -1,4 +1,4 @@
-import { CSCodeError, CSStackTraceLine } from "@codestream/protocols/api";
+import { CSCodeError, CSStackTraceInfo, CSStackTraceLine } from "@codestream/protocols/api";
 import { action } from "../common";
 import { CodeErrorsActionsTypes } from "./types";
 import { HostApi } from "@codestream/webview/webview-api";
@@ -10,7 +10,6 @@ import {
 	FetchCodeErrorsRequestType,
 	ResolveStackTraceRequestType,
 	ResolveStackTracePositionRequestType,
-	ResolveStackTraceResponse,
 	UpdateCodeErrorResponse
 } from "@codestream/protocols/agent";
 import { logError } from "@codestream/webview/logger";
@@ -53,7 +52,7 @@ export interface NewCodeErrorAttributes {
 		text: string;
 		mentionedUserIds?: string[];
 	};
-	stackInfo?: ResolveStackTraceResponse;
+	stackInfo?: CSStackTraceInfo;
 	providerUrl?: string;
 }
 
@@ -168,10 +167,15 @@ export const resolveStackTrace = (repo: string, sha: string, stackTrace: string[
 	});
 };
 
-export const jumpToStackLine = (stackLine: CSStackTraceLine, sha: string) => async dispatch => {
+export const jumpToStackLine = (
+	stackLine: CSStackTraceLine,
+	sha: string,
+	repoId: string
+) => async dispatch => {
 	const currentPosition = await HostApi.instance.send(ResolveStackTracePositionRequestType, {
-		sha: sha,
-		filePath: stackLine.fileFullPath!,
+		sha,
+		repoId,
+		filePath: stackLine.fileRelativePath!,
 		line: stackLine.line!,
 		column: stackLine.column!
 	});
@@ -180,12 +184,12 @@ export const jumpToStackLine = (stackLine: CSStackTraceLine, sha: string) => asy
 		return;
 	}
 
-	const { line, column } = currentPosition;
+	const { line, column, path } = currentPosition;
 	const start = Position.create(line! - 1, column! - 1);
 	const end = Position.create(line! - 1, 10000);
 	const range = Range.create(start, end);
 	highlightRange({
-		uri: `file://${stackLine.fileFullPath!}`,
+		uri: `file://${path!}`,
 		range,
 		highlight: true
 	});

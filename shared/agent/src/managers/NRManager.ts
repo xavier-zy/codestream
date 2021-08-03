@@ -119,8 +119,6 @@ export class NRManager {
 		repoRemote,
 		sha
 	}: ResolveStackTraceRequest): Promise<ResolveStackTraceResponse> {
-		// …v/sandboxes/csbe/codestream-server/api_server/modules/codemarks/codemark_creator.js:21:9
-		const response: ResolveStackTraceResponse = { lines: [] };
 		const matchingRepo = await this.getMatchingRepo(repoRemote);
 		if (!matchingRepo) {
 			// Repo **codestream-server** not found in your editor. Open it in order to navigate the stack trace.
@@ -129,7 +127,6 @@ export class NRManager {
 				repoName = repoRemote.split("/").reverse()[0];
 			} catch {}
 			return {
-				...response,
 				error: `Repo ${repoName} not found in your editor. Open it in order to navigate the stack trace.`
 			};
 		}
@@ -145,7 +142,6 @@ export class NRManager {
 					// if still not there, we can't continue
 					Logger.log(`NRManager sha (${sha}) not found after fetch`);
 					return {
-						...response,
 						error: Strings.interpolate(MISSING_SHA_MESSAGE, { sha: sha })
 					};
 				}
@@ -156,34 +152,36 @@ export class NRManager {
 				sha: sha
 			});
 			return {
-				...response,
 				error: Strings.interpolate(MISSING_SHA_MESSAGE, { sha: sha })
 			};
 		}
 
-		response.repoId = matchingRepo.id;
-		response.sha = sha;
+		const parsedStackInfo = await this.parseStackTrace({ stackTrace });
+		if (parsedStackInfo.parseError) {
+			return { error: parsedStackInfo.parseError };
+		} else if (!parsedStackInfo.lines.find(line => !line.error)) {
+			// if there was an error on all lines (for some reason)
+			return {
+				error: Strings.interpolate(MISSING_SHA_MESSAGE, { sha: sha })
+			};
+		}
+		parsedStackInfo.repoId = matchingRepo.id;
+		parsedStackInfo.sha = sha;
 
 		const allFilePaths = this.getAllFiles(matchingRepo.path);
 
-		const stackTraceInfo = await this.parseStackTrace({ stackTrace });
-		if (stackTraceInfo.error) {
-			return stackTraceInfo;
-		} else if (!stackTraceInfo.lines.find(line => !line.error)) {
-			// if there was an error on all lines (for some reason)
-			return {
-				...response,
-				error: Strings.interpolate(MISSING_SHA_MESSAGE, { sha: sha })
-			};
-		}
-
-		for (const line of stackTraceInfo.lines) {
-			await this.resolveStackTraceLine(line, sha, allFilePaths, matchingRepo);
+		const resolvedStackInfo: CSStackTraceInfo = { ...parsedStackInfo, lines: [] };
+		for (const line of parsedStackInfo.lines) {
+			const resolvedLine = line.error
+				? { ...line }
+				: await this.resolveStackTraceLine(line, sha, allFilePaths, matchingRepo);
+			resolvedStackInfo.lines.push(resolvedLine);
+			line.fileRelativePath = resolvedLine.fileRelativePath;
 		}
 
 		return {
-			...response,
-			...stackTraceInfo
+			resolvedStackInfo,
+			parsedStackInfo
 		};
 	}
 
@@ -191,11 +189,26 @@ export class NRManager {
 	@lspHandler(ResolveStackTracePositionRequestType)
 	async resolveStackTracePosition({
 		sha,
+		repoId,
 		filePath,
 		line,
 		column
 	}: ResolveStackTracePositionRequest): Promise<ResolveStackTracePositionResponse> {
-		return this.getCurrentStackTracePosition(sha, filePath, line, column);
+		const { git } = SessionContainer.instance();
+		const repos = await git.getRepositories();
+		let repo;
+		for (repo of repos) {
+			if (repo.id === repoId) break;
+		}
+		if (!repo) {
+			return { error: "unable to find repo " + repoId };
+		}
+		const fullPath = path.join(repo.path, filePath);
+		const position = await this.getCurrentStackTracePosition(sha, fullPath, line, column);
+		return {
+			...position,
+			path: fullPath
+		};
 	}
 
 	@log()

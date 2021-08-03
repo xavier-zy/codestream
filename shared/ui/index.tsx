@@ -99,6 +99,7 @@ import { openPullRequestByUrl } from "./store/providerPullRequests/actions";
 import { updateCapabilities } from "./store/capabilities/actions";
 import { confirmPopup } from "./Stream/Confirm";
 import { switchToTeam } from "./store/session/actions";
+import { ParseStackTraceRequestType } from "@codestream/protocols/agent";
 
 export { HostApi };
 
@@ -487,22 +488,25 @@ function listenForEvents(store) {
 							store.dispatch(setPendingProtocolHandlerUrl({ url: e.url }));
 							break;
 						}
-						const parsedStack: string[] = route.query.stack ? JSON.parse(route.query.stack) : [];
-						const title = parsedStack[0]
-							? parsedStack[0].startsWith("Error: ")
-								? parsedStack[0].substring(7)
-								: parsedStack[0]
-							: "";
+
 						const { repo, sha } = JSON.parse(route.query.customAttributes);
+						const parsedStack: string[] = route.query.stack ? JSON.parse(route.query.stack) : [];
+
+						// "resolving" the stack trace here gives us two pieces of info for each line of the stack
+						// the info parsed directly from the stack, and the "resolved" info that is specific to the
+						// file the user has currently in their repo ... this position may be different if the user is
+						// on a particular commit ... the "parsed" stack info is considered permanent, the "resolved"
+						// stack info is considered ephemeral, since it only applies to the current user in the current state
+						// resolved line number that gives the full path and line of the
+						const stackInfo = await resolveStackTrace(repo, sha, parsedStack);
+						if (stackInfo.error) return;
 						const codeError: NewCodeErrorAttributes = {
-							title,
+							title: stackInfo.resolvedStackInfo!.header || "",
 							stackTrace: parsedStack.join("\n"),
+							stackInfo: stackInfo.parsedStackInfo, // storing the permanently parsed stack info
 							providerUrl: route.query.url
 						};
 						const response = (await store.dispatch(createPostAndCodeError(codeError))) as any;
-						store.dispatch(closeAllPanels());
-						const stackInfo = await resolveStackTrace(repo, sha, parsedStack);
-
 						store.dispatch(
 							setCurrentCodeError(response.codeError.id, {
 								repo: repo,
@@ -512,7 +516,6 @@ function listenForEvents(store) {
 							})
 						);
 
-						store.dispatch(updateCodeError({ id: response.codeError.id, stackInfo }));
 						store.dispatch(openPanel(WebviewPanels.CodemarksForFile));
 						break;
 					}

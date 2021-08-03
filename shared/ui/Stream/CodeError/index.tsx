@@ -513,12 +513,10 @@ const BaseCodeError = (props: BaseCodeErrorProps) => {
 	const onClickStackLine = async (event, lineNum) => {
 		event && event.preventDefault();
 		if (props.collapsed) return;
-		if (lineNum < 1) return;
-		lineNum--; // skip "error" line ... but this is fragile
 		const { stackInfo } = codeError;
 		if (stackInfo && stackInfo.lines[lineNum] && stackInfo.lines[lineNum].line !== undefined) {
 			setCurrentSelectedLine(lineNum);
-			await dispatch(jumpToStackLine(stackInfo.lines[lineNum], stackInfo.sha!));
+			dispatch(jumpToStackLine(stackInfo.lines[lineNum], stackInfo.sha!, stackInfo.repoId!));
 		}
 	};
 
@@ -527,8 +525,15 @@ const BaseCodeError = (props: BaseCodeErrorProps) => {
 	useEffect(() => {
 		if (!props.collapsed) {
 			const { stackInfo } = codeError;
-			if (stackInfo && stackInfo.lines && stackInfo.lines[0] && !stackInfo.lines[0].error) {
-				dispatch(jumpToStackLine(stackInfo.lines[0], stackInfo.sha!));
+			if (stackInfo && !stackInfo.error) {
+				let lineNum = 0;
+				const len = stackInfo.lines.length;
+				while (lineNum < len && stackInfo.lines[lineNum].line !== undefined) {
+					lineNum++;
+				}
+				if (lineNum < len) {
+					dispatch(jumpToStackLine(stackInfo.lines[lineNum], stackInfo.sha, stackInfo.repoId!));
+				}
 			}
 		}
 	}, [codeError]);

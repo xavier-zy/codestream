@@ -7,7 +7,9 @@ export interface ParseStackTraceRequest {
 	stackTrace: string | string[];
 }
 
-export interface ParseStackTraceResponse extends CSStackTraceInfo {}
+export interface ParseStackTraceResponse extends CSStackTraceInfo {
+	parseError?: string;
+}
 
 export const ParseStackTraceRequestType = new RequestType<
 	ParseStackTraceRequest,
@@ -22,7 +24,11 @@ export interface ResolveStackTraceRequest {
 	sha: string;
 }
 
-export interface ResolveStackTraceResponse extends CSStackTraceInfo {}
+export interface ResolveStackTraceResponse {
+	parsedStackInfo?: CSStackTraceInfo; // this is parsed info relative to the given sha, to be stored
+	resolvedStackInfo?: CSStackTraceInfo; // this is relative to the user's current sha, ephemeral
+	error?: string;
+}
 
 export const ResolveStackTraceRequestType = new RequestType<
 	ResolveStackTraceRequest,
@@ -33,6 +39,7 @@ export const ResolveStackTraceRequestType = new RequestType<
 
 export interface ResolveStackTracePositionRequest {
 	sha: string;
+	repoId: string;
 	filePath: string;
 	line: number;
 	column: number;
@@ -41,6 +48,7 @@ export interface ResolveStackTracePositionRequest {
 export interface ResolveStackTracePositionResponse {
 	line?: number;
 	column?: number;
+	path?: string;
 	error?: string;
 }
 

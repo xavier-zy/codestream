@@ -133,7 +133,7 @@ export const CodeErrorForm = (props: Props = {}) => {
 		}
 	};
 
-	const { stack, parsedStack, customAttributes, currentUser, url } = derivedState;
+	const { stack, parsedStack, customAttributes, currentUser, url, stackInfo } = derivedState;
 	const { repo, branch, sha } = customAttributes;
 
 	useDidMount(() => {
@@ -147,13 +147,14 @@ export const CodeErrorForm = (props: Props = {}) => {
 		if (!resolvedStackPromise) return;
 		(async function() {
 			const resolvedStack = await resolvedStackPromise;
-			if (resolvedStack) {
-				if (
-					!resolvedStack.error &&
-					resolvedStack.lines[0] &&
-					!resolvedStack.lines[0].line !== undefined
-				) {
-					await dispatch(jumpToStackLine(resolvedStack.lines[0], sha));
+			if (resolvedStack && !resolvedStack.error) {
+				let lineNum = 0;
+				const len = resolvedStack.lines.length;
+				while (lineNum < len && resolvedStack.lines[lineNum].line !== undefined) {
+					lineNum++;
+				}
+				if (lineNum < len) {
+					dispatch(jumpToStackLine(resolvedStack.lines[lineNum], sha, ""));
 				}
 			}
 		})();
@@ -163,7 +164,7 @@ export const CodeErrorForm = (props: Props = {}) => {
 		event && event.preventDefault();
 		const resolvedStack = await resolvedStackPromise;
 		if (!resolvedStack.error && resolvedStack.lines[lineNum].line !== undefined) {
-			await dispatch(jumpToStackLine(resolvedStack.lines[lineNum], sha));
+			dispatch(jumpToStackLine(resolvedStack.lines[lineNum], sha, ""));
 		}
 	};
 

@@ -11,6 +11,14 @@ export function Parser(stack: string): CSStackTraceInfo {
 		info.header = firstLine;
 		info.error = match[1];
 	}
+
+	/*
+	The code below works great! If we can actually manage to get a full stack trace.
+	Unfortunately, until NR can deliver a real Open In IDE button passing us the real stack trace,
+	we are limited to the truncated stack trace we can glean from the web page, so we have to
+	go with our own parser garbage...
+	*/
+	/*
 	const parsed = StackTraceParser.parse(stack);
 	info.lines = parsed.map(line => {
 		return {
@@ -20,6 +28,23 @@ export function Parser(stack: string): CSStackTraceInfo {
 			line: line.lineNumber === null ? undefined : line.lineNumber,
 			column: line.column === null ? undefined : line.column
 		};
+	});
+	*/
+
+	const lines = stack.split("\n");
+	info.lines = lines.map(line => {
+		const parts = line.split(":");
+		if (parts.length > 2) {
+			return {
+				fileFullPath: parts[0],
+				line: parseInt(parts[1], 10),
+				column: parseInt(parts[2], 0)
+			};
+		} else {
+			return {
+				error: "unable to parse line"
+			};
+		}
 	});
 	return info;
 }

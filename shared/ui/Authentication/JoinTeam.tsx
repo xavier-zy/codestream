@@ -35,10 +35,14 @@ export const JoinTeam = (connect(undefined) as any)((props: DispatchProp) => {
 		});
 
 		if (status === LoginResult.Success) {
+			let tosType;
+			const picker = Math.random();
+			picker < 0.5 ? (tosType = "Interstitial") : (tosType = "Links");
 			HostApi.instance.track("Reg Path Selected", {
-				"Reg Path": "Join Team"
+				"Reg Path": "Join Team",
+				"TOS Type": tosType
 			});
-			props.dispatch(goToSignup({ ...info, inviteCode: code, type: SignupType.JoinTeam }));
+			props.dispatch(goToSignup({ ...info, inviteCode: code, type: SignupType.JoinTeam, tosType }));
 		} else {
 			setIsLoading(false);
 			setError(status);

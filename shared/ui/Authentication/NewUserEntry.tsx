@@ -89,10 +89,14 @@ export const NewUserEntry = (connect(mapStateToProps) as any)((props: Props) => 
 
 	const onClickCreateTeam = (event: React.SyntheticEvent) => {
 		event.preventDefault();
+		let tosType;
+		const picker = Math.random();
+		picker < 0.5 ? (tosType = "Interstitial") : (tosType = "Links");
 		HostApi.instance.track("Reg Path Selected", {
-			"Reg Path": "Create Team"
+			"Reg Path": "Create Team",
+			"TOS Type": tosType
 		});
-		props.dispatch(goToSignup({ type: SignupType.CreateTeam }));
+		props.dispatch(goToSignup({ type: SignupType.CreateTeam, tosType }));
 	};
 
 	// const onClickJoinTeam = (event: React.SyntheticEvent) => {
@@ -105,17 +109,21 @@ export const NewUserEntry = (connect(mapStateToProps) as any)((props: Props) => 
 
 	const onClickAutoJoinTeam = (event: React.SyntheticEvent, teamId: string) => {
 		event.preventDefault();
+		let tosType;
+		const picker = Math.random();
+		picker < 0.5 ? (tosType = "Interstitial") : (tosType = "Links");
 		HostApi.instance.track("Reg Path Selected", {
-			"Reg Path": "Auto Join Team"
+			"Reg Path": "Auto Join Team",
+			"TOS Type": tosType
 		});
 		const info = autoJoinInfo.find(info => info.team.id === teamId);
 		if (info) {
 			const repoId = info.repo.id;
 			// @ts-ignore
 			const commitHash = info.repo.knownCommitHashes[0];
-			props.dispatch(goToSignup({ teamId, repoId, commitHash }));
+			props.dispatch(goToSignup({ teamId, repoId, commitHash, tosType }));
 		} else {
-			props.dispatch(goToSignup());
+			props.dispatch(goToSignup({ tosType }));
 		}
 	};
 

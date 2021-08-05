@@ -49,6 +49,7 @@ interface Props {
 	teamId?: string;
 	inviteCode?: string;
 	type?: SignupType;
+	tosType?: string;
 
 	/** the following attributes are for auto-joining teams */
 	repoId?: string;
@@ -334,7 +335,8 @@ export const Signup = (props: Props) => {
 		authenticationProviders["gitlab*com"] ||
 		authenticationProviders["bitbucket*org"];
 
-	// if (!derivedState.acceptedTOS) return <PresentTOS />;
+	if (!derivedState.acceptedTOS && props.tosType && props.tosType === "Interstitial")
+		return <PresentTOS />;
 
 	return (
 		<div className="onboarding-page">
@@ -509,16 +511,18 @@ export const Signup = (props: Props) => {
 					)}
 					<div id="controls">
 						<div className="footer">
-							<small className="fine-print">
-								<FormattedMessage id="signUp.legal.start" />{" "}
-								<FormattedMessage id="signUp.legal.terms">
-									{text => <Link href="https://codestream.com/terms">{text}</Link>}
-								</FormattedMessage>{" "}
-								<FormattedMessage id="and" />{" "}
-								<FormattedMessage id="signUp.legal.privacyPolicy">
-									{text => <Link href="https://codestream.com/privacy">{text}</Link>}
-								</FormattedMessage>
-							</small>
+							{props.tosType && props.tosType === "Links" && (
+								<small className="fine-print">
+									<FormattedMessage id="signUp.legal.start" />{" "}
+									<FormattedMessage id="signUp.legal.terms">
+										{text => <Link href="https://codestream.com/terms">{text}</Link>}
+									</FormattedMessage>{" "}
+									<FormattedMessage id="and" />{" "}
+									<FormattedMessage id="signUp.legal.privacyPolicy">
+										{text => <Link href="https://codestream.com/privacy">{text}</Link>}
+									</FormattedMessage>
+								</small>
+							)}
 							<Link onClick={onClickGoBack}>
 								<p>{"< Back"}</p>
 							</Link>

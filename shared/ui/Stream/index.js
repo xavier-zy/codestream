@@ -237,7 +237,7 @@ export class SimpleStream extends PureComponent {
 		let { activePanel, activeModal, acceptedTOS } = this.props;
 		const { q } = this.state;
 
-		if (!acceptedTOS) return <PresentTOS />;
+		// if (!acceptedTOS) return <PresentTOS />;
 
 		if (activePanel === WebviewPanels.LandingRedirect) activePanel = WebviewPanels.Sidebar;
 

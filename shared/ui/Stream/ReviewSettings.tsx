@@ -121,8 +121,8 @@ export const ReviewSettings = () => {
 									<p>&nbsp;</p>
 
 									<p>
-										<Link href="https://docs.codestream.com/userguide/features/managing-the-team/#code-review-assignment--approval">
-											Learn more about Feedback Request Assignment
+										<Link href="https://docs.codestream.com/userguide/features/team-administration/#feedback-request-assignment--approval">
+											Learn more about Feedback Request assignment
 										</Link>
 									</p>
 								</>

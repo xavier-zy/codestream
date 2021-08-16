@@ -9,7 +9,7 @@ import com.teamdev.jxbrowser.engine.Engine
 import com.teamdev.jxbrowser.engine.EngineOptions
 import com.teamdev.jxbrowser.engine.RenderingMode
 import com.teamdev.jxbrowser.net.ResourceType
-import com.teamdev.jxbrowser.net.callback.LoadResourceCallback
+import com.teamdev.jxbrowser.net.callback.BeforeUrlRequestCallback
 import com.teamdev.jxbrowser.plugin.callback.AllowPluginCallback
 import java.nio.file.Paths
 
@@ -52,18 +52,18 @@ class JxBrowserEngineService : Disposable {
         engine.spellChecker().disable()
         engine.plugins()
             .set(AllowPluginCallback::class.java, AllowPluginCallback { AllowPluginCallback.Response.deny() })
-        engine.network().set(LoadResourceCallback::class.java, LoadResourceCallback {
-            if (it.resourceType() == ResourceType.IMAGE || it.url().startsWith("file://")) {
-                LoadResourceCallback.Response.load()
+        engine.network().set(BeforeUrlRequestCallback::class.java, BeforeUrlRequestCallback {
+            if (it.urlRequest().resourceType() == ResourceType.IMAGE || it.urlRequest().url().startsWith("file://")) {
+                BeforeUrlRequestCallback.Response.proceed()
             } else {
-                if (it.resourceType() == ResourceType.MAIN_FRAME) {
+                if (it.urlRequest().resourceType() == ResourceType.MAIN_FRAME) {
                     try {
-                        BrowserUtil.browse(it.url())
+                        BrowserUtil.browse(it.urlRequest().url())
                     } catch (e: Exception) {
                         logger.warn(e)
                     }
                 }
-                LoadResourceCallback.Response.cancel()
+                BeforeUrlRequestCallback.Response.cancel()
             }
         })
     }

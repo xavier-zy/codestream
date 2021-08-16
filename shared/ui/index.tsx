@@ -499,6 +499,10 @@ function listenForEvents(store) {
 						// stack info is considered ephemeral, since it only applies to the current user in the current state
 						// resolved line number that gives the full path and line of the
 						const stackInfo = await resolveStackTrace(repo, sha, parsedStack);
+						if (stackInfo.error) {
+							logWarning(`Unable to resolve stack: ${stackInfo.error}`);
+							return;
+						}
 						const codeError: NewCodeErrorAttributes = {
 							title: stackInfo.resolvedStackInfo!.header || "",
 							stackTrace: parsedStack.join("\n"),

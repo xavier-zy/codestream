@@ -310,7 +310,15 @@ export class NRManager {
 				if (!compareRepo.startsWith("ssh://")) {
 					compareRepo = `ssh://${compareRepo}`;
 				}
-				if (remote.uri.toString().toLowerCase() === compareRepo) {
+				if (!compareRepo.endsWith(".git")) {
+					compareRepo += ".git";
+				}
+				let remoteUri = remote.uri.toString().toLowerCase();
+				if (!remoteUri.endsWith(".git")) {
+					remoteUri += ".git";
+				}
+				Logger.log(`comparing remote ${remoteUri} to ${compareRepo}`);
+				if (remoteUri === compareRepo) {
 					matchingRepo = gitRepo;
 					break;
 				}

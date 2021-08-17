@@ -607,7 +607,21 @@ function listenForEvents(store) {
 				break;
 			}
 			case "navigate": {
-				if (route.action) {
+				if (route.action === "open" || route.action === "navigate") {
+					const reposResponse = await HostApi.instance.send(GetReposScmRequestType, {
+						inEditorOnly: true
+					});
+
+					if (reposResponse) {
+						HostApi.instance.send(EditorRevealRangeRequestType, {
+							uri: path.join(reposResponse.repositories![0].path, "main.js"),
+							range: Range.create(0, 0, 0, 0),
+							atTop: true
+						});
+					} else {
+						console.warn("no repo found");
+					}
+				} else if (route.action) {
 					if (Object.values(WebviewPanels).includes(route.action as any)) {
 						store.dispatch(closeAllPanels());
 						store.dispatch(openPanel(route.action));
@@ -615,6 +629,7 @@ function listenForEvents(store) {
 						logWarning(`Cannot navigate to route.action=${route.action}`);
 					}
 				}
+
 				break;
 			}
 			default: {

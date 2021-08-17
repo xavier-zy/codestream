@@ -53,10 +53,13 @@ class JxBrowserEngineService : Disposable {
         engine.plugins()
             .set(AllowPluginCallback::class.java, AllowPluginCallback { AllowPluginCallback.Response.deny() })
         engine.network().set(BeforeUrlRequestCallback::class.java, BeforeUrlRequestCallback {
-            if (it.urlRequest().resourceType() == ResourceType.IMAGE || it.urlRequest().url().startsWith("file://")) {
+            if (it.urlRequest().resourceType() == ResourceType.IMAGE
+                || it.urlRequest().url().startsWith("file://")
+                || it.urlRequest().url().contains("/dns-query?dns=")
+            ) {
                 BeforeUrlRequestCallback.Response.proceed()
             } else {
-                if (!it.urlRequest().url().contains("/dns-query?dns=") && it.urlRequest().resourceType() == ResourceType.MAIN_FRAME) {
+                if (it.urlRequest().resourceType() == ResourceType.MAIN_FRAME) {
                     try {
                         BrowserUtil.browse(it.urlRequest().url())
                     } catch (e: Exception) {

@@ -105,7 +105,7 @@ export enum RouteActionType {
 }
 export interface Route {
 	controller?: RouteControllerType;
-	action?: RouteActionType;
+	action?: any;
 	id?: string;
 	query?: any;
 }

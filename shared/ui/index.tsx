@@ -607,7 +607,7 @@ function listenForEvents(store) {
 				break;
 			}
 			case "navigate": {
-				if (route.action === "open" || route.action === "navigate") {
+				if (route.action && (route.action === "open" || route.action === "navigate")) {
 					const reposResponse = await HostApi.instance.send(GetReposScmRequestType, {
 						inEditorOnly: true
 					});

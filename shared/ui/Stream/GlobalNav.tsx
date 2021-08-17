@@ -122,6 +122,7 @@ export function GlobalNav() {
 	return React.useMemo(() => {
 		if (currentCodemarkId) return null;
 		else if (activePanel === WebviewPanels.Onboard) return null;
+		else if (activePanel === WebviewPanels.OnboardNewRelic) return null;
 		else {
 			return (
 				<nav className="inline" id="global-nav">

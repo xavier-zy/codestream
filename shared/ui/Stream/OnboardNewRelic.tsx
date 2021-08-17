@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { shallowEqual, useDispatch, useSelector } from "react-redux";
 import styled from "styled-components";
 import { CodeStreamState } from "../store";
 import { getTeamMembers } from "../store/users/reducer";
 import { useDidMount, usePrevious } from "../utilities/hooks";
 import { HostApi } from "../webview-api";
-import { closePanel, invite, openPanel } from "./actions";
+import { closeModal, closePanel, invite, openPanel } from "./actions";
 import {
 	GetLatestCommittersRequestType,
 	GetReposScmRequestType,
@@ -14,7 +14,6 @@ import {
 import { Checkbox } from "../src/components/Checkbox";
 import { CSText } from "../src/components/CSText";
 import { Button } from "../src/components/Button";
-import * as Legacy from "../Stream/Button";
 import { Link } from "./Link";
 import Icon from "./Icon";
 import { confirmPopup } from "./Confirm";
@@ -31,346 +30,88 @@ import { isEmailValid } from "../Authentication/Signup";
 import { OpenUrlRequestType, WebviewPanels } from "@codestream/protocols/webview";
 import { TelemetryRequestType } from "@codestream/protocols/agent";
 import { setOnboardStep, setShowFeedbackSmiley } from "../store/context/actions";
+import { getTestGroup } from "../store/context/reducer";
+import {
+	Step,
+	LinkRow,
+	CenterRow,
+	Dots,
+	Dot,
+	DialogRow,
+	SkipLink,
+	Keybinding,
+	Sep,
+	OutlineNumber,
+	ExpandingText,
+	ConnectCodeHostProvider
+} from "./Onboard";
+import {
+	AddNewRelicIncludeRequestType,
+	AddNewRelicIncludeResponse,
+	CreateNewRelicConfigFileRequestType,
+	CreateNewRelicConfigFileResponse,
+	FindCandidateMainFilesRequestType,
+	FindCandidateMainFilesResponse,
+	InstallNewRelicRequestType,
+	InstallNewRelicResponse
+} from "../protocols/agent/agent.protocol.nr";
+import { logError } from "../logger";
+import { InlineMenu } from "../src/components/controls/InlineMenu";
+import * as path from "path-browserify";
+import { Position, Range } from "vscode-languageserver-types";
+import { highlightRange } from "../Stream/api-functions";
 
-export const Step = styled.div`
-	margin: 0 auto;
-	text-align: left;
-	position: absolute;
-	display: none;
-	opacity: 0;
-	justify-content: center;
-	align-items: center;
-	flex-direction: row;
-	top: 0;
-	left: 0;
-	width: 100%;
-	min-height: 100vh;
-	.body {
-		padding: 30px 20px 20px 20px;
-		margin-bottom: 30px;
-		max-width: 450px;
-		pointer-events: none;
-	}
-	p {
-		margin-top: 0.5em;
-		color: var(--text-color-subtle);
-	}
-	h1,
-	h2,
-	h3 {
-		color: var(--text-color-highlight);
-		margin: 0 0 0 0;
-		text-align: center;
-	}
-	h1 {
-		font-size: 32px;
-		margin-bottom: 10px;
-		.icon {
-			pointer-events: none;
-			font-size: 24px;
-			line-height: 1;
-			display: inline-block;
-			opacity: 1;
-			transform: scale(7);
-			animation-duration: 2s;
-			animation-timing-function: ease-out;
-			animation-name: hoverin;
-			animation-fill-mode: forwards;
-		}
-	}
-	h3 {
-		font-size: 18px;
-		margin-bottom: 10px;
-		.icon {
-			line-height: 2;
-			display: inline-block;
-			opacity: 0.5;
-			transform: scale(2);
-			margin: 0 15px;
-		}
-	}
-	.explainer {
-		text-align: center;
-		&.left {
-			text-align: left;
-		}
-	}
-	&.active {
-		animation-duration: 0.75s;
-		animation-name: slidein;
-		animation-timing-function: ease;
-		display: flex;
-		opacity: 1;
-		.body {
-			pointer-events: auto;
-		}
-		z-index: 10;
-	}
-	&.ease-down {
-		animation-duration: 2s;
-		animation-timing-function: ease-out;
-		animation-name: easedown;
-	}
-	&.last-active {
-		animation-duration: 0.25s;
-		animation-name: slideout;
-		animation-timing-function: ease;
-		animation-fill-mode: forwards;
-		display: flex;
-		overflow: hidden;
-	}
-	b {
-		color: var(--text-color-highlight);
-	}
-
-	@keyframes easedown {
-		from {
-			transform: translateY(-30px);
-		}
-		75% {
-			transform: translateY(-30px);
-		}
-		to {
-			transform: translateY(0);
-		}
-	}
-
-	@keyframes hoverin {
-		from {
-			transform: scale(400) translateY(15vh);
-			opacity: 0;
-		}
-
-		75% {
-			opacity: 0.1;
-		}
-
-		to {
-			transform: scale(7) translateY(0);
-			opacity: 1;
-		}
-	}
-
-	@keyframes slideout {
-		from {
-			opacity: 1;
-			height: auto;
-		}
-		99% {
-			opacity: 0;
-			height: auto;
-			transform: scale(0.9);
-		}
-		to {
-			opacity: 0;
-			height: 0px;
-			transform: scale(0.09);
-		}
-	}
-	@keyframes slidein {
-		from {
-			opacity: 0;
-			transform: scale(1);
-		}
-		50% {
-			opacity: 0;
-		}
-		to {
-			opacity: 1;
-		}
-	}
-`;
-
-export const ButtonRow = styled.div`
-	margin-top: 10px;
-	flex-wrap: wrap;
-	justify-content: flex-start;
-	white-space: normal; // required for wrap
-	button {
-		margin: 10px 10px 0 0;
-	}
-`;
-
-const LinkRow = styled.div`
-	margin-top: 10px;
-	text-align: right;
-	a {
-		text-decoration: none;
-	}
-`;
-
-export const CenterRow = styled.div`
-	margin-top: 20px;
-	text-align: center;
-`;
-
-export const Dots = styled.div<{ steps: number }>`
-	display: flex;
-	position: absolute;
-	top: calc(100vh - 30px);
-	left: calc(50vw - ${props => props.steps * 10}px);
-	z-index: 11;
-	transition: top 0.15s;
-`;
-
-export const Dot = styled.div<{ selected?: boolean }>`
-	width: 10px;
-	height: 10px;
-	border-radius: 5px;
-	margin: 0 5px;
-	background: var(--text-color-highlight);
-	opacity: ${props => (props.selected ? "1" : "0.2")};
-	transition: opacity 0.25s;
-`;
-
-export const OutlineBox = styled.div`
-	width: 100%;
-	border: 1px solid var(--base-border-color);
-	padding: 50px 0;
-`;
-
-export const DialogRow = styled.div`
-	display: flex;
-	padding: 10px 0;
-	&:first-child {
-		margin-top: -10px;
-	}
-	.icon {
-		color: var(--text-color-info);
-		margin-right: 15px;
-		flex-shrink: 0;
-		flex-grow: 0;
-	}
-`;
-
-export const SkipLink = styled.div`
-	cursor: pointer;
-	text-align: center;
-	margin-top: 30px;
-	color: var(--text-color-subtle);
-	opacity: 0.75;
-	&:hover {
-		opacity: 1;
-		color: var(--text-color);
-	}
-`;
-
-export const Keybinding = styled.div`
-	margin: 20px 0;
-	text-align: center;
-	transform: scale(1.5);
-`;
-
-export const Sep = styled.div`
-	border-top: 1px solid var(--base-border-color);
-	margin: 10px -20px 20px -20px;
-`;
-
-export const OutlineNumber = styled.div`
+export const StepNumber = styled.div`
 	display: flex;
 	flex-shrink: 0;
 	align-items: center;
 	justify-content: center;
-	font-size: 14px;
-	width: 30px;
-	height: 30px;
+	font-size: 20px;
+	width: 40px;
+	height: 40px;
 	border-radius: 50%;
-	margin: 0 10px 0 0;
+	margin: 0;
 	font-weight: bold;
 
 	background: var(--button-background-color);
 	color: var(--button-foreground-color);
+	// background: var(--text-color-highlight);
+	// color: var(--base-background-color);
 `;
 
-export const ExpandingText = styled.div`
-	margin: 10px 0;
-	position: relative;
-
-	.error-message {
-		position: absolute;
-		top: 5px;
-		right: 5px;
+export const InstallRow = styled.div`
+	display: flex;
+	align-items: center;
+	padding: 10px 0;
+	width: 100%;
+	label {
+		text-align: left;
 	}
-
-	animation-duration: 0.25s;
-	animation-name: expand;
-	animation-timing-function: ease;
-	animation-fill-mode: forwards;
-
-	@keyframes expand {
-		from {
-			height: 0px;
-		}
-		to {
-			height: 25px;
-		}
+	> * {
+		flex-grow: 0;
+	}
+	> :nth-child(2) {
+		text-align: left;
+		margin: 0 10px;
+		flex-grow: 10;
+	}
+	> :nth-child(3) {
+		align-self: flex-end;
+		flex-shrink: 0;
+	}
+	opacity: 0.15;
+	transition: opacity 0.3s;
+	&.row-active {
+		opacity: 1;
+	}
+	button {
+		width: 65px;
 	}
 `;
 
 const EMPTY_ARRAY = [];
 
-const positionDots = () => {
-	requestAnimationFrame(() => {
-		const $active = document.getElementsByClassName("active")[0];
-		if ($active) {
-			const $dots = document.getElementById("dots");
-			if ($dots) $dots.style.top = `${$active.clientHeight - 30}px`;
-		}
-	});
-};
-
-export const Onboard = React.memo(function Onboard() {
-	const dispatch = useDispatch();
-	const derivedState = useSelector((state: CodeStreamState) => {
-		const user = state.users[state.session.userId!];
-		return {
-			currentStep: state.context.onboardStep,
-			teamMembers: getTeamMembers(state),
-			totalPosts: user.totalPosts || 0,
-			isInVSCode: state.ide.name === "VSC",
-			isInJetBrains: state.ide.name === "JETBRAINS"
-		};
-	}, shallowEqual);
-
-	const { currentStep } = derivedState;
-	let NUM_STEPS = 1;
-	const [lastStep, setLastStep] = useState(currentStep);
-	const skip = () => setStep(currentStep + 1);
-	const setStep = (step: number) => {
-		if (step === NUM_STEPS) {
-			dispatch(setOnboardStep(0));
-			dispatch(closePanel());
-			return;
-		}
-
-		setLastStep(currentStep);
-		dispatch(setOnboardStep(step));
-		setTimeout(() => scrollToTop(), 250);
-	};
-
-	const scrollToTop = () => {
-		requestAnimationFrame(() => {
-			const $container = document.getElementById("scroll-container");
-			if ($container) $container.scrollTo({ top: 0, behavior: "smooth" });
-		});
-	};
-
-	return (
-		<>
-			<div id="scroll-container" className="onboarding-page">
-				<div className="standard-form">
-					<fieldset className="form-body">
-						<div className="border-bottom-box">
-							<InviteTeammates className={"active"} skip={skip} unwrap={true} />
-						</div>
-					</fieldset>
-				</div>
-			</div>
-		</>
-	);
-});
-
-export const OnboardFull = React.memo(function Onboard() {
+export const OnboardNewRelic = React.memo(function OnboardNewRelic() {
 	const dispatch = useDispatch();
 	const derivedState = useSelector((state: CodeStreamState) => {
 		const { providers } = state;
@@ -411,7 +152,6 @@ export const OnboardFull = React.memo(function Onboard() {
 		);
 
 		return {
-			tourType: "educate", //getTestGroup(state, "onboard") || "educate",
 			currentStep: state.context.onboardStep,
 			providers: state.providers,
 			connectedProviders,
@@ -429,28 +169,18 @@ export const OnboardFull = React.memo(function Onboard() {
 	}, shallowEqual);
 
 	const {
-		tourType,
 		currentStep,
 		connectedCodeHostProviders,
 		connectedIssueProviders,
 		connectedMessagingProviders
 	} = derivedState;
 
-	let NUM_STEPS = 7;
+	let NUM_STEPS = 5;
 	let CODE_HOSTS_STEP = 1;
 	let ISSUE_PROVIDERS_STEP = 2;
 	let MESSAGING_PROVIDERS_STEP = 3;
-	let CODEMARK_STEP = 5;
-	let CONGRATULATIONS_STEP = 6;
-
-	if (tourType === "educate") {
-		NUM_STEPS = 7;
-		MESSAGING_PROVIDERS_STEP = 2;
-		CODE_HOSTS_STEP = 4;
-		CONGRATULATIONS_STEP = 6;
-		ISSUE_PROVIDERS_STEP = 999;
-		CODEMARK_STEP = 999;
-	}
+	let CODEMARK_STEP = 6;
+	let CONGRATULATIONS_STEP = 4;
 
 	const [lastStep, setLastStep] = useState(currentStep);
 	// if we come back into the tour from elsewhere and currentStep is the codemark step, add icons
@@ -490,15 +220,12 @@ export const OnboardFull = React.memo(function Onboard() {
 		}
 	}, [derivedState.totalPosts]);
 
+	const [isLoadingData, setIsLoadingData] = useState(false);
+	const [loadedData, setLoadedData] = useState(false);
+
 	const skip = () => setStep(currentStep + 1);
 
 	const setStep = (step: number) => {
-		if (
-			tourType === "onboard" &&
-			step === CODE_HOSTS_STEP &&
-			derivedState.connectedCodeHostProviders.length > 0
-		)
-			step = 2;
 		if (step === NUM_STEPS) {
 			dispatch(setOnboardStep(0));
 			dispatch(closePanel());
@@ -515,6 +242,16 @@ export const OnboardFull = React.memo(function Onboard() {
 		requestAnimationFrame(() => {
 			const $container = document.getElementById("scroll-container");
 			if ($container) $container.scrollTo({ top: 0, behavior: "smooth" });
+		});
+	};
+
+	const positionDots = () => {
+		requestAnimationFrame(() => {
+			const $active = document.getElementsByClassName("active")[0];
+			if ($active) {
+				const $dots = document.getElementById("dots");
+				if ($dots) $dots.style.top = `${$active.clientHeight - 30}px`;
+			}
 		});
 	};
 
@@ -542,81 +279,66 @@ export const OnboardFull = React.memo(function Onboard() {
 						<Step className={`ease-down ${className(0)}`}>
 							<div className="body">
 								<h1>
-									<Icon name="codestream" />
+									<Icon name="new-relic-big" />
 									<br />
-									Welcome to CodeStream
+									Welcome to New Relic
 								</h1>
 								<p className="explainer">
-									CodeStream helps you discuss, review, and understand code.
+									New Relic helps engineers create more perfect software. Instrument, analyze,
+									troubleshoot, and optimize your entire software stack.
 								</p>
 								<CenterRow>
-									<Button size="xl" onClick={() => setStep(1)}>
+									<Button variant="new-relic" size="xl" onClick={() => setStep(1)}>
 										Get Started
 									</Button>
 								</CenterRow>
 							</div>
 						</Step>
 
-						{derivedState.tourType === "educate" ? (
-							<>
-								<ThreeWays className={className(1)} skip={skip} />
-								<CodeComments
-									className={className(2)}
-									skip={skip}
-									showNextMessagingStep={showNextMessagingStep}
-									setShowNextMessagingStep={setShowNextMessagingStep}
-								/>
-								<FeedbackRequests className={className(3)} skip={skip} />
-								<PullRequests className={className(4)} skip={skip} />
-								<InviteTeammates className={className(5)} skip={skip} />
-							</>
-						) : (
-							<>
-								<ConnectCodeHostProvider className={className(1)} skip={skip} />
-								<ConnectIssueProvider className={className(2)} skip={skip} />
-								<ConnectMessagingProvider
-									className={className(3)}
-									skip={skip}
-									showNextMessagingStep={showNextMessagingStep}
-									setShowNextMessagingStep={setShowNextMessagingStep}
-								/>
-								<InviteTeammates className={className(4)} skip={skip} />
-								<CreateCodemark className={className(CODEMARK_STEP)} skip={skip} />
-							</>
-						)}
-
+						<AddAppMonitoring className={className(1)} skip={skip} />
+						<AddAppMonitoringNodeJS className={className(2)} skip={skip} />
+						{/*
+						<ConnectCodeHostProvider className={className(2)} skip={skip} />
+						<ConnectIssueProvider className={className(3)} skip={skip} />
+						<ConnectMessagingProvider
+							className={className(4)}
+							skip={skip}
+							showNextMessagingStep={showNextMessagingStep}
+							setShowNextMessagingStep={setShowNextMessagingStep}
+						/>
+						<CreateCodemark className={className(CODEMARK_STEP)} skip={skip} />
+						*/}
+						<InviteTeammates className={className(3)} skip={skip} positionDots={positionDots} />
 						<Step className={className(CONGRATULATIONS_STEP)}>
 							<div className="body">
 								<h1>You're good to go!</h1>
 								<p className="explainer">
-									Next, explore the features, and any time you want to discuss code with your team,
-									select it and hit {ComposeKeybindings.comment}
+									Click the button and give us a few minutes or less. We’ll let you know when we’ve
+									received your data and where you can see it.
 								</p>
 								<CenterRow>
-									<Button size="xl" onClick={() => setStep(NUM_STEPS)}>
-										Open CodeStream
+									<Button
+										size="xl"
+										onClick={() => {
+											setIsLoadingData(true);
+											setTimeout(() => {
+												setIsLoadingData(false);
+												setLoadedData(true);
+											}, 6000);
+										}}
+										isLoading={isLoadingData}
+									>
+										See Your Data
 									</Button>
 								</CenterRow>
+								<SkipLink onClick={() => setStep(NUM_STEPS)}>I'll do this later</SkipLink>
 							</div>
 						</Step>
 					</fieldset>
 				</div>
-				<Dots
-					id="dots"
-					steps={
-						tourType === "onboard" && connectedCodeHostProviders.length > 0
-							? NUM_STEPS - 1
-							: NUM_STEPS
-					}
-				>
+				<Dots id="dots" steps={NUM_STEPS}>
 					{[...Array(NUM_STEPS)].map((_, index) => {
 						const selected = index === currentStep;
-						if (
-							tourType === "onboard" &&
-							index === CODE_HOSTS_STEP &&
-							connectedCodeHostProviders.length > 0
-						)
-							return null;
 						return <Dot selected={selected} onClick={() => setStep(index)} />;
 					})}
 				</Dots>
@@ -861,60 +583,364 @@ const PullRequests = (props: { className: string; skip: Function }) => {
 	}
 };
 
-export const ConnectCodeHostProvider = (props: { className: string; skip: Function }) => {
+const AddAppMonitoring = (props: { className: string; skip: Function }) => {
+	return (
+		<Step className={props.className}>
+			<div className="body">
+				<h3>Add App Monitoring</h3>
+				<p className="explainer">Monitor the performance of your app by installing an agent</p>
+				<Dialog>
+					<DialogRow>
+						<Icon name="check" />
+						<div>Troubleshoot and resolve problems with Alerts and Applied Intelligence</div>
+					</DialogRow>
+					<DialogRow>
+						<Icon name="check" />
+						<div>
+							Query any data type (including metrics, events, logs, and traces) via UI or API
+						</div>
+					</DialogRow>
+					<DialogRow>
+						<Icon name="check" />
+						<div>
+							Create and share a variety of charts and dashboards that include customer context with
+							business priorities and expected outcomes
+						</div>
+					</DialogRow>
+					<Sep />
+					<IntegrationButtons noBorder noPadding>
+						<Provider onClick={() => props.skip()}>
+							<Icon name="node" />
+							Node JS
+							<div style={{ position: "absolute", fontSize: "10px", bottom: "-5px", right: "4px" }}>
+								detected
+							</div>
+						</Provider>
+						<Provider variant="neutral">
+							<Icon name="php" />
+							PHP
+						</Provider>
+						<Provider variant="neutral">
+							<Icon name="java" />
+							Java
+						</Provider>
+						<Provider variant="neutral">
+							<Icon name="dot-net" />
+							Microsft.NET
+						</Provider>
+					</IntegrationButtons>
+					<SkipLink onClick={() => {}}>
+						Ruby, Python, Go and C users <Link href="">click here</Link>
+					</SkipLink>
+				</Dialog>
+				<SkipLink onClick={() => props.skip()}>I'll do this later</SkipLink>
+			</div>
+		</Step>
+	);
+};
+
+const AddAppMonitoringNodeJS = (props: { className: string; skip: Function }) => {
+	const dispatch = useDispatch();
 	const derivedState = useSelector((state: CodeStreamState) => {
-		const { providers } = state;
+		const { repoId, path } = state.context.wantNewRelicOptions || {};
+		const repo = repoId ? state.repos[repoId] : undefined;
+		return { repo, repoPath: path };
+	});
 
-		const codeHostProviders = Object.keys(providers).filter(id =>
-			[
-				"github",
-				"github_enterprise",
-				"bitbucket",
-				"bitbucket_server",
-				"gitlab",
-				"gitlab_enterprise"
-			].includes(providers[id].name)
-		);
+	const [licenseKey, setLicenseKey] = useState("");
+	const [appName, setAppName] = useState("");
+	const [files, setFiles] = useState<string[]>([]);
+	const [selectedFile, setSelectedFile] = useState("");
+	const [installingLibrary, setInstallingLibrary] = useState(false);
+	const [creatingConfig, setCreatingConfig] = useState(false);
+	const [insertingRequire, setInsertingRequire] = useState(false);
+	const [loading, setLoading] = useState(false);
+	const [unexpectedError, setUnexpectedError] = useState(false);
+	const [step, setStep] = useState(1);
 
+	const { repo, repoPath } = derivedState;
+
+	useEffect(() => {
+		(async () => {
+			const response = (await HostApi.instance.send(FindCandidateMainFilesRequestType, {
+				type: "nodejs",
+				path: repoPath!
+			})) as FindCandidateMainFilesResponse;
+			if (!response.error) {
+				setFiles(response.files);
+			}
+		})();
+	}, ["repoPath"]);
+
+	useEffect(() => {
+		if (!repo) {
+			// FIXME: what should we really do here?
+			dispatch(closeModal());
+		}
+	}, ["repo"]);
+
+	const onSubmit = async (event: React.SyntheticEvent) => {
+		setUnexpectedError(false);
+		event.preventDefault();
+
+		setLoading(true);
+		try {
+			dispatch(closeModal());
+		} catch (error) {
+			logError(`Unexpected error during New Relic installation: ${error}`);
+			setUnexpectedError(true);
+		}
+		// @ts-ignore
+		setLoading(false);
+	};
+
+	const onSetLicenseKey = useCallback(
+		key => {
+			setLicenseKey(key);
+			if (key) {
+				setUnexpectedError(false);
+				// setStep(2);
+			} else {
+				setStep(1);
+			}
+		},
+		["key"]
+	);
+
+	const onSetAppName = useCallback(
+		name => {
+			setAppName(name);
+			if (name) {
+				setUnexpectedError(false);
+				// setStep(3);
+			} else {
+				setStep(2);
+			}
+		},
+		["appName"]
+	);
+
+	const onInstallLibrary = async (event: React.SyntheticEvent) => {
+		event.preventDefault();
+		setInstallingLibrary(true);
+		const response = (await HostApi.instance.send(InstallNewRelicRequestType, {
+			type: "nodejs",
+			cwd: repoPath!
+		})) as InstallNewRelicResponse;
+		if (response.error) {
+			logError(`Unable to install New Relic module: ${response.error}`);
+			setUnexpectedError(true);
+		} else {
+			setUnexpectedError(false);
+			setStep(4);
+		}
+		setInstallingLibrary(false);
+	};
+
+	const onCreateConfigFile = async (event: React.SyntheticEvent) => {
+		event.preventDefault();
+		setCreatingConfig(true);
+		const response = (await HostApi.instance.send(CreateNewRelicConfigFileRequestType, {
+			type: "nodejs",
+			filePath: repoPath!,
+			appName,
+			licenseKey
+		})) as CreateNewRelicConfigFileResponse;
+		if (response.error) {
+			logError(`Unable to create New Relic config file: ${response.error}`);
+			setUnexpectedError(true);
+		} else {
+			setUnexpectedError(false);
+			setStep(5);
+		}
+		setCreatingConfig(false);
+	};
+
+	const onRequireNewRelic = async (event: React.SyntheticEvent) => {
+		event.preventDefault();
+		setInsertingRequire(true);
+		const response = (await HostApi.instance.send(AddNewRelicIncludeRequestType, {
+			type: "nodejs",
+			file: selectedFile || files[0],
+			dir: repoPath!
+		})) as AddNewRelicIncludeResponse;
+		if (response.error) {
+			logError(`Unable to add New Relic include to ${selectedFile}: ${response.error}`);
+			setUnexpectedError(true);
+		} else {
+			setUnexpectedError(false);
+			setStep(6);
+		}
+		setInsertingRequire(false);
+
+		const start = Position.create(0, 0);
+		const end = Position.create(0, 10000);
+		const range = Range.create(start, end);
+		const includeFile = path.join(repoPath!, selectedFile);
+		highlightRange({
+			uri: `file://${includeFile}`,
+			range,
+			highlight: true
+		});
+	};
+
+	const fileItems = files.map((file, i) => {
 		return {
-			codeHostProviders
+			key: file,
+			label: file,
+			checked: selectedFile === file,
+			default: i === 0,
+			action: () => setSelectedFile(file)
 		};
-	}, shallowEqual);
+	});
 
 	return (
 		<Step className={props.className}>
 			<div className="body">
 				<h3>
-					<Icon name="mark-github" />
-					<Icon name="gitlab" />
-					<Icon name="bitbucket" />
+					<Icon name="node" />
 					<br />
-					Connect to your Code Host
+					Add App Monitoring for Node JS
 				</h3>
-				<p className="explainer">Bring pull requests into your IDE to streamline your workflow</p>
+				<p className="explainer">Monitor the performance of your app by installing an agent</p>
 				<Dialog>
-					<DialogRow>
-						<Icon name="check" />
-						<div>Rich create pull request interface w/diff tool</div>
-					</DialogRow>
-					<DialogRow>
-						<Icon name="check" />
-						<div>
-							Visualize code comments from merged-in pull requests as annotations on your source
-							files
-						</div>
-					</DialogRow>
-					<DialogRow>
-						<Icon name="check" />
-						<div>
-							Manage pull requests and conduct code reviews with full source-tree context (GitHub
-							only)
-						</div>
-					</DialogRow>
-					<Sep />
-					<IntegrationButtons noBorder noPadding>
-						<ProviderButtons providerIds={derivedState.codeHostProviders} />
-					</IntegrationButtons>
+					<div className="standard-form">
+						<fieldset className="form-body">
+							<div id="controls">
+								<div className="small-spacer" />
+								{unexpectedError && (
+									<div className="error-message form-error">
+										<FormattedMessage
+											id="error.unexpected"
+											defaultMessage="Something went wrong! Please try again, or "
+										/>
+										<FormattedMessage id="contactSupport" defaultMessage="contact support">
+											{text => <Link href="https://help.codestream.com">{text}</Link>}
+										</FormattedMessage>
+										.
+									</div>
+								)}
+								<div className="control-group">
+									<InstallRow className={step > 0 ? "row-active" : ""}>
+										<StepNumber>1</StepNumber>
+										<div>
+											<label>
+												Paste your{" "}
+												<Link href="https://docs.newrelic.com/docs/accounts/accounts-billing/account-setup/new-relic-license-key/">
+													New Relic license key
+												</Link>
+												:
+											</label>
+											<TextInput
+												name="licenseKey"
+												value={licenseKey}
+												onChange={onSetLicenseKey}
+												nativeProps={{ id: "licenseKeyInput" }}
+											/>
+										</div>
+										<Button
+											isDone={step > 1}
+											onClick={() => {
+												setStep(2);
+												document.getElementById("appName")?.focus();
+											}}
+											disabled={licenseKey.length == 0}
+										>
+											Save
+										</Button>
+									</InstallRow>
+									<InstallRow className={step > 1 ? "row-active" : ""}>
+										<StepNumber>2</StepNumber>
+										<div>
+											<label>Type a name for your application:</label>
+											<TextInput
+												name="appName"
+												value={appName}
+												onChange={onSetAppName}
+												nativeProps={{ id: "appName" }}
+											/>
+										</div>
+										<Button
+											isDone={step > 2}
+											onClick={() => setStep(3)}
+											disabled={appName.length == 0}
+										>
+											Save
+										</Button>
+									</InstallRow>
+									<InstallRow className={step > 2 ? "row-active" : ""}>
+										<StepNumber>3</StepNumber>
+										<div>
+											<label>
+												Install the node module in your repo:
+												<br />
+												<code>npm install --save newrelic</code>
+											</label>
+										</div>
+										<Button
+											onClick={onInstallLibrary}
+											isLoading={installingLibrary}
+											isDone={step > 3}
+										>
+											Install
+										</Button>
+									</InstallRow>
+									<InstallRow className={step > 3 ? "row-active" : ""}>
+										<StepNumber>4</StepNumber>
+										<div>
+											<label>
+												Create a custom configuration file in
+												<br />
+												<code>{repoPath}</code>
+											</label>
+										</div>
+										<Button
+											onClick={onCreateConfigFile}
+											isLoading={creatingConfig}
+											isDone={step > 4}
+										>
+											Create
+										</Button>
+									</InstallRow>
+									<InstallRow className={step > 4 ? "row-active" : ""}>
+										<StepNumber>5</StepNumber>
+										<div>
+											<label>
+												Add <code>require("newrelic")</code> to{" "}
+											</label>
+											<code>
+												<InlineMenu
+													key="team-display-options"
+													className="no-padding"
+													items={fileItems}
+												>
+													{files[0]}
+												</InlineMenu>
+											</code>
+										</div>
+										<Button
+											onClick={onRequireNewRelic}
+											isLoading={insertingRequire}
+											isDone={step > 5}
+										>
+											Add
+										</Button>
+									</InstallRow>
+									<InstallRow className={step > 5 ? "row-active" : ""}>
+										<StepNumber>6</StepNumber>
+										<div>
+											<label>
+												Restart your application to start sending your data to New Relic
+											</label>
+										</div>
+										<Button onClick={() => props.skip()} isDone={step > 6}>
+											Done
+										</Button>
+									</InstallRow>
+								</div>
+							</div>
+						</fieldset>
+					</div>
 				</Dialog>
 				<SkipLink onClick={() => props.skip()}>I'll do this later</SkipLink>
 			</div>
@@ -1050,21 +1076,16 @@ const ConnectMessagingProvider = (props: {
 	);
 };
 
-export const InviteTeammates = (props: { className: string; skip: Function; unwrap?: boolean }) => {
+const InviteTeammates = (props: { className: string; skip: Function; positionDots: Function }) => {
 	const dispatch = useDispatch();
 	const derivedState = useSelector((state: CodeStreamState) => {
-		const team =
-			state.teams && state.context.currentTeamId
-				? state.teams[state.context.currentTeamId]
-				: undefined;
-		const dontSuggestInvitees =
-			team && team.settings ? team.settings.dontSuggestInvitees || {} : {};
+		const team = state.teams[state.context.currentTeamId];
+		const dontSuggestInvitees = team.settings ? team.settings.dontSuggestInvitees || {} : {};
 
 		return {
 			providers: state.providers,
 			dontSuggestInvitees,
-			companyName: team ? state.companies[team.companyId]?.name : "your organization",
-			teamMembers: team ? getTeamMembers(state) : []
+			teamMembers: getTeamMembers(state)
 		};
 	}, shallowEqual);
 
@@ -1074,7 +1095,7 @@ export const InviteTeammates = (props: { className: string; skip: Function; unwr
 		new Array(50).fill(true)
 	);
 	const [sendingInvites, setSendingInvites] = useState(false);
-	const [addSuggestedField, setAddSuggestedField] = useState<{ [email: string]: boolean }>({});
+	const [skipSuggestedField, setSkipSuggestedField] = useState<{ [email: string]: boolean }>({});
 	const [suggestedInvitees, setSuggestedInvitees] = useState<any[]>([]);
 
 	useDidMount(() => {
@@ -1089,17 +1110,9 @@ export const InviteTeammates = (props: { className: string; skip: Function; unwr
 		const { teamMembers, dontSuggestInvitees } = derivedState;
 		const suggested: any[] = [];
 		Object.keys(committers).forEach(email => {
-			if (email.match(/noreply/)) return;
-			// If whitespace in domain, invalid email
-			if (email.match(/.*(@.* .+)/)) return;
-			// If contains @ and ends in .local is invalid email
-			if (email.match(/.*(@.*\.local)$/)) return;
-			// Will check for spaces not surrounded by quotes. Will still
-			// allow some emails through that shouldn't be through, but
-			// won't block any that shouldn't be
-			if (email.match(/(?<!"") (?!"")(?=((?:[^"]*"){2})*[^"]*$)/)) return;
-			if (teamMembers?.find(user => user.email === email)) return;
+			if (teamMembers.find(user => user.email === email)) return;
 			if (dontSuggestInvitees[email.replace(/\./g, "*")]) return;
+			if (committers[email].startsWith("TeamCity")) return;
 			suggested.push({ email, fullName: committers[email] || email });
 		});
 		setSuggestedInvitees(suggested);
@@ -1125,7 +1138,7 @@ export const InviteTeammates = (props: { className: string; skip: Function; unwr
 
 	const addInvite = () => {
 		setNumInviteFields(numInviteFields + 1);
-		setTimeout(() => positionDots(), 250);
+		setTimeout(() => props.positionDots(), 250);
 	};
 
 	const onInviteEmailChange = (value, index) => {
@@ -1160,7 +1173,7 @@ export const InviteTeammates = (props: { className: string; skip: Function; unwr
 		while (index <= suggestedInvitees.length) {
 			if (suggestedInvitees[index]) {
 				const email = suggestedInvitees[index].email;
-				if (addSuggestedField[email]) await inviteEmail(email, "Onboarding Suggestion");
+				if (!skipSuggestedField[email]) await inviteEmail(email, "Onboarding Suggestion");
 			}
 			index++;
 		}
@@ -1175,26 +1188,24 @@ export const InviteTeammates = (props: { className: string; skip: Function; unwr
 		props.skip();
 	};
 
-	const component = () => {
-		return (
+	return (
+		<Step className={props.className}>
 			<div className="body">
-				<h3>Invite teammates to {derivedState.companyName}</h3>
-				{suggestedInvitees.length === 0 && (
-					<p className="explainer">We recommend exploring CodeStream with your team</p>
-				)}
-				<div>
+				<h3>Invite your team</h3>
+				<p className="explainer">We recommend exploring CodeStream with your team</p>
+				<Dialog>
 					{suggestedInvitees.length > 0 && (
 						<>
-							<p className="explainer left">Here are some suggestions based on your git history</p>
+							<p className="explainer left">Suggestions below are based on your git history</p>
 							{suggestedInvitees.map(user => {
 								return (
 									<Checkbox
 										name={user.email}
-										checked={addSuggestedField[user.email]}
+										checked={!skipSuggestedField[user.email]}
 										onChange={() => {
-											setAddSuggestedField({
-												...addSuggestedField,
-												[user.email]: !addSuggestedField[user.email]
+											setSkipSuggestedField({
+												...skipSuggestedField,
+												[user.email]: !skipSuggestedField[user.email]
 											});
 										}}
 									>
@@ -1228,23 +1239,16 @@ export const InviteTeammates = (props: { className: string; skip: Function; unwr
 						);
 					})}
 					<LinkRow style={{ minWidth: "180px" }}>
-						<Link onClick={addInvite}>+ Add another</Link>
+						<Link onClick={addInvite}>+ Add more</Link>
+						<Button isLoading={sendingInvites} onClick={sendInvites}>
+							Send invites
+						</Button>
 					</LinkRow>
-					<div>
-						<Legacy.default className="row-button" loading={sendingInvites} onClick={sendInvites}>
-							<div className="copy">Send invites</div>
-							<Icon name="chevron-right" />
-						</Legacy.default>
-					</div>
-				</div>
+				</Dialog>
 				<SkipLink onClick={confirmSkip}>I'll do this later</SkipLink>
 			</div>
-		);
-	};
-	if (props.unwrap) {
-		return component();
-	}
-	return <Step className={props.className}>{component()}</Step>;
+		</Step>
+	);
 };
 
 const CreateCodemark = (props: { className: string; skip: Function }) => {

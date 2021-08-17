@@ -29,6 +29,7 @@ export const Provider = styled(Button)`
 	.icon {
 		margin-right: 5px;
 	}
+	position: relative;
 `;
 
 const ProviderDropdown = styled(DropdownButton)`

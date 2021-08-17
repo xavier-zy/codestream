@@ -338,6 +338,11 @@ export function EllipsisMenu(props: EllipsisMenuProps) {
 				},
 				// { label: "Onboard", key: "onboard", action: () => go(WebviewPanels.Onboard) },
 				{
+					label: "Onboard New Relic",
+					key: "onboard-newrelic",
+					action: () => go(WebviewPanels.OnboardNewRelic)
+				},
+				{
 					label: "What's New",
 					key: "whats-new",
 					action: () => openUrl("https://www.codestream.com/blog")

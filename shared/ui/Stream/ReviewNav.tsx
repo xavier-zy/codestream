@@ -167,7 +167,7 @@ const Tip = styled.div`
 	}
 `;
 
-const Step = styled.div`
+export const Step = styled.div`
 	display: flex;
 	flex-shrink: 0;
 	align-items: center;

@@ -6,6 +6,7 @@ import cx from "classnames";
 import { ActivityPanel } from "./ActivityPanel";
 import { ExportPanel } from "./ExportPanel";
 import { Onboard } from "./Onboard";
+import { OnboardNewRelic } from "./OnboardNewRelic";
 import { Sidebar } from "./Sidebar";
 import { Notifications } from "./Notifications";
 import { ChangeEmail } from "./ChangeEmail";
@@ -363,6 +364,8 @@ export class SimpleStream extends PureComponent {
 				{activePanel !== WebviewPanels.Onboard && <GlobalNav />}
 				{activePanel === WebviewPanels.Onboard ? (
 					<Onboard type={this.props.onboardingTestGroup} />
+				) : activePanel === WebviewPanels.OnboardNewRelic ? (
+					<OnboardNewRelic />
 				) : (
 					<Sidebar />
 				)}
@@ -424,6 +427,7 @@ export class SimpleStream extends PureComponent {
 					activePanel !== WebviewPanels.WorkInProgress &&
 					activePanel !== WebviewPanels.Sidebar &&
 					activePanel !== WebviewPanels.Onboard &&
+					activePanel !== WebviewPanels.OnboardNewRelic &&
 					activePanel !== WebviewPanels.CodemarksForFile && (
 						<Modal translucent>
 							{activePanel === WebviewPanels.Tester && <Tester />}

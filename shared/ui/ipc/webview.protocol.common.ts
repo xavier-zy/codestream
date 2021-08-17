@@ -63,6 +63,7 @@ export enum WebviewPanels {
 	OpenPullRequests = "open-pull-requests",
 	WorkInProgress = "work-in-progress",
 	Onboard = "onboard",
+	OnboardNewRelic = "onboard-newrelic",
 	Commits = "commits",
 	ErrorInbox = "errorinbox",
 	Instrumentation = "instrumentation",

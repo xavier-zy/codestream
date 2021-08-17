@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, PropsWithChildren } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { CodeStreamState } from "../store";
 import { HostApi } from "../webview-api";
@@ -24,8 +24,16 @@ import { InlineMenu } from "../src/components/controls/InlineMenu";
 import * as path from "path-browserify";
 import { Position, Range } from "vscode-languageserver-types";
 import { highlightRange } from "../Stream/api-functions";
+import styled from "styled-components";
+import { Step } from "./ReviewNav";
 
 const isNotEmpty = s => s.length > 0;
+
+export const InstallRow = styled.div`
+	display: flex;
+	align-items: flex-start;
+	padding: 10px 0;
+`;
 
 export const AddNewRelic = props => {
 	const dispatch = useDispatch();
@@ -44,7 +52,7 @@ export const AddNewRelic = props => {
 	const [insertingRequire, setInsertingRequire] = useState(false);
 	const [loading, setLoading] = useState(false);
 	const [unexpectedError, setUnexpectedError] = useState(false);
-	const [step, setStep] = useState(1);
+	const [step, setStep] = useState(10);
 
 	const { repo, repoPath } = derivedState;
 
@@ -183,16 +191,12 @@ export const AddNewRelic = props => {
 	});
 
 	return (
-		<Dialog title="Add New Relic" onClose={() => dispatch(closeModal())}>
+		<Dialog title="Add App Monitoring" onClose={() => dispatch(closeModal())}>
 			<div>
-				We've noticed you're a New Relic user and that your Node JS project <b>{repo!.name}</b> is
-				not yet instrumented.
-				<br />
-				We can make that real easy for you! Just go through these steps to install the New Relic APM
-				module:
+				Start monitoring the performance of an application or service by installing an agent.
 			</div>
 			<form className="standard-form">
-				<fieldset className="form-body" style={{ width: "18em" }}>
+				<fieldset className="form-body">
 					<div id="controls">
 						<div className="small-spacer" />
 						{unexpectedError && (
@@ -209,81 +213,91 @@ export const AddNewRelic = props => {
 						)}
 						<div className="control-group">
 							{step > 0 && (
-								<div>
-									<br />
-									{step > 1 && <span className="checkmark">✔&nbsp;</span>}
-									<label>
-										Paste your{" "}
-										<Link href="https://docs.newrelic.com/docs/accounts/accounts-billing/account-setup/new-relic-license-key/">
-											New Relic license key
-										</Link>
-										:
-									</label>
-									<TextInput
-										name="licenseKey"
-										value={licenseKey}
-										autoFocus
-										onChange={onSetLicenseKey}
-									/>
-								</div>
+								<InstallRow>
+									<Step>1</Step>
+									<div>
+										<label>
+											Paste your{" "}
+											<Link href="https://docs.newrelic.com/docs/accounts/accounts-billing/account-setup/new-relic-license-key/">
+												New Relic license key
+											</Link>
+											:
+										</label>
+										<TextInput
+											name="licenseKey"
+											value={licenseKey}
+											autoFocus
+											onChange={onSetLicenseKey}
+										/>
+									</div>
+									<Button>Go</Button>
+								</InstallRow>
 							)}
 							{step > 1 && (
-								<div>
-									<br />
-									{step > 2 && <span className="checkmark">✔&nbsp;</span>}
-									<label>Type a name for your application:</label>
-									<TextInput name="appName" value={appName} onChange={onSetAppName} />
-								</div>
+								<InstallRow>
+									<Step>2</Step>
+									<div>
+										<label>Type a name for your application:</label>
+										<TextInput name="appName" value={appName} onChange={onSetAppName} />
+									</div>
+									<Button>Go</Button>
+								</InstallRow>
 							)}
 							{step > 2 && (
-								<div>
-									<br />
-									<label>
-										{step > 3 && <span className="checkmark">✔&nbsp;</span>}
-										Click below to install the New Relic node module in your repo (will run{" "}
-										<b>npm install --save newrelic</b>):
-									</label>
+								<InstallRow>
+									<Step>3</Step>
+									<div>
+										<label>
+											{step > 3 && <span className="checkmark">✔&nbsp;</span>}
+											Install the New Relic node module in your repo:
+											<code>npm install --save newrelic</code>
+										</label>
+									</div>
 									<Button onClick={onInstallLibrary} isLoading={installingLibrary}>
 										Install
 									</Button>
-								</div>
+								</InstallRow>
 							)}
 							{step > 3 && (
-								<div>
-									<br />
-									<label>
-										{step > 4 && <span className="checkmark">✔&nbsp;</span>}
-										Create a custom configuration file in <b>{repoPath}</b>
-									</label>
+								<InstallRow>
+									<Step>4</Step>
+									<div>
+										<label>
+											{step > 4 && <span className="checkmark">✔&nbsp;</span>}
+											Create a custom configuration file in <b>{repoPath}</b>
+										</label>
+									</div>
 									<Button onClick={onCreateConfigFile} isLoading={creatingConfig}>
 										Create
 									</Button>
-								</div>
+								</InstallRow>
 							)}
 							{step > 4 && (
-								<div>
-									<br />
-									<label>
-										{step > 5 && <span className="checkmark">✔&nbsp;</span>}
-										Add a 'require("newrelic")' to{" "}
-									</label>
-									<InlineMenu
-										key="team-display-options"
-										className="subtle no-padding"
-										items={fileItems}
-									></InlineMenu>
+								<InstallRow>
+									<Step>5</Step>
+									<div>
+										<label>
+											{step > 5 && <span className="checkmark">✔&nbsp;</span>}
+											Add a 'require("newrelic")' to{" "}
+										</label>
+										<InlineMenu
+											key="team-display-options"
+											className="subtle no-padding"
+											items={fileItems}
+										></InlineMenu>
+									</div>
 									<Button onClick={onRequireNewRelic} isLoading={insertingRequire}>
 										Add to File
 									</Button>
-								</div>
+								</InstallRow>
 							)}
 							{step > 5 && (
-								<div>
-									<br />
+								<InstallRow>
+									<Step>6</Step>
 									<div>Congratulations! You've installed New Relic for Node JS!</div>
-									<br />
-									<Button onClick={onSubmit}>OK</Button>
-								</div>
+
+									<Button onClick={onSubmit}>Done</Button>
+								</InstallRow>
 							)}
 						</div>
 					</div>

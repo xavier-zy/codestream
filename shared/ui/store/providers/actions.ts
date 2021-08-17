@@ -110,7 +110,8 @@ export type ViewLocation =
 	| "Issues Section"
 	| "Provider Error Banner"
 	| "Onboard"
-	| "PRs Section";
+	| "PRs Section"
+	| "Observability Section";
 
 export const sendIssueProviderConnected = (
 	providerId: string,

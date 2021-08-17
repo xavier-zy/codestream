@@ -4,6 +4,8 @@ import { configureProvider } from "../store/providers/actions";
 import Button from "./Button";
 import { PROVIDER_MAPPINGS } from "./CrossPostIssueControls/types";
 import { Link } from "./Link";
+import { WebviewPanels } from "../ipc/webview.protocol.common";
+import { openPanel } from "./actions";
 
 class ConfigureNewRelic extends Component {
 	initialState = {
@@ -38,9 +40,13 @@ class ConfigureNewRelic extends Component {
 			true,
 			this.props.originLocation
 		);
-		if (this.props.onSubmited) {
-			this.props.onSubmited(e);
-		}
+		this.setState({ loading: true });
+		setTimeout(() => {
+			if (this.props.onSubmited) {
+				this.props.onSubmited(e);
+			}
+			this.props.openPanel(WebviewPanels.OnboardNewRelic);
+		}, 3000);
 	};
 
 	renderError = () => {};
@@ -105,7 +111,8 @@ class ConfigureNewRelic extends Component {
 									className="input-text control"
 									type="text"
 									name="apiKey"
-									tabIndex={0}
+									tabIndex={1}
+									autoFocus
 									value={this.state.apiKey}
 									onChange={e => this.setState({ apiKey: e.target.value })}
 									onBlur={this.onBlurApiKey}
@@ -165,6 +172,6 @@ const mapStateToProps = ({ providers }) => {
 	return { providers };
 };
 
-const component = connect(mapStateToProps, { configureProvider })(ConfigureNewRelic);
+const component = connect(mapStateToProps, { configureProvider, openPanel })(ConfigureNewRelic);
 
 export { component as ConfigureNewRelic };

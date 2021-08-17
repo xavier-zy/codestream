@@ -8,6 +8,12 @@ import { runNRQL, setNewRelicData } from "../store/newrelic/actions";
 import { TextInput } from "../Authentication/TextInput";
 import { Button } from "../src/components/Button";
 import { FormattedMessage } from "react-intl";
+import { IntegrationButtons, Provider } from "./IntegrationsPanel";
+import { configureAndConnectProvider } from "../store/providers/actions";
+import Icon from "./Icon";
+import Tooltip from "./Tooltip";
+import { setUserPreference } from "./actions";
+import { Linkish } from "./CrossPostIssueControls/IssueDropdown";
 
 interface Props {
 	paneState: PaneState;
@@ -19,7 +25,7 @@ export const NewRelic = React.memo((props: Props) => {
 		const { providers = {}, newRelicData } = state;
 		const newRelicIsConnected =
 			providers["newrelic*com"] && isConnected(state, { id: "newrelic*com" });
-		const data = (newRelicData && newRelicData.data) || {};
+		const data = (newRelicData && newRelicData.data) || undefined;
 		return { newRelicIsConnected, newRelicData: data };
 	}, shallowEqual);
 
@@ -43,18 +49,19 @@ export const NewRelic = React.memo((props: Props) => {
 
 	return (
 		<>
-			<PaneHeader title={<>New Relic</>} id={WebviewPanels.NewRelic}>
+			<PaneHeader title="Observability" id={WebviewPanels.NewRelic}>
 				&nbsp;
 			</PaneHeader>
 			{props.paneState !== PaneState.Collapsed && (
 				<PaneBody>
 					<div style={{ padding: "0 10px 0 20px" }}></div>
-					{derivedState.newRelicIsConnected && (
-						<div>
-							Enter your NRQL query:
+					{derivedState.newRelicIsConnected ? (
+						<div style={{ padding: "0 20px" }}>
+							Enter your NRQL query:&nbsp;&nbsp;
 							<TextInput name="query" value={query} onChange={setQuery} />
-							<Button onClick={onSubmit} isLoading={loading}>
-								Submit
+							&nbsp;
+							<Button size="compact" onClick={onSubmit} isLoading={loading}>
+								Go
 							</Button>
 							{unexpectedError && (
 								<div className="error-message form-error">
@@ -65,8 +72,40 @@ export const NewRelic = React.memo((props: Props) => {
 									.
 								</div>
 							)}
-							<div>{JSON.stringify(derivedState.newRelicData, undefined, 5)}</div>
+							<div>
+								{derivedState.newRelicData &&
+									JSON.stringify(derivedState.newRelicData, undefined, 5)}
+							</div>
 						</div>
+					) : (
+						<>
+							<div className="filters" style={{ padding: "0 20px 10px 20px" }}>
+								<span>
+									Connect to New Relic to instrument your app, see errors, and debug issues.{" "}
+									<Tooltip title="Connect later on the Integrations page" placement="top">
+										<Linkish
+											onClick={() =>
+												dispatch(setUserPreference(["skipConnectObservabilityProviders"], true))
+											}
+										>
+											Skip this step.
+										</Linkish>
+									</Tooltip>
+								</span>
+							</div>
+
+							<IntegrationButtons noBorder style={{ marginBottom: "20px" }}>
+								<Provider
+									key="newrelic"
+									onClick={() =>
+										dispatch(configureAndConnectProvider("newrelic*com", "Observability Section"))
+									}
+								>
+									<Icon name="newrelic" />
+									New Relic
+								</Provider>
+							</IntegrationButtons>
+						</>
 					)}
 				</PaneBody>
 			)}

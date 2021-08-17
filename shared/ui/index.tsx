@@ -787,7 +787,7 @@ const checkForNewRelicInterest = async function(store) {
 		);
 		if (nodeJSRepo && nodeJSRepo.id) {
 			await store.dispatch(setWantNewRelicOptions(nodeJSRepo.id, nodeJSRepo.path));
-			store.dispatch(openModal(WebviewModals.AddNewRelic));
+			// store.dispatch(openModal(WebviewModals.AddNewRelic));
 		}
 	}
 };

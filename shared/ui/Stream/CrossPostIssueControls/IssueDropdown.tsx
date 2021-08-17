@@ -1205,14 +1205,14 @@ export const IssueList = React.memo((props: React.PropsWithChildren<IssueListPro
 							<div className="filters" style={{ padding: "0 20px 10px 20px" }}>
 								<span>
 									Connect your issue provider(s) to make it easy to manage tasks, create branches,
-									and connect tasks to commits &amp; PRs, or{" "}
+									and connect tasks to commits &amp; PRs.{" "}
 									<Tooltip title="Connect later on the Integrations page" placement="top">
 										<Linkish
 											onClick={() =>
 												dispatch(setUserPreference(["skipConnectIssueProviders"], true))
 											}
 										>
-											skip this step
+											Skip this step.
 										</Linkish>
 									</Tooltip>
 								</span>
@@ -1454,7 +1454,7 @@ export const IssueRows = styled.div`
 	padding-bottom: 20px;
 `;
 
-const Linkish = styled.span`
+export const Linkish = styled.span`
 	text-decoration: underline;
 	cursor: pointer;
 	:hover {

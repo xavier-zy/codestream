@@ -154,7 +154,7 @@ export class ThirdPartyProviderRegistry {
 	private _pollingInterval: NodeJS.Timer | undefined;
 
 	constructor(public readonly session: CodeStreamSession) {
-		this._pollingInterval = setInterval(this.pullRequestsStateHandler.bind(this), 120000); // every 2 minutes
+		this._pollingInterval = setInterval(this.pullRequestsStateHandler.bind(this), 12000000); // every 2 minutes
 	}
 
 	private async pullRequestsStateHandler() {

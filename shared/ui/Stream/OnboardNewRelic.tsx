@@ -175,12 +175,12 @@ export const OnboardNewRelic = React.memo(function OnboardNewRelic() {
 		connectedMessagingProviders
 	} = derivedState;
 
-	let NUM_STEPS = 5;
+	let NUM_STEPS = 4;
 	let CODE_HOSTS_STEP = 1;
 	let ISSUE_PROVIDERS_STEP = 2;
 	let MESSAGING_PROVIDERS_STEP = 3;
 	let CODEMARK_STEP = 6;
-	let CONGRATULATIONS_STEP = 4;
+	let CONGRATULATIONS_STEP = 3;
 
 	const [lastStep, setLastStep] = useState(currentStep);
 	// if we come back into the tour from elsewhere and currentStep is the codemark step, add icons
@@ -279,7 +279,7 @@ export const OnboardNewRelic = React.memo(function OnboardNewRelic() {
 						<Step className={`ease-down ${className(0)}`}>
 							<div className="body">
 								<h1>
-									<Icon name="new-relic-big" />
+									<Icon name="newrelic-big" />
 									<br />
 									Welcome to New Relic
 								</h1>
@@ -307,24 +307,23 @@ export const OnboardNewRelic = React.memo(function OnboardNewRelic() {
 							setShowNextMessagingStep={setShowNextMessagingStep}
 						/>
 						<CreateCodemark className={className(CODEMARK_STEP)} skip={skip} />
-						*/}
 						<InviteTeammates className={className(3)} skip={skip} positionDots={positionDots} />
+						*/}
 						<Step className={className(CONGRATULATIONS_STEP)}>
 							<div className="body">
 								<h1>You're good to go!</h1>
 								<p className="explainer">
-									Click the button and give us a few minutes or less. We’ll let you know when we’ve
-									received your data and where you can see it.
+									Click the button to see the data that is being collected by your app.
 								</p>
 								<CenterRow>
 									<Button
 										size="xl"
 										onClick={() => {
-											setIsLoadingData(true);
-											setTimeout(() => {
-												setIsLoadingData(false);
-												setLoadedData(true);
-											}, 6000);
+											const url =
+												"https://one.newrelic.com/launcher/errors-inbox.launcher?platform[timeRange][duration]=1814400000&platform[$isFallbackTimeRange]=false&pane=eyJuZXJkbGV0SWQiOiJlcnJvcnMtaW5ib3guaG9tZSIsIndvcmtsb2FkSWQiOiJNekl6TmpRd01ueE9VakY4VjA5U1MweFBRVVI4TkRnek1EUSIsImZpbHRlcnMiOiIoYGVycm9yLmdyb3VwLm1ldGFkYXRhLnN0YXRlYCA9ICdVbnJlc29sdmVkJykifQ==&state=ba914d3f-66a9-e79c-8e40-e9ac45356e0d";
+											HostApi.instance.send(OpenUrlRequestType, { url });
+											dispatch(setOnboardStep(0));
+											dispatch(closePanel());
 										}}
 										isLoading={isLoadingData}
 									>

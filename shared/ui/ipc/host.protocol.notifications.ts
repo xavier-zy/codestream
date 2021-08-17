@@ -97,7 +97,8 @@ export enum RouteControllerType {
 	PullRequest = "pullRequest",
 	StartWork = "startWork",
 	ErrorInbox = "errorinbox",
-	CodeError = "codeError"
+	CodeError = "codeError",
+	File = "file"
 }
 export enum RouteActionType {
 	Open = "open"

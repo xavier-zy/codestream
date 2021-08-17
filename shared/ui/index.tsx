@@ -101,6 +101,9 @@ import { confirmPopup } from "./Stream/Confirm";
 import { switchToTeam } from "./store/session/actions";
 import { ParseStackTraceRequestType } from "@codestream/protocols/agent";
 
+import { Range } from "vscode-languageserver-types";
+import * as path from "path-browserify";
+
 export { HostApi };
 
 export function setupCommunication(host: { postMessage: (message: any) => void }) {
@@ -453,6 +456,22 @@ function listenForEvents(store) {
 							break;
 						}
 					}
+				}
+				break;
+			}
+			case RouteControllerType.File: {
+				const reposResponse = await HostApi.instance.send(GetReposScmRequestType, {
+					inEditorOnly: true
+				});
+
+				if (reposResponse) {
+					HostApi.instance.send(EditorRevealRangeRequestType, {
+						uri: path.join(reposResponse.repositories![0].path, "main.js"),
+						range: Range.create(0, 0, 0, 0),
+						atTop: true
+					});
+				} else {
+					console.warn("no repo found");
 				}
 				break;
 			}

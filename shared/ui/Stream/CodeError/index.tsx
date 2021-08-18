@@ -133,6 +133,7 @@ const DisabledClickLine = styled.div`
 `;
 
 const ClickLine = styled.div`
+	position: relative;
 	cursor: pointer;
 	color: var(--text-color);
 	:hover {
@@ -143,6 +144,10 @@ const ClickLine = styled.div`
 	&.selected {
 		color: var(--text-color-highlight);
 		opacity: 1;
+	}
+	.icon {
+		position: absolute !important;
+		left: -21px;
 	}
 `;
 
@@ -159,7 +164,7 @@ const DataValue = styled.div`
 
 const ApmServiceTitle = styled.span`
 	a {
-		color: var(--text-color);
+		color: var(--text-color-highlight);
 		text-decoration: none;
 	}
 	.open-external {
@@ -201,7 +206,7 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 							<span>
 								{/* TODO get actual service name and link */}
 								<Link href="#">
-									Jumpstore CommunicationAPI (Service Fabric - Stateless ASP.NET Core)
+									<span className="subtle">CodeStream-Demo API Server</span>
 								</Link>{" "}
 								<Icon name="link-external" className="open-external"></Icon>
 							</span>
@@ -209,7 +214,7 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 					</ApmServiceTitle>
 				</div>
 
-				<div style={{ marginLeft: "auto", alignItems: "center" }}>
+				<div style={{ marginLeft: "auto", alignItems: "center", whiteSpace: "nowrap" }}>
 					<DropdownButton
 						items={[
 							{
@@ -309,13 +314,13 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 					</InlineMenu>
 					<>
 						{props.post && <AddReactionIcon post={props.post} className="in-review" />}
-						{props.children || (
+						{/* props.children || (
 							<BaseCodeErrorMenu
 								codeError={codeError}
 								collapsed={collapsed}
 								setIsEditing={props.setIsEditing}
 							/>
-						)}
+						) */}
 					</>
 				</div>
 			</div>
@@ -330,7 +335,7 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 							<span>
 								{/* TODO get the actual class of error here */}
 								{/* {codeError.title} */}
-								<Link href="#">Error</Link>{" "}
+								<Link href="#">Error: hash table index out of range</Link>{" "}
 								<Icon name="link-external" className="open-external"></Icon>
 							</span>
 						</Tooltip>
@@ -525,13 +530,19 @@ const BaseCodeError = (props: BaseCodeErrorProps) => {
 	useEffect(() => {
 		if (!props.collapsed) {
 			const { stackInfo } = codeError;
-			if (stackInfo && !stackInfo.error) {
-				let lineNum = 0;
+			if (stackInfo) {
+				// FIXME this should be zero
+				let lineNum = 1;
 				const len = stackInfo.lines.length;
-				while (lineNum < len && stackInfo.lines[lineNum].line !== undefined) {
+				while (
+					lineNum < len &&
+					// stackInfo.lines[lineNum].line !== undefined &&
+					stackInfo.lines[lineNum].error
+				) {
 					lineNum++;
 				}
 				if (lineNum < len) {
+					setCurrentSelectedLine(lineNum);
 					dispatch(jumpToStackLine(stackInfo.lines[lineNum], stackInfo.sha, stackInfo.repoId!));
 				}
 			}
@@ -540,118 +551,116 @@ const BaseCodeError = (props: BaseCodeErrorProps) => {
 
 	return (
 		<MinimumWidthCard {...getCardProps(props)} noCard={!props.collapsed}>
-			<CardBody>
-				{props.collapsed && (
-					<BaseCodeErrorHeader
-						codeError={codeError}
-						post={props.post}
-						collapsed={props.collapsed}
-						setIsEditing={props.setIsEditing}
-					/>
+			{props.collapsed && (
+				<BaseCodeErrorHeader
+					codeError={codeError}
+					post={props.post}
+					collapsed={props.collapsed}
+					setIsEditing={props.setIsEditing}
+				/>
+			)}
+			{props.headerError && props.headerError.message && (
+				<div
+					className="color-warning"
+					style={{
+						display: "flex",
+						padding: "10px 0",
+						whiteSpace: "normal",
+						alignItems: "flex-start"
+					}}
+				>
+					<Icon name="alert" />
+					<div style={{ paddingLeft: "10px" }}>{props.headerError.message}</div>
+				</div>
+			)}
+
+			{!props.collapsed && (
+				<>
+					<DataRow>
+						<DataLabel>Timestamp:</DataLabel>
+						<DataValue>
+							<Timestamp className="no-padding" time={props.codeError.createdAt} />
+						</DataValue>
+					</DataRow>
+					<DataRow>
+						<DataLabel>URL host:</DataLabel>
+						<DataValue>localhost.codestream.us:12079</DataValue>
+					</DataRow>
+					<DataRow>
+						<DataLabel>URL path:</DataLabel>
+						<DataValue>/posts</DataValue>
+					</DataRow>
+					{props.repoInfo && (
+						<DataRow>
+							<DataLabel>Repo:</DataLabel>
+							<DataValue>{props.repoInfo.repoName}</DataValue>
+						</DataRow>
+					)}
+					{props.repoInfo && (
+						<DataRow>
+							<DataLabel>Build:</DataLabel>
+							<DataValue>{props.repoInfo.branch.substr(0, 8)}</DataValue>
+						</DataRow>
+					)}
+				</>
+			)}
+
+			<MetaSection>
+				{codeError.stackTrace && (
+					<Meta>
+						<MetaLabel>Stack Trace</MetaLabel>
+						{stackTraceLines.map((line, i) => {
+							if (i === 0) return null;
+							if (line.includes("processTicksAndRejections")) return;
+							const selected = i === currentSelectedLine;
+							const className = selected ? "monospace selected" : "monospace";
+							const mline = line
+								.replace(/.*codestream-server\//, "")
+								.replace(/\)/, "")
+								.replace(/\s\s\s\s+/g, "     ");
+							return props.stackFrameClickDisabled ? (
+								<DisabledClickLine className="monospace">
+									<span>{mline}</span>
+								</DisabledClickLine>
+							) : (
+								<ClickLine className={className} onClick={e => onClickStackLine(e, i)}>
+									{selected && <Icon name="arrow-right" />}
+									<span>{mline}</span>
+								</ClickLine>
+							);
+						})}
+					</Meta>
 				)}
-				{props.headerError && props.headerError.message && (
-					<div
-						className="color-warning"
-						style={{
-							display: "flex",
-							padding: "10px 0",
-							whiteSpace: "normal",
-							alignItems: "flex-start"
-						}}
-					>
-						<Icon name="alert" />
-						<div style={{ paddingLeft: "10px" }}>{props.headerError.message}</div>
+				{props.post && (
+					<div style={{ marginBottom: "10px" }}>
+						<Reactions className="reactions no-pad-left" post={props.post} />
 					</div>
 				)}
-
-				{!props.collapsed && (
-					<>
-						<DataRow>
-							<DataLabel>Timestamp:</DataLabel>
-							<DataValue>
-								<Timestamp className="no-padding" time={props.codeError.createdAt} />
-							</DataValue>
-						</DataRow>
-						<DataRow>
-							<DataLabel>URL host:</DataLabel>
-							<DataValue>localhost.codestream.us:12079</DataValue>
-						</DataRow>
-						<DataRow>
-							<DataLabel>URL path:</DataLabel>
-							<DataValue>/posts</DataValue>
-						</DataRow>
-						{props.repoInfo && (
-							<DataRow>
-								<DataLabel>Repo:</DataLabel>
-								<DataValue>
-									<span className="monospace">{props.repoInfo.repoName}</span>
-								</DataValue>
-							</DataRow>
-						)}
-						{props.repoInfo && (
-							<DataRow>
-								<DataLabel>Build:</DataLabel>
-								<DataValue>
-									<span className="monospace">{props.repoInfo.branch.substr(0, 8)}</span>
-								</DataValue>
-							</DataRow>
-						)}
-					</>
+				{!props.collapsed && props.post && <Attachments post={props.post as CSPost} />}
+			</MetaSection>
+			{props.collapsed && renderMetaSectionCollapsed(props)}
+			{!props.collapsed &&
+				props &&
+				props.post &&
+				props.post.sharedTo &&
+				props.post.sharedTo.length > 0 && (
+					<div className="related">
+						<div className="related-label">Shared To</div>
+						{props.post.sharedTo.map(target => {
+							const providerDisplay = PROVIDER_MAPPINGS[target.providerId];
+							return (
+								<Link className="external-link" href={target.url}>
+									{providerDisplay && providerDisplay.icon && (
+										<span>
+											<Icon name={providerDisplay.icon} />
+										</span>
+									)}
+									{target.channelName}
+								</Link>
+							);
+						})}
+					</div>
 				)}
-
-				<MetaSection>
-					{codeError.stackTrace && (
-						<Meta style={{ maxHeight: "350px", overflowY: "auto" }}>
-							<MetaLabel>Stack Trace</MetaLabel>
-							{stackTraceLines.map((line, i) => {
-								const className = i === currentSelectedLine ? "monospace selected" : "monospace";
-								const mline = line
-									.replace(/.*codestream-server\//, "")
-									.replace(/\)/, "")
-									.replace(/\s\s\s\s+/g, "     ");
-								return props.stackFrameClickDisabled ? (
-									<DisabledClickLine className="monospace">
-										<span>{mline}</span>
-									</DisabledClickLine>
-								) : (
-									<ClickLine className={className} onClick={e => onClickStackLine(e, i)}>
-										<span>{mline}</span>
-									</ClickLine>
-								);
-							})}
-						</Meta>
-					)}
-					{props.post && (
-						<div style={{ marginBottom: "10px" }}>
-							<Reactions className="reactions no-pad-left" post={props.post} />
-						</div>
-					)}
-					{!props.collapsed && props.post && <Attachments post={props.post as CSPost} />}
-				</MetaSection>
-				{props.collapsed && renderMetaSectionCollapsed(props)}
-				{!props.collapsed &&
-					props &&
-					props.post &&
-					props.post.sharedTo &&
-					props.post.sharedTo.length > 0 && (
-						<div className="related">
-							<div className="related-label">Shared To</div>
-							{props.post.sharedTo.map(target => {
-								const providerDisplay = PROVIDER_MAPPINGS[target.providerId];
-								return (
-									<Link className="external-link" href={target.url}>
-										{providerDisplay && providerDisplay.icon && (
-											<span>
-												<Icon name={providerDisplay.icon} />
-											</span>
-										)}
-										{target.channelName}
-									</Link>
-								);
-							})}
-						</div>
-					)}
-			</CardBody>
 			{renderedFooter}
 		</MinimumWidthCard>
 	);

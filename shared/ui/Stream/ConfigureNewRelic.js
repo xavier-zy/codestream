@@ -1,11 +1,19 @@
 import React, { Component } from "react";
 import { connect } from "react-redux";
 import { configureProvider } from "../store/providers/actions";
+import { setWantNewRelicOptions } from "../store/context/actions";
+
 import Button from "./Button";
 import { PROVIDER_MAPPINGS } from "./CrossPostIssueControls/types";
 import { Link } from "./Link";
 import { WebviewPanels } from "../ipc/webview.protocol.common";
 import { openPanel } from "./actions";
+import {
+	ReposScm,
+	RepoProjectType,
+	GetReposScmRequestType
+} from "../protocols/agent/agent.protocol.scm";
+import { HostApi } from "../webview-api";
 
 class ConfigureNewRelic extends Component {
 	initialState = {
@@ -24,7 +32,7 @@ class ConfigureNewRelic extends Component {
 		el && el.focus();
 	}
 
-	onSubmit = e => {
+	onSubmit = async e => {
 		e.preventDefault();
 		if (this.isFormInvalid()) return;
 		const { providerId } = this.props;
@@ -41,6 +49,21 @@ class ConfigureNewRelic extends Component {
 			this.props.originLocation
 		);
 		this.setState({ loading: true });
+
+		const reposResponse = await HostApi.instance.send(GetReposScmRequestType, {
+			inEditorOnly: true,
+			guessProjectTypes: true
+		});
+		if (!reposResponse.error && reposResponse.repositories) {
+			const nodeJSRepo = reposResponse.repositories.find(
+				repo => repo.projectType === RepoProjectType.NodeJS
+			);
+			if (nodeJSRepo && nodeJSRepo.id) {
+				this.props.setWantNewRelicOptions(nodeJSRepo.id, nodeJSRepo.path);
+				// store.dispatch(openModal(WebviewModals.AddNewRelic));
+			}
+		}
+
 		setTimeout(() => {
 			if (this.props.onSubmited) {
 				this.props.onSubmited(e);
@@ -172,6 +195,10 @@ const mapStateToProps = ({ providers }) => {
 	return { providers };
 };
 
-const component = connect(mapStateToProps, { configureProvider, openPanel })(ConfigureNewRelic);
+const component = connect(mapStateToProps, {
+	configureProvider,
+	openPanel,
+	setWantNewRelicOptions
+})(ConfigureNewRelic);
 
 export { component as ConfigureNewRelic };

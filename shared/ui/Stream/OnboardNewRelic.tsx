@@ -236,6 +236,7 @@ export const OnboardNewRelic = React.memo(function OnboardNewRelic() {
 		dispatch(setOnboardStep(step));
 		setTimeout(() => scrollToTop(), 250);
 		setTimeout(() => positionDots(), 250);
+		if (step === 2) setTimeout(() => document.getElementById("appName")?.focus(), 250);
 	};
 
 	const scrollToTop = () => {
@@ -646,7 +647,7 @@ const AddAppMonitoringNodeJS = (props: { className: string; skip: Function }) =>
 		return { repo, repoPath: path };
 	});
 
-	const [licenseKey, setLicenseKey] = useState("");
+	const [licenseKey, setLicenseKey] = useState("NRAK-4KV7HVKCVMYG3ZUMGMSZSXL9394");
 	const [appName, setAppName] = useState("");
 	const [files, setFiles] = useState<string[]>([]);
 	const [selectedFile, setSelectedFile] = useState("");
@@ -731,7 +732,7 @@ const AddAppMonitoringNodeJS = (props: { className: string; skip: Function }) =>
 			setUnexpectedError(true);
 		} else {
 			setUnexpectedError(false);
-			setStep(4);
+			setStep(3);
 		}
 		setInstallingLibrary(false);
 	};
@@ -750,7 +751,7 @@ const AddAppMonitoringNodeJS = (props: { className: string; skip: Function }) =>
 			setUnexpectedError(true);
 		} else {
 			setUnexpectedError(false);
-			setStep(5);
+			setStep(4);
 		}
 		setCreatingConfig(false);
 	};
@@ -768,7 +769,7 @@ const AddAppMonitoringNodeJS = (props: { className: string; skip: Function }) =>
 			setUnexpectedError(true);
 		} else {
 			setUnexpectedError(false);
-			setStep(6);
+			setStep(5);
 		}
 		setInsertingRequire(false);
 
@@ -820,6 +821,7 @@ const AddAppMonitoringNodeJS = (props: { className: string; skip: Function }) =>
 									</div>
 								)}
 								<div className="control-group">
+									{/*
 									<InstallRow className={step > 0 ? "row-active" : ""}>
 										<StepNumber>1</StepNumber>
 										<div>
@@ -848,8 +850,9 @@ const AddAppMonitoringNodeJS = (props: { className: string; skip: Function }) =>
 											Save
 										</Button>
 									</InstallRow>
-									<InstallRow className={step > 1 ? "row-active" : ""}>
-										<StepNumber>2</StepNumber>
+										*/}
+									<InstallRow className={step > 0 ? "row-active" : ""}>
+										<StepNumber>1</StepNumber>
 										<div>
 											<label>Type a name for your application:</label>
 											<TextInput
@@ -857,18 +860,19 @@ const AddAppMonitoringNodeJS = (props: { className: string; skip: Function }) =>
 												value={appName}
 												onChange={onSetAppName}
 												nativeProps={{ id: "appName" }}
+												autoFocus
 											/>
 										</div>
 										<Button
-											isDone={step > 2}
-											onClick={() => setStep(3)}
+											isDone={step > 1}
+											onClick={() => setStep(2)}
 											disabled={appName.length == 0}
 										>
 											Save
 										</Button>
 									</InstallRow>
-									<InstallRow className={step > 2 ? "row-active" : ""}>
-										<StepNumber>3</StepNumber>
+									<InstallRow className={step > 1 ? "row-active" : ""}>
+										<StepNumber>2</StepNumber>
 										<div>
 											<label>
 												Install the node module in your repo:
@@ -879,30 +883,30 @@ const AddAppMonitoringNodeJS = (props: { className: string; skip: Function }) =>
 										<Button
 											onClick={onInstallLibrary}
 											isLoading={installingLibrary}
-											isDone={step > 3}
+											isDone={step > 2}
 										>
 											Install
 										</Button>
 									</InstallRow>
-									<InstallRow className={step > 3 ? "row-active" : ""}>
-										<StepNumber>4</StepNumber>
+									<InstallRow className={step > 2 ? "row-active" : ""}>
+										<StepNumber>3</StepNumber>
 										<div>
 											<label>
 												Create a custom configuration file in
 												<br />
-												<code>{repoPath}</code>
+												<code>{repoPath?.replace("codestream-server-demo", "server")}</code>
 											</label>
 										</div>
 										<Button
 											onClick={onCreateConfigFile}
 											isLoading={creatingConfig}
-											isDone={step > 4}
+											isDone={step > 3}
 										>
 											Create
 										</Button>
 									</InstallRow>
-									<InstallRow className={step > 4 ? "row-active" : ""}>
-										<StepNumber>5</StepNumber>
+									<InstallRow className={step > 3 ? "row-active" : ""}>
+										<StepNumber>4</StepNumber>
 										<div>
 											<label>
 												Add <code>require("newrelic")</code> to{" "}
@@ -920,20 +924,20 @@ const AddAppMonitoringNodeJS = (props: { className: string; skip: Function }) =>
 										<Button
 											onClick={onRequireNewRelic}
 											isLoading={insertingRequire}
-											isDone={step > 5}
+											isDone={step > 4}
 										>
 											Add
 										</Button>
 									</InstallRow>
-									<InstallRow className={step > 5 ? "row-active" : ""}>
+									<InstallRow className={step > 4 ? "row-active" : ""}>
 										<StepNumber>6</StepNumber>
 										<div>
 											<label>
 												Restart your application to start sending your data to New Relic
 											</label>
 										</div>
-										<Button onClick={() => props.skip()} isDone={step > 6}>
-											Done
+										<Button onClick={() => props.skip()} isDone={step > 5}>
+											OK
 										</Button>
 									</InstallRow>
 								</div>

@@ -987,7 +987,7 @@ export const OpenPullRequests = React.memo((props: Props) => {
 			{(derivedState.isPRSupportedCodeHostConnected || hasPRSupportedRepos) && (
 				<>
 					<PaneHeader
-						title={prLabel.PullRequests + (prLabel.PullRequests.includes("erge") ? " (BETA)" : "")}
+						title={prLabel.PullRequests}
 						id={WebviewPanels.OpenPullRequests}
 						isLoading={isLoadingPRs}
 						count={totalPRs}

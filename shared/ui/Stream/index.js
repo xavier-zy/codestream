@@ -17,10 +17,15 @@ import { ChangeWorksOn } from "./ChangeWorksOn";
 import { ChangePhoneNumber } from "./ChangePhoneNumber";
 import { ChangeAvatar } from "./ChangeAvatar";
 import { ChangeTeamName } from "./ChangeTeamName";
+
 import { ChangeCompanyName } from "./ChangeCompanyName";
 import { BlameMap } from "./BlameMap";
 import { Team } from "./Team";
 import { AddNewRelic } from "./AddNewRelic";
+
+import { AddNewRelicNodeJS } from "./NewRelicWizards/AddNewRelicNodeJS";
+import { AddNewRelicJava } from "./NewRelicWizards/AddNewRelicJava";
+
 import { TeamSetup } from "./TeamSetup";
 import { Invite } from "./Invite";
 import { CreatePullRequestPanel } from "./CreatePullRequestPanel";
@@ -383,12 +388,17 @@ export class SimpleStream extends PureComponent {
 						{activeModal === WebviewModals.ChangePhoneNumber && <ChangePhoneNumber />}
 						{activeModal === WebviewModals.ChangePassword && <ChangePassword />}
 						{activeModal === WebviewModals.ChangeTeamName && <ChangeTeamName />}
+
 						{activeModal === WebviewModals.ChangeCompanyName && <ChangeCompanyName />}
 						{activeModal === WebviewModals.Profile && <ProfilePanel />}
 						{activeModal === WebviewModals.BlameMap && <BlameMap />}
 						{activeModal === WebviewModals.Invite && <Invite />}
 						{activeModal === WebviewModals.Team && <Team />}
 						{activeModal === WebviewModals.AddNewRelic && <AddNewRelic />}
+
+						{activeModal === WebviewModals.AddNewRelicNodeJS && <AddNewRelicNodeJS />}
+						{activeModal === WebviewModals.AddNewRelicJava && <AddNewRelicJava />}
+
 						{activeModal === WebviewModals.TeamSetup && <TeamSetup />}
 						{activeModal === WebviewModals.Keybindings && (
 							<Keybindings onClick={this.props.closeModal}>

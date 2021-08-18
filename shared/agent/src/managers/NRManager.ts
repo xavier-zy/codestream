@@ -1,8 +1,8 @@
 "use strict";
 
 import { structuredPatch } from "diff";
-import * as fs from "fs";
 import path from "path";
+import { promises as fsPromises } from "fs";
 import { Container, SessionContainer } from "../container";
 import { calculateLocation, MAX_RANGE_VALUE } from "../markerLocation/calculator";
 import {
@@ -35,14 +35,18 @@ import { lsp, lspHandler } from "../system/decorators/lsp";
 import { Strings } from "../system/string";
 import { xfs } from "../xfs";
 import { GitRepository } from "../git/models/models";
-import { spawnSync } from "child_process";
 import { Logger } from "../logger";
+import { RepoProjectType } from "../protocol/agent.protocol.scm";
+
 import { Parser as javascriptParser } from "./stackTraceParsers/javascriptStackTraceParser";
 import { Parser as rubyParser } from "./stackTraceParsers/rubyStackTraceParser";
 import { Parser as phpParser } from "./stackTraceParsers/phpStackTraceParser";
 import { Parser as pythonParser } from "./stackTraceParsers/pythonStackTraceParser";
 import { Parser as csharpParser } from "./stackTraceParsers/csharpStackTraceParser";
 import { Parser as javaParser } from "./stackTraceParsers/javaStackTraceParser";
+
+import { NodeJSInstrumentation } from "./newRelicInstrumentation/nodeJSInstrumentation";
+import { JavaInstrumentation } from "./newRelicInstrumentation/javaInstrumentation";
 
 interface CandidateFiles {
 	packageJson: string | null;
@@ -75,7 +79,13 @@ const MISSING_SHA_MESSAGE =
 
 @lsp
 export class NRManager {
-	constructor(readonly session: CodeStreamSession) {}
+	_nodeJS: NodeJSInstrumentation;
+	_java: JavaInstrumentation;
+
+	constructor(readonly session: CodeStreamSession) {
+		this._nodeJS = new NodeJSInstrumentation(session);
+		this._java = new JavaInstrumentation(session);
+	}
 
 	// returns info gleaned from parsing a stack trace
 	@log()
@@ -168,7 +178,7 @@ export class NRManager {
 		parsedStackInfo.repoId = matchingRepo.id;
 		parsedStackInfo.sha = sha;
 
-		const allFilePaths = this.getAllFiles(matchingRepo.path);
+		const allFilePaths = await this.getAllFiles(matchingRepo.path);
 
 		const resolvedStackInfo: CSStackTraceInfo = { ...parsedStackInfo, lines: [] };
 		for (const line of parsedStackInfo.lines) {
@@ -218,9 +228,8 @@ export class NRManager {
 		path
 	}: FindCandidateMainFilesRequest): Promise<FindCandidateMainFilesResponse> {
 		switch (type) {
-			case "nodejs": {
-				return this.findNodeJSCandidateMainFiles(path);
-			}
+			case RepoProjectType.NodeJS:
+				return this._nodeJS.findCandidateMainFiles(path);
 			default:
 				return { error: "unknown type: " + type, files: [] };
 		}
@@ -229,13 +238,21 @@ export class NRManager {
 	@log()
 	@lspHandler(InstallNewRelicRequestType)
 	async installNewRelic({ type, cwd }: InstallNewRelicRequest): Promise<InstallNewRelicResponse> {
+		let response;
 		switch (type) {
-			case "nodejs": {
-				return this.installNodeJSNewRelic(cwd);
-			}
+			case RepoProjectType.NodeJS:
+				response = await this._nodeJS.installNewRelic(cwd);
+				break;
+			case RepoProjectType.Java:
+				response = await this._java.installNewRelic(cwd);
+				break;
 			default:
 				return { error: "unknown type: " + type };
 		}
+		if (response.error) {
+			Logger.warn(response.error);
+		}
+		return response;
 	}
 
 	@log()
@@ -246,13 +263,21 @@ export class NRManager {
 		licenseKey,
 		appName
 	}: CreateNewRelicConfigFileRequest): Promise<CreateNewRelicConfigFileResponse> {
+		let response;
 		switch (type) {
-			case "nodejs": {
-				return this.createNodeJSNewRelicConfigFile(filePath, licenseKey, appName);
-			}
+			case RepoProjectType.NodeJS:
+				response = await this._nodeJS.createNewRelicConfigFile(filePath, licenseKey, appName);
+				break;
+			case RepoProjectType.Java:
+				response = await this._java.createNewRelicConfigFile(filePath, licenseKey, appName);
+				break;
 			default:
 				return { error: "unknown type: " + type };
 		}
+		if (response.error) {
+			Logger.warn(response.error);
+		}
+		return response;
 	}
 
 	@log()
@@ -262,13 +287,18 @@ export class NRManager {
 		file,
 		dir
 	}: AddNewRelicIncludeRequest): Promise<AddNewRelicIncludeResponse> {
+		let response;
 		switch (type) {
-			case "nodejs": {
-				return this.addNodeJSNewRelicInclude(file, dir);
-			}
+			case RepoProjectType.NodeJS:
+				response = await this._nodeJS.addNewRelicInclude(file, dir);
+				break;
 			default:
 				return { error: "unknown type: " + type };
 		}
+		if (response.error) {
+			Logger.warn(response.error);
+		}
+		return response;
 	}
 
 	private getBestMatchingPath(pathSuffix: string, allFilePaths: string[]) {
@@ -430,142 +460,23 @@ export class NRManager {
 		};
 	}
 
-	private getAllFiles(dirPath: string, arrayOfFiles?: string[] | undefined): string[] {
+	private async getAllFiles(
+		dirPath: string,
+		arrayOfFiles?: string[] | undefined
+	): Promise<string[]> {
 		arrayOfFiles = arrayOfFiles || [];
-		const files = fs.readdirSync(dirPath);
+		const files = await fsPromises.readdir(dirPath);
 		for (const file of files) {
 			// For demo purposes!!!
 			if (file !== "node_modules" && file !== ".git") {
 				const filePath = path.join(dirPath, file);
-				if (fs.statSync(filePath).isDirectory()) {
-					arrayOfFiles = this.getAllFiles(filePath, arrayOfFiles);
+				if ((await fsPromises.stat(filePath)).isDirectory()) {
+					arrayOfFiles = await this.getAllFiles(filePath, arrayOfFiles);
 				} else {
 					arrayOfFiles!.push(filePath);
 				}
 			}
 		}
 		return arrayOfFiles;
-	}
-
-	private findNodeJSCandidateMainFiles(dirPath: string) {
-		const files: CandidateFiles = {
-			packageJson: null,
-			indexFiles: [],
-			jsFiles: []
-		};
-
-		const packageJson = path.join(dirPath, "package.json");
-		if (fs.existsSync(packageJson)) {
-			const json = fs.readFileSync(packageJson, { encoding: "utf8" });
-			let data;
-			try {
-				data = JSON.parse(json);
-			} catch (error) {}
-			if (data && data.main) {
-				const mainFile = path.join(dirPath, data.main);
-				if (fs.existsSync(mainFile)) {
-					files.packageJson = data.main;
-				}
-			}
-		}
-
-		this._findNodeJSCandidateMainFiles(dirPath, dirPath, files, 0, 2);
-
-		const arrayOfFiles: string[] = [];
-		if (files.packageJson) {
-			arrayOfFiles.push(files.packageJson);
-		}
-
-		return { files: [...arrayOfFiles, ...files.indexFiles, ...files.jsFiles] };
-	}
-
-	private _findNodeJSCandidateMainFiles(
-		dirPath: string,
-		mainPath: string,
-		files: CandidateFiles,
-		depth: number,
-		maxDepth: number
-	) {
-		const allFiles = fs.readdirSync(dirPath);
-		for (const file of allFiles) {
-			// For demo purposes!!!
-			if (!file.match(/node_modules/)) {
-				const filePath = path.join(dirPath, file);
-				if (fs.statSync(filePath).isDirectory() && (!maxDepth || depth !== maxDepth)) {
-					this._findNodeJSCandidateMainFiles(filePath, mainPath, files, depth + 1, maxDepth);
-				} else if (path.basename(filePath) === "index.js") {
-					files.indexFiles.push(filePath.substring(mainPath.length + 1));
-				} else if (path.extname(filePath) === ".js") {
-					files.jsFiles.push(filePath.substring(mainPath.length + 1));
-				}
-			}
-		}
-
-		return files;
-	}
-
-	private async installNodeJSNewRelic(cwd: string): Promise<InstallNewRelicResponse> {
-		// FIXME does this work in windows???
-		return new Promise(resolve => {
-			try {
-				const result = spawnSync("npm", ["install", "--save", "newrelic"], {
-					cwd
-					/* This is what Colin needs to run this as a demo locally
-					shell: "/bin/zsh",
-					env: {
-						PATH: `${process.env.PATH}:/Users/cstryker/dev/sandboxes/csbe/node/bin`
-					}
-					*/
-				});
-				if (result.error) {
-					resolve({ error: `unable to execute npm install: ${result.error.message}` });
-				} else {
-					resolve({});
-				}
-			} catch (error) {
-				const msg = error instanceof Error ? error.message : JSON.stringify(error);
-				resolve({ error: `exception throw executing npm install: ${msg}` });
-			}
-		});
-	}
-
-	private async createNodeJSNewRelicConfigFile(
-		filePath: string,
-		licenseKey: string,
-		appName: string
-	): Promise<CreateNewRelicConfigFileResponse> {
-		try {
-			const configFile = path.join(filePath, "node_modules", "newrelic", "newrelic.js");
-			if (!fs.existsSync(configFile)) {
-				return { error: `could not find default config file: ${configFile}` };
-			}
-			let config = fs.readFileSync(configFile, "utf8");
-			config = config
-				.replace("license_key: 'license key here'", `license_key: '${licenseKey}'`)
-				.replace("app_name: ['My Application']", `app_name: ['${appName}']`);
-
-			const newConfigFile = path.join(filePath, "newrelic.js");
-			fs.writeFileSync(newConfigFile, config, { encoding: "utf8" });
-			return {};
-		} catch (error) {
-			const msg = error instanceof Error ? error.message : JSON.stringify(error);
-			return { error: `caught ${msg}` };
-		}
-	}
-
-	private async addNodeJSNewRelicInclude(
-		file: string,
-		dir: string
-	): Promise<AddNewRelicIncludeResponse> {
-		try {
-			const fullPath = path.join(dir, file);
-			let contents = fs.readFileSync(fullPath, "utf8");
-			contents = `require("newrelic");\n\n${contents}`;
-			fs.writeFileSync(fullPath, contents, { encoding: "utf8" });
-			return {};
-		} catch (error) {
-			const msg = error instanceof Error ? error.message : JSON.stringify(error);
-			return { error: `caught ${msg}` };
-		}
 	}
 }

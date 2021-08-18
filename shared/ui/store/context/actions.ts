@@ -1,4 +1,4 @@
-import { RegisterUserRequest } from "@codestream/protocols/agent";
+import { RegisterUserRequest, RepoProjectType } from "@codestream/protocols/agent";
 import { logError } from "../../logger";
 import { setUserPreference } from "../../Stream/actions";
 import { action } from "../common";
@@ -184,8 +184,11 @@ export const setCurrentErrorInboxOptions = (
 export const setCurrentInstrumentationOptions = (options?: any) =>
 	action(ContextActionsType.SetCurrentInstrumentationOptions, { options });
 
-export const setWantNewRelicOptions = (repoId?: string, path?: string) =>
-	action(ContextActionsType.SetWantNewRelicOptions, { repoId, path });
+export const setWantNewRelicOptions = (
+	projectType: RepoProjectType,
+	repoId?: string,
+	path?: string
+) => action(ContextActionsType.SetWantNewRelicOptions, { projectType, repoId, path });
 
 export const setNewPullRequestOptions = (options?: { branch: NewPullRequestBranch }) =>
 	action(ContextActionsType.SetNewPullRequestOptions, { options });

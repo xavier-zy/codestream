@@ -2,6 +2,7 @@
 
 import { RequestType } from "vscode-languageserver-protocol";
 import { CSStackTraceInfo } from "./api.protocol.models";
+import { RepoProjectType } from "./agent.protocol.scm";
 
 export interface ParseStackTraceRequest {
 	stackTrace: string | string[];
@@ -60,7 +61,7 @@ export const ResolveStackTracePositionRequestType = new RequestType<
 >("codestream/nr/resolveStackTracePosition");
 
 export interface FindCandidateMainFilesRequest {
-	type: string;
+	type: RepoProjectType;
 	path: string;
 }
 
@@ -77,12 +78,13 @@ export const FindCandidateMainFilesRequestType = new RequestType<
 >("codestream/nr/findCandidateMainFiles");
 
 export interface InstallNewRelicRequest {
-	type: string;
+	type: RepoProjectType;
 	cwd: string;
 }
 
 export interface InstallNewRelicResponse {
 	error?: string;
+	[key: string]: any;
 }
 
 export const InstallNewRelicRequestType = new RequestType<
@@ -93,7 +95,7 @@ export const InstallNewRelicRequestType = new RequestType<
 >("codestream/nr/installNewRelic");
 
 export interface CreateNewRelicConfigFileRequest {
-	type: string;
+	type: RepoProjectType;
 	filePath: string;
 	licenseKey: string;
 	appName: string;
@@ -101,6 +103,11 @@ export interface CreateNewRelicConfigFileRequest {
 
 export interface CreateNewRelicConfigFileResponse {
 	error?: string;
+	[key: string]: any;
+}
+
+export interface CreateNewRelicConfigFileJavaResponse extends CreateNewRelicConfigFileResponse {
+	agentJar?: string;
 }
 
 export const CreateNewRelicConfigFileRequestType = new RequestType<
@@ -111,13 +118,14 @@ export const CreateNewRelicConfigFileRequestType = new RequestType<
 >("codestream/nr/createNewRelicConfigFile");
 
 export interface AddNewRelicIncludeRequest {
-	type: string;
+	type: RepoProjectType;
 	file: string;
 	dir: string;
 }
 
 export interface AddNewRelicIncludeResponse {
 	error?: string;
+	[key: string]: any;
 }
 
 export const AddNewRelicIncludeRequestType = new RequestType<

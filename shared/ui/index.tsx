@@ -159,7 +159,7 @@ export async function initialize(selector: string) {
 	}
 
 	// ask the agent to identify any open repos, and see if we can do any NR magic
-	checkForNewRelicInterest(store);
+	checkForNewRelicInstrumentationOpportunity(store);
 }
 
 // TODO: type up the store state
@@ -774,7 +774,7 @@ const confirmSwitchToTeam = function(
 };
 
 // ask the agent to identify any open repos, and see if we can do any NR magic
-const checkForNewRelicInterest = async function(store) {
+const checkForNewRelicInstrumentationOpportunity = async function(store) {
 	if (!isConnected(store.getState(), { id: "newrelic*com" })) return;
 
 	const reposResponse = await HostApi.instance.send(GetReposScmRequestType, {
@@ -782,12 +782,26 @@ const checkForNewRelicInterest = async function(store) {
 		guessProjectTypes: true
 	});
 	if (!reposResponse.error) {
-		const nodeJSRepo = reposResponse.repositories!.find(
-			repo => repo.projectType === RepoProjectType.NodeJS
-		);
-		if (nodeJSRepo && nodeJSRepo.id) {
-			await store.dispatch(setWantNewRelicOptions(nodeJSRepo.id, nodeJSRepo.path));
-			// store.dispatch(openModal(WebviewModals.AddNewRelic));
+		const knownRepo = (reposResponse.repositories || []).find(repo => {
+			return repo.id && repo.projectType !== RepoProjectType.Unknown;
+		});
+		if (knownRepo) {
+			await store.dispatch(
+				setWantNewRelicOptions(knownRepo.projectType!, knownRepo.id, knownRepo.path)
+			);
+
+			/*
+			switch (knownRepo.projectType!) {
+				case RepoProjectType.NodeJS:
+					store.dispatch(openModal(WebviewModals.AddNewRelicNodeJS));
+					break;
+				case RepoProjectType.Java:
+					store.dispatch(openModal(WebviewModals.AddNewRelicJava));
+					break;
+				default:
+					break;
+			}
+			*/
 		}
 	}
 };

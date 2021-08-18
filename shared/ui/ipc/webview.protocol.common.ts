@@ -111,10 +111,14 @@ export enum WebviewModals {
 	Notifications = "notifications",
 	ReviewSettings = "review-settings",
 	Invite = "invite",
+
 	BlameMap = "blame-map",
 	Team = "people",
 	Profile = "profile",
-	AddNewRelic = "add-new-relic"
+	AddNewRelic = "add-new-relic",
+
+	AddNewRelicNodeJS = "add-new-relic-nodejs",
+	AddNewRelicJava = "add-new-relic-java"
 }
 
 export interface WebviewContext {

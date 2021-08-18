@@ -18,6 +18,9 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.ui.jcef.JBCefApp
 import com.intellij.ui.jcef.JBCefBrowser
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.future.await
+import kotlinx.coroutines.launch
 import org.apache.commons.io.FileUtils
 import java.io.File
 import java.nio.charset.Charset
@@ -43,8 +46,10 @@ class WebViewService(val project: Project) : Disposable {
     init {
         logger.info("Initializing WebViewService for project ${project.basePath}")
         ApplicationManager.getApplication().invokeLater {
-            webView = createWebView(router)
-            webViewCreation.complete(Unit)
+            GlobalScope.launch {
+                webView = createWebView(router)
+                webViewCreation.complete(Unit)
+            }
         }
 
         extractAssets()
@@ -75,10 +80,13 @@ class WebViewService(val project: Project) : Disposable {
         }
         applyStylesheet()
         ApplicationManager.getApplication().invokeLater {
-            try {
-                webView.loadUrl(htmlFile.url)
-            } catch (e: Exception) {
-                logger.error(e)
+            GlobalScope.launch {
+                try {
+                    webViewCreation.await()
+                    webView.loadUrl(htmlFile.url)
+                } catch (e: Exception) {
+                    logger.error(e)
+                }
             }
         }
     }
@@ -145,7 +153,7 @@ class WebViewService(val project: Project) : Disposable {
         webView.dispose()
     }
 
-    private fun createWebView(router: WebViewRouter): WebView {
+    private suspend fun createWebView(router: WebViewRouter): WebView {
         val appSettings = ServiceManager.getService(ApplicationSettingsService::class.java)
         return try {
             if (!ENV_DISABLE_JCEF && appSettings.jcef && JBCefApp.isSupported()) {

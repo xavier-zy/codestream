@@ -157,9 +157,6 @@ export async function initialize(selector: string) {
 			);
 		}
 	}
-
-	// ask the agent to identify any open repos, and see if we can do any NR magic
-	checkForNewRelicInstrumentationOpportunity(store);
 }
 
 // TODO: type up the store state
@@ -771,37 +768,4 @@ const confirmSwitchToTeam = function(
 		}
 	}
 	return false;
-};
-
-// ask the agent to identify any open repos, and see if we can do any NR magic
-const checkForNewRelicInstrumentationOpportunity = async function(store) {
-	if (!isConnected(store.getState(), { id: "newrelic*com" })) return;
-
-	const reposResponse = await HostApi.instance.send(GetReposScmRequestType, {
-		inEditorOnly: true,
-		guessProjectTypes: true
-	});
-	if (!reposResponse.error) {
-		const knownRepo = (reposResponse.repositories || []).find(repo => {
-			return repo.id && repo.projectType !== RepoProjectType.Unknown;
-		});
-		if (knownRepo) {
-			await store.dispatch(
-				setWantNewRelicOptions(knownRepo.projectType!, knownRepo.id, knownRepo.path)
-			);
-
-			/*
-			switch (knownRepo.projectType!) {
-				case RepoProjectType.NodeJS:
-					store.dispatch(openModal(WebviewModals.AddNewRelicNodeJS));
-					break;
-				case RepoProjectType.Java:
-					store.dispatch(openModal(WebviewModals.AddNewRelicJava));
-					break;
-				default:
-					break;
-			}
-			*/
-		}
-	}
 };

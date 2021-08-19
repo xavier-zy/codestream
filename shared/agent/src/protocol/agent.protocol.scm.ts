@@ -166,6 +166,12 @@ export enum RepoProjectType {
 	*/
 }
 
+export interface NewRelicOptions {
+	projectType?: RepoProjectType;
+	repoId?: string;
+	path?: string;
+}
+
 export interface ReposScm {
 	id?: string;
 	path: string;

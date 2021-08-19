@@ -54,13 +54,12 @@ class ConfigureNewRelic extends Component {
 			inEditorOnly: true,
 			guessProjectTypes: true
 		});
-		if (!reposResponse.error && reposResponse.repositories) {
-			const nodeJSRepo = reposResponse.repositories.find(
-				repo => repo.projectType === RepoProjectType.NodeJS
-			);
-			if (nodeJSRepo && nodeJSRepo.id) {
-				this.props.setWantNewRelicOptions(nodeJSRepo.id, nodeJSRepo.path);
-				// store.dispatch(openModal(WebviewModals.AddNewRelic));
+		if (!reposResponse.error) {
+			const knownRepo = (reposResponse.repositories || []).find(repo => {
+				return repo.id && repo.projectType !== RepoProjectType.Unknown;
+			});
+			if (knownRepo) {
+				this.props.setWantNewRelicOptions(knownRepo.projectType, knownRepo.id, knownRepo.path);
 			}
 		}
 

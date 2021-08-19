@@ -1,0 +1,345 @@
+import React, { useState, useEffect, useCallback } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import {
+	AddNewRelicIncludeRequestType,
+	AddNewRelicIncludeResponse,
+	CreateNewRelicConfigFileRequestType,
+	CreateNewRelicConfigFileResponse,
+	FindCandidateMainFilesRequestType,
+	FindCandidateMainFilesResponse,
+	InstallNewRelicRequestType,
+	InstallNewRelicResponse
+} from "../../protocols/agent/agent.protocol.nr";
+import { logError } from "../../logger";
+import { InlineMenu } from "../../src/components/controls/InlineMenu";
+import * as path from "path-browserify";
+import { Position, Range } from "vscode-languageserver-types";
+import { highlightRange } from "../../Stream/api-functions";
+import { NewRelicOptions, RepoProjectType } from "@codestream/protocols/agent";
+import { CodeStreamState } from "../../store";
+import { HostApi } from "../../webview-api";
+import { closeModal } from "../actions";
+import { SkipLink, Step } from "../Onboard";
+import { InstallRow, StepNumber } from "../OnboardNewRelic";
+import { Dialog } from "../../src/components/Dialog";
+import { FormattedMessage } from "react-intl";
+import { Button } from "../../src/components/Button";
+import { Link } from "../Link";
+import Icon from "../Icon";
+import { TextInput } from "../../Authentication/TextInput";
+
+export const AddAppMonitoringNodeJS = (props: {
+	className: string;
+	skip: Function;
+	newRelicOptions: NewRelicOptions;
+}) => {
+	const dispatch = useDispatch();
+	const derivedState = useSelector((state: CodeStreamState) => {
+		const { repoId, path } = state.context.wantNewRelicOptions || {};
+		const repo = repoId ? state.repos[repoId] : undefined;
+		return { repo, repoPath: path };
+	});
+
+	const [licenseKey, setLicenseKey] = useState("****");
+	const [appName, setAppName] = useState("");
+	const [files, setFiles] = useState<string[]>([]);
+	const [selectedFile, setSelectedFile] = useState("");
+	const [installingLibrary, setInstallingLibrary] = useState(false);
+	const [creatingConfig, setCreatingConfig] = useState(false);
+	const [insertingRequire, setInsertingRequire] = useState(false);
+	const [loading, setLoading] = useState(false);
+	const [unexpectedError, setUnexpectedError] = useState(false);
+	const [step, setStep] = useState(1);
+
+	const { repo, repoPath } = derivedState;
+
+	useEffect(() => {
+		(async () => {
+			const response = (await HostApi.instance.send(FindCandidateMainFilesRequestType, {
+				type: RepoProjectType.NodeJS,
+				path: repoPath!
+			})) as FindCandidateMainFilesResponse;
+			if (!response.error) {
+				setFiles(response.files);
+			}
+		})();
+	}, ["repoPath"]);
+
+	useEffect(() => {
+		if (!repo) {
+			// FIXME: what should we really do here?
+			dispatch(closeModal());
+		}
+	}, ["repo"]);
+
+	const onSubmit = async (event: React.SyntheticEvent) => {
+		setUnexpectedError(false);
+		event.preventDefault();
+
+		setLoading(true);
+		try {
+			dispatch(closeModal());
+		} catch (error) {
+			logError(`Unexpected error during New Relic installation: ${error}`);
+			setUnexpectedError(true);
+		}
+		// @ts-ignore
+		setLoading(false);
+	};
+
+	const onSetLicenseKey = useCallback(
+		key => {
+			setLicenseKey(key);
+			if (key) {
+				setUnexpectedError(false);
+				// setStep(2);
+			} else {
+				setStep(1);
+			}
+		},
+		["key"]
+	);
+
+	const onSetAppName = useCallback(
+		name => {
+			setAppName(name);
+			if (name) {
+				setUnexpectedError(false);
+				// setStep(3);
+			} else {
+				setStep(2);
+			}
+		},
+		["appName"]
+	);
+
+	const onInstallLibrary = async (event: React.SyntheticEvent) => {
+		event.preventDefault();
+		setInstallingLibrary(true);
+		const response = (await HostApi.instance.send(InstallNewRelicRequestType, {
+			type: RepoProjectType.NodeJS,
+			cwd: repoPath!
+		})) as InstallNewRelicResponse;
+		if (response.error) {
+			logError(`Unable to install New Relic module: ${response.error}`);
+			setUnexpectedError(true);
+		} else {
+			setUnexpectedError(false);
+			setStep(3);
+		}
+		setInstallingLibrary(false);
+	};
+
+	const onCreateConfigFile = async (event: React.SyntheticEvent) => {
+		event.preventDefault();
+		setCreatingConfig(true);
+		const response = (await HostApi.instance.send(CreateNewRelicConfigFileRequestType, {
+			type: RepoProjectType.NodeJS,
+			filePath: repoPath!,
+			appName,
+			licenseKey
+		})) as CreateNewRelicConfigFileResponse;
+		if (response.error) {
+			logError(`Unable to create New Relic config file: ${response.error}`);
+			setUnexpectedError(true);
+		} else {
+			setUnexpectedError(false);
+			setStep(4);
+		}
+		setCreatingConfig(false);
+	};
+
+	const onRequireNewRelic = async (event: React.SyntheticEvent) => {
+		event.preventDefault();
+		setInsertingRequire(true);
+		const response = (await HostApi.instance.send(AddNewRelicIncludeRequestType, {
+			type: RepoProjectType.NodeJS,
+			file: selectedFile || files[0],
+			dir: repoPath!
+		})) as AddNewRelicIncludeResponse;
+		if (response.error) {
+			logError(`Unable to add New Relic include to ${selectedFile}: ${response.error}`);
+			setUnexpectedError(true);
+		} else {
+			setUnexpectedError(false);
+			setStep(5);
+		}
+		setInsertingRequire(false);
+
+		const start = Position.create(0, 0);
+		const end = Position.create(0, 10000);
+		const range = Range.create(start, end);
+		const includeFile = path.join(repoPath!, selectedFile);
+		highlightRange({
+			uri: `file://${includeFile}`,
+			range,
+			highlight: true
+		});
+	};
+
+	const fileItems = files.map((file, i) => {
+		return {
+			key: file,
+			label: file,
+			checked: selectedFile === file,
+			default: i === 0,
+			action: () => setSelectedFile(file)
+		};
+	});
+
+	return (
+		<Step className={props.className}>
+			<div className="body">
+				<h3>
+					<Icon name="node" />
+					<br />
+					Add App Monitoring for Node JS
+				</h3>
+				<p className="explainer">Monitor the performance of your app by installing an agent</p>
+				<Dialog>
+					<div className="standard-form">
+						<fieldset className="form-body">
+							<div id="controls">
+								<div className="small-spacer" />
+								{unexpectedError && (
+									<div className="error-message form-error">
+										<FormattedMessage
+											id="error.unexpected"
+											defaultMessage="Something went wrong! Please try again, or "
+										/>
+										<FormattedMessage id="contactSupport" defaultMessage="contact support">
+											{text => <Link href="https://help.codestream.com">{text}</Link>}
+										</FormattedMessage>
+										.
+									</div>
+								)}
+								<div className="control-group">
+									{/*
+									<InstallRow className={step > 0 ? "row-active" : ""}>
+										<StepNumber>1</StepNumber>
+										<div>
+											<label>
+												Paste your{" "}
+												<Link href="https://docs.newrelic.com/docs/accounts/accounts-billing/account-setup/new-relic-license-key/">
+													New Relic license key
+												</Link>
+												:
+											</label>
+											<TextInput
+												name="licenseKey"
+												value={licenseKey}
+												onChange={onSetLicenseKey}
+												nativeProps={{ id: "licenseKeyInput" }}
+											/>
+										</div>
+										<Button
+											isDone={step > 1}
+											onClick={() => {
+												setStep(2);
+												document.getElementById("appName")?.focus();
+											}}
+											disabled={licenseKey.length == 0}
+										>
+											Save
+										</Button>
+									</InstallRow>
+										*/}
+									<InstallRow className={step > 0 ? "row-active" : ""}>
+										<StepNumber>1</StepNumber>
+										<div>
+											<label>Type a name for your application:</label>
+											<TextInput
+												name="appName"
+												value={appName}
+												onChange={onSetAppName}
+												nativeProps={{ id: "appName" }}
+												autoFocus
+											/>
+										</div>
+										<Button
+											isDone={step > 1}
+											onClick={() => setStep(2)}
+											disabled={appName.length == 0}
+										>
+											Save
+										</Button>
+									</InstallRow>
+									<InstallRow className={step > 1 ? "row-active" : ""}>
+										<StepNumber>2</StepNumber>
+										<div>
+											<label>
+												Install the node module in your repo:
+												<br />
+												<code>npm install --save newrelic</code>
+											</label>
+										</div>
+										<Button
+											onClick={onInstallLibrary}
+											isLoading={installingLibrary}
+											isDone={step > 2}
+										>
+											Install
+										</Button>
+									</InstallRow>
+									<InstallRow className={step > 2 ? "row-active" : ""}>
+										<StepNumber>3</StepNumber>
+										<div>
+											<label>
+												Create a custom configuration file in
+												<br />
+												<code>{repoPath?.replace("codestream-server-demo", "server")}</code>
+											</label>
+										</div>
+										<Button
+											onClick={onCreateConfigFile}
+											isLoading={creatingConfig}
+											isDone={step > 3}
+										>
+											Create
+										</Button>
+									</InstallRow>
+									<InstallRow className={step > 3 ? "row-active" : ""}>
+										<StepNumber>4</StepNumber>
+										<div>
+											<label>
+												Add <code>require("newrelic")</code> to{" "}
+											</label>
+											<code>
+												<InlineMenu
+													key="team-display-options"
+													className="no-padding"
+													items={fileItems}
+												>
+													{files[0]}
+												</InlineMenu>
+											</code>
+										</div>
+										<Button
+											onClick={onRequireNewRelic}
+											isLoading={insertingRequire}
+											isDone={step > 4}
+										>
+											Add
+										</Button>
+									</InstallRow>
+									<InstallRow className={step > 4 ? "row-active" : ""}>
+										<StepNumber>6</StepNumber>
+										<div>
+											<label>
+												Restart your application to start sending your data to New Relic
+											</label>
+										</div>
+										<Button onClick={() => props.skip()} isDone={step > 5}>
+											OK
+										</Button>
+									</InstallRow>
+								</div>
+							</div>
+						</fieldset>
+					</div>
+				</Dialog>
+				<SkipLink onClick={() => props.skip()}>I'll do this later</SkipLink>
+			</div>
+		</Step>
+	);
+};

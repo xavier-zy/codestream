@@ -1,0 +1,267 @@
+import React, { useState, useEffect, useCallback } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import {
+	CreateNewRelicConfigFileRequestType,
+	CreateNewRelicConfigFileResponse,
+	InstallNewRelicRequestType,
+	InstallNewRelicResponse
+} from "../../protocols/agent/agent.protocol.nr";
+import { logError } from "../../logger";
+import { NewRelicOptions, RepoProjectType } from "@codestream/protocols/agent";
+import { CodeStreamState } from "../../store";
+import { HostApi } from "../../webview-api";
+import { closeModal } from "../actions";
+import { SkipLink, Step } from "../Onboard";
+import { InstallRow, StepNumber } from "../OnboardNewRelic";
+import { Dialog } from "../../src/components/Dialog";
+import { FormattedMessage } from "react-intl";
+import { Button } from "../../src/components/Button";
+import { Link } from "../Link";
+import Icon from "../Icon";
+import { TextInput } from "../../Authentication/TextInput";
+
+export const AddAppMonitoringJava = (props: {
+	className: string;
+	skip: Function;
+	newRelicOptions: NewRelicOptions;
+}) => {
+	const dispatch = useDispatch();
+	const derivedState = useSelector((state: CodeStreamState) => {
+		const { repoId, path } = state.context.wantNewRelicOptions || {};
+		const repo = repoId ? state.repos[repoId] : undefined;
+		return { repo, repoPath: path };
+	});
+
+	const [licenseKey, setLicenseKey] = useState("****");
+	const [appName, setAppName] = useState("");
+	const [selectedFile, setSelectedFile] = useState("");
+	const [installingLibrary, setInstallingLibrary] = useState(false);
+	const [creatingConfig, setCreatingConfig] = useState(false);
+	const [agentJar, setAgentJar] = useState("");
+	const [loading, setLoading] = useState(false);
+	const [unexpectedError, setUnexpectedError] = useState(false);
+	const [step, setStep] = useState(1);
+
+	const { repo, repoPath } = derivedState;
+
+	useEffect(() => {
+		if (!repo) {
+			// FIXME: what should we really do here?
+			dispatch(closeModal());
+		}
+	}, ["repo"]);
+
+	const onSubmit = async (event: React.SyntheticEvent) => {
+		setUnexpectedError(false);
+		event.preventDefault();
+
+		setLoading(true);
+		try {
+			dispatch(closeModal());
+		} catch (error) {
+			logError(`Unexpected error during New Relic installation: ${error}`);
+			setUnexpectedError(true);
+		}
+		// @ts-ignore
+		setLoading(false);
+	};
+
+	const onSetLicenseKey = useCallback(
+		key => {
+			setLicenseKey(key);
+			if (key) {
+				setUnexpectedError(false);
+				// setStep(2);
+			} else {
+				setStep(1);
+			}
+		},
+		["key"]
+	);
+
+	const onSetAppName = useCallback(
+		name => {
+			setAppName(name);
+			if (name) {
+				setUnexpectedError(false);
+				// setStep(3);
+			} else {
+				setStep(2);
+			}
+		},
+		["appName"]
+	);
+
+	const onInstallLibrary = async (event: React.SyntheticEvent) => {
+		event.preventDefault();
+		setInstallingLibrary(true);
+		const response = (await HostApi.instance.send(InstallNewRelicRequestType, {
+			type: RepoProjectType.Java,
+			cwd: repoPath!
+		})) as InstallNewRelicResponse;
+		if (response.error) {
+			logError(`Unable to install New Relic module: ${response.error}`);
+			setUnexpectedError(true);
+		} else {
+			setUnexpectedError(false);
+			setStep(3);
+		}
+		setInstallingLibrary(false);
+	};
+
+	const onCreateConfigFile = async (event: React.SyntheticEvent) => {
+		event.preventDefault();
+		setCreatingConfig(true);
+		const response = (await HostApi.instance.send(CreateNewRelicConfigFileRequestType, {
+			type: RepoProjectType.Java,
+			filePath: repoPath!,
+			appName,
+			licenseKey
+		})) as CreateNewRelicConfigFileResponse;
+		if (response.error) {
+			logError(`Unable to create New Relic config file: ${response.error}`);
+			setUnexpectedError(true);
+		} else {
+			setUnexpectedError(false);
+			setAgentJar(response.agentJar!);
+			setStep(4);
+		}
+		setCreatingConfig(false);
+	};
+
+	return (
+		<Step className={props.className}>
+			<div className="body">
+				<h3>
+					<Icon name="node" />
+					<br />
+					Add App Monitoring for Java
+				</h3>
+				<p className="explainer">Monitor the performance of your app by installing an agent</p>
+				<Dialog>
+					<div className="standard-form">
+						<fieldset className="form-body">
+							<div id="controls">
+								<div className="small-spacer" />
+								{unexpectedError && (
+									<div className="error-message form-error">
+										<FormattedMessage
+											id="error.unexpected"
+											defaultMessage="Something went wrong! Please try again, or "
+										/>
+										<FormattedMessage id="contactSupport" defaultMessage="contact support">
+											{text => <Link href="https://help.codestream.com">{text}</Link>}
+										</FormattedMessage>
+										.
+									</div>
+								)}
+								<div className="control-group">
+									{/*
+									<InstallRow className={step > 0 ? "row-active" : ""}>
+										<StepNumber>1</StepNumber>
+										<div>
+											<label>
+												Paste your{" "}
+												<Link href="https://docs.newrelic.com/docs/accounts/accounts-billing/account-setup/new-relic-license-key/">
+													New Relic license key
+												</Link>
+												:
+											</label>
+											<TextInput
+												name="licenseKey"
+												value={licenseKey}
+												onChange={onSetLicenseKey}
+												nativeProps={{ id: "licenseKeyInput" }}
+											/>
+										</div>
+										<Button
+											isDone={step > 1}
+											onClick={() => {
+												setStep(2);
+												document.getElementById("appName")?.focus();
+											}}
+											disabled={licenseKey.length == 0}
+										>
+											Save
+										</Button>
+									</InstallRow>
+										*/}
+									<InstallRow className={step > 0 ? "row-active" : ""}>
+										<StepNumber>1</StepNumber>
+										<div>
+											<label>Type a name for your application:</label>
+											<TextInput
+												name="appName"
+												value={appName}
+												onChange={onSetAppName}
+												nativeProps={{ id: "appName" }}
+												autoFocus
+											/>
+										</div>
+										<Button
+											isDone={step > 1}
+											onClick={() => setStep(2)}
+											disabled={appName.length == 0}
+										>
+											Save
+										</Button>
+									</InstallRow>
+									<InstallRow className={step > 1 ? "row-active" : ""}>
+										<StepNumber>2</StepNumber>
+										<div>
+											<label>
+												Download and install the agent in your repo
+												<br />
+												<code>
+													curl -O
+													https://download.newrelic.com/newrelic/java-agent/newrelic-agent/current/newrelic-java.zip
+												</code>
+											</label>
+										</div>
+										<Button
+											onClick={onInstallLibrary}
+											isLoading={installingLibrary}
+											isDone={step > 2}
+										>
+											Install
+										</Button>
+									</InstallRow>
+									<InstallRow className={step > 2 ? "row-active" : ""}>
+										<StepNumber>3</StepNumber>
+										<div>
+											<label>
+												Create a custom configuration file in
+												<br />
+												<code>{repoPath?.replace("codestream-server-demo", "server")}</code>
+											</label>
+										</div>
+										<Button
+											onClick={onCreateConfigFile}
+											isLoading={creatingConfig}
+											isDone={step > 3}
+										>
+											Create
+										</Button>
+									</InstallRow>
+									<InstallRow className={step > 3 ? "row-active" : ""}>
+										<StepNumber>4</StepNumber>
+										<div>
+											<label>
+												To start sending data to New Relic, recompile and restart your application
+												with <b>-javaagent:{agentJar}</b>
+											</label>
+										</div>
+										<Button onClick={() => props.skip()} isDone={step > 5}>
+											OK
+										</Button>
+									</InstallRow>
+								</div>
+							</div>
+						</fieldset>
+					</div>
+				</Dialog>
+				<SkipLink onClick={() => props.skip()}>I'll do this later</SkipLink>
+			</div>
+		</Step>
+	);
+};

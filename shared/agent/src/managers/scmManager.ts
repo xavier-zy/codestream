@@ -221,7 +221,6 @@ export class ScmManager {
 		}
 
 		if (request && request.guessProjectTypes) {
-			console.warn("COLIN: GUESSING PROJECT TYPE...");
 			for (let repo of response.repositories) {
 				repo.projectType = await repoIdentifier.identifyRepo(repo);
 			}

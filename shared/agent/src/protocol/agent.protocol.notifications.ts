@@ -370,3 +370,12 @@ export const DidChangeBranchNotificationType = new NotificationType<
 	DidChangeBranchNotification,
 	void
 >("codestream/didChangeBranch");
+
+export interface DidChangeProcessBufferNotification {
+	text?: string;
+}
+
+export const DidChangeProcessBufferNotificationType = new NotificationType<
+	DidChangeProcessBufferNotification,
+	void
+>("codestream/didChangeProcessBuffer");

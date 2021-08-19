@@ -83,6 +83,7 @@ export interface InstallNewRelicRequest {
 }
 
 export interface InstallNewRelicResponse {
+	message?: string;
 	error?: string;
 	[key: string]: any;
 }

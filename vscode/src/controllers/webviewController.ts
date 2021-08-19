@@ -11,6 +11,8 @@ import {
 	DidChangeDataNotificationType,
 	DidChangeDocumentMarkersNotification,
 	DidChangeDocumentMarkersNotificationType,
+	DidChangeProcessBufferNotification,
+	DidChangeProcessBufferNotificationType,
 	DidChangeServerUrlNotification,
 	DidChangeServerUrlNotificationType,
 	DidChangeVersionCompatibilityNotification,
@@ -642,6 +644,16 @@ export class WebviewController implements Disposable {
 	@log()
 	async onServerUrlChanged(e: DidChangeServerUrlNotification) {
 		this._webview!.notify(DidChangeServerUrlNotificationType, e);
+	}
+
+	@log({
+		args: false
+	})
+	async onProcessBufferChanged(e: DidChangeProcessBufferNotification) {
+		if (!this.visible) {
+			await this.show();
+		}
+		this._webview!.notify(DidChangeProcessBufferNotificationType, e);
 	}
 
 	@log()

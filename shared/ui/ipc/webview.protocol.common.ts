@@ -186,6 +186,10 @@ export interface EditorContext {
 	sidebar?: {
 		location?: SidebarLocation;
 	};
+	/* spawned process buffer text */
+	buffer?: {
+		text?: string;
+	};
 }
 
 export interface EditorLayout {

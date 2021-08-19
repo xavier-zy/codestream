@@ -47,6 +47,7 @@ import { Parser as javaParser } from "./stackTraceParsers/javaStackTraceParser";
 
 import { NodeJSInstrumentation } from "./newRelicInstrumentation/nodeJSInstrumentation";
 import { JavaInstrumentation } from "./newRelicInstrumentation/javaInstrumentation";
+import { DotNetCoreInstrumentation } from "./newRelicInstrumentation/dotNetCoreInstrumentation";
 
 interface CandidateFiles {
 	packageJson: string | null;
@@ -81,10 +82,12 @@ const MISSING_SHA_MESSAGE =
 export class NRManager {
 	_nodeJS: NodeJSInstrumentation;
 	_java: JavaInstrumentation;
+	_dotNetCore: DotNetCoreInstrumentation;
 
 	constructor(readonly session: CodeStreamSession) {
 		this._nodeJS = new NodeJSInstrumentation(session);
 		this._java = new JavaInstrumentation(session);
+		this._dotNetCore = new DotNetCoreInstrumentation(session);
 	}
 
 	// returns info gleaned from parsing a stack trace
@@ -246,6 +249,12 @@ export class NRManager {
 			case RepoProjectType.Java:
 				response = await this._java.installNewRelic(cwd);
 				break;
+			case RepoProjectType.DotNetCore:
+				response = await this._dotNetCore.installNewRelic(cwd);
+				break;
+			case RepoProjectType.DotNetFramework:
+				return { error: "not implemented. type: " + type };
+
 			default:
 				return { error: "unknown type: " + type };
 		}
@@ -271,6 +280,12 @@ export class NRManager {
 			case RepoProjectType.Java:
 				response = await this._java.createNewRelicConfigFile(filePath, licenseKey, appName);
 				break;
+			case RepoProjectType.DotNetCore:
+				response = await this._dotNetCore.createNewRelicConfigFile(filePath, licenseKey, appName);
+				break;
+			case RepoProjectType.DotNetFramework:
+				return { error: "not implemented. type: " + type };
+
 			default:
 				return { error: "unknown type: " + type };
 		}

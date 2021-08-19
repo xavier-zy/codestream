@@ -44,7 +44,8 @@ import {
 	ExecuteThirdPartyRequestUntypedType,
 	ResolveStackTraceResponse,
 	GetReposScmRequestType,
-	RepoProjectType
+	RepoProjectType,
+	DidChangeProcessBufferNotificationType
 } from "@codestream/protocols/agent";
 import { CSApiCapabilities, CodemarkType, CSMe } from "@codestream/protocols/api";
 import translations from "./translations/en";
@@ -100,9 +101,9 @@ import { updateCapabilities } from "./store/capabilities/actions";
 import { confirmPopup } from "./Stream/Confirm";
 import { switchToTeam } from "./store/session/actions";
 import { ParseStackTraceRequestType } from "@codestream/protocols/agent";
-
 import { Range } from "vscode-languageserver-types";
 import * as path from "path-browserify";
+import { appendProcessBuffer } from "./store/editorContext/actions";
 
 export { HostApi };
 
@@ -274,6 +275,10 @@ function listenForEvents(store) {
 
 	api.on(HostDidChangeVisibleEditorsNotificationType, async params => {
 		store.dispatch(setEditorContext({ visibleEditorCount: params.count }));
+	});
+
+	api.on(DidChangeProcessBufferNotificationType, async params => {
+		store.dispatch(appendProcessBuffer({ text: params.text || "" }));
 	});
 
 	api.on(HostDidChangeFocusNotificationType, ({ focused }) => {

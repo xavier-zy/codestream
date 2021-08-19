@@ -1,6 +1,6 @@
 "use strict";
 
-import { promises as fsPromises } from "fs";
+import { promises as fsPromises, readFileSync as fsReadFileSync } from "fs";
 import path from "path";
 import { CodeStreamSession } from "../session";
 import { lsp } from "../system/decorators/lsp";
@@ -16,6 +16,10 @@ export class RepoIdentificationManager {
 			return RepoProjectType.NodeJS;
 		} else if (await this.repoIsJava(repo, files)) {
 			return RepoProjectType.Java;
+		} else if (await this.repoIsDotNetCore(repo, files)) {
+			return RepoProjectType.DotNetCore;
+		} else if (await this.repoIsDotNetFramework(repo, files)) {
+			return RepoProjectType.DotNetFramework;
 		} else {
 			return RepoProjectType.Unknown;
 		}
@@ -32,6 +36,40 @@ export class RepoIdentificationManager {
 
 	private async repoIsJava(repo: ReposScm, files: string[]): Promise<boolean> {
 		return await this._findFileWithExtension(repo.path, ".java", files, 2, 0);
+	}
+
+	private async repoIsDotNetCore(repo: ReposScm, files: string[]): Promise<boolean> {
+		const projectFileName = files.find(file =>
+			file.endsWith(".csproj" || file.endsWith(".vbproj"))
+		);
+
+		if (projectFileName) {
+			const contents = fsReadFileSync(path.join(repo.path, projectFileName), "utf8");
+			return (
+				contents != null &&
+				new RegExp(/\<TargetFramework\>net[0-9]+\.[0-9]+\<\/TargetFramework\>/, "gm").test(contents)
+			);
+		}
+
+		return false;
+	}
+
+	private async repoIsDotNetFramework(repo: ReposScm, files: string[]): Promise<boolean> {
+		const projectFileName = files.find(file =>
+			file.endsWith(".csproj" || file.endsWith(".vbproj"))
+		);
+
+		if (projectFileName) {
+			const contents = fsReadFileSync(path.join(repo.path, projectFileName), "utf8");
+			return (
+				contents != null &&
+				new RegExp(/\<TargetFrameworkVersion\>v(.+)+\<\/TargetFrameworkVersion\>/, "gm").test(
+					contents
+				)
+			);
+		}
+
+		return false;
 	}
 
 	private async _findFileWithExtension(

@@ -49,6 +49,7 @@ import {
 } from "./Onboard";
 import { AddAppMonitoringNodeJS } from "./NewRelicWizards/AddAppMonitoringNodeJS";
 import { AddAppMonitoringJava } from "./NewRelicWizards/AddAppMonitoringJava";
+import { AddAppMonitoringDotNetCore } from "./NewRelicWizards/AddAppMonitoringDotNetCore";
 
 export const StepNumber = styled.div`
 	display: flex;
@@ -589,8 +590,14 @@ const AddAppMonitoringIntro = (props: {
 }) => {
 	const nodeJSDetected = props.newRelicOptions.projectType === RepoProjectType.NodeJS;
 	const javaDetected = props.newRelicOptions.projectType === RepoProjectType.Java;
+	const dotNetDetected =
+		props.newRelicOptions.projectType === RepoProjectType.DotNetCore ||
+		props.newRelicOptions.projectType === RepoProjectType.DotNetFramework;
+
 	const nodeJSVariant = nodeJSDetected ? "primary" : "neutral";
 	const javaVariant = javaDetected ? "primary" : "neutral";
+	const dotNetVariant = dotNetDetected ? "primary" : "neutral";
+
 	return (
 		<Step className={props.className}>
 			<div className="body">
@@ -634,9 +641,15 @@ const AddAppMonitoringIntro = (props: {
 								{props.newRelicOptions.projectType === RepoProjectType.Java && <>detected</>}
 							</div>
 						</Provider>
-						<Provider variant="neutral">
+						<Provider onClick={() => props.skip()} variant={dotNetVariant}>
 							<Icon name="dot-net" />
 							Microsft.NET
+							<div style={{ position: "absolute", fontSize: "10px", bottom: "-5px", right: "4px" }}>
+								{(props.newRelicOptions.projectType === RepoProjectType.DotNetCore ||
+									props.newRelicOptions.projectType === RepoProjectType.DotNetFramework) && (
+									<>detected</>
+								)}
+							</div>
 						</Provider>
 					</IntegrationButtons>
 					<SkipLink onClick={() => {}}>
@@ -659,6 +672,8 @@ const AddAppMonitoring = (props: {
 			return AddAppMonitoringNodeJS(props);
 		case RepoProjectType.Java:
 			return AddAppMonitoringJava(props);
+		case RepoProjectType.DotNetCore:
+			return AddAppMonitoringDotNetCore(props);
 		default:
 			// FIXME
 			return <></>;

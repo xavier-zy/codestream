@@ -159,7 +159,9 @@ export const GetRepoScmStatusesRequestType = new RequestType<
 export enum RepoProjectType {
 	Unknown = "Unknown",
 	NodeJS = "NodeJS",
-	Java = "Java"
+	Java = "Java",
+	DotNetCore = "DotNetCore",
+	DotNetFramework = "DotNetFramework"
 	/*
 	PHP = "PHP",
 	CSharp = "C#"

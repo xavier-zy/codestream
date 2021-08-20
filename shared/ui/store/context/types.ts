@@ -41,7 +41,7 @@ export enum ContextActionsType {
 	SetCurrentRepo = "@context/SetCurrentRepo",
 	SetCreatePullRequest = "@context/SetCreatePullRequest",
 	SetCurrentPullRequest = "@context/SetCurrentPullRequest",
-	SetCurrentErrorInboxOptions = "@context/SetCurrentErrorInboxOptions",
+	SetCurrentErrorsInboxOptions = "@context/SetCurrentErrorsInboxOptions",
 	SetCurrentInstrumentationOptions = "@context/SetCurrentInstrumentationOptions",
 	SetCurrentPullRequestAndBranch = "@context/SetCurrentPullRequestAndBranch",
 	SetNewPullRequestOptions = "@context/SetNewPullRequestOptions",
@@ -99,7 +99,7 @@ export interface ContextState extends WebviewContext {
 	pullRequestCheckoutBranch: boolean;
 	newPullRequestOptions?: { branch: NewPullRequestBranch };
 	currentInstrumentation?: any;
-	errorInboxOptions?: { stack?: string; customAttributes?: string; url?: string };
+	errorsInboxOptions?: { stack?: string; customAttributes?: string; url?: string };
 
 	wantNewRelicOptions?: { repoId?: string; path?: string };
 }

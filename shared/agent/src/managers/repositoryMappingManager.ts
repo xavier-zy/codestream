@@ -9,9 +9,13 @@ import {
 	MapReposRequest,
 	MapReposRequestType,
 	MapReposResponse,
+	NormalizeUrlRequest,
+	NormalizeUrlRequestType,
+	NormalizeUrlResponse,
 	RepoMap
 } from "../protocol/agent.protocol.repos";
 import { log, lsp, lspHandler } from "../system";
+import { GitRemoteParser } from "../git/parsers/remoteParser";
 
 interface RepoMapValue {
 	paths: string[];
@@ -205,5 +209,12 @@ export class RepositoryMappingManager {
 	private mappingFilePath(): string {
 		const p = path.join(this.codeStreamDirectory(), "mappings.json");
 		return p;
+	}
+
+	@log()
+	@lspHandler(NormalizeUrlRequestType)
+	async normalizeUrl({ url }: NormalizeUrlRequest): Promise<NormalizeUrlResponse> {
+		const [, domain, path] = await GitRemoteParser.parseGitUrl(url);
+		return { normalizedUrl: `${domain}/${path}` };
 	}
 }

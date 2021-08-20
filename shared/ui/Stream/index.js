@@ -473,7 +473,6 @@ export class SimpleStream extends PureComponent {
 									setMultiLocation={this.setMultiLocation}
 								/>
 							)}
-							{/*{activePanel === WebviewPanels.ErrorInbox && <CodeErrorForm />} */}
 							{activePanel === WebviewPanels.CodeError && (
 								<>
 									<DelayedRender>

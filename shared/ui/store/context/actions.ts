@@ -44,7 +44,7 @@ export const closeAllPanels = () => dispatch => {
 	dispatch(setCurrentReview());
 	dispatch(setCurrentCodeError());
 	dispatch(clearCurrentPullRequest());
-	dispatch(clearCurrentErrorInboxOptions());
+	dispatch(clearCurrentErrorsInboxOptions());
 	dispatch(clearCurrentInstrumentationOptions());
 	dispatch(clearWantNewRelicOptions());
 };
@@ -55,7 +55,7 @@ export const closeAllModals = () => dispatch => {
 	dispatch(setCurrentReview());
 	dispatch(setCurrentCodeError());
 	dispatch(clearCurrentPullRequest());
-	dispatch(clearCurrentErrorInboxOptions());
+	dispatch(clearCurrentErrorsInboxOptions());
 	dispatch(clearCurrentInstrumentationOptions());
 	dispatch(clearWantNewRelicOptions());
 };
@@ -175,11 +175,11 @@ export const setCurrentPullRequest = (
 	source?: string
 ) => action(ContextActionsType.SetCurrentPullRequest, { providerId, id, commentId, source });
 
-export const setCurrentErrorInboxOptions = (
+export const setCurrentErrorsInboxOptions = (
 	stack?: string,
 	customAttributes?: string,
 	url?: string
-) => action(ContextActionsType.SetCurrentErrorInboxOptions, { stack, customAttributes, url });
+) => action(ContextActionsType.SetCurrentErrorsInboxOptions, { stack, customAttributes, url });
 
 export const setCurrentInstrumentationOptions = (options?: any) =>
 	action(ContextActionsType.SetCurrentInstrumentationOptions, { options });
@@ -194,8 +194,8 @@ export const setWantNewRelicOptions = (
 export const setNewPullRequestOptions = (options?: { branch: NewPullRequestBranch }) =>
 	action(ContextActionsType.SetNewPullRequestOptions, { options });
 
-export const clearCurrentErrorInboxOptions = () =>
-	action(ContextActionsType.SetCurrentErrorInboxOptions, {});
+export const clearCurrentErrorsInboxOptions = () =>
+	action(ContextActionsType.SetCurrentErrorsInboxOptions, {});
 
 export const clearCurrentInstrumentationOptions = () =>
 	action(ContextActionsType.SetCurrentInstrumentationOptions, { options: {} });

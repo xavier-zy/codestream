@@ -48,7 +48,7 @@ const initialState: ContextState = {
 	route: { name: Route.NewUser, params: {} },
 	spatialViewShowPRComments: false,
 	composeCodemarkActive: undefined,
-	errorInboxOptions: undefined,
+	errorsInboxOptions: undefined,
 	currentInstrumentation: undefined,
 	wantNewRelicOptions: undefined
 };
@@ -172,10 +172,10 @@ export function reduceContext(
 				newPullRequestOptions: action.payload.options
 			};
 		}
-		case ContextActionsType.SetCurrentErrorInboxOptions: {
+		case ContextActionsType.SetCurrentErrorsInboxOptions: {
 			return {
 				...state,
-				errorInboxOptions: action.payload
+				errorsInboxOptions: action.payload
 			};
 		}
 		case ContextActionsType.SetCurrentInstrumentationOptions: {

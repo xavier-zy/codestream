@@ -33,7 +33,7 @@ import { createPatch, ParsedDiff, parsePatch } from "diff";
 import * as fs from "fs";
 import { memoize } from "lodash-es";
 import * as path from "path";
-import { CommitsChangedData, WorkspaceChangedData } from "protocol/agent.protocol";
+import { CommitsChangedData, WorkspaceChangedData } from "../protocol/agent.protocol";
 import { Disposable, Event } from "vscode-languageserver";
 import { URI } from "vscode-uri";
 import { Logger } from "../logger";

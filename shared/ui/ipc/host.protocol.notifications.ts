@@ -96,7 +96,7 @@ export enum RouteControllerType {
 	Search = "search",
 	PullRequest = "pullRequest",
 	StartWork = "startWork",
-	ErrorInbox = "errorinbox",
+	NewRelic = "newrelic",
 	CodeError = "codeError",
 	File = "file"
 }

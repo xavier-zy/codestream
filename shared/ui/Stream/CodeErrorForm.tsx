@@ -71,12 +71,12 @@ export const CodeErrorForm = (props: Props = {}) => {
 	const derivedState = useSelector((state: CodeStreamState) => {
 		const { users, context, session, codeErrors } = state;
 		const currentUser = users[session.userId!] as CSMe;
-		const { errorInboxOptions = {} } = context;
+		const { errorsInboxOptions = {} } = context;
 		const codeError =
 			props.editingCodeError || (props.codeErrorId && codeErrors[props.codeErrorId]);
-		const stack = codeError?.stackTrace || errorInboxOptions.stack;
+		const stack = codeError?.stackTrace || errorsInboxOptions.stack;
 		const url = codeError?.providerUrl;
-		const { customAttributes } = errorInboxOptions;
+		const { customAttributes } = errorsInboxOptions;
 		const parsedStack: string[] = stack ? JSON.parse(stack) : [];
 		const stackInfo = stack ? parseStack(parsedStack) : { calls: [] };
 		const attrs = customAttributes ? JSON.parse(customAttributes) : {};

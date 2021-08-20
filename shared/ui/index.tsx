@@ -42,10 +42,9 @@ import {
 	DidEncounterMaintenanceModeNotificationType,
 	VerifyConnectivityRequestType,
 	ExecuteThirdPartyRequestUntypedType,
-	ResolveStackTraceResponse,
 	GetReposScmRequestType,
-	RepoProjectType,
-	DidChangeProcessBufferNotificationType
+	DidChangeProcessBufferNotificationType,
+	NormalizeUrlRequestType
 } from "@codestream/protocols/agent";
 import { CSApiCapabilities, CodemarkType, CSMe } from "@codestream/protocols/api";
 import translations from "./translations/en";
@@ -407,7 +406,6 @@ function listenForEvents(store) {
 
 	api.on(HostDidReceiveRequestNotificationType, async e => {
 		if (!e) return;
-
 		const route = parseProtocol(e.url);
 		if (!route || !route.controller) return;
 
@@ -498,9 +496,9 @@ function listenForEvents(store) {
 				}
 				break;
 			}
-			case RouteControllerType.ErrorInbox: {
+			case RouteControllerType.NewRelic: {
 				switch (route.action) {
-					case "open": {
+					case "errorsinbox": {
 						store.dispatch(closeAllPanels());
 
 						// if the user isn't logged in we'll queue this url
@@ -542,6 +540,60 @@ function listenForEvents(store) {
 
 						store.dispatch(openPanel(WebviewPanels.CodemarksForFile));
 						break;
+					}
+
+					case "pixie": {
+						const { remote, file, line } = route.query;
+						let lineNumber = line ? parseInt(line, 0) : 0;
+						if (isNaN(lineNumber)) lineNumber = 0;
+						if (!remote || !file) return;
+
+						let normalizedUrlResponse;
+						try {
+							normalizedUrlResponse = await HostApi.instance.send(NormalizeUrlRequestType, {
+								url: remote
+							});
+						} catch (e) {
+							logWarning(`could not normalize remote: ${e.message}`);
+							return;
+						}
+						const { normalizedUrl } = normalizedUrlResponse;
+
+						let reposResponse;
+						try {
+							reposResponse = await HostApi.instance.send(GetReposScmRequestType, {
+								inEditorOnly: true
+							});
+						} catch (e) {
+							logWarning(`could not get repos: ${e.message}`);
+							return;
+						}
+
+						if (reposResponse) {
+							const repo = (reposResponse.repositories || []).find(r => {
+								if (r.id) {
+									const csRepo = store.getState().repos[r.id];
+									return (csRepo.remotes || []).find(rem => {
+										logWarning(
+											`comparing pixie "${normalizedUrl}" to known repo "${rem.normalizedUrl}"`
+										);
+										return normalizedUrl === rem.normalizedUrl;
+									});
+								}
+							});
+							if (repo) {
+								const filePath = path.join(repo.path, file);
+								HostApi.instance.send(EditorRevealRangeRequestType, {
+									uri: filePath,
+									range: Range.create(lineNumber, 0, lineNumber, 9999),
+									atTop: true
+								});
+							} else {
+								logWarning(`no matching repo found to pixie remote ${normalizedUrl}`);
+							}
+						} else {
+							logWarning("no git repos found to match pixie remote");
+						}
 					}
 				}
 				break;
@@ -609,21 +661,7 @@ function listenForEvents(store) {
 				break;
 			}
 			case "navigate": {
-				if (route.action && (route.action === "open" || route.action === "navigate")) {
-					const reposResponse = await HostApi.instance.send(GetReposScmRequestType, {
-						inEditorOnly: true
-					});
-
-					if (reposResponse) {
-						HostApi.instance.send(EditorRevealRangeRequestType, {
-							uri: path.join(reposResponse.repositories![0].path, "main.js"),
-							range: Range.create(0, 0, 0, 0),
-							atTop: true
-						});
-					} else {
-						console.warn("no repo found");
-					}
-				} else if (route.action) {
+				if (route.action) {
 					if (Object.values(WebviewPanels).includes(route.action as any)) {
 						store.dispatch(closeAllPanels());
 						store.dispatch(openPanel(route.action));

@@ -65,7 +65,7 @@ export enum WebviewPanels {
 	Onboard = "onboard",
 	OnboardNewRelic = "onboard-newrelic",
 	Commits = "commits",
-	ErrorInbox = "errorinbox",
+	ErrorsInbox = "errorsinbox",
 	Instrumentation = "instrumentation",
 	CodeError = "code-error",
 	NewRelic = "newrelic"

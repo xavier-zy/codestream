@@ -147,7 +147,7 @@ class JxBrowserEngineService : Disposable {
 
         val engineImpl = Class.forName("com.teamdev.jxbrowser.engine.internal.EngineImpl", true, childClassLoader)
         val extractorMethod = engineImpl.getDeclaredMethod("extractChromiumBinariesIfNecessary", Path::class.java)
-        extractorMethod.trySetAccessible()
+        extractorMethod.isAccessible = true
         extractorMethod.invoke(null, chromiumDir.toPath())
 
         logger.info("JxBrowser Chromium available at ${chromiumDir.canonicalPath}")

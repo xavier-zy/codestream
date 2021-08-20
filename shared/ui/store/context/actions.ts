@@ -187,8 +187,9 @@ export const setCurrentInstrumentationOptions = (options?: any) =>
 export const setWantNewRelicOptions = (
 	projectType: RepoProjectType,
 	repoId?: string,
-	path?: string
-) => action(ContextActionsType.SetWantNewRelicOptions, { projectType, repoId, path });
+	path?: string,
+	projects?: { path: string; name?: string; version?: string }[]
+) => action(ContextActionsType.SetWantNewRelicOptions, { projectType, repoId, path, projects });
 
 export const setNewPullRequestOptions = (options?: { branch: NewPullRequestBranch }) =>
 	action(ContextActionsType.SetNewPullRequestOptions, { options });

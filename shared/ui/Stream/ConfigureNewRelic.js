@@ -59,7 +59,12 @@ class ConfigureNewRelic extends Component {
 				return repo.id && repo.projectType !== RepoProjectType.Unknown;
 			});
 			if (knownRepo) {
-				this.props.setWantNewRelicOptions(knownRepo.projectType, knownRepo.id, knownRepo.path);
+				this.props.setWantNewRelicOptions(
+					knownRepo.projectType,
+					knownRepo.id,
+					knownRepo.path,
+					knownRepo.projects
+				);
 			}
 		}
 

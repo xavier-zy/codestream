@@ -49,6 +49,11 @@ export const AddAppMonitoringDotNetCore = (props: {
 		return { repo, repoPath: path, bufferText: state.editorContext.buffer?.text, token };
 	});
 
+	const [cwd, setCwd] = useState(
+		props.newRelicOptions && props.newRelicOptions.projects && props.newRelicOptions.projects.length
+			? props.newRelicOptions.projects[0].path
+			: derivedState.repoPath
+	);
 	const [appName, setAppName] = useState("");
 	const [selectedFile, setSelectedFile] = useState("");
 	const [installingLibrary, setInstallingLibrary] = useState(false);
@@ -135,7 +140,7 @@ export const AddAppMonitoringDotNetCore = (props: {
 		setInstallingLibrary(true);
 		const response = (await HostApi.instance.send(InstallNewRelicRequestType, {
 			type: RepoProjectType.DotNetCore,
-			cwd: repoPath!
+			cwd: cwd || repoPath!
 		})) as InstallNewRelicResponse;
 		if (response.error) {
 			logError(`Unable to install New Relic module: ${response.error}`);
@@ -152,7 +157,8 @@ export const AddAppMonitoringDotNetCore = (props: {
 		setCreatingConfig(true);
 		const response = (await HostApi.instance.send(CreateNewRelicConfigFileRequestType, {
 			type: RepoProjectType.DotNetCore,
-			filePath: repoPath!,
+			repoPath: repoPath!,
+			filePath: cwd || repoPath!,
 			appName,
 			licenseKey: derivedState.token
 		})) as CreateNewRelicConfigFileResponse;
@@ -250,6 +256,16 @@ export const AddAppMonitoringDotNetCore = (props: {
 											<label>
 												Click to install the New Relic Agent in your repo. This will run: <br />
 												<code>dotnet add package NewRelic.Agent</code>
+												{props.newRelicOptions.projects &&
+													props.newRelicOptions.projects.length > 1 && (
+														<div>
+															<select onChange={e => setCwd(e.target.value)}>
+																{props.newRelicOptions.projects.map(_ => {
+																	return <option value={_.path}>{_.name || _.path}</option>;
+																})}
+															</select>
+														</div>
+													)}
 											</label>
 
 											{/* <div>
@@ -279,7 +295,7 @@ export const AddAppMonitoringDotNetCore = (props: {
 											<label>
 												Create a custom configuration file in
 												<br />
-												<code>{repoPath}</code>
+												<code>{cwd}</code>
 											</label>
 										</div>
 										<Button

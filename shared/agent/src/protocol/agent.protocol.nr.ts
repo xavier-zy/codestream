@@ -97,7 +97,14 @@ export const InstallNewRelicRequestType = new RequestType<
 
 export interface CreateNewRelicConfigFileRequest {
 	type: RepoProjectType;
+	/**
+	 * path to file or project
+	 */
 	filePath: string;
+	/**
+	 * path to the root repo
+	 */
+	repoPath?: string;
 	licenseKey: string;
 	appName: string;
 }

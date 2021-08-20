@@ -222,7 +222,9 @@ export class ScmManager {
 
 		if (request && request.guessProjectTypes) {
 			for (let repo of response.repositories) {
-				repo.projectType = await repoIdentifier.identifyRepo(repo);
+				const { projectType, projects } = await repoIdentifier.identifyRepo(repo);
+				repo.projectType = projectType;
+				repo.projects = projects;
 			}
 		}
 

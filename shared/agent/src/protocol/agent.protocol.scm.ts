@@ -168,8 +168,17 @@ export enum RepoProjectType {
 	*/
 }
 
+export interface IdentifyRepoResult {
+	projectType: RepoProjectType;
+	projects?: { path: string; name?: string }[];
+}
+
 export interface NewRelicOptions {
 	projectType?: RepoProjectType;
+	/**
+	 * Collection of projects (folders)
+	 */
+	projects?: { path: string; name?: string }[];
 	repoId?: string;
 	path?: string;
 }
@@ -203,6 +212,7 @@ export interface ReposScm {
 	 * Project type (NodeJS, Ruby, Python)
 	 */
 	projectType?: RepoProjectType;
+	projects?: { path: string; name?: string }[];
 
 	directories?: DirectoryTree;
 }

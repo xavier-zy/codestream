@@ -9,6 +9,7 @@ import {
 } from "../../protocol/agent.protocol";
 import { CodeStreamSession } from "../../session";
 import * as childProcess from "child_process";
+import { SpawnOptions } from "child_process";
 
 export class DotNetCoreInstrumentation {
 	constructor(readonly session: CodeStreamSession) {}
@@ -22,9 +23,13 @@ export class DotNetCoreInstrumentation {
 
 		let me = this;
 		return new Promise(resolve => {
-			function run_script(command: any, args: any, callback: any) {
-				let child = childProcess.spawn(command, args);
-
+			function run_script(
+				command: string,
+				args: string[],
+				options: SpawnOptions,
+				callback: (scriptOutput: string, error: string, code: string) => void
+			) {
+				const child = childProcess.spawn(command, args, options);
 				let scriptOutput = "";
 				let error = "";
 
@@ -48,10 +53,10 @@ export class DotNetCoreInstrumentation {
 				});
 			}
 
-			run_script("dotnet", ["add", "package", "NewRelic.Agent"], function(
-				output: any,
+			run_script("dotnet", ["add", "package", "NewRelic.Agent"], { cwd: cwd }, function(
+				output: string,
 				error: string,
-				exit_code: any
+				exitCode: string
 			) {
 				if (error) {
 					resolve({ error: error });
@@ -101,6 +106,7 @@ export class DotNetCoreInstrumentation {
 	}
 
 	async createNewRelicConfigFile(
+		repoPath: string,
 		filePath: string,
 		licenseKey: string,
 		appName: string
@@ -129,7 +135,7 @@ dotnet run -c Debug
 
 		try {
 			// exclude this file from git since it includes a licensekey
-			const gitExclude = path.join(filePath, ".git", "info", "exclude");
+			const gitExclude = path.join(repoPath, ".git", "info", "exclude");
 			let config = fs.readFileSync(gitExclude, "utf8");
 			if (config && config.indexOf("NrStart.cmd") === -1) {
 				fs.appendFileSync(gitExclude, "NrStart.cmd");

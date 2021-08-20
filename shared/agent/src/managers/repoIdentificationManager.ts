@@ -1,27 +1,33 @@
 "use strict";
 
-import { promises as fsPromises, readFileSync as fsReadFileSync } from "fs";
+import { promises as fsPromises, readFileSync as fsReadFileSync, readdirSync, statSync } from "fs";
 import path from "path";
 import { CodeStreamSession } from "../session";
 import { lsp } from "../system/decorators/lsp";
-import { ReposScm, RepoProjectType } from "../protocol/agent.protocol";
+import { ReposScm, RepoProjectType, IdentifyRepoResult } from "../protocol/agent.protocol";
 
 @lsp
 export class RepoIdentificationManager {
 	constructor(readonly session: CodeStreamSession) {}
 
-	async identifyRepo(repo: ReposScm): Promise<RepoProjectType> {
+	async identifyRepo(repo: ReposScm): Promise<IdentifyRepoResult> {
 		const files = await fsPromises.readdir(repo.path);
 		if (await this.repoIsNodeJS(repo, files)) {
-			return RepoProjectType.NodeJS;
+			return { projectType: RepoProjectType.NodeJS };
 		} else if (await this.repoIsJava(repo, files)) {
-			return RepoProjectType.Java;
-		} else if (await this.repoIsDotNetCore(repo, files)) {
-			return RepoProjectType.DotNetCore;
-		} else if (await this.repoIsDotNetFramework(repo, files)) {
-			return RepoProjectType.DotNetFramework;
+			return { projectType: RepoProjectType.Java };
 		} else {
-			return RepoProjectType.Unknown;
+			const dotNetCore = await this.repoIsDotNetCore(repo, files);
+			if (dotNetCore) {
+				return {
+					projectType: RepoProjectType.DotNetCore,
+					projects: dotNetCore.projects
+				};
+			} else if (await this.repoIsDotNetFramework(repo, files)) {
+				return { projectType: RepoProjectType.DotNetFramework };
+			} else {
+				return { projectType: RepoProjectType.Unknown };
+			}
 		}
 	}
 
@@ -38,20 +44,58 @@ export class RepoIdentificationManager {
 		return await this._findFileWithExtension(repo.path, ".java", files, 2, 0);
 	}
 
-	private async repoIsDotNetCore(repo: ReposScm, files: string[]): Promise<boolean> {
-		const projectFileName = files.find(file =>
-			file.endsWith(".csproj" || file.endsWith(".vbproj"))
-		);
+	// TODO consolidate with other method
+	private _getFilesRecursively(
+		results: { directory: string; file: string }[] = [],
+		directory: string,
+		predicate: (file: string) => boolean
+	) {
+		const filesInDirectory = readdirSync(directory);
+		for (const file of filesInDirectory) {
+			const absolute = path.join(directory, file);
+			if (statSync(absolute).isDirectory()) {
+				this._getFilesRecursively(results, absolute, predicate);
+			} else {
+				if (predicate(file)) {
+					results.push({ directory: directory, file: absolute });
+				}
+			}
+		}
+	}
 
-		if (projectFileName) {
-			const contents = fsReadFileSync(path.join(repo.path, projectFileName), "utf8");
-			return (
-				contents != null &&
-				new RegExp(/\<TargetFramework\>net[0-9]+\.[0-9]+\<\/TargetFramework\>/, "gm").test(contents)
-			);
+	private async repoIsDotNetCore(
+		repo: ReposScm,
+		files: string[]
+	): Promise<
+		| {
+				projects: { path: string; name: string; version?: string }[];
+		  }
+		| undefined
+	> {
+		const projectPaths: { directory: string; file: string }[] = [];
+		this._getFilesRecursively(projectPaths, repo.path, f => {
+			return f.endsWith(".csproj") || f.endsWith(".vbproj");
+		});
+
+		const projects: { path: string; name: string; version?: string }[] = [];
+		for (const projectPath of projectPaths) {
+			const contents = fsReadFileSync(projectPath.file, "utf8");
+			if (contents != null) {
+				const exec = new RegExp(
+					/\<TargetFramework\>(net[0-9]+\.[0-9]+)\<\/TargetFramework\>/,
+					"gmi"
+				).exec(contents);
+				if (exec && exec[1]) {
+					projects.push({
+						path: projectPath.directory,
+						name: path.basename(projectPath.file, path.extname(projectPath.file)),
+						version: exec[1]
+					});
+				}
+			}
 		}
 
-		return false;
+		return { projects: projects };
 	}
 
 	private async repoIsDotNetFramework(repo: ReposScm, files: string[]): Promise<boolean> {

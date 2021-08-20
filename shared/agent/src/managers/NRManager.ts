@@ -269,6 +269,7 @@ export class NRManager {
 	async createNewRelicConfigFile({
 		type,
 		filePath,
+		repoPath,
 		licenseKey,
 		appName
 	}: CreateNewRelicConfigFileRequest): Promise<CreateNewRelicConfigFileResponse> {
@@ -281,7 +282,12 @@ export class NRManager {
 				response = await this._java.createNewRelicConfigFile(filePath, licenseKey, appName);
 				break;
 			case RepoProjectType.DotNetCore:
-				response = await this._dotNetCore.createNewRelicConfigFile(filePath, licenseKey, appName);
+				response = await this._dotNetCore.createNewRelicConfigFile(
+					repoPath!,
+					filePath,
+					licenseKey,
+					appName
+				);
 				break;
 			case RepoProjectType.DotNetFramework:
 				return { error: "not implemented. type: " + type };

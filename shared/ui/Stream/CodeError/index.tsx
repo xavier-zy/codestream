@@ -314,13 +314,15 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 					</InlineMenu>
 					<>
 						{props.post && <AddReactionIcon post={props.post} className="in-review" />}
-						{/* props.children || (
-							<BaseCodeErrorMenu
-								codeError={codeError}
-								collapsed={collapsed}
-								setIsEditing={props.setIsEditing}
-							/>
-						) */}
+						{props.children || (
+							<Button variant="secondary">
+								<BaseCodeErrorMenu
+									codeError={codeError}
+									collapsed={collapsed}
+									setIsEditing={props.setIsEditing}
+								/>
+							</Button>
+						)}
 					</>
 				</div>
 			</div>

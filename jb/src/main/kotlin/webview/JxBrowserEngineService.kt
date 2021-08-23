@@ -114,43 +114,48 @@ class JxBrowserEngineService : Disposable {
 
     private suspend fun downloadAndExtractJxBrowserChromium(): File {
         logger.info("Ensuring JxBrowser Chromium is available")
-        val jarNames = JxBrowserJarName.list()
-        val userHomeDir = File(System.getProperty("user.home"))
-        val jxBrowserJarsDir = userHomeDir.resolve(".codestream").resolve("jxbrowser")
-        val chromiumDir = jxBrowserJarsDir.resolve("chromium")
+        try {
+            val jarNames = JxBrowserJarName.list()
+            val userHomeDir = File(System.getProperty("user.home"))
+            val jxBrowserJarsDir = userHomeDir.resolve(".codestream").resolve("jxbrowser")
+            val chromiumDir = jxBrowserJarsDir.resolve("chromium")
 
-        if (!chromiumDir.exists()) {
-            Files.createDirectories(chromiumDir.toPath())
-        }
-
-        val missingJarsDescriptions = mutableListOf<DownloadableFileDescription>()
-        jarNames.forEach {
-            val jarFile = jxBrowserJarsDir.resolve(it.value())
-            if (!Files.exists(jarFile.toPath())) {
-                val description = DownloadableFileService.getInstance().createFileDescription(DOWNLOAD_URL_PREFIX + it.value(), it.value())
-                missingJarsDescriptions.add(description)
+            if (!chromiumDir.exists()) {
+                Files.createDirectories(chromiumDir.toPath())
             }
-        }
 
-        if (missingJarsDescriptions.isNotEmpty()) {
-            val downloader = DownloadableFileService.getInstance().createDownloader(missingJarsDescriptions, "JxBrowser Chromium binaries")
-            val downloadedFiles = downloader.downloadWithBackgroundProgress(jxBrowserJarsDir.absolutePath, null).await()
-
-            downloadedFiles?.forEach {
-                logger.info("Downloaded ${it.first.name}")
+            val missingJarsDescriptions = mutableListOf<DownloadableFileDescription>()
+            jarNames.forEach {
+                val jarFile = jxBrowserJarsDir.resolve(it.value())
+                if (!Files.exists(jarFile.toPath())) {
+                    val description = DownloadableFileService.getInstance().createFileDescription(DOWNLOAD_URL_PREFIX + it.value(), it.value())
+                    missingJarsDescriptions.add(description)
+                }
             }
+
+            if (missingJarsDescriptions.isNotEmpty()) {
+                val downloader = DownloadableFileService.getInstance().createDownloader(missingJarsDescriptions, "JxBrowser Chromium binaries")
+                val downloadedFiles = downloader.downloadWithBackgroundProgress(jxBrowserJarsDir.absolutePath, null).await()
+
+                downloadedFiles?.forEach {
+                    logger.info("Downloaded ${it.first.name}")
+                }
+            }
+            val jarUrls = jarNames.map { jxBrowserJarsDir.resolve(it.value()).toURI().toURL() }
+            val childClassLoader = URLClassLoader(
+                jarUrls.toTypedArray()
+            )
+
+            val engineImpl = Class.forName("com.teamdev.jxbrowser.engine.internal.EngineImpl", true, childClassLoader)
+            val extractorMethod = engineImpl.getDeclaredMethod("extractChromiumBinariesIfNecessary", Path::class.java)
+            extractorMethod.isAccessible = true
+            extractorMethod.invoke(null, chromiumDir.toPath())
+
+            logger.info("JxBrowser Chromium available at ${chromiumDir.canonicalPath}")
+            return chromiumDir
+        } catch (ex: Exception) {
+            logger.error(ex)
+            throw ex
         }
-        val jarUrls = jarNames.map { jxBrowserJarsDir.resolve(it.value()).toURI().toURL() }
-        val childClassLoader = URLClassLoader(
-            jarUrls.toTypedArray()
-        )
-
-        val engineImpl = Class.forName("com.teamdev.jxbrowser.engine.internal.EngineImpl", true, childClassLoader)
-        val extractorMethod = engineImpl.getDeclaredMethod("extractChromiumBinariesIfNecessary", Path::class.java)
-        extractorMethod.isAccessible = true
-        extractorMethod.invoke(null, chromiumDir.toPath())
-
-        logger.info("JxBrowser Chromium available at ${chromiumDir.canonicalPath}")
-        return chromiumDir
     }
 }

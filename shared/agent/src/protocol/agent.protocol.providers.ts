@@ -866,3 +866,21 @@ export const GetNewRelicDataRequestType = new RequestType<
 	void,
 	void
 >("codestream/newrelic/data");
+
+export interface GetNewRelicErrorsInboxRequest {
+	errorGroupId: string;
+	route?: any;
+}
+
+export interface GetNewRelicErrorsInboxResponse {
+	repo: string;
+	sha: string;
+	parsedStack: string[];
+}
+
+export const GetNewRelicErrorsInboxRequestType = new RequestType<
+	GetNewRelicErrorsInboxRequest,
+	GetNewRelicErrorsInboxResponse,
+	void,
+	void
+>("codestream/newrelic/errorsinbox");

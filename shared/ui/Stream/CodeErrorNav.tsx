@@ -12,7 +12,6 @@ import { closePanel, markItemRead } from "./actions";
 import { Dispatch } from "../store/common";
 import { CodeError, BaseCodeErrorHeader, ExpandedAuthor, Description } from "./CodeError";
 import ScrollBox from "./ScrollBox";
-import { Modal } from "./Modal";
 import KeystrokeDispatcher from "../utilities/keystroke-dispatcher";
 import { CodeErrorForm } from "./CodeErrorForm";
 import { isFeatureEnabled } from "../store/apiVersioning/reducer";
@@ -20,6 +19,7 @@ import { getSidebarLocation } from "../store/editorContext/reducer";
 import Icon from "./Icon";
 import { isConnected } from "../store/providers/reducer";
 import { ConfigureNewRelic } from "./ConfigureNewRelic";
+import Dismissable from "./Dismissable";
 
 const NavHeader = styled.div`
 	// flex-grow: 0;
@@ -174,20 +174,46 @@ export function CodeErrorNav(props: Props) {
 		};
 	});
 
-	if (notFound || !codeError)
-		return (
-			<Modal verticallyCenter={true} onClose={exit}>
-				<MinimumWidthCard>
-					This code error was not found. Perhaps it was deleted by the author, or you don't have
-					permission to view it.
-					<br />
-					<br />
-					<Button onClick={exit}>Exit</Button>
-				</MinimumWidthCard>
-			</Modal>
-		);
+	let errorTitle;
+	let errorText;
+	if (notFound || !codeError) {
+		errorTitle = "Cannot open Code Error";
+		errorText =
+			"This code error was not found. Perhaps it was deleted by the author, or you don't have permission to view it.";
+	} else {
+		if (derivedState.currentCodeErrorData) {
+			if (!derivedState.currentCodeErrorData.parsedStack) {
+				errorTitle = "Missing Stack Trace";
+				errorText =
+					"This error report does not have a stack trace associated with it and cannot be displayed.";
+			} else if (!derivedState.currentCodeErrorData.repo) {
+				errorTitle = "Missing Remote URL";
+				errorText =
+					"This error report does not have a remote URL associated with it and cannot be displayed.";
+			}
+		}
+	}
 
 	if (derivedState.currentCodemarkId) return null;
+
+	if (errorText) {
+		return (
+			<Dismissable
+				title={errorTitle}
+				buttons={[
+					{
+						text: "Dismiss",
+						onClick: e => {
+							e.preventDefault();
+							exit();
+						}
+					}
+				]}
+			>
+				<p>{errorText}</p>
+			</Dismissable>
+		);
+	}
 
 	if (isEditing) {
 		return <CodeErrorForm />;
@@ -222,6 +248,7 @@ export function CodeErrorNav(props: Props) {
 					/>
 				</div>
 			</div>
+
 			{!derivedState.isConnectedToNewRelic && (
 				<div className="embedded-panel">
 					<ConfigureNewRelic
@@ -246,7 +273,7 @@ export function CodeErrorNav(props: Props) {
 				<>
 					<NavHeader id="nav-header">
 						<BaseCodeErrorHeader
-							codeError={codeError}
+							codeError={codeError!}
 							collapsed={false}
 							setIsEditing={setIsEditing}
 						></BaseCodeErrorHeader>
@@ -262,6 +289,18 @@ export function CodeErrorNav(props: Props) {
 										width: "100%"
 									}}
 								>
+									{/* TODO perhaps consolidate these? */}
+									{derivedState.currentCodeErrorData && derivedState.currentCodeErrorData.warning && (
+										<CodeErrorErrorBox>
+											<Icon name="alert" className="alert" />
+											<div
+												className="message"
+												dangerouslySetInnerHTML={{
+													__html: derivedState.currentCodeErrorData.warning.replace(/\n/g, "<br />")
+												}}
+											></div>
+										</CodeErrorErrorBox>
+									)}
 									{derivedState.currentCodeErrorData && derivedState.currentCodeErrorData.error && (
 										<CodeErrorErrorBox>
 											<Icon name="alert" className="alert" />
@@ -275,7 +314,7 @@ export function CodeErrorNav(props: Props) {
 									)}
 									<StyledCodeError className="pulse">
 										<CodeError
-											codeError={codeError}
+											codeError={codeError!}
 											stackFrameClickDisabled={!!derivedState.currentCodeErrorData?.error}
 										/>
 									</StyledCodeError>

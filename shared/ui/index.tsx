@@ -44,7 +44,8 @@ import {
 	ExecuteThirdPartyRequestUntypedType,
 	GetReposScmRequestType,
 	DidChangeProcessBufferNotificationType,
-	NormalizeUrlRequestType
+	NormalizeUrlRequestType,
+	GetNewRelicErrorsInboxRequestType
 } from "@codestream/protocols/agent";
 import { CSApiCapabilities, CodemarkType, CSMe } from "@codestream/protocols/api";
 import translations from "./translations/en";
@@ -507,9 +508,12 @@ function listenForEvents(store) {
 							store.dispatch(setPendingProtocolHandlerUrl({ url: e.url }));
 							break;
 						}
-
-						const { repo, sha } = JSON.parse(route.query.customAttributes);
-						const parsedStack: string[] = route.query.stack ? JSON.parse(route.query.stack) : [];
+						const result = await HostApi.instance.send(GetNewRelicErrorsInboxRequestType, {
+							//TODO fix this later
+							errorGroupId: "FIXME",
+							//TODO remote this later
+							route: route
+						});
 
 						// "resolving" the stack trace here gives us two pieces of info for each line of the stack
 						// the info parsed directly from the stack, and the "resolved" info that is specific to the
@@ -517,23 +521,24 @@ function listenForEvents(store) {
 						// on a particular commit ... the "parsed" stack info is considered permanent, the "resolved"
 						// stack info is considered ephemeral, since it only applies to the current user in the current state
 						// resolved line number that gives the full path and line of the
-						const stackInfo = await resolveStackTrace(repo, sha, parsedStack);
+						const stackInfo = await resolveStackTrace(result.repo, result.sha, result.parsedStack);
 						if (stackInfo.error) {
 							logWarning(`Unable to resolve stack: ${stackInfo.error}`);
 							return;
 						}
 						const codeError: NewCodeErrorAttributes = {
-							title: stackInfo.resolvedStackInfo!.header || "",
-							stackTrace: parsedStack.join("\n"),
+							title: stackInfo.resolvedStackInfo?.header || "",
+							stackTrace: result.parsedStack.join("\n"),
 							stackInfo: stackInfo.error ? { ...stackInfo, lines: [] } : stackInfo.parsedStackInfo, // storing the permanently parsed stack info
 							providerUrl: route.query.url
 						};
 						const response = (await store.dispatch(createPostAndCodeError(codeError))) as any;
 						store.dispatch(
 							setCurrentCodeError(response.codeError.id, {
-								repo: repo,
-								sha: sha,
-								parsedStack: parsedStack,
+								repo: result.repo,
+								sha: result.sha,
+								parsedStack: result.parsedStack,
+								warning: stackInfo?.warning,
 								error: stackInfo?.error
 							})
 						);

@@ -4,6 +4,9 @@ import {
 	GetNewRelicDataRequest,
 	GetNewRelicDataRequestType,
 	GetNewRelicDataResponse,
+	GetNewRelicErrorsInboxRequest,
+	GetNewRelicErrorsInboxRequestType,
+	GetNewRelicErrorsInboxResponse,
 	NewRelicConfigurationData,
 	ThirdPartyProviderConfig
 } from "../protocol/agent.protocol";
@@ -164,6 +167,27 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			}
 		} catch (ex) {
 			return { data: {} };
+		}
+	}
+
+	@lspHandler(GetNewRelicErrorsInboxRequestType)
+	@log()
+	async getNewRelicErrorsInboxData(
+		request: GetNewRelicErrorsInboxRequest
+	): Promise<GetNewRelicErrorsInboxResponse | undefined> {
+		try {
+			// TODO this is all mocked from the protocol url -- need to actually hit NR here
+			const route = request.route;
+			const { repo, sha } = JSON.parse(route.query.customAttributes);
+			const parsedStack: string[] = route.query.stack ? JSON.parse(route.query.stack) : [];
+
+			return {
+				repo,
+				sha,
+				parsedStack
+			};
+		} catch (ex) {
+			return undefined;
 		}
 	}
 }

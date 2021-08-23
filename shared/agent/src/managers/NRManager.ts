@@ -91,8 +91,8 @@ export class NRManager {
 	}
 
 	// returns info gleaned from parsing a stack trace
-	@log()
 	@lspHandler(ParseStackTraceRequestType)
+	@log()
 	async parseStackTrace({ stackTrace }: ParseStackTraceRequest): Promise<ParseStackTraceResponse> {
 		const lines: string[] = typeof stackTrace === "string" ? stackTrace.split("\n") : stackTrace;
 		const whole = lines.join("\n");
@@ -125,8 +125,8 @@ export class NRManager {
 	// parses the passed stack, tries to determine if any of the user's open repos match it, and if so,
 	// given the commit hash of the code for which the stack trace was generated, tries to match each line
 	// of the stack trace with a line in the user's repo, given that the user may be on a different commit
-	@log()
 	@lspHandler(ResolveStackTraceRequestType)
+	@log()
 	async resolveStackTrace({
 		stackTrace,
 		repoRemote,
@@ -139,8 +139,9 @@ export class NRManager {
 			try {
 				repoName = repoRemote.split("/").reverse()[0];
 			} catch {}
+			repoName = repoName ? repoName + " " : "";
 			return {
-				error: `Repo ${repoName} not found in your editor. Open it in order to navigate the stack trace.`
+				warning: `Repo ${repoName}not found in your editor. Open it in order to navigate the stack trace.`
 			};
 		}
 		try {
@@ -198,8 +199,8 @@ export class NRManager {
 		};
 	}
 
-	@log()
 	@lspHandler(ResolveStackTracePositionRequestType)
+	@log()
 	async resolveStackTracePosition({
 		sha,
 		repoId,
@@ -224,8 +225,8 @@ export class NRManager {
 		};
 	}
 
-	@log()
 	@lspHandler(FindCandidateMainFilesRequestType)
+	@log()
 	async findCandidateMainFiles({
 		type,
 		path
@@ -238,8 +239,8 @@ export class NRManager {
 		}
 	}
 
-	@log()
 	@lspHandler(InstallNewRelicRequestType)
+	@log()
 	async installNewRelic({ type, cwd }: InstallNewRelicRequest): Promise<InstallNewRelicResponse> {
 		let response;
 		switch (type) {
@@ -264,8 +265,8 @@ export class NRManager {
 		return response;
 	}
 
-	@log()
 	@lspHandler(CreateNewRelicConfigFileRequestType)
+	@log()
 	async createNewRelicConfigFile({
 		type,
 		filePath,
@@ -301,8 +302,8 @@ export class NRManager {
 		return response;
 	}
 
-	@log()
 	@lspHandler(AddNewRelicIncludeRequestType)
+	@log()
 	async addNewRelicInclude({
 		type,
 		file,
@@ -350,10 +351,14 @@ export class NRManager {
 	}
 
 	private async getMatchingRepo(repoRemote: string) {
-		const { git } = SessionContainer.instance();
+		const { git, repositoryMappings } = SessionContainer.instance();
 		const gitRepos = await git.getRepositories();
 		let matchingRepo = undefined;
 
+		const normalizedRepoRemote = await repositoryMappings.normalizeUrl({ url: repoRemote });
+		if (normalizedRepoRemote && normalizedRepoRemote.normalizedUrl) {
+			repoRemote = normalizedRepoRemote.normalizedUrl;
+		}
 		for (const gitRepo of gitRepos) {
 			const remotes = await git.getRepoRemotes(gitRepo.path);
 			for (const remote of remotes) {
@@ -370,6 +375,12 @@ export class NRManager {
 				}
 				Logger.log(`comparing remote ${remoteUri} to ${compareRepo}`);
 				if (remoteUri === compareRepo) {
+					matchingRepo = gitRepo;
+					break;
+				}
+
+				let normalized = await repositoryMappings.normalizeUrl({ url: remoteUri });
+				if (normalized && normalized.normalizedUrl === repoRemote) {
 					matchingRepo = gitRepo;
 					break;
 				}

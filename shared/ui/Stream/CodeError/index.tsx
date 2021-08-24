@@ -532,7 +532,7 @@ const BaseCodeError = (props: BaseCodeErrorProps) => {
 	useEffect(() => {
 		if (!props.collapsed) {
 			const { stackInfo } = codeError;
-			if (stackInfo) {
+			if (stackInfo?.lines) {
 				// FIXME this should be zero
 				let lineNum = 1;
 				const len = stackInfo.lines.length;
@@ -853,7 +853,7 @@ const CodeErrorForCodeError = (props: PropsWithCodeError) => {
 
 			return (
 				<Footer className="replies-to-review" style={{ borderTop: "none", marginTop: 0 }}>
-					{derivedState.replies.length > 0 && <MetaLabel>Activity</MetaLabel>}
+					{derivedState.replies?.length > 0 && <MetaLabel>Activity</MetaLabel>}
 					<RepliesToPost
 						streamId={props.codeError.streamId}
 						parentPostId={props.codeError.postId}

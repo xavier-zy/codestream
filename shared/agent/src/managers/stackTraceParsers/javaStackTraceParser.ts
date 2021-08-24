@@ -4,7 +4,7 @@ import { CSStackTraceInfo } from "../../protocol/api.protocol.models";
 
 export function Parser(stack: string): CSStackTraceInfo {
 	const regex = new RegExp(
-		"^\\tat ((?:(?:[\\d\\w]*\\.)*[\\d\\w]*))\\.([\\d\\w\\$]*)\\.([\\d\\w\\$]*)\\((?:(?:([\\d\\w]*\\.java):(\\d*))|([\\d\\w\\s]*))\\)$"
+		"^\\s*at ((?:(?:[\\d\\w]*\\.)*[\\d\\w]*))\\.([\\d\\w\\$]*)\\.([\\d\\w\\$]*)\\((?:(?:([\\d\\w]*\\.java):(\\d*))|([\\d\\w\\s]*))\\)$"
 	);
 	const lines = stack.split("\n");
 	const stackInfo: CSStackTraceInfo = { text: stack, lines: [] };
@@ -14,7 +14,7 @@ export function Parser(stack: string): CSStackTraceInfo {
 		const line = lines[i];
 		const match = line.match(regex);
 		if (match) {
-			const [packageName, className, methodName, file, lineText] = match;
+			const [, packageName, className, methodName, file, lineText] = match;
 			let lineNum: number | undefined = parseInt(lineText, 10);
 			if (isNaN(lineNum)) lineNum = undefined;
 			stackInfo.lines.push({

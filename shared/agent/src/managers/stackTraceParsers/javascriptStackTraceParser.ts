@@ -6,7 +6,7 @@ import * as StackTraceParser from "stacktrace-parser";
 export function Parser(stack: string): CSStackTraceInfo {
 	const info: CSStackTraceInfo = { text: stack, lines: [] };
 	const firstLine = stack.split("\n")[0];
-	const match = firstLine.match(/Error:(.*)$/);
+	const match = firstLine.match(/Error: (.*)$/);
 	if (match && match[1]) {
 		info.header = firstLine;
 		info.error = match[1];

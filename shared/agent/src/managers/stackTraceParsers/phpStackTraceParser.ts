@@ -1,29 +1,50 @@
 "use strict";
 
+import { Strings } from "../../system/string";
 import { CSStackTraceInfo } from "../../protocol/api.protocol.models";
 
+let regex: RegExp;
+
 export function Parser(stack: string): CSStackTraceInfo {
-	const regex = new RegExp(
-		"^in (?:([\\d\\w\\\\]+)::)?([\\d\\w\\\\\\{\\}]+) called at (\\?|(?:[\\d\\w\\/]+\\.php)) \\((\\?|[\\d]*)\\)$"
-	);
-	const lines = stack.trim().split("\n");
+	if (!regex) {
+		// NOTE: there's no great way to have a multiline regex in js (except for this hackery ;)
+		// so we build it once
+		regex = Strings.regexBuilder`
+			^
+			[\s\t]*
+			in\s
+			(?:([\d\w\\]+)::)? // class
+			([\d\w\\\{\}]+) // method
+			\scalled at\s
+			(
+				\?
+				|
+				(?:
+					[^*&%\s]+\.php
+				)
+			) // file (can be just '?')
+			\s
+			\(
+				(\?|\d*) // line (can be just '?')
+			\)
+			$`;
+	}
+
+	let m;
 	const stackInfo: CSStackTraceInfo = { lines: [] };
-	const len = lines.length;
-	for (let i = 0; i < len; i++) {
-		const line = lines[i].trim();
-		const match = line.match(regex);
-		if (match) {
-			const [, className, methodName, file, lineText] = match;
-			let lineNum: number | undefined = parseInt(lineText, 10);
-			if (isNaN(lineNum)) lineNum = undefined;
-			stackInfo.lines.push({
-				method: className ? `${className}::${methodName}` : methodName,
-				fileFullPath: file,
-				line: lineNum
-			});
-		} else {
-			stackInfo.lines.push({ error: "could not parse line" });
+	while ((m = regex.exec(stack)) !== null) {
+		// This is necessary to avoid infinite loops with zero-width matches
+		if (m.index === regex.lastIndex) {
+			regex.lastIndex++;
 		}
+		const [, className, methodName, file, lineText] = m;
+		let lineNum: number | undefined = parseInt(lineText, 10);
+		if (isNaN(lineNum)) lineNum = undefined;
+		stackInfo.lines.push({
+			method: className ? `${className}::${methodName}` : methodName,
+			fileFullPath: file,
+			line: lineNum
+		});
 	}
 
 	return stackInfo;

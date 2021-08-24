@@ -30,6 +30,7 @@ at org.mortbay.jetty.bio.SocketConnector$Connection.run(SocketConnector.java:228
 at org.mortbay.thread.QueuedThreadPool$PoolThread.run(QueuedThreadPool.java:582)`;
 
 		const result = Parser(str);
+
 		expect(result).to.deep.equals({
 			lines: [
 				{
@@ -133,7 +134,8 @@ at org.mortbay.thread.QueuedThreadPool$PoolThread.run(QueuedThreadPool.java:582)
 					line: 582
 				}
 			],
-			header: "javax.servlet.ServletException: Something bad happened"
+			header: "javax.servlet.ServletException: Something bad happened",
+			error: "Something bad happened"
 		});
 	});
 });

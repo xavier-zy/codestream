@@ -184,7 +184,9 @@ in Acme\\Foundation\\Http\\Kernel::handle called at /var/www/public/index.php (5
 					line: 167
 				},
 				{
-					error: "could not parse line"
+					fileFullPath: "/var/www/vendor/fruitcake/foocorp-cors/src/HandleCors.php",
+					line: 36,
+					method: "Acme\\Pipeline\\Pipeline::Acme\\Pipeline\\{closure}"
 				},
 				{
 					method: "Fruitcake\\Cors\\HandleCors::handle",

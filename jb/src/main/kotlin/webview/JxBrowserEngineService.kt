@@ -146,6 +146,10 @@ class JxBrowserEngineService : Disposable {
                 jarUrls.toTypedArray()
             )
 
+            val jniLibrary = Class.forName("com.teamdev.jxbrowser.internal.JniLibrary", true, childClassLoader)//.path(chromiumDir);
+            val pathMethod = jniLibrary.getDeclaredMethod("path", Path::class.java)
+            pathMethod.invoke(null, chromiumDir.toPath())
+
             val engineImpl = Class.forName("com.teamdev.jxbrowser.engine.internal.EngineImpl", true, childClassLoader)
             val extractorMethod = engineImpl.getDeclaredMethod("extractChromiumBinariesIfNecessary", Path::class.java)
             extractorMethod.isAccessible = true

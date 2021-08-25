@@ -138,7 +138,7 @@ export interface WebviewContext {
 		repo?: string;
 		sha?: string;
 		parsedStack?: any;
-		warning?; string;
+		warning?: string;
 		error?: string;
 	};
 	createPullRequestReviewId?: string;

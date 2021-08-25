@@ -1,6 +1,6 @@
 import React from "react";
+import { useEffect } from "react";
 import styled from "styled-components";
-import { Button } from "../src/components/Button";
 import { useDispatch, useSelector, shallowEqual } from "react-redux";
 import { closeAllPanels, setCurrentCodeError } from "@codestream/webview/store/context/actions";
 import { useDidMount } from "@codestream/webview/utilities/hooks";
@@ -127,6 +127,10 @@ export function CodeErrorNav(props: Props) {
 	const [isEditing, setIsEditing] = React.useState(false);
 	const [notFound, setNotFound] = React.useState(false);
 	const [lastUpdated, setLastUpdated] = React.useState(new Date());
+	const [isLoading, setIsLoading] = React.useState(false);
+	const [error, setError] = React.useState<{ title: string; description: string } | undefined>(
+		undefined
+	);
 
 	const { codeError } = derivedState;
 
@@ -147,14 +151,17 @@ export function CodeErrorNav(props: Props) {
 
 	useDidMount(() => {
 		let isValid = true;
+		setIsLoading(true);
 		if (codeError == null) {
 			dispatch(fetchCodeError(props.codeErrorId)).then(result => {
+				setIsLoading(false);
 				if (!isValid) return;
 				if (result == null) setNotFound(true);
 				markRead();
 			});
 		} else {
 			markRead();
+			setIsLoading(false);
 		}
 		// Kind of a HACK leaving this here, BUT...
 		// since <CancelButton /> uses the OLD version of Button.js
@@ -174,32 +181,38 @@ export function CodeErrorNav(props: Props) {
 		};
 	});
 
-	let errorTitle;
-	let errorText;
-	if (notFound || !codeError) {
-		errorTitle = "Cannot open Code Error";
-		errorText =
-			"This code error was not found. Perhaps it was deleted by the author, or you don't have permission to view it.";
-	} else {
-		if (derivedState.currentCodeErrorData) {
-			if (!derivedState.currentCodeErrorData.parsedStack) {
-				errorTitle = "Missing Stack Trace";
-				errorText =
-					"This error report does not have a stack trace associated with it and cannot be displayed.";
-			} else if (!derivedState.currentCodeErrorData.repo) {
-				errorTitle = "Missing Remote URL";
-				errorText =
-					"This error report does not have a remote URL associated with it and cannot be displayed.";
+	useEffect(() => {
+		if (notFound || !codeError) {
+			setError({
+				title: "Cannot open Code Error",
+				description:
+					"This code error was not found. Perhaps it was deleted by the author, or you don't have permission to view it."
+			});
+		} else {
+			if (derivedState.currentCodeErrorData) {
+				if (!derivedState.currentCodeErrorData.parsedStack) {
+					setError({
+						title: "Missing Stack Trace",
+						description:
+							"This error report does not have a stack trace associated with it and cannot be displayed."
+					});
+				} else if (!derivedState.currentCodeErrorData.repo) {
+					setError({
+						title: "Missing Remote URL",
+						description:
+							"This error report does not have a remote URL associated with it and cannot be displayed."
+					});
+				}
 			}
 		}
-	}
+	}, [notFound, codeError, derivedState.currentCodeErrorData]);
 
 	if (derivedState.currentCodemarkId) return null;
 
-	if (errorText) {
+	if (error) {
 		return (
 			<Dismissable
-				title={errorTitle}
+				title={error.title}
 				buttons={[
 					{
 						text: "Dismiss",
@@ -210,7 +223,7 @@ export function CodeErrorNav(props: Props) {
 					}
 				]}
 			>
-				<p>{errorText}</p>
+				<p>{error.description}</p>
 			</Dismissable>
 		);
 	}

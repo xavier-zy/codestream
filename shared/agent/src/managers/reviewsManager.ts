@@ -1,6 +1,8 @@
 "use strict";
 import { ParsedDiff } from "diff";
+import * as fs from "fs";
 import { flatten } from "lodash-es";
+import { decompressFromBase64 } from "lz-string";
 import * as path from "path";
 import { URI } from "vscode-uri";
 import { MessageType } from "../api/apiProvider";
@@ -61,8 +63,6 @@ import {
 	UpdateReviewResponse
 } from "../protocol/agent.protocol";
 import {
-	CSBitbucketProviderInfo,
-	CSMe,
 	CSReview,
 	CSReviewChangeset,
 	CSReviewCheckpoint,
@@ -70,16 +70,9 @@ import {
 	CSTransformedReviewChangeset,
 	FileStatus
 } from "../protocol/api.protocol";
-import {
-	getRemotePaths,
-	ThirdPartyIssueProvider,
-	ThirdPartyProvider,
-	ThirdPartyProviderSupportsPullRequests
-} from "../providers/provider";
-import { Arrays, log, lsp, lspHandler, Strings } from "../system";
+import { log, lsp, lspHandler, Strings } from "../system";
 import { gate } from "../system/decorators/gate";
 import { xfs } from "../xfs";
-import * as fs from "fs";
 import { CachedEntityManagerBase, Id } from "./entityManager";
 import { resolveCreatePostResponse, trackReviewPostCreation } from "./postsManager";
 import Timer = NodeJS.Timer;
@@ -423,14 +416,21 @@ export class ReviewsManager extends CachedEntityManagerBase<CSReview> {
 		const diffs = await this.getDiffs(reviewId, repoId);
 		const checkpointDiff = diffs.find(d => d.checkpoint === changeset.checkpoint)!;
 		const diff = checkpointDiff.diff;
-		const leftDiff = diff.leftDiffs.find(
+
+		const leftDiffs =
+			diff.leftDiffs ||
+			(JSON.parse(decompressFromBase64(diff.leftDiffsCompressed!) as string) as ParsedDiff[]);
+		const leftDiff = leftDiffs.find(
 			d => d.newFileName === fileInfo.oldFile || d.oldFileName === fileInfo.oldFile
 		);
 
 		const leftBaseRelativePath =
 			(leftDiff && leftDiff.oldFileName !== "/dev/null" && leftDiff.oldFileName) ||
 			fileInfo.oldFile;
-		const rightDiff = diff.rightDiffs?.find(
+		const rightDiffs =
+			diff.rightDiffs ||
+			(JSON.parse(decompressFromBase64(diff.rightDiffsCompressed!) as string) as ParsedDiff[]);
+		const rightDiff = rightDiffs?.find(
 			d => d.newFileName === fileInfo.file || d.oldFileName === fileInfo.file
 		);
 		const rightBaseRelativePath =

@@ -3,9 +3,9 @@ import { CodeStreamApiProvider } from "api/codestream/codestreamApi";
 import { ParsedDiff } from "diff";
 import * as fs from "fs";
 import { groupBy, last, orderBy } from "lodash-es";
+import { compressToBase64 } from "lz-string";
 import sizeof from "object-sizeof";
 import * as path from "path";
-import { Directives } from "../providers/directives";
 import { TextDocumentIdentifier } from "vscode-languageserver";
 import { URI } from "vscode-uri";
 import { MessageType } from "../api/apiProvider";
@@ -86,6 +86,7 @@ import {
 	ProviderType,
 	StreamType
 } from "../protocol/api.protocol";
+import { Directives } from "../providers/directives";
 import { providerDisplayNamesByNameKey } from "../providers/provider";
 import { Arrays, debug, log, lsp, lspHandler } from "../system";
 import { Strings } from "../system/string";
@@ -1602,14 +1603,18 @@ export class PostsManager extends EntityManagerBase<CSPost> {
 			diffs: {
 				leftBaseAuthor,
 				leftBaseSha,
-				leftDiffs,
+				leftDiffsCompressed: compressToBase64(JSON.stringify(leftDiffs)),
 				rightBaseAuthor,
 				rightBaseSha,
-				rightDiffs,
-				rightReverseDiffs,
+				rightDiffsCompressed: compressToBase64(JSON.stringify(rightDiffs)),
+				rightReverseDiffsCompressed: compressToBase64(JSON.stringify(rightReverseDiffs)),
 				latestCommitSha,
-				rightToLatestCommitDiffs, // for backtracking
-				latestCommitToRightDiffs
+				rightToLatestCommitDiffsCompressed: compressToBase64(
+					JSON.stringify(rightToLatestCommitDiffs)
+				), // for backtracking
+				latestCommitToRightDiffsCompressed: compressToBase64(
+					JSON.stringify(latestCommitToRightDiffs)
+				)
 			}
 		};
 	}
@@ -1933,7 +1938,7 @@ export class PostsManager extends EntityManagerBase<CSPost> {
 					anchorFormat: "[${text}](${url})"
 				};
 		}
-	};
+	}
 
 	createProviderCard = async (
 		providerCardRequest: {
@@ -2205,7 +2210,7 @@ export class PostsManager extends EntityManagerBase<CSPost> {
 			Logger.error(error, `failed to create a ${attributes.issueProvider.name} card:`);
 			return undefined;
 		}
-	};
+	}
 }
 
 export async function resolveCreatePostResponse(response: CreatePostResponse) {

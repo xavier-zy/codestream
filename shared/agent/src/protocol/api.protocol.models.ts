@@ -196,14 +196,19 @@ export interface ReviewChangesetFileInfo {
 export interface CSReviewDiffs {
 	leftBaseAuthor: string;
 	leftBaseSha: string;
-	leftDiffs: ParsedDiff[];
+	leftDiffs?: ParsedDiff[];
+	leftDiffsCompressed?: string;
 	rightBaseAuthor: string;
 	rightBaseSha: string;
-	rightDiffs: ParsedDiff[];
-	rightReverseDiffs: ParsedDiff[];
+	rightDiffs?: ParsedDiff[];
+	rightDiffsCompressed?: string;
+	rightReverseDiffs?: ParsedDiff[];
+	rightReverseDiffsCompressed?: string;
 	latestCommitSha: string;
-	rightToLatestCommitDiffs: ParsedDiff[];
-	latestCommitToRightDiffs: ParsedDiff[];
+	rightToLatestCommitDiffs?: ParsedDiff[];
+	rightToLatestCommitDiffsCompressed?: string;
+	latestCommitToRightDiffs?: ParsedDiff[];
+	latestCommitToRightDiffsCompressed?: string;
 }
 
 export interface CSReviewChangesetBase {

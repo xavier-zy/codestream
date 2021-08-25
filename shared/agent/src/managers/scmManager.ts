@@ -1,4 +1,5 @@
-import { applyPatch, createPatch, parsePatch } from "diff";
+import { applyPatch, createPatch, ParsedDiff, parsePatch } from "diff";
+import { decompressFromBase64 } from "lz-string";
 import * as paths from "path";
 import { TextDocument } from "vscode-languageserver-types";
 import { URI } from "vscode-uri";
@@ -701,7 +702,12 @@ export class ScmManager {
 			if (lastChangesetContainingFile) {
 				// file was included in at least one checkpoint
 				const diff = diffs.find(d => d.checkpoint === lastChangesetContainingFile.checkpoint)!.diff;
-				const latestCommitToRightDiff = diff.latestCommitToRightDiffs.find(
+				const latestCommitToRightDiffs =
+					diff.latestCommitToRightDiffs ||
+					(JSON.parse(
+						decompressFromBase64(diff.latestCommitToRightDiffsCompressed!) as string
+					) as ParsedDiff[]);
+				const latestCommitToRightDiff = latestCommitToRightDiffs.find(
 					d =>
 						d.newFileName === numStatFromNewestCommitShaInOrBeforeReview.oldFile ||
 						d.newFileName === numStatFromNewestCommitShaInOrBeforeReview.file
@@ -811,9 +817,12 @@ export class ScmManager {
 			if (lastChangesetContainingFile) {
 				// File  was included in a previous checkpoint, so we need to compute differences rather than listing it as new
 				const diff = diffs.find(d => d.checkpoint === lastChangesetContainingFile.checkpoint)!.diff;
-				const latestCommitToRightDiff = diff.latestCommitToRightDiffs.find(
-					d => d.newFileName === file
-				);
+				const latestCommitToRightDiffs =
+					diff.latestCommitToRightDiffs ||
+					(JSON.parse(
+						decompressFromBase64(diff.latestCommitToRightDiffsCompressed!) as string
+					) as ParsedDiff[]);
+				const latestCommitToRightDiff = latestCommitToRightDiffs.find(d => d.newFileName === file);
 				const previousCheckpointRightContents = applyPatch("", latestCommitToRightDiff!);
 
 				const filePath = paths.join(repoPath, file);
@@ -1292,9 +1301,9 @@ export class ScmManager {
 		range = Ranges.ensureStartBeforeEnd(range);
 
 		let currentContent = "";
-		let currentBranch = "";
-		let currentCommitHash = "";
-		let diff = "";
+		const currentBranch = "";
+		const currentCommitHash = "";
+		const diff = "";
 		const document = Container.instance().documents.get(uri);
 		if (document === undefined) {
 			try {
@@ -1519,7 +1528,7 @@ export class ScmManager {
 				}
 			};
 		}
-		if (!request.baseSha)
+		if (!request.baseSha) {
 			return {
 				sha: "",
 				error: {
@@ -1527,7 +1536,8 @@ export class ScmManager {
 					type: "REPO_NOT_FOUND"
 				}
 			};
-		if (!request.headSha)
+		}
+		if (!request.headSha) {
 			return {
 				sha: "",
 				error: {
@@ -1535,6 +1545,7 @@ export class ScmManager {
 					type: "REPO_NOT_FOUND"
 				}
 			};
+		}
 		try {
 			if (repo && request.ref) {
 				await git.fetchReference(repo, request.ref);

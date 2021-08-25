@@ -1,6 +1,7 @@
 "use strict";
 
-import { structuredPatch } from "diff";
+import { ParsedDiff, structuredPatch } from "diff";
+import { decompressFromBase64 } from "lz-string";
 import * as path from "path";
 import { Range, TextDocumentIdentifier } from "vscode-languageserver";
 import { URI } from "vscode-uri";
@@ -379,15 +380,24 @@ class ReviewDiffMarkersBuilder extends MarkersBuilder {
 
 		const diffs = await reviews.getDiffs(this._reviewId, this._repoId);
 		const diffCheckpoint = diffs.find(_ => _.checkpoint === changeset.checkpoint)!;
-		const fromLatestCommitDiff = diffCheckpoint.diff.latestCommitToRightDiffs.find(
-			d => d.newFileName === this._path
-		);
-		const toLatestCommitDiff = diffCheckpoint.diff.rightToLatestCommitDiffs.find(
-			d => d.newFileName === this._path
-		);
-		const toBaseCommitDiff = diffCheckpoint.diff.rightReverseDiffs.find(
-			d => d.newFileName === this._path
-		);
+		const latestCommitToRightDiffs =
+			diffCheckpoint.diff.latestCommitToRightDiffs ||
+			(JSON.parse(
+				decompressFromBase64(diffCheckpoint.diff.latestCommitToRightDiffsCompressed!) as string
+			) as ParsedDiff[]);
+		const fromLatestCommitDiff = latestCommitToRightDiffs.find(d => d.newFileName === this._path);
+		const rightToLatestCommitDiffs =
+			diffCheckpoint.diff.rightToLatestCommitDiffs ||
+			(JSON.parse(
+				decompressFromBase64(diffCheckpoint.diff.rightToLatestCommitDiffsCompressed!) as string
+			) as ParsedDiff[]);
+		const toLatestCommitDiff = rightToLatestCommitDiffs.find(d => d.newFileName === this._path);
+		const rightReverseDiffs =
+			diffCheckpoint.diff.rightReverseDiffs ||
+			(JSON.parse(
+				decompressFromBase64(diffCheckpoint.diff.rightReverseDiffsCompressed!) as string
+			) as ParsedDiff[]);
+		const toBaseCommitDiff = rightReverseDiffs.find(d => d.newFileName === this._path);
 
 		const latestCommitLocation = toLatestCommitDiff
 			? await calculateLocation(this.location, toLatestCommitDiff)

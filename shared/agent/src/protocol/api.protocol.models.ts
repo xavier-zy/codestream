@@ -327,6 +327,9 @@ export interface CSCodeError extends CSEntity {
 	codeAuthorIds?: string[];
 	permalink?: string;
 	resolvedAt?: number;
+	entityId?: string;
+	entityType?: "ErrorGroup";
+	entityInfo?: { [key: string]: string[] };
 }
 
 export interface Attachment {

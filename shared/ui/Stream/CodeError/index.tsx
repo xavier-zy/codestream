@@ -1,12 +1,6 @@
 import React, { PropsWithChildren, useEffect } from "react";
-import cx from "classnames";
-import {
-	CardBody,
-	CardProps,
-	getCardProps,
-	CardFooter
-} from "@codestream/webview/src/components/Card";
-import { FollowCodeErrorRequestType } from "@codestream/protocols/agent";
+import { CardProps, getCardProps, CardFooter } from "@codestream/webview/src/components/Card";
+import { CodeErrorPlus, FollowCodeErrorRequestType } from "@codestream/protocols/agent";
 import {
 	MinimumWidthCard,
 	Header,
@@ -45,15 +39,13 @@ import Menu from "../Menu";
 import { confirmPopup } from "../Confirm";
 import { createCodemark } from "@codestream/webview/store/codemarks/actions";
 import { Link } from "../Link";
-import { MarkdownText } from "../MarkdownText";
 import { CodeErrorForm } from "../CodeErrorForm";
 import { Dispatch } from "@codestream/webview/store/common";
 import { Loading } from "@codestream/webview/Container/Loading";
 import { getPost } from "../../store/posts/reducer";
 import { AddReactionIcon, Reactions } from "../Reactions";
 import { Attachments } from "../Attachments";
-import { HeadshotName } from "@codestream/webview/src/components/HeadshotName";
-import { RepoInfo, RepoMetadata } from "../Review";
+import { RepoMetadata } from "../Review";
 import Timestamp from "../Timestamp";
 import { Button } from "@codestream/webview/src/components/Button";
 import { ButtonRow } from "@codestream/webview/src/components/Dialog";
@@ -74,7 +66,7 @@ interface SimpleError {
 }
 
 export interface BaseCodeErrorProps extends CardProps {
-	codeError: CSCodeError;
+	codeError: CodeErrorPlus;
 	post?: CSPost;
 	repoInfo?: RepoMetadata;
 	headerError?: SimpleError;
@@ -92,7 +84,7 @@ export interface BaseCodeErrorProps extends CardProps {
 }
 
 export interface BaseCodeErrorHeaderProps {
-	codeError: CSCodeError;
+	codeError: CodeErrorPlus;
 	post?: CSPost;
 	collapsed?: boolean;
 	isFollowing?: boolean;
@@ -178,6 +170,14 @@ const ApmServiceTitle = styled.span`
 	}
 `;
 
+const ALERT_SEVERITY_COLORS = {
+	"": "#9FA5A5",
+	CRITICAL: "#F5554B",
+	NOT_ALERTING: "#01B076",
+	NOT_CONFIGURED: "#9FA5A5",
+	WARNING: "#F0B400"
+};
+
 // if child props are passed in, we assume they are the action buttons/menu for the header
 export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeaderProps>) => {
 	const { codeError, collapsed } = props;
@@ -189,143 +189,145 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 
 	return (
 		<>
-			<div style={{ display: "flex", justifyContent: "space-between", marginBottom: "10px" }}>
-				<div>
-					{/* TODO get actual service status + color */}
-					<div
-						style={{
-							display: "inline-block",
-							width: "10px",
-							height: "10px",
-							backgroundColor: "gray",
-							margin: "0 5px 0 6px"
-						}}
-					/>
-					<ApmServiceTitle>
-						<Tooltip title="Open on New Relic" placement="bottom" delay={1}>
-							<span>
-								{/* TODO get actual service name and link */}
-								<Link href="#">
-									<span className="subtle">CodeStream-Demo API Server</span>
-								</Link>{" "}
-								<Icon name="link-external" className="open-external"></Icon>
-							</span>
-						</Tooltip>
-					</ApmServiceTitle>
-				</div>
+			{!collapsed && props.codeError.errorGroup && (
+				<div style={{ display: "flex", justifyContent: "space-between", marginBottom: "10px" }}>
+					<div>
+						{/* TODO get actual service status + color */}
+						<div
+							style={{
+								display: "inline-block",
+								width: "10px",
+								height: "10px",
+								backgroundColor:
+									ALERT_SEVERITY_COLORS[props.codeError.errorGroup?.entityAlertingSeverity || ""],
+								margin: "0 5px 0 6px"
+							}}
+						/>
+						<ApmServiceTitle>
+							<Tooltip title="Open on New Relic" placement="bottom" delay={1}>
+								<span>
+									<Link href={props.codeError.errorGroup.entityUrl}>
+										<span className="subtle">{props.codeError.errorGroup.entityName}</span>
+									</Link>{" "}
+									<Icon name="link-external" className="open-external"></Icon>
+								</span>
+							</Tooltip>
+						</ApmServiceTitle>
+					</div>
 
-				<div style={{ marginLeft: "auto", alignItems: "center", whiteSpace: "nowrap" }}>
-					<DropdownButton
-						items={[
-							{
-								key: "resolve",
-								label: `Resolve`,
-								onSelect: () => setResolveMethod("RESOLVE"),
-								action: () => resolveCodeError("resolve")
-							},
-							{ label: "-" },
-							{
-								key: "ignore",
-								label: `Ignore`,
-								onSelect: () => setResolveMethod("IGNORE"),
-								action: () => resolveCodeError("ignore")
-							}
-						]}
-						selectedKey={"resolve"}
-						variant="secondary"
-						size="compact"
-						wrap
-					>
-						Unresolved
-					</DropdownButton>
-					<div style={{ display: "inline-block", width: "10px" }} />
-					<InlineMenu
-						items={[
-							{ type: "search", label: "", placeholder: "User name" },
-							{ label: "-" },
-							{
-								label: (
-									<span style={{ fontSize: "10px", fontWeight: "bold", opacity: 0.7 }}>
-										CURRENT ASSIGNEE
-									</span>
-								),
-								noHover: true,
-								disabled: true
-							},
-							{
-								icon: (
-									<Headshot
-										size={16}
-										display="inline-block"
-										person={{ email: "pez@codestream.com" }}
+					<div style={{ marginLeft: "auto", alignItems: "center", whiteSpace: "nowrap" }}>
+						<DropdownButton
+							items={[
+								{
+									key: "resolve",
+									label: `Resolve`,
+									onSelect: () => setResolveMethod("RESOLVE"),
+									action: () => resolveCodeError("resolve")
+								},
+								{ label: "-" },
+								{
+									key: "ignore",
+									label: `Ignore`,
+									onSelect: () => setResolveMethod("IGNORE"),
+									action: () => resolveCodeError("ignore")
+								}
+							]}
+							selectedKey={"resolve"}
+							variant="secondary"
+							size="compact"
+							wrap
+						>
+							Unresolved
+						</DropdownButton>
+						<div style={{ display: "inline-block", width: "10px" }} />
+						<InlineMenu
+							items={[
+								{ type: "search", label: "", placeholder: "User name" },
+								{ label: "-" },
+								{
+									label: (
+										<span style={{ fontSize: "10px", fontWeight: "bold", opacity: 0.7 }}>
+											CURRENT ASSIGNEE
+										</span>
+									),
+									noHover: true,
+									disabled: true
+								},
+								{
+									icon: (
+										<Headshot
+											size={16}
+											display="inline-block"
+											person={{ email: "pez@codestream.com" }}
+										/>
+									),
+									key: "pez",
+									label: `Peter Pezaris`,
+									searchLabel: "Peter Pezaris",
+									subtext: "ppezaris@newrelic.com",
+									floatRight: { label: <Icon name="x" /> },
+									action: () => setAssignee("pez@codestream.com")
+								},
+								{ label: "-" },
+								{
+									label: (
+										<span style={{ fontSize: "10px", fontWeight: "bold", opacity: 0.7 }}>
+											SUGGESTIONS FROM GIT
+										</span>
+									),
+									noHover: true,
+									disabled: true
+								},
+								{
+									key: "colin",
+									label: `Colin Stryker`,
+									searchLabel: "Colin Stryker",
+									subtextNoPadding: "cstryker@newrelic.com",
+									action: () => setAssignee("cstryker@newrelic.com")
+								},
+								{
+									key: "dave",
+									label: `David Hersh`,
+									searchLabel: "David Hersh",
+									subtextNoPadding: "dhersh@newrelic.com",
+									action: () => setAssignee("dhersh@newrelic.com")
+								},
+								{ label: "-" },
+								{
+									label: (
+										<span style={{ fontSize: "10px", fontWeight: "bold", opacity: 0.7 }}>
+											OTHER TEAMMATES
+										</span>
+									),
+									noHover: true,
+									disabled: true
+								},
+								{
+									key: "brian",
+									label: `Brian Canzanella`,
+									searchLabel: "Brian Canzanella",
+									subtextNoPadding: "bcanzanella@newrelic.com",
+									action: () => setAssignee("bcanzanella@newrelic.com")
+								}
+							]}
+						>
+							<Headshot size={20} display="inline-block" person={{ email: assignee }} />
+						</InlineMenu>
+						<>
+							{props.post && <AddReactionIcon post={props.post} className="in-review" />}
+							{props.children || (
+								<Button variant="secondary">
+									<BaseCodeErrorMenu
+										codeError={codeError}
+										collapsed={collapsed}
+										setIsEditing={props.setIsEditing}
 									/>
-								),
-								key: "pez",
-								label: `Peter Pezaris`,
-								searchLabel: "Peter Pezaris",
-								subtext: "ppezaris@newrelic.com",
-								floatRight: { label: <Icon name="x" /> },
-								action: () => setAssignee("pez@codestream.com")
-							},
-							{ label: "-" },
-							{
-								label: (
-									<span style={{ fontSize: "10px", fontWeight: "bold", opacity: 0.7 }}>
-										SUGGESTIONS FROM GIT
-									</span>
-								),
-								noHover: true,
-								disabled: true
-							},
-							{
-								key: "colin",
-								label: `Colin Stryker`,
-								searchLabel: "Colin Stryker",
-								subtextNoPadding: "cstryker@newrelic.com",
-								action: () => setAssignee("cstryker@newrelic.com")
-							},
-							{
-								key: "dave",
-								label: `David Hersh`,
-								searchLabel: "David Hersh",
-								subtextNoPadding: "dhersh@newrelic.com",
-								action: () => setAssignee("dhersh@newrelic.com")
-							},
-							{ label: "-" },
-							{
-								label: (
-									<span style={{ fontSize: "10px", fontWeight: "bold", opacity: 0.7 }}>
-										OTHER TEAMMATES
-									</span>
-								),
-								noHover: true,
-								disabled: true
-							},
-							{
-								key: "brian",
-								label: `Brian Canzanella`,
-								searchLabel: "Brian Canzanella",
-								subtextNoPadding: "bcanzanella@newrelic.com",
-								action: () => setAssignee("bcanzanella@newrelic.com")
-							}
-						]}
-					>
-						<Headshot size={20} display="inline-block" person={{ email: assignee }} />
-					</InlineMenu>
-					<>
-						{props.post && <AddReactionIcon post={props.post} className="in-review" />}
-						{props.children || (
-							<Button variant="secondary">
-								<BaseCodeErrorMenu
-									codeError={codeError}
-									collapsed={collapsed}
-									setIsEditing={props.setIsEditing}
-								/>
-							</Button>
-						)}
-					</>
+								</Button>
+							)}
+						</>
+					</div>
 				</div>
-			</div>
+			)}
 			<Header>
 				<Icon name="alert" className="type" />
 				<BigTitle>
@@ -335,9 +337,7 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 					<ApmServiceTitle>
 						<Tooltip title="Open Error on New Relic" placement="bottom" delay={1}>
 							<span>
-								{/* TODO get the actual class of error here */}
-								{/* {codeError.title} */}
-								<Link href="#">Error: hash table index out of range</Link>{" "}
+								<Link href="#">{props.codeError.title}</Link>{" "}
 								<Icon name="link-external" className="open-external"></Icon>
 							</span>
 						</Tooltip>
@@ -796,7 +796,7 @@ interface PropsWithId extends FromBaseCodeErrorProps {
 }
 
 interface PropsWithCodeError extends FromBaseCodeErrorProps {
-	codeError: CSCodeError;
+	codeError: CodeErrorPlus;
 }
 
 function isPropsWithId(props: PropsWithId | PropsWithCodeError): props is PropsWithId {

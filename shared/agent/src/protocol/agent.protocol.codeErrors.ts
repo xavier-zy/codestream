@@ -1,6 +1,6 @@
 "use strict";
 import { RequestType } from "vscode-languageserver-protocol";
-import { CreateMarkerRequest, PostPlus } from "./agent.protocol";
+import { CreateMarkerRequest, NewRelicErrorGroup, PostPlus } from "./agent.protocol";
 import {
 	CSChannelStream,
 	CSCreateCodeErrorRequest,
@@ -15,7 +15,9 @@ import {
 	CSUpdateCodeErrorResponse
 } from "./api.protocol";
 
-export interface CodeErrorPlus extends CSCodeError {}
+export interface CodeErrorPlus extends CSCodeError {
+	errorGroup?: NewRelicErrorGroup;
+}
 
 export interface CreateCodeErrorRequest extends Omit<CSCreateCodeErrorRequest, "teamId"> {
 	markers?: CreateMarkerRequest[];

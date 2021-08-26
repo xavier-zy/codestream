@@ -173,6 +173,9 @@ export const CodeErrorForm = (props: Props = {}) => {
 
 		const stackInfo = await resolvedStackPromise;
 		const codeError: NewCodeErrorAttributes = {
+			entityId: derivedState.codeError.entityId,
+			entityType: derivedState.codeError.entityType,
+			entityInfo: derivedState.codeError.entityInfo,
 			title,
 			stackTrace: parsedStack.join("\n"),
 			stackInfo,

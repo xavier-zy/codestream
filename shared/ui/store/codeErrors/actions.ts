@@ -10,7 +10,9 @@ import {
 	FetchCodeErrorsRequestType,
 	ResolveStackTraceRequestType,
 	ResolveStackTracePositionRequestType,
-	UpdateCodeErrorResponse
+	UpdateCodeErrorResponse,
+	GetNewRelicErrorGroupRequestType,
+	GetNewRelicErrorGroupRequest
 } from "@codestream/protocols/agent";
 import { logError } from "@codestream/webview/logger";
 import { addStreams } from "../streams/actions";
@@ -43,7 +45,11 @@ export const updateCodeErrors = (codeErrors: CSCodeError[]) =>
 	action(CodeErrorsActionsTypes.UpdateCodeErrors, codeErrors);
 
 export interface NewCodeErrorAttributes {
+	entityId?: string;
+	entityType?: "ErrorGroup";
+	entityInfo?: any;
 	title: string;
+	description?: string;
 	stackTrace: string;
 	assignees?: string[];
 	addedUsers?: string[];
@@ -197,4 +203,10 @@ export const jumpToStackLine = (
 
 export const updateCodeError = request => async dispatch => {
 	return HostApi.instance.send(UpdateCodeErrorRequestType, request);
+};
+
+export const fetchNewRelicErrorGroup = (
+	request: GetNewRelicErrorGroupRequest
+) => async dispatch => {
+	return HostApi.instance.send(GetNewRelicErrorGroupRequestType, request);
 };

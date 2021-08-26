@@ -4,10 +4,13 @@ import styled from "styled-components";
 import { useDispatch, useSelector, shallowEqual } from "react-redux";
 import { closeAllPanels, setCurrentCodeError } from "@codestream/webview/store/context/actions";
 import { useDidMount } from "@codestream/webview/utilities/hooks";
-import { fetchCodeError } from "@codestream/webview/store/codeErrors/actions";
+import {
+	fetchCodeError,
+	fetchNewRelicErrorGroup
+} from "@codestream/webview/store/codeErrors/actions";
 import { CodeStreamState } from "../store";
 import { getCodeError } from "../store/codeErrors/reducer";
-import { MinimumWidthCard, Meta, BigTitle, Header } from "./Codemark/BaseCodemark";
+import { Meta, BigTitle, Header } from "./Codemark/BaseCodemark";
 import { closePanel, markItemRead } from "./actions";
 import { Dispatch } from "../store/common";
 import { CodeError, BaseCodeErrorHeader, ExpandedAuthor, Description } from "./CodeError";
@@ -15,11 +18,14 @@ import ScrollBox from "./ScrollBox";
 import KeystrokeDispatcher from "../utilities/keystroke-dispatcher";
 import { CodeErrorForm } from "./CodeErrorForm";
 import { isFeatureEnabled } from "../store/apiVersioning/reducer";
-import { getSidebarLocation } from "../store/editorContext/reducer";
 import Icon from "./Icon";
 import { isConnected } from "../store/providers/reducer";
 import { ConfigureNewRelic } from "./ConfigureNewRelic";
 import Dismissable from "./Dismissable";
+import { bootstrapCodeErrors } from "@codestream/webview/store/codeErrors/actions";
+import { DelayedRender } from "../Container/DelayedRender";
+import { Loading } from "../Container/Loading";
+import { CodeErrorPlus, GetNewRelicErrorGroupResponse } from "@codestream/protocols/agent";
 
 const NavHeader = styled.div`
 	// flex-grow: 0;
@@ -107,19 +113,24 @@ export const StyledCodeError = styled.div``;
 
 export type Props = React.PropsWithChildren<{ codeErrorId: string; composeOpen: boolean }>;
 
+/**
+ * Called from InlineCodemarks it is what allows the commenting on lines of code
+ *
+ * @export
+ * @param {Props} props
+ * @return {*}
+ */
 export function CodeErrorNav(props: Props) {
 	const dispatch = useDispatch<Dispatch | any>();
 	const derivedState = useSelector((state: CodeStreamState) => {
-		const codeError = getCodeError(state.codeErrors, props.codeErrorId);
-		const currentUserId = state.session.userId || "";
+		const codeError = getCodeError(state.codeErrors, props.codeErrorId) as CodeErrorPlus;
 
 		return {
+			codeErrorStateBootstrapped: state.codeErrors.bootstrapped,
 			currentCodeErrorId: state.context.currentCodeErrorId,
 			currentCodeErrorData: state.context.currentCodeErrorData,
 			codeError,
 			currentCodemarkId: state.context.currentCodemarkId,
-			isMine: currentUserId === (codeError ? codeError.creatorId : ""),
-			sidebarLocation: getSidebarLocation(state),
 			isConnectedToNewRelic: isConnected(state, { id: "newrelic*com" })
 		};
 	}, shallowEqual);
@@ -127,7 +138,7 @@ export function CodeErrorNav(props: Props) {
 	const [isEditing, setIsEditing] = React.useState(false);
 	const [notFound, setNotFound] = React.useState(false);
 	const [lastUpdated, setLastUpdated] = React.useState(new Date());
-	const [isLoading, setIsLoading] = React.useState(false);
+	const [isLoading, setIsLoading] = React.useState(true);
 	const [error, setError] = React.useState<{ title: string; description: string } | undefined>(
 		undefined
 	);
@@ -149,20 +160,44 @@ export function CodeErrorNav(props: Props) {
 		if (codeError && unreadEnabled) dispatch(markItemRead(codeError.id, codeError.numReplies || 0));
 	};
 
+	useEffect(() => {
+		if (codeError && !codeError.errorGroup) {
+			console.warn("loading codeError.errorGroup");
+			dispatch(fetchNewRelicErrorGroup({ errorGroupId: codeError.entityId! }))
+				.then((result: GetNewRelicErrorGroupResponse) => {
+					if (result?.errorGroup == null) setNotFound(true);
+					(codeError as CodeErrorPlus).errorGroup = result.errorGroup;
+				})
+				.then(() => {
+					setIsLoading(false);
+				})
+				.catch(ex => {
+					setIsLoading(false);
+					console.warn(ex);
+				});
+		}
+	}, [codeError]);
+
 	useDidMount(() => {
-		let isValid = true;
-		setIsLoading(true);
-		if (codeError == null) {
-			dispatch(fetchCodeError(props.codeErrorId)).then(result => {
-				setIsLoading(false);
-				if (!isValid) return;
-				if (result == null) setNotFound(true);
+		const fetch = () => {
+			if (codeError == null) {
+				dispatch(fetchCodeError(props.codeErrorId)).then(result => {
+					if (result == null) setNotFound(true);
+					markRead();
+				});
+			} else {
 				markRead();
+			}
+		};
+
+		if (!derivedState.codeErrorStateBootstrapped) {
+			dispatch(bootstrapCodeErrors()).then(() => {
+				fetch();
 			});
 		} else {
-			markRead();
-			setIsLoading(false);
+			fetch();
 		}
+
 		// Kind of a HACK leaving this here, BUT...
 		// since <CancelButton /> uses the OLD version of Button.js
 		// and not Button.tsx (below), there's no way to keep the style.
@@ -177,12 +212,11 @@ export function CodeErrorNav(props: Props) {
 
 		return () => {
 			disposable && disposable.dispose();
-			isValid = false;
 		};
 	});
 
 	useEffect(() => {
-		if (notFound || !codeError) {
+		if (notFound) {
 			setError({
 				title: "Cannot open Code Error",
 				description:
@@ -205,11 +239,13 @@ export function CodeErrorNav(props: Props) {
 				}
 			}
 		}
-	}, [notFound, codeError, derivedState.currentCodeErrorData]);
+	}, [notFound, derivedState.currentCodeErrorData]);
 
+	// if for some reason we have a codemark, don't render anything
 	if (derivedState.currentCodemarkId) return null;
 
 	if (error) {
+		// essentially a roadblock
 		return (
 			<Dismissable
 				title={error.title}
@@ -227,9 +263,16 @@ export function CodeErrorNav(props: Props) {
 			</Dismissable>
 		);
 	}
+	if (isLoading) {
+		return (
+			<DelayedRender>
+				<Loading />
+			</DelayedRender>
+		);
+	}
 
-	if (isEditing) {
-		return <CodeErrorForm />;
+	if (isEditing && codeError) {
+		return <CodeErrorForm editingCodeError={codeError} />;
 	}
 	return (
 		<Root>

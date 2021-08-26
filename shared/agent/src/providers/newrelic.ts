@@ -1,13 +1,18 @@
 "use strict";
 import { MessageType } from "../api/apiProvider";
 import {
+	NewRelicErrorGroup,
 	GetNewRelicDataRequest,
 	GetNewRelicDataRequestType,
 	GetNewRelicDataResponse,
-	GetNewRelicErrorsInboxRequest,
-	GetNewRelicErrorsInboxRequestType,
-	GetNewRelicErrorsInboxResponse,
+	GetNewRelicErrorGroupRequest,
+	GetNewRelicErrorGroupRequestType,
+	GetNewRelicErrorGroupResponse,
 	NewRelicConfigurationData,
+	SetNewRelicErrorGroupAssigneeRequest,
+	SetNewRelicErrorGroupAssigneeResponse,
+	SetNewRelicErrorGroupStateRequest,
+	SetNewRelicErrorGroupStateResponse,
 	ThirdPartyProviderConfig
 } from "../protocol/agent.protocol";
 import { CSMe, CSNewRelicProviderInfo } from "../protocol/api.protocol";
@@ -17,7 +22,6 @@ import { GraphQLClient } from "graphql-request";
 import { InternalError, ReportSuppressedMessages } from "../agentError";
 import { Logger } from "../logger";
 import { lspHandler } from "../system";
-import { SessionContainer } from "../container";
 import { CodeStreamSession } from "../session";
 
 @lspProvider("newrelic")
@@ -47,7 +51,8 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		if (usingEU) {
 			return "https://api.eu.newrelic.com";
 		} else {
-			return "https://api.newrelic.com";
+			// TODO need a switch or something for this
+			return Logger.isDebugging ? "https://staging-api.newrelic.com" : "https://api.newrelic.com";
 		}
 	}
 
@@ -106,6 +111,10 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				resolve();
 			});
 		});
+	}
+
+	async mutate<T>(query: string, variables: any = undefined) {
+		return (await this.client()).request<T>(query, variables);
 	}
 
 	async query<T = any>(query: string, variables: any = undefined) {
@@ -170,23 +179,187 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		}
 	}
 
-	@lspHandler(GetNewRelicErrorsInboxRequestType)
+	@lspHandler(GetNewRelicErrorGroupRequestType)
 	@log()
 	async getNewRelicErrorsInboxData(
-		request: GetNewRelicErrorsInboxRequest
-	): Promise<GetNewRelicErrorsInboxResponse | undefined> {
+		request: GetNewRelicErrorGroupRequest
+	): Promise<GetNewRelicErrorGroupResponse | undefined> {
+		let repo;
+		let sha;
+		let parsedStack: string[] = [];
+		let errorGroup: NewRelicErrorGroup | undefined = undefined;
+
 		try {
+			await this.ensureConnected();
 			// TODO this is all mocked from the protocol url -- need to actually hit NR here
-			const route = request.route;
-			const { repo, sha } = JSON.parse(route.query.customAttributes);
-			const parsedStack: string[] = route.query.stack ? JSON.parse(route.query.stack) : [];
+			const route = {
+				query: {
+					errorGroupId: "",
+					stack: "",
+					customAttributes: ""
+				}
+			};
+			try {
+				({ repo, sha } = JSON.parse(route.query.customAttributes));
+				parsedStack = route.query.stack ? JSON.parse(route.query.stack) : [];
+			} catch (ex) {
+				Logger.warn("missing repo or sha", { repo, sha });
+			}
+
+			const accountId = this._providerInfo?.data?.accountId;
+			if (!accountId) {
+				throw new Error("must provide an accountId");
+			}
+
+			repo = "git@github.com:teamcodestream/codestream-server-demo";
+			sha = "9542e9c702f0879f8407928eb313b33174a7c2b5";
+			let response;
+			const errorGroupId = request.errorGroupId;
+
+			response = await this.query(
+				`query fetchErrorsInboxData($accountId:Int!) {
+					actor {
+					  account(id: $accountId) {
+						nrql(query: "FROM Metric SELECT entity.guid, error.group.guid, error.group.message, error.group.name, error.group.source, error.group.nrql WHERE error.group.guid = '${errorGroupId}' SINCE 24 hours ago LIMIT 1") { nrql results }
+					  }
+					}
+				  }
+				  `,
+				{
+					accountId: parseInt(accountId, 10)
+				}
+			);
+			const results = response.actor.account.nrql.results[0];
+			if (results) {
+				errorGroup = {
+					entityGuid: results["entity.guid"],
+					guid: results["error.group.guid"],
+					message: results["error.group.message"],
+					title: results["error.group.name"],
+					nrql: results["error.group.nrql"],
+					source: results["error.group.source"],
+					timestamp: results["timestamp"],
+					entityUrl: `https://staging-one.newrelic.com/redirect/entity/${results["entity.guid"]}`
+				};
+				response = await this.query(
+					`{
+						actor {
+						  entity(guid: "${errorGroup?.entityGuid}") {
+							alertSeverity
+							name
+						  }
+						}
+					  }
+				  `
+				);
+				errorGroup.entityName = response.actor.entity.name;
+				errorGroup.entityAlertingSeverity = response.actor.entity.alertSeverity;
+
+				// const stackTrace = await this.query(`{
+				// 	actor {
+				// 	  entity(guid: "<entityId>") {
+				// 		... on ApmApplicationEntity {
+				// 		  guid
+				// 		  name
+				// 		  errorTrace(traceId: "<traceId>") {
+				// 			id
+				// 			exceptionClass
+				// 			intrinsicAttributes
+				// 			message
+				// 			path
+				// 			stackTrace {
+				// 			  filepath
+				// 			  line
+				// 			  name
+				// 			  formatted
+				// 			}
+				// 		  }
+				// 		}
+				// 	  }
+				// 	}
+				//   }
+				//   `);
+				Logger.debug("NR:ErrorGroup", {
+					errorGroup: errorGroup
+				});
+			}
 
 			return {
 				repo,
 				sha,
-				parsedStack
+				parsedStack,
+				errorGroup
 			};
 		} catch (ex) {
+			Logger.error(ex);
+			return {
+				repo: repo,
+				sha: sha,
+				parsedStack: [],
+				errorGroup: {} as any
+			};
+		}
+	}
+
+	@log()
+	async setNewRelicErrorsInboxAssignee(
+		request: SetNewRelicErrorGroupAssigneeRequest
+	): Promise<SetNewRelicErrorGroupAssigneeResponse | undefined> {
+		try {
+			await this.ensureConnected();
+			const response = await this.query(
+				`mutation {
+					errorTrackingAssignErrorGroup(id: "${request.errorGroupId}", assignment: {userId: ${request.userId}}) {
+					  errors {
+						description
+						type
+					  }
+					  assignedUser {
+						email
+						gravatar
+						id
+						name
+					  }
+					}
+				  }`
+			);
+			return true;
+		} catch (ex) {
+			Logger.error(ex);
+			return undefined;
+		}
+	}
+
+	@log()
+	async setNewRelicErrorsInboxState(
+		request: SetNewRelicErrorGroupStateRequest
+	): Promise<SetNewRelicErrorGroupStateResponse | undefined> {
+		try {
+			await this.ensureConnected();
+			const response = await this.mutate<{
+				errorTrackingUpdateErrorGroupState: {
+					error?: any;
+					state?: string;
+				};
+			}>(
+				`mutation setState($errorGroupId:ID!, $state:ErrorTrackingErrorGroupState) {
+					errorTrackingUpdateErrorGroupState(id: 
+					  $errorGroupId, state: {state: $state}) {
+					  state
+					  errors {
+						description
+						type
+					  }
+					}
+				  }`,
+				{
+					errorGroupId: request.errorGroupId,
+					state: request.state
+				}
+			);
+			return true;
+		} catch (ex) {
+			Logger.error(ex);
 			return undefined;
 		}
 	}

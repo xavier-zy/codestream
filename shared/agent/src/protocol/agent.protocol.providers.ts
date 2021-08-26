@@ -867,20 +867,50 @@ export const GetNewRelicDataRequestType = new RequestType<
 	void
 >("codestream/newrelic/data");
 
-export interface GetNewRelicErrorsInboxRequest {
+export interface GetNewRelicErrorGroupRequest {
 	errorGroupId: string;
-	route?: any;
 }
 
-export interface GetNewRelicErrorsInboxResponse {
+export interface NewRelicErrorGroup {
+	entityGuid: string;
+	entityName?: string;
+	entityUrl?: string;
+	entityAlertingSeverity?: "CRITICAL" | "NOT_ALERTING" | "NOT_CONFIGURED" | "WARNING";
+	guid: string;
+	message: string;
+	title: string;
+	nrql: string;
+	source: string;
+	timestamp: number;
+
+	hostDisplayName?: string;
+	transactionName?: string;
+}
+
+export interface GetNewRelicErrorGroupResponse {
 	repo: string;
 	sha: string;
 	parsedStack: string[];
+	errorGroup?: NewRelicErrorGroup;
 }
 
-export const GetNewRelicErrorsInboxRequestType = new RequestType<
-	GetNewRelicErrorsInboxRequest,
-	GetNewRelicErrorsInboxResponse,
+export interface SetNewRelicErrorGroupAssigneeRequest {
+	errorGroupId: string;
+	userId: string;
+}
+
+export interface SetNewRelicErrorGroupAssigneeResponse {}
+
+export interface SetNewRelicErrorGroupStateRequest {
+	errorGroupId: string;
+	state: "RESOLVED" | "UNRESOLVED" | "IGNORED";
+}
+
+export interface SetNewRelicErrorGroupStateResponse {}
+
+export const GetNewRelicErrorGroupRequestType = new RequestType<
+	GetNewRelicErrorGroupRequest,
+	GetNewRelicErrorGroupResponse,
 	void,
 	void
->("codestream/newrelic/errorsinbox");
+>("codestream/newrelic/errorGroup");

@@ -1,5 +1,20 @@
 # Change Log
 
+## [11.0.14] - 2021-8-26
+
+### Changed
+
+- Custom merge request queries now use proper GitLab syntax
+- Addresses [#677](https://github.com/TeamCodeStream/CodeStream/issues/677) &mdash; Merge Request Query for negate
+- Addresses [#661](https://github.com/TeamCodeStream/CodeStream/issues/661) &mdash; MR integration doesn't work with project token
+- No-reply email addresses, such as @users.noreply.github.com, are no longer suggested throughout CodeStream
+
+### Fixed
+
+- Addresses [#693](https://github.com/TeamCodeStream/CodeStream/issues/693) &mdash; Changing PR remote branch makes the branch unable to be found
+- Addresses [#673](https://github.com/TeamCodeStream/CodeStream/issues/673) &mdash; Request codestream/reviews/create failed with message: Cannot create review. Payload exceeds 10MB
+- Addresses [#650](https://github.com/TeamCodeStream/CodeStream/issues/650) &mdash; Code fences displayed as single line in Issue Codemarks
+
 ## [11.0.13] - 2021-7-15
 
 ### Added

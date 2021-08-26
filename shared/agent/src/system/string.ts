@@ -461,4 +461,29 @@ export namespace Strings {
 	export function pathToFileURL(str: string) {
 		return encodeURI(new URL(`file:///${path.resolve(str)}`).href);
 	}
+
+	const clean = (piece: string) =>
+		piece
+			.replace(/((^|\n)(?:[^\/\\]|\/[^*\/]|\\.)*?)\s*\/\*(?:[^*]|\*[^\/])*(\*\/|)/g, "$1")
+			.replace(/((^|\n)(?:[^\/\\]|\/[^\/]|\\.)*?)\s*\/\/[^\n]*/g, "$1")
+			.replace(/\n\s*/g, "");
+
+	/**
+	 * Creates a raw RegExp object from a well-commented multiline regex string
+	 * NOTE: this uses some RegExp default flags (gmi)
+	 *
+	 * @export
+	 * @param {*} { raw }
+	 * @param {...string[]} interpolations
+	 * @return {*}
+	 */
+	export function regexBuilder({ raw }: any, ...interpolations: string[]) {
+		return new RegExp(
+			interpolations.reduce(
+				(regex, insert, index) => regex + insert + clean(raw[index + 1]),
+				clean(raw[0])
+			),
+			"gmi"
+		);
+	}
 }

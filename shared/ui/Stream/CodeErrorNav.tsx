@@ -161,22 +161,25 @@ export function CodeErrorNav(props: Props) {
 	};
 
 	useEffect(() => {
-		if (codeError && !codeError.errorGroup) {
-			console.warn("loading codeError.errorGroup");
-			dispatch(fetchNewRelicErrorGroup({ errorGroupId: codeError.entityId! }))
-				.then((result: GetNewRelicErrorGroupResponse) => {
-					if (result?.errorGroup == null) setNotFound(true);
-					(codeError as CodeErrorPlus).errorGroup = result.errorGroup;
-				})
-				.then(() => {
-					setIsLoading(false);
-				})
-				.catch(ex => {
-					setIsLoading(false);
-					console.warn(ex);
-				});
+		if (!codeError) return;
+		if (!derivedState.isConnectedToNewRelic || codeError.errorGroup) {
+			setIsLoading(false);
+			return;
 		}
-	}, [codeError]);
+
+		dispatch(fetchNewRelicErrorGroup({ errorGroupId: codeError.entityId! }))
+			.then((result: GetNewRelicErrorGroupResponse) => {
+				if (result?.errorGroup == null) setNotFound(true);
+				(codeError as CodeErrorPlus).errorGroup = result.errorGroup;
+			})
+			.then(() => {
+				setIsLoading(false);
+			})
+			.catch(ex => {
+				setIsLoading(false);
+				console.warn(ex);
+			});
+	}, [codeError, derivedState.isConnectedToNewRelic]);
 
 	useDidMount(() => {
 		const fetch = () => {
@@ -216,6 +219,9 @@ export function CodeErrorNav(props: Props) {
 	});
 
 	useEffect(() => {
+		if (!derivedState.isConnectedToNewRelic) {
+			return;
+		}
 		if (notFound) {
 			setError({
 				title: "Cannot open Code Error",
@@ -239,12 +245,12 @@ export function CodeErrorNav(props: Props) {
 				}
 			}
 		}
-	}, [notFound, derivedState.currentCodeErrorData]);
+	}, [notFound, derivedState.currentCodeErrorData, derivedState.isConnectedToNewRelic]);
 
 	// if for some reason we have a codemark, don't render anything
 	if (derivedState.currentCodemarkId) return null;
 
-	if (error) {
+	if (!derivedState.isConnectedToNewRelic && error) {
 		// essentially a roadblock
 		return (
 			<Dismissable

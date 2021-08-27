@@ -1,6 +1,7 @@
 package com.codestream.webview
 
 import com.codestream.DEBUG
+import com.codestream.extensions.escapeUnicode
 import com.codestream.system.SPACE_ENCODED
 import com.google.gson.JsonElement
 import com.intellij.ide.BrowserUtil
@@ -110,7 +111,7 @@ class JBCefWebView(val jbCefBrowser: JBCefBrowser, val router: WebViewRouter) : 
     }
 
     override fun postMessage(message: JsonElement) {
-        jbCefBrowser.cefBrowser.executeJavaScript("window.postMessage($message,'*');", jbCefBrowser.cefBrowser.url, 0)
+        jbCefBrowser.cefBrowser.executeJavaScript("window.postMessage(${message.toString().escapeUnicode()},'*');", jbCefBrowser.cefBrowser.url, 0)
     }
 
     override fun focus() {

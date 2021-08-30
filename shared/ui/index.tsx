@@ -100,7 +100,6 @@ import { openPullRequestByUrl } from "./store/providerPullRequests/actions";
 import { updateCapabilities } from "./store/capabilities/actions";
 import { confirmPopup } from "./Stream/Confirm";
 import { switchToTeam } from "./store/session/actions";
-import { ParseStackTraceRequestType } from "@codestream/protocols/agent";
 import { Range } from "vscode-languageserver-types";
 import * as path from "path-browserify";
 import { appendProcessBuffer } from "./store/editorContext/actions";
@@ -508,46 +507,12 @@ function listenForEvents(store) {
 							store.dispatch(setPendingProtocolHandlerUrl({ url: e.url }));
 							break;
 						}
-						const errorGroupId = route.query.errorGroupId;
-						const errorGroupResult = await HostApi.instance.send(GetNewRelicErrorGroupRequestType, {
-							errorGroupId: errorGroupId
-						});
 
-						// TODO consolidate the top and bottom
-
-						// "resolving" the stack trace here gives us two pieces of info for each line of the stack
-						// the info parsed directly from the stack, and the "resolved" info that is specific to the
-						// file the user has currently in their repo ... this position may be different if the user is
-						// on a particular commit ... the "parsed" stack info is considered permanent, the "resolved"
-						// stack info is considered ephemeral, since it only applies to the current user in the current state
-						// resolved line number that gives the full path and line of the
-						const stackInfo = await resolveStackTrace(
-							errorGroupResult.repo,
-							errorGroupResult.sha,
-							errorGroupResult.parsedStack
-						);
-						// if (stackInfo.error) {
-						// 	logWarning(`Unable to resolve stack: ${stackInfo.error}`);
-						// 	return;
-						// }
-						const codeError: NewCodeErrorAttributes = {
-							entityId: errorGroupId,
-							entityType: "ErrorGroup",
-							title: errorGroupResult.errorGroup?.title || "",
-							description: errorGroupResult.errorGroup?.message || "",
-							stackTrace: errorGroupResult.parsedStack.join("\n"),
-							stackInfo: stackInfo.error ? { ...stackInfo, lines: [] } : stackInfo.parsedStackInfo, // storing the permanently parsed stack info
-							providerUrl: route.query.url
-						};
-						const response = (await store.dispatch(createPostAndCodeError(codeError))) as any;
+						// NOTE don't really like this "PENDING" business, but it's something to say we need to CREATE a codeError
 						store.dispatch(
-							setCurrentCodeError(response.codeError.id, {
-								errorGroup: errorGroupResult.errorGroup,
-								repo: errorGroupResult.repo,
-								sha: errorGroupResult.sha,
-								parsedStack: errorGroupResult.parsedStack,
-								warning: stackInfo?.warning,
-								error: stackInfo?.error
+							setCurrentCodeError("PENDING", {
+								pendingErrorGroupId: route.query.errorGroupId,
+								requiresConnection: !isConnected(store.getState(), { id: "newrelic*com" })
 							})
 						);
 

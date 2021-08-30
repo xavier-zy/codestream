@@ -133,13 +133,17 @@ export interface WebviewContext {
 		includeLatestCommit?: boolean;
 		openFirstDiff?: boolean;
 	};
-	currentCodeErrorId?: string;
+	currentCodeErrorId?: "PENDING" | string;
 	currentCodeErrorData?: {
+		// REMOVE BELOW
 		repo?: string;
 		sha?: string;
 		parsedStack?: any;
 		warning?: string;
 		error?: string;
+		// REMOVE ABOVE
+		requiresConnection?: boolean;
+		pendingErrorGroupId?: string;
 	};
 	createPullRequestReviewId?: string;
 	createPullRequestOptions?: NewPullRequestBranch;

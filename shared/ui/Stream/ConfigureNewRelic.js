@@ -22,7 +22,8 @@ class ConfigureNewRelic extends Component {
 		accountId: "",
 		accountIdTouched: false,
 		formTouched: false,
-		showSignupUrl: true
+		showSignupUrl: true,
+		disablePostConnectOnboarding: false
 	};
 
 	state = this.initialState;
@@ -50,21 +51,23 @@ class ConfigureNewRelic extends Component {
 		);
 		this.setState({ loading: true });
 
-		const reposResponse = await HostApi.instance.send(GetReposScmRequestType, {
-			inEditorOnly: true,
-			guessProjectTypes: true
-		});
-		if (!reposResponse.error) {
-			const knownRepo = (reposResponse.repositories || []).find(repo => {
-				return repo.id && repo.projectType !== RepoProjectType.Unknown;
+		if (!this.props.disablePostConnectOnboarding) {
+			const reposResponse = await HostApi.instance.send(GetReposScmRequestType, {
+				inEditorOnly: true,
+				guessProjectTypes: true
 			});
-			if (knownRepo) {
-				this.props.setWantNewRelicOptions(
-					knownRepo.projectType,
-					knownRepo.id,
-					knownRepo.path,
-					knownRepo.projects
-				);
+			if (!reposResponse.error) {
+				const knownRepo = (reposResponse.repositories || []).find(repo => {
+					return repo.id && repo.projectType !== RepoProjectType.Unknown;
+				});
+				if (knownRepo) {
+					this.props.setWantNewRelicOptions(
+						knownRepo.projectType,
+						knownRepo.id,
+						knownRepo.path,
+						knownRepo.projects
+					);
+				}
 			}
 		}
 
@@ -72,7 +75,9 @@ class ConfigureNewRelic extends Component {
 			if (this.props.onSubmited) {
 				this.props.onSubmited(e);
 			}
-			this.props.openPanel(WebviewPanels.OnboardNewRelic);
+			if (!this.props.disablePostConnectOnboarding) {
+				this.props.openPanel(WebviewPanels.OnboardNewRelic);
+			}
 		}, 3000);
 	};
 
@@ -195,7 +200,6 @@ class ConfigureNewRelic extends Component {
 }
 
 const mapStateToProps = ({ providers }) => {
-	// debugger;
 	return { providers };
 };
 

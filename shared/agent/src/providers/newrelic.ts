@@ -239,7 +239,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					nrql: results["error.group.nrql"],
 					source: results["error.group.source"],
 					timestamp: results["timestamp"],
-					entityUrl: `https://staging-one.newrelic.com/redirect/entity/${results["entity.guid"]}`
+					entityUrl: `${this.baseUrl}/redirect/entity/${results["entity.guid"]}`
 				};
 				response = await this.query(
 					`{
@@ -282,6 +282,9 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				Logger.debug("NR:ErrorGroup", {
 					errorGroup: errorGroup
 				});
+				errorGroup.repo = repo;
+				// TODO fix me
+				errorGroup.hasStackTrace = true;
 			}
 
 			return {
@@ -296,7 +299,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				repo: repo,
 				sha: sha,
 				parsedStack: [],
-				errorGroup: {} as any
+				errorGroup: undefined as any
 			};
 		}
 	}

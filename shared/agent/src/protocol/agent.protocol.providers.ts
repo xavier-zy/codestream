@@ -885,12 +885,17 @@ export interface NewRelicErrorGroup {
 
 	hostDisplayName?: string;
 	transactionName?: string;
+
+	hasStackTrace?: boolean;
+	repo?: string;
 }
 
 export interface GetNewRelicErrorGroupResponse {
+	// TODO REMOVE BELOW
 	repo: string;
 	sha: string;
 	parsedStack: string[];
+	// TODO REMOVE ABOVE
 	errorGroup?: NewRelicErrorGroup;
 }
 

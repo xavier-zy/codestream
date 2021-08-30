@@ -5,13 +5,14 @@ import { useDispatch, useSelector, shallowEqual } from "react-redux";
 import { closeAllPanels, setCurrentCodeError } from "@codestream/webview/store/context/actions";
 import { useDidMount } from "@codestream/webview/utilities/hooks";
 import {
-	fetchCodeError,
-	fetchNewRelicErrorGroup
+	fetchNewRelicErrorGroup,
+	NewCodeErrorAttributes,
+	resolveStackTrace
 } from "@codestream/webview/store/codeErrors/actions";
 import { CodeStreamState } from "../store";
 import { getCodeError } from "../store/codeErrors/reducer";
 import { Meta, BigTitle, Header } from "./Codemark/BaseCodemark";
-import { closePanel, markItemRead } from "./actions";
+import { closePanel, createPostAndCodeError, markItemRead } from "./actions";
 import { Dispatch } from "../store/common";
 import { CodeError, BaseCodeErrorHeader, ExpandedAuthor, Description } from "./CodeError";
 import ScrollBox from "./ScrollBox";
@@ -25,7 +26,13 @@ import Dismissable from "./Dismissable";
 import { bootstrapCodeErrors } from "@codestream/webview/store/codeErrors/actions";
 import { DelayedRender } from "../Container/DelayedRender";
 import { Loading } from "../Container/Loading";
-import { CodeErrorPlus, GetNewRelicErrorGroupResponse } from "@codestream/protocols/agent";
+import {
+	GetNewRelicErrorGroupRequestType,
+	GetNewRelicErrorGroupResponse,
+	NewRelicErrorGroup
+} from "@codestream/protocols/agent";
+import { HostApi } from "..";
+import { CSCodeError } from "@codestream/protocols/api";
 
 const NavHeader = styled.div`
 	// flex-grow: 0;
@@ -123,27 +130,40 @@ export type Props = React.PropsWithChildren<{ codeErrorId: string; composeOpen: 
 export function CodeErrorNav(props: Props) {
 	const dispatch = useDispatch<Dispatch | any>();
 	const derivedState = useSelector((state: CodeStreamState) => {
-		const codeError = getCodeError(state.codeErrors, props.codeErrorId) as CodeErrorPlus;
-
 		return {
 			codeErrorStateBootstrapped: state.codeErrors.bootstrapped,
 			currentCodeErrorId: state.context.currentCodeErrorId,
 			currentCodeErrorData: state.context.currentCodeErrorData,
-			codeError,
+			pendingErrorGroupId: state.context.currentCodeErrorData?.pendingErrorGroupId,
+			codeErrors: state.codeErrors,
 			currentCodemarkId: state.context.currentCodemarkId,
-			isConnectedToNewRelic: isConnected(state, { id: "newrelic*com" })
+			isConnectedToNewRelic: isConnected(state, { id: "newrelic*com" }),
+			requiresConnection: state.context.currentCodeErrorData?.requiresConnection
 		};
 	}, shallowEqual);
 
+	const [requiresConnection, setRequiresConnection] = React.useState<boolean | undefined>(
+		undefined
+	);
 	const [isEditing, setIsEditing] = React.useState(false);
-	const [notFound, setNotFound] = React.useState(false);
-	const [lastUpdated, setLastUpdated] = React.useState(new Date());
+
 	const [isLoading, setIsLoading] = React.useState(true);
 	const [error, setError] = React.useState<{ title: string; description: string } | undefined>(
 		undefined
 	);
 
-	const { codeError } = derivedState;
+	const [errorGroup, setErrorGroup] = React.useState<NewRelicErrorGroup | undefined>(undefined);
+
+	const codeError = React.useMemo(() => {
+		if (derivedState.currentCodeErrorId === "PENDING") return undefined;
+
+		const codeError = getCodeError(
+			derivedState.codeErrors,
+			derivedState.currentCodeErrorId!
+		) as CSCodeError;
+
+		return codeError;
+	}, [derivedState.codeErrors, derivedState.currentCodeErrorId, errorGroup]);
 
 	const exit = async () => {
 		// clear out the current code error (set to blank) in the webview
@@ -161,16 +181,15 @@ export function CodeErrorNav(props: Props) {
 	};
 
 	useEffect(() => {
-		if (!codeError) return;
-		if (!derivedState.isConnectedToNewRelic || codeError.errorGroup) {
-			setIsLoading(false);
+		if (!codeError || !codeError.entityId || !derivedState.isConnectedToNewRelic || errorGroup) {
 			return;
 		}
 
+		setIsLoading(true);
+
 		dispatch(fetchNewRelicErrorGroup({ errorGroupId: codeError.entityId! }))
 			.then((result: GetNewRelicErrorGroupResponse) => {
-				if (result?.errorGroup == null) setNotFound(true);
-				(codeError as CodeErrorPlus).errorGroup = result.errorGroup;
+				setErrorGroup(result.errorGroup);
 			})
 			.then(() => {
 				setIsLoading(false);
@@ -179,26 +198,101 @@ export function CodeErrorNav(props: Props) {
 				setIsLoading(false);
 				console.warn(ex);
 			});
-	}, [codeError, derivedState.isConnectedToNewRelic]);
+	}, [codeError]);
 
-	useDidMount(() => {
-		const fetch = () => {
-			if (codeError == null) {
-				dispatch(fetchCodeError(props.codeErrorId)).then(result => {
-					if (result == null) setNotFound(true);
-					markRead();
-				});
-			} else {
-				markRead();
-			}
+	useEffect(() => {
+		if (!errorGroup) return;
+
+		if (!errorGroup.hasStackTrace) {
+			setError({
+				title: "Missing Stack Trace",
+				description:
+					"This error report does not have a stack trace associated with it and cannot be displayed."
+			});
+		} else if (!errorGroup.repo) {
+			setError({
+				title: "Missing Remote URL",
+				description:
+					"This error report does not have a remote URL associated with it and cannot be displayed."
+			});
+		}
+	}, [errorGroup]);
+
+	const onConnected = async () => {
+		if (!derivedState.pendingErrorGroupId) {
+			return;
+		}
+		setIsLoading(true);
+		const errorGroupId = derivedState.pendingErrorGroupId;
+		const errorGroupResult = await HostApi.instance.send(GetNewRelicErrorGroupRequestType, {
+			errorGroupId: errorGroupId!
+		});
+		// "resolving" the stack trace here gives us two pieces of info for each line of the stack
+		// the info parsed directly from the stack, and the "resolved" info that is specific to the
+		// file the user has currently in their repo ... this position may be different if the user is
+		// on a particular commit ... the "parsed" stack info is considered permanent, the "resolved"
+		// stack info is considered ephemeral, since it only applies to the current user in the current state
+		// resolved line number that gives the full path and line of the
+		const stackInfo = (await resolveStackTrace(
+			errorGroupResult.repo,
+			errorGroupResult.sha,
+			errorGroupResult.parsedStack
+		)) as any;
+		const newCodeError: NewCodeErrorAttributes = {
+			entityId: errorGroupId,
+			entityType: "ErrorGroup",
+			title: errorGroupResult.errorGroup?.title || "",
+			description: errorGroupResult.errorGroup?.message || "",
+			stackTrace: errorGroupResult.parsedStack.join("\n"),
+			stackInfo: stackInfo.error ? { ...stackInfo, lines: [] } : stackInfo.parsedStackInfo, // storing the permanently parsed stack info
+			providerUrl: ""
 		};
 
-		if (!derivedState.codeErrorStateBootstrapped) {
-			dispatch(bootstrapCodeErrors()).then(() => {
-				fetch();
-			});
+		if (errorGroupResult?.errorGroup != null) {
+			setErrorGroup(errorGroupResult.errorGroup!);
+		}
+
+		const response = (await dispatch(createPostAndCodeError(newCodeError))) as any;
+		dispatch(
+			setCurrentCodeError(response.codeError.id, {
+				errorGroup: errorGroupResult?.errorGroup,
+				repo: errorGroupResult?.repo,
+				sha: errorGroupResult?.sha,
+				parsedStack: errorGroupResult?.parsedStack,
+				warning: stackInfo?.warning,
+				error: stackInfo?.error
+			})
+		);
+
+		setRequiresConnection(false);
+		setIsLoading(false);
+	};
+
+	useDidMount(() => {
+		if (derivedState.requiresConnection) {
+			setRequiresConnection(derivedState.requiresConnection);
+		} else if (derivedState.pendingErrorGroupId) {
+			onConnected();
 		} else {
-			fetch();
+			const onDidMount = () => {
+				if (codeError) {
+					setIsLoading(false);
+				} else {
+					setError({
+						title: "Cannot open Code Error",
+						description:
+							"This code error was not found. Perhaps it was deleted by the author, or you don't have permission to view it."
+					});
+				}
+				markRead();
+			};
+			if (!derivedState.codeErrorStateBootstrapped) {
+				dispatch(bootstrapCodeErrors()).then(() => {
+					onDidMount();
+				});
+			} else {
+				onDidMount();
+			}
 		}
 
 		// Kind of a HACK leaving this here, BUT...
@@ -218,39 +312,10 @@ export function CodeErrorNav(props: Props) {
 		};
 	});
 
-	useEffect(() => {
-		if (!derivedState.isConnectedToNewRelic) {
-			return;
-		}
-		if (notFound) {
-			setError({
-				title: "Cannot open Code Error",
-				description:
-					"This code error was not found. Perhaps it was deleted by the author, or you don't have permission to view it."
-			});
-		} else {
-			if (derivedState.currentCodeErrorData) {
-				if (!derivedState.currentCodeErrorData.parsedStack) {
-					setError({
-						title: "Missing Stack Trace",
-						description:
-							"This error report does not have a stack trace associated with it and cannot be displayed."
-					});
-				} else if (!derivedState.currentCodeErrorData.repo) {
-					setError({
-						title: "Missing Remote URL",
-						description:
-							"This error report does not have a remote URL associated with it and cannot be displayed."
-					});
-				}
-			}
-		}
-	}, [notFound, derivedState.currentCodeErrorData, derivedState.isConnectedToNewRelic]);
-
 	// if for some reason we have a codemark, don't render anything
 	if (derivedState.currentCodemarkId) return null;
 
-	if (!derivedState.isConnectedToNewRelic && error) {
+	if (error) {
 		// essentially a roadblock
 		return (
 			<Dismissable
@@ -269,7 +334,53 @@ export function CodeErrorNav(props: Props) {
 			</Dismissable>
 		);
 	}
-	if (isLoading) {
+
+	if (requiresConnection) {
+		return (
+			<Root>
+				<div
+					style={{
+						display: "flex",
+						alignItems: "center",
+						width: "100%"
+					}}
+				>
+					<div
+						style={{ marginLeft: "auto", marginRight: "13px", whiteSpace: "nowrap", flexGrow: 0 }}
+					>
+						<Icon
+							className="clickable"
+							name="x"
+							onClick={exit}
+							title="Close View"
+							placement="bottomRight"
+							delay={1}
+						/>
+					</div>
+				</div>
+
+				<div className="embedded-panel">
+					<ConfigureNewRelic
+						headerChildren={
+							<div className="panel-header" style={{ background: "none" }}>
+								<span className="panel-title">Connect to New Relic</span>
+							</div>
+						}
+						disablePostConnectOnboarding={true}
+						showSignupUrl={false}
+						providerId={"newrelic*com"}
+						onClose={e => {
+							dispatch(closeAllPanels());
+						}}
+						onSubmited={async e => {
+							onConnected();
+						}}
+					/>
+				</div>
+			</Root>
+		);
+	}
+	if (isLoading && !codeError) {
 		return (
 			<DelayedRender>
 				<Loading />
@@ -311,93 +422,71 @@ export function CodeErrorNav(props: Props) {
 				</div>
 			</div>
 
-			{!derivedState.isConnectedToNewRelic && (
-				<div className="embedded-panel">
-					<ConfigureNewRelic
-						headerChildren={
-							<div className="panel-header" style={{ background: "none" }}>
-								<span className="panel-title">Connect to New Relic</span>
+			<>
+				<NavHeader id="nav-header">
+					<BaseCodeErrorHeader
+						codeError={codeError!}
+						errorGroup={errorGroup}
+						collapsed={false}
+						setIsEditing={setIsEditing}
+					></BaseCodeErrorHeader>
+				</NavHeader>
+				{props.composeOpen ? null : (
+					<div className="scroll-container">
+						<ScrollBox>
+							<div
+								className="vscroll"
+								id="code-error-container"
+								style={{
+									padding: "0 20px 60px 40px",
+									width: "100%"
+								}}
+							>
+								{/* TODO perhaps consolidate these? */}
+								{derivedState.currentCodeErrorData && derivedState.currentCodeErrorData.warning && (
+									<CodeErrorErrorBox>
+										<Icon name="alert" className="alert" />
+										<div className="message">
+											{derivedState.currentCodeErrorData.warning
+												.split("\n")
+												.map(function(item, key) {
+													return (
+														<div key={"warning_" + key}>
+															{item}
+															<br />
+														</div>
+													);
+												})}
+										</div>
+									</CodeErrorErrorBox>
+								)}
+								{derivedState.currentCodeErrorData && derivedState.currentCodeErrorData.error && (
+									<CodeErrorErrorBox>
+										<Icon name="alert" className="alert" />
+										<div className="message">
+											{derivedState.currentCodeErrorData.error.split("\n").map(function(item, key) {
+												return (
+													<div key={"error_" + key}>
+														{item}
+														<br />
+													</div>
+												);
+											})}
+										</div>
+									</CodeErrorErrorBox>
+								)}
+								<StyledCodeError className="pulse">
+									<CodeError
+										codeError={codeError!}
+										errorGroup={errorGroup}
+										stackFrameClickDisabled={!!derivedState.currentCodeErrorData?.error}
+									/>
+								</StyledCodeError>
 							</div>
-						}
-						showSignupUrl={false}
-						providerId={"newrelic*com"}
-						onClose={e => {
-							dispatch(closeAllPanels());
-						}}
-						onSubmited={e => {
-							// TODO something here?
-							setLastUpdated(new Date());
-						}}
-					/>
-				</div>
-			)}
-			{derivedState.isConnectedToNewRelic && (
-				<>
-					<NavHeader id="nav-header">
-						<BaseCodeErrorHeader
-							codeError={codeError!}
-							collapsed={false}
-							setIsEditing={setIsEditing}
-						></BaseCodeErrorHeader>
-					</NavHeader>
-					{props.composeOpen ? null : (
-						<div className="scroll-container">
-							<ScrollBox>
-								<div
-									className="vscroll"
-									id="code-error-container"
-									style={{
-										padding: "0 20px 60px 40px",
-										width: "100%"
-									}}
-								>
-									{/* TODO perhaps consolidate these? */}
-									{derivedState.currentCodeErrorData && derivedState.currentCodeErrorData.warning && (
-										<CodeErrorErrorBox>
-											<Icon name="alert" className="alert" />
-											<div className="message">
-												{derivedState.currentCodeErrorData.warning
-													.split("\n")
-													.map(function(item, key) {
-														return (
-															<div key={"warning_" + key}>
-																{item}
-																<br />
-															</div>
-														);
-													})}
-											</div>
-										</CodeErrorErrorBox>
-									)}
-									{derivedState.currentCodeErrorData && derivedState.currentCodeErrorData.error && (
-										<CodeErrorErrorBox>
-											<Icon name="alert" className="alert" />
-											<div className="message">
-												{derivedState.currentCodeErrorData.error
-													.split("\n")
-													.map(function(item, key) {
-														return (
-															<div key={"error_" + key}>
-																{item}
-																<br />
-															</div>
-														);
-													})}
-											</div>
-										</CodeErrorErrorBox>
-									)}
-									<StyledCodeError className="pulse">
-										<CodeError
-											codeError={codeError!}
-											stackFrameClickDisabled={!!derivedState.currentCodeErrorData?.error}
-										/>
-									</StyledCodeError>
-								</div>
-							</ScrollBox>
-						</div>
-					)}
-				</>
-			)}
+						</ScrollBox>
+					</div>
+				)}
+			</>
 		</Root>
 	);
 }

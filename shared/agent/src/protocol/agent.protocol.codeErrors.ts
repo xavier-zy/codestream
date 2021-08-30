@@ -111,7 +111,7 @@ export interface SetCodeErrorStatusRequest {
 	status: string;
 }
 export interface SetCodeErrorStatusResponse {
-	codeError: CodeErrorPlus;
+	codeError: CSCodeError;
 }
 export const SetCodeErrorStatusRequestType = new RequestType<
 	SetCodeErrorStatusRequest,

@@ -53,6 +53,7 @@ import { Headshot } from "@codestream/webview/src/components/Headshot";
 import { InlineMenu } from "@codestream/webview/src/components/controls/InlineMenu";
 import { SharingModal } from "../SharingModal";
 import { PROVIDER_MAPPINGS } from "../CrossPostIssueControls/types";
+import { NewRelicErrorGroup } from "@codestream/protocols/agent";
 
 interface SimpleError {
 	/**
@@ -66,7 +67,8 @@ interface SimpleError {
 }
 
 export interface BaseCodeErrorProps extends CardProps {
-	codeError: CodeErrorPlus;
+	codeError: CSCodeError;
+	errrorGroup?: NewRelicErrorGroup;
 	post?: CSPost;
 	repoInfo?: RepoMetadata;
 	headerError?: SimpleError;
@@ -84,7 +86,8 @@ export interface BaseCodeErrorProps extends CardProps {
 }
 
 export interface BaseCodeErrorHeaderProps {
-	codeError: CodeErrorPlus;
+	codeError: CSCodeError;
+	errorGroup?: NewRelicErrorGroup;
 	post?: CSPost;
 	collapsed?: boolean;
 	isFollowing?: boolean;
@@ -94,6 +97,7 @@ export interface BaseCodeErrorHeaderProps {
 
 export interface BaseCodeErrorMenuProps {
 	codeError: CSCodeError;
+	errorGroup?: NewRelicErrorGroup;
 	setIsEditing: Function;
 	collapsed?: boolean;
 }
@@ -189,7 +193,7 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 
 	return (
 		<>
-			{!collapsed && props.codeError.errorGroup && (
+			{!collapsed && props.errorGroup && (
 				<div style={{ display: "flex", justifyContent: "space-between", marginBottom: "10px" }}>
 					<div>
 						{/* TODO get actual service status + color */}
@@ -199,15 +203,15 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 								width: "10px",
 								height: "10px",
 								backgroundColor:
-									ALERT_SEVERITY_COLORS[props.codeError.errorGroup?.entityAlertingSeverity || ""],
+									ALERT_SEVERITY_COLORS[props.errorGroup?.entityAlertingSeverity || ""],
 								margin: "0 5px 0 6px"
 							}}
 						/>
 						<ApmServiceTitle>
 							<Tooltip title="Open on New Relic" placement="bottom" delay={1}>
 								<span>
-									<Link href={props.codeError.errorGroup.entityUrl}>
-										<span className="subtle">{props.codeError.errorGroup.entityName}</span>
+									<Link href={props.errorGroup.entityUrl}>
+										<span className="subtle">{props.errorGroup.entityName}</span>
 									</Link>{" "}
 									<Icon name="link-external" className="open-external"></Icon>
 								</span>
@@ -509,11 +513,12 @@ const BaseCodeError = (props: BaseCodeErrorProps) => {
 			isInVscode: state.ide.name === "VSC",
 			author: state.users[props.codeError.creatorId],
 			codeAuthor: state.users[codeAuthorId || props.codeError.creatorId],
-			codeError
+			codeError,
+			errrorGroup: props.errrorGroup
 		};
 	}, shallowEqual);
 	const renderedFooter = props.renderFooter && props.renderFooter(CardFooter, ComposeWrapper);
-	const { codeError } = derivedState;
+	const { codeError, errrorGroup } = derivedState;
 
 	const [currentSelectedLine, setCurrentSelectedLine] = React.useState(0);
 
@@ -556,6 +561,7 @@ const BaseCodeError = (props: BaseCodeErrorProps) => {
 			{props.collapsed && (
 				<BaseCodeErrorHeader
 					codeError={codeError}
+					errorGroup={errrorGroup}
 					post={props.post}
 					collapsed={props.collapsed}
 					setIsEditing={props.setIsEditing}
@@ -796,7 +802,8 @@ interface PropsWithId extends FromBaseCodeErrorProps {
 }
 
 interface PropsWithCodeError extends FromBaseCodeErrorProps {
-	codeError: CodeErrorPlus;
+	codeError: CSCodeError;
+	errorGroup?: NewRelicErrorGroup;
 }
 
 function isPropsWithId(props: PropsWithId | PropsWithCodeError): props is PropsWithId {

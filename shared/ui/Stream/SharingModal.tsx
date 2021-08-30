@@ -7,9 +7,9 @@ import styled from "styled-components";
 import { Spacer } from "./SpatialView/PRInfoModal";
 import { Button } from "../src/components/Button";
 import {
-	CodeErrorPlus,
 	CodemarkPlus,
 	CreateThirdPartyPostRequestType,
+	NewRelicErrorGroup,
 	ReviewPlus,
 	UpdatePostSharingDataRequestType
 } from "@codestream/protocols/agent";
@@ -24,7 +24,7 @@ import { logError } from "../logger";
 import { useMarkdownifyToHtml } from "./Markdowner";
 import { getConnectedProviders } from "../store/providers/reducer";
 import { capitalize } from "../utils";
-import { CSPost } from "@codestream/protocols/api";
+import { CSCodeError, CSPost } from "@codestream/protocols/api";
 import { Dialog } from "../src/components/Dialog";
 
 const StyledCard = styled(Card)``;
@@ -97,7 +97,8 @@ interface SharingModalProps extends ModalProps {
 	codemark?: CodemarkPlus;
 	post?: CSPost;
 	review?: ReviewPlus;
-	codeError?: CodeErrorPlus;
+	codeError?: CSCodeError;
+	errorGroup?: NewRelicErrorGroup;
 }
 
 export function SharingModal(props: SharingModalProps) {

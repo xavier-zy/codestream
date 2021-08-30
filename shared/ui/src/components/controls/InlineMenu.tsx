@@ -3,7 +3,7 @@ import Menu from "../../../Stream/Menu";
 import styled from "styled-components";
 import Icon from "../../../Stream/Icon";
 
-interface MenuItem {
+export interface MenuItem {
 	label: any;
 	action?: string | (() => void);
 	key?: string;

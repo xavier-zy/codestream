@@ -185,20 +185,15 @@ export function CodeErrorNav(props: Props) {
 			return;
 		}
 
-		setIsLoading(true);
-
-		dispatch(fetchNewRelicErrorGroup({ errorGroupId: codeError.entityId! }))
-			.then((result: GetNewRelicErrorGroupResponse) => {
-				setErrorGroup(result.errorGroup);
-			})
-			.then(() => {
-				setIsLoading(false);
-			})
-			.catch(ex => {
-				setIsLoading(false);
-				console.warn(ex);
-			});
-	}, [codeError]);
+		(async () => {
+			setIsLoading(true);
+			const result: GetNewRelicErrorGroupResponse = await dispatch(
+				fetchNewRelicErrorGroup({ errorGroupId: codeError.entityId! })
+			);
+			setErrorGroup(result.errorGroup);
+			setIsLoading(false);
+		})();
+	}, [codeError, derivedState.isConnectedToNewRelic, errorGroup]);
 
 	useEffect(() => {
 		if (!errorGroup) return;

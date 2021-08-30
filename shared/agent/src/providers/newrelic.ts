@@ -13,7 +13,8 @@ import {
 	SetNewRelicErrorGroupAssigneeResponse,
 	SetNewRelicErrorGroupStateRequest,
 	SetNewRelicErrorGroupStateResponse,
-	ThirdPartyProviderConfig
+	ThirdPartyProviderConfig,
+	GetNewRelicAssigneesRequestType
 } from "../protocol/agent.protocol";
 import { CSMe, CSNewRelicProviderInfo } from "../protocol/api.protocol";
 import { log, lspProvider } from "../system";
@@ -23,6 +24,8 @@ import { InternalError, ReportSuppressedMessages } from "../agentError";
 import { Logger } from "../logger";
 import { lspHandler } from "../system";
 import { CodeStreamSession } from "../session";
+import { SessionContainer } from "../container";
+import { lsp } from "system/decorators/lsp";
 
 @lspProvider("newrelic")
 export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProviderInfo> {
@@ -230,9 +233,11 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				}
 			);
 			const results = response.actor.account.nrql.results[0];
+			let entityId;
 			if (results) {
+				entityId = results["entity.guid"];
 				errorGroup = {
-					entityGuid: results["entity.guid"],
+					entityGuid: entityId,
 					guid: results["error.group.guid"],
 					message: results["error.group.message"],
 					title: results["error.group.name"],
@@ -254,6 +259,39 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				);
 				errorGroup.entityName = response.actor.entity.name;
 				errorGroup.entityAlertingSeverity = response.actor.entity.alertSeverity;
+
+				// TODO below does not work yet
+				const foo = false;
+				if (foo) {
+					const assigneeResults = await this.query(`{
+						actor {
+						  entity(guid: "${entityId}") {
+							... on WorkloadEntity {
+							  guid
+							  name
+							  errorGroup(id: "${errorGroupId}") {
+								assignedUser {
+								  email
+								  gravatar
+								  id
+								  name
+								}
+								state
+								id
+							  }
+							}
+						  }
+						}
+					  }
+					  `);
+					if (assigneeResults) {
+						errorGroup.state = assigneeResults.actor.entity.errorGroup.state;
+						const assignee = assigneeResults.actor.entity.errorGroup.assignedUser;
+						if (assignee) {
+							errorGroup.assignee = assignee;
+						}
+					}
+				}
 
 				// const stackTrace = await this.query(`{
 				// 	actor {
@@ -302,6 +340,40 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				errorGroup: undefined as any
 			};
 		}
+	}
+
+	@lspHandler(GetNewRelicAssigneesRequestType)
+	@log()
+	async getAssignableUsers(request: { boardId: string }) {
+		await this.ensureConnected();
+
+		const { scm } = SessionContainer.instance();
+		const committers = await scm.getLatestCommittersAllRepos();
+		let users: any[] = [];
+		if (committers?.scm) {
+			users = users.concat(
+				Object.keys(committers.scm).map((_: string) => {
+					return {
+						id: _,
+						displayName: _,
+						email: _,
+						group: "GIT"
+					};
+				})
+			);
+		}
+
+		// users.push({
+		// 	id: "a",
+		// 	displayName: "A",
+		// 	email: "a@a.com",
+		// 	avatarUrl: "A",
+		// 	group: "NR"
+		// });
+
+		return {
+			users: users
+		};
 	}
 
 	@log()

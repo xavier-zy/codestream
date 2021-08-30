@@ -1,6 +1,12 @@
 import React, { PropsWithChildren, useEffect } from "react";
 import { CardProps, getCardProps, CardFooter } from "@codestream/webview/src/components/Card";
-import { CodeErrorPlus, FollowCodeErrorRequestType } from "@codestream/protocols/agent";
+import {
+	FetchAssignableUsersRequestType,
+	FetchAssignableUsersResponse,
+	FollowCodeErrorRequestType,
+	GetNewRelicAssigneesRequestType,
+	ThirdPartyProviderUser
+} from "@codestream/protocols/agent";
 import {
 	MinimumWidthCard,
 	Header,
@@ -33,7 +39,7 @@ import styled from "styled-components";
 import { getTeamMates, findMentionedUserIds } from "@codestream/webview/store/users/reducer";
 import { createPost, markItemRead } from "../actions";
 import { getThreadPosts } from "@codestream/webview/store/posts/reducer";
-import { DropdownButton } from "../DropdownButton";
+import { DropdownButton, DropdownButtonItems } from "../DropdownButton";
 import { RepliesToPost } from "../Posts/RepliesToPost";
 import Menu from "../Menu";
 import { confirmPopup } from "../Confirm";
@@ -50,7 +56,7 @@ import Timestamp from "../Timestamp";
 import { Button } from "@codestream/webview/src/components/Button";
 import { ButtonRow } from "@codestream/webview/src/components/Dialog";
 import { Headshot } from "@codestream/webview/src/components/Headshot";
-import { InlineMenu } from "@codestream/webview/src/components/controls/InlineMenu";
+import { InlineMenu, MenuItem } from "@codestream/webview/src/components/controls/InlineMenu";
 import { SharingModal } from "../SharingModal";
 import { PROVIDER_MAPPINGS } from "../CrossPostIssueControls/types";
 import { NewRelicErrorGroup } from "@codestream/protocols/agent";
@@ -188,8 +194,137 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 
 	const [resolveMethod, setResolveMethod] = React.useState("resolve");
 	const resolveCodeError = (status: string) => {};
+	const [items, setItems] = React.useState<MenuItem[]>([]);
+	const [states, setStates] = React.useState<DropdownButtonItems[] | undefined>(undefined);
 
-	const [assignee, setAssignee] = React.useState("pez@codestream.com");
+	//const [assignee, setAssignee] = React.useState("pez@codestream.com");
+	const [assignees, setAssignees] = React.useState<ThirdPartyProviderUser[] | undefined>();
+	let _items: MenuItem[] = [];
+	useDidMount(() => {
+		(async () => {
+			if (collapsed) return;
+
+			const { users } = await HostApi.instance.send(GetNewRelicAssigneesRequestType, {});
+
+			setAssignees(users);
+
+			_items = [{ type: "search", label: "", placeholder: "User name" }];
+
+			if (props.errorGroup && props.errorGroup.assignee) {
+				const a = props.errorGroup.assignee;
+				_items.push({ label: "-" });
+				_items.push({
+					label: (
+						<span style={{ fontSize: "10px", fontWeight: "bold", opacity: 0.7 }}>
+							CURRENT ASSIGNEE
+						</span>
+					),
+					noHover: true,
+					disabled: true
+				});
+				_items.push({
+					icon: <Headshot size={16} display="inline-block" person={{ email: a.email }} />,
+					key: a.email,
+					label: a.name,
+					searchLabel: a.name,
+					subtext: a.email,
+					floatRight: {
+						label: (
+							<Icon
+								name="x"
+								onClick={() => {
+									removeAssignee(a.id);
+								}}
+							/>
+						)
+					},
+					action: () => setAssignee(a.id)
+				});
+			}
+
+			const usersFromGit = users.filter(_ => _.group === "GIT");
+			if (usersFromGit.length) {
+				_items.push({ label: "-" });
+				_items.push({
+					label: (
+						<span style={{ fontSize: "10px", fontWeight: "bold", opacity: 0.7 }}>
+							SUGGESTIONS FROM GIT
+						</span>
+					),
+					noHover: true,
+					disabled: true
+				});
+				_items = _items.concat(
+					usersFromGit.map(_ => {
+						return {
+							icon: <Headshot size={16} display="inline-block" person={{ email: _.email }} />,
+							key: _.id,
+							label: _.displayName,
+							searchLabel: _.displayName,
+							subtext: _.email,
+							//	floatRight: { label: <Icon name="x" /> },
+							action: () => setAssignee(_.id)
+						};
+					})
+				);
+			}
+			const usersFromNr = users.filter(_ => _.group === "NR");
+			if (usersFromNr.length) {
+				_items.push({ label: "-" });
+				_items.push({
+					label: (
+						<span style={{ fontSize: "10px", fontWeight: "bold", opacity: 0.7 }}>
+							OTHER TEAMMATES
+						</span>
+					),
+					noHover: true,
+					disabled: true
+				});
+				_items = _items.concat(
+					usersFromNr.map(_ => {
+						return {
+							icon: <Headshot size={16} display="inline-block" person={{ email: _.email }} />,
+							key: _.id,
+							label: _.displayName,
+							searchLabel: _.displayName,
+							subtext: _.email,
+							//	floatRight: { label: <Icon name="x" /> },
+							action: () => setAssignee(_.id)
+						};
+					})
+				);
+			}
+			setItems(_items);
+		})();
+
+		if (props.errorGroup?.states) {
+			setStates(
+				props.errorGroup?.states.map(_ => {
+					return {
+						key: _,
+						label: _,
+						onSelect: () => setResolveMethod(_),
+						action: () => resolveCodeError(_)
+					};
+					// { label: "-" },
+					// {
+					// 	key: "ignore",
+					// 	label: `Ignore`,
+					// 	onSelect: () => setResolveMethod("IGNORE"),
+					// 	action: () => resolveCodeError("ignore")
+					// }
+				}) as DropdownButtonItems[]
+			);
+		}
+	});
+
+	const setAssignee = React.useCallback(a => {
+		console.warn(a);
+	}, []);
+
+	const removeAssignee = React.useCallback(a => {
+		console.warn(a);
+	}, []);
 
 	return (
 		<>
@@ -220,102 +355,27 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 					</div>
 
 					<div style={{ marginLeft: "auto", alignItems: "center", whiteSpace: "nowrap" }}>
-						<DropdownButton
-							items={[
-								{
-									key: "resolve",
-									label: `Resolve`,
-									onSelect: () => setResolveMethod("RESOLVE"),
-									action: () => resolveCodeError("resolve")
-								},
-								{ label: "-" },
-								{
-									key: "ignore",
-									label: `Ignore`,
-									onSelect: () => setResolveMethod("IGNORE"),
-									action: () => resolveCodeError("ignore")
-								}
-							]}
-							selectedKey={"resolve"}
-							variant="secondary"
-							size="compact"
-							wrap
-						>
-							Unresolved
-						</DropdownButton>
+						{states && (
+							<DropdownButton
+								items={states}
+								selectedKey={"resolve"}
+								variant="secondary"
+								size="compact"
+								wrap
+							>
+								{props.errorGroup.state}
+							</DropdownButton>
+						)}
+
 						<div style={{ display: "inline-block", width: "10px" }} />
-						<InlineMenu
-							items={[
-								{ type: "search", label: "", placeholder: "User name" },
-								{ label: "-" },
-								{
-									label: (
-										<span style={{ fontSize: "10px", fontWeight: "bold", opacity: 0.7 }}>
-											CURRENT ASSIGNEE
-										</span>
-									),
-									noHover: true,
-									disabled: true
-								},
-								{
-									icon: (
-										<Headshot
-											size={16}
-											display="inline-block"
-											person={{ email: "pez@codestream.com" }}
-										/>
-									),
-									key: "pez",
-									label: `Peter Pezaris`,
-									searchLabel: "Peter Pezaris",
-									subtext: "ppezaris@newrelic.com",
-									floatRight: { label: <Icon name="x" /> },
-									action: () => setAssignee("pez@codestream.com")
-								},
-								{ label: "-" },
-								{
-									label: (
-										<span style={{ fontSize: "10px", fontWeight: "bold", opacity: 0.7 }}>
-											SUGGESTIONS FROM GIT
-										</span>
-									),
-									noHover: true,
-									disabled: true
-								},
-								{
-									key: "colin",
-									label: `Colin Stryker`,
-									searchLabel: "Colin Stryker",
-									subtextNoPadding: "cstryker@newrelic.com",
-									action: () => setAssignee("cstryker@newrelic.com")
-								},
-								{
-									key: "dave",
-									label: `David Hersh`,
-									searchLabel: "David Hersh",
-									subtextNoPadding: "dhersh@newrelic.com",
-									action: () => setAssignee("dhersh@newrelic.com")
-								},
-								{ label: "-" },
-								{
-									label: (
-										<span style={{ fontSize: "10px", fontWeight: "bold", opacity: 0.7 }}>
-											OTHER TEAMMATES
-										</span>
-									),
-									noHover: true,
-									disabled: true
-								},
-								{
-									key: "brian",
-									label: `Brian Canzanella`,
-									searchLabel: "Brian Canzanella",
-									subtextNoPadding: "bcanzanella@newrelic.com",
-									action: () => setAssignee("bcanzanella@newrelic.com")
-								}
-							]}
-						>
-							<Headshot size={20} display="inline-block" person={{ email: assignee }} />
+						<InlineMenu items={items}>
+							{props.errorGroup && props.errorGroup.assignee && props.errorGroup.assignee.email && (
+								<Headshot
+									size={20}
+									display="inline-block"
+									person={{ email: props.errorGroup.assignee.email! }}
+								/>
+							)}
 						</InlineMenu>
 						<>
 							{props.post && <AddReactionIcon post={props.post} className="in-review" />}

@@ -883,6 +883,16 @@ export interface NewRelicErrorGroup {
 	source: string;
 	timestamp: number;
 
+	states?: string[];
+	state?: string;
+
+	assignee?: {
+		email: string;
+		gravatar: string;
+		id: number;
+		name: string;
+	};
+
 	hostDisplayName?: string;
 	transactionName?: string;
 
@@ -901,7 +911,7 @@ export interface GetNewRelicErrorGroupResponse {
 
 export interface SetNewRelicErrorGroupAssigneeRequest {
 	errorGroupId: string;
-	userId: string;
+	userId: number;
 }
 
 export interface SetNewRelicErrorGroupAssigneeResponse {}
@@ -919,3 +929,16 @@ export const GetNewRelicErrorGroupRequestType = new RequestType<
 	void,
 	void
 >("codestream/newrelic/errorGroup");
+
+export interface GetNewRelicAssigneesRequest {}
+
+export interface GetNewRelicAssigneesResponse {
+	users: any[];
+}
+
+export const GetNewRelicAssigneesRequestType = new RequestType<
+	GetNewRelicAssigneesRequest,
+	GetNewRelicAssigneesResponse,
+	void,
+	void
+>("codestream/newrelic/assignees");

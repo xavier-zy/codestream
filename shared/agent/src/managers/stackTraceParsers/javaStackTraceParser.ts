@@ -7,7 +7,7 @@ export function Parser(stack: string): CSStackTraceInfo {
 		"^\\tat ((?:(?:[\\d\\w]*\\.)*[\\d\\w]*))\\.([\\d\\w\\$]*)\\.([\\d\\w\\$]*)\\((?:(?:([\\d\\w]*\\.java):(\\d*))|([\\d\\w\\s]*))\\)$"
 	);
 	const lines = stack.split("\n");
-	const stackInfo: CSStackTraceInfo = { lines: [] };
+	const stackInfo: CSStackTraceInfo = { text: stack, lines: [] };
 	stackInfo.header = lines[0];
 	const len = lines.length;
 	for (let i = 1; i < len; i++) {

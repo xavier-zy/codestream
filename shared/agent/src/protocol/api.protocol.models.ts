@@ -279,7 +279,7 @@ export interface CSReview extends CSEntity {
 
 export function isCSCodeError(object: any): object is CSCodeError {
 	const maybeCodeError: Partial<CSCodeError> = object;
-	return maybeCodeError.assignees != null && maybeCodeError.stackTrace != null;
+	return (maybeCodeError as any).stackInfo != null || maybeCodeError.stackTraces != null;
 }
 
 export interface CSCodeErrorResolutions {
@@ -299,6 +299,7 @@ export interface CSStackTraceLine {
 }
 
 export interface CSStackTraceInfo {
+	text?: string;
 	repoId?: string;
 	sha?: string;
 	lines: CSStackTraceLine[];
@@ -308,8 +309,7 @@ export interface CSStackTraceInfo {
 
 export interface CSCodeError extends CSEntity {
 	title: string;
-	stackTrace: string;
-	stackInfo?: CSStackTraceInfo;
+	stackTraces: CSStackTraceInfo[];
 	providerUrl?: string;
 	assignees: string[];
 
@@ -327,9 +327,9 @@ export interface CSCodeError extends CSEntity {
 	codeAuthorIds?: string[];
 	permalink?: string;
 	resolvedAt?: number;
-	entityId?: string;
-	entityType?: "ErrorGroup";
-	entityInfo?: { [key: string]: string[] };
+	objectId?: string;
+	objectType?: "ErrorGroup";
+	objectInfo?: { [key: string]: string[] };
 }
 
 export interface Attachment {

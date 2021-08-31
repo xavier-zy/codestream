@@ -621,8 +621,7 @@ export interface CSCreateCodeErrorResponse {
 
 export interface CSCreateCodeErrorRequest {
 	teamId: string;
-	stackTrace: string;
-	stackInfo?: CSStackTraceInfo;
+	stackTraces: CSStackTraceInfo[];
 	providerUrl?: string;
 	streamId?: string;
 	postId?: string;
@@ -722,7 +721,7 @@ export interface CSUpdateReviewResponse {
 export interface CSUpdateCodeErrorRequest {
 	// edit the status, title or text
 	status?: CSCodeErrorStatus;
-	stackTrace?: string;
+	stackTraces?: CSStackTraceInfo[];
 }
 
 export interface CSUpdateCodeErrorResponse {

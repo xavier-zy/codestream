@@ -1158,15 +1158,16 @@ export function toSlackCodeErrorPostBlocks(
 		});
 	}
 
-	if (codeError.stackTrace) {
+	if (codeError.stackTraces && codeError.stackTraces[0]) {
 		// 9 = ```*2 + ...
-		const contentLength = codeError.stackTrace.length + 9;
+		const stackTrace = codeError.stackTraces[0].text || (codeError as any).stackTrace || "";
+		const contentLength = stackTrace.length + 9;
 		const isTruncated = contentLength > slackBlockTextCodeMax;
 		blocks.push({
 			type: "section",
 			text: {
 				type: "mrkdwn",
-				text: `\`\`\`${codeError.stackTrace.substring(0, slackBlockTextCodeMax - 9)}${
+				text: `\`\`\`${stackTrace.substring(0, slackBlockTextCodeMax - 9)}${
 					isTruncated ? "..." : ""
 				}\`\`\``
 			}

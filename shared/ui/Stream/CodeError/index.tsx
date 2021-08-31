@@ -603,18 +603,23 @@ const BaseCodeError = (props: BaseCodeErrorProps) => {
 	const onClickStackLine = async (event, lineNum) => {
 		event && event.preventDefault();
 		if (props.collapsed) return;
-		const { stackInfo } = codeError;
+		const { stackTraces } = codeError;
+		const stackInfo = (stackTraces && stackTraces[0]) || codeError.stackInfo;
 		if (stackInfo && stackInfo.lines[lineNum] && stackInfo.lines[lineNum].line !== undefined) {
 			setCurrentSelectedLine(lineNum);
 			dispatch(jumpToStackLine(stackInfo.lines[lineNum], stackInfo.sha!, stackInfo.repoId!));
 		}
 	};
 
-	const stackTraceLines = codeError.stackTrace.split("\n");
+	const { stackTraces } = codeError;
+	const stackTrace =
+		(stackTraces && stackTraces[0] && stackTraces[0].text) || codeError.stackTrace || "";
+	const stackTraceLines = stackTrace.split("\n");
 
 	useEffect(() => {
 		if (!props.collapsed) {
-			const { stackInfo } = codeError;
+			const { stackTraces } = codeError;
+			const stackInfo = (stackTraces && stackTraces[0]) || codeError.stackInfo;
 			if (stackInfo?.lines) {
 				// FIXME this should be zero
 				let lineNum = 1;
@@ -692,7 +697,7 @@ const BaseCodeError = (props: BaseCodeErrorProps) => {
 			)}
 
 			<MetaSection>
-				{codeError.stackTrace && (
+				{stackTrace && (
 					<Meta>
 						<MetaLabel>Stack Trace</MetaLabel>
 						{stackTraceLines.map((line, i) => {
@@ -960,7 +965,9 @@ const CodeErrorForCodeError = (props: PropsWithCodeError) => {
 		});
 
 	const repoInfo = React.useMemo(() => {
-		const { stackInfo } = codeError;
+		const { stackTraces } = codeError;
+		let stackInfo = stackTraces && stackTraces[0]; // TODO deal with multiple stacks
+		if (!stackInfo) stackInfo = (codeError as any).stackInfo; // this is for old code, maybe can remove after a while?
 		if (stackInfo && stackInfo.repoId) {
 			const repo = derivedState.repos[stackInfo.repoId];
 			return { repoName: repo.name, branch: stackInfo.sha! };

@@ -6,7 +6,7 @@ import { CSStackTraceInfo } from "../../protocol/api.protocol.models";
 let regex: RegExp;
 
 export function Parser(stack: string): CSStackTraceInfo {
-	const info: CSStackTraceInfo = { lines: [] };
+	const info: CSStackTraceInfo = { text: stack, lines: [] };
 
 	if (!stack) return info;
 

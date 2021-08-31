@@ -182,14 +182,14 @@ export function CodeErrorNav(props: Props) {
 	};
 
 	useEffect(() => {
-		if (!codeError || !codeError.entityId || !derivedState.isConnectedToNewRelic || errorGroup) {
+		if (!codeError || !codeError.objectId || !derivedState.isConnectedToNewRelic || errorGroup) {
 			return;
 		}
 
 		(async () => {
 			setIsLoading(true);
 			const result: GetNewRelicErrorGroupResponse = await dispatch(
-				fetchNewRelicErrorGroup({ errorGroupId: codeError.entityId! })
+				fetchNewRelicErrorGroup({ errorGroupId: codeError.objectId! })
 			);
 			setErrorGroup(result.errorGroup);
 			setIsLoading(false);
@@ -234,13 +234,13 @@ export function CodeErrorNav(props: Props) {
 			errorGroupResult.sha,
 			errorGroupResult.parsedStack
 		)) as any;
+
 		const newCodeError: NewCodeErrorAttributes = {
-			entityId: errorGroupId,
-			entityType: "ErrorGroup",
+			objectId: errorGroupId,
+			objectType: "ErrorGroup",
 			title: errorGroupResult.errorGroup?.title || "",
 			description: errorGroupResult.errorGroup?.message || "",
-			stackTrace: errorGroupResult.parsedStack.join("\n"),
-			stackInfo: stackInfo.error ? { ...stackInfo, lines: [] } : stackInfo.parsedStackInfo, // storing the permanently parsed stack info
+			stackTraces: stackInfo.error ? [{ ...stackInfo, lines: [] }] : [stackInfo.parsedStackInfo!], // storing the permanently parsed stack info
 			providerUrl: ""
 		};
 

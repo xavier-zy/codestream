@@ -5,6 +5,7 @@ import { useDispatch, useSelector, shallowEqual } from "react-redux";
 import { closeAllPanels, setCurrentCodeError } from "@codestream/webview/store/context/actions";
 import { useDidMount } from "@codestream/webview/utilities/hooks";
 import {
+	fetchCodeError,
 	fetchNewRelicErrorGroup,
 	NewCodeErrorAttributes,
 	resolveStackTrace
@@ -273,13 +274,22 @@ export function CodeErrorNav(props: Props) {
 				if (codeError) {
 					setIsLoading(false);
 				} else {
-					setError({
-						title: "Cannot open Code Error",
-						description:
-							"This code error was not found. Perhaps it was deleted by the author, or you don't have permission to view it."
-					});
+					dispatch(fetchCodeError(derivedState.currentCodeErrorId!))
+						.then((_: any) => {
+							if (!_ || !_.payload.length) {
+								setError({
+									title: "Cannot open Code Error",
+									description:
+										"This code error was not found. Perhaps it was deleted by the author, or you don't have permission to view it."
+								});
+							} else {
+								markRead();
+							}
+						})
+						.then(() => {
+							setIsLoading(false);
+						});
 				}
-				markRead();
 			};
 			if (!derivedState.codeErrorStateBootstrapped) {
 				dispatch(bootstrapCodeErrors()).then(() => {

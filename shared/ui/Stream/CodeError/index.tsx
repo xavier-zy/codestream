@@ -196,23 +196,43 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 	const resolveCodeError = (status: string) => {};
 	const [items, setItems] = React.useState<MenuItem[]>([]);
 	const [states, setStates] = React.useState<DropdownButtonItems[] | undefined>(undefined);
-
-	//const [assignee, setAssignee] = React.useState("pez@codestream.com");
 	const [assignees, setAssignees] = React.useState<ThirdPartyProviderUser[] | undefined>();
-	let _items: MenuItem[] = [];
+
 	useDidMount(() => {
 		(async () => {
 			if (collapsed) return;
+
+			if (props.errorGroup?.states) {
+				setStates(
+					props.errorGroup?.states.map(_ => {
+						return {
+							key: _,
+							label: _,
+							onSelect: () => setResolveMethod(_),
+							action: () => resolveCodeError(_)
+						};
+						// { label: "-" },
+						// {
+						// 	key: "ignore",
+						// 	label: `Ignore`,
+						// 	onSelect: () => setResolveMethod("IGNORE"),
+						// 	action: () => resolveCodeError("ignore")
+						// }
+					}) as DropdownButtonItems[]
+				);
+			}
 
 			const { users } = await HostApi.instance.send(GetNewRelicAssigneesRequestType, {});
 
 			setAssignees(users);
 
-			_items = [{ type: "search", label: "", placeholder: "User name" }];
+			let _items: MenuItem[] = [
+				{ type: "search", label: "", placeholder: "User name", key: "search" }
+			];
 
 			if (props.errorGroup && props.errorGroup.assignee) {
 				const a = props.errorGroup.assignee;
-				_items.push({ label: "-" });
+				_items.push({ label: "-", key: "sep-assignee" });
 				_items.push({
 					label: (
 						<span style={{ fontSize: "10px", fontWeight: "bold", opacity: 0.7 }}>
@@ -244,7 +264,7 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 
 			const usersFromGit = users.filter(_ => _.group === "GIT");
 			if (usersFromGit.length) {
-				_items.push({ label: "-" });
+				_items.push({ label: "-", key: "sep-git" });
 				_items.push({
 					label: (
 						<span style={{ fontSize: "10px", fontWeight: "bold", opacity: 0.7 }}>
@@ -270,7 +290,7 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 			}
 			const usersFromNr = users.filter(_ => _.group === "NR");
 			if (usersFromNr.length) {
-				_items.push({ label: "-" });
+				_items.push({ label: "-", key: "sep-nr" });
 				_items.push({
 					label: (
 						<span style={{ fontSize: "10px", fontWeight: "bold", opacity: 0.7 }}>
@@ -296,26 +316,6 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 			}
 			setItems(_items);
 		})();
-
-		if (props.errorGroup?.states) {
-			setStates(
-				props.errorGroup?.states.map(_ => {
-					return {
-						key: _,
-						label: _,
-						onSelect: () => setResolveMethod(_),
-						action: () => resolveCodeError(_)
-					};
-					// { label: "-" },
-					// {
-					// 	key: "ignore",
-					// 	label: `Ignore`,
-					// 	onSelect: () => setResolveMethod("IGNORE"),
-					// 	action: () => resolveCodeError("ignore")
-					// }
-				}) as DropdownButtonItems[]
-			);
-		}
 	});
 
 	const setAssignee = React.useCallback(a => {
@@ -328,34 +328,36 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 
 	return (
 		<>
-			{!collapsed && props.errorGroup && (
+			{!collapsed && (
 				<div style={{ display: "flex", justifyContent: "space-between", marginBottom: "10px" }}>
-					<div>
-						{/* TODO get actual service status + color */}
-						<div
-							style={{
-								display: "inline-block",
-								width: "10px",
-								height: "10px",
-								backgroundColor:
-									ALERT_SEVERITY_COLORS[props.errorGroup?.entityAlertingSeverity || ""],
-								margin: "0 5px 0 6px"
-							}}
-						/>
-						<ApmServiceTitle>
-							<Tooltip title="Open on New Relic" placement="bottom" delay={1}>
-								<span>
-									<Link href={props.errorGroup.entityUrl}>
-										<span className="subtle">{props.errorGroup.entityName}</span>
-									</Link>{" "}
-									<Icon name="link-external" className="open-external"></Icon>
-								</span>
-							</Tooltip>
-						</ApmServiceTitle>
-					</div>
+					{props.errorGroup && (
+						<div>
+							{/* TODO get actual service status + color */}
+							<div
+								style={{
+									display: "inline-block",
+									width: "10px",
+									height: "10px",
+									backgroundColor:
+										ALERT_SEVERITY_COLORS[props.errorGroup?.entityAlertingSeverity || ""],
+									margin: "0 5px 0 6px"
+								}}
+							/>
 
+							<ApmServiceTitle>
+								<Tooltip title="Open Entity on New Relic" placement="bottom" delay={1}>
+									<span>
+										<Link href={props.errorGroup.entityUrl}>
+											<span className="subtle">{props.errorGroup.entityName}</span>
+										</Link>{" "}
+										<Icon name="link-external" className="open-external"></Icon>
+									</span>
+								</Tooltip>
+							</ApmServiceTitle>
+						</div>
+					)}
 					<div style={{ marginLeft: "auto", alignItems: "center", whiteSpace: "nowrap" }}>
-						{states && (
+						{props.errorGroup && states && (
 							<DropdownButton
 								items={states}
 								selectedKey={"resolve"}
@@ -363,20 +365,27 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 								size="compact"
 								wrap
 							>
-								{props.errorGroup.state}
+								{props.errorGroup.state || "Unknown"}
 							</DropdownButton>
 						)}
+						{props.errorGroup && (
+							<>
+								<div style={{ display: "inline-block", width: "10px" }} />
+								<InlineMenu items={items}>
+									<Icon name="person" />
+									{props.errorGroup &&
+										props.errorGroup.assignee &&
+										props.errorGroup.assignee.email && (
+											<Headshot
+												size={20}
+												display="inline-block"
+												person={{ email: props.errorGroup.assignee.email! }}
+											/>
+										)}
+								</InlineMenu>
+							</>
+						)}
 
-						<div style={{ display: "inline-block", width: "10px" }} />
-						<InlineMenu items={items}>
-							{props.errorGroup && props.errorGroup.assignee && props.errorGroup.assignee.email && (
-								<Headshot
-									size={20}
-									display="inline-block"
-									person={{ email: props.errorGroup.assignee.email! }}
-								/>
-							)}
-						</InlineMenu>
 						<>
 							{props.post && <AddReactionIcon post={props.post} className="in-review" />}
 							{props.children || (
@@ -399,12 +408,21 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 						{props.post && <AddReactionIcon post={props.post} className="in-review" />}
 					</HeaderActions>
 					<ApmServiceTitle>
-						<Tooltip title="Open Error on New Relic" placement="bottom" delay={1}>
+						{props.errorGroup?.errorsInboxUrl && (
+							<>
+								<Tooltip title="Open Error on New Relic" placement="bottom" delay={1}>
+									<span>
+										<Link href={props.errorGroup.errorsInboxUrl!}>{props.codeError.title}</Link>{" "}
+										<Icon name="link-external" className="open-external"></Icon>
+									</span>
+								</Tooltip>
+							</>
+						)}
+						{!props.errorGroup?.errorsInboxUrl && (
 							<span>
-								<Link href="#">{props.codeError.title}</Link>{" "}
-								<Icon name="link-external" className="open-external"></Icon>
+								{props.codeError.title} <Icon name="link-external" className="open-external"></Icon>
 							</span>
-						</Tooltip>
+						)}
 					</ApmServiceTitle>
 				</BigTitle>
 			</Header>

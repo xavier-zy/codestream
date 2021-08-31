@@ -875,6 +875,7 @@ export interface NewRelicErrorGroup {
 	entityGuid: string;
 	entityName?: string;
 	entityUrl?: string;
+	errorsInboxUrl?: string;
 	entityAlertingSeverity?: "CRITICAL" | "NOT_ALERTING" | "NOT_CONFIGURED" | "WARNING";
 	guid: string;
 	message: string;

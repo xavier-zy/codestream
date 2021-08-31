@@ -59,6 +59,10 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		}
 	}
 
+	get productUrl() {
+		return Logger.isDebugging ? "https://staging-one.newrelic.com" : "https://one.newrelic.com";
+	}
+
 	get baseUrl() {
 		return this.myUrl;
 	}
@@ -214,6 +218,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				throw new Error("must provide an accountId");
 			}
 
+			// TODO need real values
 			repo = "git@github.com:teamcodestream/codestream-server-demo";
 			sha = "9542e9c702f0879f8407928eb313b33174a7c2b5";
 			let response;
@@ -244,7 +249,8 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					nrql: results["error.group.nrql"],
 					source: results["error.group.source"],
 					timestamp: results["timestamp"],
-					entityUrl: `${this.baseUrl}/redirect/entity/${results["entity.guid"]}`
+					errorsInboxUrl: `${this.productUrl}/redirect/errors-inbox/${errorGroupId}`,
+					entityUrl: `${this.productUrl}/redirect/entity/${results["entity.guid"]}`
 				};
 				response = await this.query(
 					`{
@@ -291,32 +297,32 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 							errorGroup.assignee = assignee;
 						}
 					}
-				}
 
-				// const stackTrace = await this.query(`{
-				// 	actor {
-				// 	  entity(guid: "<entityId>") {
-				// 		... on ApmApplicationEntity {
-				// 		  guid
-				// 		  name
-				// 		  errorTrace(traceId: "<traceId>") {
-				// 			id
-				// 			exceptionClass
-				// 			intrinsicAttributes
-				// 			message
-				// 			path
-				// 			stackTrace {
-				// 			  filepath
-				// 			  line
-				// 			  name
-				// 			  formatted
-				// 			}
-				// 		  }
-				// 		}
-				// 	  }
-				// 	}
-				//   }
-				//   `);
+					const stackTraceResult = await this.query(`{
+					actor {
+					  entity(guid: "<entityId>") {
+						... on ApmApplicationEntity {
+						  guid
+						  name
+						  errorTrace(traceId: "<traceId>") {
+							id
+							exceptionClass
+							intrinsicAttributes
+							message
+							path
+							stackTrace {
+							  filepath
+							  line
+							  name
+							  formatted
+							}
+						  }
+						}
+					  }
+					}
+				  }
+				  `);
+				}
 				Logger.debug("NR:ErrorGroup", {
 					errorGroup: errorGroup
 				});

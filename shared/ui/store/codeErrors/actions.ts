@@ -164,11 +164,17 @@ export const fetchCodeError = (codeErrorId: string) => async dispatch => {
 	if (response.codeError) return dispatch(saveCodeErrors([response.codeError]));
 };
 
-export const resolveStackTrace = (repo: string, sha: string, stackTrace: string[]) => {
+export const resolveStackTrace = (
+	repo: string,
+	sha: string,
+	traceId: string,
+	stackTrace: string[]
+) => {
 	return HostApi.instance.send(ResolveStackTraceRequestType, {
 		stackTrace,
 		repoRemote: repo,
-		sha
+		sha,
+		traceId
 	});
 };
 

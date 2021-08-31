@@ -20,6 +20,7 @@ export const ParseStackTraceRequestType = new RequestType<
 >("codestream/nr/parseStackTrace");
 
 export interface ResolveStackTraceRequest {
+	traceId: string;
 	stackTrace: string[];
 	repoRemote: string;
 	sha: string;

@@ -138,7 +138,8 @@ export const CodeErrorForm = (props: Props = {}) => {
 
 	useDidMount(() => {
 		if (repo && sha) {
-			setResolvedStackPromise(resolveStackTrace(repo, sha, parsedStack));
+			// TODO fix me
+			setResolvedStackPromise(resolveStackTrace(repo, sha, "FIXME", parsedStack));
 		}
 	});
 

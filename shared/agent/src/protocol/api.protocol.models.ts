@@ -299,6 +299,8 @@ export interface CSStackTraceLine {
 }
 
 export interface CSStackTraceInfo {
+	// TODO required??
+	traceId?: string;
 	text?: string;
 	repoId?: string;
 	sha?: string;
@@ -307,9 +309,13 @@ export interface CSStackTraceInfo {
 	error?: string;
 }
 
+export interface CSStackTraceError {
+	error: string;
+}
+
 export interface CSCodeError extends CSEntity {
 	title: string;
-	stackTraces: CSStackTraceInfo[];
+	stackTraces: CSStackTraceInfo[]; // (CSStackTraceInfo | CSStackTraceError)[];
 	providerUrl?: string;
 	assignees: string[];
 

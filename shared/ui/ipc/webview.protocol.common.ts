@@ -144,6 +144,7 @@ export interface WebviewContext {
 		// REMOVE ABOVE
 		requiresConnection?: boolean;
 		pendingErrorGroupId?: string;
+		traceId?: string;
 	};
 	createPullRequestReviewId?: string;
 	createPullRequestOptions?: NewPullRequestBranch;

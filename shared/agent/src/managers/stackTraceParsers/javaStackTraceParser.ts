@@ -14,7 +14,7 @@ export function Parser(stack: string): CSStackTraceInfo {
 		regex = Strings.regexBuilder`
 			^
 			\s*
-			at
+			(at)? // at
 			\s+
 			((?:(?:[\d\w]*\.)*[\d\w]*))\. // package
 			([\d\w\$]*)\. // class
@@ -43,7 +43,7 @@ export function Parser(stack: string): CSStackTraceInfo {
 			regex.lastIndex++;
 		}
 
-		const [, packageName, className, methodName, file, lineText] = m;
+		const [, , packageName, className, methodName, file, lineText] = m;
 		let lineNum: number | undefined = parseInt(lineText, 10);
 		if (isNaN(lineNum)) lineNum = undefined;
 		info.lines.push({

@@ -30,7 +30,8 @@ import { Loading } from "../Container/Loading";
 import {
 	GetNewRelicErrorGroupRequestType,
 	GetNewRelicErrorGroupResponse,
-	NewRelicErrorGroup
+	NewRelicErrorGroup,
+	ResolveStackTraceResponse
 } from "@codestream/protocols/agent";
 import { HostApi } from "..";
 import { CSCodeError } from "@codestream/protocols/api";
@@ -136,6 +137,7 @@ export function CodeErrorNav(props: Props) {
 			currentCodeErrorId: state.context.currentCodeErrorId,
 			currentCodeErrorData: state.context.currentCodeErrorData,
 			pendingErrorGroupId: state.context.currentCodeErrorData?.pendingErrorGroupId,
+			traceId: state.context.currentCodeErrorData?.traceId,
 			codeErrors: state.codeErrors,
 			currentCodemarkId: state.context.currentCodemarkId,
 			isConnectedToNewRelic: isConnected(state, { id: "newrelic*com" }),
@@ -188,8 +190,12 @@ export function CodeErrorNav(props: Props) {
 
 		(async () => {
 			setIsLoading(true);
+
 			const result: GetNewRelicErrorGroupResponse = await dispatch(
-				fetchNewRelicErrorGroup({ errorGroupId: codeError.objectId! })
+				fetchNewRelicErrorGroup({
+					errorGroupId: codeError.objectId!,
+					traceId: codeError.stackTraces[0].traceId!
+				})
 			);
 			setErrorGroup(result.errorGroup);
 			setIsLoading(false);
@@ -221,7 +227,8 @@ export function CodeErrorNav(props: Props) {
 		setIsLoading(true);
 		const errorGroupId = derivedState.pendingErrorGroupId;
 		const errorGroupResult = await HostApi.instance.send(GetNewRelicErrorGroupRequestType, {
-			errorGroupId: errorGroupId!
+			errorGroupId: errorGroupId!,
+			traceId: derivedState.traceId!
 		});
 		// "resolving" the stack trace here gives us two pieces of info for each line of the stack
 		// the info parsed directly from the stack, and the "resolved" info that is specific to the
@@ -232,8 +239,9 @@ export function CodeErrorNav(props: Props) {
 		const stackInfo = (await resolveStackTrace(
 			errorGroupResult.repo,
 			errorGroupResult.sha,
-			errorGroupResult.parsedStack
-		)) as any;
+			derivedState.traceId!,
+			errorGroupResult.errorGroup?.errorTrace!?.stackTrace.map(_ => _.formatted)
+		)) as ResolveStackTraceResponse;
 
 		const newCodeError: NewCodeErrorAttributes = {
 			objectId: errorGroupId,
@@ -254,7 +262,7 @@ export function CodeErrorNav(props: Props) {
 				errorGroup: errorGroupResult?.errorGroup,
 				repo: errorGroupResult?.repo,
 				sha: errorGroupResult?.sha,
-				parsedStack: errorGroupResult?.parsedStack,
+				// parsedStack: errorGroupResult?.parsedStack,
 				warning: stackInfo?.warning,
 				error: stackInfo?.error
 			})

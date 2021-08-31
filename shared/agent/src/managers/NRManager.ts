@@ -90,7 +90,7 @@ export class NRManager {
 		this._dotNetCore = new DotNetCoreInstrumentation(session);
 	}
 
-	// returns info gleaned from parsing a stack trace	
+	// returns info gleaned from parsing a stack trace
 	@lspHandler(ParseStackTraceRequestType)
 	@log()
 	async parseStackTrace({ stackTrace }: ParseStackTraceRequest): Promise<ParseStackTraceResponse> {
@@ -126,11 +126,12 @@ export class NRManager {
 	// given the commit hash of the code for which the stack trace was generated, tries to match each line
 	// of the stack trace with a line in the user's repo, given that the user may be on a different commit
 	@lspHandler(ResolveStackTraceRequestType)
-	@log()	
+	@log()
 	async resolveStackTrace({
 		stackTrace,
 		repoRemote,
-		sha
+		sha,
+		traceId
 	}: ResolveStackTraceRequest): Promise<ResolveStackTraceResponse> {
 		const matchingRepo = await this.getMatchingRepo(repoRemote);
 		if (!matchingRepo) {
@@ -139,7 +140,7 @@ export class NRManager {
 			try {
 				repoName = repoRemote.split("/").reverse()[0];
 			} catch {}
-			repoName = repoName ? repoName + " ": "";
+			repoName = repoName ? repoName + " " : "";
 			return {
 				warning: `Repo ${repoName}not found in your editor. Open it in order to navigate the stack trace.`
 			};
@@ -181,6 +182,7 @@ export class NRManager {
 		}
 		parsedStackInfo.repoId = matchingRepo.id;
 		parsedStackInfo.sha = sha;
+		parsedStackInfo.traceId = traceId;
 
 		const allFilePaths = await this.getAllFiles(matchingRepo.path);
 
@@ -238,7 +240,7 @@ export class NRManager {
 				return { error: "unknown type: " + type, files: [] };
 		}
 	}
-	
+
 	@lspHandler(InstallNewRelicRequestType)
 	@log()
 	async installNewRelic({ type, cwd }: InstallNewRelicRequest): Promise<InstallNewRelicResponse> {
@@ -264,7 +266,7 @@ export class NRManager {
 		}
 		return response;
 	}
-	
+
 	@lspHandler(CreateNewRelicConfigFileRequestType)
 	@log()
 	async createNewRelicConfigFile({
@@ -355,10 +357,10 @@ export class NRManager {
 		const gitRepos = await git.getRepositories();
 		let matchingRepo = undefined;
 
-		const normalizedRepoRemote = await repositoryMappings.normalizeUrl({url: repoRemote});
-		if (normalizedRepoRemote && normalizedRepoRemote.normalizedUrl){
+		const normalizedRepoRemote = await repositoryMappings.normalizeUrl({ url: repoRemote });
+		if (normalizedRepoRemote && normalizedRepoRemote.normalizedUrl) {
 			repoRemote = normalizedRepoRemote.normalizedUrl;
-		} 
+		}
 		for (const gitRepo of gitRepos) {
 			const remotes = await git.getRepoRemotes(gitRepo.path);
 			for (const remote of remotes) {
@@ -378,13 +380,13 @@ export class NRManager {
 					matchingRepo = gitRepo;
 					break;
 				}
-			
-				let normalized = await repositoryMappings.normalizeUrl({url: remoteUri});
+
+				let normalized = await repositoryMappings.normalizeUrl({ url: remoteUri });
 				if (normalized && normalized.normalizedUrl === repoRemote) {
 					matchingRepo = gitRepo;
 					break;
 				}
- 			}
+			}
 		}
 		return matchingRepo;
 	}
@@ -422,7 +424,7 @@ export class NRManager {
 		let mostRepresented: string = "";
 		stackTrace.forEach(line => {
 			const extRe = new RegExp(
-				`\/.+\.(${Object.keys(ExtensionToLanguageMap).join("|")})[^a-zA-Z0-9]`
+				`[\/|\\t].+\.(${Object.keys(ExtensionToLanguageMap).join("|")})[^a-zA-Z0-9]`
 			);
 			const match = line.match(extRe);
 			if (match && match[1]) {

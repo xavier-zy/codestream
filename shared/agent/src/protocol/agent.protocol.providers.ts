@@ -869,13 +869,19 @@ export const GetNewRelicDataRequestType = new RequestType<
 
 export interface GetNewRelicErrorGroupRequest {
 	errorGroupId: string;
+	traceId: string;
 }
 
 export interface NewRelicErrorGroup {
 	entityGuid: string;
+	entityType?: string; //ApmApplicationEntity |
 	entityName?: string;
+
+	traceId?: string;
+
 	entityUrl?: string;
 	errorsInboxUrl?: string;
+
 	entityAlertingSeverity?: "CRITICAL" | "NOT_ALERTING" | "NOT_CONFIGURED" | "WARNING";
 	guid: string;
 	message: string;
@@ -894,6 +900,21 @@ export interface NewRelicErrorGroup {
 		name: string;
 	};
 
+	errorTrace?: {
+		id: string;
+		// exceptionClass: string;
+		// agentAttributes: any;
+		// intrinsicAttributes: any;
+		// message: string;
+		path: string;
+		stackTrace: {
+			filepath?: string;
+			line?: number;
+			name?: string;
+			formatted: string;
+		}[];
+	};
+
 	hostDisplayName?: string;
 	transactionName?: string;
 
@@ -902,10 +923,10 @@ export interface NewRelicErrorGroup {
 }
 
 export interface GetNewRelicErrorGroupResponse {
-	// TODO REMOVE BELOW
 	repo: string;
 	sha: string;
-	parsedStack: string[];
+	// TODO REMOVE BELOW
+	// parsedStack: string[];
 	// TODO REMOVE ABOVE
 	errorGroup?: NewRelicErrorGroup;
 }

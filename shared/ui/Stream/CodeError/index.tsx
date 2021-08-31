@@ -132,6 +132,10 @@ export const Description = styled.div`
 const DisabledClickLine = styled.div`
 	color: var(--text-color);
 	opacity: 0.7;
+	text-align: right;
+	direction: rtl;
+	text-overflow: ellipsis;
+	overflow: hidden;
 `;
 
 const ClickLine = styled.div`
@@ -151,6 +155,10 @@ const ClickLine = styled.div`
 		position: absolute !important;
 		left: -21px;
 	}
+	text-align: right;
+	direction: rtl;
+	text-overflow: ellipsis;
+	overflow: hidden;
 `;
 
 const DataRow = styled.div`
@@ -611,10 +619,11 @@ const BaseCodeError = (props: BaseCodeErrorProps) => {
 		}
 	};
 
-	const { stackTraces } = codeError;
-	const stackTrace =
-		(stackTraces && stackTraces[0] && stackTraces[0].text) || codeError.stackTrace || "";
-	const stackTraceLines = stackTrace.split("\n");
+	const { stackTraces } = codeError as CSCodeError;
+	const stackTrace = stackTraces && stackTraces[0] && stackTraces[0].lines;
+	const stackTraceLines = stackTrace
+		? stackTrace.map(_ => `${_.method}(${_.fileFullPath}:${_.line})`)
+		: [];
 
 	useEffect(() => {
 		if (!props.collapsed) {
@@ -633,7 +642,11 @@ const BaseCodeError = (props: BaseCodeErrorProps) => {
 				}
 				if (lineNum < len) {
 					setCurrentSelectedLine(lineNum);
-					dispatch(jumpToStackLine(stackInfo.lines[lineNum], stackInfo.sha, stackInfo.repoId!));
+					try {
+						dispatch(jumpToStackLine(stackInfo.lines[lineNum], stackInfo.sha, stackInfo.repoId!));
+					} catch (ex) {
+						console.warn(ex);
+					}
 				}
 			}
 		}
@@ -700,26 +713,25 @@ const BaseCodeError = (props: BaseCodeErrorProps) => {
 				{stackTrace && (
 					<Meta>
 						<MetaLabel>Stack Trace</MetaLabel>
-						{stackTraceLines.map((line, i) => {
-							if (i === 0) return null;
-							if (line.includes("processTicksAndRejections")) return;
-							const selected = i === currentSelectedLine;
-							const className = selected ? "monospace selected" : "monospace";
-							const mline = line
-								.replace(/.*codestream-server\//, "")
-								.replace(/\)/, "")
-								.replace(/\s\s\s\s+/g, "     ");
-							return props.stackFrameClickDisabled ? (
-								<DisabledClickLine className="monospace">
-									<span>{mline}</span>
-								</DisabledClickLine>
-							) : (
-								<ClickLine className={className} onClick={e => onClickStackLine(e, i)}>
-									{selected && <Icon name="arrow-right" />}
-									<span>{mline}</span>
-								</ClickLine>
-							);
-						})}
+						<div className="code">
+							{stackTraceLines.map((line, i) => {
+								if (i === 0 || !line) return null;
+								if (line.includes("processTicksAndRejections")) return;
+								const selected = i === currentSelectedLine;
+								const className = selected ? "monospace selected" : "monospace";
+								const mline = line.replace(/\s\s\s\s+/g, "     ");
+								return props.stackFrameClickDisabled ? (
+									<DisabledClickLine className="monospace">
+										<span>{mline}</span>
+									</DisabledClickLine>
+								) : (
+									<ClickLine className={className} onClick={e => onClickStackLine(e, i)}>
+										{selected && <Icon name="arrow-right" />}
+										<span>{mline}</span>
+									</ClickLine>
+								);
+							})}
+						</div>
 					</Meta>
 				)}
 				{props.post && (

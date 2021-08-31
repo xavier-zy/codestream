@@ -191,36 +191,27 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 	async getNewRelicErrorsInboxData(
 		request: GetNewRelicErrorGroupRequest
 	): Promise<GetNewRelicErrorGroupResponse | undefined> {
-		let repo;
-		let sha;
-		let parsedStack: string[] = [];
+		// TODO need real values
+		let repo = "git@github.com:teamcodestream/codestream-server-demo";
+		let sha = "9542e9c702f0879f8407928eb313b33174a7c2b5";
+		//let parsedStack: string[] = [];
 		let errorGroup: NewRelicErrorGroup | undefined = undefined;
 
 		try {
 			await this.ensureConnected();
-			// TODO this is all mocked from the protocol url -- need to actually hit NR here
-			const route = {
-				query: {
-					errorGroupId: "",
-					stack: "",
-					customAttributes: ""
-				}
-			};
-			try {
-				({ repo, sha } = JSON.parse(route.query.customAttributes));
-				parsedStack = route.query.stack ? JSON.parse(route.query.stack) : [];
-			} catch (ex) {
-				Logger.warn("missing repo or sha", { repo, sha });
-			}
+
+			// try {
+			//	({ repo, sha } = JSON.parse(route.query.customAttributes));
+			// 	parsedStack = route.query.stack ? JSON.parse(route.query.stack) : [];
+			// } catch (ex) {
+			// 	Logger.warn("missing repo or sha", { repo, sha });
+			// }
 
 			const accountId = this._providerInfo?.data?.accountId;
 			if (!accountId) {
 				throw new Error("must provide an accountId");
 			}
 
-			// TODO need real values
-			repo = "git@github.com:teamcodestream/codestream-server-demo";
-			sha = "9542e9c702f0879f8407928eb313b33174a7c2b5";
 			let response;
 			const errorGroupId = request.errorGroupId;
 
@@ -266,6 +257,77 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				errorGroup.entityName = response.actor.entity.name;
 				errorGroup.entityAlertingSeverity = response.actor.entity.alertSeverity;
 
+				// if (request.traceId) {
+				// 	const tracesResponse = await this.query(
+				// 		`query fetchErrorsInboxData($accountId:Int!) {
+				// 			actor {
+				// 			  account(id: $accountId) {
+				// 				nrql(query: "FROM ErrorTrace SELECT * WHERE entityGuid = '${entityId}' and message=${results[
+				// 			"error.group.message"
+				// 		].replace(/'/g, "\\'")} LIMIT 2") { results }
+				// 			  }
+				// 			}
+				// 		  }
+				// 		  `,
+				// 		{
+				// 			accountId: parseInt(accountId, 10)
+				// 		}
+				// 	);
+				// 	if (tracesResponse?.actor.account.results) {
+				// 	}
+				// 	// /FROM ErrorTrace SELECT * WHERE entityGuid = 'MzQwMjYyfEFQTXxBUFBMSUNBVElPTnw0MjIxMDk4' LIMIT  1
+				// }
+				errorGroup.errorTrace = {
+					id: "10d5c489-049f-11ec-86ae-0242ac110009_14970_28033",
+					path: "WebTransaction/SpringController/api/urlRules/{accountId}/{applicationId} (GET)",
+					stackTrace: [
+						{
+							formatted:
+								"\torg.springframework.web.servlet.FrameworkServlet.processRequest(FrameworkServlet.java:1013)"
+						},
+						{
+							formatted:
+								"\torg.springframework.web.servlet.FrameworkServlet.doGet(FrameworkServlet.java:897)"
+						},
+						{
+							formatted: "\tjavax.servlet.http.HttpServlet.service(HttpServlet.java:634)"
+						},
+						{
+							formatted:
+								"\torg.springframework.web.servlet.FrameworkServlet.service(FrameworkServlet.java:882)"
+						},
+						{
+							formatted: "\tjavax.servlet.http.HttpServlet.service(HttpServlet.java:741)"
+						},
+						{
+							formatted:
+								"\torg.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:231)"
+						},
+						{
+							formatted:
+								"\torg.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:166)"
+						},
+						{
+							formatted: "\torg.apache.tomcat.websocket.server.WsFilter.doFilter(WsFilter.java:53)"
+						},
+						{
+							formatted:
+								"\torg.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:193)"
+						},
+						{
+							formatted:
+								"\torg.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:166)"
+						},
+						{
+							formatted:
+								"\torg.springframework.boot.actuate.web.trace.servlet.HttpTraceFilter.doFilterInternal(HttpTraceFilter.java:88)"
+						},
+						{
+							formatted:
+								"\torg.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:109)"
+						}
+					]
+				};
 				// TODO below does not work yet
 				const foo = false;
 				if (foo) {
@@ -334,7 +396,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			return {
 				repo,
 				sha,
-				parsedStack,
+
 				errorGroup
 			};
 		} catch (ex) {
@@ -342,7 +404,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			return {
 				repo: repo,
 				sha: sha,
-				parsedStack: [],
+
 				errorGroup: undefined as any
 			};
 		}

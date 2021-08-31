@@ -264,7 +264,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				// 			  account(id: $accountId) {
 				// 				nrql(query: "FROM ErrorTrace SELECT * WHERE entityGuid = '${entityId}' and message=${results[
 				// 			"error.group.message"
-				// 		].replace(/'/g, "\\'")} LIMIT 2") { results }
+				// 		].replace(/'/g, "\\'")} LIMIT 1") { results }
 				// 			  }
 				// 			}
 				// 		  }
@@ -391,12 +391,15 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				errorGroup.repo = repo;
 				// TODO fix me
 				errorGroup.hasStackTrace = true;
+			} else {
+				Logger.log("No results", {
+					request: request
+				});
 			}
 
 			return {
 				repo,
 				sha,
-
 				errorGroup
 			};
 		} catch (ex) {
@@ -404,7 +407,6 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			return {
 				repo: repo,
 				sha: sha,
-
 				errorGroup: undefined as any
 			};
 		}

@@ -720,7 +720,7 @@ const BaseCodeError = (props: BaseCodeErrorProps) => {
 								const selected = i === currentSelectedLine;
 								const className = selected ? "monospace selected" : "monospace";
 								const mline = line.replace(/\s\s\s\s+/g, "     ");
-								return props.stackFrameClickDisabled ? (
+								return props.stackFrameClickDisabled || props.collapsed ? (
 									<DisabledClickLine className="monospace">
 										<span>{mline}</span>
 									</DisabledClickLine>

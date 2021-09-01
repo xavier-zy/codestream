@@ -5,8 +5,6 @@ import com.intellij.ui.EnumComboBoxModel;
 
 import javax.swing.*;
 
-import static com.codestream.settings.ApplicationSettingsServiceKt.API_PROD;
-
 public class CodeStreamConfigurableGUI {
     private JPanel rootPanel;
     private JCheckBox autoSignIn;

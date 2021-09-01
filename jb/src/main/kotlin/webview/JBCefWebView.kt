@@ -29,7 +29,7 @@ class JBCefWebView(val jbCefBrowser: JBCefBrowser, val router: WebViewRouter) : 
         }
 
     }
-    override val component = JBCefWebViewPanel(jbCefBrowser)
+    override val component = jbCefBrowser.component
 
     init {
         logger.info("Initializing JBCef WebView")
@@ -115,7 +115,7 @@ class JBCefWebView(val jbCefBrowser: JBCefBrowser, val router: WebViewRouter) : 
     }
 
     override fun focus() {
-        component.focus()
+        component.grabFocus()
     }
 
     override fun openDevTools() {

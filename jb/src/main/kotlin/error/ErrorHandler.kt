@@ -18,7 +18,7 @@ class ErrorHandler : ErrorReportSubmitter() {
 
     companion object {
         var userLoggedIn: UserLoggedIn? = null
-        private var _consumer: Consumer<SubmittedReportInfo>? = null
+        private var _consumer: Consumer<in SubmittedReportInfo>? = null
         private var _environment: String = "prod"
         var environment: String
             get() = _environment
@@ -59,10 +59,10 @@ class ErrorHandler : ErrorReportSubmitter() {
     }
 
     override fun submit(
-        events: Array<IdeaLoggingEvent>,
+        events: Array<out IdeaLoggingEvent>,
         additionalInfo: String?,
         parentComponent: Component,
-        consumer: Consumer<SubmittedReportInfo>
+        consumer: Consumer<in SubmittedReportInfo>
     ): Boolean {
         _consumer = consumer
 

@@ -71,7 +71,7 @@ idea {
 intellij {
     type "IC"
     // the version parameter dictates which jars will be used at compilation time
-    version "2020.2" // earliest version we support
+    version "2020.3.1" // earliest version we support
     // version "201.5616-EAP-CANDIDATE-SNAPSHOT"
     // version "2019.2.3"
     // version "2019.3"

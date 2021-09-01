@@ -164,6 +164,19 @@ export const fetchCodeError = (codeErrorId: string) => async dispatch => {
 	if (response.codeError) return dispatch(saveCodeErrors([response.codeError]));
 };
 
+/**
+ *  "resolving" the stack trace here gives us two pieces of info for each line of the stack
+ *	the info parsed directly from the stack, and the "resolved" info that is specific to the
+ *	file the user has currently in their repo ... this position may be different if the user is
+ *	on a particular commit ... the "parsed" stack info is considered permanent, the "resolved"
+ *	stack info is considered ephemeral, since it only applies to the current user in the current state
+ *	resolved line number that gives the full path and line of the
+ * @param repo
+ * @param sha
+ * @param traceId
+ * @param stackTrace
+ * @returns ResolveStackTraceResponse
+ */
 export const resolveStackTrace = (
 	repo: string,
 	sha: string,

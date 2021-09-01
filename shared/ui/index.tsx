@@ -509,12 +509,15 @@ function listenForEvents(store) {
 						}
 
 						// NOTE don't really like this "PENDING" business, but it's something to say we need to CREATE a codeError
+						// rationalie is: instead of creating _another_ codeError router-like UI,
+						// just re-use the CodeErrorNav component which already does some work for
+						// directing / opening a codeError
 						store.dispatch(
 							setCurrentCodeError("PENDING", {
 								// TODO fix me
 								traceId: "cd761a0b-03eb-11ec-9b3c-0242ac110012_0_2040",
 								pendingErrorGroupId: route.query.errorGroupId,
-								requiresConnection: !isConnected(store.getState(), { id: "newrelic*com" })
+								pendingRequiresConnection: !isConnected(store.getState(), { id: "newrelic*com" })
 							})
 						);
 

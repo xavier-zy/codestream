@@ -132,45 +132,40 @@ export type Props = React.PropsWithChildren<{ codeErrorId: string; composeOpen: 
 export function CodeErrorNav(props: Props) {
 	const dispatch = useDispatch<Dispatch | any>();
 	const derivedState = useSelector((state: CodeStreamState) => {
-		return {
+		const result = {
 			codeErrorStateBootstrapped: state.codeErrors.bootstrapped,
 			currentCodeErrorId: state.context.currentCodeErrorId,
 			currentCodeErrorData: state.context.currentCodeErrorData,
-			pendingErrorGroupId: state.context.currentCodeErrorData?.pendingErrorGroupId,
-			traceId: state.context.currentCodeErrorData?.traceId,
-			codeErrors: state.codeErrors,
+
+			codeError: state.context.currentCodeErrorId
+				? (getCodeError(state.codeErrors, state.context.currentCodeErrorId) as CSCodeError)
+				: undefined,
 			currentCodemarkId: state.context.currentCodemarkId,
-			isConnectedToNewRelic: isConnected(state, { id: "newrelic*com" }),
-			requiresConnection: state.context.currentCodeErrorData?.requiresConnection
+			isConnectedToNewRelic: isConnected(state, { id: "newrelic*com" })
 		};
+		// console.warn(JSON.stringify(result, null, 4));
+		return result;
 	}, shallowEqual);
 
 	const [requiresConnection, setRequiresConnection] = React.useState<boolean | undefined>(
 		undefined
 	);
 	const [isEditing, setIsEditing] = React.useState(false);
-
 	const [isLoading, setIsLoading] = React.useState(true);
 	const [error, setError] = React.useState<{ title: string; description: string } | undefined>(
 		undefined
 	);
-
 	const [errorGroup, setErrorGroup] = React.useState<NewRelicErrorGroup | undefined>(undefined);
 
-	const codeError = React.useMemo(() => {
-		if (derivedState.currentCodeErrorId === "PENDING") return undefined;
+	const { codeError } = derivedState;
 
-		const codeError = getCodeError(
-			derivedState.codeErrors,
-			derivedState.currentCodeErrorId!
-		) as CSCodeError;
-
-		return codeError;
-	}, [derivedState.codeErrors, derivedState.currentCodeErrorId, errorGroup]);
+	const pendingErrorGroupId = derivedState.currentCodeErrorData?.pendingErrorGroupId;
+	const traceId = derivedState.currentCodeErrorData?.traceId;
+	const pendingRequiresConnection = derivedState.currentCodeErrorData?.pendingRequiresConnection;
 
 	const exit = async () => {
 		// clear out the current code error (set to blank) in the webview
-		await dispatch(setCurrentCodeError());
+		await dispatch(setCurrentCodeError(undefined, undefined));
 		dispatch(closePanel());
 	};
 
@@ -221,61 +216,65 @@ export function CodeErrorNav(props: Props) {
 	}, [errorGroup]);
 
 	const onConnected = async () => {
-		if (!derivedState.pendingErrorGroupId) {
+		console.warn("onConnected starting...");
+		if (!pendingErrorGroupId) {
 			return;
 		}
+		console.warn("onConnected started");
+
 		setIsLoading(true);
-		const errorGroupId = derivedState.pendingErrorGroupId;
-		const errorGroupResult = await HostApi.instance.send(GetNewRelicErrorGroupRequestType, {
-			errorGroupId: errorGroupId!,
-			traceId: derivedState.traceId!
-		});
-		// "resolving" the stack trace here gives us two pieces of info for each line of the stack
-		// the info parsed directly from the stack, and the "resolved" info that is specific to the
-		// file the user has currently in their repo ... this position may be different if the user is
-		// on a particular commit ... the "parsed" stack info is considered permanent, the "resolved"
-		// stack info is considered ephemeral, since it only applies to the current user in the current state
-		// resolved line number that gives the full path and line of the
-		const stackInfo = (await resolveStackTrace(
-			errorGroupResult.repo,
-			errorGroupResult.sha,
-			derivedState.traceId!,
-			errorGroupResult.errorGroup?.errorTrace!?.stackTrace.map(_ => _.formatted)
-		)) as ResolveStackTraceResponse;
+		try {
+			const errorGroupId = pendingErrorGroupId;
+			const errorGroupResult = await HostApi.instance.send(GetNewRelicErrorGroupRequestType, {
+				errorGroupId: errorGroupId!,
+				traceId: traceId!
+			});
 
-		const newCodeError: NewCodeErrorAttributes = {
-			objectId: errorGroupId,
-			objectType: "ErrorGroup",
-			title: errorGroupResult.errorGroup?.title || "",
-			description: errorGroupResult.errorGroup?.message || "",
-			stackTraces: stackInfo.error ? [{ ...stackInfo, lines: [] }] : [stackInfo.parsedStackInfo!], // storing the permanently parsed stack info
-			providerUrl: ""
-		};
+			const stackInfo = (await resolveStackTrace(
+				errorGroupResult.repo,
+				errorGroupResult.sha,
+				traceId!,
+				errorGroupResult.errorGroup?.errorTrace!?.stackTrace.map(_ => _.formatted)
+			)) as ResolveStackTraceResponse;
 
-		if (errorGroupResult?.errorGroup != null) {
-			setErrorGroup(errorGroupResult.errorGroup!);
+			const newCodeError: NewCodeErrorAttributes = {
+				objectId: errorGroupId,
+				objectType: "ErrorGroup",
+				title: errorGroupResult.errorGroup?.title || "",
+				description: errorGroupResult.errorGroup?.message || "",
+				stackTraces: stackInfo.error ? [{ ...stackInfo, lines: [] }] : [stackInfo.parsedStackInfo!], // storing the permanently parsed stack info
+				providerUrl: ""
+			};
+
+			if (errorGroupResult?.errorGroup != null) {
+				setErrorGroup(errorGroupResult.errorGroup!);
+			}
+
+			const response = (await dispatch(createPostAndCodeError(newCodeError))) as any;
+			dispatch(
+				setCurrentCodeError(response.codeError.id, {
+					pendingErrorGroupId: undefined,
+					errorGroup: errorGroupResult?.errorGroup,
+					repo: errorGroupResult?.repo,
+					sha: errorGroupResult?.sha,
+					// parsedStack: errorGroupResult?.parsedStack,
+					warning: stackInfo?.warning,
+					error: stackInfo?.error
+				})
+			);
+		} catch (ex) {
+			console.warn(ex);
+			throw ex;
+		} finally {
+			setRequiresConnection(false);
+			setIsLoading(false);
 		}
-
-		const response = (await dispatch(createPostAndCodeError(newCodeError))) as any;
-		dispatch(
-			setCurrentCodeError(response.codeError.id, {
-				errorGroup: errorGroupResult?.errorGroup,
-				repo: errorGroupResult?.repo,
-				sha: errorGroupResult?.sha,
-				// parsedStack: errorGroupResult?.parsedStack,
-				warning: stackInfo?.warning,
-				error: stackInfo?.error
-			})
-		);
-
-		setRequiresConnection(false);
-		setIsLoading(false);
 	};
 
 	useDidMount(() => {
-		if (derivedState.requiresConnection) {
-			setRequiresConnection(derivedState.requiresConnection);
-		} else if (derivedState.pendingErrorGroupId) {
+		if (pendingRequiresConnection) {
+			setRequiresConnection(pendingRequiresConnection);
+		} else if (pendingErrorGroupId) {
 			onConnected();
 		} else {
 			const onDidMount = () => {

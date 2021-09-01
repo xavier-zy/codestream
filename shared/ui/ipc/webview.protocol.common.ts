@@ -142,7 +142,7 @@ export interface WebviewContext {
 		warning?: string;
 		error?: string;
 		// REMOVE ABOVE
-		requiresConnection?: boolean;
+		pendingRequiresConnection?: boolean;
 		pendingErrorGroupId?: string;
 		traceId?: string;
 	};

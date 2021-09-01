@@ -27,7 +27,6 @@ import { Logger } from "../logger";
 import { lspHandler } from "../system";
 import { CodeStreamSession } from "../session";
 import { SessionContainer } from "../container";
-import { lsp } from "system/decorators/lsp";
 
 @lspProvider("newrelic")
 export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProviderInfo> {

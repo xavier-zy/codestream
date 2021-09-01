@@ -6,7 +6,7 @@ import { closeAllPanels, setCurrentCodeError } from "@codestream/webview/store/c
 import { useDidMount } from "@codestream/webview/utilities/hooks";
 import {
 	fetchCodeError,
-	fetchNewRelicErrorGroup,
+	fetchErrorGroup,
 	NewCodeErrorAttributes,
 	resolveStackTrace,
 	setErrorGroup
@@ -30,7 +30,6 @@ import { DelayedRender } from "../Container/DelayedRender";
 import { Loading } from "../Container/Loading";
 import {
 	GetNewRelicErrorGroupRequestType,
-	GetNewRelicErrorGroupResponse,
 	ResolveStackTraceResponse
 } from "@codestream/protocols/agent";
 import { HostApi } from "..";
@@ -186,20 +185,11 @@ export function CodeErrorNav(props: Props) {
 			return;
 		}
 
-		(async () => {
-			setIsLoading(true);
-
-			const result: GetNewRelicErrorGroupResponse = await dispatch(
-				fetchNewRelicErrorGroup({
-					errorGroupId: codeError.objectId!,
-					traceId: codeError.stackTraces[0].traceId!
-				})
-			);
-			dispatch(setErrorGroup(codeError.objectId!, result.errorGroup));
-			setTimeout(() => {
-				setIsLoading(false);
-			}, 1);
-		})();
+		setIsLoading(true);
+		dispatch(fetchErrorGroup(codeError));
+		setTimeout(() => {
+			setIsLoading(false);
+		}, 1);
 	}, [codeError, derivedState.isConnectedToNewRelic, errorGroup]);
 
 	useEffect(() => {

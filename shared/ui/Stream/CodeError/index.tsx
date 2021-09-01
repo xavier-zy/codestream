@@ -27,6 +27,7 @@ import {
 	api,
 	deleteCodeError,
 	fetchCodeError,
+	fetchErrorGroup,
 	jumpToStackLine
 } from "@codestream/webview/store/codeErrors/actions";
 import { setCurrentCodeError } from "@codestream/webview/store/context/actions";
@@ -444,6 +445,7 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 								<Button variant="secondary">
 									<BaseCodeErrorMenu
 										codeError={codeError}
+										errorGroup={props.errorGroup}
 										collapsed={collapsed}
 										setIsEditing={props.setIsEditing}
 									/>
@@ -499,7 +501,8 @@ export const BaseCodeErrorMenu = (props: BaseCodeErrorMenuProps) => {
 			author: state.users[props.codeError.creatorId],
 			userIsFollowing: (props.codeError.followerIds || []).includes(state.session.userId!)
 		};
-	}, shallowEqual);
+	});
+	const [isLoading, setIsLoading] = React.useState(false);
 	const [menuState, setMenuState] = React.useState<{ open: boolean; target?: any }>({
 		open: false,
 		target: undefined
@@ -510,7 +513,21 @@ export const BaseCodeErrorMenu = (props: BaseCodeErrorMenuProps) => {
 	const permalinkRef = React.useRef<HTMLTextAreaElement>(null);
 
 	const menuItems = React.useMemo(() => {
-		const items: any[] = [
+		let items: any[] = [];
+
+		if (props.errorGroup) {
+			items.push({
+				label: "Refresh",
+				key: "refresh",
+				action: async () => {
+					setIsLoading(true);
+					await dispatch(fetchErrorGroup(props.codeError));
+					setIsLoading(false);
+				}
+			});
+		}
+
+		items = items.concat([
 			{
 				label: "Share",
 				key: "share",
@@ -542,7 +559,7 @@ export const BaseCodeErrorMenu = (props: BaseCodeErrorMenuProps) => {
 					});
 				}
 			}
-		];
+		]);
 
 		if (codeError.creatorId === derivedState.currentUser.id) {
 			items.push({
@@ -570,7 +587,7 @@ export const BaseCodeErrorMenu = (props: BaseCodeErrorMenuProps) => {
 		}
 
 		return items;
-	}, [codeError, collapsed]);
+	}, [codeError, collapsed, props.errorGroup]);
 
 	if (shareModalOpen)
 		return (
@@ -612,7 +629,7 @@ export const BaseCodeErrorMenu = (props: BaseCodeErrorMenuProps) => {
 					}
 				}}
 			>
-				<Icon name="kebab-horizontal" />
+				<Icon loading={isLoading} name="kebab-horizontal" />
 			</KebabIcon>
 			<textarea
 				readOnly

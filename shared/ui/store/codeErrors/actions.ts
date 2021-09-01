@@ -13,7 +13,8 @@ import {
 	UpdateCodeErrorResponse,
 	GetNewRelicErrorGroupRequestType,
 	GetNewRelicErrorGroupRequest,
-	ExecuteThirdPartyTypedType
+	ExecuteThirdPartyTypedType,
+	GetNewRelicErrorGroupResponse
 } from "@codestream/protocols/agent";
 import { logError } from "@codestream/webview/logger";
 import { addStreams } from "../streams/actions";
@@ -236,36 +237,40 @@ export const handleDirectives = (id: string, data: any) =>
 		data
 	});
 
-export const _addProviderError = (providerId: string, id: string, error?: { message: string }) =>
+export const _addProviderError = (
+	providerId: string,
+	errorGroupId: string,
+	error?: { message: string }
+) =>
 	action(CodeErrorsActionsTypes.AddProviderError, {
-		providerId: "newrelic*com",
-		id,
+		providerId: providerId,
+		id: errorGroupId,
 		error
 	});
 
-export const _clearProviderError = (providerId: string, id: string) =>
+export const _clearProviderError = (providerId: string, errorGroupId: string) =>
 	action(CodeErrorsActionsTypes.ClearProviderError, {
-		providerId: "newrelic*com",
-		id,
+		providerId: providerId,
+		id: errorGroupId,
 		undefined
 	});
 
-export const _setErrorGroup = (id: string, data: any) =>
+export const _setErrorGroup = (errorGroupId: string, data: any) =>
 	action(CodeErrorsActionsTypes.SetErrorGroup, {
 		providerId: "newrelic*com",
-		id,
+		id: errorGroupId,
 		data
 	});
 
 export const setProviderError = (
 	providerId: string,
-	id: string,
+	errorGroupId: string,
 	error?: { message: string }
 ) => async (dispatch, getState: () => CodeStreamState) => {
 	try {
-		dispatch(_addProviderError(providerId, id, error));
+		dispatch(_addProviderError(providerId, errorGroupId, error));
 	} catch (error) {
-		logError(`failed to setProviderError: ${error}`, { providerId, id });
+		logError(`failed to setProviderError: ${error}`, { providerId, errorGroupId });
 	}
 };
 
@@ -281,14 +286,35 @@ export const clearProviderError = (
 	}
 };
 
-export const setErrorGroup = (id: string, data?: any) => async (
+export const fetchErrorGroup = (codeError: CSCodeError, traceId?: string) => async (
+	dispatch,
+	getState: () => CodeStreamState
+) => {
+	let objectId;
+	try {
+		// this is an errorGroupId
+		objectId = codeError?.objectId;
+		return dispatch(
+			fetchNewRelicErrorGroup({
+				errorGroupId: objectId!,
+				traceId: traceId || codeError.stackTraces[0].traceId!
+			})
+		).then((result: GetNewRelicErrorGroupResponse) => {
+			dispatch(_setErrorGroup(codeError.objectId!, result.errorGroup));
+		});
+	} catch (error) {
+		logError(`failed to fetchErrorGroup: ${error}`, { objectId });
+	}
+};
+
+export const setErrorGroup = (errorGroupId: string, data?: any) => async (
 	dispatch,
 	getState: () => CodeStreamState
 ) => {
 	try {
-		dispatch(_setErrorGroup(id, data));
+		dispatch(_setErrorGroup(errorGroupId, data));
 	} catch (error) {
-		logError(`failed to _setErrorGroup: ${error}`, { id });
+		logError(`failed to _setErrorGroup: ${error}`, { errorGroupId });
 	}
 };
 
@@ -316,7 +342,7 @@ export const api = <T = any, R = any>(
 			console.warn(`missing errorGroupId for ${method}`);
 			return;
 		}
-		const state = getState();
+		// const state = getState();
 		// const currentPullRequest = state.context.currentPullRequest;
 		// if (!currentPullRequest) {
 		// 	dispatch(
@@ -339,9 +365,9 @@ export const api = <T = any, R = any>(
 			providerId: "newrelic*com",
 			params: params
 		})) as any;
-		if (response && (!options || (options && !options.preventClearError))) {
-			dispatch(clearProviderError(params.errorGroupId, pullRequestId));
-		}
+		// if (response && (!options || (options && !options.preventClearError))) {
+		// 	dispatch(clearProviderError(params.errorGroupId, pullRequestId));
+		// }
 
 		if (response && response.directives) {
 			dispatch(handleDirectives(params.errorGroupId, response.directives));
@@ -380,11 +406,11 @@ export const api = <T = any, R = any>(
 				}
 			}
 		}
-		dispatch(
-			setProviderError(providerId, params.errorGroupId, {
-				message: errorString
-			})
-		);
+		// dispatch(
+		// 	setProviderError(providerId, params.errorGroupId, {
+		// 		message: errorString
+		// 	})
+		// );
 		logError(error, { providerId, pullRequestId, method, message: errorString });
 
 		HostApi.instance.track("ErrorGroup Error", {

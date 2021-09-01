@@ -14,7 +14,9 @@ import {
 	SetNewRelicErrorGroupStateRequest,
 	SetNewRelicErrorGroupStateResponse,
 	ThirdPartyProviderConfig,
-	GetNewRelicAssigneesRequestType
+	GetNewRelicAssigneesRequestType,
+	SetNewRelicErrorGroupAssigneeRequestType,
+	SetNewRelicErrorGroupStateRequestType
 } from "../protocol/agent.protocol";
 import { CSMe, CSNewRelicProviderInfo } from "../protocol/api.protocol";
 import { log, lspProvider } from "../system";
@@ -277,6 +279,8 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				// 	}
 				// 	// /FROM ErrorTrace SELECT * WHERE entityGuid = 'MzQwMjYyfEFQTXxBUFBMSUNBVElPTnw0MjIxMDk4' LIMIT  1
 				// }
+
+				// TODO fix me
 				errorGroup.errorTrace = {
 					id: "10d5c489-049f-11ec-86ae-0242ac110009_14970_28033",
 					path: "WebTransaction/SpringController/api/urlRules/{accountId}/{applicationId} (GET)",
@@ -328,7 +332,11 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 						}
 					]
 				};
-				// TODO below does not work yet
+
+				// TODO fix me
+				errorGroup.state = "Unresolved";
+				errorGroup.states = ["Resolve", "Ignore"];
+				// TODO fix me below does not work yet
 				const foo = false;
 				if (foo) {
 					const assigneeResults = await this.query(`{
@@ -433,6 +441,8 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			);
 		}
 
+		// TODO fix me get users from NR
+
 		// users.push({
 		// 	id: "a",
 		// 	displayName: "A",
@@ -446,8 +456,9 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		};
 	}
 
+	@lspHandler(SetNewRelicErrorGroupAssigneeRequestType)
 	@log()
-	async setNewRelicErrorsInboxAssignee(
+	async setNewRelicErrorsGroupAssignee(
 		request: SetNewRelicErrorGroupAssigneeRequest
 	): Promise<SetNewRelicErrorGroupAssigneeResponse | undefined> {
 		try {
@@ -468,15 +479,20 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					}
 				  }`
 			);
-			return true;
+			return {
+				success: true,
+				// TODO fix me
+				assignee: {}
+			};
 		} catch (ex) {
 			Logger.error(ex);
 			return undefined;
 		}
 	}
 
+	@lspHandler(SetNewRelicErrorGroupStateRequestType)
 	@log()
-	async setNewRelicErrorsInboxState(
+	async setNewRelicErrorGroupState(
 		request: SetNewRelicErrorGroupStateRequest
 	): Promise<SetNewRelicErrorGroupStateResponse | undefined> {
 		try {
@@ -502,7 +518,10 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					state: request.state
 				}
 			);
-			return true;
+			return {
+				success: true,
+				state: request.state
+			};
 		} catch (ex) {
 			Logger.error(ex);
 			return undefined;

@@ -930,21 +930,6 @@ export interface GetNewRelicErrorGroupResponse {
 	// TODO REMOVE ABOVE
 	errorGroup?: NewRelicErrorGroup;
 }
-
-export interface SetNewRelicErrorGroupAssigneeRequest {
-	errorGroupId: string;
-	userId: number;
-}
-
-export interface SetNewRelicErrorGroupAssigneeResponse {}
-
-export interface SetNewRelicErrorGroupStateRequest {
-	errorGroupId: string;
-	state: "RESOLVED" | "UNRESOLVED" | "IGNORED";
-}
-
-export interface SetNewRelicErrorGroupStateResponse {}
-
 export const GetNewRelicErrorGroupRequestType = new RequestType<
 	GetNewRelicErrorGroupRequest,
 	GetNewRelicErrorGroupResponse,
@@ -952,12 +937,42 @@ export const GetNewRelicErrorGroupRequestType = new RequestType<
 	void
 >("codestream/newrelic/errorGroup");
 
-export interface GetNewRelicAssigneesRequest {}
+export interface SetNewRelicErrorGroupAssigneeRequest {
+	errorGroupId: string;
+	userId: number;
+}
 
+export interface SetNewRelicErrorGroupAssigneeResponse {
+	success?: boolean;
+	assignee?: any;
+}
+
+export const SetNewRelicErrorGroupAssigneeRequestType = new RequestType<
+	SetNewRelicErrorGroupAssigneeRequest,
+	SetNewRelicErrorGroupAssigneeResponse,
+	void,
+	void
+>("codestream/newrelic/errorGroup/assignee/set");
+
+export interface SetNewRelicErrorGroupStateRequest {
+	errorGroupId: string;
+	state: "RESOLVED" | "UNRESOLVED" | "IGNORED";
+}
+export interface SetNewRelicErrorGroupStateResponse {
+	success?: boolean;
+	state?: string;
+}
+export const SetNewRelicErrorGroupStateRequestType = new RequestType<
+	SetNewRelicErrorGroupStateRequest,
+	SetNewRelicErrorGroupStateRequest,
+	void,
+	void
+>("codestream/newrelic/errorGroup/state/set");
+
+export interface GetNewRelicAssigneesRequest {}
 export interface GetNewRelicAssigneesResponse {
 	users: any[];
 }
-
 export const GetNewRelicAssigneesRequestType = new RequestType<
 	GetNewRelicAssigneesRequest,
 	GetNewRelicAssigneesResponse,

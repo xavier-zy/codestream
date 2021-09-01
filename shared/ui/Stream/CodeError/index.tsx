@@ -5,6 +5,8 @@ import {
 	FetchAssignableUsersResponse,
 	FollowCodeErrorRequestType,
 	GetNewRelicAssigneesRequestType,
+	SetNewRelicErrorGroupAssigneeRequestType,
+	SetNewRelicErrorGroupStateRequestType,
 	ThirdPartyProviderUser
 } from "@codestream/protocols/agent";
 import {
@@ -186,6 +188,7 @@ const ApmServiceTitle = styled.span`
 	&:hover .open-external {
 		visibility: visible;
 	}
+	padding-left: 5px;
 `;
 
 const ALERT_SEVERITY_COLORS = {
@@ -196,134 +199,153 @@ const ALERT_SEVERITY_COLORS = {
 	WARNING: "#F0B400"
 };
 
+const STATES = {
+	resolve: "RESOLVED",
+	ignore: "IGNORED"
+};
+
 // if child props are passed in, we assume they are the action buttons/menu for the header
 export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeaderProps>) => {
 	const { codeError, collapsed } = props;
-
-	const [resolveMethod, setResolveMethod] = React.useState("resolve");
-	const resolveCodeError = (status: string) => {};
 	const [items, setItems] = React.useState<MenuItem[]>([]);
 	const [states, setStates] = React.useState<DropdownButtonItems[] | undefined>(undefined);
-	const [assignees, setAssignees] = React.useState<ThirdPartyProviderUser[] | undefined>();
 
+	const onSetAssignee = async userId => {
+		if (!props.errorGroup) return;
+
+		const response = await HostApi.instance.send(SetNewRelicErrorGroupAssigneeRequestType, {
+			errorGroupId: props.errorGroup?.guid!,
+			userId: userId
+		});
+		if (response) {
+			props.errorGroup.assignee = response.assignee;
+		}
+	};
+
+	const onLoad = async () => {
+		if (collapsed) return;
+
+		if (props.errorGroup?.states) {
+			setStates(
+				props.errorGroup?.states.map(_ => {
+					return {
+						key: _,
+						label: _,
+						//	onSelect: () => setResolveMethod(_),
+						action: async e => {
+							console.warn("set state", _);
+							if (!props.errorGroup) return;
+
+							const response = await HostApi.instance.send(SetNewRelicErrorGroupStateRequestType, {
+								errorGroupId: props.errorGroup?.guid!,
+								state: STATES[_.toLowerCase()]
+							});
+							if (response) {
+								props.errorGroup.state = response.state;
+							}
+						}
+					};
+				}) as DropdownButtonItems[]
+			);
+		}
+
+		const { users } = await HostApi.instance.send(GetNewRelicAssigneesRequestType, {});
+
+		let _items: MenuItem[] = [
+			{ type: "search", label: "", placeholder: "User name", key: "search" }
+		];
+
+		if (props.errorGroup && props.errorGroup.assignee) {
+			const a = props.errorGroup.assignee;
+			_items.push({ label: "-", key: "sep-assignee" });
+			_items.push({
+				label: (
+					<span style={{ fontSize: "10px", fontWeight: "bold", opacity: 0.7 }}>
+						CURRENT ASSIGNEE
+					</span>
+				),
+				noHover: true,
+				disabled: true
+			});
+			_items.push({
+				icon: <Headshot size={16} display="inline-block" person={{ email: a.email }} />,
+				key: a.email,
+				label: a.name,
+				searchLabel: a.name,
+				subtext: a.email,
+				floatRight: {
+					label: (
+						<Icon
+							name="x"
+							onClick={() => {
+								removeAssignee(a.id);
+							}}
+						/>
+					)
+				},
+				action: () => setAssignee(a.id)
+			});
+		}
+
+		const usersFromGit = users.filter(_ => _.group === "GIT");
+		if (usersFromGit.length) {
+			_items.push({ label: "-", key: "sep-git" });
+			_items.push({
+				label: (
+					<span style={{ fontSize: "10px", fontWeight: "bold", opacity: 0.7 }}>
+						SUGGESTIONS FROM GIT
+					</span>
+				),
+				noHover: true,
+				disabled: true
+			});
+			_items = _items.concat(
+				usersFromGit.map(_ => {
+					return {
+						icon: <Headshot size={16} display="inline-block" person={{ email: _.email }} />,
+						key: _.id,
+						label: _.displayName,
+						searchLabel: _.displayName,
+						subtext: _.email,
+						//	floatRight: { label: <Icon name="x" /> },
+						action: () => onSetAssignee(_.id)
+					};
+				})
+			);
+		}
+		const usersFromNr = users.filter(_ => _.group === "NR");
+		if (usersFromNr.length) {
+			_items.push({ label: "-", key: "sep-nr" });
+			_items.push({
+				label: (
+					<span style={{ fontSize: "10px", fontWeight: "bold", opacity: 0.7 }}>
+						OTHER TEAMMATES
+					</span>
+				),
+				noHover: true,
+				disabled: true
+			});
+			_items = _items.concat(
+				usersFromNr.map(_ => {
+					return {
+						icon: <Headshot size={16} display="inline-block" person={{ email: _.email }} />,
+						key: _.id,
+						label: _.displayName,
+						searchLabel: _.displayName,
+						subtext: _.email,
+						//	floatRight: { label: <Icon name="x" /> },
+						action: () => onSetAssignee(_.id)
+					};
+				})
+			);
+		}
+		setItems(_items);
+	};
+	useEffect(() => {
+		onLoad();
+	}, [props.errorGroup]);
 	useDidMount(() => {
-		(async () => {
-			if (collapsed) return;
-
-			if (props.errorGroup?.states) {
-				setStates(
-					props.errorGroup?.states.map(_ => {
-						return {
-							key: _,
-							label: _,
-							onSelect: () => setResolveMethod(_),
-							action: () => resolveCodeError(_)
-						};
-						// { label: "-" },
-						// {
-						// 	key: "ignore",
-						// 	label: `Ignore`,
-						// 	onSelect: () => setResolveMethod("IGNORE"),
-						// 	action: () => resolveCodeError("ignore")
-						// }
-					}) as DropdownButtonItems[]
-				);
-			}
-
-			const { users } = await HostApi.instance.send(GetNewRelicAssigneesRequestType, {});
-
-			setAssignees(users);
-
-			let _items: MenuItem[] = [
-				{ type: "search", label: "", placeholder: "User name", key: "search" }
-			];
-
-			if (props.errorGroup && props.errorGroup.assignee) {
-				const a = props.errorGroup.assignee;
-				_items.push({ label: "-", key: "sep-assignee" });
-				_items.push({
-					label: (
-						<span style={{ fontSize: "10px", fontWeight: "bold", opacity: 0.7 }}>
-							CURRENT ASSIGNEE
-						</span>
-					),
-					noHover: true,
-					disabled: true
-				});
-				_items.push({
-					icon: <Headshot size={16} display="inline-block" person={{ email: a.email }} />,
-					key: a.email,
-					label: a.name,
-					searchLabel: a.name,
-					subtext: a.email,
-					floatRight: {
-						label: (
-							<Icon
-								name="x"
-								onClick={() => {
-									removeAssignee(a.id);
-								}}
-							/>
-						)
-					},
-					action: () => setAssignee(a.id)
-				});
-			}
-
-			const usersFromGit = users.filter(_ => _.group === "GIT");
-			if (usersFromGit.length) {
-				_items.push({ label: "-", key: "sep-git" });
-				_items.push({
-					label: (
-						<span style={{ fontSize: "10px", fontWeight: "bold", opacity: 0.7 }}>
-							SUGGESTIONS FROM GIT
-						</span>
-					),
-					noHover: true,
-					disabled: true
-				});
-				_items = _items.concat(
-					usersFromGit.map(_ => {
-						return {
-							icon: <Headshot size={16} display="inline-block" person={{ email: _.email }} />,
-							key: _.id,
-							label: _.displayName,
-							searchLabel: _.displayName,
-							subtext: _.email,
-							//	floatRight: { label: <Icon name="x" /> },
-							action: () => setAssignee(_.id)
-						};
-					})
-				);
-			}
-			const usersFromNr = users.filter(_ => _.group === "NR");
-			if (usersFromNr.length) {
-				_items.push({ label: "-", key: "sep-nr" });
-				_items.push({
-					label: (
-						<span style={{ fontSize: "10px", fontWeight: "bold", opacity: 0.7 }}>
-							OTHER TEAMMATES
-						</span>
-					),
-					noHover: true,
-					disabled: true
-				});
-				_items = _items.concat(
-					usersFromNr.map(_ => {
-						return {
-							icon: <Headshot size={16} display="inline-block" person={{ email: _.email }} />,
-							key: _.id,
-							label: _.displayName,
-							searchLabel: _.displayName,
-							subtext: _.email,
-							//	floatRight: { label: <Icon name="x" /> },
-							action: () => setAssignee(_.id)
-						};
-					})
-				);
-			}
-			setItems(_items);
-		})();
+		onLoad();
 	});
 
 	const setAssignee = React.useCallback(a => {
@@ -380,7 +402,11 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 							<>
 								<div style={{ display: "inline-block", width: "10px" }} />
 								<InlineMenu items={items}>
-									<Icon name="person" />
+									{props.errorGroup &&
+										(!props.errorGroup.assignee || !props.errorGroup.assignee.email) && (
+											<Icon name="person" />
+										)}
+
 									{props.errorGroup &&
 										props.errorGroup.assignee &&
 										props.errorGroup.assignee.email && (

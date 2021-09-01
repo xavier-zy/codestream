@@ -9,14 +9,8 @@ import {
 	GetNewRelicErrorGroupRequestType,
 	GetNewRelicErrorGroupResponse,
 	NewRelicConfigurationData,
-	SetNewRelicErrorGroupAssigneeRequest,
-	SetNewRelicErrorGroupAssigneeResponse,
-	SetNewRelicErrorGroupStateRequest,
-	SetNewRelicErrorGroupStateResponse,
 	ThirdPartyProviderConfig,
-	GetNewRelicAssigneesRequestType,
-	SetNewRelicErrorGroupAssigneeRequestType,
-	SetNewRelicErrorGroupStateRequestType
+	GetNewRelicAssigneesRequestType
 } from "../protocol/agent.protocol";
 import { CSMe, CSNewRelicProviderInfo } from "../protocol/api.protocol";
 import { log, lspProvider } from "../system";
@@ -27,6 +21,15 @@ import { Logger } from "../logger";
 import { lspHandler } from "../system";
 import { CodeStreamSession } from "../session";
 import { SessionContainer } from "../container";
+
+export interface Directive {
+	type: "removeAssignee" | "setAssignee" | "setState";
+	data: any;
+}
+
+interface Directives {
+	directives: Directive[];
+}
 
 @lspProvider("newrelic")
 export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProviderInfo> {
@@ -192,21 +195,13 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 	async getNewRelicErrorsInboxData(
 		request: GetNewRelicErrorGroupRequest
 	): Promise<GetNewRelicErrorGroupResponse | undefined> {
-		// TODO need real values
+		// TODO fix me need real values
 		let repo = "git@github.com:teamcodestream/codestream-server-demo";
 		let sha = "9542e9c702f0879f8407928eb313b33174a7c2b5";
-		//let parsedStack: string[] = [];
 		let errorGroup: NewRelicErrorGroup | undefined = undefined;
 
 		try {
 			await this.ensureConnected();
-
-			// try {
-			//	({ repo, sha } = JSON.parse(route.query.customAttributes));
-			// 	parsedStack = route.query.stack ? JSON.parse(route.query.stack) : [];
-			// } catch (ex) {
-			// 	Logger.warn("missing repo or sha", { repo, sha });
-			// }
 
 			const accountId = this._providerInfo?.data?.accountId;
 			if (!accountId) {
@@ -242,7 +237,10 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					source: results["error.group.source"],
 					timestamp: results["timestamp"],
 					errorsInboxUrl: `${this.productUrl}/redirect/errors-inbox/${errorGroupId}`,
-					entityUrl: `${this.productUrl}/redirect/entity/${results["entity.guid"]}`
+					entityUrl: `${this.productUrl}/redirect/entity/${results["entity.guid"]}`,
+					// TODO fix me
+					state: "UNRESOLVED",
+					states: ["RESOLVED", "IGNORED", "UNRESOLVED"]
 				};
 				response = await this.query(
 					`{
@@ -332,9 +330,6 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					]
 				};
 
-				// TODO fix me
-				errorGroup.state = "Unresolved";
-				errorGroup.states = ["Resolve", "Ignore"];
 				// TODO fix me below does not work yet
 				const foo = false;
 				if (foo) {
@@ -455,33 +450,43 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		};
 	}
 
-	@lspHandler(SetNewRelicErrorGroupAssigneeRequestType)
 	@log()
-	async setNewRelicErrorsGroupAssignee(
-		request: SetNewRelicErrorGroupAssigneeRequest
-	): Promise<SetNewRelicErrorGroupAssigneeResponse | undefined> {
+	async setAssignee(request: {
+		errorGroupId: string;
+		userId: number;
+	}): Promise<Directives | undefined> {
 		try {
 			await this.ensureConnected();
-			const response = await this.query(
-				`mutation {
-					errorTrackingAssignErrorGroup(id: "${request.errorGroupId}", assignment: {userId: ${request.userId}}) {
-					  errors {
-						description
-						type
-					  }
-					  assignedUser {
-						email
-						gravatar
-						id
-						name
-					  }
-					}
-				  }`
-			);
+			// TODO fix me
+			// const response = await this.query(
+			// 	`mutation {
+			// 		errorTrackingAssignErrorGroup(id: "${request.errorGroupId}", assignment: {userId: ${request.userId}}) {
+			// 		  errors {
+			// 			description
+			// 			type
+			// 		  }
+			// 		  assignedUser {
+			// 			email
+			// 			gravatar
+			// 			id
+			// 			name
+			// 		  }
+			// 		}
+			// 	  }`
+			// );
 			return {
-				success: true,
-				// TODO fix me
-				assignee: {}
+				directives: [
+					{
+						type: "setAssignee",
+						data: {
+							assignee: {
+								email: "cheese@cheese.com",
+								id: 1,
+								name: "cheese"
+							}
+						}
+					}
+				]
 			};
 		} catch (ex) {
 			Logger.error(ex);
@@ -489,37 +494,82 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		}
 	}
 
-	@lspHandler(SetNewRelicErrorGroupStateRequestType)
 	@log()
-	async setNewRelicErrorGroupState(
-		request: SetNewRelicErrorGroupStateRequest
-	): Promise<SetNewRelicErrorGroupStateResponse | undefined> {
+	async removeAssignee(request: { errorGroupId: string }): Promise<Directives | undefined> {
 		try {
 			await this.ensureConnected();
-			const response = await this.mutate<{
-				errorTrackingUpdateErrorGroupState: {
-					error?: any;
-					state?: string;
-				};
-			}>(
-				`mutation setState($errorGroupId:ID!, $state:ErrorTrackingErrorGroupState) {
-					errorTrackingUpdateErrorGroupState(id: 
-					  $errorGroupId, state: {state: $state}) {
-					  state
-					  errors {
-						description
-						type
-					  }
-					}
-				  }`,
-				{
-					errorGroupId: request.errorGroupId,
-					state: request.state
-				}
-			);
+			// TODO fix me
+			// const response = await this.query(
+			// 	`mutation {
+			// 		errorTrackingAssignErrorGroup(id: "${request.errorGroupId}", assignment: {userId: ${request.userId}}) {
+			// 		  errors {
+			// 			description
+			// 			type
+			// 		  }
+			// 		  assignedUser {
+			// 			email
+			// 			gravatar
+			// 			id
+			// 			name
+			// 		  }
+			// 		}
+			// 	  }`
+			// );
 			return {
-				success: true,
-				state: request.state
+				directives: [
+					{
+						type: "removeAssignee",
+						data: {
+							assignee: null
+						}
+					}
+				]
+			};
+		} catch (ex) {
+			Logger.error(ex);
+			return undefined;
+		}
+	}
+
+	@log()
+	async setState(request: {
+		errorGroupId: string;
+		state: string;
+	}): Promise<Directives | undefined> {
+		try {
+			await this.ensureConnected();
+
+			// "RESOLVED" | "UNRESOLVED" | "IGNORED"
+			// const response = await this.mutate<{
+			// 	errorTrackingUpdateErrorGroupState: {
+			// 		error?: any;
+			// 		state?: string;
+			// 	};
+			// }>(
+			// 	`mutation setState($errorGroupId:ID!, $state:ErrorTrackingErrorGroupState) {
+			// 		errorTrackingUpdateErrorGroupState(id:
+			// 		  $errorGroupId, state: {state: $state}) {
+			// 		  state
+			// 		  errors {
+			// 			description
+			// 			type
+			// 		  }
+			// 		}
+			// 	  }`,
+			// 	{
+			// 		errorGroupId: request.errorGroupId,
+			// 		state: request.state
+			// 	}
+			// );
+			return {
+				directives: [
+					{
+						type: "setState",
+						data: {
+							state: request.state
+						}
+					}
+				]
 			};
 		} catch (ex) {
 			Logger.error(ex);

@@ -6,10 +6,24 @@ export enum CodeErrorsActionsTypes {
 	SaveCodeErrors = "@codeErrors/SaveCodeErrors",
 	UpdateCodeErrors = "@codeErrors/UpdateCodeErrors",
 	Delete = "@codeErrors/Delete",
-	Bootstrap = "@codeErrors/Bootstrap"
+	Bootstrap = "@codeErrors/Bootstrap",
+	HandleDirectives = "@codeErrors/HandleDirectives",
+	AddProviderError = "@codeErrors/AddError",
+	ClearProviderError = "@codeErrors/ClearError",
+	SetErrorGroup = "@codeError/SetErrorGroup"
 }
 
 export type CodeErrorsState = {
 	bootstrapped: boolean;
 	codeErrors: Index<CSCodeError>;
+	errorGroups: Index<{
+		id: string;
+		error?: string;
+		errorGroup: {
+			id: string;
+			// TODO fix me get the real object type
+			assignee?: any;
+			state?: any;
+		};
+	}>;
 };

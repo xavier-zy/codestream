@@ -1,13 +1,8 @@
 import React, { PropsWithChildren, useEffect } from "react";
 import { CardProps, getCardProps, CardFooter } from "@codestream/webview/src/components/Card";
 import {
-	FetchAssignableUsersRequestType,
-	FetchAssignableUsersResponse,
 	FollowCodeErrorRequestType,
-	GetNewRelicAssigneesRequestType,
-	SetNewRelicErrorGroupAssigneeRequestType,
-	SetNewRelicErrorGroupStateRequestType,
-	ThirdPartyProviderUser
+	GetNewRelicAssigneesRequestType
 } from "@codestream/protocols/agent";
 import {
 	MinimumWidthCard,
@@ -29,13 +24,14 @@ import { replaceHtml, emptyArray } from "@codestream/webview/utils";
 import { useDidMount } from "@codestream/webview/utilities/hooks";
 import { HostApi } from "../..";
 import {
+	api,
 	deleteCodeError,
 	fetchCodeError,
 	jumpToStackLine
 } from "@codestream/webview/store/codeErrors/actions";
 import { setCurrentCodeError } from "@codestream/webview/store/context/actions";
 import { DelayedRender } from "@codestream/webview/Container/DelayedRender";
-import { getCodeError } from "@codestream/webview/store/codeErrors/reducer";
+import { getCodeError, getErrorGroup } from "@codestream/webview/store/codeErrors/reducer";
 import MessageInput, { AttachmentField } from "../MessageInput";
 import styled from "styled-components";
 import { getTeamMates, findMentionedUserIds } from "@codestream/webview/store/users/reducer";
@@ -199,57 +195,80 @@ const ALERT_SEVERITY_COLORS = {
 	WARNING: "#F0B400"
 };
 
-const STATES = {
-	resolve: "RESOLVED",
-	ignore: "IGNORED"
+/**
+ * States are from NR
+ */
+const STATES_TO_ACTION_STRINGS = {
+	RESOLVED: "Resolve",
+	IGNORED: "Ignore",
+	UNRESOLVED: "Unresolve"
+};
+/**
+ * States are from NR
+ */
+const STATES_TO_DISPLAY_STRINGS = {
+	RESOLVED: "Resolved",
+	IGNORED: "Ignored",
+	UNRESOLVED: "Unresolved"
 };
 
 // if child props are passed in, we assume they are the action buttons/menu for the header
 export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeaderProps>) => {
 	const { codeError, collapsed } = props;
+	const dispatch = useDispatch();
 	const [items, setItems] = React.useState<MenuItem[]>([]);
 	const [states, setStates] = React.useState<DropdownButtonItems[] | undefined>(undefined);
 
 	const onSetAssignee = async userId => {
 		if (!props.errorGroup) return;
 
-		const response = await HostApi.instance.send(SetNewRelicErrorGroupAssigneeRequestType, {
-			errorGroupId: props.errorGroup?.guid!,
-			userId: userId
-		});
-		if (response) {
-			props.errorGroup.assignee = response.assignee;
-		}
+		dispatch(
+			api("setAssignee", {
+				errorGroupId: props.errorGroup?.guid!,
+				userId: userId
+			})
+		);
 	};
 
-	const onLoad = async () => {
-		if (collapsed) return;
+	const onRemoveAssignee = async (e: React.SyntheticEvent<Element, Event>, userId) => {
+		if (!props.errorGroup) return;
+		// dont allow this to bubble to the parent item which would call setAssignee
+		e.stopPropagation();
 
-		if (props.errorGroup?.states) {
-			setStates(
-				props.errorGroup?.states.map(_ => {
+		dispatch(
+			api("removeAssignee", {
+				errorGroupId: props.errorGroup?.guid!,
+				userId: userId
+			})
+		);
+	};
+
+	const buildStates = () => {
+		if (collapsed || !props.errorGroup?.states) return;
+
+		// only show states that aren't the current state
+		setStates(
+			props.errorGroup?.states
+				.filter(_ => (props.errorGroup?.state ? _ !== props.errorGroup.state : true))
+				.map(_ => {
 					return {
 						key: _,
-						label: _,
-						//	onSelect: () => setResolveMethod(_),
+						label: STATES_TO_ACTION_STRINGS[_],
 						action: async e => {
-							console.warn("set state", _);
-							if (!props.errorGroup) return;
-
-							const response = await HostApi.instance.send(SetNewRelicErrorGroupStateRequestType, {
-								errorGroupId: props.errorGroup?.guid!,
-								state: STATES[_.toLowerCase()]
-							});
-							if (response) {
-								props.errorGroup.state = response.state;
-							}
+							dispatch(
+								api("setState", {
+									errorGroupId: props.errorGroup?.guid!,
+									state: _
+								})
+							);
 						}
 					};
 				}) as DropdownButtonItems[]
-			);
-		}
+		);
+	};
 
-		const { users } = await HostApi.instance.send(GetNewRelicAssigneesRequestType, {});
+	const buildAssignees = async () => {
+		if (collapsed) return;
 
 		let _items: MenuItem[] = [
 			{ type: "search", label: "", placeholder: "User name", key: "search" }
@@ -277,15 +296,16 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 					label: (
 						<Icon
 							name="x"
-							onClick={() => {
-								removeAssignee(a.id);
+							onClick={e => {
+								onRemoveAssignee(e, a.id);
 							}}
 						/>
 					)
-				},
-				action: () => setAssignee(a.id)
+				}
 			});
 		}
+
+		const { users } = await HostApi.instance.send(GetNewRelicAssigneesRequestType, {});
 
 		const usersFromGit = users.filter(_ => _.group === "GIT");
 		if (usersFromGit.length) {
@@ -307,7 +327,6 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 						label: _.displayName,
 						searchLabel: _.displayName,
 						subtext: _.email,
-						//	floatRight: { label: <Icon name="x" /> },
 						action: () => onSetAssignee(_.id)
 					};
 				})
@@ -333,7 +352,6 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 						label: _.displayName,
 						searchLabel: _.displayName,
 						subtext: _.email,
-						//	floatRight: { label: <Icon name="x" /> },
 						action: () => onSetAssignee(_.id)
 					};
 				})
@@ -341,20 +359,21 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 		}
 		setItems(_items);
 	};
+
 	useEffect(() => {
-		onLoad();
-	}, [props.errorGroup]);
+		buildAssignees();
+	}, [props.errorGroup, props.errorGroup?.assignee]);
+
+	useEffect(() => {
+		buildStates();
+	}, [props.errorGroup, props.errorGroup?.state]);
+
 	useDidMount(() => {
-		onLoad();
+		if (collapsed) return;
+
+		buildStates();
+		buildAssignees();
 	});
-
-	const setAssignee = React.useCallback(a => {
-		console.warn(a);
-	}, []);
-
-	const removeAssignee = React.useCallback(a => {
-		console.warn(a);
-	}, []);
 
 	return (
 		<>
@@ -362,7 +381,6 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 				<div style={{ display: "flex", justifyContent: "space-between", marginBottom: "10px" }}>
 					{props.errorGroup && (
 						<div>
-							{/* TODO get actual service status + color */}
 							<div
 								style={{
 									display: "inline-block",
@@ -390,12 +408,12 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 						{props.errorGroup && states && (
 							<DropdownButton
 								items={states}
-								selectedKey={"resolve"}
+								selectedKey={props.errorGroup.state}
 								variant="secondary"
 								size="compact"
 								wrap
 							>
-								{props.errorGroup.state || "Unknown"}
+								{STATES_TO_DISPLAY_STRINGS[props.errorGroup.state!]}
 							</DropdownButton>
 						)}
 						{props.errorGroup && (

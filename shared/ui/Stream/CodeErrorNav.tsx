@@ -1,17 +1,18 @@
 import React from "react";
 import { useEffect } from "react";
 import styled from "styled-components";
-import { useDispatch, useSelector, shallowEqual } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { closeAllPanels, setCurrentCodeError } from "@codestream/webview/store/context/actions";
 import { useDidMount } from "@codestream/webview/utilities/hooks";
 import {
 	fetchCodeError,
 	fetchNewRelicErrorGroup,
 	NewCodeErrorAttributes,
-	resolveStackTrace
+	resolveStackTrace,
+	setErrorGroup
 } from "@codestream/webview/store/codeErrors/actions";
 import { CodeStreamState } from "../store";
-import { getCodeError } from "../store/codeErrors/reducer";
+import { getCodeError, getErrorGroup } from "../store/codeErrors/reducer";
 import { Meta, BigTitle, Header } from "./Codemark/BaseCodemark";
 import { closePanel, createPostAndCodeError, markItemRead } from "./actions";
 import { Dispatch } from "../store/common";
@@ -30,7 +31,6 @@ import { Loading } from "../Container/Loading";
 import {
 	GetNewRelicErrorGroupRequestType,
 	GetNewRelicErrorGroupResponse,
-	NewRelicErrorGroup,
 	ResolveStackTraceResponse
 } from "@codestream/protocols/agent";
 import { HostApi } from "..";
@@ -132,20 +132,24 @@ export type Props = React.PropsWithChildren<{ codeErrorId: string; composeOpen: 
 export function CodeErrorNav(props: Props) {
 	const dispatch = useDispatch<Dispatch | any>();
 	const derivedState = useSelector((state: CodeStreamState) => {
+		const codeError = state.context.currentCodeErrorId
+			? (getCodeError(state.codeErrors, state.context.currentCodeErrorId) as CSCodeError)
+			: undefined;
+		const errorGroup = getErrorGroup(state.codeErrors, codeError);
+
 		const result = {
 			codeErrorStateBootstrapped: state.codeErrors.bootstrapped,
 			currentCodeErrorId: state.context.currentCodeErrorId,
 			currentCodeErrorData: state.context.currentCodeErrorData,
 
-			codeError: state.context.currentCodeErrorId
-				? (getCodeError(state.codeErrors, state.context.currentCodeErrorId) as CSCodeError)
-				: undefined,
+			codeError: codeError,
 			currentCodemarkId: state.context.currentCodemarkId,
-			isConnectedToNewRelic: isConnected(state, { id: "newrelic*com" })
+			isConnectedToNewRelic: isConnected(state, { id: "newrelic*com" }),
+			errorGroup: errorGroup
 		};
 		// console.warn(JSON.stringify(result, null, 4));
 		return result;
-	}, shallowEqual);
+	});
 
 	const [requiresConnection, setRequiresConnection] = React.useState<boolean | undefined>(
 		undefined
@@ -155,9 +159,8 @@ export function CodeErrorNav(props: Props) {
 	const [error, setError] = React.useState<{ title: string; description: string } | undefined>(
 		undefined
 	);
-	const [errorGroup, setErrorGroup] = React.useState<NewRelicErrorGroup | undefined>(undefined);
 
-	const { codeError } = derivedState;
+	const { codeError, errorGroup } = derivedState;
 
 	const pendingErrorGroupId = derivedState.currentCodeErrorData?.pendingErrorGroupId;
 	const traceId = derivedState.currentCodeErrorData?.traceId;
@@ -192,8 +195,10 @@ export function CodeErrorNav(props: Props) {
 					traceId: codeError.stackTraces[0].traceId!
 				})
 			);
-			setErrorGroup(result.errorGroup);
-			setIsLoading(false);
+			dispatch(setErrorGroup(codeError.objectId!, result.errorGroup));
+			setTimeout(() => {
+				setIsLoading(false);
+			}, 1);
 		})();
 	}, [codeError, derivedState.isConnectedToNewRelic, errorGroup]);
 
@@ -246,13 +251,14 @@ export function CodeErrorNav(props: Props) {
 				providerUrl: ""
 			};
 
-			if (errorGroupResult?.errorGroup != null) {
-				setErrorGroup(errorGroupResult.errorGroup!);
-			}
-
 			const response = (await dispatch(createPostAndCodeError(newCodeError))) as any;
+			if (errorGroupResult?.errorGroup != null) {
+				dispatch(setErrorGroup(errorGroupId, errorGroupResult.errorGroup!));
+			}
 			dispatch(
 				setCurrentCodeError(response.codeError.id, {
+					// need to reset this back to undefined now that we aren't
+					// pending any longer
 					pendingErrorGroupId: undefined,
 					errorGroup: errorGroupResult?.errorGroup,
 					repo: errorGroupResult?.repo,

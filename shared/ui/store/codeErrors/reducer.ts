@@ -8,13 +8,14 @@ import { CodeStreamState } from "..";
 
 type CodeErrorsActions = ActionType<typeof actions>;
 
-const initialState: CodeErrorsState = { bootstrapped: false, codeErrors: {} };
+const initialState: CodeErrorsState = { bootstrapped: false, codeErrors: {}, errorGroups: {} };
 
 export function reduceCodeErrors(state = initialState, action: CodeErrorsActions): CodeErrorsState {
 	switch (action.type) {
 		case CodeErrorsActionsTypes.Bootstrap:
 			return {
 				bootstrapped: true,
+				errorGroups: state.errorGroups,
 				codeErrors: { ...state.codeErrors, ...toMapBy("id", action.payload) }
 			};
 		case CodeErrorsActionsTypes.AddCodeErrors:
@@ -22,13 +23,54 @@ export function reduceCodeErrors(state = initialState, action: CodeErrorsActions
 		case CodeErrorsActionsTypes.SaveCodeErrors: {
 			return {
 				bootstrapped: state.bootstrapped,
+				errorGroups: state.errorGroups,
 				codeErrors: { ...state.codeErrors, ...toMapBy("id", action.payload) }
 			};
 		}
 		case CodeErrorsActionsTypes.Delete: {
 			const nextCodeErrors = { ...state.codeErrors };
 			delete nextCodeErrors[action.payload];
-			return { bootstrapped: state.bootstrapped, codeErrors: nextCodeErrors };
+			return {
+				bootstrapped: state.bootstrapped,
+				codeErrors: nextCodeErrors,
+				errorGroups: state.errorGroups
+			};
+		}
+		case CodeErrorsActionsTypes.SetErrorGroup: {
+			const nextErrorGroups = { ...state.errorGroups };
+
+			nextErrorGroups[action.payload.id] = {
+				errorGroup: action.payload.data,
+				id: action.payload.id
+			};
+			return {
+				...state,
+				errorGroups: nextErrorGroups
+			};
+		}
+		case CodeErrorsActionsTypes.HandleDirectives: {
+			const nextErrorGroups = { ...state.errorGroups };
+
+			const errorGroupWrapper = nextErrorGroups[action.payload.id];
+			if (errorGroupWrapper.errorGroup) {
+				for (const directive of action.payload.data) {
+					switch (directive.type) {
+						case "removeAssignee": {
+							errorGroupWrapper.errorGroup.assignee = null;
+							break;
+						}
+						case "setAssignee": {
+							errorGroupWrapper.errorGroup.assignee = directive.data.assignee;
+							break;
+						}
+						case "setState": {
+							errorGroupWrapper.errorGroup.state = directive.data.state;
+							break;
+						}
+					}
+				}
+			}
+			return { ...state, errorGroups: nextErrorGroups };
 		}
 		case "RESET":
 			return initialState;
@@ -39,6 +81,15 @@ export function reduceCodeErrors(state = initialState, action: CodeErrorsActions
 
 export function getCodeError(state: CodeErrorsState, id: string): CSCodeError | undefined {
 	return state.codeErrors[id];
+}
+
+// TODO fix me get the type for the result
+export function getErrorGroup(
+	state: CodeErrorsState,
+	codeError: CSCodeError | undefined
+): any | undefined {
+	if (!codeError || codeError.objectType !== "ErrorGroup" || !codeError.objectId) return undefined;
+	return state.errorGroups[codeError.objectId!]?.errorGroup;
 }
 
 export function getByStatus(state: CodeStreamState, status?: string): CSCodeError[] {

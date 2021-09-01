@@ -883,6 +883,9 @@ export interface NewRelicErrorGroup {
 	errorsInboxUrl?: string;
 
 	entityAlertingSeverity?: "CRITICAL" | "NOT_ALERTING" | "NOT_CONFIGURED" | "WARNING";
+	/**
+	 * This is the "id" aka errorGroupId, NR calls this "guid"
+	 */
 	guid: string;
 	message: string;
 	title: string;
@@ -891,7 +894,8 @@ export interface NewRelicErrorGroup {
 	timestamp: number;
 
 	states?: string[];
-	state?: string;
+	// TODO these might not be hard-codeable
+	state: "RESOLVED" | "IGNORED" | "UNRESOLVED";
 
 	assignee?: {
 		email: string;
@@ -936,38 +940,6 @@ export const GetNewRelicErrorGroupRequestType = new RequestType<
 	void,
 	void
 >("codestream/newrelic/errorGroup");
-
-export interface SetNewRelicErrorGroupAssigneeRequest {
-	errorGroupId: string;
-	userId: number;
-}
-
-export interface SetNewRelicErrorGroupAssigneeResponse {
-	success?: boolean;
-	assignee?: any;
-}
-
-export const SetNewRelicErrorGroupAssigneeRequestType = new RequestType<
-	SetNewRelicErrorGroupAssigneeRequest,
-	SetNewRelicErrorGroupAssigneeResponse,
-	void,
-	void
->("codestream/newrelic/errorGroup/assignee/set");
-
-export interface SetNewRelicErrorGroupStateRequest {
-	errorGroupId: string;
-	state: "RESOLVED" | "UNRESOLVED" | "IGNORED";
-}
-export interface SetNewRelicErrorGroupStateResponse {
-	success?: boolean;
-	state?: string;
-}
-export const SetNewRelicErrorGroupStateRequestType = new RequestType<
-	SetNewRelicErrorGroupStateRequest,
-	SetNewRelicErrorGroupStateRequest,
-	void,
-	void
->("codestream/newrelic/errorGroup/state/set");
 
 export interface GetNewRelicAssigneesRequest {}
 export interface GetNewRelicAssigneesResponse {

@@ -12,7 +12,8 @@ import {
 	ResolveStackTracePositionRequestType,
 	UpdateCodeErrorResponse,
 	GetNewRelicErrorGroupRequestType,
-	GetNewRelicErrorGroupRequest
+	GetNewRelicErrorGroupRequest,
+	ExecuteThirdPartyTypedType
 } from "@codestream/protocols/agent";
 import { logError } from "@codestream/webview/logger";
 import { addStreams } from "../streams/actions";
@@ -227,4 +228,171 @@ export const fetchNewRelicErrorGroup = (
 	request: GetNewRelicErrorGroupRequest
 ) => async dispatch => {
 	return HostApi.instance.send(GetNewRelicErrorGroupRequestType, request);
+};
+
+export const handleDirectives = (id: string, data: any) =>
+	action(CodeErrorsActionsTypes.HandleDirectives, {
+		id,
+		data
+	});
+
+export const _addProviderError = (providerId: string, id: string, error?: { message: string }) =>
+	action(CodeErrorsActionsTypes.AddProviderError, {
+		providerId: "newrelic*com",
+		id,
+		error
+	});
+
+export const _clearProviderError = (providerId: string, id: string) =>
+	action(CodeErrorsActionsTypes.ClearProviderError, {
+		providerId: "newrelic*com",
+		id,
+		undefined
+	});
+
+export const _setErrorGroup = (id: string, data: any) =>
+	action(CodeErrorsActionsTypes.SetErrorGroup, {
+		providerId: "newrelic*com",
+		id,
+		data
+	});
+
+export const setProviderError = (
+	providerId: string,
+	id: string,
+	error?: { message: string }
+) => async (dispatch, getState: () => CodeStreamState) => {
+	try {
+		dispatch(_addProviderError(providerId, id, error));
+	} catch (error) {
+		logError(`failed to setProviderError: ${error}`, { providerId, id });
+	}
+};
+
+export const clearProviderError = (
+	providerId: string,
+	id: string,
+	error?: { message: string }
+) => async (dispatch, getState: () => CodeStreamState) => {
+	try {
+		dispatch(_clearProviderError(providerId, id));
+	} catch (error) {
+		logError(`failed to setProviderError: ${error}`, { providerId, id });
+	}
+};
+
+export const setErrorGroup = (id: string, data?: any) => async (
+	dispatch,
+	getState: () => CodeStreamState
+) => {
+	try {
+		dispatch(_setErrorGroup(id, data));
+	} catch (error) {
+		logError(`failed to _setErrorGroup: ${error}`, { id });
+	}
+};
+
+/**
+ * Provider api
+ *
+ * @param method the method in the agent
+ * @param params the data to send to the provider
+ * @param options optional options
+ */
+export const api = <T = any, R = any>(
+	method: "removeAssignee" | "setAssignee" | "setState",
+
+	params: { errorGroupId: string } | any,
+	options?: {
+		updateOnSuccess?: boolean;
+		preventClearError: boolean;
+		preventErrorReporting?: boolean;
+	}
+) => async (dispatch, getState: () => CodeStreamState) => {
+	let providerId = "newrelic*com";
+	let pullRequestId;
+	try {
+		if (!params.errorGroupId) {
+			console.warn(`missing errorGroupId for ${method}`);
+			return;
+		}
+		const state = getState();
+		// const currentPullRequest = state.context.currentPullRequest;
+		// if (!currentPullRequest) {
+		// 	dispatch(
+		// 		setProviderError(providerId, pullRequestId, {
+		// 			message: "currentPullRequest not found"
+		// 		})
+		// 	);
+		// 	return;
+		// }
+		// ({ providerId, id: pullRequestId } = currentPullRequest);
+		// params = params || {};
+		// if (!params.pullRequestId) params.pullRequestId = pullRequestId;
+		// if (currentPullRequest.metadata) {
+		// 	params = { ...params, ...currentPullRequest.metadata };
+		// 	params.metadata = currentPullRequest.metadata;
+		// }
+
+		const response = (await HostApi.instance.send(new ExecuteThirdPartyTypedType<T, R>(), {
+			method: method,
+			providerId: "newrelic*com",
+			params: params
+		})) as any;
+		if (response && (!options || (options && !options.preventClearError))) {
+			dispatch(clearProviderError(params.errorGroupId, pullRequestId));
+		}
+
+		if (response && response.directives) {
+			dispatch(handleDirectives(params.errorGroupId, response.directives));
+			return {
+				handled: true
+			};
+		}
+		return response as R;
+	} catch (error) {
+		let errorString = typeof error === "string" ? error : error.message;
+		if (errorString) {
+			if (
+				options &&
+				options.preventErrorReporting &&
+				(errorString.indexOf("ENOTFOUND") > -1 ||
+					errorString.indexOf("ETIMEDOUT") > -1 ||
+					errorString.indexOf("EAI_AGAIN") > -1 ||
+					errorString.indexOf("ECONNRESET") > -1 ||
+					errorString.indexOf("ENETDOWN") > -1 ||
+					errorString.indexOf("socket disconnected before secure") > -1)
+			) {
+				// ignores calls where the user might be offline
+				console.error(error);
+				return undefined;
+			}
+
+			const target = "failed with message: ";
+			const targetLength = target.length;
+			const index = errorString.indexOf(target);
+			if (index > -1) {
+				errorString = errorString.substring(index + targetLength);
+				const jsonIndex = errorString.indexOf(`: {\"`);
+				// not the first character
+				if (jsonIndex > 0) {
+					errorString = errorString.substring(0, jsonIndex);
+				}
+			}
+		}
+		dispatch(
+			setProviderError(providerId, params.errorGroupId, {
+				message: errorString
+			})
+		);
+		logError(error, { providerId, pullRequestId, method, message: errorString });
+
+		HostApi.instance.track("ErrorGroup Error", {
+			Host: providerId,
+			Operation: method,
+			Error: errorString,
+			IsOAuthError: errorString && errorString.indexOf("OAuth App access restrictions") > -1
+		});
+		return undefined;
+	}
 };

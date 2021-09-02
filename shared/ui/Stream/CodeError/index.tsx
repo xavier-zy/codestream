@@ -32,7 +32,11 @@ import {
 } from "@codestream/webview/store/codeErrors/actions";
 import { setCurrentCodeError } from "@codestream/webview/store/context/actions";
 import { DelayedRender } from "@codestream/webview/Container/DelayedRender";
-import { getCodeError, getErrorGroup } from "@codestream/webview/store/codeErrors/reducer";
+import {
+	getCodeError,
+	getCodeErrorCreator,
+	getErrorGroup
+} from "@codestream/webview/store/codeErrors/reducer";
 import MessageInput, { AttachmentField } from "../MessageInput";
 import styled from "styled-components";
 import { getTeamMates, findMentionedUserIds } from "@codestream/webview/store/users/reducer";
@@ -53,12 +57,16 @@ import { Attachments } from "../Attachments";
 import { RepoMetadata } from "../Review";
 import Timestamp from "../Timestamp";
 import { Button } from "@codestream/webview/src/components/Button";
-import { ButtonRow } from "@codestream/webview/src/components/Dialog";
+import { ButtonRow, Dialog } from "@codestream/webview/src/components/Dialog";
 import { Headshot } from "@codestream/webview/src/components/Headshot";
 import { InlineMenu, MenuItem } from "@codestream/webview/src/components/controls/InlineMenu";
 import { SharingModal } from "../SharingModal";
 import { PROVIDER_MAPPINGS } from "../CrossPostIssueControls/types";
 import { NewRelicErrorGroup } from "@codestream/protocols/agent";
+import { isConnected } from "@codestream/webview/store/providers/reducer";
+import { Modal } from "../Modal";
+import { ConfigureNewRelic } from "../ConfigureNewRelic";
+import { ConditionalNewRelic } from "./ConditionalComponent";
 
 interface SimpleError {
 	/**
@@ -197,7 +205,9 @@ const ALERT_SEVERITY_COLORS = {
 	CRITICAL: "#F5554B",
 	NOT_ALERTING: "#01B076",
 	NOT_CONFIGURED: "#9FA5A5",
-	WARNING: "#F0B400"
+	WARNING: "#F0B400",
+	// if not connected, we're unknown
+	UNKNOWN: "transparent"
 };
 
 /**
@@ -214,15 +224,24 @@ const STATES_TO_ACTION_STRINGS = {
 const STATES_TO_DISPLAY_STRINGS = {
 	RESOLVED: "Resolved",
 	IGNORED: "Ignored",
-	UNRESOLVED: "Unresolved"
+	UNRESOLVED: "Unresolved",
+	// if not connected, we're unknown, just say "Status"
+	UNKNOWN: "Status"
 };
 
 // if child props are passed in, we assume they are the action buttons/menu for the header
 export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeaderProps>) => {
 	const { codeError, collapsed } = props;
 	const dispatch = useDispatch();
+	const derivedState = useSelector((state: CodeStreamState) => {
+		return {
+			isConnectedToNewRelic: isConnected(state, { id: "newrelic*com" }),
+			codeErrorCreator: getCodeErrorCreator(state)
+		};
+	});
 	const [items, setItems] = React.useState<MenuItem[]>([]);
 	const [states, setStates] = React.useState<DropdownButtonItems[] | undefined>(undefined);
+	const [openConnectionModal, setOpenConnectionModal] = React.useState(false);
 
 	const onSetAssignee = async userId => {
 		if (!props.errorGroup) return;
@@ -249,27 +268,39 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 	};
 
 	const buildStates = () => {
-		if (collapsed || !props.errorGroup?.states) return;
+		if (collapsed) return;
 
-		// only show states that aren't the current state
-		setStates(
-			props.errorGroup?.states
-				.filter(_ => (props.errorGroup?.state ? _ !== props.errorGroup.state : true))
-				.map(_ => {
-					return {
-						key: _,
-						label: STATES_TO_ACTION_STRINGS[_],
-						action: async e => {
-							dispatch(
-								api("setState", {
-									errorGroupId: props.errorGroup?.guid!,
-									state: _
-								})
-							);
-						}
-					};
-				}) as DropdownButtonItems[]
-		);
+		if (derivedState.isConnectedToNewRelic && props.errorGroup?.states) {
+			// only show states that aren't the current state
+			setStates(
+				props.errorGroup?.states
+					.filter(_ => (props.errorGroup?.state ? _ !== props.errorGroup.state : true))
+					.map(_ => {
+						return {
+							key: _,
+							label: STATES_TO_ACTION_STRINGS[_],
+							action: async e => {
+								dispatch(
+									api("setState", {
+										errorGroupId: props.errorGroup?.guid!,
+										state: _
+									})
+								);
+							}
+						};
+					}) as DropdownButtonItems[]
+			);
+		} else {
+			setStates([
+				{
+					key: "UNKNOWN",
+					label: STATES_TO_DISPLAY_STRINGS["UNKNOWN"],
+					action: e => {
+						setOpenConnectionModal(true);
+					}
+				} as DropdownButtonItems
+			]);
+		}
 	};
 
 	const buildAssignees = async () => {
@@ -310,68 +341,72 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 			});
 		}
 
-		const { users } = await HostApi.instance.send(GetNewRelicAssigneesRequestType, {});
+		if (derivedState.isConnectedToNewRelic) {
+			const { users } = await HostApi.instance.send(GetNewRelicAssigneesRequestType, {});
 
-		const usersFromGit = users.filter(_ => _.group === "GIT");
-		if (usersFromGit.length) {
-			_items.push({ label: "-", key: "sep-git" });
-			_items.push({
-				label: (
-					<span style={{ fontSize: "10px", fontWeight: "bold", opacity: 0.7 }}>
-						SUGGESTIONS FROM GIT
-					</span>
-				),
-				noHover: true,
-				disabled: true
-			});
-			_items = _items.concat(
-				usersFromGit.map(_ => {
-					return {
-						icon: <Headshot size={16} display="inline-block" person={{ email: _.email }} />,
-						key: _.id,
-						label: _.displayName,
-						searchLabel: _.displayName,
-						subtext: _.email,
-						action: () => onSetAssignee(_.id)
-					};
-				})
-			);
+			const usersFromGit = users.filter(_ => _.group === "GIT");
+			if (usersFromGit.length) {
+				_items.push({ label: "-", key: "sep-git" });
+				_items.push({
+					label: (
+						<span style={{ fontSize: "10px", fontWeight: "bold", opacity: 0.7 }}>
+							SUGGESTIONS FROM GIT
+						</span>
+					),
+					noHover: true,
+					disabled: true
+				});
+				_items = _items.concat(
+					usersFromGit.map(_ => {
+						return {
+							icon: <Headshot size={16} display="inline-block" person={{ email: _.email }} />,
+							key: _.id,
+							label: _.displayName,
+							searchLabel: _.displayName,
+							subtext: _.email,
+							action: () => onSetAssignee(_.id)
+						};
+					})
+				);
+			}
+			const usersFromNr = users.filter(_ => _.group === "NR");
+			if (usersFromNr.length) {
+				_items.push({ label: "-", key: "sep-nr" });
+				_items.push({
+					label: (
+						<span style={{ fontSize: "10px", fontWeight: "bold", opacity: 0.7 }}>
+							OTHER TEAMMATES
+						</span>
+					),
+					noHover: true,
+					disabled: true
+				});
+				_items = _items.concat(
+					usersFromNr.map(_ => {
+						return {
+							icon: <Headshot size={16} display="inline-block" person={{ email: _.email }} />,
+							key: _.id,
+							label: _.displayName,
+							searchLabel: _.displayName,
+							subtext: _.email,
+							action: () => onSetAssignee(_.id)
+						};
+					})
+				);
+			}
+			setItems(_items);
+		} else {
+			setItems([{ label: "-", key: "none" }]);
 		}
-		const usersFromNr = users.filter(_ => _.group === "NR");
-		if (usersFromNr.length) {
-			_items.push({ label: "-", key: "sep-nr" });
-			_items.push({
-				label: (
-					<span style={{ fontSize: "10px", fontWeight: "bold", opacity: 0.7 }}>
-						OTHER TEAMMATES
-					</span>
-				),
-				noHover: true,
-				disabled: true
-			});
-			_items = _items.concat(
-				usersFromNr.map(_ => {
-					return {
-						icon: <Headshot size={16} display="inline-block" person={{ email: _.email }} />,
-						key: _.id,
-						label: _.displayName,
-						searchLabel: _.displayName,
-						subtext: _.email,
-						action: () => onSetAssignee(_.id)
-					};
-				})
-			);
-		}
-		setItems(_items);
 	};
 
 	useEffect(() => {
 		buildAssignees();
-	}, [props.errorGroup, props.errorGroup?.assignee]);
+	}, [props.errorGroup, props.errorGroup?.assignee, derivedState.isConnectedToNewRelic]);
 
 	useEffect(() => {
 		buildStates();
-	}, [props.errorGroup, props.errorGroup?.state]);
+	}, [props.errorGroup, props.errorGroup?.state, derivedState.isConnectedToNewRelic]);
 
 	useDidMount(() => {
 		if (collapsed) return;
@@ -379,82 +414,192 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 		buildStates();
 		buildAssignees();
 	});
+	if (openConnectionModal) {
+		return (
+			<Modal
+				translucent
+				onClose={() => {
+					setOpenConnectionModal(false);
+				}}
+			>
+				<Dialog wide title="">
+					<div className="embedded-panel">
+						<ConfigureNewRelic
+							headerChildren={
+								<>
+									<div className="panel-header" style={{ background: "none" }}>
+										<span className="panel-title">Connect to New Relic</span>
+									</div>
+									<div>
+										Working with errors requires a connection to your New Relic account. If you
+										don't have one, get a teammate{" "}
+										{derivedState.codeErrorCreator
+											? `like ${derivedState.codeErrorCreator.fullName ||
+													derivedState.codeErrorCreator.username} `
+											: ""}
+										to invite you.
+									</div>
+								</>
+							}
+							disablePostConnectOnboarding={true}
+							showSignupUrl={false}
+							providerId={"newrelic*com"}
+							onClose={e => {
+								setOpenConnectionModal(false);
+							}}
+							onSubmited={async e => {
+								//	await dispatch(fetchErrorGroup(props.codeError));
+								setOpenConnectionModal(false);
+							}}
+						/>
+					</div>
+				</Dialog>
+			</Modal>
+		);
+	}
 
 	return (
 		<>
 			{!collapsed && (
 				<div style={{ display: "flex", justifyContent: "space-between", marginBottom: "10px" }}>
-					{props.errorGroup && (
-						<div>
-							<div
-								style={{
-									display: "inline-block",
-									width: "10px",
-									height: "10px",
-									backgroundColor:
-										ALERT_SEVERITY_COLORS[props.errorGroup?.entityAlertingSeverity || ""],
-									margin: "0 5px 0 6px"
-								}}
-							/>
+					<div>
+						<div
+							style={{
+								display: "inline-block",
+								width: "10px",
+								height: "10px",
+								border: derivedState.isConnectedToNewRelic
+									? "0px"
+									: `1px solid ${ALERT_SEVERITY_COLORS["NOT_CONFIGURED"]}`,
+								backgroundColor:
+									ALERT_SEVERITY_COLORS[props.errorGroup?.entityAlertingSeverity || "UNKNOWN"],
+								margin: "0 5px 0 6px"
+							}}
+						/>
 
-							<ApmServiceTitle>
-								<Tooltip title="Open Entity on New Relic" placement="bottom" delay={1}>
-									<span>
-										<Link href={props.errorGroup.entityUrl}>
-											<span className="subtle">{props.errorGroup.entityName}</span>
-										</Link>{" "}
-										<Icon name="link-external" className="open-external"></Icon>
-									</span>
-								</Tooltip>
-							</ApmServiceTitle>
-						</div>
-					)}
+						<ApmServiceTitle>
+							<Tooltip title="Open Entity on New Relic" placement="bottom" delay={1}>
+								<span>
+									<ConditionalNewRelic
+										connected={
+											<>
+												{props.errorGroup && (
+													<>
+														<Link href={props.errorGroup.entityUrl}>
+															<span className="subtle">{props.errorGroup.entityName}</span>
+														</Link>{" "}
+														<Icon name="link-external" className="open-external"></Icon>
+													</>
+												)}
+											</>
+										}
+										disconnected={
+											<>
+												{!props.errorGroup && props.codeError && props.codeError.objectInfo && (
+													<>
+														<Link
+															href="#"
+															onClick={e => {
+																e.preventDefault();
+																setOpenConnectionModal(true);
+															}}
+														>
+															<span className="subtle">
+																{props.codeError.objectInfo.entityName}
+															</span>
+														</Link>{" "}
+														<Icon name="link-external" className="open-external"></Icon>
+													</>
+												)}
+											</>
+										}
+									/>
+								</span>
+							</Tooltip>
+						</ApmServiceTitle>
+					</div>
+
 					<div style={{ marginLeft: "auto", alignItems: "center", whiteSpace: "nowrap" }}>
-						{props.errorGroup && states && (
+						{states && (
 							<DropdownButton
 								items={states}
-								selectedKey={props.errorGroup.state}
+								selectedKey={props.errorGroup?.state || "UNKNOWN"}
 								variant="secondary"
 								size="compact"
+								preventStopPropagation={!derivedState.isConnectedToNewRelic}
+								onButtonClicked={
+									derivedState.isConnectedToNewRelic
+										? undefined
+										: e => {
+												e.preventDefault();
+												e.stopPropagation();
+
+												setOpenConnectionModal(true);
+										  }
+								}
 								wrap
 							>
-								{STATES_TO_DISPLAY_STRINGS[props.errorGroup.state!]}
+								{STATES_TO_DISPLAY_STRINGS[props.errorGroup?.state || "UNKNOWN"]}
 							</DropdownButton>
-						)}
-						{props.errorGroup && (
-							<>
-								<div style={{ display: "inline-block", width: "10px" }} />
-								<InlineMenu items={items}>
-									{props.errorGroup &&
-										(!props.errorGroup.assignee || !props.errorGroup.assignee.email) && (
-											<Icon name="person" />
-										)}
-
-									{props.errorGroup &&
-										props.errorGroup.assignee &&
-										props.errorGroup.assignee.email && (
-											<Headshot
-												size={20}
-												display="inline-block"
-												person={{ email: props.errorGroup.assignee.email! }}
-											/>
-										)}
-								</InlineMenu>
-							</>
 						)}
 
 						<>
+							<div style={{ display: "inline-block", width: "10px" }} />
+							<InlineMenu
+								items={items}
+								allowEmpty={true}
+								preventStopPropagation={!derivedState.isConnectedToNewRelic}
+								onChevronClick={e =>
+									!derivedState.isConnectedToNewRelic ? setOpenConnectionModal(true) : undefined
+								}
+							>
+								<ConditionalNewRelic
+									connected={
+										<>
+											{props.errorGroup && (
+												<>
+													{/* no assignee */}
+													{(!props.errorGroup.assignee || !props.errorGroup.assignee.email) && (
+														<Icon name="person" />
+													)}
+													{/* has assignee */}
+													{props.errorGroup.assignee && props.errorGroup.assignee.email && (
+														<Headshot
+															size={20}
+															display="inline-block"
+															person={{ email: props.errorGroup.assignee.email! }}
+														/>
+													)}
+												</>
+											)}
+										</>
+									}
+									disconnected={
+										<Icon
+											style={{ cursor: "pointer" }}
+											name="person"
+											onClick={e => {
+												setOpenConnectionModal(true);
+											}}
+										/>
+									}
+								/>
+							</InlineMenu>
+						</>
+
+						<>
 							{props.post && <AddReactionIcon post={props.post} className="in-review" />}
-							{props.children || (
-								<Button variant="secondary">
-									<BaseCodeErrorMenu
-										codeError={codeError}
-										errorGroup={props.errorGroup}
-										collapsed={collapsed}
-										setIsEditing={props.setIsEditing}
-									/>
-								</Button>
-							)}
+							{props.children ||
+								(codeError && (
+									<Button variant="secondary">
+										<BaseCodeErrorMenu
+											codeError={codeError}
+											errorGroup={props.errorGroup}
+											collapsed={collapsed}
+											setIsEditing={props.setIsEditing}
+										/>
+									</Button>
+								))}
 						</>
 					</div>
 				</div>
@@ -466,21 +611,45 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 						{props.post && <AddReactionIcon post={props.post} className="in-review" />}
 					</HeaderActions>
 					<ApmServiceTitle>
-						{props.errorGroup?.errorsInboxUrl && (
-							<>
-								<Tooltip title="Open Error on New Relic" placement="bottom" delay={1}>
-									<span>
-										<Link href={props.errorGroup.errorsInboxUrl!}>{props.codeError.title}</Link>{" "}
-										<Icon name="link-external" className="open-external"></Icon>
-									</span>
-								</Tooltip>
-							</>
-						)}
-						{!props.errorGroup?.errorsInboxUrl && (
-							<span>
-								{props.codeError.title} <Icon name="link-external" className="open-external"></Icon>
-							</span>
-						)}
+						<ConditionalNewRelic
+							connected={
+								<>
+									{props.errorGroup?.errorGroupUrl && props.codeError.title && (
+										<>
+											<Tooltip title="Open Error on New Relic" placement="bottom" delay={1}>
+												<span>
+													<Link href={props.errorGroup.errorGroupUrl!}>
+														{props.codeError.title}
+													</Link>{" "}
+													<Icon name="link-external" className="open-external"></Icon>
+												</span>
+											</Tooltip>
+										</>
+									)}
+									{!props.errorGroup?.errorGroupUrl && props.codeError?.title && (
+										<span> {props.codeError.title}</span>
+									)}
+								</>
+							}
+							disconnected={
+								<>
+									{props.codeError && !props.errorGroup?.errorGroupUrl && (
+										<span>
+											<Link
+												href="#"
+												onClick={e => {
+													e.preventDefault();
+													setOpenConnectionModal(true);
+												}}
+											>
+												{props.codeError.title}
+											</Link>{" "}
+											<Icon name="link-external" className="open-external"></Icon>
+										</span>
+									)}
+								</>
+							}
+						/>
 					</ApmServiceTitle>
 				</BigTitle>
 			</Header>
@@ -502,8 +671,10 @@ export const BaseCodeErrorMenu = (props: BaseCodeErrorMenuProps) => {
 			post,
 			currentUserId: state.session.userId!,
 			currentUser: state.users[state.session.userId!],
-			author: state.users[props.codeError.creatorId],
-			userIsFollowing: (props.codeError.followerIds || []).includes(state.session.userId!)
+			author: props.codeError ? state.users[props.codeError.creatorId] : undefined,
+			userIsFollowing: props.codeError
+				? (props.codeError.followerIds || []).includes(state.session.userId!)
+				: []
 		};
 	});
 	const [isLoading, setIsLoading] = React.useState(false);
@@ -565,7 +736,7 @@ export const BaseCodeErrorMenu = (props: BaseCodeErrorMenuProps) => {
 			}
 		]);
 
-		if (codeError.creatorId === derivedState.currentUser.id) {
+		if (codeError?.creatorId === derivedState.currentUser.id) {
 			items.push({
 				label: "Delete",
 				action: () => {
@@ -609,7 +780,7 @@ export const BaseCodeErrorMenu = (props: BaseCodeErrorMenuProps) => {
 					readOnly
 					key="permalink-offscreen"
 					ref={permalinkRef}
-					value={codeError.permalink}
+					value={codeError?.permalink}
 					style={{ position: "absolute", left: "-9999px" }}
 				/>
 			</DropdownButton>
@@ -639,7 +810,7 @@ export const BaseCodeErrorMenu = (props: BaseCodeErrorMenuProps) => {
 				readOnly
 				key="permalink-offscreen"
 				ref={permalinkRef}
-				value={codeError.permalink}
+				value={codeError?.permalink}
 				style={{ position: "absolute", left: "-9999px" }}
 			/>
 			{menuState.open && (
@@ -662,12 +833,12 @@ const BaseCodeError = (props: BaseCodeErrorProps) => {
 		return {
 			providers: state.providers,
 			isInVscode: state.ide.name === "VSC",
-			author: state.users[props.codeError.creatorId],
-			codeAuthor: state.users[codeAuthorId || props.codeError.creatorId],
+			author: props.codeError ? state.users[props.codeError.creatorId] : undefined,
+			codeAuthor: state.users[codeAuthorId || props.codeError?.creatorId],
 			codeError,
 			errrorGroup: props.errrorGroup
 		};
-	}, shallowEqual);
+	});
 	const renderedFooter = props.renderFooter && props.renderFooter(CardFooter, ComposeWrapper);
 	const { codeError, errrorGroup } = derivedState;
 
@@ -978,7 +1149,6 @@ export type CodeErrorProps = PropsWithId | PropsWithCodeError;
 const CodeErrorForCodeError = (props: PropsWithCodeError) => {
 	const { codeError, ...baseProps } = props;
 	let disposableDidChangeDataNotification: { dispose(): void };
-	const dispatch = useDispatch();
 	const derivedState = useSelector((state: CodeStreamState) => {
 		const post =
 			codeError && codeError.postId
@@ -996,7 +1166,7 @@ const CodeErrorForCodeError = (props: PropsWithCodeError) => {
 				? emptyArray
 				: getThreadPosts(state, codeError.streamId, codeError.postId)
 		};
-	}, shallowEqual);
+	});
 
 	const [preconditionError, setPreconditionError] = React.useState<SimpleError>({
 		message: "",

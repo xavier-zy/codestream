@@ -236,7 +236,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					nrql: results["error.group.nrql"],
 					source: results["error.group.source"],
 					timestamp: results["timestamp"],
-					errorsInboxUrl: `${this.productUrl}/redirect/errors-inbox/${errorGroupId}`,
+					errorGroupUrl: `${this.productUrl}/redirect/errors-inbox/${errorGroupId}`,
 					entityUrl: `${this.productUrl}/redirect/entity/${results["entity.guid"]}`,
 					// TODO fix me
 					state: "UNRESOLVED",

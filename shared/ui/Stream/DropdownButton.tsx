@@ -37,6 +37,9 @@ export interface DropdownButtonProps extends ButtonProps {
 	isMultiSelect?: boolean;
 	itemsRange?: string[];
 	align?: string;
+	/** if true, prevents e.stopPropagation() from being called onclick */
+	preventStopPropagation?: boolean;
+	onButtonClicked?: Function;
 }
 
 // operates in two modes. if splitDropdown is false (the default), it's a dropdown menu.
@@ -120,8 +123,13 @@ export function DropdownButton(props: React.PropsWithChildren<DropdownButtonProp
 					{...getButtonProps(props)}
 					onClick={e => {
 						e.preventDefault();
-						e.stopPropagation();
-						setMenuIsOpen(!menuIsOpen);
+						if (!props.preventStopPropagation) {
+							e.stopPropagation();
+							setMenuIsOpen(!menuIsOpen);
+						}
+						if (props.onButtonClicked) {
+							props.onButtonClicked(e);
+						}
 					}}
 					ref={buttonRef}
 				>

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { SyntheticEvent } from "react";
 import Menu from "../../../Stream/Menu";
 import styled from "styled-components";
 import Icon from "../../../Stream/Icon";
@@ -33,6 +33,11 @@ export interface InlineMenuProps {
 	noChevronDown?: boolean;
 	noFocusOnSelect?: boolean;
 	align?: string;
+	/** if true, still renders the surrounding TextButton UI  */
+	allowEmpty?: boolean;
+	/** if true, prevents e.stopPropagation() from being called onclick */
+	preventStopPropagation?: boolean;
+	onChevronClick?: Function;
 }
 
 export const TextButton = styled.span`
@@ -89,7 +94,7 @@ export function InlineMenu(props: InlineMenuProps) {
 		if (props.onChange) props.onChange(action);
 	};
 
-	if (!props.items.length) {
+	if (!props.items.length && !props.allowEmpty) {
 		return <>{props.children}</>;
 	}
 
@@ -111,9 +116,13 @@ export function InlineMenu(props: InlineMenuProps) {
 				ref={buttonRef}
 				onClickCapture={e => {
 					e.preventDefault();
-					e.stopPropagation();
-					if (!isOpen && props.onOpen) props.onOpen();
-					toggleMenu(isOpen);
+					if (props.preventStopPropagation) {
+						// noop
+					} else {
+						e.stopPropagation();
+						if (!isOpen && props.onOpen) props.onOpen();
+						toggleMenu(isOpen);
+					}
 				}}
 				tabIndex={0}
 				onKeyPress={handleKeyPress}
@@ -123,7 +132,10 @@ export function InlineMenu(props: InlineMenuProps) {
 				{!props.noChevronDown && (
 					<span style={{ whiteSpace: "nowrap" }}>
 						&#65279;
-						<Icon name="chevron-down-thin" />
+						<Icon
+							name="chevron-down-thin"
+							onClick={e => (props.onChevronClick ? props.onChevronClick(e) : undefined)}
+						/>
 					</span>
 				)}
 			</TextButton>

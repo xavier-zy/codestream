@@ -2,15 +2,23 @@ import { createSelector } from "reselect";
 import { toMapBy } from "../../utils";
 import { ActionType, Index } from "../common";
 import * as actions from "./actions";
+import * as activeIntegrationsActions from "../activeIntegrations/actions";
 import { CodeErrorsActionsTypes, CodeErrorsState } from "./types";
 import { CSCodeError } from "@codestream/protocols/api";
 import { CodeStreamState } from "..";
+import { ActiveIntegrationsActionType } from "../activeIntegrations/types";
+import { getTeamMates } from "../users/reducer";
+import { ContextState } from "../context/types";
 
 type CodeErrorsActions = ActionType<typeof actions>;
+type ActiveIntegrationsActions = ActionType<typeof activeIntegrationsActions>;
 
 const initialState: CodeErrorsState = { bootstrapped: false, codeErrors: {}, errorGroups: {} };
 
-export function reduceCodeErrors(state = initialState, action: CodeErrorsActions): CodeErrorsState {
+export function reduceCodeErrors(
+	state = initialState,
+	action: CodeErrorsActions | ActiveIntegrationsActions
+): CodeErrorsState {
 	switch (action.type) {
 		case CodeErrorsActionsTypes.Bootstrap:
 			return {
@@ -47,6 +55,17 @@ export function reduceCodeErrors(state = initialState, action: CodeErrorsActions
 				...state,
 				errorGroups: nextErrorGroups
 			};
+		}
+		case ActiveIntegrationsActionType.DeleteForProvider: {
+			// if the user is disconnecting from NR, remove all the errorGroups
+			if (action.payload.providerId === "newrelic*com") {
+				return {
+					...state,
+					errorGroups: {}
+				};
+			} else {
+				return state;
+			}
 		}
 		case CodeErrorsActionsTypes.HandleDirectives: {
 			const nextErrorGroups = { ...state.errorGroups };
@@ -99,6 +118,25 @@ export function getByStatus(state: CodeStreamState, status?: string): CSCodeErro
 }
 
 const getCodeErrors = (state: CodeStreamState) => state.codeErrors.codeErrors;
+
+export const getCurrentCodeErrorId = createSelector(
+	(state: CodeStreamState) => state.context,
+	(context: ContextState) => {
+		return context.currentCodeErrorId || "";
+	}
+);
+
+export const getCodeErrorCreator = createSelector(
+	getCodeErrors,
+	getCurrentCodeErrorId,
+	getTeamMates,
+	(codeErrors, id, teamMates) => {
+		if (!teamMates) return undefined;
+		const codeError = codeErrors[id];
+		if (!codeError || !codeError.creatorId) return undefined;
+		return teamMates.find(_ => _.id === codeError.creatorId);
+	}
+);
 
 export const getByStatusAndUser = createSelector(
 	getCodeErrors,

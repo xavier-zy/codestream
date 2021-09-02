@@ -880,7 +880,7 @@ export interface NewRelicErrorGroup {
 	traceId?: string;
 
 	entityUrl?: string;
-	errorsInboxUrl?: string;
+	errorGroupUrl?: string;
 
 	entityAlertingSeverity?: "CRITICAL" | "NOT_ALERTING" | "NOT_CONFIGURED" | "WARNING";
 	/**

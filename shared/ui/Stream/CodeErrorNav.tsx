@@ -238,7 +238,10 @@ export function CodeErrorNav(props: Props) {
 				title: errorGroupResult.errorGroup?.title || "",
 				description: errorGroupResult.errorGroup?.message || "",
 				stackTraces: stackInfo.error ? [{ ...stackInfo, lines: [] }] : [stackInfo.parsedStackInfo!], // storing the permanently parsed stack info
-				providerUrl: ""
+				providerUrl: "",
+				objectInfo: {
+					entityName: errorGroupResult?.errorGroup?.entityName
+				}
 			};
 
 			const response = (await dispatch(createPostAndCodeError(newCodeError))) as any;

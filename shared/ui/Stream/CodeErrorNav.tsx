@@ -260,7 +260,10 @@ export function CodeErrorNav(props: Props) {
 			);
 		} catch (ex) {
 			console.warn(ex);
-			throw ex;
+			setError({
+				title: "Unexpected Error",
+				description: ex.message
+			});
 		} finally {
 			setRequiresConnection(false);
 			setIsLoading(false);

@@ -143,12 +143,16 @@ const ClickLine = styled.div`
 	color: var(--text-color);
 	:hover {
 		color: var(--text-color-highlight);
+		background: var(--app-background-color-hover);
 		opacity: 1;
 	}
-	opacity: 0.7;
+	padding: 3px;
+	opacity: 0.8;
 	&.selected {
 		color: var(--text-color-highlight);
 		opacity: 1;
+		border: 2px solid var(--text-focus-border-color);
+		background: var(--app-background-color-hover);
 	}
 	.icon {
 		position: absolute !important;
@@ -682,9 +686,6 @@ const BaseCodeError = (props: BaseCodeErrorProps) => {
 
 	const { stackTraces } = codeError as CSCodeError;
 	const stackTrace = stackTraces && stackTraces[0] && stackTraces[0].lines;
-	const stackTraceLines = stackTrace
-		? stackTrace.map(_ => `${_.method}(${_.fileFullPath}:${_.line})`)
-		: [];
 
 	useEffect(() => {
 		if (!props.collapsed) {
@@ -774,21 +775,27 @@ const BaseCodeError = (props: BaseCodeErrorProps) => {
 				{stackTrace && (
 					<Meta>
 						<MetaLabel>Stack Trace</MetaLabel>
-						<div className="code">
-							{stackTraceLines.map((line, i) => {
-								if (i === 0 || !line) return null;
-								if (line.includes("processTicksAndRejections")) return;
-								const selected = i === currentSelectedLine;
-								const className = selected ? "monospace selected" : "monospace";
-								const mline = line.replace(/\s\s\s\s+/g, "     ");
+						<div className="code" style={{ padding: "0px" }}>
+							{(stackTrace || []).map((line, i) => {
+								if (i === 0 || !line || !line.fileFullPath) return null;
+
+								const className = i === currentSelectedLine ? "monospace selected" : "monospace";
+								const mline = line.fileFullPath.replace(/\s\s\s\s+/g, "     ");
 								return props.stackFrameClickDisabled || props.collapsed ? (
 									<DisabledClickLine className="monospace">
-										<span>{mline}</span>
+										<span>
+											<span style={{ opacity: ".8" }}>{line.method}</span>({mline}:
+											<strong>{line.line}</strong>
+											{line.column ? `:${line.column}` : null})
+										</span>
 									</DisabledClickLine>
 								) : (
 									<ClickLine className={className} onClick={e => onClickStackLine(e, i)}>
-										{selected && <Icon name="arrow-right" />}
-										<span>{mline}</span>
+										<span>
+											<span style={{ opacity: ".8" }}>{line.method}</span>({mline}:
+											<strong>{line.line}</strong>
+											{line.column ? `:${line.column}` : null})
+										</span>
 									</ClickLine>
 								);
 							})}

@@ -19,7 +19,6 @@ import {
 	ShowCodeErrorNotificationType,
 	ShowStreamNotificationType,
 	WebviewDidInitializeNotificationType,
-	WebviewModals,
 	WebviewPanels,
 	HostDidChangeVisibleEditorsNotificationType,
 	ShowPullRequestNotificationType,
@@ -54,7 +53,7 @@ import { apiUpgradeRecommended, apiUpgradeRequired } from "./store/apiVersioning
 import { getCodemark } from "./store/codemarks/reducer";
 import { getReview } from "./store/reviews/reducer";
 import { getCodeError } from "./store/codeErrors/reducer";
-import { createPostAndCodeError, fetchCodemarks, openPanel } from "./Stream/actions";
+import { fetchCodemarks, openPanel } from "./Stream/actions";
 import { ContextState } from "./store/context/types";
 import { CodemarksState } from "./store/codemarks/types";
 import { EditorContextState } from "./store/editorContext/types";
@@ -80,9 +79,7 @@ import {
 	setStartWorkCard,
 	closeAllPanels,
 	clearCurrentPullRequest,
-	setPendingProtocolHandlerUrl,
-	openModal,
-	setWantNewRelicOptions
+	setPendingProtocolHandlerUrl
 } from "./store/context/actions";
 import { URI } from "vscode-uri";
 import { moveCursorToLine } from "./Stream/api-functions";
@@ -90,12 +87,7 @@ import { setMaintenanceMode } from "./store/session/actions";
 import { updateModifiedReposDebounced } from "./store/users/actions";
 import { logWarning } from "./logger";
 import { fetchReview } from "./store/reviews/actions";
-import {
-	fetchCodeError,
-	NewCodeErrorAttributes,
-	resolveStackTrace,
-	updateCodeError
-} from "./store/codeErrors/actions";
+import { fetchCodeError, findErrorGroupByObjectId } from "./store/codeErrors/actions";
 import { openPullRequestByUrl } from "./store/providerPullRequests/actions";
 import { updateCapabilities } from "./store/capabilities/actions";
 import { confirmPopup } from "./Stream/Confirm";
@@ -507,21 +499,35 @@ function listenForEvents(store) {
 							store.dispatch(setPendingProtocolHandlerUrl({ url: e.url }));
 							break;
 						}
+						// TODO fix me
+						const traceId = "cd761a0b-03eb-11ec-9b3c-0242ac110012_0_2040";
+						store
+							.dispatch(findErrorGroupByObjectId(route.query.errorGroupId, traceId))
+							.then(codeError => {
+								if (codeError) {
+									store.dispatch(
+										setCurrentCodeError(codeError.id, {
+											traceId: traceId
+										})
+									);
+								} else {
+									// NOTE don't really like this "PENDING" business, but it's something to say we need to CREATE a codeError
+									// rationalie is: instead of creating _another_ codeError router-like UI,
+									// just re-use the CodeErrorNav component which already does some work for
+									// directing / opening a codeError
+									store.dispatch(
+										setCurrentCodeError("PENDING", {
+											traceId: traceId,
+											pendingErrorGroupId: route.query.errorGroupId,
+											pendingRequiresConnection: !isConnected(store.getState(), {
+												id: "newrelic*com"
+											})
+										})
+									);
+								}
+								store.dispatch(openPanel(WebviewPanels.CodemarksForFile));
+							});
 
-						// NOTE don't really like this "PENDING" business, but it's something to say we need to CREATE a codeError
-						// rationalie is: instead of creating _another_ codeError router-like UI,
-						// just re-use the CodeErrorNav component which already does some work for
-						// directing / opening a codeError
-						store.dispatch(
-							setCurrentCodeError("PENDING", {
-								// TODO fix me
-								traceId: "cd761a0b-03eb-11ec-9b3c-0242ac110012_0_2040",
-								pendingErrorGroupId: route.query.errorGroupId,
-								pendingRequiresConnection: !isConnected(store.getState(), { id: "newrelic*com" })
-							})
-						);
-
-						store.dispatch(openPanel(WebviewPanels.CodemarksForFile));
 						break;
 					}
 

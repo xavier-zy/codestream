@@ -307,6 +307,39 @@ export const fetchErrorGroup = (codeError: CSCodeError, traceId?: string) => asy
 	}
 };
 
+/**
+ * Try to find a codeError by its objectId
+ *
+ * @param objectId
+ * @param traceId
+ * @returns
+ */
+export const findErrorGroupByObjectId = (objectId: string, traceId?: string) => async (
+	dispatch,
+	getState: () => CodeStreamState
+) => {
+	try {
+		const locator = (state: CodeStreamState, oid: string, tid?: string) => {
+			const codeError = Object.values(state.codeErrors.codeErrors).find(
+				(_: CSCodeError) =>
+					_.objectId === oid && (tid ? _.stackTraces.find(st => st.traceId === tid) : true)
+			);
+			return codeError;
+		};
+		const state = getState();
+		if (!state.codeErrors.bootstrapped) {
+			return dispatch(bootstrapCodeErrors()).then((_: any) => {
+				return locator(getState(), objectId, traceId);
+			});
+		} else {
+			return locator(state, objectId, traceId);
+		}
+	} catch (error) {
+		logError(`failed to findErrorGroupByObjectId: ${error}`, { objectId, traceId });
+	}
+	return undefined;
+};
+
 export const setErrorGroup = (errorGroupId: string, data?: any) => async (
 	dispatch,
 	getState: () => CodeStreamState

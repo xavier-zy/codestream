@@ -295,7 +295,13 @@ export function CodeErrorNav(props: Props) {
 								markRead();
 							}
 						})
-						.then(() => {
+						.catch(ex => {
+							setError({
+								title: "Error",
+								description: ex.message ? ex.message : ex.toString()
+							});
+						})
+						.finally(() => {
 							setIsLoading(false);
 						});
 				}
@@ -376,9 +382,14 @@ export function CodeErrorNav(props: Props) {
 				<div className="embedded-panel">
 					<ConfigureNewRelic
 						headerChildren={
-							<div className="panel-header" style={{ background: "none" }}>
-								<span className="panel-title">Connect to New Relic</span>
-							</div>
+							<>
+								<div className="panel-header" style={{ background: "none" }}>
+									<span className="panel-title">Connect to New Relic</span>
+								</div>
+								<div style={{ textAlign: "center" }}>
+									Working with errors requires a connection to your New Relic account.
+								</div>
+							</>
 						}
 						disablePostConnectOnboarding={true}
 						showSignupUrl={false}

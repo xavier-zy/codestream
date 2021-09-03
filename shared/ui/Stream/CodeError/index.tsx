@@ -414,52 +414,49 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 		buildStates();
 		buildAssignees();
 	});
-	if (openConnectionModal) {
-		return (
-			<Modal
-				translucent
-				onClose={() => {
-					setOpenConnectionModal(false);
-				}}
-			>
-				<Dialog wide title="">
-					<div className="embedded-panel">
-						<ConfigureNewRelic
-							headerChildren={
-								<>
-									<div className="panel-header" style={{ background: "none" }}>
-										<span className="panel-title">Connect to New Relic</span>
-									</div>
-									<div>
-										Working with errors requires a connection to your New Relic account. If you
-										don't have one, get a teammate{" "}
-										{derivedState.codeErrorCreator
-											? `like ${derivedState.codeErrorCreator.fullName ||
-													derivedState.codeErrorCreator.username} `
-											: ""}
-										to invite you.
-									</div>
-								</>
-							}
-							disablePostConnectOnboarding={true}
-							showSignupUrl={false}
-							providerId={"newrelic*com"}
-							onClose={e => {
-								setOpenConnectionModal(false);
-							}}
-							onSubmited={async e => {
-								//	await dispatch(fetchErrorGroup(props.codeError));
-								setOpenConnectionModal(false);
-							}}
-						/>
-					</div>
-				</Dialog>
-			</Modal>
-		);
-	}
-
 	return (
 		<>
+			{openConnectionModal && (
+				<Modal
+					translucent
+					onClose={() => {
+						setOpenConnectionModal(false);
+					}}
+				>
+					<Dialog narrow title="">
+						<div className="embedded-panel">
+							<ConfigureNewRelic
+								headerChildren={
+									<>
+										<div className="panel-header" style={{ background: "none" }}>
+											<span className="panel-title">Connect to New Relic</span>
+										</div>
+										<div style={{ textAlign: "center" }}>
+											Working with errors requires a connection to your New Relic account. If you
+											don't have one, get a teammate{" "}
+											{derivedState.codeErrorCreator
+												? `like ${derivedState.codeErrorCreator.fullName ||
+														derivedState.codeErrorCreator.username} `
+												: ""}
+											to invite you.
+										</div>
+									</>
+								}
+								disablePostConnectOnboarding={true}
+								showSignupUrl={false}
+								providerId={"newrelic*com"}
+								onClose={e => {
+									setOpenConnectionModal(false);
+								}}
+								onSubmited={async e => {
+									//	await dispatch(fetchErrorGroup(props.codeError));
+									setOpenConnectionModal(false);
+								}}
+							/>
+						</div>
+					</Dialog>
+				</Modal>
+			)}
 			{!collapsed && (
 				<div style={{ display: "flex", justifyContent: "space-between", marginBottom: "10px" }}>
 					<div>

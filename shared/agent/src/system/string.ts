@@ -486,4 +486,8 @@ export namespace Strings {
 			"gmi"
 		);
 	}
+
+	export function santizeGraphqlValue(value: string) {
+		return value?.replace(/'/g, "").replace(/"/g, "");
+	}
 }

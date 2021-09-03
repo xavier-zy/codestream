@@ -19,8 +19,6 @@ class ConfigureNewRelic extends Component {
 	initialState = {
 		apiKey: "",
 		apiKeyTouched: false,
-		accountId: "",
-		accountIdTouched: false,
 		formTouched: false,
 		showSignupUrl: true,
 		disablePostConnectOnboarding: false
@@ -37,18 +35,13 @@ class ConfigureNewRelic extends Component {
 		e.preventDefault();
 		if (this.isFormInvalid()) return;
 		const { providerId } = this.props;
-		const { apiKey, accountId } = this.state;
+		const { apiKey } = this.state;
 
 		// configuring is as good as connecting, since we are letting the user
 		// set the access token ... sending the fourth argument as true here lets the
 		// configureProvider function know that they can mark New Relic as connected as soon
 		// as the access token entered by the user has been saved to the server
-		this.props.configureProvider(
-			providerId,
-			{ apiKey, accountId },
-			true,
-			this.props.originLocation
-		);
+		this.props.configureProvider(providerId, { apiKey }, true, this.props.originLocation);
 		this.setState({ loading: true });
 
 		if (!this.props.disablePostConnectOnboarding) {
@@ -87,24 +80,14 @@ class ConfigureNewRelic extends Component {
 		this.setState({ apiKeyTouched: true });
 	};
 
-	onBlurAccountId = () => {
-		this.setState({ accountIdTouched: true });
-	};
-
 	renderApiKeyHelp = () => {
 		const { apiKey, apiKeyTouched, formTouched } = this.state;
 		if (apiKeyTouched || formTouched)
 			if (apiKey.length === 0) return <small className="error-message">Required</small>;
 	};
 
-	renderAccountIdHelp = () => {
-		const { accountId, accountIdTouched, formTouched } = this.state;
-		if (accountIdTouched || formTouched)
-			if (accountId.length === 0) return <small className="error-message">Required</small>;
-	};
-
 	isFormInvalid = () => {
-		return this.state.apiKey.length === 0 || this.state.accountId.length === 0;
+		return this.state.apiKey.length === 0;
 	};
 
 	render() {
@@ -129,12 +112,8 @@ class ConfigureNewRelic extends Component {
 								Please provide a{" "}
 								<Link href="https://docs.newrelic.com/docs/apis/intro-apis/new-relic-api-keys/#user-api-key">
 									{providerName} User API Key
-								</Link>{" "}
-								and your{" "}
-								<Link href="https://docs.newrelic.com/docs/accounts/accounts-billing/account-setup/account-id/">
-									Account ID
 								</Link>
-								.
+								{"."}
 							</p>
 							<div className="control-group">
 								<label>{providerName} User API Key</label>
@@ -151,20 +130,6 @@ class ConfigureNewRelic extends Component {
 									required={this.state.apiKeyTouched || this.state.formTouched}
 								/>
 								{this.renderApiKeyHelp()}
-							</div>
-							<div className="control-group">
-								<label>{providerName} Account ID</label>
-								<input
-									className="input-text control"
-									type="text"
-									name="accountId"
-									tabIndex={1}
-									value={this.state.accountId}
-									onChange={e => this.setState({ accountId: e.target.value })}
-									onBlur={this.onBlurAccountId}
-									required={this.state.accountIdTouched || this.state.formTouched}
-								/>
-								{this.renderAccountIdHelp()}
 							</div>
 						</div>
 						<div className="button-group">

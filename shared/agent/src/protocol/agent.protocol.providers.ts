@@ -873,6 +873,7 @@ export interface GetNewRelicErrorGroupRequest {
 }
 
 export interface NewRelicErrorGroup {
+	accountId: number;
 	entityGuid: string;
 	entityType?: string; //ApmApplicationEntity |
 	entityName?: string;
@@ -927,16 +928,20 @@ export interface NewRelicErrorGroup {
 		url?: string;
 		name?: string;
 	};
+	attributes?: {
+		[key: string]: {
+			type: "timestamp" | "string";
+			value: string | number | boolean;
+		};
+	};
 }
 
 export interface GetNewRelicErrorGroupResponse {
+	// TODO fic me REMOVE BELOW
 	sha: string;
-	// TODO REMOVE BELOW
-	// 	repo: string;
-	// parsedStack: string[];
-	// TODO REMOVE ABOVE
+	// TODO fic me REMOVE ABOVE
 	errorGroup?: NewRelicErrorGroup;
-	accountId: string;
+	accountId: number;
 }
 export const GetNewRelicErrorGroupRequestType = new RequestType<
 	GetNewRelicErrorGroupRequest,

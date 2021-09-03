@@ -15,7 +15,7 @@ import {
 	KebabIcon,
 	BigTitle
 } from "../Codemark/BaseCodemark";
-import { CSUser, CSCodeError, CodemarkType, CSPost } from "@codestream/protocols/api";
+import { CSUser, CSCodeError, CodemarkType, CSPost, CSRepository } from "@codestream/protocols/api";
 import { CodeStreamState } from "@codestream/webview/store";
 import { useSelector, useDispatch, shallowEqual } from "react-redux";
 import Icon from "../Icon";
@@ -81,7 +81,7 @@ interface SimpleError {
 
 export interface BaseCodeErrorProps extends CardProps {
 	codeError: CSCodeError;
-	errrorGroup?: NewRelicErrorGroup;
+	errorGroup?: NewRelicErrorGroup;
 	post?: CSPost;
 	repoInfo?: RepoMetadata;
 	headerError?: SimpleError;
@@ -835,13 +835,15 @@ const BaseCodeError = (props: BaseCodeErrorProps) => {
 	const derivedState = useSelector((state: CodeStreamState) => {
 		const codeError = state.codeErrors[props.codeError.id] || props.codeError;
 		const codeAuthorId = (props.codeError.codeAuthorIds || [])[0];
+
 		return {
 			providers: state.providers,
 			isInVscode: state.ide.name === "VSC",
 			author: props.codeError ? state.users[props.codeError.creatorId] : undefined,
 			codeAuthor: state.users[codeAuthorId || props.codeError?.creatorId],
 			codeError,
-			errorGroup: props.errrorGroup
+			errorGroup: props.errorGroup,
+			errorGroupIsLoading: (state.codeErrors.errorGroups[codeError.objectId] as any)?.isLoading
 		};
 	});
 	const renderedFooter = props.renderFooter && props.renderFooter(CardFooter, ComposeWrapper);
@@ -917,35 +919,43 @@ const BaseCodeError = (props: BaseCodeErrorProps) => {
 			)}
 			{codeError?.text && <Message>{codeError.text}</Message>}
 
+			{/* assuming 6 items (108px) */}
 			{!props.collapsed && (
-				<>
-					<DataRow>
-						<DataLabel>Timestamp:</DataLabel>
-						<DataValue>
-							<Timestamp className="no-padding" time={props.codeError.createdAt} />
-						</DataValue>
-					</DataRow>
-					<DataRow>
-						<DataLabel>URL host:</DataLabel>
-						<DataValue>localhost.codestream.us:12079</DataValue>
-					</DataRow>
-					<DataRow>
-						<DataLabel>URL path:</DataLabel>
-						<DataValue>/posts</DataValue>
-					</DataRow>
+				<div
+					style={{
+						minHeight: derivedState.errorGroupIsLoading || errorGroup ? "108px" : "initial"
+					}}
+				>
+					{errorGroup &&
+						errorGroup.attributes &&
+						Object.keys(errorGroup.attributes).map(key => {
+							const value: { type: string; value: any } = errorGroup.attributes![key];
+							return (
+								<DataRow>
+									<DataLabel>{key}:</DataLabel>
+									<DataValue>
+										{value.type === "timestamp" && (
+											<Timestamp className="no-padding" time={value.value as number} />
+										)}
+										{value.type !== "timestamp" && <>{value.value}</>}
+									</DataValue>
+								</DataRow>
+							);
+						})}
+
 					{props.repoInfo && (
 						<DataRow>
 							<DataLabel>Repo:</DataLabel>
 							<DataValue>{props.repoInfo.repoName}</DataValue>
 						</DataRow>
 					)}
-					{props.repoInfo && (
+					{props.repoInfo?.branch && (
 						<DataRow>
 							<DataLabel>Build:</DataLabel>
 							<DataValue>{props.repoInfo.branch.substr(0, 8)}</DataValue>
 						</DataRow>
 					)}
-				</>
+				</div>
 			)}
 
 			<MetaSection>

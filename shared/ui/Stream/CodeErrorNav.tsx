@@ -261,7 +261,7 @@ export function CodeErrorNav(props: Props) {
 							const remoteUrl = e?.types?.find(_ => _.type === "fetch")?.url;
 							results.push({
 								...repo,
-								remote: remoteUrl,
+								remote: remoteUrl!,
 								name:
 									(derivedState.repos[id] ? derivedState.repos[id].name : "") + ` (${remoteUrl})`
 							});
@@ -299,7 +299,7 @@ export function CodeErrorNav(props: Props) {
 			});
 
 			const stackInfo = (await resolveStackTrace(
-				errorGroupResult.errorGroup?.repo || "",
+				errorGroupResult.errorGroup?.repo?.url || "",
 				errorGroupResult.sha,
 				traceId!,
 				errorGroupResult.errorGroup?.errorTrace!?.stackTrace.map(_ => _.formatted)
@@ -311,8 +311,8 @@ export function CodeErrorNav(props: Props) {
 				objectType: "ErrorGroup",
 				title: errorGroupResult.errorGroup?.title || "",
 				text: errorGroupResult.errorGroup?.message || undefined,
-				stackTraces: stackInfo.error ? [{ ...stackInfo, lines: [] }] : [stackInfo.parsedStackInfo!], // storing the permanently parsed stack info
-				providerUrl: "",
+				// storing the permanently parsed stack info
+				stackTraces: stackInfo.error ? [{ ...stackInfo, lines: [] }] : [stackInfo.parsedStackInfo!],
 				objectInfo: {
 					entityName: errorGroupResult?.errorGroup?.entityName
 				}
@@ -328,7 +328,7 @@ export function CodeErrorNav(props: Props) {
 					// pending any longer
 					pendingErrorGroupId: undefined,
 					errorGroup: errorGroupResult?.errorGroup,
-					repo: errorGroupResult?.repo,
+					// repo: errorGroupResult?.repo,
 					sha: errorGroupResult?.sha,
 					// parsedStack: errorGroupResult?.parsedStack,
 					warning: stackInfo?.warning,

@@ -21,9 +21,7 @@ import { Logger } from "../logger";
 import { lspHandler } from "../system";
 import { CodeStreamSession } from "../session";
 import { SessionContainer } from "../container";
-import { URL } from "url";
-import { URI } from "vscode-uri";
-import { assertObjectType } from "graphql";
+import { Strings } from "../system/string";
 
 export interface Directive {
 	type: "assignRepository" | "removeAssignee" | "setAssignee" | "setState";
@@ -35,7 +33,7 @@ interface Directives {
 }
 
 interface NewRelicId {
-	accountId: string;
+	accountId: number;
 	unknownAbbreviation: string;
 	entityType: string;
 	unknownGuid: string;
@@ -68,7 +66,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		if (usingEU) {
 			return "https://api.eu.newrelic.com";
 		} else {
-			// TODO need a switch or something for this
+			// TODO fix me need a switch or something for this
 			return Logger.isDebugging ? "https://staging-api.newrelic.com" : "https://api.newrelic.com";
 		}
 	}
@@ -209,7 +207,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			//"140272|ERT|ERR_GROUP|12026a73-fc72-3205-92d3-b785d12e08b6"
 			const [accountId, unknownAbbreviation, entityType, unknownGuid] = split;
 			return {
-				accountId,
+				accountId: accountId != null ? parseInt(accountId, 10) : 0,
 				unknownAbbreviation,
 				entityType,
 				unknownGuid
@@ -231,7 +229,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		let repoRemote = "git@github.com:teamcodestream/codestream-server-demo";
 		let sha = "9542e9c702f0879f8407928eb313b33174a7c2b5";
 		let errorGroup: NewRelicErrorGroup | undefined = undefined;
-		let accountId = "";
+		let accountId = 0;
 		try {
 			await this.ensureConnected();
 
@@ -244,13 +242,15 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				`query fetchErrorsInboxData($accountId:Int!) {
 					actor {
 					  account(id: $accountId) {
-						nrql(query: "FROM Metric SELECT entity.guid, error.group.guid, error.group.message, error.group.name, error.group.source, error.group.nrql WHERE error.group.guid = '${errorGroupId}' SINCE 24 hours ago LIMIT 1") { nrql results }
+						nrql(query: "FROM Metric SELECT entity.guid, error.group.guid, error.group.message, error.group.name, error.group.source, error.group.nrql WHERE error.group.guid = '${Strings.santizeGraphqlValue(
+							errorGroupId
+						)}' SINCE 24 hours ago LIMIT 1") { nrql results }
 					  }
 					}
 				  }
 				  `,
 				{
-					accountId: parseInt(accountId, 10)
+					accountId: accountId
 				}
 			);
 			const results = response.actor.account.nrql.results[0];
@@ -258,6 +258,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			if (results) {
 				entityId = results["entity.guid"];
 				errorGroup = {
+					accountId: accountId,
 					entityGuid: entityId,
 					guid: results["error.group.guid"],
 					title: results["error.group.name"],
@@ -284,6 +285,13 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				);
 				errorGroup.entityName = response.actor.entity.name;
 				errorGroup.entityAlertingSeverity = response.actor.entity.alertSeverity;
+				errorGroup.attributes = {
+					Timestamp: { type: "timestamp", value: errorGroup.timestamp },
+					// TODO fix me
+					"Host display name": { type: "string", value: "10.16.33.9:15595" },
+					"URL host": { type: "string", value: "shardcache.vip.cf.nr-ops.net" },
+					"URL path": { type: "string", value: "/api/urlRules/1869706/375473842" }
+				};
 
 				// if (request.traceId) {
 				// 	const tracesResponse = await this.query(
@@ -362,13 +370,14 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				// TODO fix me below does not work yet
 				const foo = false;
 				if (foo) {
-					const assigneeResults = await this.query(`{
+					const assigneeResults = await this.query(
+						`query getStatus($entityId:String, $errorGroupId:String) {
 						actor {
-						  entity(guid: "${entityId}") {
+						  entity(guid: $entityId) {
 							... on WorkloadEntity {
 							  guid
 							  name
-							  errorGroup(id: "${errorGroupId}") {
+							  errorGroup(id: $errorGroupId) {
 								assignedUser {
 								  email
 								  gravatar
@@ -382,7 +391,12 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 						  }
 						}
 					  }
-					  `);
+					  `,
+						{
+							entityId: entityId,
+							errorGroupId: errorGroupId
+						}
+					);
 					if (assigneeResults) {
 						errorGroup.state = assigneeResults.actor.entity.errorGroup.state;
 						const assignee = assigneeResults.actor.entity.errorGroup.assignedUser;
@@ -391,13 +405,15 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 						}
 					}
 
-					const stackTraceResult = await this.query(`{
+					const stackTraceResult = await this.query(
+						`
+					 query getTrace($entityId:String, $traceId:String) {
 					actor {
-					  entity(guid: "<entityId>") {
+					  entity(guid: $entityId) {
 						... on ApmApplicationEntity {
 						  guid
 						  name
-						  errorTrace(traceId: "<traceId>") {
+						  errorTrace(traceId: $traceId) {
 							id
 							exceptionClass
 							intrinsicAttributes
@@ -414,7 +430,12 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					  }
 					}
 				  }
-				  `);
+				  `,
+						{
+							entityId: entityId,
+							traceId: request.traceId
+						}
+					);
 				}
 				Logger.debug("NR:ErrorGroup", {
 					errorGroup: errorGroup

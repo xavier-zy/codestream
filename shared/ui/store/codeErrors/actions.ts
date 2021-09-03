@@ -47,7 +47,7 @@ export const updateCodeErrors = (codeErrors: CSCodeError[]) =>
 	action(CodeErrorsActionsTypes.UpdateCodeErrors, codeErrors);
 
 export interface NewCodeErrorAttributes {
-	accountId: string;
+	accountId: number;
 	objectId?: string;
 	objectType?: "ErrorGroup";
 	objectInfo?: any;
@@ -263,6 +263,13 @@ export const _setErrorGroup = (errorGroupId: string, data: any) =>
 		data
 	});
 
+export const _isLoadingErrorGroup = (errorGroupId: string, data: any) =>
+	action(CodeErrorsActionsTypes.IsLoadingErrorGroup, {
+		providerId: "newrelic*com",
+		id: errorGroupId,
+		data
+	});
+
 export const setProviderError = (
 	providerId: string,
 	errorGroupId: string,
@@ -295,13 +302,15 @@ export const fetchErrorGroup = (codeError: CSCodeError, traceId?: string) => asy
 	try {
 		// this is an errorGroupId
 		objectId = codeError?.objectId;
+		dispatch(_isLoadingErrorGroup(objectId, { isLoading: true }));
 		return dispatch(
 			fetchNewRelicErrorGroup({
 				errorGroupId: objectId!,
 				traceId: traceId || codeError.stackTraces[0].traceId!
 			})
 		).then((result: GetNewRelicErrorGroupResponse) => {
-			dispatch(_setErrorGroup(codeError.objectId!, result.errorGroup));
+			dispatch(_isLoadingErrorGroup(objectId, { isLoading: true }));
+			return dispatch(_setErrorGroup(codeError.objectId!, result.errorGroup));
 		});
 	} catch (error) {
 		logError(`failed to fetchErrorGroup: ${error}`, { objectId });

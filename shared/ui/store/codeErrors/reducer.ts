@@ -56,6 +56,17 @@ export function reduceCodeErrors(
 				errorGroups: nextErrorGroups
 			};
 		}
+		case CodeErrorsActionsTypes.IsLoadingErrorGroup: {
+			const nextErrorGroups = { ...state.errorGroups };
+			nextErrorGroups[action.payload.id] = {
+				...nextErrorGroups[action.payload.id],
+				isLoading: action.payload.data.isLoading
+			};
+			return {
+				...state,
+				errorGroups: nextErrorGroups
+			};
+		}
 		case ActiveIntegrationsActionType.DeleteForProvider: {
 			// if the user is disconnecting from NR, remove all the errorGroups
 			if (action.payload.providerId === "newrelic*com") {

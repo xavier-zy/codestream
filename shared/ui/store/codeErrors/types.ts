@@ -10,7 +10,8 @@ export enum CodeErrorsActionsTypes {
 	HandleDirectives = "@codeErrors/HandleDirectives",
 	AddProviderError = "@codeErrors/AddError",
 	ClearProviderError = "@codeErrors/ClearError",
-	SetErrorGroup = "@codeError/SetErrorGroup"
+	SetErrorGroup = "@codeError/SetErrorGroup",
+	IsLoadingErrorGroup = "@codeError/IsLoadingErrorGroup"
 }
 
 export type CodeErrorsState = {
@@ -19,6 +20,7 @@ export type CodeErrorsState = {
 	errorGroups: Index<{
 		id: string;
 		error?: string;
+		isLoading?: boolean;
 		errorGroup: {
 			id: string;
 			// TODO fix me get the real object type

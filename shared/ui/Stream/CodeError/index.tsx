@@ -467,7 +467,7 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 			)}
 			{!collapsed && (
 				<div style={{ display: "flex", justifyContent: "space-between", marginBottom: "10px" }}>
-					<div>
+					<div style={{ paddingTop: "4px" }}>
 						<div
 							style={{
 								display: "inline-block",

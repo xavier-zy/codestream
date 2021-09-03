@@ -887,8 +887,8 @@ export interface NewRelicErrorGroup {
 	 * This is the "id" aka errorGroupId, NR calls this "guid"
 	 */
 	guid: string;
-	message: string;
 	title: string;
+	message: string;
 	nrql: string;
 	source: string;
 	timestamp: number;
@@ -933,6 +933,7 @@ export interface GetNewRelicErrorGroupResponse {
 	// parsedStack: string[];
 	// TODO REMOVE ABOVE
 	errorGroup?: NewRelicErrorGroup;
+	accountId: string;
 }
 export const GetNewRelicErrorGroupRequestType = new RequestType<
 	GetNewRelicErrorGroupRequest,

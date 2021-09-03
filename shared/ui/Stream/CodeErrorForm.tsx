@@ -174,6 +174,7 @@ export const CodeErrorForm = (props: Props = {}) => {
 
 		const stackInfo = await resolvedStackPromise;
 		const codeError: NewCodeErrorAttributes = {
+			accountId: derivedState.codeError.accountId,
 			objectId: derivedState.codeError.objectId,
 			objectType: derivedState.codeError.objectType,
 			objectInfo: derivedState.codeError.objectInfo,

@@ -47,11 +47,12 @@ export const updateCodeErrors = (codeErrors: CSCodeError[]) =>
 	action(CodeErrorsActionsTypes.UpdateCodeErrors, codeErrors);
 
 export interface NewCodeErrorAttributes {
+	accountId: string;
 	objectId?: string;
 	objectType?: "ErrorGroup";
 	objectInfo?: any;
 	title: string;
-	description?: string;
+	text?: string;
 	stackTraces: CSStackTraceInfo[];
 	assignees?: string[];
 	addedUsers?: string[];

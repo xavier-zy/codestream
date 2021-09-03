@@ -315,6 +315,7 @@ export interface CSStackTraceError {
 
 export interface CSCodeError extends CSEntity {
 	title: string;
+	text?: string;
 	stackTraces: CSStackTraceInfo[]; // (CSStackTraceInfo | CSStackTraceError)[];
 	providerUrl?: string;
 	assignees: string[];

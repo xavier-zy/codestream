@@ -199,11 +199,11 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		let repo = "git@github.com:teamcodestream/codestream-server-demo";
 		let sha = "9542e9c702f0879f8407928eb313b33174a7c2b5";
 		let errorGroup: NewRelicErrorGroup | undefined = undefined;
-
+		let accountId;
 		try {
 			await this.ensureConnected();
 
-			const accountId = this._providerInfo?.data?.accountId;
+			accountId = this._providerInfo?.data?.accountId;
 			if (!accountId) {
 				throw new Error("must provide an accountId");
 			}
@@ -231,8 +231,8 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				errorGroup = {
 					entityGuid: entityId,
 					guid: results["error.group.guid"],
-					message: results["error.group.message"],
 					title: results["error.group.name"],
+					message: results["error.group.message"],
 					nrql: results["error.group.nrql"],
 					source: results["error.group.source"],
 					timestamp: results["timestamp"],
@@ -402,6 +402,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			return {
 				repo,
 				sha,
+				accountId,
 				errorGroup
 			};
 		} catch (ex) {
@@ -409,6 +410,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			return {
 				repo: repo,
 				sha: sha,
+				accountId,
 				errorGroup: undefined as any
 			};
 		}

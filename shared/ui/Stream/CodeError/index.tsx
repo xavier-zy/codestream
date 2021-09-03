@@ -200,6 +200,14 @@ const ApmServiceTitle = styled.span`
 	padding-left: 5px;
 `;
 
+export const Message = styled.div`
+	width: 100%;
+	margin-bottom: 10px;
+	display: flex;
+	align-items: flex-start;
+	font-size: 12px;
+`;
+
 const ALERT_SEVERITY_COLORS = {
 	"": "#9FA5A5",
 	CRITICAL: "#F5554B",
@@ -833,11 +841,11 @@ const BaseCodeError = (props: BaseCodeErrorProps) => {
 			author: props.codeError ? state.users[props.codeError.creatorId] : undefined,
 			codeAuthor: state.users[codeAuthorId || props.codeError?.creatorId],
 			codeError,
-			errrorGroup: props.errrorGroup
+			errorGroup: props.errrorGroup
 		};
 	});
 	const renderedFooter = props.renderFooter && props.renderFooter(CardFooter, ComposeWrapper);
-	const { codeError, errrorGroup } = derivedState;
+	const { codeError, errorGroup } = derivedState;
 
 	const [currentSelectedLine, setCurrentSelectedLine] = React.useState(0);
 
@@ -887,7 +895,7 @@ const BaseCodeError = (props: BaseCodeErrorProps) => {
 			{props.collapsed && (
 				<BaseCodeErrorHeader
 					codeError={codeError}
-					errorGroup={errrorGroup}
+					errorGroup={errorGroup}
 					post={props.post}
 					collapsed={props.collapsed}
 					setIsEditing={props.setIsEditing}
@@ -907,6 +915,7 @@ const BaseCodeError = (props: BaseCodeErrorProps) => {
 					<div style={{ paddingLeft: "10px" }}>{props.headerError.message}</div>
 				</div>
 			)}
+			{codeError?.text && <Message>{codeError.text}</Message>}
 
 			{!props.collapsed && (
 				<>

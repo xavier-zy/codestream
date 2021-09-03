@@ -233,10 +233,11 @@ export function CodeErrorNav(props: Props) {
 			)) as ResolveStackTraceResponse;
 
 			const newCodeError: NewCodeErrorAttributes = {
+				accountId: errorGroupResult.accountId,
 				objectId: errorGroupId,
 				objectType: "ErrorGroup",
 				title: errorGroupResult.errorGroup?.title || "",
-				description: errorGroupResult.errorGroup?.message || "",
+				text: errorGroupResult.errorGroup?.message || undefined,
 				stackTraces: stackInfo.error ? [{ ...stackInfo, lines: [] }] : [stackInfo.parsedStackInfo!], // storing the permanently parsed stack info
 				providerUrl: "",
 				objectInfo: {

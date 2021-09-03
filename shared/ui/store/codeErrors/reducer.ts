@@ -69,11 +69,18 @@ export function reduceCodeErrors(
 		}
 		case CodeErrorsActionsTypes.HandleDirectives: {
 			const nextErrorGroups = { ...state.errorGroups };
+			nextErrorGroups[action.payload.id] = {
+				...nextErrorGroups[action.payload.id]
+			};
 
 			const errorGroupWrapper = nextErrorGroups[action.payload.id];
 			if (errorGroupWrapper.errorGroup) {
 				for (const directive of action.payload.data) {
 					switch (directive.type) {
+						case "assignRepository": {
+							errorGroupWrapper.errorGroup.repo = directive.data.repo;
+							break;
+						}
 						case "removeAssignee": {
 							errorGroupWrapper.errorGroup.assignee = null;
 							break;

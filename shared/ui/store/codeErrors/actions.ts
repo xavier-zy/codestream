@@ -360,7 +360,7 @@ export const setErrorGroup = (errorGroupId: string, data?: any) => async (
  * @param options optional options
  */
 export const api = <T = any, R = any>(
-	method: "removeAssignee" | "setAssignee" | "setState",
+	method: "assignRepository" | "removeAssignee" | "setAssignee" | "setState",
 
 	params: { errorGroupId: string } | any,
 	options?: {
@@ -372,10 +372,6 @@ export const api = <T = any, R = any>(
 	let providerId = "newrelic*com";
 	let pullRequestId;
 	try {
-		if (!params.errorGroupId) {
-			console.warn(`missing errorGroupId for ${method}`);
-			return;
-		}
 		// const state = getState();
 		// const currentPullRequest = state.context.currentPullRequest;
 		// if (!currentPullRequest) {

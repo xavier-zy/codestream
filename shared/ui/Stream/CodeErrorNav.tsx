@@ -5,6 +5,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { closeAllPanels, setCurrentCodeError } from "@codestream/webview/store/context/actions";
 import { useDidMount } from "@codestream/webview/utilities/hooks";
 import {
+	api,
 	fetchCodeError,
 	fetchErrorGroup,
 	NewCodeErrorAttributes,
@@ -30,10 +31,14 @@ import { DelayedRender } from "../Container/DelayedRender";
 import { Loading } from "../Container/Loading";
 import {
 	GetNewRelicErrorGroupRequestType,
+	GetReposScmRequestType,
+	ReposScm,
 	ResolveStackTraceResponse
 } from "@codestream/protocols/agent";
 import { HostApi } from "..";
 import { CSCodeError } from "@codestream/protocols/api";
+import { DropdownButton } from "./DropdownButton";
+import { logWarning } from "../logger";
 
 const NavHeader = styled.div`
 	// flex-grow: 0;
@@ -121,6 +126,16 @@ export const StyledCodeError = styled.div``;
 
 export type Props = React.PropsWithChildren<{ codeErrorId: string; composeOpen: boolean }>;
 
+interface EnhancedRepoScm {
+	/**
+	 * name of the repo
+	 */
+	name: string;
+	/**
+	 * remote url
+	 */
+	remote: string;
+}
 /**
  * Called from InlineCodemarks it is what allows the commenting on lines of code
  *
@@ -144,7 +159,8 @@ export function CodeErrorNav(props: Props) {
 			codeError: codeError,
 			currentCodemarkId: state.context.currentCodemarkId,
 			isConnectedToNewRelic: isConnected(state, { id: "newrelic*com" }),
-			errorGroup: errorGroup
+			errorGroup: errorGroup,
+			repos: state.repos
 		};
 		// console.warn(JSON.stringify(result, null, 4));
 		return result;
@@ -158,6 +174,12 @@ export function CodeErrorNav(props: Props) {
 	const [error, setError] = React.useState<{ title: string; description: string } | undefined>(
 		undefined
 	);
+	const [openRepositories, setOpenRepositories] = React.useState<
+		(ReposScm & EnhancedRepoScm)[] | undefined
+	>(undefined);
+	const [repositoryError, setRepositoryError] = React.useState<
+		{ title: string; description: string } | undefined
+	>(undefined);
 
 	const { codeError, errorGroup } = derivedState;
 
@@ -201,14 +223,65 @@ export function CodeErrorNav(props: Props) {
 				description:
 					"This error report does not have a stack trace associated with it and cannot be displayed."
 			});
-		} else if (!errorGroup.repo) {
-			setError({
-				title: "Missing Remote URL",
-				description:
-					"This error report does not have a remote URL associated with it and cannot be displayed."
-			});
 		}
 	}, [errorGroup]);
+
+	useEffect(() => {
+		if (!errorGroup) return;
+
+		if (!errorGroup.repo || !errorGroup.repo.url) {
+			setRepositoryError({
+				title: "Missing Repository Info",
+				description: `In order to view this stack trace, please select a repository to associate with ${
+					errorGroup ? errorGroup.entityName + " " : ""
+				}on New Relic.`
+			});
+		}
+		if (errorGroup.repo?.url && repositoryError) {
+			setRepositoryError(undefined);
+		}
+	}, [errorGroup, errorGroup?.repo]);
+
+	useEffect(() => {
+		if (!repositoryError) return;
+
+		HostApi.instance
+			.send(GetReposScmRequestType, {
+				inEditorOnly: true,
+				includeRemotes: true
+			})
+			.then(_ => {
+				if (!_.repositories) return;
+
+				const results: (ReposScm & EnhancedRepoScm)[] = [];
+				for (const repo of _.repositories) {
+					if (repo.remotes && repo.remotes.length > 1) {
+						for (const e of repo.remotes) {
+							const id = repo.id || "";
+							const remoteUrl = e?.types?.find(_ => _.type === "fetch")?.url;
+							results.push({
+								...repo,
+								remote: remoteUrl,
+								name:
+									(derivedState.repos[id] ? derivedState.repos[id].name : "") + ` (${remoteUrl})`
+							});
+						}
+					} else {
+						const id = repo.id || "";
+						results.push({
+							...repo,
+							remote: repo.remotes![0]?.types?.find(_ => _.type === "fetch")?.url!,
+							name: derivedState.repos[id] ? derivedState.repos[id].name : ""
+						});
+					}
+				}
+
+				setOpenRepositories(results);
+			})
+			.catch(e => {
+				logWarning(`could not get repos: ${e.message}`);
+			});
+	}, [repositoryError]);
 
 	const onConnected = async () => {
 		console.warn("onConnected starting...");
@@ -226,7 +299,7 @@ export function CodeErrorNav(props: Props) {
 			});
 
 			const stackInfo = (await resolveStackTrace(
-				errorGroupResult.repo,
+				errorGroupResult.errorGroup?.repo || "",
 				errorGroupResult.sha,
 				traceId!,
 				errorGroupResult.errorGroup?.errorTrace!?.stackTrace.map(_ => _.formatted)
@@ -336,6 +409,56 @@ export function CodeErrorNav(props: Props) {
 	// if for some reason we have a codemark, don't render anything
 	if (derivedState.currentCodemarkId) return null;
 
+	if (repositoryError) {
+		// essentially a roadblock
+		return (
+			<Dismissable
+				title={repositoryError.title}
+				buttons={[
+					{
+						text: "Cancel",
+						onClick: e => {
+							e.preventDefault();
+							exit();
+						}
+					},
+					{
+						text: "Associate",
+						onClick: e => {
+							e.preventDefault();
+							exit();
+						}
+					}
+				]}
+			>
+				<p>{repositoryError.description}</p>
+				<DropdownButton
+					items={
+						openRepositories?.map((_, index) => {
+							return {
+								key: _.id! + index,
+								label: _.name,
+								action: () => {
+									dispatch(
+										api("assignRepository", {
+											url: _.remote,
+											name: _.name,
+											errorGroupId: codeError?.objectId!
+										})
+									);
+								}
+							};
+						}) || []
+					}
+					variant="secondary"
+					size="compact"
+					wrap
+				>
+					select a repo
+				</DropdownButton>
+			</Dismissable>
+		);
+	}
 	if (error) {
 		// essentially a roadblock
 		return (

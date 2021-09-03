@@ -923,13 +923,16 @@ export interface NewRelicErrorGroup {
 	transactionName?: string;
 
 	hasStackTrace?: boolean;
-	repo?: string;
+	repo?: {
+		url?: string;
+		name?: string;
+	};
 }
 
 export interface GetNewRelicErrorGroupResponse {
-	repo: string;
 	sha: string;
 	// TODO REMOVE BELOW
+	// 	repo: string;
 	// parsedStack: string[];
 	// TODO REMOVE ABOVE
 	errorGroup?: NewRelicErrorGroup;

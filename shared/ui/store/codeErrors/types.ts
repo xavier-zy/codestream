@@ -24,6 +24,7 @@ export type CodeErrorsState = {
 			// TODO fix me get the real object type
 			assignee?: any;
 			state?: any;
+			repo?: string;
 		};
 	}>;
 };

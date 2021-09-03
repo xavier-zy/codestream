@@ -172,7 +172,7 @@ export class ScmManager {
 			if (request && request.includeCurrentBranches) {
 				branches = await Promise.all(repositories.map(repo => git.getCurrentBranch(repo.path)));
 			}
-			if (request && request.includeProviders) {
+			if (request && (request.includeRemotes || request.includeProviders)) {
 				remotes = await Promise.all(repositories.map(repo => repo.getRemotes()));
 			}
 			if (request && request.includeConnectedProviders) {

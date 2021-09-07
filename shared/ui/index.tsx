@@ -504,10 +504,13 @@ function listenForEvents(store) {
 						store
 							.dispatch(findErrorGroupByObjectId(route.query.errorGroupId, traceId))
 							.then(codeError => {
+								const state = store.getState();
 								if (codeError) {
 									store.dispatch(
 										setCurrentCodeError(codeError.id, {
-											traceId: traceId
+											traceId: traceId,
+											// cache the sessionStart here in case the IDE is restarted
+											sessionStart: state.context.sessionStart
 										})
 									);
 								} else {
@@ -518,8 +521,10 @@ function listenForEvents(store) {
 									store.dispatch(
 										setCurrentCodeError("PENDING", {
 											traceId: traceId,
+											// cache the sessionStart here in case the IDE is restarted
+											sessionStart: state.context.sessionStart,
 											pendingErrorGroupId: route.query.errorGroupId,
-											pendingRequiresConnection: !isConnected(store.getState(), {
+											pendingRequiresConnection: !isConnected(state, {
 												id: "newrelic*com"
 											})
 										})

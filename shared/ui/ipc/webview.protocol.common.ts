@@ -121,6 +121,7 @@ export enum WebviewModals {
 
 export interface WebviewContext {
 	currentTeamId: string;
+	sessionStart?: number;
 	currentStreamId?: string;
 	threadId?: string;
 	currentRepo?: {
@@ -142,6 +143,8 @@ export interface WebviewContext {
 		warning?: string;
 		error?: string;
 		// REMOVE ABOVE
+		/** caches when the last user session started  */
+		sessionStart?: number;
 		pendingRequiresConnection?: boolean;
 		pendingErrorGroupId?: string;
 		traceId?: string;

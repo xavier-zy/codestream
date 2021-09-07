@@ -31,13 +31,12 @@ import { DelayedRender } from "../Container/DelayedRender";
 import { Loading } from "../Container/Loading";
 import {
 	GetNewRelicErrorGroupRequestType,
-	GetReposScmRequestType,
-	ReposScm,
 	ResolveStackTraceResponse
 } from "@codestream/protocols/agent";
 import { HostApi } from "..";
 import { CSCodeError } from "@codestream/protocols/api";
-import { DropdownButton } from "./DropdownButton";
+
+import { RepositoryAssociator } from "./CodeError/RepositoryAssociator";
 import { logWarning } from "../logger";
 
 const NavHeader = styled.div`
@@ -126,16 +125,6 @@ export const StyledCodeError = styled.div``;
 
 export type Props = React.PropsWithChildren<{ codeErrorId: string; composeOpen: boolean }>;
 
-interface EnhancedRepoScm {
-	/**
-	 * name of the repo
-	 */
-	name: string;
-	/**
-	 * remote url
-	 */
-	remote: string;
-}
 /**
  * Called from InlineCodemarks it is what allows the commenting on lines of code
  *
@@ -155,6 +144,7 @@ export function CodeErrorNav(props: Props) {
 			codeErrorStateBootstrapped: state.codeErrors.bootstrapped,
 			currentCodeErrorId: state.context.currentCodeErrorId,
 			currentCodeErrorData: state.context.currentCodeErrorData,
+			sessionStart: state.context.sessionStart,
 
 			codeError: codeError,
 			currentCodemarkId: state.context.currentCodemarkId,
@@ -174,9 +164,7 @@ export function CodeErrorNav(props: Props) {
 	const [error, setError] = React.useState<{ title: string; description: string } | undefined>(
 		undefined
 	);
-	const [openRepositories, setOpenRepositories] = React.useState<
-		(ReposScm & EnhancedRepoScm)[] | undefined
-	>(undefined);
+
 	const [repositoryError, setRepositoryError] = React.useState<
 		{ title: string; description: string } | undefined
 	>(undefined);
@@ -230,58 +218,21 @@ export function CodeErrorNav(props: Props) {
 		if (!errorGroup) return;
 
 		if (!errorGroup.repo || !errorGroup.repo.url) {
-			setRepositoryError({
-				title: "Missing Repository Info",
-				description: `In order to view this stack trace, please select a repository to associate with ${
-					errorGroup ? errorGroup.entityName + " " : ""
-				}on New Relic.`
-			});
+			setRepositoryErrorCore(errorGroup);
 		}
 		if (errorGroup.repo?.url && repositoryError) {
 			setRepositoryError(undefined);
 		}
 	}, [errorGroup, errorGroup?.repo]);
 
-	useEffect(() => {
-		if (!repositoryError) return;
-
-		HostApi.instance
-			.send(GetReposScmRequestType, {
-				inEditorOnly: true,
-				includeRemotes: true
-			})
-			.then(_ => {
-				if (!_.repositories) return;
-
-				const results: (ReposScm & EnhancedRepoScm)[] = [];
-				for (const repo of _.repositories) {
-					if (repo.remotes && repo.remotes.length > 1) {
-						for (const e of repo.remotes) {
-							const id = repo.id || "";
-							const remoteUrl = e?.types?.find(_ => _.type === "fetch")?.url;
-							results.push({
-								...repo,
-								remote: remoteUrl!,
-								name:
-									(derivedState.repos[id] ? derivedState.repos[id].name : "") + ` (${remoteUrl})`
-							});
-						}
-					} else {
-						const id = repo.id || "";
-						results.push({
-							...repo,
-							remote: repo.remotes![0]?.types?.find(_ => _.type === "fetch")?.url!,
-							name: derivedState.repos[id] ? derivedState.repos[id].name : ""
-						});
-					}
-				}
-
-				setOpenRepositories(results);
-			})
-			.catch(e => {
-				logWarning(`could not get repos: ${e.message}`);
-			});
-	}, [repositoryError]);
+	const setRepositoryErrorCore = errorGroup => {
+		setRepositoryError({
+			title: "Missing Repository Info",
+			description: `In order to view this stack trace, please select a repository to associate with ${
+				errorGroup ? errorGroup.entityName + " " : ""
+			}on New Relic.`
+		});
+	};
 
 	const onConnected = async () => {
 		console.warn("onConnected starting...");
@@ -289,7 +240,6 @@ export function CodeErrorNav(props: Props) {
 			return;
 		}
 		console.warn("onConnected started");
-
 		setIsLoading(true);
 		try {
 			const errorGroupId = pendingErrorGroupId;
@@ -297,6 +247,11 @@ export function CodeErrorNav(props: Props) {
 				errorGroupId: errorGroupId!,
 				traceId: traceId!
 			});
+
+			if (!errorGroupResult.errorGroup?.repo?.url) {
+				setRepositoryErrorCore(errorGroupResult.errorGroup);
+				return;
+			}
 
 			const stackInfo = (await resolveStackTrace(
 				errorGroupResult.errorGroup?.repo?.url || "",
@@ -348,6 +303,19 @@ export function CodeErrorNav(props: Props) {
 	};
 
 	useDidMount(() => {
+		if (
+			derivedState.sessionStart &&
+			derivedState.currentCodeErrorData?.sessionStart &&
+			derivedState.currentCodeErrorData?.sessionStart !== derivedState.sessionStart
+		) {
+			logWarning("preventing reload from creating a codeError, sessionStart mismatch", {
+				currentCodeErrorDataSessionStart: derivedState.currentCodeErrorData?.sessionStart,
+				sessionStart: derivedState.sessionStart
+			});
+			dispatch(setCurrentCodeError(undefined, undefined));
+			dispatch(closeAllPanels());
+			return;
+		}
 		if (pendingRequiresConnection) {
 			setRequiresConnection(pendingRequiresConnection);
 		} else if (pendingErrorGroupId) {
@@ -412,51 +380,20 @@ export function CodeErrorNav(props: Props) {
 	if (repositoryError) {
 		// essentially a roadblock
 		return (
-			<Dismissable
-				title={repositoryError.title}
-				buttons={[
-					{
-						text: "Cancel",
-						onClick: e => {
-							e.preventDefault();
-							exit();
-						}
-					},
-					{
-						text: "Associate",
-						onClick: e => {
-							e.preventDefault();
-							exit();
-						}
-					}
-				]}
-			>
-				<p>{repositoryError.description}</p>
-				<DropdownButton
-					items={
-						openRepositories?.map((_, index) => {
-							return {
-								key: _.id! + index,
-								label: _.name,
-								action: () => {
-									dispatch(
-										api("assignRepository", {
-											url: _.remote,
-											name: _.name,
-											errorGroupId: codeError?.objectId!
-										})
-									);
-								}
-							};
-						}) || []
-					}
-					variant="secondary"
-					size="compact"
-					wrap
-				>
-					select a repo
-				</DropdownButton>
-			</Dismissable>
+			<RepositoryAssociator
+				error={repositoryError}
+				onSubmit={r => {
+					dispatch(
+						api("assignRepository", {
+							url: r.remote,
+							name: r.name,
+							errorGroupId: codeError?.objectId!
+						})
+					).then(_ => {
+						onConnected();
+					});
+				}}
+			/>
 		);
 	}
 	if (error) {

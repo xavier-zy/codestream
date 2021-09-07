@@ -6,7 +6,7 @@ interface State {}
 
 export interface Props {
 	title: string;
-	buttons: { text: string; onClick: React.MouseEventHandler }[];
+	buttons: { text: string; onClick: React.MouseEventHandler; isSecondary?: boolean }[];
 }
 
 const StyledButton = styled(Button)`
@@ -16,7 +16,7 @@ const StyledButton = styled(Button)`
 export default class Dismissable extends React.Component<Props, State> {
 	static defaultProps = {
 		title: "",
-		buttons: [{ text: "Dismiss", onClick: () => {} }]
+		buttons: [{ text: "Dismiss", onClick: () => {}, isSecondary: false }]
 	};
 
 	render() {
@@ -31,7 +31,11 @@ export default class Dismissable extends React.Component<Props, State> {
 							<div id="controls">
 								<div className="button-group">
 									{buttons.map(button => (
-										<StyledButton className="control-button" onClick={button.onClick}>
+										<StyledButton
+											isSecondary={button.isSecondary}
+											className="control-button"
+											onClick={button.onClick}
+										>
 											{button.text}
 										</StyledButton>
 									))}

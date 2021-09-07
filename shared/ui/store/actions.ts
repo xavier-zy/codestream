@@ -81,7 +81,13 @@ export const bootstrap = (data?: SignedInBootstrapData) => async dispatch => {
 const bootstrapEssentials = (data: BootstrapInHostResponse) => dispatch => {
 	dispatch(setIde(data.ide!));
 	dispatch(sessionActions.setSession(data.session));
-	dispatch(contextActions.setContext({ hasFocus: true, ...data.context }));
+	dispatch(
+		contextActions.setContext({
+			hasFocus: true,
+			...data.context,
+			sessionStart: new Date().getTime()
+		})
+	);
 	dispatch(updateCapabilities(data.capabilities || {}));
 	dispatch(updateConfigs({ ...data.configs, ...data.environmentInfo }));
 	dispatch({ type: "@pluginVersion/Set", payload: data.version });

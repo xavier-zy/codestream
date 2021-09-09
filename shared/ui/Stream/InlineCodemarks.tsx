@@ -545,7 +545,7 @@ export class SimpleInlineCodemarks extends Component<Props, State> {
 					<div key="no-codemarks" className="no-codemarks">
 						<h3>No file open.</h3>
 						<p>
-							Open a source file to to start discussing code with your teammates!{" "}
+							Open a source file to start discussing code with your teammates!{" "}
 							<a href="https://docs.codestream.com/userguide/workflow/discuss-code/">Learn more.</a>
 						</p>
 					</div>

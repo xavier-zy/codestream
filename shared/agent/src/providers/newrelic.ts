@@ -293,27 +293,105 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					"URL path": { type: "string", value: "/api/urlRules/1869706/375473842" }
 				};
 
-				// if (request.traceId) {
-				// 	const tracesResponse = await this.query(
-				// 		`query fetchErrorsInboxData($accountId:Int!) {
-				// 			actor {
-				// 			  account(id: $accountId) {
-				// 				nrql(query: "FROM ErrorTrace SELECT * WHERE entityGuid = '${entityId}' and message=${results[
-				// 			"error.group.message"
-				// 		].replace(/'/g, "\\'")} LIMIT 1") { results }
-				// 			  }
-				// 			}
-				// 		  }
-				// 		  `,
-				// 		{
-				// 			accountId: parseInt(accountId, 10)
-				// 		}
-				// 	);
-				// 	if (tracesResponse?.actor.account.results) {
-				// 	}
-				// 	// /FROM ErrorTrace SELECT * WHERE entityGuid = 'MzQwMjYyfEFQTXxBUFBMSUNBVElPTnw0MjIxMDk4' LIMIT  1
-				// }
+				if (!request.traceId) {
+					// HACK to find a traceId if none supplied -- find the latest traceId
 
+					const queryAsString = `
+					query fetchErrorsInboxData($accountId:Int!) {
+						actor {
+						  account(id: $accountId) {
+							nrql(query: "FROM ErrorTrace SELECT * WHERE entityGuid = '${entityId}' and message = '${results[
+						"error.group.message"
+					].replace(/'/g, "\\'")}' LIMIT 1") { 
+						results 
+					}
+						  }
+						}
+					  }
+					  `;
+					const tracesResponse = await this.query(queryAsString, {
+						accountId: accountId
+					});
+					if (tracesResponse?.actor?.account?.nrql?.results?.length) {
+						request.traceId = tracesResponse?.actor.account.nrql.results[0].traceId;
+					}
+				}
+
+				// TODO fix me below does not work yet
+				const foo = false;
+				if (foo) {
+					const assigneeResults = await this.query(
+						`query getStatus($entityId:String, $errorGroupId:String) {
+						actor {
+						  entity(guid: $entityId) {
+							... on WorkloadEntity {
+							  guid
+							  name
+							  errorGroup(id: $errorGroupId) {
+								assignedUser {
+								  email
+								  gravatar
+								  id
+								  name
+								}
+								state
+								id
+							  }
+							}
+						  }
+						}
+					  }
+					  `,
+						{
+							entityId: entityId,
+							errorGroupId: errorGroupId
+						}
+					);
+					if (assigneeResults) {
+						errorGroup.state = assigneeResults.actor.entity.errorGroup.state;
+						const assignee = assigneeResults.actor.entity.errorGroup.assignedUser;
+						if (assignee) {
+							errorGroup.assignee = assignee;
+						}
+					}
+
+					const stackTraceResult = await this.query(
+						`query getTrace($entityId: EntityGuid!, $traceId: String!) {
+					actor {
+					  entity(guid: $entityId) {
+						... on ApmApplicationEntity {
+						  guid
+						  name
+						  errorTrace(traceId: $traceId) {
+							id
+							exceptionClass
+							intrinsicAttributes
+							message
+							path
+							stackTrace {
+							  filepath
+							  line
+							  name
+							  formatted
+							}
+						  }
+						}
+					  }
+					}
+				  }
+				  `,
+						{
+							entityId: entityId,
+							traceId: request.traceId
+						}
+					);
+
+					errorGroup.errorTrace = {
+						id: stackTraceResult.actor.entity.errorTrace.id,
+						path: stackTraceResult.actor.entity.errorTrace.path,
+						stackTrace: stackTraceResult.actor.entity.errorTrace.stackTrace
+					};
+				}
 				// TODO fix me
 				errorGroup.errorTrace = {
 					id: "10d5c489-049f-11ec-86ae-0242ac110009_14970_28033",
@@ -366,77 +444,6 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 						}
 					]
 				};
-
-				// TODO fix me below does not work yet
-				const foo = false;
-				if (foo) {
-					const assigneeResults = await this.query(
-						`query getStatus($entityId:String, $errorGroupId:String) {
-						actor {
-						  entity(guid: $entityId) {
-							... on WorkloadEntity {
-							  guid
-							  name
-							  errorGroup(id: $errorGroupId) {
-								assignedUser {
-								  email
-								  gravatar
-								  id
-								  name
-								}
-								state
-								id
-							  }
-							}
-						  }
-						}
-					  }
-					  `,
-						{
-							entityId: entityId,
-							errorGroupId: errorGroupId
-						}
-					);
-					if (assigneeResults) {
-						errorGroup.state = assigneeResults.actor.entity.errorGroup.state;
-						const assignee = assigneeResults.actor.entity.errorGroup.assignedUser;
-						if (assignee) {
-							errorGroup.assignee = assignee;
-						}
-					}
-
-					const stackTraceResult = await this.query(
-						`
-					 query getTrace($entityId:String, $traceId:String) {
-					actor {
-					  entity(guid: $entityId) {
-						... on ApmApplicationEntity {
-						  guid
-						  name
-						  errorTrace(traceId: $traceId) {
-							id
-							exceptionClass
-							intrinsicAttributes
-							message
-							path
-							stackTrace {
-							  filepath
-							  line
-							  name
-							  formatted
-							}
-						  }
-						}
-					  }
-					}
-				  }
-				  `,
-						{
-							entityId: entityId,
-							traceId: request.traceId
-						}
-					);
-				}
 				Logger.debug("NR:ErrorGroup", {
 					errorGroup: errorGroup
 				});

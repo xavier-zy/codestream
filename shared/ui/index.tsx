@@ -499,16 +499,15 @@ function listenForEvents(store) {
 							store.dispatch(setPendingProtocolHandlerUrl({ url: e.url }));
 							break;
 						}
-						// TODO fix me
-						const traceId = "cd761a0b-03eb-11ec-9b3c-0242ac110012_0_2040";
+
 						store
-							.dispatch(findErrorGroupByObjectId(route.query.errorGroupId, traceId))
+							.dispatch(findErrorGroupByObjectId(route.query.errorGroupId, route.query.traceId))
 							.then(codeError => {
 								const state = store.getState();
 								if (codeError) {
 									store.dispatch(
 										setCurrentCodeError(codeError.id, {
-											traceId: traceId,
+											traceId: route.query.traceId,
 											// cache the sessionStart here in case the IDE is restarted
 											sessionStart: state.context.sessionStart
 										})
@@ -520,7 +519,7 @@ function listenForEvents(store) {
 									// directing / opening a codeError
 									store.dispatch(
 										setCurrentCodeError("PENDING", {
-											traceId: traceId,
+											traceId: route.query.traceId,
 											// cache the sessionStart here in case the IDE is restarted
 											sessionStart: state.context.sessionStart,
 											pendingErrorGroupId: route.query.errorGroupId,

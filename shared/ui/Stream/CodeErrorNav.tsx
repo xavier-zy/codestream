@@ -171,7 +171,7 @@ export function CodeErrorNav(props: Props) {
 
 	const { codeError, errorGroup } = derivedState;
 
-	const pendingErrorGroupId = derivedState.currentCodeErrorData?.pendingErrorGroupId;
+	const pendingErrorGroupGuid = derivedState.currentCodeErrorData?.pendingErrorGroupGuid;
 	const traceId = derivedState.currentCodeErrorData?.traceId;
 	const pendingRequiresConnection = derivedState.currentCodeErrorData?.pendingRequiresConnection;
 
@@ -236,15 +236,15 @@ export function CodeErrorNav(props: Props) {
 
 	const onConnected = async () => {
 		console.warn("onConnected starting...");
-		if (!pendingErrorGroupId) {
+		if (!pendingErrorGroupGuid) {
 			return;
 		}
 		console.warn("onConnected started");
 		setIsLoading(true);
 		try {
-			const errorGroupId = pendingErrorGroupId;
+			const errorGroupGuid = pendingErrorGroupGuid;
 			const errorGroupResult = await HostApi.instance.send(GetNewRelicErrorGroupRequestType, {
-				errorGroupId: errorGroupId!,
+				errorGroupGuid: errorGroupGuid!,
 				traceId: traceId!
 			});
 
@@ -262,7 +262,7 @@ export function CodeErrorNav(props: Props) {
 
 			const newCodeError: NewCodeErrorAttributes = {
 				accountId: errorGroupResult.accountId,
-				objectId: errorGroupId,
+				objectId: errorGroupGuid,
 				objectType: "ErrorGroup",
 				title: errorGroupResult.errorGroup?.title || "",
 				text: errorGroupResult.errorGroup?.message || undefined,
@@ -275,13 +275,13 @@ export function CodeErrorNav(props: Props) {
 
 			const response = (await dispatch(createPostAndCodeError(newCodeError))) as any;
 			if (errorGroupResult?.errorGroup != null) {
-				dispatch(setErrorGroup(errorGroupId, errorGroupResult.errorGroup!));
+				dispatch(setErrorGroup(errorGroupGuid, errorGroupResult.errorGroup!));
 			}
 			dispatch(
 				setCurrentCodeError(response.codeError.id, {
 					// need to reset this back to undefined now that we aren't
 					// pending any longer
-					pendingErrorGroupId: undefined,
+					pendingErrorGroupGuid: undefined,
 					errorGroup: errorGroupResult?.errorGroup,
 					// repo: errorGroupResult?.repo,
 					sha: errorGroupResult?.sha,
@@ -318,7 +318,7 @@ export function CodeErrorNav(props: Props) {
 		}
 		if (pendingRequiresConnection) {
 			setRequiresConnection(pendingRequiresConnection);
-		} else if (pendingErrorGroupId) {
+		} else if (pendingErrorGroupGuid) {
 			onConnected();
 		} else {
 			const onDidMount = () => {
@@ -387,7 +387,7 @@ export function CodeErrorNav(props: Props) {
 						api("assignRepository", {
 							url: r.remote,
 							name: r.name,
-							errorGroupId: codeError?.objectId!
+							errorGroupGuid: codeError?.objectId!
 						})
 					).then(_ => {
 						onConnected();

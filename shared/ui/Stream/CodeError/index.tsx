@@ -256,7 +256,7 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 
 		dispatch(
 			api("setAssignee", {
-				errorGroupId: props.errorGroup?.guid!,
+				errorGroupGuid: props.errorGroup?.guid!,
 				userId: userId
 			})
 		);
@@ -269,7 +269,7 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 
 		dispatch(
 			api("removeAssignee", {
-				errorGroupId: props.errorGroup?.guid!,
+				errorGroupGuid: props.errorGroup?.guid!,
 				userId: userId
 			})
 		);
@@ -290,7 +290,7 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 							action: async e => {
 								dispatch(
 									api("setState", {
-										errorGroupId: props.errorGroup?.guid!,
+										errorGroupGuid: props.errorGroup?.guid!,
 										state: _
 									})
 								);

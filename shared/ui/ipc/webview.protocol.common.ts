@@ -146,7 +146,7 @@ export interface WebviewContext {
 		/** caches when the last user session started  */
 		sessionStart?: number;
 		pendingRequiresConnection?: boolean;
-		pendingErrorGroupId?: string;
+		pendingErrorGroupGuid?: string;
 		traceId?: string;
 	};
 	createPullRequestReviewId?: string;

@@ -233,8 +233,8 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		try {
 			await this.ensureConnected();
 
-			const errorGroupId = request.errorGroupId;
-			const parsedId = this.parseId(errorGroupId)!;
+			const errorGroupGuid = request.errorGroupGuid;
+			const parsedId = this.parseId(errorGroupGuid)!;
 			accountId = parsedId.accountId;
 
 			let response;
@@ -243,7 +243,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					actor {
 					  account(id: $accountId) {
 						nrql(query: "FROM Metric SELECT entity.guid, error.group.guid, error.group.message, error.group.name, error.group.source, error.group.nrql WHERE error.group.guid = '${Strings.santizeGraphqlValue(
-							errorGroupId
+							errorGroupGuid
 						)}' SINCE 24 hours ago LIMIT 1") { nrql results }
 					  }
 					}
@@ -266,7 +266,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					nrql: results["error.group.nrql"],
 					source: results["error.group.source"],
 					timestamp: results["timestamp"],
-					errorGroupUrl: `${this.productUrl}/redirect/errors-inbox/${errorGroupId}`,
+					errorGroupUrl: `${this.productUrl}/redirect/errors-inbox/${errorGroupGuid}`,
 					entityUrl: `${this.productUrl}/redirect/entity/${results["entity.guid"]}`,
 					// TODO fix me
 					state: "UNRESOLVED",
@@ -321,13 +321,13 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				const foo = false;
 				if (foo) {
 					const assigneeResults = await this.query(
-						`query getStatus($entityId:String, $errorGroupId:String) {
+						`query getStatus($entityId:String, $errorGroupGuid:String) {
 						actor {
 						  entity(guid: $entityId) {
 							... on WorkloadEntity {
 							  guid
 							  name
-							  errorGroup(id: $errorGroupId) {
+							  errorGroup(id: $errorGroupGuid) {
 								assignedUser {
 								  email
 								  gravatar
@@ -344,7 +344,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					  `,
 						{
 							entityId: entityId,
-							errorGroupId: errorGroupId
+							errorGroupGuid: errorGroupGuid
 						}
 					);
 					if (assigneeResults) {
@@ -511,7 +511,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 
 	@log()
 	async setAssignee(request: {
-		errorGroupId: string;
+		errorGroupGuid: string;
 		userId: string;
 	}): Promise<Directives | undefined> {
 		try {
@@ -542,7 +542,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 
 	@log()
 	async removeAssignee(request: {
-		errorGroupId: string;
+		errorGroupGuid: string;
 		userId: string;
 	}): Promise<Directives | undefined> {
 		try {
@@ -568,7 +568,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 
 	@log()
 	async setState(request: {
-		errorGroupId: string;
+		errorGroupGuid: string;
 		state: "RESOLVED" | "UNRESOLVED" | "IGNORED";
 	}): Promise<Directives | undefined> {
 		try {
@@ -582,9 +582,9 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			// 		state?: string;
 			// 	};
 			// }>(
-			// 	`mutation setState($errorGroupId:ID!, $state:ErrorTrackingErrorGroupState) {
+			// 	`mutation setState($errorGroupGuid:ID!, $state:ErrorTrackingErrorGroupState) {
 			// 		errorTrackingUpdateErrorGroupState(id:
-			// 		  $errorGroupId, state: {state: $state}) {
+			// 		  $errorGroupGuid, state: {state: $state}) {
 			// 		  state
 			// 		  errors {
 			// 			description
@@ -593,7 +593,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			// 		}
 			// 	  }`,
 			// 	{
-			// 		errorGroupId: request.errorGroupId,
+			// 		errorGroupGuid: request.errorGroupGuid,
 			// 		state: request.state
 			// 	}
 			// );
@@ -616,7 +616,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 	@log()
 	async assignRepository(request: {
 		accountId?: string;
-		errorGroupId: string;
+		errorGroupGuid: string;
 		name?: string;
 		url: string;
 	}): Promise<Directives | undefined> {
@@ -648,7 +648,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					{
 						type: "assignRepository",
 						data: {
-							id: request.errorGroupId,
+							id: request.errorGroupGuid,
 							repo: {
 								accountId: accountId,
 								name: request.name,
@@ -664,10 +664,10 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		}
 	}
 
-	private _setAssignee(request: { errorGroupId: string; userId: string }) {
+	private _setAssignee(request: { errorGroupGuid: string; userId: string }) {
 		return this.query(
-			`mutation removeUser($errorGroupId: String!, userId: Int!) {
-					errorTrackingAssignErrorGroup(id: $errorGroupId, assignment: {userId: $userId}) {
+			`mutation removeUser($errorGroupGuid: String!, userId: Int!) {
+					errorTrackingAssignErrorGroup(id: $errorGroupGuid, assignment: {userId: $userId}) {
 					  errors {
 						description
 						type
@@ -681,7 +681,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					}
 				  }`,
 			{
-				errorGroupId: request.errorGroupId,
+				errorGroupGuid: request.errorGroupGuid,
 				userId: parseInt(request.userId, 10)
 			}
 		);

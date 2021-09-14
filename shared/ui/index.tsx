@@ -22,7 +22,8 @@ import {
 	WebviewPanels,
 	HostDidChangeVisibleEditorsNotificationType,
 	ShowPullRequestNotificationType,
-	HostDidChangeLayoutNotificationType
+	HostDidChangeLayoutNotificationType,
+	RouteWithQuery
 } from "./ipc/webview.protocol";
 import { createCodeStreamStore } from "./store";
 import { HostApi } from "./webview-api";
@@ -493,6 +494,18 @@ function listenForEvents(store) {
 					case "errorsinbox": {
 						store.dispatch(closeAllPanels());
 
+						const definedQuery = route as RouteWithQuery<{
+							errorGroupGuid: string;
+							traceId?: string;
+							src?: string;
+							entityId?: string;
+							hash?: string;
+							commit?: string;
+							remote?: string;
+							tag?: string;
+							ide?: string;
+						}>;
+
 						// if the user isn't logged in we'll queue this url
 						// up for post-login processing
 						if (!store.getState().session.userId) {
@@ -501,13 +514,18 @@ function listenForEvents(store) {
 						}
 
 						store
-							.dispatch(findErrorGroupByObjectId(route.query.errorGroupId, route.query.traceId))
+							.dispatch(
+								findErrorGroupByObjectId(
+									definedQuery.query.errorGroupGuid,
+									definedQuery.query.traceId
+								)
+							)
 							.then(codeError => {
 								const state = store.getState();
 								if (codeError) {
 									store.dispatch(
 										setCurrentCodeError(codeError.id, {
-											traceId: route.query.traceId,
+											traceId: definedQuery.query.traceId,
 											// cache the sessionStart here in case the IDE is restarted
 											sessionStart: state.context.sessionStart
 										})
@@ -519,10 +537,10 @@ function listenForEvents(store) {
 									// directing / opening a codeError
 									store.dispatch(
 										setCurrentCodeError("PENDING", {
-											traceId: route.query.traceId,
+											traceId: definedQuery.query.traceId,
 											// cache the sessionStart here in case the IDE is restarted
 											sessionStart: state.context.sessionStart,
-											pendingErrorGroupId: route.query.errorGroupId,
+											pendingErrorGroupGuid: definedQuery.query.errorGroupGuid,
 											pendingRequiresConnection: !isConnected(state, {
 												id: "newrelic*com"
 											})
@@ -631,13 +649,13 @@ function listenForEvents(store) {
 										HostApi.instance
 											.send(ExecuteThirdPartyRequestUntypedType, {
 												method: "setAssigneeOnIssue",
-												providerId: route.query.providerId,
+												providerId: route!.query.providerId,
 												params: { issueId: issue.id, assigneeId: issue.viewer.id, onOff: true }
 											})
 											.then(() => {
 												store.dispatch(closeAllPanels());
 												store.dispatch(
-													setStartWorkCard({ ...issue, providerId: route.query.providerId })
+													setStartWorkCard({ ...issue, providerId: route!.query.providerId })
 												);
 											});
 									} else {

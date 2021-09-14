@@ -103,11 +103,13 @@ export enum RouteControllerType {
 export enum RouteActionType {
 	Open = "open"
 }
-export interface Route {
+export interface Route extends RouteWithQuery<any> {}
+
+export interface RouteWithQuery<Query> {
 	controller?: RouteControllerType;
 	action?: any;
 	id?: string;
-	query?: any;
+	query: Query;
 }
 
 export const HostDidReceiveRequestNotificationType = new NotificationType<

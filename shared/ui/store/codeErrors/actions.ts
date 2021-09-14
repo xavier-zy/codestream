@@ -240,45 +240,45 @@ export const handleDirectives = (id: string, data: any) =>
 
 export const _addProviderError = (
 	providerId: string,
-	errorGroupId: string,
+	errorGroupGuid: string,
 	error?: { message: string }
 ) =>
 	action(CodeErrorsActionsTypes.AddProviderError, {
 		providerId: providerId,
-		id: errorGroupId,
+		id: errorGroupGuid,
 		error
 	});
 
-export const _clearProviderError = (providerId: string, errorGroupId: string) =>
+export const _clearProviderError = (providerId: string, errorGroupGuid: string) =>
 	action(CodeErrorsActionsTypes.ClearProviderError, {
 		providerId: providerId,
-		id: errorGroupId,
+		id: errorGroupGuid,
 		undefined
 	});
 
-export const _setErrorGroup = (errorGroupId: string, data: any) =>
+export const _setErrorGroup = (errorGroupGuid: string, data: any) =>
 	action(CodeErrorsActionsTypes.SetErrorGroup, {
 		providerId: "newrelic*com",
-		id: errorGroupId,
+		id: errorGroupGuid,
 		data
 	});
 
-export const _isLoadingErrorGroup = (errorGroupId: string, data: any) =>
+export const _isLoadingErrorGroup = (errorGroupGuid: string, data: any) =>
 	action(CodeErrorsActionsTypes.IsLoadingErrorGroup, {
 		providerId: "newrelic*com",
-		id: errorGroupId,
+		id: errorGroupGuid,
 		data
 	});
 
 export const setProviderError = (
 	providerId: string,
-	errorGroupId: string,
+	errorGroupGuid: string,
 	error?: { message: string }
 ) => async (dispatch, getState: () => CodeStreamState) => {
 	try {
-		dispatch(_addProviderError(providerId, errorGroupId, error));
+		dispatch(_addProviderError(providerId, errorGroupGuid, error));
 	} catch (error) {
-		logError(`failed to setProviderError: ${error}`, { providerId, errorGroupId });
+		logError(`failed to setProviderError: ${error}`, { providerId, errorGroupGuid });
 	}
 };
 
@@ -300,12 +300,12 @@ export const fetchErrorGroup = (codeError: CSCodeError, traceId?: string) => asy
 ) => {
 	let objectId;
 	try {
-		// this is an errorGroupId
+		// this is an errorGroupGuid
 		objectId = codeError?.objectId;
 		dispatch(_isLoadingErrorGroup(objectId, { isLoading: true }));
 		return dispatch(
 			fetchNewRelicErrorGroup({
-				errorGroupId: objectId!,
+				errorGroupGuid: objectId!,
 				traceId: traceId || codeError.stackTraces[0].traceId!
 			})
 		).then((result: GetNewRelicErrorGroupResponse) => {
@@ -350,14 +350,14 @@ export const findErrorGroupByObjectId = (objectId: string, traceId?: string) => 
 	return undefined;
 };
 
-export const setErrorGroup = (errorGroupId: string, data?: any) => async (
+export const setErrorGroup = (errorGroupGuid: string, data?: any) => async (
 	dispatch,
 	getState: () => CodeStreamState
 ) => {
 	try {
-		dispatch(_setErrorGroup(errorGroupId, data));
+		dispatch(_setErrorGroup(errorGroupGuid, data));
 	} catch (error) {
-		logError(`failed to _setErrorGroup: ${error}`, { errorGroupId });
+		logError(`failed to _setErrorGroup: ${error}`, { errorGroupGuid });
 	}
 };
 
@@ -371,7 +371,7 @@ export const setErrorGroup = (errorGroupId: string, data?: any) => async (
 export const api = <T = any, R = any>(
 	method: "assignRepository" | "removeAssignee" | "setAssignee" | "setState",
 
-	params: { errorGroupId: string } | any,
+	params: { errorGroupGuid: string } | any,
 	options?: {
 		updateOnSuccess?: boolean;
 		preventClearError: boolean;
@@ -405,11 +405,11 @@ export const api = <T = any, R = any>(
 			params: params
 		})) as any;
 		// if (response && (!options || (options && !options.preventClearError))) {
-		// 	dispatch(clearProviderError(params.errorGroupId, pullRequestId));
+		// 	dispatch(clearProviderError(params.errorGroupGuid, pullRequestId));
 		// }
 
 		if (response && response.directives) {
-			dispatch(handleDirectives(params.errorGroupId, response.directives));
+			dispatch(handleDirectives(params.errorGroupGuid, response.directives));
 			return {
 				handled: true
 			};
@@ -446,7 +446,7 @@ export const api = <T = any, R = any>(
 			}
 		}
 		// dispatch(
-		// 	setProviderError(providerId, params.errorGroupId, {
+		// 	setProviderError(providerId, params.errorGroupGuid, {
 		// 		message: errorString
 		// 	})
 		// );

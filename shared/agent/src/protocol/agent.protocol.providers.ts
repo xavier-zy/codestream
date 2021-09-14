@@ -868,7 +868,7 @@ export const GetNewRelicDataRequestType = new RequestType<
 >("codestream/newrelic/data");
 
 export interface GetNewRelicErrorGroupRequest {
-	errorGroupId: string;
+	errorGroupGuid: string;
 	traceId: string;
 }
 
@@ -885,7 +885,7 @@ export interface NewRelicErrorGroup {
 
 	entityAlertingSeverity?: "CRITICAL" | "NOT_ALERTING" | "NOT_CONFIGURED" | "WARNING";
 	/**
-	 * This is the "id" aka errorGroupId, NR calls this "guid"
+	 * This is the "id" aka errorGroupGuid, NR calls this "guid"
 	 */
 	guid: string;
 	title: string;

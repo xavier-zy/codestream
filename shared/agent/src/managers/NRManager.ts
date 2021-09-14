@@ -44,6 +44,7 @@ import { Parser as phpParser } from "./stackTraceParsers/phpStackTraceParser";
 import { Parser as pythonParser } from "./stackTraceParsers/pythonStackTraceParser";
 import { Parser as csharpParser } from "./stackTraceParsers/csharpStackTraceParser";
 import { Parser as javaParser } from "./stackTraceParsers/javaStackTraceParser";
+import { Parser as goParser } from "./stackTraceParsers/goStackTraceParser";
 
 import { NodeJSInstrumentation } from "./newRelicInstrumentation/nodeJSInstrumentation";
 import { JavaInstrumentation } from "./newRelicInstrumentation/javaInstrumentation";
@@ -61,7 +62,8 @@ const ExtensionToLanguageMap: { [key: string]: string } = {
 	php: "php",
 	cs: "c#",
 	py: "python",
-	java: "java"
+	java: "java",
+	go: "go"
 };
 
 type Parser = (stack: string) => CSStackTraceInfo;
@@ -72,7 +74,8 @@ const StackTraceParsers: { [key: string]: Parser } = {
 	php: phpParser,
 	"c#": csharpParser,
 	python: pythonParser,
-	java: javaParser
+	java: javaParser,
+	go: goParser
 };
 
 const MISSING_SHA_MESSAGE =

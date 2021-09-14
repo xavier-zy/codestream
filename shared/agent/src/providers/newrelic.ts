@@ -244,7 +244,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					  account(id: $accountId) {
 						nrql(query: "FROM Metric SELECT entity.guid, error.group.guid, error.group.message, error.group.name, error.group.source, error.group.nrql WHERE error.group.guid = '${Strings.santizeGraphqlValue(
 							errorGroupGuid
-						)}' SINCE 24 hours ago LIMIT 1") { nrql results }
+						)}' LIMIT 1") { nrql results }
 					  }
 					}
 				  }
@@ -286,16 +286,15 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				errorGroup.entityName = response.actor.entity.name;
 				errorGroup.entityAlertingSeverity = response.actor.entity.alertSeverity;
 				errorGroup.attributes = {
-					Timestamp: { type: "timestamp", value: errorGroup.timestamp },
+					Timestamp: { type: "timestamp", value: errorGroup.timestamp }
 					// TODO fix me
-					"Host display name": { type: "string", value: "10.16.33.9:15595" },
-					"URL host": { type: "string", value: "shardcache.vip.cf.nr-ops.net" },
-					"URL path": { type: "string", value: "/api/urlRules/1869706/375473842" }
+					// "Host display name": { type: "string", value: "10.16.33.9:15595" },
+					// "URL host": { type: "string", value: "shardcache.vip.cf.nr-ops.net" },
+					// "URL path": { type: "string", value: "/api/urlRules/1869706/375473842" }
 				};
 
 				if (!request.traceId) {
 					// HACK to find a traceId if none supplied -- find the latest traceId
-
 					const queryAsString = `
 					query fetchErrorsInboxData($accountId:Int!) {
 						actor {

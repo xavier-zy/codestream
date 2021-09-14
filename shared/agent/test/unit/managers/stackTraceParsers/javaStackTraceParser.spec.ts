@@ -138,4 +138,70 @@ at org.mortbay.thread.QueuedThreadPool$PoolThread.run(QueuedThreadPool.java:582)
 			error: "Something bad happened"
 		});
 	});
+
+	it("stack2", () => {
+		const str = `\tjava.base/sun.nio.fs.UnixException.translateToIOException(UnixException.java:92)\n\tjava.base/sun.nio.fs.UnixException.rethrowAsIOException(UnixException.java:111)\n\tjava.base/sun.nio.fs.UnixException.rethrowAsIOException(UnixException.java:116)\n\tjava.base/sun.nio.fs.UnixFileSystemProvider.newByteChannel(UnixFileSystemProvider.java:219)\n\tjava.base/java.nio.file.Files.newByteChannel(Files.java:371)\n\tjava.base/java.nio.file.Files.newByteChannel(Files.java:422)\n\tjava.base/java.nio.file.Files.readAll…va.util.concurrent.Executors$RunnableAdapter.call(Executors.java:515)\n\tjava.base/java.util.concurrent.FutureTask.runAndReset(FutureTask.java:305)\n\tjava.base/java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.run(ScheduledThreadPoolExecutor.java:305)\n\tjava.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1128)\n\tjava.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:628)\n\tjava.base/java.lang.Thread.run(Thread.java:834)`;
+		const result = Parser(str);
+		console.log(JSON.stringify(result, null, 4));
+		expect(result).to.deep.equals({
+			lines: [
+				{
+					method: "java.base/sun.nio.fs.UnixException.translateToIOException",
+					fileFullPath: "UnixException.java",
+					line: 92
+				},
+				{
+					fileFullPath: "UnixException.java",
+					line: 111,
+					method: "java.base/sun.nio.fs.UnixException.rethrowAsIOException"
+				},
+				{
+					fileFullPath: "UnixException.java",
+					line: 116,
+					method: "java.base/sun.nio.fs.UnixException.rethrowAsIOException"
+				},
+				{
+					fileFullPath: "UnixFileSystemProvider.java",
+					line: 219,
+					method: "java.base/sun.nio.fs.UnixFileSystemProvider.newByteChannel"
+				},
+				{
+					fileFullPath: "Files.java",
+					line: 371,
+					method: "java.base/java.nio.file.Files.newByteChannel"
+				},
+				{
+					fileFullPath: "Files.java",
+					line: 422,
+					method: "java.base/java.nio.file.Files.newByteChannel"
+				},
+				{
+					fileFullPath: "FutureTask.java",
+					line: 305,
+					method: "java.base/java.util.concurrent.FutureTask.runAndReset"
+				},
+				{
+					fileFullPath: "ScheduledThreadPoolExecutor.java",
+					line: 305,
+					method:
+						"java.base/java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.run"
+				},
+				{
+					fileFullPath: "ThreadPoolExecutor.java",
+					line: 1128,
+					method: "java.base/java.util.concurrent.ThreadPoolExecutor.runWorker"
+				},
+				{
+					fileFullPath: "ThreadPoolExecutor.java",
+					line: 628,
+					method: "java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run"
+				},
+				{
+					fileFullPath: "Thread.java",
+					line: 834,
+					method: "java.base/java.lang.Thread.run"
+				}
+			]
+		});
+	});
 });

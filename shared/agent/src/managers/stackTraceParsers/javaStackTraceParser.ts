@@ -16,7 +16,7 @@ export function Parser(stack: string): CSStackTraceInfo {
 			\s*
 			(at)? // at
 			\s+
-			((?:(?:[\d\w]*\.)*[\d\w]*))\. // package
+			((?:(?:[\d\w\/]*\.)*[\d\w\/]*))\. // package
 			([\d\w\$]*)\. // class
 			([\d\w\$]*) // method
 			\(

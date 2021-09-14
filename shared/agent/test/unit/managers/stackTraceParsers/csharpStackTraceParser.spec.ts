@@ -48,7 +48,9 @@ describe("csharpStackTraceParser", () => {
 						line: 10,
 						column: undefined
 					}
-				]
+				],
+				text:
+					"   at Somethingelse.Baz.Initialize() in /Users/jdoe/code/dotnet_console/Program.cs:line 37\n\t   at dotnet_console.Bar.Execute() in /Users/jdoe/code/dotnet_console/Program.cs:line 26\n\t   at dotnet_console.Foo.Go() in /Users/jdoe/code/dotnet_console/Program.cs:line 20\n\t   at dotnet_console.Program.Main(String[] args) in /Users/jdoe/code/dotnet_console/Program.cs:line 10"
 			});
 		});
 

@@ -906,7 +906,6 @@ export interface NewRelicErrorGroup {
 	};
 
 	errorTrace?: {
-		id: string;
 		// exceptionClass: string;
 		// agentAttributes: any;
 		// intrinsicAttributes: any;

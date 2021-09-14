@@ -354,96 +354,39 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 							errorGroup.assignee = assignee;
 						}
 					}
+				}
 
-					const stackTraceResult = await this.query(
-						`query getTrace($entityId: EntityGuid!, $traceId: String!) {
-					actor {
-					  entity(guid: $entityId) {
-						... on ApmApplicationEntity {
-						  guid
-						  name
-						  errorTrace(traceId: $traceId) {
-							id
-							exceptionClass
-							intrinsicAttributes
-							message
-							path
-							stackTrace {
-							  filepath
-							  line
-							  name
-							  formatted
-							}
-						  }
+				const stackTraceResult = await this.query(
+					`query getTrace($entityId: EntityGuid!, $traceId: String!) {
+				actor {
+				  entity(guid: $entityId) {
+					... on ApmApplicationEntity {
+					  name
+					  stackTrace(occurrenceId: $traceId) {
+						message
+						frames {
+							filepath
+							formatted
+							line
+							name
 						}
 					  }
 					}
 				  }
-				  `,
-						{
-							entityId: entityId,
-							traceId: request.traceId
-						}
-					);
-
-					errorGroup.errorTrace = {
-						id: stackTraceResult.actor.entity.errorTrace.id,
-						path: stackTraceResult.actor.entity.errorTrace.path,
-						stackTrace: stackTraceResult.actor.entity.errorTrace.stackTrace
-					};
 				}
-				// TODO fix me
+			  }
+			  `,
+					{
+						entityId: entityId,
+						traceId: request.traceId
+					}
+				);
+
 				errorGroup.errorTrace = {
-					id: "10d5c489-049f-11ec-86ae-0242ac110009_14970_28033",
-					path: "WebTransaction/SpringController/api/urlRules/{accountId}/{applicationId} (GET)",
-					stackTrace: [
-						{
-							formatted:
-								"\torg.springframework.web.servlet.FrameworkServlet.processRequest(FrameworkServlet.java:1013)"
-						},
-						{
-							formatted:
-								"\torg.springframework.web.servlet.FrameworkServlet.doGet(FrameworkServlet.java:897)"
-						},
-						{
-							formatted: "\tjavax.servlet.http.HttpServlet.service(HttpServlet.java:634)"
-						},
-						{
-							formatted:
-								"\torg.springframework.web.servlet.FrameworkServlet.service(FrameworkServlet.java:882)"
-						},
-						{
-							formatted: "\tjavax.servlet.http.HttpServlet.service(HttpServlet.java:741)"
-						},
-						{
-							formatted:
-								"\torg.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:231)"
-						},
-						{
-							formatted:
-								"\torg.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:166)"
-						},
-						{
-							formatted: "\torg.apache.tomcat.websocket.server.WsFilter.doFilter(WsFilter.java:53)"
-						},
-						{
-							formatted:
-								"\torg.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:193)"
-						},
-						{
-							formatted:
-								"\torg.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:166)"
-						},
-						{
-							formatted:
-								"\torg.springframework.boot.actuate.web.trace.servlet.HttpTraceFilter.doFilterInternal(HttpTraceFilter.java:88)"
-						},
-						{
-							formatted:
-								"\torg.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:109)"
-						}
-					]
+					path: stackTraceResult.actor.entity.name,
+					stackTrace: stackTraceResult.actor.entity.stackTrace.frames
 				};
+
 				Logger.debug("NR:ErrorGroup", {
 					errorGroup: errorGroup
 				});

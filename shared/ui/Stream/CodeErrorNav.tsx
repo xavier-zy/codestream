@@ -248,10 +248,10 @@ export function CodeErrorNav(props: Props) {
 				traceId: traceId!
 			});
 
-			if (errorGroupResult?.error?.message) {
+			if (!errorGroupResult || errorGroupResult?.error?.message) {
 				setError({
 					title: "Unexpected Error",
-					description: errorGroupResult.error.message
+					description: errorGroupResult?.error?.message || "unknown error"
 				});
 				return;
 			}

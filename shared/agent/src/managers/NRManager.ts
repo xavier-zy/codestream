@@ -334,7 +334,8 @@ export class NRManager {
 			.slice()
 			.reverse();
 		let bestMatchingFilePath = undefined;
-		let bestMatchingScore = 0;
+		let bestMatchingScore = -1;
+		let bestMatchingDepth = 0;
 
 		for (const filePath of allFilePaths) {
 			const filePathParts = filePath
@@ -342,11 +343,20 @@ export class NRManager {
 				.slice()
 				.reverse();
 
+			let partialMatch = false;
 			for (let i = 0; i < pathSuffixParts.length; i++) {
-				if (!pathSuffixParts[i] || pathSuffixParts[i] !== filePathParts[i]) {
-					if (i > bestMatchingScore) {
+				if (pathSuffixParts[i] === filePathParts[i]) {
+					partialMatch = true;
+				}
+				if (pathSuffixParts[i] !== filePathParts[i] || i === pathSuffixParts.length - 1) {
+					if (
+						partialMatch &&
+						(i > bestMatchingScore ||
+							(i === bestMatchingDepth && filePathParts.length < bestMatchingDepth))
+					) {
 						bestMatchingScore = i;
 						bestMatchingFilePath = filePath;
+						bestMatchingDepth = filePathParts.length;
 					}
 					break;
 				}

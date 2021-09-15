@@ -248,6 +248,14 @@ export function CodeErrorNav(props: Props) {
 				traceId: traceId!
 			});
 
+			if (errorGroupResult?.error?.message) {
+				setError({
+					title: "Unexpected Error",
+					description: errorGroupResult.error.message
+				});
+				return;
+			}
+
 			if (!errorGroupResult.errorGroup?.repo?.url) {
 				setRepositoryErrorCore(errorGroupResult.errorGroup);
 				return;

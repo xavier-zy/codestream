@@ -381,21 +381,20 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					}
 				);
 
-				errorGroup.errorTrace = {
-					path: stackTraceResult.actor.entity.name,
-					stackTrace: stackTraceResult.actor.entity.stackTrace.frames
-				};
+				if (stackTraceResult?.actor?.entity) {
+					errorGroup.errorTrace = {
+						path: stackTraceResult.actor.entity.name,
+						stackTrace: stackTraceResult.actor.entity.stackTrace.frames
+					};
+					errorGroup.hasStackTrace = true;
+				}
 
+				errorGroup.repo = repoRemote ? { url: repoRemote } : undefined;
 				Logger.debug("NR:ErrorGroup", {
 					errorGroup: errorGroup
 				});
-
-				errorGroup.repo = repoRemote ? { url: repoRemote } : undefined;
-
-				// TODO fix me
-				errorGroup.hasStackTrace = true;
 			} else {
-				Logger.log("No results", {
+				Logger.log("No errorGroup results", {
 					request: request
 				});
 			}
@@ -407,7 +406,18 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			};
 		} catch (ex) {
 			Logger.error(ex);
+
+			let result;
+			if (ex.response?.errors) {
+				result = {
+					message: ex.response.errors.map((_: { message: string }) => _.message).join("\n")
+				};
+			} else {
+				result = { message: ex.message ? ex.message : ex.toString() };
+			}
+
 			return {
+				error: result,
 				sha: sha,
 				accountId,
 				errorGroup: undefined as any

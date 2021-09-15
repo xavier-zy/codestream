@@ -870,6 +870,7 @@ export const GetNewRelicDataRequestType = new RequestType<
 export interface GetNewRelicErrorGroupRequest {
 	errorGroupGuid: string;
 	traceId: string;
+	entityId?: string;
 }
 
 export interface NewRelicErrorGroup {
@@ -941,7 +942,11 @@ export interface GetNewRelicErrorGroupResponse {
 	// TODO fic me REMOVE ABOVE
 	errorGroup?: NewRelicErrorGroup;
 	accountId: number;
+	error?: {
+		message: string;
+	};
 }
+
 export const GetNewRelicErrorGroupRequestType = new RequestType<
 	GetNewRelicErrorGroupRequest,
 	GetNewRelicErrorGroupResponse,

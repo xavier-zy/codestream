@@ -919,11 +919,11 @@ const BaseCodeError = (props: BaseCodeErrorProps) => {
 			)}
 			{codeError?.text && <Message>{codeError.text}</Message>}
 
-			{/* assuming 6 items (108px) */}
+			{/* assuming 3 items (58px) */}
 			{!props.collapsed && (
 				<div
 					style={{
-						minHeight: derivedState.errorGroupIsLoading || errorGroup ? "108px" : "initial"
+						minHeight: derivedState.errorGroupIsLoading || errorGroup ? "58px" : "initial"
 					}}
 				>
 					{errorGroup &&

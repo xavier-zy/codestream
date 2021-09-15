@@ -212,9 +212,11 @@ export const jumpToStackLine = (
 	}
 
 	const { line, column, path } = currentPosition;
-	const start = Position.create(line! - 1, column! - 1);
-	const end = Position.create(line! - 1, 10000);
-	const range = Range.create(start, end);
+
+	const range = Range.create(
+		Position.create(line! - 1, column != null ? column : 0),
+		Position.create(line! - 1, column != null ? column : 2147483647)
+	);
 	highlightRange({
 		uri: `file://${path!}`,
 		range,

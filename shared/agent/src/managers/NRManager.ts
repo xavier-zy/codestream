@@ -328,7 +328,7 @@ export class NRManager {
 		return response;
 	}
 
-	private getBestMatchingPath(pathSuffix: string, allFilePaths: string[]) {
+	static getBestMatchingPath(pathSuffix: string, allFilePaths: string[]) {
 		const pathSuffixParts = pathSuffix
 			.split("/")
 			.slice()
@@ -400,7 +400,7 @@ export class NRManager {
 		allFilePaths: string[],
 		matchingRepo: GitRepository
 	): Promise<CSStackTraceLine> {
-		const bestMatchingFilePath = this.getBestMatchingPath(line.fileFullPath!, allFilePaths);
+		const bestMatchingFilePath = NRManager.getBestMatchingPath(line.fileFullPath!, allFilePaths);
 		if (!bestMatchingFilePath)
 			return { error: `Unable to find matching file for path suffix ${line.fileFullPath!}` };
 

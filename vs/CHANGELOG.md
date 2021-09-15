@@ -1,5 +1,12 @@
 # Change Log
 
+## [11.0.15] - 2021-9-15
+
+### Fixed
+
+- Addresses [#701](https://github.com/TeamCodeStream/CodeStream/issues/701) &mdash; Failed to load MR list from Gitlab.com
+- Fixes an issue with returning users not being able to accept updated TOS
+
 ## [11.0.14] - 2021-8-26
 
 ### Changed

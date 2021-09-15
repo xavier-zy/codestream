@@ -20,7 +20,7 @@ describe("pythonStackTraceParser", () => {
 			File \"pyarrow/array.pxi\", line 83, in pyarrow.lib._ndarray_to_array`;
 
 			const result = Parser(str);
-			console.log(JSON.stringify(result, null, 4));
+
 			expect(result).to.deep.equals({
 				lines: [
 					{

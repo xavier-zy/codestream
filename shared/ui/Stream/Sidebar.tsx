@@ -74,6 +74,7 @@ export const AVAILABLE_PANES = [
 	WebviewPanels.OpenPullRequests,
 	WebviewPanels.OpenReviews,
 	WebviewPanels.CodemarksForFile,
+	WebviewPanels.NewRelic,
 	WebviewPanels.WorkInProgress,
 	WebviewPanels.Tasks,
 	WebviewPanels.NewRelic

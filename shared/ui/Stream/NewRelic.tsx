@@ -150,36 +150,18 @@ export const NewRelic = React.memo((props: Props) => {
 					{derivedState.newRelicIsConnected ? (
 						<>
 							<PaneNode>
-								<PaneNodeName title="NRQL Query" id="newrelic-NRQL-query" count={0}></PaneNodeName>
-								{!hiddenPaneNodes["newrelic-NRQL-query"] && (
+								<PaneNodeName
+									title="Welcome to New Relic"
+									id="newrelic-welcome"
+									count={0}
+								></PaneNodeName>
+								{!hiddenPaneNodes["newrelic-welcome"] && (
 									<div style={{ padding: "0 20px 0 40px" }}>
-										<TextInput
-											name="query"
-											placeholder="Enter Query"
-											value={query}
-											onChange={setQuery}
-										/>
-										&nbsp;
-										<Button size="compact" onClick={onSubmit} isLoading={loading}>
-											Go
-										</Button>
-										{unexpectedError && (
-											<div className="error-message form-error">
-												<FormattedMessage
-													id="error.unexpected"
-													defaultMessage="Something went wrong! Please try again, or "
-												/>
-												.
-											</div>
-										)}
-										<div>
-											{derivedState.newRelicData &&
-												JSON.stringify(derivedState.newRelicData, undefined, 5)}
-										</div>
+										Click Open in IDE from New Relic One to start debugging issues.
 									</div>
 								)}
 							</PaneNode>
-							<PaneNode>
+							{/* <PaneNode>
 								<PaneNodeName title="My Errors" id="newrelic-my-errors" count={0}></PaneNodeName>
 								{!hiddenPaneNodes["newrelic-my-errors"] && (
 									<>
@@ -188,14 +170,14 @@ export const NewRelic = React.memo((props: Props) => {
 										<ErrorRow title="NoMethodError in TasksControl#show" />
 									</>
 								)}
-							</PaneNode>
+							</PaneNode> */}
 						</>
 					) : (
 						<>
 							<div className="filters" style={{ padding: "0 20px 10px 20px" }}>
 								<span>
-									Connect to New Relic to instrument your app, see errors, and debug issues.{" "}
-									<Tooltip title="Connect later on the Integrations page" placement="top">
+									Connect to New Relic to see errors and debug issues.{" "}
+									{/* <Tooltip title="Connect later on the Integrations page" placement="top">
 										<Linkish
 											onClick={() =>
 												dispatch(setUserPreference(["skipConnectObservabilityProviders"], true))
@@ -203,7 +185,7 @@ export const NewRelic = React.memo((props: Props) => {
 										>
 											Skip this step.
 										</Linkish>
-									</Tooltip>
+									</Tooltip> */}
 								</span>
 							</div>
 

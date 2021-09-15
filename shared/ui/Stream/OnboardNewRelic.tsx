@@ -215,7 +215,7 @@ export const OnboardNewRelic = React.memo(function OnboardNewRelic() {
 	const [isLoadingData, setIsLoadingData] = useState(false);
 	const [loadedData, setLoadedData] = useState(false);
 
-	const skip = () => setStep(currentStep + 1);
+	const skip = (plus: number = 1) => setStep(currentStep + plus);
 
 	const setStep = (step: number) => {
 		if (step === NUM_STEPS) {
@@ -656,7 +656,7 @@ const AddAppMonitoringIntro = (props: {
 						Ruby, Python, Go and C users <Link href="">click here</Link>
 					</SkipLink>
 				</Dialog>
-				<SkipLink onClick={() => props.skip()}>I'll do this later</SkipLink>
+				<SkipLink onClick={() => props.skip(2)}>I'll do this later</SkipLink>
 			</div>
 		</Step>
 	);

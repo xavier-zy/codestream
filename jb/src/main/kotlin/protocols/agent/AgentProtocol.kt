@@ -418,3 +418,19 @@ class ResolveStackTraceLineResult(
     val column: Int?,
     val error: String?
 )
+
+class PixieDynamicLoggingParams(
+    val functionName: String,
+    val functionParameters: List<PixieDynamicLoggingFunctionParameter>,
+    val functionReceiver: String?
+)
+
+class PixieDynamicLoggingFunctionParameter(
+    val name: String,
+    val type: String
+)
+
+class PixieDynamicLoggingResult(
+    val recentArgs: List<Number>
+)
+

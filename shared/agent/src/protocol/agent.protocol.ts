@@ -40,6 +40,7 @@ export * from "./agent.protocol.linear";
 export * from "./agent.protocol.newrelic";
 
 export * from "./agent.protocol.nr";
+export * from "./agent.protocol.pixie";
 
 export interface Document {
 	uri: string;

@@ -27,6 +27,8 @@ import com.codestream.protocols.agent.GetStreamParams
 import com.codestream.protocols.agent.GetUserParams
 import com.codestream.protocols.agent.Ide
 import com.codestream.protocols.agent.InitializationOptions
+import com.codestream.protocols.agent.PixieDynamicLoggingParams
+import com.codestream.protocols.agent.PixieDynamicLoggingResult
 import com.codestream.protocols.agent.Post
 import com.codestream.protocols.agent.PullRequestFile
 import com.codestream.protocols.agent.ResolveStackTraceLineParams
@@ -470,6 +472,13 @@ class AgentService(private val project: Project) : Disposable {
     suspend fun resolveStackTraceLine(params: ResolveStackTraceLineParams): ResolveStackTraceLineResult {
         val json = remoteEndpoint
             .request("codestream/nr/resolveStackTraceLine", params)
+            .await() as JsonObject
+        return gson.fromJson(json)
+    }
+
+    suspend fun pixieDynamicLogging(params: PixieDynamicLoggingParams): PixieDynamicLoggingResult {
+        val json = remoteEndpoint
+            .request("codestream/pixie/test", params)
             .await() as JsonObject
         return gson.fromJson(json)
     }

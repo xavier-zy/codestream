@@ -72,6 +72,7 @@
 
         <group id="com.codestream.Actions" popup="true" text="CodeStream" icon="/images/codestream-color.svg" class="com.codestream.actions.CodeStreamActionGroup">
             <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="EditorPopupMenu2"/>
+            <action id="CodeStream.PixieTest" class="com.codestream.actions.PixieDynamicLoggingAction" text="Pixie dynamic logging"/>
             <action id="CodeStream.AddComment" class="com.codestream.actions.AddComment" text="Add _Comment"
                     description="Add comment" icon="/images/marker-comment.svg">
                 <add-to-group group-id="Diff.EditorPopupMenu"/>

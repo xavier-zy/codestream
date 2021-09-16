@@ -65,14 +65,21 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			this._providerInfo && this._providerInfo.data && this._providerInfo.data.usingEU;
 		if (usingEU) {
 			return "https://api.eu.newrelic.com";
-		} else {
-			// TODO fix me need a switch or something for this
-			return Logger.isDebugging ? "https://staging-api.newrelic.com" : "https://api.newrelic.com";
 		}
+		return this.session.api.baseUrl.toLowerCase().indexOf("https://api.codestream.com") > -1
+			? "https://api.newrelic.com"
+			: "https://staging-api.newrelic.com";
 	}
 
 	get productUrl() {
-		return Logger.isDebugging ? "https://staging-one.newrelic.com" : "https://one.newrelic.com";
+		const usingEU =
+			this._providerInfo && this._providerInfo.data && this._providerInfo.data.usingEU;
+		if (usingEU) {
+			return "https://one.eu.newrelic.com";
+		}
+		return this.session.api.baseUrl.toLowerCase().indexOf("https://api.codestream.com") > -1
+			? "https://one.newrelic.com"
+			: "https://staging-one.newrelic.com";
 	}
 
 	get baseUrl() {

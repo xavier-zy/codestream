@@ -341,6 +341,7 @@ export type RTMessage =
 export interface ApiProvider {
 	onDidReceiveMessage: Event<RTMessage>;
 
+	readonly baseUrl: string;
 	readonly teamId: string;
 	readonly userId: string;
 	readonly meUser: CSMe | undefined;

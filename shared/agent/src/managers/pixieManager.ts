@@ -92,7 +92,8 @@ export class PixieManager {
             function poller() {
                 const call = vizier.executeScript({
                     queryStr: script,
-                    clusterId: "0177fa38-31de-40f0-8dc0-79d73c05bc7d"
+                    clusterId: "0177fa38-31de-40f0-8dc0-79d73c05bc7d",
+                    mutation: true
                 });
                 call.on("data", function(response: any) {
                     if (

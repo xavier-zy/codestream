@@ -26,6 +26,10 @@ cd $ATOM_REPO_ROOT
 # Install git submodules
 [ -f .gitmodules ] && echo "Updating submodules" && git submodule update --init --recursive
 
+# Add absolute remotes
+echo git remote add private git@github.com:teamcodestream/codestream-private
+git remote add private git@github.com:teamcodestream/codestream-private
+
 # Add git hooks as needed
 # if [ -d "$ATOM_TOP/hooks" ]; then
 # 	echo -n "Installing git hooks as sym links"

@@ -1134,7 +1134,7 @@ const ReplyInput = (props: {
 					delay={1}
 				>
 					<Button disabled={text.length === 0} onClick={submit} isLoading={isLoading}>
-						Submit
+						Comment
 					</Button>
 				</Tooltip>
 			</ButtonRow>

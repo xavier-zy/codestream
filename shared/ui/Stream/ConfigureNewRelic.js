@@ -44,25 +44,25 @@ class ConfigureNewRelic extends Component {
 		this.props.configureProvider(providerId, { apiKey }, true, this.props.originLocation);
 		this.setState({ loading: true });
 
-		if (!this.props.disablePostConnectOnboarding) {
-			const reposResponse = await HostApi.instance.send(GetReposScmRequestType, {
-				inEditorOnly: true,
-				guessProjectTypes: true
-			});
-			if (!reposResponse.error) {
-				const knownRepo = (reposResponse.repositories || []).find(repo => {
-					return repo.id && repo.projectType !== RepoProjectType.Unknown;
-				});
-				if (knownRepo) {
-					this.props.setWantNewRelicOptions(
-						knownRepo.projectType,
-						knownRepo.id,
-						knownRepo.path,
-						knownRepo.projects
-					);
-				}
-			}
-		}
+		// if (!this.props.disablePostConnectOnboarding) {
+		// 	const reposResponse = await HostApi.instance.send(GetReposScmRequestType, {
+		// 		inEditorOnly: true,
+		// 		guessProjectTypes: true
+		// 	});
+		// 	if (!reposResponse.error) {
+		// 		const knownRepo = (reposResponse.repositories || []).find(repo => {
+		// 			return repo.id && repo.projectType !== RepoProjectType.Unknown;
+		// 		});
+		// 		if (knownRepo) {
+		// 			this.props.setWantNewRelicOptions(
+		// 				knownRepo.projectType,
+		// 				knownRepo.id,
+		// 				knownRepo.path,
+		// 				knownRepo.projects
+		// 			);
+		// 		}
+		// 	}
+		// }
 
 		setTimeout(() => {
 			if (this.props.onSubmited) {

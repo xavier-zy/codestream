@@ -27,6 +27,12 @@ export type CodeErrorsState = {
 			assignee?: any;
 			state?: any;
 			repo?: string;
+			entity?: {
+				repo?: {
+					urls: string[];
+					name: string;
+				};
+			};
 		};
 	}>;
 };

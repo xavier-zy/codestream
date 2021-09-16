@@ -413,7 +413,8 @@ export const api = <T = any, R = any>(
 		if (response && response.directives) {
 			dispatch(handleDirectives(params.errorGroupGuid, response.directives));
 			return {
-				handled: true
+				handled: true,
+				directives: response.directives
 			};
 		}
 		return response as R;

@@ -907,6 +907,13 @@ export interface NewRelicErrorGroup {
 		name: string;
 	};
 
+	entity?: {
+		repo?: {
+			name: string;
+			urls: string[];
+		};
+	};
+
 	errorTrace?: {
 		// exceptionClass: string;
 		// agentAttributes: any;

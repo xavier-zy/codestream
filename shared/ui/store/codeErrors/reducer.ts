@@ -89,7 +89,9 @@ export function reduceCodeErrors(
 				for (const directive of action.payload.data) {
 					switch (directive.type) {
 						case "assignRepository": {
-							errorGroupWrapper.errorGroup.repo = directive.data.repo;
+							if (errorGroupWrapper.errorGroup.entity) {
+								errorGroupWrapper.errorGroup.entity.repo = directive.data.repo;
+							}
 							break;
 						}
 						case "removeAssignee": {

@@ -33,7 +33,8 @@ import {
 	GetNewRelicErrorGroupRequestType,
 	ResolveStackTraceResponse,
 	MatchReposRequestType,
-	MatchReposResponse
+	MatchReposResponse,
+	NewRelicErrorGroup
 } from "@codestream/protocols/agent";
 import { HostApi } from "..";
 import { CSCodeError } from "@codestream/protocols/api";
@@ -140,7 +141,7 @@ export function CodeErrorNav(props: Props) {
 		const codeError = state.context.currentCodeErrorId
 			? (getCodeError(state.codeErrors, state.context.currentCodeErrorId) as CSCodeError)
 			: undefined;
-		const errorGroup = getErrorGroup(state.codeErrors, codeError);
+		const errorGroup = getErrorGroup(state.codeErrors, codeError) as NewRelicErrorGroup;
 
 		const result = {
 			codeErrorStateBootstrapped: state.codeErrors.bootstrapped,
@@ -163,7 +164,7 @@ export function CodeErrorNav(props: Props) {
 	);
 	const [isEditing, setIsEditing] = React.useState(false);
 	const [isLoading, setIsLoading] = React.useState(true);
-	const [error, setError] = React.useState<{ title: string; description: string } | undefined>(
+	const [error, setError] = React.useState<{ title?: string; description: string } | undefined>(
 		undefined
 	);
 
@@ -219,7 +220,7 @@ export function CodeErrorNav(props: Props) {
 		}
 	}, [errorGroup]);
 
-	const setRepositoryErrorCore = errorGroup => {
+	const setRepositoryErrorCore = (errorGroup?: NewRelicErrorGroup) => {
 		setRepositoryError({
 			title: "Missing Repository Info",
 			description: `In order to view this stack trace, please select a repository to associate with ${
@@ -228,7 +229,7 @@ export function CodeErrorNav(props: Props) {
 		});
 	};
 
-	const onConnected = async () => {
+	const onConnected = async (newRemote?: string) => {
 		console.warn("onConnected starting...");
 		if (!pendingErrorGroupGuid) {
 			return;
@@ -242,15 +243,26 @@ export function CodeErrorNav(props: Props) {
 				traceId: traceId!
 			});
 
-			if (!remote) {
-				setRepositoryErrorCore(errorGroupResult?.errorGroup);
+			if (!errorGroupResult || errorGroupResult?.error?.message) {
+				setError({
+					title: "Unexpected Error",
+					description: errorGroupResult?.error?.message || "unknown error"
+				});
+				return;
+			}
+			if (errorGroupResult?.errorGroup != null) {
+				dispatch(setErrorGroup(errorGroupGuid, errorGroupResult.errorGroup!));
+			}
+			const targetRemote = newRemote || remote;
+			if (!targetRemote) {
+				setRepositoryErrorCore();
 				return;
 			}
 
 			const reposResponse = (await HostApi.instance.send(MatchReposRequestType, {
 				repos: [
 					{
-						remotes: [remote],
+						remotes: [targetRemote],
 						knownCommitHashes: commit ? [commit] : []
 					}
 				]
@@ -259,15 +271,7 @@ export function CodeErrorNav(props: Props) {
 			if (reposResponse?.repos?.length === 0) {
 				setError({
 					title: "Error",
-					description: `Could not find a repo for the remote ${remote}`
-				});
-				return;
-			}
-
-			if (!errorGroupResult || errorGroupResult?.error?.message) {
-				setError({
-					title: "Unexpected Error",
-					description: errorGroupResult?.error?.message || "unknown error"
+					description: `Could not find a repo for the remote ${targetRemote}`
 				});
 				return;
 			}
@@ -290,14 +294,13 @@ export function CodeErrorNav(props: Props) {
 				// storing the permanently parsed stack info
 				stackTraces: stackInfo.error ? [{ ...stackInfo, lines: [] }] : [stackInfo.parsedStackInfo!],
 				objectInfo: {
+					repoId: repo.id,
 					entityName: errorGroupResult?.errorGroup?.entityName
 				}
 			};
 
 			const response = (await dispatch(createPostAndCodeError(newCodeError))) as any;
-			if (errorGroupResult?.errorGroup != null) {
-				dispatch(setErrorGroup(errorGroupGuid, errorGroupResult.errorGroup!));
-			}
+
 			dispatch(
 				setCurrentCodeError(response.codeError.id, {
 					// need to reset this back to undefined now that we aren't
@@ -406,11 +409,24 @@ export function CodeErrorNav(props: Props) {
 						api("assignRepository", {
 							url: r.remote,
 							name: r.name,
-							errorGroupGuid: codeError?.objectId!
+							errorGroupGuid: codeError?.objectId || pendingErrorGroupGuid!
 						})
-					).then(_ => {
-						onConnected();
-					});
+					)
+						.then(_ => {
+							setIsLoading(true);
+							if (_?.directives) {
+								onConnected(
+									_.directives.find(_ => _.type === "assignRepository").data.repo.urls[0]
+								);
+							} else {
+								console.warn("could not find directive");
+							}
+						})
+						.catch(_ => {
+							setError({
+								description: _
+							});
+						});
 				}}
 			/>
 		);
@@ -419,7 +435,7 @@ export function CodeErrorNav(props: Props) {
 		// essentially a roadblock
 		return (
 			<Dismissable
-				title={error.title}
+				title={error.title || "Error"}
 				buttons={[
 					{
 						text: "Dismiss",

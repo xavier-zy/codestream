@@ -68,9 +68,9 @@ class ConfigureNewRelic extends Component {
 			if (this.props.onSubmited) {
 				this.props.onSubmited(e);
 			}
-			if (!this.props.disablePostConnectOnboarding) {
-				this.props.openPanel(WebviewPanels.OnboardNewRelic);
-			}
+			// if (!this.props.disablePostConnectOnboarding) {
+			// 	this.props.openPanel(WebviewPanels.OnboardNewRelic);
+			// }
 		}, 3000);
 	};
 

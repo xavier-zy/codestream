@@ -296,6 +296,7 @@ export interface CSStackTraceLine {
 	line?: number;
 	column?: number;
 	error?: string;
+	warning?: string;
 }
 
 export interface CSStackTraceInfo {

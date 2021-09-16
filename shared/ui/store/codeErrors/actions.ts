@@ -174,21 +174,21 @@ export const fetchCodeError = (codeErrorId: string) => async dispatch => {
  *	on a particular commit ... the "parsed" stack info is considered permanent, the "resolved"
  *	stack info is considered ephemeral, since it only applies to the current user in the current state
  *	resolved line number that gives the full path and line of the
- * @param repo
+ * @param repoId
  * @param sha
  * @param traceId
  * @param stackTrace
  * @returns ResolveStackTraceResponse
  */
 export const resolveStackTrace = (
-	repo: string,
+	repoId: string,
 	sha: string,
 	traceId: string,
 	stackTrace: string[]
 ) => {
 	return HostApi.instance.send(ResolveStackTraceRequestType, {
 		stackTrace,
-		repoRemote: repo,
+		repoId,
 		sha,
 		traceId
 	});

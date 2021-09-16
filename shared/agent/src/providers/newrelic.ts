@@ -222,12 +222,9 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 
 	@lspHandler(GetNewRelicErrorGroupRequestType)
 	@log()
-	async getNewRelicErrorsInboxData(
+	async getNewRelicErrorGroupData(
 		request: GetNewRelicErrorGroupRequest
 	): Promise<GetNewRelicErrorGroupResponse | undefined> {
-		// TODO fix me need real values
-		let repoRemote = "git@github.com:teamcodestream/codestream-server-demo";
-		let sha = "9542e9c702f0879f8407928eb313b33174a7c2b5";
 		let errorGroup: NewRelicErrorGroup | undefined = undefined;
 		let accountId = 0;
 		try {
@@ -389,7 +386,6 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					errorGroup.hasStackTrace = true;
 				}
 
-				errorGroup.repo = repoRemote ? { url: repoRemote } : undefined;
 				Logger.debug("NR:ErrorGroup", {
 					errorGroup: errorGroup
 				});
@@ -400,7 +396,6 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			}
 
 			return {
-				sha,
 				accountId,
 				errorGroup
 			};
@@ -418,7 +413,6 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 
 			return {
 				error: result,
-				sha: sha,
 				accountId,
 				errorGroup: undefined as any
 			};

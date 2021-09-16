@@ -31,7 +31,9 @@ import { DelayedRender } from "../Container/DelayedRender";
 import { Loading } from "../Container/Loading";
 import {
 	GetNewRelicErrorGroupRequestType,
-	ResolveStackTraceResponse
+	ResolveStackTraceResponse,
+	MatchReposRequestType,
+	MatchReposResponse
 } from "@codestream/protocols/agent";
 import { HostApi } from "..";
 import { CSCodeError } from "@codestream/protocols/api";
@@ -173,6 +175,9 @@ export function CodeErrorNav(props: Props) {
 
 	const pendingErrorGroupGuid = derivedState.currentCodeErrorData?.pendingErrorGroupGuid;
 	const traceId = derivedState.currentCodeErrorData?.traceId;
+	const remote = derivedState.currentCodeErrorData?.remote;
+	const commit = derivedState.currentCodeErrorData?.commit;
+
 	const pendingRequiresConnection = derivedState.currentCodeErrorData?.pendingRequiresConnection;
 
 	const exit = async () => {
@@ -214,17 +219,6 @@ export function CodeErrorNav(props: Props) {
 		}
 	}, [errorGroup]);
 
-	useEffect(() => {
-		if (!errorGroup) return;
-
-		if (!errorGroup.repo || !errorGroup.repo.url) {
-			setRepositoryErrorCore(errorGroup);
-		}
-		if (errorGroup.repo?.url && repositoryError) {
-			setRepositoryError(undefined);
-		}
-	}, [errorGroup, errorGroup?.repo]);
-
 	const setRepositoryErrorCore = errorGroup => {
 		setRepositoryError({
 			title: "Missing Repository Info",
@@ -248,6 +242,28 @@ export function CodeErrorNav(props: Props) {
 				traceId: traceId!
 			});
 
+			if (!remote) {
+				setRepositoryErrorCore(errorGroupResult?.errorGroup);
+				return;
+			}
+
+			const reposResponse = (await HostApi.instance.send(MatchReposRequestType, {
+				repos: [
+					{
+						remotes: [remote],
+						knownCommitHashes: commit ? [commit] : []
+					}
+				]
+			})) as MatchReposResponse;
+
+			if (reposResponse?.repos?.length === 0) {
+				setError({
+					title: "Error",
+					description: `Could not find a repo for the remote ${remote}`
+				});
+				return;
+			}
+
 			if (!errorGroupResult || errorGroupResult?.error?.message) {
 				setError({
 					title: "Unexpected Error",
@@ -256,14 +272,11 @@ export function CodeErrorNav(props: Props) {
 				return;
 			}
 
-			if (!errorGroupResult.errorGroup?.repo?.url) {
-				setRepositoryErrorCore(errorGroupResult.errorGroup);
-				return;
-			}
+			const repo = reposResponse.repos[0];
 
 			const stackInfo = (await resolveStackTrace(
-				errorGroupResult.errorGroup?.repo?.url || "",
-				errorGroupResult.sha,
+				repo.id!,
+				commit!,
 				traceId!,
 				errorGroupResult.errorGroup?.errorTrace!?.stackTrace.map(_ => _.formatted)
 			)) as ResolveStackTraceResponse;
@@ -291,9 +304,7 @@ export function CodeErrorNav(props: Props) {
 					// pending any longer
 					pendingErrorGroupGuid: undefined,
 					errorGroup: errorGroupResult?.errorGroup,
-					// repo: errorGroupResult?.repo,
-					sha: errorGroupResult?.sha,
-					// parsedStack: errorGroupResult?.parsedStack,
+
 					warning: stackInfo?.warning,
 					error: stackInfo?.error
 				})
@@ -302,7 +313,7 @@ export function CodeErrorNav(props: Props) {
 			console.warn(ex);
 			setError({
 				title: "Unexpected Error",
-				description: ex.message
+				description: ex.message ? ex.message : ex.toString()
 			});
 		} finally {
 			setRequiresConnection(false);

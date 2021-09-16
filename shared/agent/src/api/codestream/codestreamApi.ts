@@ -34,6 +34,7 @@ import {
 	JoinCompanyRequestType,
 	JoinCompanyResponse,
 	MarkItemReadRequest,
+	MatchReposRequestType,
 	ReportingMessageType,
 	RepoScmStatus,
 	UpdateCompanyRequest,
@@ -1410,6 +1411,15 @@ export class CodeStreamApiProvider implements ApiProvider {
 			data: [response.repos]
 		});
 		return response;
+	}
+
+	@lspHandler(MatchReposRequestType)
+	@log()
+	async matchRepo(request: MatchReposRequest) {
+		return this.get<MatchReposResponse>(
+			`/repos/match/${this.teamId}?repos=${encodeURIComponent(JSON.stringify(request))}`,
+			this._token
+		);
 	}
 
 	@log()

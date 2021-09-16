@@ -423,6 +423,7 @@ export interface ApiProvider {
 	fetchRepos(request: FetchReposRequest): Promise<FetchReposResponse>;
 	getRepo(request: GetRepoRequest): Promise<GetRepoResponse>;
 	matchRepos(request: MatchReposRequest): Promise<MatchReposResponse>;
+	matchRepo(request: MatchReposRequest): Promise<MatchReposResponse>;
 
 	fetchMsTeamsConversations(
 		request: CSMsTeamsConversationRequest

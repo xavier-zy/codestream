@@ -513,6 +513,14 @@ function listenForEvents(store) {
 							break;
 						}
 
+						if (definedQuery.query.tag === "$TAG_NAME") {
+							definedQuery.query.tag = "";
+						}
+
+						if (definedQuery.query.commit === "$GIT_COMMIT") {
+							definedQuery.query.commit = "";
+						}
+
 						store
 							.dispatch(
 								findErrorGroupByObjectId(
@@ -525,7 +533,7 @@ function listenForEvents(store) {
 								if (codeError) {
 									store.dispatch(
 										setCurrentCodeError(codeError.id, {
-											traceId: definedQuery.query.traceId,
+											...definedQuery.query,
 											// cache the sessionStart here in case the IDE is restarted
 											sessionStart: state.context.sessionStart
 										})
@@ -537,7 +545,7 @@ function listenForEvents(store) {
 									// directing / opening a codeError
 									store.dispatch(
 										setCurrentCodeError("PENDING", {
-											traceId: definedQuery.query.traceId,
+											...definedQuery.query,
 											// cache the sessionStart here in case the IDE is restarted
 											sessionStart: state.context.sessionStart,
 											pendingErrorGroupGuid: definedQuery.query.errorGroupGuid,

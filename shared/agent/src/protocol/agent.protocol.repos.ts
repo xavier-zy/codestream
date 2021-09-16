@@ -121,3 +121,10 @@ export const NormalizeUrlRequestType = new RequestType<
 	void,
 	void
 >("codestream/normalizeUrl");
+
+export const MatchReposRequestType = new RequestType<
+	MatchReposRequest,
+	MatchReposResponse,
+	void,
+	void
+>("codestream/repos/match");

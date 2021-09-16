@@ -137,13 +137,13 @@ export interface WebviewContext {
 	currentCodeErrorId?: "PENDING" | string;
 	currentCodeErrorData?: {
 		// REMOVE BELOW
-		repo?: string;
-		sha?: string;
 		parsedStack?: any;
 		warning?: string;
 		error?: string;
 		// REMOVE ABOVE
 		/** caches when the last user session started  */
+		remote?: string;
+		commit?: string;
 		sessionStart?: number;
 		pendingRequiresConnection?: boolean;
 		pendingErrorGroupGuid?: string;

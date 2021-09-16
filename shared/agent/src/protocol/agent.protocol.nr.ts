@@ -22,7 +22,7 @@ export const ParseStackTraceRequestType = new RequestType<
 export interface ResolveStackTraceRequest {
 	traceId: string;
 	stackTrace: string[];
-	repoRemote: string;
+	repoId: string;
 	sha: string;
 }
 

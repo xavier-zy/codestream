@@ -34,7 +34,6 @@ import { log } from "../system/decorators/log";
 import { lsp, lspHandler } from "../system/decorators/lsp";
 import { Strings } from "../system/string";
 import { xfs } from "../xfs";
-import { GitRepository } from "../git/models/models";
 import { Logger } from "../logger";
 import { RepoProjectType } from "../protocol/agent.protocol.scm";
 
@@ -132,73 +131,91 @@ export class NRManager {
 	@log()
 	async resolveStackTrace({
 		stackTrace,
-		repoRemote,
+		repoId,
 		sha,
 		traceId
 	}: ResolveStackTraceRequest): Promise<ResolveStackTraceResponse> {
-		const matchingRepo = await this.getMatchingRepo(repoRemote);
-		if (!matchingRepo) {
-			// Repo **codestream-server** not found in your editor. Open it in order to navigate the stack trace.
-			let repoName = repoRemote;
-			try {
-				repoName = repoRemote.split("/").reverse()[0];
-			} catch {}
-			repoName = repoName ? repoName + " " : "";
-			return {
-				warning: `Repo ${repoName}not found in your editor. Open it in order to navigate the stack trace.`
-			};
-		}
-		try {
-			const { git } = SessionContainer.instance();
-			// ensure this sha is actually valid for this repo
-			if (!(await git.isValidReference(matchingRepo.path, sha))) {
-				// if not found, attempt to fetch all
-				Logger.log(`NRManager sha (${sha}) not found. fetching...`);
-				await git.fetchAllRemotes(matchingRepo.path);
+		const { git, repos, repositoryMappings } = SessionContainer.instance();
+		const matchingRepo = await git.getRepositoryById(repoId);
+		let matchingRepoPath = matchingRepo?.path;
+		let warning: string | undefined = undefined;
 
-				if (!(await git.isValidReference(matchingRepo.path, sha))) {
-					// if still not there, we can't continue
-					Logger.log(`NRManager sha (${sha}) not found after fetch`);
-					return {
-						error: Strings.interpolate(MISSING_SHA_MESSAGE, { sha: sha })
-					};
-				}
+		// NOTE: the warnings should not prevent a stack trace from being displayed
+		const setWarning = (text: string) => {
+			// only set the warning if we haven't already set it.
+			if (!warning) warning = text;
+		};
+		if (!matchingRepoPath) {
+			const mappedRepo = await repositoryMappings.getByRepoId(repoId);
+			if (mappedRepo) {
+				matchingRepoPath = mappedRepo;
+			} else {
+				const repo = await repos.getById(repoId);
+				setWarning(
+					`Repo (${
+						repo ? repo.name : repoId
+					}) not found in your editor. Open it in order to navigate the stack trace.`
+				);
 			}
-		} catch (ex) {
-			Logger.warn("NRManager issue locating sha", {
-				repoRemote: repoRemote,
-				sha: sha
-			});
-			return {
-				error: Strings.interpolate(MISSING_SHA_MESSAGE, { sha: sha })
-			};
+		}
+
+		if (!sha) {
+			setWarning(
+				`No build SHA associated with this error. Your version of the code may not match production.`
+			);
+		} else if (matchingRepoPath) {
+			try {
+				const { git } = SessionContainer.instance();
+				// ensure this sha is actually valid for this repo
+				if (!(await git.isValidReference(matchingRepoPath, sha))) {
+					// if not found, attempt to fetch all
+					Logger.log(`NRManager sha (${sha}) not found. fetching...`);
+					await git.fetchAllRemotes(matchingRepoPath);
+
+					if (!(await git.isValidReference(matchingRepoPath, sha))) {
+						// if still not there, we can't continue
+						Logger.log(`NRManager sha (${sha}) not found after fetch`);
+						setWarning(Strings.interpolate(MISSING_SHA_MESSAGE, { sha: sha }));
+					}
+				}
+			} catch (ex) {
+				Logger.warn("NRManager issue locating sha", {
+					repoId: repoId,
+					matchingRepo: matchingRepo,
+					sha: sha
+				});
+				setWarning(Strings.interpolate(MISSING_SHA_MESSAGE, { sha: sha }));
+			}
 		}
 
 		const parsedStackInfo = await this.parseStackTrace({ stackTrace });
 		if (parsedStackInfo.parseError) {
 			return { error: parsedStackInfo.parseError };
-		} else if (!parsedStackInfo.lines.find(line => !line.error)) {
+		} else if (sha && !parsedStackInfo.lines.find(line => !line.error)) {
 			// if there was an error on all lines (for some reason)
-			return {
-				error: Strings.interpolate(MISSING_SHA_MESSAGE, { sha: sha })
-			};
+			setWarning(Strings.interpolate(MISSING_SHA_MESSAGE, { sha: sha }));
 		}
-		parsedStackInfo.repoId = matchingRepo.id;
+		parsedStackInfo.repoId = repoId;
 		parsedStackInfo.sha = sha;
 		parsedStackInfo.traceId = traceId;
 
-		const allFilePaths = await this.getAllFiles(matchingRepo.path);
+		let allFilePaths = undefined;
+		if (matchingRepoPath) {
+			allFilePaths = await this.getAllFiles(matchingRepoPath);
+		}
 
 		const resolvedStackInfo: CSStackTraceInfo = { ...parsedStackInfo, lines: [] };
 		for (const line of parsedStackInfo.lines) {
-			const resolvedLine = line.error
-				? { ...line }
-				: await this.resolveStackTraceLine(line, sha, allFilePaths, matchingRepo);
+			const resolvedLine =
+				line.error || !matchingRepoPath || !allFilePaths
+					? { ...line }
+					: await this.resolveStackTraceLine(line, sha, allFilePaths, matchingRepoPath);
 			resolvedStackInfo.lines.push(resolvedLine);
 			line.fileRelativePath = resolvedLine.fileRelativePath;
 		}
 
 		return {
+			warning: warning,
 			resolvedStackInfo,
 			parsedStackInfo
 		};
@@ -213,16 +230,28 @@ export class NRManager {
 		line,
 		column
 	}: ResolveStackTracePositionRequest): Promise<ResolveStackTracePositionResponse> {
-		const { git } = SessionContainer.instance();
-		const repos = await git.getRepositories();
-		let repo;
-		for (repo of repos) {
-			if (repo.id === repoId) break;
+		const { git, repositoryMappings } = SessionContainer.instance();
+
+		const matchingRepo = await git.getRepositoryById(repoId);
+		let repoPath = matchingRepo?.path;
+
+		if (!repoPath) {
+			const mappedRepo = await repositoryMappings.getByRepoId(repoId);
+			if (mappedRepo) {
+				repoPath = mappedRepo;
+			} else {
+				return { error: "Unable to find repo " + repoId };
+			}
 		}
-		if (!repo) {
-			return { error: "unable to find repo " + repoId };
+
+		const fullPath = path.join(repoPath, filePath);
+		if (!sha) {
+			return {
+				path: fullPath,
+				line: line,
+				column: column
+			};
 		}
-		const fullPath = path.join(repo.path, filePath);
 		const position = await this.getCurrentStackTracePosition(sha, fullPath, line, column);
 		return {
 			...position,
@@ -365,54 +394,62 @@ export class NRManager {
 		return bestMatchingFilePath;
 	}
 
-	private async getMatchingRepo(repoRemote: string) {
-		const { git, repositoryMappings } = SessionContainer.instance();
-		const gitRepos = await git.getRepositories();
-		let matchingRepo = undefined;
-
-		const normalizedRepoRemote = await repositoryMappings.normalizeUrl({ url: repoRemote });
-		if (normalizedRepoRemote && normalizedRepoRemote.normalizedUrl) {
-			repoRemote = normalizedRepoRemote.normalizedUrl;
-		}
-		for (const gitRepo of gitRepos) {
-			const remotes = await git.getRepoRemotes(gitRepo.path);
-			for (const remote of remotes) {
-				let compareRepo = repoRemote.toLowerCase();
-				if (!compareRepo.startsWith("ssh://")) {
-					compareRepo = `ssh://${compareRepo}`;
-				}
-				if (!compareRepo.endsWith(".git")) {
-					compareRepo += ".git";
-				}
-				let remoteUri = remote.uri.toString().toLowerCase();
-				if (!remoteUri.endsWith(".git")) {
-					remoteUri += ".git";
-				}
-				Logger.log(`comparing remote ${remoteUri} to ${compareRepo}`);
-				if (remoteUri === compareRepo) {
-					matchingRepo = gitRepo;
-					break;
-				}
-
-				let normalized = await repositoryMappings.normalizeUrl({ url: remoteUri });
-				if (normalized && normalized.normalizedUrl === repoRemote) {
-					matchingRepo = gitRepo;
-					break;
-				}
-			}
-		}
-		return matchingRepo;
-	}
+	// private async getMatchingRepo(repoRemote: string) {
+	// 	const { git, repositoryMappings } = SessionContainer.instance();
+	// 	const gitRepos = await git.getRepositories();
+	// 	let matchingRepo = undefined;
+	// 	const normalizedRepoRemote = await repositoryMappings.normalizeUrl({ url: repoRemote });
+	// 	if (normalizedRepoRemote && normalizedRepoRemote.normalizedUrl) {
+	// 		repoRemote = normalizedRepoRemote.normalizedUrl;
+	// 	}
+	// 	for (const gitRepo of gitRepos) {
+	// 		const remotes = await git.getRepoRemotes(gitRepo.path);
+	// 		for (const remote of remotes) {
+	// 			let compareRepo = repoRemote.toLowerCase();
+	// 			if (!compareRepo.startsWith("ssh://")) {
+	// 				compareRepo = `ssh://${compareRepo}`;
+	// 			}
+	// 			if (!compareRepo.endsWith(".git")) {
+	// 				compareRepo += ".git";
+	// 			}
+	// 			let remoteUri = remote.uri.toString().toLowerCase();
+	// 			if (!remoteUri.endsWith(".git")) {
+	// 				remoteUri += ".git";
+	// 			}
+	// 			Logger.log(`comparing remote ${remoteUri} to ${compareRepo}`);
+	// 			if (remoteUri === compareRepo) {
+	// 				matchingRepo = gitRepo;
+	// 				break;
+	// 			}
+	// 			let normalized = await repositoryMappings.normalizeUrl({ url: remoteUri });
+	// 			if (normalized && normalized.normalizedUrl === repoRemote) {
+	// 				matchingRepo = gitRepo;
+	// 				break;
+	// 			}
+	// 		}
+	// 	}
+	// 	return matchingRepo;
+	// }
 
 	private async resolveStackTraceLine(
 		line: CSStackTraceLine,
 		sha: string,
 		allFilePaths: string[],
-		matchingRepo: GitRepository
+		matchingRepoPath: string
 	): Promise<CSStackTraceLine> {
 		const bestMatchingFilePath = NRManager.getBestMatchingPath(line.fileFullPath!, allFilePaths);
 		if (!bestMatchingFilePath)
 			return { error: `Unable to find matching file for path suffix ${line.fileFullPath!}` };
+
+		if (!sha) {
+			return {
+				warning: "Missing sha",
+				fileFullPath: bestMatchingFilePath,
+				fileRelativePath: path.relative(matchingRepoPath, bestMatchingFilePath),
+				line: line.line || 0,
+				column: line.column || 0
+			};
+		}
 
 		const position = await this.getCurrentStackTracePosition(
 			sha,
@@ -426,7 +463,7 @@ export class NRManager {
 
 		return {
 			fileFullPath: bestMatchingFilePath,
-			fileRelativePath: path.relative(matchingRepo.path, bestMatchingFilePath),
+			fileRelativePath: path.relative(matchingRepoPath, bestMatchingFilePath),
 			line: position.line,
 			column: position.column
 		};

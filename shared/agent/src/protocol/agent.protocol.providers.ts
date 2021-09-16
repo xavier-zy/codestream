@@ -871,6 +871,7 @@ export interface GetNewRelicErrorGroupRequest {
 	errorGroupGuid: string;
 	traceId: string;
 	entityId?: string;
+	src?: string;
 }
 
 export interface NewRelicErrorGroup {
@@ -924,10 +925,7 @@ export interface NewRelicErrorGroup {
 	transactionName?: string;
 
 	hasStackTrace?: boolean;
-	repo?: {
-		url?: string;
-		name?: string;
-	};
+
 	attributes?: {
 		[key: string]: {
 			type: "timestamp" | "string";
@@ -937,9 +935,6 @@ export interface NewRelicErrorGroup {
 }
 
 export interface GetNewRelicErrorGroupResponse {
-	// TODO fic me REMOVE BELOW
-	sha: string;
-	// TODO fic me REMOVE ABOVE
 	errorGroup?: NewRelicErrorGroup;
 	accountId: number;
 	error?: {

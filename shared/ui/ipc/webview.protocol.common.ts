@@ -91,7 +91,8 @@ export const WebviewPanelNames = {
 	"codemarks-for-file": "Codemarks",
 	tasks: "Issues",
 	onboard: "Onboard",
-	"blame-map": "Blame Map"
+	"blame-map": "Blame Map",
+	newrelic: "Observability"
 };
 
 export enum WebviewModals {

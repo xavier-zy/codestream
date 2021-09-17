@@ -948,6 +948,9 @@ export interface GetNewRelicErrorGroupResponse {
 	accountId: number;
 	error?: {
 		message: string;
+		details?: {
+			settings?: { key: string; value: any }[];
+		};
 	};
 }
 

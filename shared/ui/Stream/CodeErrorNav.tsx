@@ -164,9 +164,9 @@ export function CodeErrorNav(props: Props) {
 	);
 	const [isEditing, setIsEditing] = React.useState(false);
 	const [isLoading, setIsLoading] = React.useState(true);
-	const [error, setError] = React.useState<{ title?: string; description: string } | undefined>(
-		undefined
-	);
+	const [error, setError] = React.useState<
+		{ title?: string; description: string; details?: any } | undefined
+	>(undefined);
 
 	const [repositoryError, setRepositoryError] = React.useState<
 		{ title: string; description: string } | undefined
@@ -246,7 +246,8 @@ export function CodeErrorNav(props: Props) {
 			if (!errorGroupResult || errorGroupResult?.error?.message) {
 				setError({
 					title: "Unexpected Error",
-					description: errorGroupResult?.error?.message || "unknown error"
+					description: errorGroupResult?.error?.message || "unknown error",
+					details: errorGroupResult?.error?.details
 				});
 				return;
 			}
@@ -447,6 +448,21 @@ export function CodeErrorNav(props: Props) {
 				]}
 			>
 				<p>{error.description}</p>
+				{error?.details?.settings && (
+					<div>
+						<b>Internal Debugging Variables</b>
+						<dl style={{ overflow: "auto" }}>
+							{Object.keys(error.details.settings).map(_ => {
+								return (
+									<>
+										<dt>{_}</dt>
+										<dd>{error.details.settings[_]}</dd>
+									</>
+								);
+							})}
+						</dl>
+					</div>
+				)}
 			</Dismissable>
 		);
 	}

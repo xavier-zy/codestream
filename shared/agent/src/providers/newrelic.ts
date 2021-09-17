@@ -23,6 +23,7 @@ import { lspHandler } from "../system";
 import { CodeStreamSession } from "../session";
 import { SessionContainer } from "../container";
 import { Strings } from "../system/string";
+import { UsersManager } from "managers/usersManager";
 
 export interface Directive {
 	type: "assignRepository" | "removeAssignee" | "setAssignee" | "setState";
@@ -407,7 +408,15 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		request: GetNewRelicErrorGroupRequest
 	): Promise<GetNewRelicErrorGroupResponse | undefined> {
 		let errorGroup: NewRelicErrorGroup | undefined = undefined;
+
+		let meUser = undefined;
+		const { users, session } = SessionContainer.instance();
+		try {
+			meUser = await users.getMe();
+		} catch {}
+
 		let accountId = 0;
+		let entityId: string = "";
 		try {
 			await this.ensureConnected();
 
@@ -432,7 +441,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				}
 			);
 			const results = response.actor.account.nrql.results[0];
-			let entityId: string;
+
 			if (results) {
 				entityId = results["entity.guid"];
 				errorGroup = {
@@ -572,13 +581,25 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		} catch (ex) {
 			Logger.error(ex);
 
-			let result;
+			let result: any = {};
 			if (ex.response?.errors) {
 				result = {
 					message: ex.response.errors.map((_: { message: string }) => _.message).join("\n")
 				};
 			} else {
 				result = { message: ex.message ? ex.message : ex.toString() };
+			}
+
+			if (meUser && meUser.user && meUser.user.email.indexOf("@newrelic.com") > -1) {
+				result.details = {
+					settings: {
+						accountId: accountId,
+						errorGroupGuid: request.errorGroupGuid,
+						entityId: entityId,
+						codeStreamUserId: meUser?.user?.id,
+						codeStreamTeamId: session?.teamId
+					}
+				};
 			}
 
 			return {

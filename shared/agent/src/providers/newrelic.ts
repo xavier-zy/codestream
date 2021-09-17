@@ -11,7 +11,8 @@ import {
 	NewRelicConfigurationData,
 	ThirdPartyProviderConfig,
 	GetNewRelicAssigneesRequestType,
-	NewRelicUser
+	NewRelicUser,
+	ThirdPartyDisconnect
 } from "../protocol/agent.protocol";
 import { CSMe, CSNewRelicProviderInfo } from "../protocol/api.protocol";
 import { log, lspProvider } from "../system";
@@ -97,6 +98,13 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 
 	get graphQlBaseUrl() {
 		return `${this.baseUrl}/graphql`;
+	}
+
+	@log()
+	async onDisconnected(request?: ThirdPartyDisconnect) {
+		// delete the graphql client so it will be reconstructed if a new token is applied
+		delete this._client;
+		super.onDisconnected(request);
 	}
 
 	protected async client(): Promise<GraphQLClient> {

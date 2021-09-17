@@ -255,7 +255,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				  account(id: $accountId) {
 					nrql(query: "FROM Metric SELECT entity.guid WHERE error.group.guid = '${Strings.santizeGraphqlValue(
 						errorGroupGuid
-					)}' LIMIT 1") { nrql results }
+					)}' SINCE 1 day ago LIMIT 1") { nrql results }
 				  }
 				}
 			  }

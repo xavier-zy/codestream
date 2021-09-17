@@ -26,6 +26,7 @@ import { getTeamMembers } from "../users/reducer";
 import { phraseList } from "@codestream/webview/utilities/strings";
 import { Position, Range } from "vscode-languageserver-types";
 import { highlightRange } from "../../Stream/api-functions";
+import { EditorRevealRangeRequestType } from "@codestream/protocols/webview";
 
 export const reset = () => action("RESET");
 
@@ -212,16 +213,22 @@ export const jumpToStackLine = (
 	}
 
 	const { line, column, path } = currentPosition;
-
 	const range = Range.create(
 		Position.create(line! - 1, column != null ? column : 0),
 		Position.create(line! - 1, column != null ? column : 2147483647)
 	);
-	highlightRange({
+
+	const revealResponse = await HostApi.instance.send(EditorRevealRangeRequestType, {
 		uri: `file://${path!}`,
-		range,
-		highlight: true
+		range
 	});
+	if (revealResponse?.success) {
+		highlightRange({
+			uri: `file://${path!}`,
+			range,
+			highlight: true
+		});
+	}
 };
 
 export const updateCodeError = request => async dispatch => {

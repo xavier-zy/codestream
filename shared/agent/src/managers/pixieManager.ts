@@ -1,14 +1,19 @@
 "use strict";
 
-import { Logger } from "../logger";
-import { PixieDynamicLoggingReponse, PixieDynamicLoggingRequest, PixieDynamicLoggingRequestType } from "../protocol/agent.protocol";
-import { CodeStreamSession } from "../session";
-import { lsp, lspHandler } from "../system/decorators/lsp";
-import * as grpcProtoLoader from "@grpc/proto-loader";
 import * as grpcLibrary from "@grpc/grpc-js";
-import * as protobuf from "protobufjs";
+import * as grpcProtoLoader from "@grpc/proto-loader";
 import Long from "long";
-import { xfs } from "../xfs";
+import * as protobuf from "protobufjs";
+import { Logger } from "../logger";
+import {
+    PixieDynamicLoggingReponse,
+    PixieDynamicLoggingRequest,
+    PixieDynamicLoggingRequestType
+} from "../protocol/agent.protocol";
+import { NewRelicProvider } from "../providers/newrelic";
+import { CodeStreamSession } from "../session";
+import { getProvider } from "../system";
+import { lsp, lspHandler } from "../system/decorators/lsp";
 
 // see: https://www.npmjs.com/package/protobufjs
 protobuf.util.Long = Long;
@@ -132,16 +137,22 @@ export class PixieManager {
     }
 
     private async buildCredentials() {
-        const token = (await xfs.readText("/Users/mfarias/pixie/pixie.key"))!.trim();
-        return grpcLibrary.credentials.combineChannelCredentials(
-            grpcLibrary.credentials.createSsl(),
-            grpcLibrary.credentials.createFromMetadataGenerator((params, callback) => {
-                const md = new grpcLibrary.Metadata();
-                md.set("authorization", "Bearer " + token);
-                md.set("pixie-api-key", token);
-                md.set("pixie-api-client", "codestream");
-                return callback(null, md);
-            })
-        );
+        const nrProvider = getProvider("newrelic*com") as NewRelicProvider;
+        if (nrProvider != null) {
+            const token = await nrProvider.getPixieToken();
+            // const token = (await xfs.readText("/Users/mfarias/pixie/pixie.key"))!.trim();
+            return grpcLibrary.credentials.combineChannelCredentials(
+                grpcLibrary.credentials.createSsl(),
+                grpcLibrary.credentials.createFromMetadataGenerator((params, callback) => {
+                    const md = new grpcLibrary.Metadata();
+                    md.set("authorization", "Bearer " + token);
+                    // md.set("pixie-api-key", token);
+                    md.set("pixie-api-client", "codestream");
+                    return callback(null, md);
+                })
+            );
+        } else {
+            throw new Error("Not connected to New Relic");
+        }
     }
 }

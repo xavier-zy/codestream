@@ -410,6 +410,32 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		}
 	}
 
+	async getPixieToken() {
+		const accountId = this._providerInfo?.data?.accountId || 1;
+		try {
+			await this.ensureConnected();
+			const response = await this.query(
+				`query fetchPixieAccessToken($accountId:Int!) {
+  					actor {
+    					account(id: $accountId) {
+      						pixie {
+        						pixieAccessToken
+      						}
+						}
+  					}
+				}
+			  	`,
+				{
+					accountId: accountId
+				}
+			);
+			return response.actor.account.pixie.pixieAccessToken;
+		} catch (e) {
+			Logger.error(e);
+			throw e;
+		}
+	}
+
 	@lspHandler(GetNewRelicErrorGroupRequestType)
 	@log()
 	async getNewRelicErrorGroupData(

@@ -10,7 +10,8 @@ import {
 	GetNewRelicErrorGroupResponse,
 	NewRelicConfigurationData,
 	ThirdPartyProviderConfig,
-	GetNewRelicAssigneesRequestType
+	GetNewRelicAssigneesRequestType,
+	NewRelicUser
 } from "../protocol/agent.protocol";
 import { CSMe, CSNewRelicProviderInfo } from "../protocol/api.protocol";
 import { log, lspProvider } from "../system";
@@ -354,6 +355,52 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		return undefined;
 	}
 
+	private async getErrorGroupState(
+		errorGroupGuid: string
+	): Promise<
+		| {
+				actor: {
+					errorsInbox: {
+						errorGroup: {
+							assignedUser?: NewRelicUser;
+							state?: "RESOLVED" | "IGNORED" | "UNRESOLVED" | string;
+						};
+					};
+				};
+		  }
+		| undefined
+	> {
+		try {
+			return this.query(
+				`query getErrorGroup($errorGroupGuid: ID!) {
+			actor {
+			  errorsInbox {
+				errorGroup(id: $errorGroupGuid) {
+				  assignedUser {
+					email
+					gravatar
+					id
+					name
+				  }
+				  id
+				  state
+				}
+			  }
+			}
+		  }
+		   `,
+				{
+					errorGroupGuid: errorGroupGuid
+				}
+			);
+		} catch (ex) {
+			Logger.warn(ex.message, {
+				errorGroupGuid: errorGroupGuid
+			});
+			return undefined;
+		}
+	}
+
 	@lspHandler(GetNewRelicErrorGroupRequestType)
 	@log()
 	async getNewRelicErrorGroupData(
@@ -410,19 +457,21 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					errorGroup.entity = { repo: repo };
 				}
 
-				response = await this.query(
-					`{
+				if (entityId) {
+					response = await this.query(
+						`{
 						actor {
-						  entity(guid: "${errorGroup?.entityGuid}") {
+						  entity(guid: "${entityId}") {
 							alertSeverity
 							name
 						  }
 						}
 					  }
 				  `
-				);
-				errorGroup.entityName = response.actor.entity.name;
-				errorGroup.entityAlertingSeverity = response.actor.entity.alertSeverity;
+					);
+					errorGroup.entityName = response.actor.entity.name;
+					errorGroup.entityAlertingSeverity = response.actor.entity.alertSeverity;
+				}
 				errorGroup.attributes = {
 					Timestamp: { type: "timestamp", value: errorGroup.timestamp }
 					// TODO fix me
@@ -454,42 +503,12 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					}
 				}
 
-				// TODO fix me below does not work yet
-				const foo = false;
-				if (foo) {
-					const assigneeResults = await this.query(
-						`query getStatus($entityId:String, $errorGroupGuid:String) {
-						actor {
-						  entity(guid: $entityId) {
-							... on WorkloadEntity {
-							  guid
-							  name
-							  errorGroup(id: $errorGroupGuid) {
-								assignedUser {
-								  email
-								  gravatar
-								  id
-								  name
-								}
-								state
-								id
-							  }
-							}
-						  }
-						}
-					  }
-					  `,
-						{
-							entityId: entityId,
-							errorGroupGuid: errorGroupGuid
-						}
-					);
-					if (assigneeResults) {
-						errorGroup.state = assigneeResults.actor.entity.errorGroup.state;
-						const assignee = assigneeResults.actor.entity.errorGroup.assignedUser;
-						if (assignee) {
-							errorGroup.assignee = assignee;
-						}
+				const errorGroupState = await this.getErrorGroupState(errorGroupGuid);
+				if (errorGroupState) {
+					errorGroup.state = errorGroupState.actor.errorsInbox.errorGroup.state;
+					const assignee = errorGroupState.actor.errorsInbox.errorGroup.assignedUser;
+					if (assignee) {
+						errorGroup.assignee = assignee;
 					}
 				}
 
@@ -671,29 +690,28 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		try {
 			await this.ensureConnected();
 
-			// TODO fix me
+			const response = await this.mutate<{
+				errorTrackingUpdateErrorGroupState: {
+					error?: any;
+					state?: string;
+				};
+			}>(
+				`mutation UpdateErrorGroupState($errorGroupGuid: ID!, $state: ErrorsInboxErrorGroupState!) {
+					errorsInboxUpdateErrorGroupState(id: $errorGroupGuid, state: $state) {
+					  state
+					  errors {
+						description
+						type
+					  }
+					}
+				  }
+				  `,
+				{
+					errorGroupGuid: request.errorGroupGuid,
+					state: request.state
+				}
+			);
 
-			// const response = await this.mutate<{
-			// 	errorTrackingUpdateErrorGroupState: {
-			// 		error?: any;
-			// 		state?: string;
-			// 	};
-			// }>(
-			// 	`mutation setState($errorGroupGuid:ID!, $state:ErrorTrackingErrorGroupState) {
-			// 		errorTrackingUpdateErrorGroupState(id:
-			// 		  $errorGroupGuid, state: {state: $state}) {
-			// 		  state
-			// 		  errors {
-			// 			description
-			// 			type
-			// 		  }
-			// 		}
-			// 	  }`,
-			// 	{
-			// 		errorGroupGuid: request.errorGroupGuid,
-			// 		state: request.state
-			// 	}
-			// );
 			return {
 				directives: [
 					{

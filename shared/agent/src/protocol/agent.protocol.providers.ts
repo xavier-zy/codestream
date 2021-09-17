@@ -874,6 +874,13 @@ export interface GetNewRelicErrorGroupRequest {
 	src?: string;
 }
 
+export interface NewRelicUser {
+	email: string;
+	gravatar: string;
+	id: number;
+	name: string;
+}
+
 export interface NewRelicErrorGroup {
 	accountId: number;
 	entityGuid: string;
@@ -898,14 +905,9 @@ export interface NewRelicErrorGroup {
 
 	states?: string[];
 	// TODO these might not be hard-codeable
-	state: "RESOLVED" | "IGNORED" | "UNRESOLVED";
+	state?: "RESOLVED" | "IGNORED" | "UNRESOLVED" | string;
 
-	assignee?: {
-		email: string;
-		gravatar: string;
-		id: number;
-		name: string;
-	};
+	assignee?: NewRelicUser;
 
 	entity?: {
 		repo?: {

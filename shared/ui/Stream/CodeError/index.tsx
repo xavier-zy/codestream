@@ -250,6 +250,7 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 	const [items, setItems] = React.useState<MenuItem[]>([]);
 	const [states, setStates] = React.useState<DropdownButtonItems[] | undefined>(undefined);
 	const [openConnectionModal, setOpenConnectionModal] = React.useState(false);
+	const [isStateChanging, setIsStateChanging] = React.useState(false);
 
 	const onSetAssignee = async userId => {
 		if (!props.errorGroup) return;
@@ -288,12 +289,14 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 							key: _,
 							label: STATES_TO_ACTION_STRINGS[_],
 							action: async e => {
-								dispatch(
+								setIsStateChanging(true);
+								await dispatch(
 									api("setState", {
 										errorGroupGuid: props.errorGroup?.guid!,
 										state: _
 									})
 								);
+								setIsStateChanging(false);
 							}
 						};
 					}) as DropdownButtonItems[]
@@ -349,63 +352,63 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 			});
 		}
 
-		if (derivedState.isConnectedToNewRelic) {
-			const { users } = await HostApi.instance.send(GetNewRelicAssigneesRequestType, {});
+		// if (derivedState.isConnectedToNewRelic) {
+		// 	const { users } = await HostApi.instance.send(GetNewRelicAssigneesRequestType, {});
 
-			const usersFromGit = users.filter(_ => _.group === "GIT");
-			if (usersFromGit.length) {
-				_items.push({ label: "-", key: "sep-git" });
-				_items.push({
-					label: (
-						<span style={{ fontSize: "10px", fontWeight: "bold", opacity: 0.7 }}>
-							SUGGESTIONS FROM GIT
-						</span>
-					),
-					noHover: true,
-					disabled: true
-				});
-				_items = _items.concat(
-					usersFromGit.map(_ => {
-						return {
-							icon: <Headshot size={16} display="inline-block" person={{ email: _.email }} />,
-							key: _.id,
-							label: _.displayName,
-							searchLabel: _.displayName,
-							subtext: _.email,
-							action: () => onSetAssignee(_.id)
-						};
-					})
-				);
-			}
-			const usersFromNr = users.filter(_ => _.group === "NR");
-			if (usersFromNr.length) {
-				_items.push({ label: "-", key: "sep-nr" });
-				_items.push({
-					label: (
-						<span style={{ fontSize: "10px", fontWeight: "bold", opacity: 0.7 }}>
-							OTHER TEAMMATES
-						</span>
-					),
-					noHover: true,
-					disabled: true
-				});
-				_items = _items.concat(
-					usersFromNr.map(_ => {
-						return {
-							icon: <Headshot size={16} display="inline-block" person={{ email: _.email }} />,
-							key: _.id,
-							label: _.displayName,
-							searchLabel: _.displayName,
-							subtext: _.email,
-							action: () => onSetAssignee(_.id)
-						};
-					})
-				);
-			}
-			setItems(_items);
-		} else {
-			setItems([{ label: "-", key: "none" }]);
-		}
+		// 	const usersFromGit = users.filter(_ => _.group === "GIT");
+		// 	if (usersFromGit.length) {
+		// 		_items.push({ label: "-", key: "sep-git" });
+		// 		_items.push({
+		// 			label: (
+		// 				<span style={{ fontSize: "10px", fontWeight: "bold", opacity: 0.7 }}>
+		// 					SUGGESTIONS FROM GIT
+		// 				</span>
+		// 			),
+		// 			noHover: true,
+		// 			disabled: true
+		// 		});
+		// 		_items = _items.concat(
+		// 			usersFromGit.map(_ => {
+		// 				return {
+		// 					icon: <Headshot size={16} display="inline-block" person={{ email: _.email }} />,
+		// 					key: _.id,
+		// 					label: _.displayName,
+		// 					searchLabel: _.displayName,
+		// 					subtext: _.email,
+		// 					action: () => onSetAssignee(_.id)
+		// 				};
+		// 			})
+		// 		);
+		// 	}
+		// 	const usersFromNr = users.filter(_ => _.group === "NR");
+		// 	if (usersFromNr.length) {
+		// 		_items.push({ label: "-", key: "sep-nr" });
+		// 		_items.push({
+		// 			label: (
+		// 				<span style={{ fontSize: "10px", fontWeight: "bold", opacity: 0.7 }}>
+		// 					OTHER TEAMMATES
+		// 				</span>
+		// 			),
+		// 			noHover: true,
+		// 			disabled: true
+		// 		});
+		// 		_items = _items.concat(
+		// 			usersFromNr.map(_ => {
+		// 				return {
+		// 					icon: <Headshot size={16} display="inline-block" person={{ email: _.email }} />,
+		// 					key: _.id,
+		// 					label: _.displayName,
+		// 					searchLabel: _.displayName,
+		// 					subtext: _.email,
+		// 					action: () => onSetAssignee(_.id)
+		// 				};
+		// 			})
+		// 		);
+		// 	}
+		// 	setItems(_items);
+		// } else {
+		// 	setItems([{ label: "-", key: "none" }]);
+		// }
 	};
 
 	useEffect(() => {
@@ -529,6 +532,7 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 							<DropdownButton
 								items={states}
 								selectedKey={props.errorGroup?.state || "UNKNOWN"}
+								isLoading={isStateChanging}
 								variant="secondary"
 								size="compact"
 								preventStopPropagation={!derivedState.isConnectedToNewRelic}
@@ -554,9 +558,10 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 								items={items}
 								allowEmpty={true}
 								preventStopPropagation={!derivedState.isConnectedToNewRelic}
-								onChevronClick={e =>
-									!derivedState.isConnectedToNewRelic ? setOpenConnectionModal(true) : undefined
-								}
+								// onChevronClick={e =>
+								// 	!derivedState.isConnectedToNewRelic ? setOpenConnectionModal(true) : undefined
+								// }
+								noChevronDown={true}
 							>
 								<ConditionalNewRelic
 									connected={

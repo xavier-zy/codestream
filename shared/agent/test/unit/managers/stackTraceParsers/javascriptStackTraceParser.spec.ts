@@ -6,12 +6,6 @@ require("mocha").it;
 import { Parser } from "../../../../src/managers/stackTraceParsers/javascriptStackTraceParser";
 
 describe("javascriptStackTraceParser", () => {
-	/* 
-	This test is not fully functional until we can get a real stack trace back from NR1, instead of using our
-	extension to pluck it off the web page ... since it is truncated when we pluck it. 
-	Instead we leave in our (incorrect) parser to account for the truncated stack, for demo purposes
-	*/
-	/*
 	it("stack1", () => {
 		const str = `TypeError: this.request.csrfToken is not a function
 at LinkNewRelicRequest.createLauncherModel (/Users/cstryker/dev/sandboxes/csdemo/codestream-server/api_server/modules/web/link_newrelic_request.js:81:23)
@@ -80,9 +74,10 @@ at processTicksAndRejections (internal/process/task_queues.js:94:5)`;
 					column: 5
 				}
 			],
+			text:
+				"TypeError: this.request.csrfToken is not a function\nat LinkNewRelicRequest.createLauncherModel (/Users/cstryker/dev/sandboxes/csdemo/codestream-server/api_server/modules/web/link_newrelic_request.js:81:23)\nat LinkNewRelicRequest.render (/Users/cstryker/dev/sandboxes/csdemo/codestream-server/api_server/modules/web/link_newrelic_request.js:39:33)\nat LinkNewRelicRequest.process (/Users/cstryker/dev/sandboxes/csdemo/codestream-server/api_server/modules/web/link_newrelic_request.js:23:16)\nat LinkNewRelicRequest.executePhase (/Users/cstryker/dev/sandboxes/csdemo/codestream-server/api_server/lib/api_server/api_request.js:62:20)\nat LinkNewRelicRequest.fulfill (/Users/cstryker/dev/sandboxes/csdemo/codestream-server/api_server/lib/api_server/api_request.js:138:16)\nat runMicrotasks (<anonymous>)\nat processTicksAndRejections (internal/process/task_queues.js:94:5)",
 			header: "TypeError: this.request.csrfToken is not a function",
 			error: "this.request.csrfToken is not a function"
 		});
 	});
-	*/
 });

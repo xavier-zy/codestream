@@ -375,7 +375,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					  account(id: $accountId) {
 						nrql(query: "FROM Metric SELECT entity.guid, error.group.guid, error.group.message, error.group.name, error.group.source, error.group.nrql WHERE error.group.guid = '${Strings.santizeGraphqlValue(
 							errorGroupGuid
-						)}' LIMIT 1") { nrql results }
+						)}' SINCE 1 day ago LIMIT 1") { nrql results }
 					  }
 					}
 				  }
@@ -531,9 +531,19 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					errorGroup: errorGroup
 				});
 			} else {
-				Logger.log("No errorGroup results", {
-					request: request
-				});
+				Logger.warn(
+					`No errorGroup results errorGroupGuid (${errorGroupGuid}) in account (${accountId})`,
+					{
+						request: request,
+						accountId: accountId
+					}
+				);
+				return {
+					accountId: accountId,
+					error: {
+						message: `Could not find error info for that errorGroupGuid in account (${accountId})`
+					}
+				};
 			}
 
 			return {

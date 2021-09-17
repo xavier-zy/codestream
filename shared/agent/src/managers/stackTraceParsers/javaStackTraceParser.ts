@@ -20,7 +20,7 @@ export function Parser(stack: string): CSStackTraceInfo {
 			([\d\w\$]*)\. // class
 			([\d\w\$]*) // method
 			\(
-				(?:(?:([\d\w]*\.java):(\d*)) // file:line
+				(?:(?:([\d\w]*\.(java|kt)):(\d*)) // file:line
 				|([\d\w\s]*)) // file
 			\)
 			$`;
@@ -43,7 +43,7 @@ export function Parser(stack: string): CSStackTraceInfo {
 			regex.lastIndex++;
 		}
 
-		const [, , packageName, className, methodName, file, lineText] = m;
+		const [, , packageName, className, methodName, file, extension, lineText] = m;
 		let lineNum: number | undefined = parseInt(lineText, 10);
 		if (isNaN(lineNum)) lineNum = undefined;
 		info.lines.push({

@@ -61,6 +61,7 @@ const ExtensionToLanguageMap: { [key: string]: string } = {
 	php: "php",
 	cs: "c#",
 	py: "python",
+	kt: "java",
 	java: "java",
 	go: "go"
 };

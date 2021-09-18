@@ -139,12 +139,11 @@ export interface WebviewContext {
 	currentCodeErrorData?: {
 		// REMOVE BELOW
 		parsedStack?: any;
-		warning?: string;
-		error?: string;
 		// REMOVE ABOVE
-		/** caches when the last user session started  */
 		remote?: string;
 		commit?: string;
+		/** caches when the last user session started  */
+
 		sessionStart?: number;
 		pendingRequiresConnection?: boolean;
 		pendingErrorGroupGuid?: string;

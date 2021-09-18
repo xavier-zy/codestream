@@ -189,6 +189,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 	}
 
 	@lspHandler(GetNewRelicDataRequestType)
+	@log()
 	async getNewRelicData(request: GetNewRelicDataRequest): Promise<GetNewRelicDataResponse> {
 		try {
 			await this.ensureConnected();
@@ -255,7 +256,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				  account(id: $accountId) {
 					nrql(query: "FROM Metric SELECT entity.guid WHERE error.group.guid = '${Strings.santizeGraphqlValue(
 						errorGroupGuid
-					)}' SINCE 1 day ago LIMIT 1") { nrql results }
+					)}' SINCE 7 day ago LIMIT 1") { nrql results }
 				  }
 				}
 			  }
@@ -410,6 +411,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		}
 	}
 
+	@log()
 	async getPixieToken() {
 		const accountId = this._providerInfo?.data?.accountId || 1;
 		try {
@@ -465,7 +467,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					  account(id: $accountId) {
 						nrql(query: "FROM Metric SELECT entity.guid, error.group.guid, error.group.message, error.group.name, error.group.source, error.group.nrql WHERE error.group.guid = '${Strings.santizeGraphqlValue(
 							errorGroupGuid
-						)}' SINCE 1 day ago LIMIT 1") { nrql results }
+						)}' SINCE 7 day ago LIMIT 1") { nrql results }
 					  }
 					}
 				  }
@@ -475,7 +477,6 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				}
 			);
 			const results = response.actor.account.nrql.results[0];
-
 			if (results) {
 				entityId = results["entity.guid"];
 				errorGroup = {
@@ -603,7 +604,12 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				return {
 					accountId: accountId,
 					error: {
-						message: `Could not find error info for that errorGroupGuid in account (${accountId})`
+						message: `Could not find error info for that errorGroupGuid in account (${accountId})`,
+						details: (await this.buildErrorDetailSettings(
+							accountId,
+							entityId,
+							errorGroupGuid
+						)) as any
 					}
 				};
 			}
@@ -624,17 +630,11 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				result = { message: ex.message ? ex.message : ex.toString() };
 			}
 
-			if (meUser && meUser.user && meUser.user.email.indexOf("@newrelic.com") > -1) {
-				result.details = {
-					settings: {
-						accountId: accountId,
-						errorGroupGuid: request.errorGroupGuid,
-						entityId: entityId,
-						codeStreamUserId: meUser?.user?.id,
-						codeStreamTeamId: session?.teamId
-					}
-				};
-			}
+			result.details = (await this.buildErrorDetailSettings(
+				accountId,
+				entityId,
+				request.errorGroupGuid
+			)) as any;
 
 			return {
 				error: result,
@@ -870,6 +870,35 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			});
 			return undefined;
 		}
+	}
+
+	private async buildErrorDetailSettings(
+		accountId: number,
+		entityId: string,
+		errorGroupGuid: string
+	) {
+		let meUser = undefined;
+		const { users, session } = SessionContainer.instance();
+		try {
+			meUser = await users.getMe();
+		} catch {}
+		if (
+			meUser &&
+			meUser.user &&
+			(meUser.user.email.indexOf("@newrelic.com") > -1 ||
+				meUser.user.email.indexOf("@codestream.com") > -1)
+		) {
+			return {
+				settings: {
+					accountId: accountId,
+					errorGroupGuid: errorGroupGuid,
+					entityId: entityId,
+					codeStreamUserId: meUser?.user?.id,
+					codeStreamTeamId: session?.teamId
+				}
+			};
+		}
+		return undefined;
 	}
 
 	private _setAssignee(request: { errorGroupGuid: string; userId: string }) {

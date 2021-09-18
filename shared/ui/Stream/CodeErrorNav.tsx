@@ -168,11 +168,13 @@ export function CodeErrorNav(props: Props) {
 		{ title?: string; description: string; details?: any } | undefined
 	>(undefined);
 
-	const [repositoryError, setRepositoryError] = React.useState<
+	const [repoAssociationError, setRepoAssociationError] = React.useState<
 		{ title: string; description: string } | undefined
 	>(undefined);
-
+	const [repoWarning, setRepoWarning] = React.useState<string | undefined>(undefined);
+	const [repoError, setRepoError] = React.useState<string | undefined>(undefined);
 	const { codeError, errorGroup } = derivedState;
+	const [isResolved, setIsResolved] = React.useState(false);
 
 	const pendingErrorGroupGuid = derivedState.currentCodeErrorData?.pendingErrorGroupGuid;
 	const traceId = derivedState.currentCodeErrorData?.traceId;
@@ -197,135 +199,6 @@ export function CodeErrorNav(props: Props) {
 	};
 
 	useEffect(() => {
-		if (!codeError || !codeError.objectId || !derivedState.isConnectedToNewRelic || errorGroup) {
-			return;
-		}
-
-		setIsLoading(true);
-		dispatch(fetchErrorGroup(codeError));
-		setTimeout(() => {
-			setIsLoading(false);
-		}, 1);
-	}, [codeError, derivedState.isConnectedToNewRelic, errorGroup]);
-
-	useEffect(() => {
-		if (!errorGroup) return;
-
-		if (!errorGroup.hasStackTrace) {
-			setError({
-				title: "Missing Stack Trace",
-				description:
-					"This error report does not have a stack trace associated with it and cannot be displayed."
-			});
-		}
-	}, [errorGroup]);
-
-	const setRepositoryErrorCore = (errorGroup?: NewRelicErrorGroup) => {
-		setRepositoryError({
-			title: "Missing Repository Info",
-			description: `In order to view this stack trace, please select a repository to associate with ${
-				errorGroup ? errorGroup.entityName + " " : ""
-			}on New Relic.`
-		});
-	};
-
-	const onConnected = async (newRemote?: string) => {
-		console.warn("onConnected starting...");
-		if (!pendingErrorGroupGuid) {
-			return;
-		}
-		console.warn("onConnected started");
-		setIsLoading(true);
-		try {
-			const errorGroupGuid = pendingErrorGroupGuid;
-			const errorGroupResult = await HostApi.instance.send(GetNewRelicErrorGroupRequestType, {
-				errorGroupGuid: errorGroupGuid!,
-				traceId: traceId!
-			});
-
-			if (!errorGroupResult || errorGroupResult?.error?.message) {
-				setError({
-					title: "Unexpected Error",
-					description: errorGroupResult?.error?.message || "unknown error",
-					details: errorGroupResult?.error?.details
-				});
-				return;
-			}
-			if (errorGroupResult?.errorGroup != null) {
-				dispatch(setErrorGroup(errorGroupGuid, errorGroupResult.errorGroup!));
-			}
-			const targetRemote = newRemote || remote;
-			if (!targetRemote) {
-				setRepositoryErrorCore();
-				return;
-			}
-
-			const reposResponse = (await HostApi.instance.send(MatchReposRequestType, {
-				repos: [
-					{
-						remotes: [targetRemote],
-						knownCommitHashes: commit ? [commit] : []
-					}
-				]
-			})) as MatchReposResponse;
-
-			if (reposResponse?.repos?.length === 0) {
-				setError({
-					title: "Error",
-					description: `Could not find a repo for the remote ${targetRemote}`
-				});
-				return;
-			}
-
-			const repo = reposResponse.repos[0];
-
-			const stackInfo = (await resolveStackTrace(
-				repo.id!,
-				commit!,
-				traceId!,
-				errorGroupResult.errorGroup?.errorTrace!?.stackTrace.map(_ => _.formatted)
-			)) as ResolveStackTraceResponse;
-
-			const newCodeError: NewCodeErrorAttributes = {
-				accountId: errorGroupResult.accountId,
-				objectId: errorGroupGuid,
-				objectType: "ErrorGroup",
-				title: errorGroupResult.errorGroup?.title || "",
-				text: errorGroupResult.errorGroup?.message || undefined,
-				// storing the permanently parsed stack info
-				stackTraces: stackInfo.error ? [{ ...stackInfo, lines: [] }] : [stackInfo.parsedStackInfo!],
-				objectInfo: {
-					repoId: repo.id,
-					entityName: errorGroupResult?.errorGroup?.entityName
-				}
-			};
-
-			const response = (await dispatch(createPostAndCodeError(newCodeError))) as any;
-
-			dispatch(
-				setCurrentCodeError(response.codeError.id, {
-					// need to reset this back to undefined now that we aren't
-					// pending any longer
-					pendingErrorGroupGuid: undefined,
-					errorGroup: errorGroupResult?.errorGroup,
-
-					warning: stackInfo?.warning,
-					error: stackInfo?.error
-				})
-			);
-		} catch (ex) {
-			console.warn(ex);
-			setError({
-				title: "Unexpected Error",
-				description: ex.message ? ex.message : ex.toString()
-			});
-		} finally {
-			setRequiresConnection(false);
-			setIsLoading(false);
-		}
-	};
-
-	useDidMount(() => {
 		if (
 			derivedState.sessionStart &&
 			derivedState.currentCodeErrorData?.sessionStart &&
@@ -339,6 +212,7 @@ export function CodeErrorNav(props: Props) {
 			dispatch(closeAllPanels());
 			return;
 		}
+
 		if (pendingRequiresConnection) {
 			setRequiresConnection(pendingRequiresConnection);
 		} else if (pendingErrorGroupGuid) {
@@ -379,7 +253,154 @@ export function CodeErrorNav(props: Props) {
 				onDidMount();
 			}
 		}
+	}, [derivedState.currentCodeErrorId]);
 
+	useEffect(() => {
+		if (!codeError || !codeError.objectId || !derivedState.isConnectedToNewRelic || errorGroup) {
+			return;
+		}
+
+		setIsLoading(true);
+		dispatch(fetchErrorGroup(codeError));
+		setTimeout(() => {
+			setIsLoading(false);
+		}, 1);
+	}, [codeError, derivedState.isConnectedToNewRelic, errorGroup]);
+
+	useEffect(() => {
+		if (!errorGroup) return;
+
+		if (!errorGroup.hasStackTrace) {
+			setError({
+				title: "Missing Stack Trace",
+				description:
+					"This error report does not have a stack trace associated with it and cannot be displayed."
+			});
+		}
+
+		if (!isResolved) {
+			resolveStackTrace(
+				codeError?.objectInfo?.repoId!,
+				codeError?.objectInfo?.sha!,
+				traceId!,
+				errorGroup?.errorTrace!?.stackTrace.map(_ => _.formatted)
+			)
+				.then((stackInfo: ResolveStackTraceResponse) => {
+					setRepoError(stackInfo?.error);
+					setRepoWarning(stackInfo?.warning);
+				})
+				.catch(ex => console.warn(ex))
+				.then(() => {
+					setIsResolved(true);
+				});
+		}
+	}, [errorGroup, isResolved]);
+
+	const onConnected = async (newRemote?: string) => {
+		console.warn("onConnected starting...");
+		if (!pendingErrorGroupGuid) {
+			return;
+		}
+		console.warn("onConnected started");
+		setIsLoading(true);
+		setRepoAssociationError(undefined);
+		setError(undefined);
+
+		try {
+			const errorGroupGuid = pendingErrorGroupGuid;
+			const errorGroupResult = await HostApi.instance.send(GetNewRelicErrorGroupRequestType, {
+				errorGroupGuid: errorGroupGuid!,
+				traceId: traceId!
+			});
+
+			if (!errorGroupResult || errorGroupResult?.error?.message) {
+				setError({
+					title: "Unexpected Error",
+					description: errorGroupResult?.error?.message || "unknown error",
+					details: errorGroupResult?.error?.details
+				});
+				return;
+			}
+			if (errorGroupResult?.errorGroup != null) {
+				dispatch(setErrorGroup(errorGroupGuid, errorGroupResult.errorGroup!));
+			}
+			const targetRemote = newRemote || remote;
+			if (!targetRemote) {
+				setRepoAssociationError({
+					title: "Missing Repository Info",
+					description: `In order to view this stack trace, please select a repository to associate with ${
+						errorGroup ? errorGroup.entityName + " " : ""
+					}on New Relic.`
+				});
+				return;
+			}
+
+			const reposResponse = (await HostApi.instance.send(MatchReposRequestType, {
+				repos: [
+					{
+						remotes: [targetRemote],
+						knownCommitHashes: commit ? [commit] : []
+					}
+				]
+			})) as MatchReposResponse;
+
+			if (reposResponse?.repos?.length === 0) {
+				setError({
+					title: "Error",
+					description: `Could not find a repo for the remote ${targetRemote}`
+				});
+				return;
+			}
+
+			const repo = reposResponse.repos[0];
+			const stackInfo = (await resolveStackTrace(
+				repo.id!,
+				commit!,
+				traceId!,
+				errorGroupResult.errorGroup?.errorTrace!?.stackTrace.map(_ => _.formatted)
+			)) as ResolveStackTraceResponse;
+
+			const newCodeError: NewCodeErrorAttributes = {
+				accountId: errorGroupResult.accountId,
+				objectId: errorGroupGuid,
+				objectType: "ErrorGroup",
+				title: errorGroupResult.errorGroup?.title || "",
+				text: errorGroupResult.errorGroup?.message || undefined,
+				// storing the permanently parsed stack info
+				stackTraces: stackInfo.error ? [{ ...stackInfo, lines: [] }] : [stackInfo.parsedStackInfo!],
+				objectInfo: {
+					repoId: repo.id,
+					remote: targetRemote,
+					entityName: errorGroupResult?.errorGroup?.entityName
+				}
+			};
+
+			const response = (await dispatch(createPostAndCodeError(newCodeError))) as any;
+
+			dispatch(
+				setCurrentCodeError(response.codeError.id, {
+					// need to reset this back to undefined now that we aren't
+					// pending any longer
+					pendingErrorGroupGuid: undefined,
+					errorGroup: errorGroupResult?.errorGroup
+				})
+			);
+			setIsResolved(true);
+			setRepoError(stackInfo?.error);
+			setRepoWarning(stackInfo?.warning);
+		} catch (ex) {
+			console.warn(ex);
+			setError({
+				title: "Unexpected Error",
+				description: ex.message ? ex.message : ex.toString()
+			});
+		} finally {
+			setRequiresConnection(false);
+			setIsLoading(false);
+		}
+	};
+
+	useDidMount(() => {
 		// Kind of a HACK leaving this here, BUT...
 		// since <CancelButton /> uses the OLD version of Button.js
 		// and not Button.tsx (below), there's no way to keep the style.
@@ -400,11 +421,11 @@ export function CodeErrorNav(props: Props) {
 	// if for some reason we have a codemark, don't render anything
 	if (derivedState.currentCodemarkId) return null;
 
-	if (repositoryError) {
+	if (repoAssociationError) {
 		// essentially a roadblock
 		return (
 			<RepositoryAssociator
-				error={repositoryError}
+				error={repoAssociationError}
 				onSubmit={r => {
 					dispatch(
 						api("assignRepository", {
@@ -517,7 +538,7 @@ export function CodeErrorNav(props: Props) {
 			</Root>
 		);
 	}
-	if (isLoading && !codeError) {
+	if ((isLoading && !codeError) || derivedState.currentCodeErrorId?.indexOf("PENDING") === 0) {
 		return (
 			<DelayedRender>
 				<Loading />
@@ -580,15 +601,18 @@ export function CodeErrorNav(props: Props) {
 								}}
 							>
 								{/* TODO perhaps consolidate these? */}
-								{derivedState.currentCodeErrorData && derivedState.currentCodeErrorData.warning && (
+								{(repoWarning || repoWarning) && (
 									<CodeErrorErrorBox>
 										<Icon name="alert" className="alert" />
 										<div className="message">
-											{derivedState.currentCodeErrorData.warning
+											{(
+												(repoWarning || "") +
+												(repoError ? `${repoWarning ? "\n" : ""}${repoError}` : "")
+											)
 												.split("\n")
 												.map(function(item, key) {
 													return (
-														<div key={"warning_" + key}>
+														<div key={"warningOrError_" + key}>
 															{item}
 															<br />
 														</div>
@@ -597,26 +621,12 @@ export function CodeErrorNav(props: Props) {
 										</div>
 									</CodeErrorErrorBox>
 								)}
-								{derivedState.currentCodeErrorData && derivedState.currentCodeErrorData.error && (
-									<CodeErrorErrorBox>
-										<Icon name="alert" className="alert" />
-										<div className="message">
-											{derivedState.currentCodeErrorData.error.split("\n").map(function(item, key) {
-												return (
-													<div key={"error_" + key}>
-														{item}
-														<br />
-													</div>
-												);
-											})}
-										</div>
-									</CodeErrorErrorBox>
-								)}
+
 								<StyledCodeError className="pulse">
 									<CodeError
 										codeError={codeError!}
 										errorGroup={errorGroup}
-										stackFrameClickDisabled={!!derivedState.currentCodeErrorData?.error}
+										stackFrameClickDisabled={!!repoError}
 									/>
 								</StyledCodeError>
 							</div>

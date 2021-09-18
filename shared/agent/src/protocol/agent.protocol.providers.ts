@@ -949,7 +949,7 @@ export interface GetNewRelicErrorGroupResponse {
 	error?: {
 		message: string;
 		details?: {
-			settings?: { key: string; value: any }[];
+			settings?: { key: string; value: any }[] | undefined;
 		};
 	};
 }

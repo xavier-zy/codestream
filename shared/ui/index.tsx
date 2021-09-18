@@ -530,31 +530,27 @@ function listenForEvents(store) {
 							)
 							.then(codeError => {
 								const state = store.getState();
-								if (codeError) {
-									store.dispatch(
-										setCurrentCodeError(codeError.id, {
-											...definedQuery.query,
-											// cache the sessionStart here in case the IDE is restarted
-											sessionStart: state.context.sessionStart
+
+								const pendingId = codeError
+									? codeError.id
+									: `PENDING-${definedQuery.query.errorGroupGuid}`;
+
+								// NOTE don't really like this "PENDING" business, but it's something to say we need to CREATE a codeError
+								// rationalie is: instead of creating _another_ codeError router-like UI,
+								// just re-use the CodeErrorNav component which already does some work for
+								// directing / opening a codeError
+								store.dispatch(
+									setCurrentCodeError(pendingId, {
+										...definedQuery.query,
+										// cache the sessionStart here in case the IDE is restarted
+										sessionStart: state.context.sessionStart,
+										pendingErrorGroupGuid: definedQuery.query.errorGroupGuid,
+										pendingRequiresConnection: !isConnected(state, {
+											id: "newrelic*com"
 										})
-									);
-								} else {
-									// NOTE don't really like this "PENDING" business, but it's something to say we need to CREATE a codeError
-									// rationalie is: instead of creating _another_ codeError router-like UI,
-									// just re-use the CodeErrorNav component which already does some work for
-									// directing / opening a codeError
-									store.dispatch(
-										setCurrentCodeError("PENDING", {
-											...definedQuery.query,
-											// cache the sessionStart here in case the IDE is restarted
-											sessionStart: state.context.sessionStart,
-											pendingErrorGroupGuid: definedQuery.query.errorGroupGuid,
-											pendingRequiresConnection: !isConnected(state, {
-												id: "newrelic*com"
-											})
-										})
-									);
-								}
+									})
+								);
+
 								store.dispatch(openPanel(WebviewPanels.CodemarksForFile));
 							});
 

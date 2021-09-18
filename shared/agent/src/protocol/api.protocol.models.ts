@@ -337,7 +337,7 @@ export interface CSCodeError extends CSEntity {
 	resolvedAt?: number;
 	objectId?: string;
 	objectType?: "ErrorGroup";
-	objectInfo?: { [key: string]: string[] };
+	objectInfo?: { [key: string]: string };
 }
 
 export interface Attachment {

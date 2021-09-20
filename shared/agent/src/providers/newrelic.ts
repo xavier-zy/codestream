@@ -787,6 +787,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 	async assignRepository(request: {
 		accountId?: string;
 		errorGroupGuid: string;
+		entityId?: string;
 		name?: string;
 		url: string;
 	}): Promise<Directives | undefined> {
@@ -829,7 +830,8 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			}
 			const repoId = response.referenceEntityCreateOrUpdateRepository.created[0];
 
-			const entityId = await this.getEntityIdFromErrorGroupGuid(errorGroupGuid, accountId);
+			const entityId =
+				request.entityId || (await this.getEntityIdFromErrorGroupGuid(errorGroupGuid, accountId));
 			if (entityId) {
 				const related = await this.mutate(
 					`mutation createRelation($sourceEntityGuid:EntityGuid!, $targetEntityGuid:EntityGuid!) {

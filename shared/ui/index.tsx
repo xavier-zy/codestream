@@ -544,6 +544,7 @@ function listenForEvents(store) {
 										...definedQuery.query,
 										// cache the sessionStart here in case the IDE is restarted
 										sessionStart: state.context.sessionStart,
+										pendingEntityId: definedQuery.query.entityId,
 										pendingErrorGroupGuid: definedQuery.query.errorGroupGuid,
 										pendingRequiresConnection: !isConnected(state, {
 											id: "newrelic*com"

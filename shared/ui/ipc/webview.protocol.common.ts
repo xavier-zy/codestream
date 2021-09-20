@@ -147,6 +147,7 @@ export interface WebviewContext {
 		sessionStart?: number;
 		pendingRequiresConnection?: boolean;
 		pendingErrorGroupGuid?: string;
+		pendingEntityId?: string;
 		traceId?: string;
 	};
 	createPullRequestReviewId?: string;

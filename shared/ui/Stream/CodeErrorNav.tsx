@@ -177,6 +177,7 @@ export function CodeErrorNav(props: Props) {
 	const [isResolved, setIsResolved] = React.useState(false);
 
 	const pendingErrorGroupGuid = derivedState.currentCodeErrorData?.pendingErrorGroupGuid;
+	const pendingEntityId = derivedState.currentCodeErrorData?.pendingEntityId;
 	const traceId = derivedState.currentCodeErrorData?.traceId;
 	const remote = derivedState.currentCodeErrorData?.remote;
 	const commit = derivedState.currentCodeErrorData?.commit;
@@ -431,6 +432,7 @@ export function CodeErrorNav(props: Props) {
 						api("assignRepository", {
 							url: r.remote,
 							name: r.name,
+							entityId: pendingEntityId,
 							errorGroupGuid: codeError?.objectId || pendingErrorGroupGuid!
 						})
 					)

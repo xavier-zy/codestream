@@ -286,22 +286,64 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		  }
 		| undefined
 	> {
+		let repositoryEntityId;
+
 		try {
-			const relatedEntitiesResponse = await this.query<{
-				actor: {
-					entity?: {
-						relatedEntities: {
-							results: {
-								target: {
-									entity: NewRelicEntity;
+			const relatedEntitesResponse0 = await this.query<any>(
+				`
+	query getRelatedEntities($guid:EntityGuid!) {
+	actor {
+	  entity(guid: $guid) {
+		relatedEntities(filter: {direction: BOTH, relationshipTypes: {include: BUILT_FROM}}) {
+		  results {
+			source {
+				entity {
+				  name
+				  guid
+				  type
+				}
+			}
+			target {
+			  entity {
+				name
+				guid
+				type
+			  }
+			}
+			type
+		  }
+		}
+	  }
+	}
+  }
+  `,
+				{
+					guid: entityId
+				}
+			);
+
+			const repositoryEntity = relatedEntitesResponse0?.actor?.entity?.relatedEntities?.results.find(
+				(_: any) => _.source.entity.guid === entityId
+			);
+			if (repositoryEntity) {
+				repositoryEntityId = repositoryEntity.target?.entity?.guid;
+
+				if (repositoryEntityId) {
+					const relatedEntitiesResponse = await this.query<{
+						actor: {
+							entity?: {
+								relatedEntities: {
+									results: {
+										target: {
+											entity: NewRelicEntity;
+										};
+										type: string;
+									}[];
 								};
-								type: string;
-							}[];
+							};
 						};
-					};
-				};
-			}>(
-				`query getRelatedEntities($guid:EntityGuid!) {
+					}>(
+						`query getRelatedEntities($guid:EntityGuid!) {
 			actor {
 			  entity(guid:$guid) {
 				relatedEntities(filter: {direction: BOTH, relationshipTypes: {include: BUILT_FROM}}) {
@@ -329,35 +371,38 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			  }
 			}
 		  }`,
-				{
-					guid: entityId
-				}
-			);
-			if (!relatedEntitiesResponse?.actor.entity) return undefined;
+						{
+							guid: repositoryEntityId
+						}
+					);
+					if (!relatedEntitiesResponse?.actor.entity) return undefined;
 
-			const remote = relatedEntitiesResponse?.actor?.entity?.relatedEntities?.results.find(
-				(_: {
-					type: string;
-					target: {
-						entity: NewRelicEntity;
-					};
-				}) => _.type === "BUILT_FROM"
-			);
-			if (!remote) return undefined;
+					const remote = relatedEntitiesResponse?.actor?.entity?.relatedEntities?.results.find(
+						(_: {
+							type: string;
+							target: {
+								entity: NewRelicEntity;
+							};
+						}) => _.type === "BUILT_FROM"
+					);
+					if (!remote) return undefined;
 
-			if (remote.target?.entity?.type === "REPOSITORY") {
-				const urlTag = remote.target.entity.tags.find(
-					(_: { key: string; values: string[] }) => _.key === "url"
-				);
-				if (urlTag) {
-					return {
-						name: remote.target.entity.name,
-						urls: urlTag.values
-					};
+					if (remote.target?.entity?.type === "REPOSITORY") {
+						const urlTag = remote.target.entity.tags.find(
+							(_: { key: string; values: string[] }) => _.key === "url"
+						);
+						if (urlTag) {
+							return {
+								name: remote.target.entity.name,
+								urls: urlTag.values
+							};
+						}
+					}
 				}
 			}
 		} catch (ex) {
 			Logger.error(ex, "getEntityRepoRelationship", {
+				repositoryEntityId: repositoryEntityId,
 				entityId: entityId
 			});
 		}

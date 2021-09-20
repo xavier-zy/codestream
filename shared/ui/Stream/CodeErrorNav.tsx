@@ -325,7 +325,10 @@ export function CodeErrorNav(props: Props) {
 			if (errorGroupResult?.errorGroup != null) {
 				dispatch(setErrorGroup(errorGroupGuid, errorGroupResult.errorGroup!));
 			}
-			const targetRemote = newRemote || remote;
+			let targetRemote = newRemote || remote;
+			if (errorGroupResult?.errorGroup?.entity?.repo?.urls != null) {
+				targetRemote = errorGroupResult?.errorGroup?.entity?.repo?.urls[0]!;
+			}
 			if (!targetRemote) {
 				setRepoAssociationError({
 					title: "Missing Repository Info",

@@ -500,4 +500,14 @@ export namespace Strings {
 
 		return str;
 	}
+
+	export function trimStart(str: string, c: string) {
+		if (str == null) return str;
+
+		if (str[0] === c) {
+			str = str.slice(1);
+		}
+
+		return str;
+	}
 }

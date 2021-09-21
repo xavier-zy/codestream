@@ -2,6 +2,7 @@
 
 import { CSStackTraceInfo } from "../../protocol/api.protocol.models";
 import * as StackTraceParser from "stacktrace-parser";
+import { Strings } from "../../system";
 
 export function Parser(stack: string): CSStackTraceInfo {
 	const info: CSStackTraceInfo = { text: stack, lines: [] };
@@ -12,17 +13,22 @@ export function Parser(stack: string): CSStackTraceInfo {
 		info.error = match[1];
 	}
 
-	/*
-	The code below works great! If we can actually manage to get a full stack trace.
-	Unfortunately, until NR can deliver a real Open In IDE button passing us the real stack trace,
-	we are limited to the truncated stack trace we can glean from the web page, so we have to
-	go with our own parser garbage...
-	*/
-
 	const parsed = StackTraceParser.parse(stack);
 	info.lines = parsed.map(line => {
+		let fileFullPath = line.file ? line.file : undefined;
+		if (fileFullPath) {
+			fileFullPath = Strings.trimEnd(fileFullPath, "?");
+			if (fileFullPath.indexOf("webpack:///") === 0) {
+				fileFullPath = fileFullPath.replace("webpack:///", "");
+			}
+			fileFullPath = Strings.trimStart(fileFullPath, ".");
+			const questionIndex = fileFullPath.indexOf("?");
+			if (questionIndex > -1) {
+				fileFullPath = fileFullPath.slice(0, questionIndex);
+			}
+		}
 		return {
-			fileFullPath: line.file ? line.file : undefined,
+			fileFullPath: fileFullPath,
 			method: line.methodName,
 			arguments: line.arguments,
 			line: line.lineNumber === null ? undefined : line.lineNumber,

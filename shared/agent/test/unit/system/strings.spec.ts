@@ -43,4 +43,14 @@ describe("strings.ts", () => {
 			expect(Strings.trimEnd("https://codestream.com/?", "?")).to.equal("https://codestream.com/");
 		});
 	});
+
+	describe("trimStart", () => {
+		it("has a front dot", () => {
+			expect(Strings.trimStart(".", ".")).to.equal("");
+			expect(Strings.trimStart("..", ".")).to.equal(".");
+			expect(Strings.trimStart("/foo", ".")).to.equal("/foo");
+			expect(Strings.trimStart("../foo", ".")).to.equal("./foo");
+			expect(Strings.trimStart("./foo", ".")).to.equal("/foo");
+		});
+	});
 });

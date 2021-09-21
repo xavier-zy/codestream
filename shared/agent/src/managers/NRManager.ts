@@ -57,6 +57,7 @@ interface CandidateFiles {
 
 const ExtensionToLanguageMap: { [key: string]: string } = {
 	js: "javascript",
+	ts: "javascript",
 	rb: "ruby",
 	php: "php",
 	cs: "c#",

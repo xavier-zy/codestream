@@ -282,7 +282,7 @@ export function CodeErrorNav(props: Props) {
 		if (!isResolved) {
 			resolveStackTrace(
 				codeError?.objectInfo?.repoId!,
-				codeError?.objectInfo?.sha!,
+				codeError?.stackTraces ? codeError?.stackTraces[0].sha || "" : "",
 				traceId!,
 				errorGroup?.errorTrace!?.stackTrace.map(_ => _.formatted)
 			)

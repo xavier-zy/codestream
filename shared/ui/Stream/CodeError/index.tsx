@@ -875,8 +875,7 @@ const BaseCodeError = (props: BaseCodeErrorProps) => {
 			const { stackTraces } = codeError;
 			const stackInfo = (stackTraces && stackTraces[0]) || codeError.stackInfo;
 			if (stackInfo?.lines) {
-				// FIXME this should be zero
-				let lineNum = 1;
+				let lineNum = 0;
 				const len = stackInfo.lines.length;
 				while (
 					lineNum < len &&

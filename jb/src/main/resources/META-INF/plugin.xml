@@ -7,6 +7,7 @@
 
     <change-notes>DO NOT EDIT: Generated from docs/change-notes.html</change-notes>
 
+    <depends>com.intellij.modules.platform</depends>
     <depends optional="true" config-file="com.codestream.jetbrains-codestream-withGo.xml">org.jetbrains.plugins.go</depends>
 
     <extensions defaultExtensionNs="com.intellij">

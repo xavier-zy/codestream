@@ -11,6 +11,7 @@ export interface PixieDynamicLoggingRequest {
     functionName: string;
     functionParameters: PixieDynamicLoggingFunctionParameter[];
     functionReceiver?: string;
+    packageName: string;
 }
 
 export interface PixieDynamicLoggingReponse {

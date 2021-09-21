@@ -25,7 +25,7 @@ import px
 
 upid = '00000004-0000-3d9e-0000-000001e9f7b4'
 
-@pxtrace.probe("main.$FUNCTION_NAME$")
+@pxtrace.probe("$PROBE_PATH$")
 def probe_func():
     return [{
         $FUNCTION_PARAMETERS$
@@ -87,7 +87,7 @@ export class PixieManager {
             parametersScript += `'${parameter.name}': pxtrace.ArgExpr("${parameter.name}"),\n`;
         }
         const script = DYNAMIC_LOGGING_SCRIPT_TEMPLATE
-            .replace(/\$FUNCTION_NAME\$/g, request.functionName)
+            .replace(/\$PROBE_PATH\$/g, `${request.packageName}.${request.functionName}`)
             .replace(/\$TRACEPOINT_NAME\$/g, `${request.functionName}_data_${Date.now()}`)
             .replace(/\$FUNCTION_PARAMETERS\$/g, parametersScript);
 

@@ -1,0 +1,7 @@
+<idea-plugin>
+    <actions>
+        <action id="CodeStream.PixieDynamicLogging" class="com.codestream.actions.PixieDynamicLoggingAction" text="Pixie Dynamic Logging" icon="/images/pixie.svg">
+            <add-to-group group-id="com.codestream.Actions" />
+        </action>
+    </actions>
+</idea-plugin>

@@ -422,7 +422,8 @@ class ResolveStackTraceLineResult(
 class PixieDynamicLoggingParams(
     val functionName: String,
     val functionParameters: List<PixieDynamicLoggingFunctionParameter>,
-    val functionReceiver: String?
+    val functionReceiver: String?,
+    val packageName: String
 )
 
 class PixieDynamicLoggingFunctionParameter(

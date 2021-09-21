@@ -32,8 +32,18 @@ describe("NRManager", () => {
 			"/Users/johnd/code/error-tracking-sample-java/src/main/java/com/newrelic/errortrackingsamplejava/status/ErrorTrackingSampleJavaHealthCheck.java",
 			"/Users/johnd/code/error-tracking-sample-java/src/test/java/com/newrelic/errortrackingsamplejava/ErrorTrackingSampleJavaApplicationTest.java"
 		];
-		const r = NRManager.getBestMatchingPath("HighThroughputStackTraceExceptionService.java", all);
-		expect(r).to.equals(
+		let result = NRManager.getBestMatchingPath(
+			"HighThroughputStackTraceExceptionService.java",
+			all
+		);
+		expect(result).to.equals(
+			"/Users/johnd/code/error-tracking-sample-java/src/main/java/com/newrelic/errortrackingsamplejava/HighThroughputStackTraceExceptionService.java"
+		);
+		result = NRManager.getBestMatchingPath(
+			"com/newrelic/errortrackingsamplejava/HighThroughputStackTraceExceptionService.java",
+			all
+		);
+		expect(result).to.equals(
 			"/Users/johnd/code/error-tracking-sample-java/src/main/java/com/newrelic/errortrackingsamplejava/HighThroughputStackTraceExceptionService.java"
 		);
 	});

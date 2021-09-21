@@ -35,102 +35,102 @@ at org.mortbay.thread.QueuedThreadPool$PoolThread.run(QueuedThreadPool.java:582)
 			lines: [
 				{
 					method: "com.example.myproject.OpenSessionInViewFilter.doFilter",
-					fileFullPath: "OpenSessionInViewFilter.java",
+					fileFullPath: "com/example/myproject/OpenSessionInViewFilter.java",
 					line: 60
 				},
 				{
 					method: "org.mortbay.jetty.servlet.ServletHandler$CachedChain.doFilter",
-					fileFullPath: "ServletHandler.java",
+					fileFullPath: "org/mortbay/jetty/servlet/ServletHandler.java",
 					line: 1157
 				},
 				{
 					method: "com.example.myproject.ExceptionHandlerFilter.doFilter",
-					fileFullPath: "ExceptionHandlerFilter.java",
+					fileFullPath: "com/example/myproject/ExceptionHandlerFilter.java",
 					line: 28
 				},
 				{
 					method: "org.mortbay.jetty.servlet.ServletHandler$CachedChain.doFilter",
-					fileFullPath: "ServletHandler.java",
+					fileFullPath: "org/mortbay/jetty/servlet/ServletHandler.java",
 					line: 1157
 				},
 				{
 					method: "com.example.myproject.OutputBufferFilter.doFilter",
-					fileFullPath: "OutputBufferFilter.java",
+					fileFullPath: "com/example/myproject/OutputBufferFilter.java",
 					line: 33
 				},
 				{
 					method: "org.mortbay.jetty.servlet.ServletHandler$CachedChain.doFilter",
-					fileFullPath: "ServletHandler.java",
+					fileFullPath: "org/mortbay/jetty/servlet/ServletHandler.java",
 					line: 1157
 				},
 				{
 					method: "org.mortbay.jetty.servlet.ServletHandler.handle",
-					fileFullPath: "ServletHandler.java",
+					fileFullPath: "org/mortbay/jetty/servlet/ServletHandler.java",
 					line: 388
 				},
 				{
 					method: "org.mortbay.jetty.security.SecurityHandler.handle",
-					fileFullPath: "SecurityHandler.java",
+					fileFullPath: "org/mortbay/jetty/security/SecurityHandler.java",
 					line: 216
 				},
 				{
 					method: "org.mortbay.jetty.servlet.SessionHandler.handle",
-					fileFullPath: "SessionHandler.java",
+					fileFullPath: "org/mortbay/jetty/servlet/SessionHandler.java",
 					line: 182
 				},
 				{
 					method: "org.mortbay.jetty.handler.ContextHandler.handle",
-					fileFullPath: "ContextHandler.java",
+					fileFullPath: "org/mortbay/jetty/handler/ContextHandler.java",
 					line: 765
 				},
 				{
 					method: "org.mortbay.jetty.webapp.WebAppContext.handle",
-					fileFullPath: "WebAppContext.java",
+					fileFullPath: "org/mortbay/jetty/webapp/WebAppContext.java",
 					line: 418
 				},
 				{
 					method: "org.mortbay.jetty.handler.HandlerWrapper.handle",
-					fileFullPath: "HandlerWrapper.java",
+					fileFullPath: "org/mortbay/jetty/handler/HandlerWrapper.java",
 					line: 152
 				},
 				{
 					method: "org.mortbay.jetty.Server.handle",
-					fileFullPath: "Server.java",
+					fileFullPath: "org/mortbay/jetty/Server.java",
 					line: 326
 				},
 				{
 					method: "org.mortbay.jetty.HttpConnection.handleRequest",
-					fileFullPath: "HttpConnection.java",
+					fileFullPath: "org/mortbay/jetty/HttpConnection.java",
 					line: 542
 				},
 				{
 					method: "org.mortbay.jetty.HttpConnection$RequestHandler.content",
-					fileFullPath: "HttpConnection.java",
+					fileFullPath: "org/mortbay/jetty/HttpConnection.java",
 					line: 943
 				},
 				{
 					method: "org.mortbay.jetty.HttpParser.parseNext",
-					fileFullPath: "HttpParser.java",
+					fileFullPath: "org/mortbay/jetty/HttpParser.java",
 					line: 756
 				},
 				{
 					method: "org.mortbay.jetty.HttpParser.parseAvailable",
-					fileFullPath: "HttpParser.java",
+					fileFullPath: "org/mortbay/jetty/HttpParser.java",
 					line: 218
 				},
 				{
 					method: "org.mortbay.jetty.HttpConnection.handle",
-					fileFullPath: "HttpConnection.java",
+					fileFullPath: "org/mortbay/jetty/HttpConnection.java",
 					line: 404
 				},
 				{
 					method: "org.mortbay.jetty.bio.SocketConnector$Connection.run",
-					fileFullPath: "SocketConnector.java",
+					fileFullPath: "org/mortbay/jetty/bio/SocketConnector.java",
 					line: 228
 				},
 				{
 					method: "org.mortbay.thread.QueuedThreadPool$PoolThread.run",
-					fileFullPath: "QueuedThreadPool.java",
+					fileFullPath: "org/mortbay/thread/QueuedThreadPool.java",
 					line: 582
 				}
 			],
@@ -145,58 +145,58 @@ at org.mortbay.thread.QueuedThreadPool$PoolThread.run(QueuedThreadPool.java:582)
 		expect(result).to.deep.equals({
 			lines: [
 				{
-					method: "java.base/sun.nio.fs.UnixException.translateToIOException",
-					fileFullPath: "UnixException.java",
-					line: 92
+					fileFullPath: "java/base/sun/nio/fs/UnixException.java",
+					line: 92,
+					method: "java.base/sun.nio.fs.UnixException.translateToIOException"
 				},
 				{
-					fileFullPath: "UnixException.java",
+					fileFullPath: "java/base/sun/nio/fs/UnixException.java",
 					line: 111,
 					method: "java.base/sun.nio.fs.UnixException.rethrowAsIOException"
 				},
 				{
-					fileFullPath: "UnixException.java",
+					fileFullPath: "java/base/sun/nio/fs/UnixException.java",
 					line: 116,
 					method: "java.base/sun.nio.fs.UnixException.rethrowAsIOException"
 				},
 				{
-					fileFullPath: "UnixFileSystemProvider.java",
+					fileFullPath: "java/base/sun/nio/fs/UnixFileSystemProvider.java",
 					line: 219,
 					method: "java.base/sun.nio.fs.UnixFileSystemProvider.newByteChannel"
 				},
 				{
-					fileFullPath: "Files.java",
+					fileFullPath: "java/base/java/nio/file/Files.java",
 					line: 371,
 					method: "java.base/java.nio.file.Files.newByteChannel"
 				},
 				{
-					fileFullPath: "Files.java",
+					fileFullPath: "java/base/java/nio/file/Files.java",
 					line: 422,
 					method: "java.base/java.nio.file.Files.newByteChannel"
 				},
 				{
-					fileFullPath: "FutureTask.java",
+					fileFullPath: "java/base/java/util/concurrent/FutureTask.java",
 					line: 305,
 					method: "java.base/java.util.concurrent.FutureTask.runAndReset"
 				},
 				{
-					fileFullPath: "ScheduledThreadPoolExecutor.java",
+					fileFullPath: "java/base/java/util/concurrent/ScheduledThreadPoolExecutor.java",
 					line: 305,
 					method:
 						"java.base/java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.run"
 				},
 				{
-					fileFullPath: "ThreadPoolExecutor.java",
+					fileFullPath: "java/base/java/util/concurrent/ThreadPoolExecutor.java",
 					line: 1128,
 					method: "java.base/java.util.concurrent.ThreadPoolExecutor.runWorker"
 				},
 				{
-					fileFullPath: "ThreadPoolExecutor.java",
+					fileFullPath: "java/base/java/util/concurrent/ThreadPoolExecutor.java",
 					line: 628,
 					method: "java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run"
 				},
 				{
-					fileFullPath: "Thread.java",
+					fileFullPath: "java/base/java/lang/Thread.java",
 					line: 834,
 					method: "java.base/java.lang.Thread.run"
 				}

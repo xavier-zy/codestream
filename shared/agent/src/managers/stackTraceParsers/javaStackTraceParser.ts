@@ -46,9 +46,17 @@ export function Parser(stack: string): CSStackTraceInfo {
 		const [, , packageName, className, methodName, file, extension, lineText] = m;
 		let lineNum: number | undefined = parseInt(lineText, 10);
 		if (isNaN(lineNum)) lineNum = undefined;
+
+		let fileFromClass = file;
+		if (className && file && className.indexOf(file.replace(".java", "")) > -1) {
+			// attempt to construct a file path based upon
+			// the name of the class
+			fileFromClass = `${packageName.replace(/\./g, "/")}/${file}`;
+		}
+
 		info.lines.push({
 			method: `${packageName}.${className}.${methodName}`,
-			fileFullPath: file,
+			fileFullPath: fileFromClass,
 			line: lineNum
 		});
 	}

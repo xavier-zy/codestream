@@ -2,7 +2,7 @@ import React, { Component } from "react";
 import { connect } from "react-redux";
 import { configureProvider } from "../store/providers/actions";
 import { setWantNewRelicOptions } from "../store/context/actions";
-
+import { isCurrentUserInternal } from "../store/users/reducer";
 import Button from "./Button";
 import { PROVIDER_MAPPINGS } from "./CrossPostIssueControls/types";
 import { Link } from "./Link";
@@ -19,6 +19,7 @@ class ConfigureNewRelic extends Component {
 	initialState = {
 		apiKey: "",
 		apiKeyTouched: false,
+		apiUrl: "https://api.newrelic.com",
 		formTouched: false,
 		showSignupUrl: true,
 		disablePostConnectOnboarding: false
@@ -35,13 +36,23 @@ class ConfigureNewRelic extends Component {
 		e.preventDefault();
 		if (this.isFormInvalid()) return;
 		const { providerId } = this.props;
-		const { apiKey } = this.state;
+		const { apiKey, apiUrl } = this.state;
+		let url = apiUrl.toLowerCase();
+		if (url === this.initialState.apiUrl || url === `${this.initialState.apiUrl}/`) {
+			// if it's the default, dont save it.
+			url = undefined;
+		}
 
 		// configuring is as good as connecting, since we are letting the user
 		// set the access token ... sending the fourth argument as true here lets the
 		// configureProvider function know that they can mark New Relic as connected as soon
 		// as the access token entered by the user has been saved to the server
-		this.props.configureProvider(providerId, { apiKey }, true, this.props.originLocation);
+		this.props.configureProvider(
+			providerId,
+			{ apiKey, apiUrl: url },
+			true,
+			this.props.originLocation
+		);
 		this.setState({ loading: true });
 
 		// if (!this.props.disablePostConnectOnboarding) {
@@ -131,6 +142,23 @@ class ConfigureNewRelic extends Component {
 								/>
 								{this.renderApiKeyHelp()}
 							</div>
+							{this.props.isInternalUser && (
+								<>
+									<div className="control-group">
+										<label>{providerName} API Url</label>
+										<input
+											id="configure-provider-initial-input"
+											className="input-text control"
+											type="text"
+											name="apiUrl"
+											tabIndex={1}
+											autoFocus
+											value={this.state.apiUrl}
+											onChange={e => this.setState({ apiUrl: e.target.value })}
+										/>
+									</div>
+								</>
+							)}
 						</div>
 						<div className="button-group">
 							<Button
@@ -164,11 +192,13 @@ class ConfigureNewRelic extends Component {
 	}
 }
 
-const mapStateToProps = ({ providers }) => {
-	return { providers };
+const mapStateToProps = state => {
+	const { providers } = state;
+	return { providers, isInternalUser: isCurrentUserInternal(state) };
 };
 
 const component = connect(mapStateToProps, {
+	isCurrentUserInternal,
 	configureProvider,
 	openPanel,
 	setWantNewRelicOptions

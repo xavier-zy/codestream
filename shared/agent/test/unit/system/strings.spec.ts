@@ -33,4 +33,14 @@ describe("strings.ts", () => {
 			expect(unique[0]).to.equal("/users/foo/bar");
 		});
 	});
+
+	describe("trimEnd", () => {
+		it("has a trailing slash", () => {
+			expect(Strings.trimEnd("https://codestream.com/", "/")).to.equal("https://codestream.com");
+		});
+
+		it("has a trailing ?", () => {
+			expect(Strings.trimEnd("https://codestream.com/?", "?")).to.equal("https://codestream.com/");
+		});
+	});
 });

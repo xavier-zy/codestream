@@ -70,30 +70,25 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		};
 	}
 
-	get myUrl() {
-		const usingEU =
-			this._providerInfo && this._providerInfo.data && this._providerInfo.data.usingEU;
-		if (usingEU) {
-			return "https://api.eu.newrelic.com";
+	get apiUrl() {
+		const data = this._providerInfo && this._providerInfo.data;
+		if (data) {
+			if (data.apiUrl) {
+				return Strings.trimEnd(data.apiUrl, "/").toLowerCase();
+			}
+			if (data.usingEU) {
+				return "https://api.eu.newrelic.com";
+			}
 		}
-		return this.session.api.baseUrl.toLowerCase().indexOf("https://api.codestream.com") > -1
-			? "https://api.newrelic.com"
-			: "https://staging-api.newrelic.com";
+		return "https://api.newrelic.com";
 	}
 
 	get productUrl() {
-		const usingEU =
-			this._providerInfo && this._providerInfo.data && this._providerInfo.data.usingEU;
-		if (usingEU) {
-			return "https://one.eu.newrelic.com";
-		}
-		return this.session.api.baseUrl.toLowerCase().indexOf("https://api.codestream.com") > -1
-			? "https://one.newrelic.com"
-			: "https://staging-one.newrelic.com";
+		return this.apiUrl.replace("api", "one");
 	}
 
 	get baseUrl() {
-		return this.myUrl;
+		return this.apiUrl;
 	}
 
 	get graphQlBaseUrl() {
@@ -136,7 +131,8 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			providerId: this.providerConfig.id,
 			token: request.apiKey,
 			data: {
-				accountId: request.accountId
+				accountId: request.accountId,
+				apiUrl: request.apiUrl
 			}
 		});
 
@@ -157,6 +153,8 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 	}
 
 	async mutate<T>(query: string, variables: any = undefined) {
+		await this.ensureConnected();
+
 		return (await this.client()).request<T>(query, variables);
 	}
 
@@ -489,13 +487,6 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		request: GetNewRelicErrorGroupRequest
 	): Promise<GetNewRelicErrorGroupResponse | undefined> {
 		let errorGroup: NewRelicErrorGroup | undefined = undefined;
-
-		let meUser = undefined;
-		const { users, session } = SessionContainer.instance();
-		try {
-			meUser = await users.getMe();
-		} catch {}
-
 		let accountId = 0;
 		let entityId: string = "";
 		try {
@@ -505,8 +496,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			const parsedId = this.parseId(errorGroupGuid)!;
 			accountId = parsedId.accountId;
 
-			let response;
-			response = await this.query(
+			let response = await this.query(
 				`query fetchErrorsInboxData($accountId:Int!) {
 					actor {
 					  account(id: $accountId) {
@@ -823,7 +813,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				]
 			};
 		} catch (ex) {
-			Logger.error(ex);
+			Logger.error(ex as Error);
 			return undefined;
 		}
 	}

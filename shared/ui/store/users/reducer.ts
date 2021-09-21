@@ -51,6 +51,12 @@ const getCurrentTeam = (state: CodeStreamState) => state.teams[state.context.cur
 
 const getCurrentUser = (state: CodeStreamState) => state.users[state.session.userId || ""];
 
+export const isCurrentUserInternal = (state: CodeStreamState) => {
+	const email = state.users[state.session.userId || ""]?.email;
+	if (!email) return false;
+	return ["codestream.com", "newrelic.com"].includes(email.split("@")[1]);
+};
+
 export const getTeamMembers = createSelector(getCurrentTeam, getUsers, (team, users) => {
 	const memberIds = difference(team.memberIds, team.removedMemberIds || []);
 	return mapFilter(memberIds, (id: string) => {

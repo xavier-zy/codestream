@@ -490,4 +490,14 @@ export namespace Strings {
 	export function santizeGraphqlValue(value: string) {
 		return value?.replace(/'/g, "").replace(/"/g, "");
 	}
+
+	export function trimEnd(str: string, c: string) {
+		if (str == null) return str;
+
+		if (str[str.length - 1] === c) {
+			str = str.slice(0, str.length - 1);
+		}
+
+		return str;
+	}
 }

@@ -602,7 +602,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 
 				const errorGroupState = await this.getErrorGroupState(errorGroupGuid);
 				if (errorGroupState) {
-					errorGroup.state = errorGroupState.actor.errorsInbox.errorGroup.state;
+					errorGroup.state = errorGroupState.actor.errorsInbox.errorGroup.state || "UNRESOLVED";
 					const assignee = errorGroupState.actor.errorsInbox.errorGroup.assignedUser;
 					if (assignee) {
 						errorGroup.assignee = assignee;

@@ -969,7 +969,7 @@ const BaseCodeError = (props: BaseCodeErrorProps) => {
 						<MetaLabel>Stack Trace</MetaLabel>
 						<div className="code" style={{ padding: "0px" }}>
 							{(stackTrace || []).map((line, i) => {
-								if (i === 0 || !line || !line.fileFullPath) return null;
+								if (!line || !line.fileFullPath) return null;
 
 								const className = i === currentSelectedLine ? "monospace selected" : "monospace";
 								const mline = line.fileFullPath.replace(/\s\s\s\s+/g, "     ");

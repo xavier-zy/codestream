@@ -170,7 +170,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		try {
 			response = await (await this.client()).request<T>(query, variables);
 		} catch (ex) {
-			Logger.warn(`New Relic query caught:`, ex);
+			Logger.warn(`NR: query caught:`, ex);
 			const exType = this._isSuppressedException(ex);
 			if (exType !== undefined) {
 				this.trySetThirdPartyProviderInfo(ex, exType);
@@ -213,7 +213,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			if (results) {
 				return { data: results as GetNewRelicDataResponse };
 			} else {
-				Logger.warn("Invalid NRQL results:", results);
+				Logger.warn("NR: Invalid NRQL results:", results);
 				throw new Error("Invalid NRQL results");
 			}
 		} catch (ex) {
@@ -227,7 +227,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			if (!parsed) return undefined;
 
 			const split = parsed.split(/\|/);
-			//"140272|ERT|ERR_GROUP|12026a73-fc72-3205-92d3-b785d12e08b6"
+			//"140272|ERT|ERR_GROUP|12076a73-fc88-3205-92d3-b785d12e08b6"
 			const [accountId, unknownAbbreviation, entityType, unknownGuid] = split;
 			return {
 				accountId: accountId != null ? parseInt(accountId, 10) : 0,
@@ -236,7 +236,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				unknownGuid
 			};
 		} catch (e) {
-			Logger.warn(e.message, {
+			Logger.warn("NR: " + e.message, {
 				idLike
 			});
 		}
@@ -267,7 +267,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			const results = response.actor?.account?.nrql?.results[0] || {};
 			return results ? results["entity.guid"] : undefined;
 		} catch (ex) {
-			Logger.error(ex, "getEntityIdFromErrorGroupGuid", {
+			Logger.error(ex, "NR: getEntityIdFromErrorGroupGuid", {
 				errorGroupGuid: errorGroupGuid,
 				accountId: accountId
 			});
@@ -373,8 +373,10 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 							guid: repositoryEntityId
 						}
 					);
-					if (!relatedEntitiesResponse?.actor.entity) return undefined;
-
+					if (!relatedEntitiesResponse?.actor.entity) {
+						Logger.warn(`NR: relatedEntitiesResponse?.actor.entity=null`);
+						return undefined;
+					}
 					const remote = relatedEntitiesResponse?.actor?.entity?.relatedEntities?.results.find(
 						(_: {
 							type: string;
@@ -383,23 +385,38 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 							};
 						}) => _.type === "BUILT_FROM"
 					);
-					if (!remote) return undefined;
-
+					if (!remote) {
+						Logger.warn(`NR: BUILT_FROM remote=null`);
+						return undefined;
+					}
 					if (remote.target?.entity?.type === "REPOSITORY") {
 						const urlTag = remote.target.entity.tags.find(
 							(_: { key: string; values: string[] }) => _.key === "url"
 						);
 						if (urlTag) {
-							return {
+							const result = {
 								name: remote.target.entity.name,
 								urls: urlTag.values
 							};
+							Logger.log(`NR: found urlTag`, {
+								result: result
+							});
+
+							return result;
+						} else {
+							Logger.warn(`NR: key=url is null`);
 						}
+					} else {
+						Logger.warn(`NR: type=REPOSITORY is null`);
 					}
+				} else {
+					Logger.warn(`NR: repositoryEntityId=null`);
 				}
+			} else {
+				Logger.warn(`NR: repositoryEntity=null`);
 			}
 		} catch (ex) {
-			Logger.error(ex, "getEntityRepoRelationship", {
+			Logger.error(ex, "NR: getEntityRepoRelationship", {
 				repositoryEntityId: repositoryEntityId,
 				entityId: entityId
 			});
@@ -447,7 +464,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				}
 			);
 		} catch (ex) {
-			Logger.warn(ex.message, {
+			Logger.warn("NR: " + ex.message, {
 				errorGroupGuid: errorGroupGuid
 			});
 			return undefined;
@@ -560,6 +577,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				};
 
 				if (!request.traceId) {
+					Logger.warn("NR: missing traceId, fetching the latest");
 					// HACK to find a traceId if none supplied -- find the latest traceId
 					const queryAsString = `
 					query fetchErrorsInboxData($accountId:Int!) {
@@ -589,9 +607,20 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					if (assignee) {
 						errorGroup.assignee = assignee;
 					}
+				} else {
+					Logger.warn("NR: missing errorGroup state");
 				}
 
-				const stackTraceResult = await this.query(
+				const stackTraceResult = await this.query<{
+					actor: {
+						entity: {
+							name: string;
+							stackTrace: {
+								frames: { filepath?: string; line?: number; name?: string; formatted: string }[];
+							};
+						};
+					};
+				}>(
 					`query getTrace($entityId: EntityGuid!, $traceId: String!) {
 				actor {
 				  entity(guid: $entityId) {
@@ -625,12 +654,12 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					errorGroup.hasStackTrace = true;
 				}
 
-				Logger.debug("NR:ErrorGroup", {
-					errorGroup: errorGroup
+				Logger.debug("NR: ErrorGroup found", {
+					errorGroupGuid: errorGroup.guid
 				});
 			} else {
 				Logger.warn(
-					`No errorGroup results errorGroupGuid (${errorGroupGuid}) in account (${accountId})`,
+					`NR: No errorGroup results errorGroupGuid (${errorGroupGuid}) in account (${accountId})`,
 					{
 						request: request,
 						accountId: accountId
@@ -857,7 +886,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				}
 			);
 			if (!response.referenceEntityCreateOrUpdateRepository.created?.length) {
-				Logger.warn("referenceEntityCreateOrUpdateRepository created length is 0 ", {
+				Logger.warn("NR: referenceEntityCreateOrUpdateRepository created length is 0 ", {
 					accountId: accountId,
 					name: name,
 					url: request.url
@@ -902,7 +931,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				]
 			};
 		} catch (ex) {
-			Logger.error(ex, "assignRepository", {
+			Logger.error(ex, "NR: assignRepository", {
 				request: request
 			});
 			return undefined;
@@ -931,7 +960,8 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					errorGroupGuid: errorGroupGuid,
 					entityId: entityId,
 					codeStreamUserId: meUser?.user?.id,
-					codeStreamTeamId: session?.teamId
+					codeStreamTeamId: session?.teamId,
+					apiUrl: this.apiUrl
 				}
 			};
 		}

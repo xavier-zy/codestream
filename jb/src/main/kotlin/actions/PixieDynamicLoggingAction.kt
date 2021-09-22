@@ -1,11 +1,11 @@
 package com.codestream.actions
 
+import com.codestream.GLOBAL_DYNAMIC_LOGGING_MESSAGE
 import com.codestream.agentService
 import com.codestream.protocols.agent.PixieDynamicLoggingFunctionParameter
 import com.codestream.protocols.agent.PixieDynamicLoggingParams
 import com.goide.psi.GoFunctionOrMethodDeclaration
 import com.goide.psi.GoMethodDeclaration
-import com.goide.psi.impl.GoMethodDeclarationImpl
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.ApplicationManager
@@ -15,9 +15,7 @@ import com.intellij.psi.util.parentsOfType
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import java.awt.BorderLayout
-import java.awt.Dimension
 import javax.swing.JComponent
-import javax.swing.JLabel
 import javax.swing.JPanel
 
 class PixieDynamicLoggingAction : DumbAwareAction() {
@@ -52,14 +50,9 @@ class PixieDynamicLoggingAction : DumbAwareAction() {
                     "00000008-0000-1a41-0000-0000072e8792"
                 )
             )
-            val message =
-                result?.data?.map {
-                    row -> row.entries.map {
-                        cell -> "${cell.key}: ${cell.value}"
-                    }.joinToString(", ")
-                }?.joinToString("\n") ?: ""
+            GLOBAL_DYNAMIC_LOGGING_MESSAGE.text = "Dynamic Logging ID: ${result?.id}"
             ApplicationManager.getApplication().invokeLater {
-                SampleDialogWrapper(message).show()
+                SampleDialogWrapper("").show()
             }
         }
     }
@@ -69,9 +62,7 @@ class PixieDynamicLoggingAction : DumbAwareAction() {
 class SampleDialogWrapper(private val message: String) : DialogWrapper(true) {
     override fun createCenterPanel(): JComponent {
         val dialogPanel = JPanel(BorderLayout())
-        val label = JLabel(message)
-        label.preferredSize = Dimension(100, 100)
-        dialogPanel.add(label, BorderLayout.CENTER)
+        dialogPanel.add(GLOBAL_DYNAMIC_LOGGING_MESSAGE, BorderLayout.CENTER)
         return dialogPanel
     }
 

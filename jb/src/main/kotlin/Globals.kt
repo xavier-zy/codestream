@@ -2,7 +2,9 @@ package com.codestream
 
 import com.codestream.extensions.isTruthy
 import com.google.gson.Gson
+import javax.swing.JTextArea
 
+val GLOBAL_DYNAMIC_LOGGING_MESSAGE = JTextArea()
 val gson = Gson()
 val DEBUG =
     java.lang.management.ManagementFactory.getRuntimeMXBean().inputArguments.toString().contains("-agentlib:jdwp")

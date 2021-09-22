@@ -478,7 +478,7 @@ class AgentService(private val project: Project) : Disposable {
 
     suspend fun pixieDynamicLogging(params: PixieDynamicLoggingParams): PixieDynamicLoggingResult {
         val json = remoteEndpoint
-            .request("codestream/pixie/test", params)
+            .request("codestream/pixie/dynamicLogging", params)
             .await() as JsonObject
         return gson.fromJson(json)
     }

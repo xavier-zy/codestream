@@ -1,5 +1,6 @@
 package com.codestream.agent
 
+import com.codestream.GLOBAL_DYNAMIC_LOGGING_MESSAGE
 import com.codestream.agentService
 import com.codestream.authenticationService
 import com.codestream.codeStream
@@ -9,6 +10,7 @@ import com.codestream.gson
 import com.codestream.notificationComponent
 import com.codestream.protocols.agent.EnvironmentInfo
 import com.codestream.protocols.agent.LoginResult
+import com.codestream.protocols.agent.PixieDynamicLoggingEvent
 import com.codestream.reviewService
 import com.codestream.sessionService
 import com.codestream.webViewService
@@ -169,6 +171,27 @@ class CodeStreamLanguageClient(private val project: Project) : LanguageClient {
     @JsonNotification("codestream/didSetEnvironment")
     fun didSetEnvironment(environmentInfo: EnvironmentInfo) {
         project.sessionService?.environmentInfo = environmentInfo
+    }
+
+    @JsonNotification("codestream/pixie/dynamicLoggingEvent")
+    fun pixieDynamicLoggingEvent(event: PixieDynamicLoggingEvent) {
+        val data = event?.data?.map {
+                row -> row.entries.map {
+                cell -> "${cell.key}: ${cell.value}"
+            }.joinToString(", ")
+        }?.joinToString("\n") ?: ""
+
+        val text = """Dynamic Logging ID: ${event.id}
+            Status: ${event.status}
+            Error: ${event.error}
+            Done: ${event.done}
+            Data: $data
+        """.trimMargin()
+        GLOBAL_DYNAMIC_LOGGING_MESSAGE.text = text
+        // ApplicationManager.getApplication().invokeLater {
+        //     SampleDialogWrapper("").show()
+        // }
+        // println(event)
     }
 
     override fun workspaceFolders(): CompletableFuture<MutableList<WorkspaceFolder>> {

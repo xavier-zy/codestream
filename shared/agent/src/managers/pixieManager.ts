@@ -6,11 +6,13 @@ import Long from "long";
 import os from "os";
 import path from "path";
 import * as protobuf from "protobufjs";
+import { SessionContainer } from "../container";
 import { Logger } from "../logger";
 import {
+    PixieDynamicLoggingCancelRequest,
     PixieDynamicLoggingReponse,
     PixieDynamicLoggingRequest,
-    PixieDynamicLoggingRequestType
+    PixieDynamicLoggingRequestType, PixieDynamicLoggingResultNotification
 } from "../protocol/agent.protocol";
 import { NewRelicProvider } from "../providers/newrelic";
 import { CodeStreamSession } from "../session";
@@ -47,8 +49,17 @@ px.display(px.DataFrame(table='$TRACEPOINT_NAME$'))
 export class PixieManager {
     constructor(public readonly session: CodeStreamSession) {}
 
+    private _dynamicLoggingActiveRequests = new Set<string>();
+
     @lspHandler(PixieDynamicLoggingRequestType)
     async dynamicLogging(request: PixieDynamicLoggingRequest): Promise<PixieDynamicLoggingReponse> {
+        const { session } = SessionContainer.instance();
+        const limitRows = request.limitRows || 50;
+        const limitSeconds = request.limitSeconds || 60;
+        const now = Date.now();
+        const expiration = now + (limitSeconds * 1000);
+        const id = now.toString();
+
         const cloudApiPath = path.join(os.homedir(), ".codestream", "protobuf", "pixie", "cloudapi.proto");
         const cloudApiProto = await grpcProtoLoader.load(cloudApiPath);
         const cloudApiPackage = grpcLibrary.loadPackageDefinition(cloudApiProto);
@@ -96,15 +107,17 @@ export class PixieManager {
 
         const script = DYNAMIC_LOGGING_SCRIPT_TEMPLATE
             .replace(/\$PROBE_PATH\$/g, probePath)
-            .replace(/\$TRACEPOINT_NAME\$/g, `${request.functionName}_data_${Date.now()}`)
+            .replace(/\$TRACEPOINT_NAME\$/g, `${request.functionName}_data_${id}`)
             .replace(/\$FUNCTION_PARAMETERS\$/g, parametersScript)
             .replace(/\$UPID\$/g, request.upid)
 
         const promise = new Promise<PixieDynamicLoggingReponse>((resolve, reject) => {
 
-            function poller() {
+            const poller = () => {
                 let metaData: string[] = [];
                 const data: any[] = [];
+                let error: string | undefined;
+                let callStatus: string | undefined;
 
                 const call = vizier.executeScript({
                     queryStr: script,
@@ -136,37 +149,47 @@ export class PixieManager {
                         }
                     }
                 });
-
                 call.on("error", function(err: any) {
-                    Logger.error(err);
-                    // reject(err);
+                    error = err.toString();
                 });
-                call.on("status", function(status: any) {
-                    Logger.log(status);
+                call.on("status", function(callStatus: any) {
+                    callStatus = callStatus.toString();
                 });
-                call.on("end", function() {
-                    if (data.length) {
-                        resolve({
-                            data
-                        });
-                        Logger.log("this is the end, my only friend, the end");
-                    } else {
-                        Logger.log("nothing so far");
+                call.on("end", () => {
+                    const expired = Date.now() > expiration;
+                    const cancelled = !this._dynamicLoggingActiveRequests.has(id);
+                    const status = expired ? "Timeout exceeded" : cancelled ? "Cancelled" : callStatus;
+                    const done = expired || data.length > limitRows;
+                    session.agent.sendNotification(PixieDynamicLoggingResultNotification, {
+                        id,
+                        metaData,
+                        data,
+                        status,
+                        error,
+                        done
+                    });
+                    if (!done) {
                         setTimeout(poller, 5000);
                     }
                 });
-            }
+            };
+            this._dynamicLoggingActiveRequests.add(id);
             poller();
+            resolve({id});
         });
 
         return promise;
+    }
+
+    @lspHandler(PixieDynamicLoggingCancelRequest)
+    dynamicLoggingCancel(request: PixieDynamicLoggingCancelRequest) {
+        this._dynamicLoggingActiveRequests.delete(request.id)
     }
 
     private async buildCredentials() {
         const nrProvider = getProvider("newrelic*com") as NewRelicProvider;
         if (nrProvider != null) {
             const token = await nrProvider.getPixieToken();
-            // const token = (await xfs.readText("/Users/mfarias/pixie/pixie.key"))!.trim();
             return grpcLibrary.credentials.combineChannelCredentials(
                 grpcLibrary.credentials.createSsl(),
                 grpcLibrary.credentials.createFromMetadataGenerator((params, callback) => {

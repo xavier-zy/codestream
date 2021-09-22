@@ -433,6 +433,15 @@ class PixieDynamicLoggingFunctionParameter(
 )
 
 class PixieDynamicLoggingResult(
-    val data: List<Map<String, String>>
+    val id: String
+)
+
+class PixieDynamicLoggingEvent(
+    val id: String,
+    val metaData: List<String>?,
+    val data: List<Map<String, String>>?,
+    val error: String?,
+    val status: String?,
+    val done: Boolean
 )
 

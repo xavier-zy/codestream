@@ -124,19 +124,20 @@ export function RepositoryAssociator(props: {
 			title={repositoryError.title}
 			buttons={[
 				{
+					text: "Associate",
+					onClick: e => {
+						e.preventDefault();
+						props.onSubmit && props.onSubmit(selected);
+						exit();
+					},
+					disabled: !selected
+				},
+				{
 					text: "Cancel",
 					isSecondary: true,
 					onClick: e => {
 						e.preventDefault();
 						props.onCancelled && props.onCancelled();
-						exit();
-					}
-				},
-				{
-					text: "Associate",
-					onClick: e => {
-						e.preventDefault();
-						props.onSubmit && props.onSubmit(selected);
 						exit();
 					}
 				}
@@ -145,19 +146,21 @@ export function RepositoryAssociator(props: {
 			<p>{repositoryError.description}</p>
 			<DropdownButton
 				items={
-					openRepositories?.map((_, index) => {
-						return {
-							key: _.id,
-							label: _.name,
-							action: () => {
-								setSelected(_);
-								props.onSelected && props.onSelected(_);
-							}
-						};
-					}) || []
+					openRepositories
+						?.sort((a, b) => a.name.localeCompare(b.name))
+						.map(_ => {
+							return {
+								key: _.id,
+								label: _.name,
+								action: () => {
+									setSelected(_);
+									props.onSelected && props.onSelected(_);
+								}
+							};
+						}) || []
 				}
 				selectedKey={selected ? selected.id : null}
-				variant="secondary"
+				variant={selected ? "secondary" : "primary"}
 				size="compact"
 				wrap
 			>

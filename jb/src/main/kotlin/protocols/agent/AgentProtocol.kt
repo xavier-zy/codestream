@@ -441,7 +441,7 @@ class PixieDynamicLoggingEvent(
     val metaData: List<String>?,
     val data: List<Map<String, String>>?,
     val error: String?,
-    val status: String?,
+    val status: String,
     val done: Boolean
 )
 

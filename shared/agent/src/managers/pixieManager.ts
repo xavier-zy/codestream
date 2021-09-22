@@ -159,7 +159,7 @@ export class PixieManager {
                     const expired = Date.now() > expiration;
                     const cancelled = !this._dynamicLoggingActiveRequests.has(id);
                     const status = expired ? "Timeout exceeded" : cancelled ? "Cancelled" : callStatus;
-                    const done = expired || data.length > limitRows;
+                    const done = expired || cancelled || data.length > limitRows;
                     session.agent.sendNotification(PixieDynamicLoggingResultNotification, {
                         id,
                         metaData,

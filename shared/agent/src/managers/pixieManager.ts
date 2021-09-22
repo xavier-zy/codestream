@@ -170,6 +170,8 @@ export class PixieManager {
                     });
                     if (!done) {
                         setTimeout(poller, 5000);
+                    } else {
+                        this._dynamicLoggingActiveRequests.delete(id);
                     }
                 });
             };

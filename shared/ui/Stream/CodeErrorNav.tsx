@@ -280,6 +280,15 @@ export function CodeErrorNav(props: Props) {
 		}
 
 		if (!isResolved) {
+			if (!codeError?.objectInfo?.repoId) {
+				setRepoAssociationError({
+					title: "Missing Repository Info",
+					description: `In order to view this stack trace, please select a repository to associate with ${
+						errorGroup ? errorGroup.entityName + " " : ""
+					}on New Relic.`
+				});
+				return;
+			}
 			resolveStackTrace(
 				codeError?.objectInfo?.repoId!,
 				codeError?.stackTraces ? codeError?.stackTraces[0].sha || "" : "",
@@ -425,39 +434,6 @@ export function CodeErrorNav(props: Props) {
 	// if for some reason we have a codemark, don't render anything
 	if (derivedState.currentCodemarkId) return null;
 
-	if (repoAssociationError) {
-		// essentially a roadblock
-		return (
-			<RepositoryAssociator
-				error={repoAssociationError}
-				onSubmit={r => {
-					dispatch(
-						api("assignRepository", {
-							url: r.remote,
-							name: r.name,
-							entityId: pendingEntityId,
-							errorGroupGuid: codeError?.objectId || pendingErrorGroupGuid!
-						})
-					)
-						.then(_ => {
-							setIsLoading(true);
-							if (_?.directives) {
-								onConnected(
-									_.directives.find(_ => _.type === "assignRepository").data.repo.urls[0]
-								);
-							} else {
-								console.warn("could not find directive");
-							}
-						})
-						.catch(_ => {
-							setError({
-								description: _
-							});
-						});
-				}}
-			/>
-		);
-	}
 	if (error) {
 		// essentially a roadblock
 		return (
@@ -490,6 +466,43 @@ export function CodeErrorNav(props: Props) {
 					</div>
 				)}
 			</Dismissable>
+		);
+	}
+	if (repoAssociationError) {
+		// essentially a roadblock
+		return (
+			<RepositoryAssociator
+				error={repoAssociationError}
+				onCancelled={e => {
+					exit();
+				}}
+				onSubmit={r => {
+					const payload = {
+						url: r.remote,
+						name: r.name,
+						entityId: pendingEntityId,
+						errorGroupGuid: codeError?.objectId || pendingErrorGroupGuid!
+					};
+					dispatch(api("assignRepository", payload)).then(_ => {
+						setIsLoading(true);
+						if (_?.directives) {
+							console.log("assignRepository", {
+								directives: _?.directives
+							});
+							setRepoAssociationError(undefined);
+							onConnected(_.directives.find(_ => _.type === "assignRepository").data.repo.urls[0]);
+						} else {
+							console.log("Could not find directive", {
+								payload: payload
+							});
+							setError({
+								title: "Failed to associate repository",
+								description: _?.error
+							});
+						}
+					});
+				}}
+			/>
 		);
 	}
 
@@ -543,7 +556,7 @@ export function CodeErrorNav(props: Props) {
 			</Root>
 		);
 	}
-	if ((isLoading && !codeError) || derivedState.currentCodeErrorId?.indexOf("PENDING") === 0) {
+	if (isLoading || derivedState.currentCodeErrorId?.indexOf("PENDING") === 0) {
 		return (
 			<DelayedRender>
 				<Loading />

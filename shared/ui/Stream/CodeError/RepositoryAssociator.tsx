@@ -27,8 +27,8 @@ interface EnhancedRepoScm {
 export function RepositoryAssociator(props: {
 	error: { title: string; description: string };
 	onSelected?: Function;
-	onSubmit?: Function;
-	onCancelled?: Function;
+	onSubmit: Function;
+	onCancelled: Function;
 }) {
 	const dispatch = useDispatch<Dispatch | any>();
 	const derivedState = useSelector((state: CodeStreamState) => {
@@ -94,12 +94,6 @@ export function RepositoryAssociator(props: {
 			});
 	});
 
-	const exit = async () => {
-		// clear out the current code error (set to blank) in the webview
-		await dispatch(setCurrentCodeError(undefined, undefined));
-		dispatch(closeAllPanels());
-	};
-
 	if (openRepositories?.length === 0) {
 		return (
 			<Dismissable
@@ -109,7 +103,7 @@ export function RepositoryAssociator(props: {
 						text: "Dismiss",
 						onClick: e => {
 							e.preventDefault();
-							exit();
+							props.onCancelled(e);
 						}
 					}
 				]}
@@ -127,8 +121,7 @@ export function RepositoryAssociator(props: {
 					text: "Associate",
 					onClick: e => {
 						e.preventDefault();
-						props.onSubmit && props.onSubmit(selected);
-						exit();
+						props.onSubmit(selected);
 					},
 					disabled: !selected
 				},
@@ -137,8 +130,7 @@ export function RepositoryAssociator(props: {
 					isSecondary: true,
 					onClick: e => {
 						e.preventDefault();
-						props.onCancelled && props.onCancelled();
-						exit();
+						props.onCancelled(e);
 					}
 				}
 			]}

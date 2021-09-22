@@ -468,6 +468,8 @@ export const api = <T = any, R = any>(
 			Error: errorString,
 			IsOAuthError: errorString && errorString.indexOf("OAuth App access restrictions") > -1
 		});
-		return undefined;
+		return {
+			error: errorString
+		};
 	}
 };

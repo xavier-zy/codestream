@@ -811,7 +811,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 
 			const response = await this.mutate<{
 				errorTrackingUpdateErrorGroupState: {
-					error?: any;
+					errors?: { description: string }[];
 					state?: string;
 				};
 			}>(
@@ -831,6 +831,21 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				}
 			);
 
+			Logger.log("NR: errorsInboxUpdateErrorGroupState", {
+				request: request,
+				response: response
+			});
+
+			if (response?.errorTrackingUpdateErrorGroupState?.errors?.length) {
+				const stateFailure = response.errorTrackingUpdateErrorGroupState.errors
+					.map(_ => _.description)
+					.join("\n");
+				Logger.warn("NR: errorsInboxUpdateErrorGroupState failure", {
+					error: stateFailure
+				});
+				throw new Error(stateFailure);
+			}
+
 			return {
 				directives: [
 					{
@@ -843,7 +858,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			};
 		} catch (ex) {
 			Logger.error(ex as Error);
-			return undefined;
+			throw ex;
 		}
 	}
 
@@ -865,10 +880,15 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 
 			const response = await this.mutate<{
 				referenceEntityCreateOrUpdateRepository: {
-					created: string;
+					created: string[];
+					failures: {
+						guid: string;
+						message: string;
+						type: string;
+					}[];
 				};
 			}>(
-				`mutation assignRepository($accountId: Int!, $name: String!, $url: String!) {
+				`mutation ReferenceEntityCreateOrUpdateRepository($accountId: Int!, $name: String!, $url: String!) {
 					referenceEntityCreateOrUpdateRepository(repositories: [{accountId: $accountId, name: $name, url: $url}]) {
 					  created
 					  failures {
@@ -885,20 +905,34 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					url: request.url
 				}
 			);
-			if (!response.referenceEntityCreateOrUpdateRepository.created?.length) {
-				Logger.warn("NR: referenceEntityCreateOrUpdateRepository created length is 0 ", {
+			Logger.log("NR: referenceEntityCreateOrUpdateRepository", {
+				accountId: accountId,
+				name: name,
+				url: request.url,
+				response: response
+			});
+
+			if (response?.referenceEntityCreateOrUpdateRepository?.failures?.length) {
+				const failures = response.referenceEntityCreateOrUpdateRepository.failures
+					.map(_ => `${_.message} (${_.type})`)
+					.join("\n");
+				Logger.warn("NR: referenceEntityCreateOrUpdateRepository failures", {
 					accountId: accountId,
 					name: name,
-					url: request.url
+					url: request.url,
+					failures: failures
 				});
+				throw new Error(failures);
 			}
-			const repoId = response.referenceEntityCreateOrUpdateRepository.created[0];
 
+			const repoEntityId = response.referenceEntityCreateOrUpdateRepository.created[0];
 			const entityId =
 				request.entityId || (await this.getEntityIdFromErrorGroupGuid(errorGroupGuid, accountId));
 			if (entityId) {
-				const related = await this.mutate(
-					`mutation createRelation($sourceEntityGuid:EntityGuid!, $targetEntityGuid:EntityGuid!) {
+				const entityRelationshipUserDefinedCreateOrReplaceResponse = await this.mutate<{
+					errors?: { message: string }[];
+				}>(
+					`mutation EntityRelationshipUserDefinedCreateOrReplace($sourceEntityGuid:EntityGuid!, $targetEntityGuid:EntityGuid!) {
 						entityRelationshipUserDefinedCreateOrReplace(sourceEntityGuid: $sourceEntityGuid, targetEntityGuid: $targetEntityGuid, type: BUILT_FROM) {
 						  errors {
 							message
@@ -906,35 +940,52 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 						  }
 						}
 					  }
-					  
 				  `,
 					{
 						sourceEntityGuid: entityId,
-						targetEntityGuid: repoId
+						targetEntityGuid: repoEntityId
 					}
 				);
-			}
+				Logger.log("NR: entityRelationshipUserDefinedCreateOrReplace", {
+					sourceEntityGuid: entityId,
+					targetEntityGuid: repoEntityId,
+					response: entityRelationshipUserDefinedCreateOrReplaceResponse
+				});
 
-			return {
-				directives: [
-					{
-						type: "assignRepository",
-						data: {
-							id: request.errorGroupGuid,
-							repo: {
-								accountId: accountId,
-								name: request.name,
-								urls: [request.url]
+				if (entityRelationshipUserDefinedCreateOrReplaceResponse?.errors?.length) {
+					const createOrReplaceError = entityRelationshipUserDefinedCreateOrReplaceResponse.errors
+						.map(_ => _.message)
+						.join("\n");
+					Logger.warn("NR: entityRelationshipUserDefinedCreateOrReplace failure", {
+						error: createOrReplaceError
+					});
+					throw new Error(createOrReplaceError);
+				}
+
+				return {
+					directives: [
+						{
+							type: "assignRepository",
+							data: {
+								id: request.errorGroupGuid,
+								repo: {
+									accountId: accountId,
+									name: request.name,
+									urls: [request.url]
+								}
 							}
 						}
-					}
-				]
-			};
+					]
+				};
+			} else {
+				Logger.warn("NR: entityId needed for entityRelationshipUserDefinedCreateOrReplace is null");
+				throw new Error("Could not locate entityId");
+			}
 		} catch (ex) {
 			Logger.error(ex, "NR: assignRepository", {
 				request: request
 			});
-			return undefined;
+			throw ex;
 		}
 	}
 

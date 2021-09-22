@@ -441,7 +441,7 @@ export class NRManager {
 	): Promise<CSStackTraceLine> {
 		const bestMatchingFilePath = NRManager.getBestMatchingPath(line.fileFullPath!, allFilePaths);
 		if (!bestMatchingFilePath)
-			return { error: `Unable to find matching file for path suffix ${line.fileFullPath!}` };
+			return { error: `Unable to find matching file for path ${line.fileFullPath!}` };
 
 		if (!sha) {
 			return {

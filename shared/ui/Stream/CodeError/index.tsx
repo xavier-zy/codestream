@@ -2,7 +2,8 @@ import React, { PropsWithChildren, useEffect } from "react";
 import { CardProps, getCardProps, CardFooter } from "@codestream/webview/src/components/Card";
 import {
 	FollowCodeErrorRequestType,
-	GetNewRelicAssigneesRequestType
+	GetNewRelicAssigneesRequestType,
+	ResolveStackTraceResponse
 } from "@codestream/protocols/agent";
 import {
 	MinimumWidthCard,
@@ -82,6 +83,7 @@ interface SimpleError {
 export interface BaseCodeErrorProps extends CardProps {
 	codeError: CSCodeError;
 	errorGroup?: NewRelicErrorGroup;
+	parsedStack?: ResolveStackTraceResponse;
 	post?: CSPost;
 	repoInfo?: RepoMetadata;
 	headerError?: SimpleError;
@@ -138,11 +140,12 @@ export const Description = styled.div`
 
 const DisabledClickLine = styled.div`
 	color: var(--text-color);
-	opacity: 0.7;
+	opacity: 0.4;
 	text-align: right;
 	direction: rtl;
 	text-overflow: ellipsis;
 	overflow: hidden;
+	padding: 2px 0px 2px 0px;
 `;
 
 const ClickLine = styled.div`
@@ -154,8 +157,8 @@ const ClickLine = styled.div`
 		background: var(--app-background-color-hover);
 		opacity: 1;
 	}
-	padding: 3px;
-	opacity: 0.8;
+	padding: 2px 0px 2px 0px;
+	opacity: 0.9;
 	&.selected {
 		color: var(--text-color-highlight);
 		opacity: 1;
@@ -972,21 +975,31 @@ const BaseCodeError = (props: BaseCodeErrorProps) => {
 
 								const className = i === currentSelectedLine ? "monospace selected" : "monospace";
 								const mline = line.fileFullPath.replace(/\s\s\s\s+/g, "     ");
-								return props.stackFrameClickDisabled || props.collapsed ? (
+								return props.stackFrameClickDisabled ||
+									props.collapsed ||
+									props.parsedStack?.resolvedStackInfo?.lines[i]?.error ? (
 									<DisabledClickLine className="monospace">
-										<span>
-											<span style={{ opacity: ".8" }}>{line.method}</span>({mline}:
-											<strong>{line.line}</strong>
-											{line.column ? `:${line.column}` : null})
-										</span>
+										<Tooltip
+											title={props.parsedStack?.resolvedStackInfo?.lines[i]?.error}
+											placement="bottom"
+											delay={1}
+										>
+											<span>
+												<span style={{ opacity: ".6" }}>{line.method}</span>({mline}:
+												<strong>{line.line}</strong>
+												{line.column ? `:${line.column}` : null})
+											</span>
+										</Tooltip>
 									</DisabledClickLine>
 								) : (
 									<ClickLine className={className} onClick={e => onClickStackLine(e, i)}>
-										<span>
-											<span style={{ opacity: ".8" }}>{line.method}</span>({mline}:
-											<strong>{line.line}</strong>
-											{line.column ? `:${line.column}` : null})
-										</span>
+										<Tooltip title={"Click to navigate"} placement="bottom" delay={1}>
+											<span>
+												<span style={{ opacity: ".6" }}>{line.method}</span>({mline}:
+												<strong>{line.line}</strong>
+												{line.column ? `:${line.column}` : null})
+											</span>
+										</Tooltip>
 									</ClickLine>
 								);
 							})}
@@ -1158,6 +1171,7 @@ interface PropsWithId extends FromBaseCodeErrorProps {
 interface PropsWithCodeError extends FromBaseCodeErrorProps {
 	codeError: CSCodeError;
 	errorGroup?: NewRelicErrorGroup;
+	parsedStack?: ResolveStackTraceResponse;
 }
 
 function isPropsWithId(props: PropsWithId | PropsWithCodeError): props is PropsWithId {
@@ -1260,6 +1274,7 @@ const CodeErrorForCodeError = (props: PropsWithCodeError) => {
 				)}
 				<BaseCodeError
 					{...baseProps}
+					parsedStack={props.parsedStack}
 					codeError={props.codeError}
 					post={derivedState.post}
 					repoInfo={repoInfo}

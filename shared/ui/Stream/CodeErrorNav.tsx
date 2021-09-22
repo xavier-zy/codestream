@@ -175,6 +175,9 @@ export function CodeErrorNav(props: Props) {
 	const [repoError, setRepoError] = React.useState<string | undefined>(undefined);
 	const { codeError, errorGroup } = derivedState;
 	const [isResolved, setIsResolved] = React.useState(false);
+	const [parsedStack, setParsedStack] = React.useState<ResolveStackTraceResponse | undefined>(
+		undefined
+	);
 
 	const pendingErrorGroupGuid = derivedState.currentCodeErrorData?.pendingErrorGroupGuid;
 	const pendingEntityId = derivedState.currentCodeErrorData?.pendingEntityId;
@@ -296,6 +299,7 @@ export function CodeErrorNav(props: Props) {
 				errorGroup?.errorTrace!?.stackTrace.map(_ => _.formatted)
 			)
 				.then((stackInfo: ResolveStackTraceResponse) => {
+					setParsedStack(stackInfo);
 					setRepoError(stackInfo?.error);
 					setRepoWarning(stackInfo?.warning);
 				})
@@ -398,6 +402,7 @@ export function CodeErrorNav(props: Props) {
 					errorGroup: errorGroupResult?.errorGroup
 				})
 			);
+			setParsedStack(stackInfo);
 			setIsResolved(true);
 			setRepoError(stackInfo?.error);
 			setRepoWarning(stackInfo?.warning);
@@ -642,6 +647,7 @@ export function CodeErrorNav(props: Props) {
 
 								<StyledCodeError className="pulse">
 									<CodeError
+										parsedStack={parsedStack}
 										codeError={codeError!}
 										errorGroup={errorGroup}
 										stackFrameClickDisabled={!!repoError}

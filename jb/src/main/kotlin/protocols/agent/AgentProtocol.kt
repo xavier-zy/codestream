@@ -423,7 +423,8 @@ class PixieDynamicLoggingParams(
     val functionName: String,
     val functionParameters: List<PixieDynamicLoggingFunctionParameter>,
     val functionReceiver: String?,
-    val packageName: String
+    val packageName: String,
+    val upid: String
 )
 
 class PixieDynamicLoggingFunctionParameter(
@@ -432,6 +433,6 @@ class PixieDynamicLoggingFunctionParameter(
 )
 
 class PixieDynamicLoggingResult(
-    val recentArgs: List<Number>
+    val data: List<Map<String, String>>
 )
 

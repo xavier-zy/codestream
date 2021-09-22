@@ -12,10 +12,11 @@ export interface PixieDynamicLoggingRequest {
     functionParameters: PixieDynamicLoggingFunctionParameter[];
     functionReceiver?: string;
     packageName: string;
+    upid: string;
 }
 
 export interface PixieDynamicLoggingReponse {
-    recentArgs: number[];
+    data: { [key: string]: string }[];
 }
 
 export const PixieDynamicLoggingRequestType = new RequestType<PixieDynamicLoggingRequest, PixieDynamicLoggingReponse, void, void>(

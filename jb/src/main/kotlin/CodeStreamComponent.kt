@@ -30,9 +30,14 @@ import com.intellij.openapi.wm.ToolWindowType
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.util.ui.UIUtil
+import org.apache.commons.io.FileUtils
+import org.reflections.Reflections
+import org.reflections.scanners.ResourcesScanner
 import java.awt.KeyboardFocusManager
 import java.awt.event.WindowEvent
 import java.awt.event.WindowFocusListener
+import java.io.File
+import java.nio.file.Files
 import kotlin.properties.Delegates
 
 const val CODESTREAM_TOOL_WINDOW_ID = "CodeStream"
@@ -53,6 +58,7 @@ class CodeStreamComponent(val project: Project) : Disposable {
     init {
         logger.info("Initializing CodeStream")
         CodeStreamDiffURLStreamHandler
+        extractAssets()
         initDebugMonitors()
         initEditorFactoryListener()
         initVirtualFileListener()
@@ -65,6 +71,28 @@ class CodeStreamComponent(val project: Project) : Disposable {
         project.agentService?.onDidStart {
             val webViewService = project.webViewService ?: return@onDidStart
             webViewService.load()
+        }
+    }
+
+    private fun extractAssets() {
+        try {
+            val userHomeDir = File(System.getProperty("user.home"))
+            val protobufDir = userHomeDir.resolve(".codestream").resolve("protobuf")
+            if (!protobufDir.exists()) {
+                Files.createDirectories(protobufDir.toPath())
+            }
+            val reflections = Reflections("protobuf", ResourcesScanner())
+            val resourceList = reflections.getResources { true }
+            val csDir = userHomeDir.resolve(".codestream")
+            resourceList.forEach {
+                val dest = csDir.resolve(it)
+                if (!dest.parentFile.exists()) {
+                    Files.createDirectories(dest.parentFile.toPath())
+                }
+                FileUtils.copyToFile(javaClass.getResourceAsStream("/$it"), dest)
+            }
+        } catch (e: Exception) {
+            logger.error(e)
         }
     }
 

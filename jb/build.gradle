@@ -45,6 +45,7 @@ dependencies {
     }
 
     implementation group: 'commons-io', name: 'commons-io', version: '2.6'
+    implementation("org.reflections:reflections:0.9.12")
 }
 
 compileKotlin {
@@ -122,11 +123,17 @@ task copyAgent(type: Copy) {
     into "$projectDir/src/main/resources/agent"
 }
 
+task copyProtobuf(type: Copy) {
+    from "$projectDir/../shared/protobuf"
+    include "**/*"
+    into "$projectDir/src/main/resources/protobuf"
+}
+
 task buildDependencies {}
-buildDependencies.dependsOn buildDeps, copyAgent
+buildDependencies.dependsOn buildDeps, copyAgent, copyProtobuf
 
 task buildDependenciesMac {}
-buildDependenciesMac.dependsOn buildDepsMac, copyAgent
+buildDependenciesMac.dependsOn buildDepsMac, copyAgent, copyProtobuf
 
 buildPlugin.dependsOn buildDependencies
 
@@ -148,7 +155,7 @@ task copyDebugAgent(type: Copy) {
 copyDebugAgent.dependsOn buildDebugDeps
 
 task buildDebugDependencies {}
-buildDebugDependencies.dependsOn buildDebugDeps, copyDebugAgent
+buildDebugDependencies.dependsOn buildDebugDeps, copyDebugAgent, copyProtobuf
 
 
 

@@ -3,6 +3,8 @@
 import * as grpcLibrary from "@grpc/grpc-js";
 import * as grpcProtoLoader from "@grpc/proto-loader";
 import Long from "long";
+import os from "os";
+import path from "path";
 import * as protobuf from "protobufjs";
 import { Logger } from "../logger";
 import {
@@ -23,7 +25,7 @@ const DYNAMIC_LOGGING_SCRIPT_TEMPLATE = `
 import pxtrace
 import px
 
-upid = '00000004-0000-3d9e-0000-000001e9f7b4'
+upid = '$UPID$'
 
 @pxtrace.probe("$PROBE_PATH$")
 def probe_func():
@@ -47,11 +49,13 @@ export class PixieManager {
 
     @lspHandler(PixieDynamicLoggingRequestType)
     async dynamicLogging(request: PixieDynamicLoggingRequest): Promise<PixieDynamicLoggingReponse> {
-        const cloudApiProto = await grpcProtoLoader.load("/Users/mfarias/pixie/cloudapi.proto");
+        const cloudApiPath = path.join(os.homedir(), ".codestream", "protobuf", "pixie", "cloudapi.proto");
+        const cloudApiProto = await grpcProtoLoader.load(cloudApiPath);
         const cloudApiPackage = grpcLibrary.loadPackageDefinition(cloudApiProto);
         const cloudApi = cloudApiPackage.px as any;
 
-        const vizierApiProto = await grpcProtoLoader.load("/Users/mfarias/pixie/vizierapi.proto");
+        const vizierApiPath = path.join(os.homedir(), ".codestream", "protobuf", "pixie", "vizierapi.proto");
+        const vizierApiProto = await grpcProtoLoader.load(vizierApiPath);
         const vizierApiPackage = grpcLibrary.loadPackageDefinition(vizierApiProto);
         const vizierApi = vizierApiPackage.px as any;
 
@@ -86,28 +90,50 @@ export class PixieManager {
         for (const parameter of request.functionParameters) {
             parametersScript += `'${parameter.name}': pxtrace.ArgExpr("${parameter.name}"),\n`;
         }
-        const script = DYNAMIC_LOGGING_SCRIPT_TEMPLATE
-            .replace(/\$PROBE_PATH\$/g, `${request.packageName}.${request.functionName}`)
-            .replace(/\$TRACEPOINT_NAME\$/g, `${request.functionName}_data_${Date.now()}`)
-            .replace(/\$FUNCTION_PARAMETERS\$/g, parametersScript);
+        const probePath = request.functionReceiver
+            ? `${request.packageName}.(${request.functionReceiver}).${request.functionName}`
+            : `${request.packageName}.${request.functionName}`
 
-        const recentArgs: number[] = [];
+        const script = DYNAMIC_LOGGING_SCRIPT_TEMPLATE
+            .replace(/\$PROBE_PATH\$/g, probePath)
+            .replace(/\$TRACEPOINT_NAME\$/g, `${request.functionName}_data_${Date.now()}`)
+            .replace(/\$FUNCTION_PARAMETERS\$/g, parametersScript)
+            .replace(/\$UPID\$/g, request.upid)
 
         const promise = new Promise<PixieDynamicLoggingReponse>((resolve, reject) => {
+
             function poller() {
+                let metaData: string[] = [];
+                const data: any[] = [];
+
                 const call = vizier.executeScript({
                     queryStr: script,
                     clusterId: "0177fa38-31de-40f0-8dc0-79d73c05bc7d",
                     mutation: true
                 });
                 call.on("data", function(response: any) {
-                    if (
-                        response.data &&
-                        response.data.batch &&
-                        response.data.batch.cols[3] &&
-                        response.data.batch.cols[3].int64Data.data
-                    ) {
-                        recentArgs.push(response.data.batch.cols[3].int64Data.data[0].low);
+                    if (response.metaData) {
+                        metaData = (response.metaData.relation.columns as any[]).map(c => c.columnName);
+                    }
+                    if (response.data?.batch?.cols) {
+                        const cols = response.data?.batch?.cols;
+                        const row: any = {};
+                        let hasData = false;
+
+                        for (let i = 0; i < cols.length; i++) {
+                            const value = colValue(cols[i]);
+                            const key = metaData[i];
+                            if (key) {
+                                row[key] = value;
+                                if (value) {
+                                    hasData = true;
+                                }
+                            }
+                        }
+
+                        if (hasData) {
+                            data.push(row);
+                        }
                     }
                 });
 
@@ -119,14 +145,14 @@ export class PixieManager {
                     Logger.log(status);
                 });
                 call.on("end", function() {
-                    if (recentArgs.length) {
+                    if (data.length) {
                         resolve({
-                            recentArgs
+                            data
                         });
                         Logger.log("this is the end, my only friend, the end");
                     } else {
                         Logger.log("nothing so far");
-                        setTimeout(poller, 5000)
+                        setTimeout(poller, 5000);
                     }
                 });
             }
@@ -155,4 +181,28 @@ export class PixieManager {
             throw new Error("Not connected to New Relic");
         }
     }
+}
+
+function colValue(col: any): string | undefined {
+    if (col.uint128Data?.data?.length) {
+        const data = col.uint128Data.data[0];
+        const long = new Long(data.low, data.high, data.unsigned);
+        return long.toString();
+    }
+    if (col.time64nsData?.data?.length) {
+        const data = col.time64nsData.data[0];
+        const long = new Long(data.low, data.high, data.unsigned);
+        return long.toString();
+    }
+    if (col.int64Data?.data?.length) {
+        const data = col.int64Data.data[0];
+        const long = new Long(data.low, data.high, data.unsigned);
+        return long.toString();
+    }
+
+    if (col.stringData?.data) {
+        return col.stringData.data[0];
+    }
+
+    return undefined;
 }

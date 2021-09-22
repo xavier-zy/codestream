@@ -5,6 +5,7 @@ import com.codestream.protocols.agent.PixieDynamicLoggingFunctionParameter
 import com.codestream.protocols.agent.PixieDynamicLoggingParams
 import com.goide.psi.GoFunctionOrMethodDeclaration
 import com.goide.psi.GoMethodDeclaration
+import com.goide.psi.impl.GoMethodDeclarationImpl
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.ApplicationManager
@@ -36,20 +37,27 @@ class PixieDynamicLoggingAction : DumbAwareAction() {
         val parameters = declaration.signature?.parameters?.definitionList?.map {
             PixieDynamicLoggingFunctionParameter(it.name!!, it.elementType.debugName)
         }
-        val receiver = (declaration as? GoMethodDeclaration)?.receiver?.name
+        val receiver = (declaration as? GoMethodDeclaration)?.receiver?.type?.text
         val pkg = declaration.containingFile.`package`?.name
 
+        // catalogue: 00000008-0000-1a41-0000-0000072e8792
+        // simple gotracing: 00000004-0000-3d9e-0000-000001e9f7b4
         GlobalScope.launch {
             val result = e.project?.agentService?.pixieDynamicLogging(
                 PixieDynamicLoggingParams(
                     name!!,
                     parameters!!,
                     receiver,
-                    pkg!!
+                    pkg!!,
+                    "00000008-0000-1a41-0000-0000072e8792"
                 )
             )
-            val recentArgsAsString = result?.recentArgs?.joinToString(", ")
-            val message = "Recent arguments: $recentArgsAsString"
+            val message =
+                result?.data?.map {
+                    row -> row.entries.map {
+                        cell -> "${cell.key}: ${cell.value}"
+                    }.joinToString(", ")
+                }?.joinToString("\n") ?: ""
             ApplicationManager.getApplication().invokeLater {
                 SampleDialogWrapper(message).show()
             }

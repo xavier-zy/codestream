@@ -177,7 +177,17 @@ export class PixieManager {
 				});
 				call.on("status", function(s: any) {
 					if (s?.details?.length) {
-						callStatus = s.details;
+						if (
+							s.details === "rpc error: code = Unavailable desc = probe installation in progress"
+						) {
+							callStatus = "Installing probe";
+						} else if (
+							s.details === "rpc error: code = Unavailable desc = Schema is not ready yet"
+						) {
+							callStatus = "Setting up schema";
+						} else {
+							callStatus = s.details;
+						}
 					}
 				});
 				call.on("end", () => {
@@ -185,7 +195,7 @@ export class PixieManager {
 					const cancelled = !this._dynamicLoggingActiveRequests.has(id);
 					const done = expired || cancelled || data.length > limitRows;
 					const status = expired
-						? "Timeout exceeded"
+						? "Done (timeout)"
 						: cancelled
 						? "Cancelled"
 						: callStatus

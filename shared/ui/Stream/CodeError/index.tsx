@@ -138,6 +138,14 @@ export const Description = styled.div`
 	margin-bottom: 15px;
 `;
 
+const ClickLines = styled.div`
+	padding: 1px !important;
+	&:focus {
+		border: none;
+		outline: none;
+	}
+`;
+
 const DisabledClickLine = styled.div`
 	color: var(--text-color);
 	opacity: 0.4;
@@ -151,28 +159,16 @@ const DisabledClickLine = styled.div`
 const ClickLine = styled.div`
 	position: relative;
 	cursor: pointer;
-	color: var(--text-color);
+	padding: 2px 0px 2px 0px;
+	text-align: right;
+	direction: rtl;
+	text-overflow: ellipsis;
+	overflow: hidden;
 	:hover {
 		color: var(--text-color-highlight);
 		background: var(--app-background-color-hover);
 		opacity: 1;
 	}
-	padding: 2px 0px 2px 0px;
-	opacity: 0.9;
-	&.selected {
-		color: var(--text-color-highlight);
-		opacity: 1;
-		border: 2px solid var(--text-focus-border-color);
-		background: var(--app-background-color-hover);
-	}
-	.icon {
-		position: absolute !important;
-		left: -21px;
-	}
-	text-align: right;
-	direction: rtl;
-	text-overflow: ellipsis;
-	overflow: hidden;
 `;
 
 const DataRow = styled.div`
@@ -899,6 +895,40 @@ const BaseCodeError = (props: BaseCodeErrorProps) => {
 		}
 	}, [codeError]);
 
+	const handleKeyDown = event => {
+		if (
+			props.stackFrameClickDisabled ||
+			props.collapsed ||
+			!props.parsedStack?.resolvedStackInfo?.lines
+		)
+			return;
+
+		const lines = props.parsedStack?.resolvedStackInfo?.lines;
+		if (!lines) return;
+
+		let nextLine = currentSelectedLine;
+		if (event.key === "ArrowUp" || event.which === 38) {
+			event.stopPropagation();
+			while (currentSelectedLine >= 0) {
+				nextLine--;
+				if (!lines[nextLine].error) {
+					onClickStackLine(event, nextLine);
+					return;
+				}
+			}
+		}
+		if (event.key === "ArrowDown" || event.which === 40) {
+			event.stopPropagation();
+			while (currentSelectedLine <= lines.length) {
+				nextLine++;
+				if (!lines[nextLine].error) {
+					onClickStackLine(event, nextLine);
+					return;
+				}
+			}
+		}
+	};
+
 	return (
 		<MinimumWidthCard {...getCardProps(props)} noCard={!props.collapsed}>
 			{props.collapsed && (
@@ -969,41 +999,39 @@ const BaseCodeError = (props: BaseCodeErrorProps) => {
 				{stackTrace && (
 					<Meta>
 						<MetaLabel>Stack Trace</MetaLabel>
-						<div className="code" style={{ padding: "0px" }}>
+						<ClickLines className="code" tabIndex={0} onKeyDown={handleKeyDown}>
 							{(stackTrace || []).map((line, i) => {
 								if (!line || !line.fileFullPath) return null;
 
-								const className = i === currentSelectedLine ? "monospace selected" : "monospace";
+								const className = i === currentSelectedLine ? "monospace li-active" : "monospace";
 								const mline = line.fileFullPath.replace(/\s\s\s\s+/g, "     ");
 								return props.stackFrameClickDisabled ||
 									props.collapsed ||
 									props.parsedStack?.resolvedStackInfo?.lines[i]?.error ? (
-									<DisabledClickLine className="monospace">
-										<Tooltip
-											title={props.parsedStack?.resolvedStackInfo?.lines[i]?.error}
-											placement="bottom"
-											delay={1}
-										>
+									<Tooltip
+										title={props.parsedStack?.resolvedStackInfo?.lines[i]?.error}
+										placement="bottom"
+										delay={1}
+									>
+										<DisabledClickLine className="monospace">
 											<span>
 												<span style={{ opacity: ".6" }}>{line.method}</span>({mline}:
 												<strong>{line.line}</strong>
 												{line.column ? `:${line.column}` : null})
 											</span>
-										</Tooltip>
-									</DisabledClickLine>
+										</DisabledClickLine>
+									</Tooltip>
 								) : (
 									<ClickLine className={className} onClick={e => onClickStackLine(e, i)}>
-										<Tooltip title={"Click to navigate"} placement="bottom" delay={1}>
-											<span>
-												<span style={{ opacity: ".6" }}>{line.method}</span>({mline}:
-												<strong>{line.line}</strong>
-												{line.column ? `:${line.column}` : null})
-											</span>
-										</Tooltip>
+										<span>
+											<span style={{ opacity: ".6" }}>{line.method}</span>({mline}:
+											<strong>{line.line}</strong>
+											{line.column ? `:${line.column}` : null})
+										</span>
 									</ClickLine>
 								);
 							})}
-						</div>
+						</ClickLines>
 					</Meta>
 				)}
 				{props.post && (

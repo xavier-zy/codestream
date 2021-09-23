@@ -220,6 +220,7 @@ export const jumpToStackLine = (
 
 	const revealResponse = await HostApi.instance.send(EditorRevealRangeRequestType, {
 		uri: `file://${path!}`,
+		preserveFocus: true,
 		range
 	});
 	if (revealResponse?.success) {

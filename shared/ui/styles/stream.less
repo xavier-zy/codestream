@@ -3346,3 +3346,13 @@ li,
 .active-drag .drop-target {
 	display: flex;
 }
+:focus > &.li-active {
+	color: var(--list-active-foreground) !important;
+	background: var(--list-active-background) !important;
+	outline: 1px solid var(--list-active-outline) !important;
+	z-index: 5;
+}
+&.li-active {
+	color: var(--list-inactive-foreground) !important;
+	background: var(--list-inactive-background) !important;
+}

@@ -158,7 +158,7 @@ class WebViewService(val project: Project) : Disposable {
     private suspend fun createWebView(router: WebViewRouter): WebView {
         val appSettings = ServiceManager.getService(ApplicationSettingsService::class.java)
         return try {
-            if (ENV_DISABLE_JCEF && appSettings.jcef && JBCefApp.isSupported() && platform != Platform.LINUX) {
+            if (!ENV_DISABLE_JCEF && appSettings.jcef && JBCefApp.isSupported() && platform != Platform.LINUX) {
                 logger.info("JCEF enabled")
                 val jbCefBrowser = JBCefBrowser()
                 JBCefWebView(jbCefBrowser, router).also {

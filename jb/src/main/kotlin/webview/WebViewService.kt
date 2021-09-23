@@ -9,6 +9,8 @@ import com.codestream.protocols.webview.WebViewNotification
 import com.codestream.sessionService
 import com.codestream.settings.ApplicationSettingsService
 import com.codestream.settingsService
+import com.codestream.system.Platform
+import com.codestream.system.platform
 import com.github.salomonbrys.kotson.jsonObject
 import com.google.gson.JsonElement
 import com.intellij.openapi.Disposable
@@ -156,7 +158,7 @@ class WebViewService(val project: Project) : Disposable {
     private suspend fun createWebView(router: WebViewRouter): WebView {
         val appSettings = ServiceManager.getService(ApplicationSettingsService::class.java)
         return try {
-            if (!ENV_DISABLE_JCEF && appSettings.jcef && JBCefApp.isSupported()) {
+            if (ENV_DISABLE_JCEF && appSettings.jcef && JBCefApp.isSupported() && platform != Platform.LINUX) {
                 logger.info("JCEF enabled")
                 val jbCefBrowser = JBCefBrowser()
                 JBCefWebView(jbCefBrowser, router).also {

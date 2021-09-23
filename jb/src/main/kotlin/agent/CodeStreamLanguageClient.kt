@@ -173,8 +173,11 @@ class CodeStreamLanguageClient(private val project: Project) : LanguageClient {
         project.sessionService?.environmentInfo = environmentInfo
     }
 
+
+
     @JsonNotification("codestream/pixie/dynamicLoggingEvent")
-    fun pixieDynamicLoggingEvent(event: PixieDynamicLoggingEvent) {
+    fun pixieDynamicLoggingEvent(json: JsonElement) {
+        val event = gson.fromJson<PixieDynamicLoggingEvent>(json)
         val data = event?.data?.map {
                 row -> row.entries.map {
                 cell -> "${cell.key}: ${cell.value}"
@@ -192,6 +195,12 @@ class CodeStreamLanguageClient(private val project: Project) : LanguageClient {
         //     SampleDialogWrapper("").show()
         // }
         // println(event)
+
+        ApplicationManager.getApplication().invokeLater {
+            project.codeStream?.show {
+                project.webViewService?.postNotification("codestream/pixie/dynamicLoggingEvent", json, true)
+            }
+        }
     }
 
     override fun workspaceFolders(): CompletableFuture<MutableList<WorkspaceFolder>> {

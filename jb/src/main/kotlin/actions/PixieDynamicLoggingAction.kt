@@ -51,9 +51,9 @@ class PixieDynamicLoggingAction : DumbAwareAction() {
                 )
             )
             GLOBAL_DYNAMIC_LOGGING_MESSAGE.text = "Dynamic Logging ID: ${result?.id}"
-            ApplicationManager.getApplication().invokeLater {
-                SampleDialogWrapper("").show()
-            }
+           // ApplicationManager.getApplication().invokeLater {
+            //    SampleDialogWrapper("").show()
+           // }
         }
     }
 

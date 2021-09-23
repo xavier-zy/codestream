@@ -45,7 +45,8 @@ import {
 	GetReposScmRequestType,
 	DidChangeProcessBufferNotificationType,
 	NormalizeUrlRequestType,
-	GetNewRelicErrorGroupRequestType
+	GetNewRelicErrorGroupRequestType,
+	PixieDynamicLoggingResultNotification
 } from "@codestream/protocols/agent";
 import { CSApiCapabilities, CodemarkType, CSMe } from "@codestream/protocols/api";
 import translations from "./translations/en";
@@ -692,6 +693,23 @@ function listenForEvents(store) {
 				break;
 			}
 		}
+	});
+
+	api.on(PixieDynamicLoggingResultNotification, async e => {
+		const keys = e.metaData?.slice(3);
+		const results: any[] = [];
+
+		if (e.data) {
+			for (const row of e.data) {
+				let result = {};
+				keys?.forEach(_ => {
+					result[_] = row[_];
+				});
+				results.push(result);
+			}
+		}
+
+		store.dispatch({ type: `ADD_DYNAMICLOGGING`, payload: { status: e.status, results: results } });
 	});
 }
 

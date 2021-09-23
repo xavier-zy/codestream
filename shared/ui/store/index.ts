@@ -61,6 +61,8 @@ import { reduceProviderPullRequests } from "./providerPullRequests/reducer";
 import { ProviderPullRequestsState } from "./providerPullRequests/types";
 import { reduceNewRelicData } from "./newrelic/reducer";
 import { NewRelicDataState } from "./newrelic/types";
+import { reduceDynamicLogging } from "./dynamicLogging/reducer";
+import { DynamicLoggingState } from "./dynamicLogging/types";
 
 const pluginVersion = (state = "", action) => {
 	if (action.type === "@pluginVersion/Set") return action.payload;
@@ -97,7 +99,8 @@ const reducer = combineReducers({
 	apiVersioning: reduceApiVersioning,
 	providerPullRequests: reduceProviderPullRequests,
 	codeErrors: reduceCodeErrors,
-	newRelicData: reduceNewRelicData
+	newRelicData: reduceNewRelicData,
+	dynamicLogging: reduceDynamicLogging
 });
 
 export function createCodeStreamStore(
@@ -147,4 +150,5 @@ export interface CodeStreamState {
 	versioning: VersioningState;
 	codeErrors: CodeErrorsState;
 	newRelicData: NewRelicDataState;
+	dynamicLogging: DynamicLoggingState;
 }

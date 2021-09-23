@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useSelector, useDispatch, shallowEqual } from "react-redux";
 import { PaneHeader, PaneBody, PaneState, PaneNode, PaneNodeName } from "../src/components/Pane";
 import { WebviewPanels } from "../ipc/webview.protocol.common";
@@ -117,12 +117,26 @@ export const NewRelic = React.memo((props: Props) => {
 			providers["newrelic*com"] && isConnected(state, { id: "newrelic*com" });
 		const data = (newRelicData && newRelicData.data) || undefined;
 		const hiddenPaneNodes = preferences.hiddenPaneNodes || EMPTY_HASH;
-		return { newRelicIsConnected, newRelicData: data, hiddenPaneNodes };
+		return {
+			newRelicIsConnected,
+			newRelicData: data,
+			hiddenPaneNodes,
+			dynamicLogs: state.dynamicLogging?.dynamicLogs
+		};
 	}, shallowEqual);
 
 	const [loading, setLoading] = useState(false);
 	const [query, setQuery] = useState("");
 	const [unexpectedError, setUnexpectedError] = useState(false);
+	const messagesEndRef = useRef(null);
+
+	useEffect(() => {
+		// TODO
+		const El = document.getElementById("xyz")!;
+		if (El) {
+			El.scrollTo({ top: El.scrollHeight, behavior: "smooth" });
+		}
+	}, [derivedState.dynamicLogs?.results]);
 
 	const onSubmit = async (event: React.SyntheticEvent) => {
 		setUnexpectedError(false);
@@ -140,7 +154,7 @@ export const NewRelic = React.memo((props: Props) => {
 
 	const { hiddenPaneNodes } = derivedState;
 	return (
-		<Root>
+		<Root id="xyz" ref={messagesEndRef}>
 			<PaneHeader title="Observability" id={WebviewPanels.NewRelic}>
 				&nbsp;
 			</PaneHeader>
@@ -156,9 +170,68 @@ export const NewRelic = React.memo((props: Props) => {
 									count={0}
 								></PaneNodeName>
 								{!hiddenPaneNodes["newrelic-welcome"] && (
-									<div style={{ padding: "0 20px 0 40px" }}>
-										Click Open in IDE from New Relic One to start debugging issues.
-									</div>
+									<>
+										<div style={{ padding: "0 20px 0 40px" }}>
+											Click Open in IDE from New Relic One to start debugging issues.
+										</div>
+									</>
+								)}
+								<PaneNodeName
+									title={`Pixie Dynamic Logging${
+										derivedState.dynamicLogs?.status ? ` (${derivedState.dynamicLogs.status})` : ""
+									}`}
+									id="newrelic-pixie"
+									count={0}
+								></PaneNodeName>
+								{!hiddenPaneNodes["newrelic-pixie"] && (
+									<>
+										<div style={{ padding: "0 20px 0 40px" }}>
+											{derivedState.dynamicLogs && (
+												<div>
+													<table style={{ borderCollapse: "collapse" }}>
+														{derivedState.dynamicLogs &&
+															derivedState.dynamicLogs.results?.map((_, index) => {
+																return (
+																	<>
+																		{index === 0 && (
+																			<tr
+																				style={{
+																					borderTop: "1px solid #666",
+																					borderBottom: "2px solid #666"
+																				}}
+																			>
+																				{Object.keys(_).map(k => {
+																					return (
+																						<td
+																							style={{
+																								width: "25%",
+																								padding: "5px 0px 5px 0px",
+																								fontWeight: "bold"
+																							}}
+																						>
+																							{k}
+																						</td>
+																					);
+																				})}
+																			</tr>
+																		)}
+																		<tr style={{ borderBottom: "1px solid #666" }}>
+																			{Object.keys(_).map(k => {
+																				return (
+																					<td style={{ width: "25%", padding: "3px 0px 3px 0px" }}>
+																						{_[k]}
+																					</td>
+																				);
+																			})}
+																		</tr>
+																	</>
+																);
+															})}
+													</table>
+												</div>
+											)}
+										</div>
+									</>
 								)}
 							</PaneNode>
 							{/* <PaneNode>

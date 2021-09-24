@@ -79,7 +79,7 @@ import { FormattedMessage } from "react-intl";
 import { Link } from "./Link";
 import { confirmPopup } from "./Confirm";
 import { openPanel, openModal, setUserPreference, markItemRead } from "./actions";
-import { fetchCodeError } from "../store/codeErrors/actions";
+import { fetchCodeError, upgradePendingCodeError } from "../store/codeErrors/actions";
 import CancelButton from "./CancelButton";
 import { VideoLink } from "./Flow";
 import { PanelHeader } from "../src/components/PanelHeader";
@@ -127,6 +127,10 @@ interface Props extends ConnectedProps {
 	markItemRead(
 		...args: Parameters<typeof markItemRead>
 	): ReturnType<ReturnType<typeof markItemRead>>;
+	upgradePendingCodeError(
+		codeErrorId: string,
+		source: "Comment" | "Status Change" | "Assignee Change"
+	);
 }
 
 interface ConnectedProps {
@@ -840,13 +844,23 @@ class CodemarkForm extends React.Component<Props, State> {
 
 		if (this.props.currentCodeErrorId) {
 			try {
-				fetchCodeError(this.props.currentCodeErrorId);
-				const codeError = this.props.codeErrors.codeErrors[this.props.currentCodeErrorId];
+				const codeErrorResponse = await this.props.upgradePendingCodeError(
+					this.props.currentCodeErrorId,
+					"Comment"
+				);
+				if (codeErrorResponse.wasPending) {
+					// if this codeError was pending, we know that we just created one, use the codeError
+					// that was created
+					parentPostId = codeErrorResponse.codeError.postId;
+				} else {
+					fetchCodeError(this.props.currentCodeErrorId);
+					const codeError = this.props.codeErrors.codeErrors[this.props.currentCodeErrorId];
+					parentPostId = codeError.postId;
+				}
 
-				parentPostId = codeError.postId;
 				//this.props.markItemRead(review.id, review.numReplies + 1);
 			} catch (error) {
-				// FIXME what do we do if we don't find the review?
+				// FIXME what do we do if we don't find the code error?
 			}
 		}
 
@@ -2628,7 +2642,8 @@ const ConnectedCodemarkForm = connect(mapStateToProps, {
 	openModal,
 	markItemRead,
 	setUserPreference,
-	fetchCodeError
+	fetchCodeError,
+	upgradePendingCodeError
 })(CodemarkForm);
 
 export { ConnectedCodemarkForm as CodemarkForm };

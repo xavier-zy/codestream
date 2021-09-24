@@ -89,7 +89,11 @@ import { setMaintenanceMode } from "./store/session/actions";
 import { updateModifiedReposDebounced } from "./store/users/actions";
 import { logWarning } from "./logger";
 import { fetchReview } from "./store/reviews/actions";
-import { fetchCodeError, findErrorGroupByObjectId } from "./store/codeErrors/actions";
+import {
+	fetchCodeError,
+	findErrorGroupByObjectId,
+	PENDING_CODE_ERROR_ID_FORMAT as toPendingCodeErrorId
+} from "./store/codeErrors/actions";
 import { openPullRequestByUrl } from "./store/providerPullRequests/actions";
 import { updateCapabilities } from "./store/capabilities/actions";
 import { confirmPopup } from "./Stream/Confirm";
@@ -532,9 +536,10 @@ function listenForEvents(store) {
 							.then(codeError => {
 								const state = store.getState();
 
+								// if we found an existing codeError, it exists in the data store
 								const pendingId = codeError
 									? codeError.id
-									: `PENDING-${definedQuery.query.errorGroupGuid}`;
+									: toPendingCodeErrorId(definedQuery.query.errorGroupGuid);
 
 								// NOTE don't really like this "PENDING" business, but it's something to say we need to CREATE a codeError
 								// rationalie is: instead of creating _another_ codeError router-like UI,

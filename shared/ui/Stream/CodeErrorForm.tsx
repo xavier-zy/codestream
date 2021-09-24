@@ -149,23 +149,23 @@ export const CodeErrorForm = (props: Props = {}) => {
 		(async function() {
 			const resolvedStack = await resolvedStackPromise;
 			if (resolvedStack && !resolvedStack.error) {
-				let lineNum = 0;
+				let lineIndex = 0;
 				const len = resolvedStack.lines.length;
-				while (lineNum < len && resolvedStack.lines[lineNum].line !== undefined) {
-					lineNum++;
+				while (lineIndex < len && resolvedStack.lines[lineIndex].line !== undefined) {
+					lineIndex++;
 				}
-				if (lineNum < len) {
-					dispatch(jumpToStackLine(resolvedStack.lines[lineNum], sha, ""));
+				if (lineIndex < len) {
+					dispatch(jumpToStackLine(lineIndex, resolvedStack.lines[lineIndex], sha, ""));
 				}
 			}
 		})();
 	}, [resolvedStackPromise]);
 
-	const onClickStackLine = async (event, lineNum) => {
+	const onClickStackLine = async (event, lineIndex) => {
 		event && event.preventDefault();
 		const resolvedStack = await resolvedStackPromise;
-		if (!resolvedStack.error && resolvedStack.lines[lineNum].line !== undefined) {
-			dispatch(jumpToStackLine(resolvedStack.lines[lineNum], sha, ""));
+		if (!resolvedStack.error && resolvedStack.lines[lineIndex].line !== undefined) {
+			dispatch(jumpToStackLine(lineIndex, resolvedStack.lines[lineIndex], sha, ""));
 		}
 	};
 

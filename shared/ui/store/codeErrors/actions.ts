@@ -21,12 +21,14 @@ import { addStreams } from "../streams/actions";
 import { CodeStreamState } from "..";
 import { mapFilter } from "@codestream/webview/utils";
 import { addPosts } from "../posts/actions";
-import { createPost } from "@codestream/webview/Stream/actions";
+import { createPost, createPostAndCodeError } from "@codestream/webview/Stream/actions";
 import { getTeamMembers } from "../users/reducer";
 import { phraseList } from "@codestream/webview/utilities/strings";
 import { Position, Range } from "vscode-languageserver-types";
 import { highlightRange } from "../../Stream/api-functions";
 import { EditorRevealRangeRequestType } from "@codestream/protocols/webview";
+import { setCurrentCodeError } from "../context/actions";
+import { getCodeError } from "./reducer";
 
 export const reset = () => action("RESET");
 
@@ -48,7 +50,7 @@ export const updateCodeErrors = (codeErrors: CSCodeError[]) =>
 	action(CodeErrorsActionsTypes.UpdateCodeErrors, codeErrors);
 
 export interface NewCodeErrorAttributes {
-	accountId: number;
+	accountId?: number;
 	objectId?: string;
 	objectType?: "ErrorGroup";
 	objectInfo?: any;
@@ -196,10 +198,19 @@ export const resolveStackTrace = (
 };
 
 export const jumpToStackLine = (
+	lineIndex: number,
 	stackLine: CSStackTraceLine,
 	sha: string,
 	repoId: string
-) => async dispatch => {
+) => async (dispatch, getState: () => CodeStreamState) => {
+	const state = getState();
+	dispatch(
+		setCurrentCodeError(state.context.currentCodeErrorId, {
+			...(state.context.currentCodeErrorData || {}),
+			lineIndex: lineIndex || 0
+		})
+	);
+
 	const currentPosition = await HostApi.instance.send(ResolveStackTracePositionRequestType, {
 		sha,
 		repoId,
@@ -369,6 +380,79 @@ export const setErrorGroup = (errorGroupGuid: string, data?: any) => async (
 	} catch (error) {
 		logError(`failed to _setErrorGroup: ${error}`, { errorGroupGuid });
 	}
+};
+
+const PENDING_CODE_ERROR_ID_PREFIX = "PENDING";
+export const PENDING_CODE_ERROR_ID_FORMAT = id => `${PENDING_CODE_ERROR_ID_PREFIX}-${id}`;
+
+/**
+ * codeErrors (CodeStream's representation of a NewRelic error group error) can be ephemeral
+ * and by default, they are not persisted to the data store. before certain actions happen from the user
+ * we will create a concrete version of the codeError, then run the operation requiring it.
+ *
+ * a pending codeError has an ide that begins with PENDING, and fully looks like `PENDING-${errorGroupGuid}`.
+ *
+ * @param {string} codeErrorId
+ */
+export const upgradePendingCodeError = (
+	codeErrorId: string,
+	source: "Comment" | "Status Change" | "Assignee Change"
+) => async (dispatch, getState: () => CodeStreamState) => {
+	console.log("upgradePendingCodeError", { codeErrorId: codeErrorId });
+	try {
+		const state = getState();
+		let existingCodeError = getCodeError(state.codeErrors, codeErrorId) as CSCodeError;
+		if (codeErrorId?.indexOf(PENDING_CODE_ERROR_ID_PREFIX) === 0) {
+			const {
+				accountId,
+				objectId,
+				objectType,
+				title,
+				text,
+				stackTraces,
+				objectInfo
+			} = existingCodeError;
+			const newCodeError: NewCodeErrorAttributes = {
+				accountId,
+				objectId,
+				objectType,
+				title,
+				text,
+				stackTraces,
+				objectInfo
+			};
+			const response = (await dispatch(createPostAndCodeError(newCodeError))) as any;
+			HostApi.instance.track("Error Report Created", {
+				"Error Group ID": "",
+				"NR Organization ID": "",
+				"NR Account ID": newCodeError.accountId,
+				Trigger: source
+			});
+
+			dispatch(
+				setCurrentCodeError(response.codeError.id, {
+					// need to reset this back to undefined now that we aren't
+					// pending any longer
+					pendingErrorGroupGuid: undefined,
+					// if there's already a selected line, retain it
+					lineIndex: state.context.currentCodeErrorData?.lineIndex || 0
+				})
+			);
+			return {
+				codeError: response.codeError as CSCodeError,
+				wasPending: true
+			};
+		} else {
+			return {
+				codeError: existingCodeError as CSCodeError
+			};
+		}
+	} catch (ex) {
+		logError(ex, {
+			codeErrorId: codeErrorId
+		});
+	}
+	return undefined;
 };
 
 /**

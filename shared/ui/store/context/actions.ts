@@ -7,7 +7,8 @@ import {
 	WebviewPanels,
 	WebviewModals,
 	NewPullRequestBranch,
-	HostDidReceiveRequestNotificationType
+	HostDidReceiveRequestNotificationType,
+	CodeErrorData
 } from "@codestream/protocols/webview";
 import { CodemarkType } from "@codestream/protocols/api";
 import { HostApi } from "@codestream/webview/webview-api";
@@ -158,7 +159,10 @@ export const setCurrentReviewOptions = (options: any) =>
 export const _setCurrentCodeError = (codeErrorId?: string, data?: any) =>
 	action(ContextActionsType.SetCurrentCodeError, { codeErrorId, data });
 
-export const setCurrentCodeError = (codeErrorId?: string, data?: any) => (dispatch, getState) => {
+export const setCurrentCodeError = (codeErrorId?: string, data?: CodeErrorData) => (
+	dispatch,
+	getState
+) => {
 	return dispatch(_setCurrentCodeError(codeErrorId, data));
 };
 

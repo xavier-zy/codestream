@@ -122,6 +122,22 @@ export enum WebviewModals {
 	AddNewRelicJava = "add-new-relic-java"
 }
 
+export interface CodeErrorData {
+	// REMOVE BELOW
+	parsedStack?: any;
+	// REMOVE ABOVE
+	remote?: string;
+	commit?: string;
+	/** caches when the last user session started  */
+
+	sessionStart?: number;
+	pendingRequiresConnection?: boolean;
+	pendingErrorGroupGuid?: string;
+	pendingEntityId?: string;
+	traceId?: string;
+	lineIndex?: number;
+}
+
 export interface WebviewContext {
 	currentTeamId: string;
 	sessionStart?: number;
@@ -137,21 +153,11 @@ export interface WebviewContext {
 		includeLatestCommit?: boolean;
 		openFirstDiff?: boolean;
 	};
-	currentCodeErrorId?: "PENDING" | string;
-	currentCodeErrorData?: {
-		// REMOVE BELOW
-		parsedStack?: any;
-		// REMOVE ABOVE
-		remote?: string;
-		commit?: string;
-		/** caches when the last user session started  */
-
-		sessionStart?: number;
-		pendingRequiresConnection?: boolean;
-		pendingErrorGroupGuid?: string;
-		pendingEntityId?: string;
-		traceId?: string;
-	};
+	/**
+	 * This could be a real codeErorr.id or a PENDING-${id}
+	 */
+	currentCodeErrorId?: string;
+	currentCodeErrorData?: CodeErrorData;
 	createPullRequestReviewId?: string;
 	createPullRequestOptions?: NewPullRequestBranch;
 	currentPullRequest?:

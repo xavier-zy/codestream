@@ -5,6 +5,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { closeAllPanels, setCurrentCodeError } from "@codestream/webview/store/context/actions";
 import { useDidMount } from "@codestream/webview/utilities/hooks";
 import {
+	addCodeErrors,
 	api,
 	fetchCodeError,
 	fetchErrorGroup,
@@ -377,31 +378,48 @@ export function CodeErrorNav(props: Props) {
 				errorGroupResult.errorGroup?.errorTrace!?.stackTrace.map(_ => _.formatted)
 			)) as ResolveStackTraceResponse;
 
-			const newCodeError: NewCodeErrorAttributes = {
-				accountId: errorGroupResult.accountId,
-				objectId: errorGroupGuid,
-				objectType: "ErrorGroup",
-				title: errorGroupResult.errorGroup?.title || "",
-				text: errorGroupResult.errorGroup?.message || undefined,
-				// storing the permanently parsed stack info
-				stackTraces: stackInfo.error ? [{ ...stackInfo, lines: [] }] : [stackInfo.parsedStackInfo!],
-				objectInfo: {
-					repoId: repo.id,
-					remote: targetRemote,
-					entityName: errorGroupResult?.errorGroup?.entityName
-				}
-			};
-
-			const response = (await dispatch(createPostAndCodeError(newCodeError))) as any;
-
-			dispatch(
-				setCurrentCodeError(response.codeError.id, {
-					// need to reset this back to undefined now that we aren't
-					// pending any longer
-					pendingErrorGroupGuid: undefined,
-					errorGroup: errorGroupResult?.errorGroup
-				})
+			await dispatch(
+				addCodeErrors([
+					{
+						accountId: errorGroupResult.accountId,
+						id: derivedState.currentCodeErrorId!,
+						createdAt: new Date().getTime(),
+						modifiedAt: new Date().getTime(),
+						// these don't matter
+						assignees: [],
+						teamId: "",
+						streamId: "",
+						postId: "",
+						fileStreamIds: [],
+						status: "open",
+						numReplies: 0,
+						lastActivityAt: 0,
+						creatorId: "",
+						objectId: errorGroupGuid,
+						objectType: "ErrorGroup",
+						title: errorGroupResult.errorGroup?.title || "",
+						text: errorGroupResult.errorGroup?.message || undefined,
+						// storing the permanently parsed stack info
+						stackTraces: stackInfo.error
+							? [{ ...stackInfo, lines: [] }]
+							: [stackInfo.parsedStackInfo!],
+						objectInfo: {
+							repoId: repo.id,
+							remote: targetRemote,
+							accountId: errorGroupResult.accountId.toString(),
+							entityName: errorGroupResult?.errorGroup?.entityName || ""
+						}
+					}
+				])
 			);
+
+			HostApi.instance.track("Error Report Opened", {
+				"Error Group ID": errorGroupResult?.errorGroup?.guid,
+				"NR Organization ID": "",
+				"NR Account ID": errorGroupResult.accountId,
+				"Entry Point": "Open in IDE Flow"
+			});
+
 			setParsedStack(stackInfo);
 			setIsResolved(true);
 			setRepoError(stackInfo?.error);
@@ -561,7 +579,7 @@ export function CodeErrorNav(props: Props) {
 			</Root>
 		);
 	}
-	if (isLoading || derivedState.currentCodeErrorId?.indexOf("PENDING") === 0) {
+	if (isLoading) {
 		return (
 			<DelayedRender>
 				<Loading />

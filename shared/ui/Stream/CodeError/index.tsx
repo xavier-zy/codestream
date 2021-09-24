@@ -29,7 +29,8 @@ import {
 	deleteCodeError,
 	fetchCodeError,
 	fetchErrorGroup,
-	jumpToStackLine
+	jumpToStackLine,
+	upgradePendingCodeError
 } from "@codestream/webview/store/codeErrors/actions";
 import { setCurrentCodeError } from "@codestream/webview/store/context/actions";
 import { DelayedRender } from "@codestream/webview/Container/DelayedRender";
@@ -254,6 +255,8 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 	const onSetAssignee = async userId => {
 		if (!props.errorGroup) return;
 
+		await dispatch(upgradePendingCodeError(props.codeError.id, "Assignee Change"));
+
 		dispatch(
 			api("setAssignee", {
 				errorGroupGuid: props.errorGroup?.guid!,
@@ -266,6 +269,8 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 		if (!props.errorGroup) return;
 		// dont allow this to bubble to the parent item which would call setAssignee
 		e.stopPropagation();
+
+		await dispatch(upgradePendingCodeError(props.codeError.id, "Assignee Change"));
 
 		dispatch(
 			api("removeAssignee", {
@@ -289,6 +294,7 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 							label: STATES_TO_ACTION_STRINGS[_],
 							action: async e => {
 								setIsStateChanging(true);
+								await dispatch(upgradePendingCodeError(props.codeError.id, "Status Change"));
 								await dispatch(
 									api("setState", {
 										errorGroupGuid: props.errorGroup?.guid!,
@@ -847,22 +853,27 @@ const BaseCodeError = (props: BaseCodeErrorProps) => {
 			codeAuthor: state.users[codeAuthorId || props.codeError?.creatorId],
 			codeError,
 			errorGroup: props.errorGroup,
-			errorGroupIsLoading: (state.codeErrors.errorGroups[codeError.objectId] as any)?.isLoading
+			errorGroupIsLoading: (state.codeErrors.errorGroups[codeError.objectId] as any)?.isLoading,
+			currentCodeErrorData: state.context.currentCodeErrorData
 		};
 	});
 	const renderedFooter = props.renderFooter && props.renderFooter(CardFooter, ComposeWrapper);
 	const { codeError, errorGroup } = derivedState;
 
-	const [currentSelectedLine, setCurrentSelectedLine] = React.useState(0);
+	const [currentSelectedLine, setCurrentSelectedLineIndex] = React.useState(
+		derivedState.currentCodeErrorData?.lineIndex || 0
+	);
 
-	const onClickStackLine = async (event, lineNum) => {
+	const onClickStackLine = async (event, lineIndex) => {
 		event && event.preventDefault();
 		if (props.collapsed) return;
 		const { stackTraces } = codeError;
 		const stackInfo = (stackTraces && stackTraces[0]) || codeError.stackInfo;
-		if (stackInfo && stackInfo.lines[lineNum] && stackInfo.lines[lineNum].line !== undefined) {
-			setCurrentSelectedLine(lineNum);
-			dispatch(jumpToStackLine(stackInfo.lines[lineNum], stackInfo.sha!, stackInfo.repoId!));
+		if (stackInfo && stackInfo.lines[lineIndex] && stackInfo.lines[lineIndex].line !== undefined) {
+			setCurrentSelectedLineIndex(lineIndex);
+			dispatch(
+				jumpToStackLine(lineIndex, stackInfo.lines[lineIndex], stackInfo.sha!, stackInfo.repoId!)
+			);
 		}
 	};
 
@@ -874,19 +885,27 @@ const BaseCodeError = (props: BaseCodeErrorProps) => {
 			const { stackTraces } = codeError;
 			const stackInfo = (stackTraces && stackTraces[0]) || codeError.stackInfo;
 			if (stackInfo?.lines) {
-				let lineNum = 0;
+				let lineIndex = currentSelectedLine;
 				const len = stackInfo.lines.length;
 				while (
-					lineNum < len &&
+					lineIndex < len &&
 					// stackInfo.lines[lineNum].line !== undefined &&
-					stackInfo.lines[lineNum].error
+					stackInfo.lines[lineIndex].error
 				) {
-					lineNum++;
+					lineIndex++;
 				}
-				if (lineNum < len) {
-					setCurrentSelectedLine(lineNum);
+				if (lineIndex < len) {
+					setCurrentSelectedLineIndex(lineIndex);
+
 					try {
-						dispatch(jumpToStackLine(stackInfo.lines[lineNum], stackInfo.sha, stackInfo.repoId!));
+						dispatch(
+							jumpToStackLine(
+								lineIndex,
+								stackInfo.lines[lineIndex],
+								stackInfo.sha,
+								stackInfo.repoId!
+							)
+						);
 					} catch (ex) {
 						console.warn(ex);
 					}
@@ -1097,16 +1116,10 @@ const renderMetaSectionCollapsed = (props: BaseCodeErrorProps) => {
 	);
 };
 
-const ReplyInput = (props: {
-	codeError: CSCodeError;
-	parentPostId: string;
-	streamId: string;
-	numReplies: number;
-}) => {
+const ReplyInput = (props: { codeError: CSCodeError }) => {
 	const dispatch = useDispatch();
 	const [text, setText] = React.useState("");
 	const [attachments, setAttachments] = React.useState<AttachmentField[]>([]);
-	const [isChangeRequest, setIsChangeRequest] = React.useState(false);
 	const [isLoading, setIsLoading] = React.useState(false);
 	const teamMates = useSelector((state: CodeStreamState) => getTeamMates(state));
 
@@ -1115,39 +1128,28 @@ const ReplyInput = (props: {
 		if (text.length === 0) return;
 
 		setIsLoading(true);
-		dispatch(markItemRead(props.codeError.id, props.numReplies + 1));
-		if (isChangeRequest) {
-			await dispatch(
-				createCodemark({
-					text: replaceHtml(text)!,
-					parentPostId: props.parentPostId,
-					type: CodemarkType.Comment,
-					codeBlocks: [],
-					assignees: [],
-					relatedCodemarkIds: [],
-					accessMemberIds: [],
-					isChangeRequest: true,
-					tags: [],
-					isPseudoCodemark: true,
+
+		const actualCodeError = ((await dispatch(
+			upgradePendingCodeError(props.codeError.id, "Comment")
+		)) as any) as {
+			codeError: CSCodeError;
+		};
+		dispatch(markItemRead(props.codeError.id, actualCodeError.codeError.numReplies + 1));
+
+		await dispatch(
+			createPost(
+				actualCodeError.codeError.streamId,
+				actualCodeError.codeError.postId,
+				replaceHtml(text)!,
+				null,
+				findMentionedUserIds(teamMates, text),
+				{
+					entryPoint: "Code Error",
 					files: attachments
-				})
-			);
-		} else {
-			await dispatch(
-				createPost(
-					props.streamId,
-					props.parentPostId,
-					replaceHtml(text)!,
-					null,
-					findMentionedUserIds(teamMates, text),
-					{
-						entryPoint: "Code Error",
-						files: attachments
-					}
-				)
-			);
-			setIsChangeRequest(false);
-		}
+				}
+			)
+		);
+
 		setIsLoading(false);
 		setText("");
 		setAttachments([]);
@@ -1264,12 +1266,7 @@ const CodeErrorForCodeError = (props: PropsWithCodeError) => {
 					/>
 					{InputContainer && (
 						<InputContainer>
-							<ReplyInput
-								codeError={codeError}
-								parentPostId={codeError.postId}
-								streamId={codeError.streamId}
-								numReplies={codeError.numReplies}
-							/>
+							<ReplyInput codeError={codeError} />
 						</InputContainer>
 					)}
 				</Footer>

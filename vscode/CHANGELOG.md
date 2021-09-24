@@ -1,5 +1,11 @@
 # Change Log
 
+## [11.0.16] - 2021-9-24
+
+### Fixed
+
+- Fixes an issue with CodeStream overriding GitLab defaults for "Squash commits" and "Delete source branch"
+
 ## [11.0.15] - 2021-9-15
 
 ### Fixed

@@ -111,7 +111,7 @@ import { CheckEmailVsGit } from "./CheckEmailVsGit";
 import { EnjoyingCodeStream } from "./EnjoyingCodeStream";
 import { getTestGroup } from "../store/context/reducer";
 import { PresentTOS } from "../Authentication/PresentTOS";
-
+import { PresentPrereleaseTOS } from "../Authentication/PresentPrereleaseTOS";
 import { Loading } from "../Container/Loading";
 import { DelayedRender } from "../Container/DelayedRender";
 
@@ -285,11 +285,14 @@ export class SimpleStream extends PureComponent {
 
 	render() {
 		const { showHeadshots, isFirstPageview } = this.props;
-		let { activePanel, activeModal, acceptedTOS } = this.props;
+		let { activePanel, activeModal, acceptedPrereleaseTOS } = this.props;
 		const { q } = this.state;
 
 		// this will show for any old, lingering users that have not accepted as part of a new registration
 		if (!acceptedTOS) return <PresentTOS />;
+
+		// FIXME -- remove this before October 19th
+		if (!acceptedPrereleaseTOS) return <PresentPrereleaseTOS />;
 
 		if (activePanel === WebviewPanels.LandingRedirect) activePanel = WebviewPanels.Sidebar;
 
@@ -754,7 +757,7 @@ export class SimpleStream extends PureComponent {
  * @param {Object} state.teams
  **/
 const mapStateToProps = state => {
-	const { configs, context, session, streams, companies, preferences } = state;
+	const { configs, context, streams } = state;
 
 	// FIXME -- eventually we'll allow the user to switch to other streams, like DMs and channels
 	const teamStream = getStreamForTeam(streams, context.currentTeamId) || {};
@@ -764,6 +767,7 @@ const mapStateToProps = state => {
 	// this would be nice, but unfortunately scm is only loaded on spatial view so we can't
 	// rely on it here
 	// const { scmInfo } = state.editorContext;
+	const team = state.teams[state.context.currentTeamId];
 
 	// console.warn("COMP: ", companies);
 	return {
@@ -784,7 +788,7 @@ const mapStateToProps = state => {
 		composeCodemarkActive: context.composeCodemarkActive,
 		isFirstPageview: context.isFirstPageview,
 		onboardingTestGroup: getTestGroup(state, "onboard-edu"),
-		acceptedTOS: preferences.acceptedTOS,
+		acceptedPrereleaseTOS: team.settings ? team.settings.acceptedPrereleaseTOS : false,
 		pendingProtocolHandlerUrl: context.pendingProtocolHandlerUrl
 	};
 };

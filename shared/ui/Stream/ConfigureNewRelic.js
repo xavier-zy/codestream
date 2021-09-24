@@ -8,6 +8,8 @@ import { PROVIDER_MAPPINGS } from "./CrossPostIssueControls/types";
 import { Link } from "./Link";
 import { WebviewPanels } from "../ipc/webview.protocol.common";
 import { openPanel } from "./actions";
+import { IntegrationButtons, Provider } from "./IntegrationsPanel";
+import Icon from "./Icon";
 import {
 	ReposScm,
 	RepoProjectType,
@@ -119,18 +121,14 @@ class ConfigureNewRelic extends Component {
 					{this.renderError()}
 					<div id="controls">
 						<div id="token-controls" className="control-group">
-							<p>
-								Please provide a{" "}
-								<Link href="https://docs.newrelic.com/docs/apis/intro-apis/new-relic-api-keys/#user-api-key">
-									{providerName} User API Key
-								</Link>
-								{"."}
-							</p>
 							<div className="control-group">
-								<label>{providerName} User API Key</label>
+								<label>
+									Already have a {providerName} User API Key? {this.renderApiKeyHelp()}
+								</label>
 								<input
 									id="configure-provider-initial-input"
 									className="input-text control"
+									style={{ width: "294px" }}
 									type="text"
 									name="apiKey"
 									tabIndex={1}
@@ -140,50 +138,57 @@ class ConfigureNewRelic extends Component {
 									onBlur={this.onBlurApiKey}
 									required={this.state.apiKeyTouched || this.state.formTouched}
 								/>
-								{this.renderApiKeyHelp()}
+								<Button
+									id="save-button"
+									className="control-button"
+									style={{ padding: "2px 10px", marginLeft: "10px" }}
+									tabIndex={2}
+									type="submit"
+									onClick={this.onSubmit}
+									loading={this.state.loading}
+								>
+									Connect
+								</Button>
+								<p>
+									Don't have an API key?{" "}
+									<Link href="https://docs.newrelic.com/docs/apis/intro-apis/new-relic-api-keys/#user-api-key">
+										Create one now
+									</Link>
+								</p>
+								{this.props.isInternalUser && (
+									<>
+										<div className="control-group" style={{ margin: "15px 0px" }}>
+											<input
+												id="configure-provider-initial-input"
+												className="input-text control"
+												type="text"
+												name="apiUrl"
+												tabIndex={1}
+												autoFocus
+												value={this.state.apiUrl}
+												onChange={e => this.setState({ apiUrl: e.target.value })}
+											/>
+										</div>
+									</>
+								)}{" "}
 							</div>
-							{this.props.isInternalUser && (
-								<>
-									<div className="control-group">
-										<label>{providerName} API Url</label>
-										<input
-											id="configure-provider-initial-input"
-											className="input-text control"
-											type="text"
-											name="apiUrl"
-											tabIndex={1}
-											autoFocus
-											value={this.state.apiUrl}
-											onChange={e => this.setState({ apiUrl: e.target.value })}
-										/>
-									</div>
-								</>
-							)}
 						</div>
-						<div className="button-group">
-							<Button
-								id="save-button"
-								className="control-button"
-								tabIndex={2}
-								type="submit"
-								onClick={this.onSubmit}
-								loading={this.state.loading}
-							>
-								Submit
-							</Button>
-							<Button
-								id="discard-button"
-								className="control-button cancel"
-								tabIndex={3}
-								type="button"
-								onClick={e => {
-									if (this.props.onClose) {
-										this.props.onClose(e);
-									}
-								}}
-							>
-								Cancel
-							</Button>
+						<div className="control-group" style={{ marginTop: "30px" }}>
+							<div>Don't have a {providerName} account?</div>
+							<div>
+								<Button
+									style={{ marginTop: "5px" }}
+									className="row-button"
+									onClick={event => {
+										event.preventDefault();
+										HostApi.instance.send(OpenUrlRequestType, { url: "https://one.newrelic.com" });
+									}}
+								>
+									<Icon name="newrelic" />
+									<div className="copy">Sign Up for New Relic One</div>
+									<Icon name="chevron-right" />
+								</Button>
+							</div>
 						</div>
 					</div>
 				</fieldset>

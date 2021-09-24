@@ -204,7 +204,7 @@ export const NewRelic = React.memo((props: Props) => {
 									}
 								>
 									<Icon name="newrelic" />
-									Connect to New Relic
+									Connect to New Relic One
 								</Provider>
 							</IntegrationButtons>
 						</>

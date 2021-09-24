@@ -70,6 +70,7 @@ import {
 	NewPullRequestNotificationType,
 	InstrumentationOpenType,
 	EditorSelectRangeRequestType,
+	PixieDynamicLoggingType,
 	StartWorkNotificationType,
 	WebviewPanels,
 	WebviewModals
@@ -95,13 +96,15 @@ import {
 	setNewPullRequestOptions,
 	setCurrentCodemark,
 	setCurrentCodeError,
-	setCurrentInstrumentationOptions
+	setCurrentInstrumentationOptions,
+	setCurrentPixieDynamicLoggingOptions
 } from "../store/context/actions";
 import { last as _last, findLastIndex } from "lodash-es";
 import { Keybindings } from "./Keybindings";
 import { FlowPanel, VideoLink } from "./Flow";
 import { CodeErrorForm } from "./CodeErrorForm";
 import { InstrumentationPanel } from "./InstrumentationPanel";
+import { PixieDynamicLoggingPanel } from "./PixieDynamicLoggingPanel";
 import { PRInfoModal } from "./SpatialView/PRInfoModal";
 import { GlobalNav } from "./GlobalNav";
 import { CheckEmailVsGit } from "./CheckEmailVsGit";
@@ -152,6 +155,9 @@ export class SimpleStream extends PureComponent {
 		);
 		this.disposables.push(
 			HostApi.instance.on(InstrumentationOpenType, this.handleInstrumentationOpenType, this)
+		);
+		this.disposables.push(
+			HostApi.instance.on(PixieDynamicLoggingType, this.handlePixieDynamicLoggingType, this)
 		);
 	}
 
@@ -216,6 +222,11 @@ export class SimpleStream extends PureComponent {
 
 		this.props.setCurrentInstrumentationOptions({ name: e.name });
 		this.props.openPanel(WebviewPanels.Instrumentation);
+	}
+
+	handlePixieDynamicLoggingType(e) {
+		this.props.setCurrentPixieDynamicLoggingOptions(e);
+		this.props.openPanel(WebviewPanels.PixieDynamicLogging);
 	}
 
 	// for performance debugging purposes
@@ -483,6 +494,7 @@ export class SimpleStream extends PureComponent {
 							{activePanel === WebviewPanels.Instrumentation && <InstrumentationPanel />}
 							{activePanel === WebviewPanels.Flow && <FlowPanel />}
 							{activePanel === WebviewPanels.NewReview && <ReviewForm />}
+							{activePanel === WebviewPanels.PixieDynamicLogging && <PixieDynamicLoggingPanel />}
 							{activePanel === WebviewPanels.Integrations && <IntegrationsPanel />}
 							{activePanel === WebviewPanels.Profile && <ProfilePanel />}
 							{activePanel === WebviewPanels.NewPullRequest && (
@@ -789,5 +801,6 @@ export default connect(mapStateToProps, {
 	editCodemark,
 	setNewPostEntry,
 	setIsFirstPageview,
-	setCurrentInstrumentationOptions
+	setCurrentInstrumentationOptions,
+	setCurrentPixieDynamicLoggingOptions
 })(injectIntl(SimpleStream));

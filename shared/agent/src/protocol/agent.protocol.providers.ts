@@ -971,3 +971,13 @@ export const GetNewRelicAssigneesRequestType = new RequestType<
 	void,
 	void
 >("codestream/newrelic/assignees");
+
+export interface GetNewRelicAccountsResponse {
+	accounts: { id: number; name: string }[];
+}
+export const GetNewRelicAccountsRequestType = new RequestType<
+	void,
+	GetNewRelicAccountsResponse,
+	void,
+	void
+>("codestream/newrelic/accounts");

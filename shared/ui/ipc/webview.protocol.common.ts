@@ -68,7 +68,8 @@ export enum WebviewPanels {
 	ErrorsInbox = "errorsinbox",
 	Instrumentation = "instrumentation",
 	CodeError = "code-error",
-	NewRelic = "newrelic"
+	NewRelic = "newrelic",
+	PixieDynamicLogging = "pixie-dynamic-logging"
 }
 
 // this is for mixpanel and maps the values from WebviewPanels to their
@@ -92,7 +93,8 @@ export const WebviewPanelNames = {
 	tasks: "Issues",
 	onboard: "Onboard",
 	"blame-map": "Blame Map",
-	newrelic: "Observability"
+	newrelic: "Observability",
+	"pixie-dynamic-logging": "Pixie Dynamic logging"
 };
 
 export enum WebviewModals {

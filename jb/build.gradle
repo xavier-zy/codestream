@@ -96,6 +96,7 @@ runIde {
 //    jvmArgs '-Dsun.java2d.uiScale.enabled=false'
 //    jvmArgs '-Dkotlinx.coroutines.debug=on'
 //    jvmArgs '-Dcom.codestream.recordRequests=true'
+//    jvmArgs '-Dcom.codestream.webview=/Users/mfarias/Code/codestream-private/jb/src/main/resources/webview/webview.html'
     jvmArgs '-Xmx2048m'
     jvmArgs '-Xms128m'
 }

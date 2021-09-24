@@ -120,8 +120,7 @@ export const NewRelic = React.memo((props: Props) => {
 		return {
 			newRelicIsConnected,
 			newRelicData: data,
-			hiddenPaneNodes,
-			dynamicLogs: state.dynamicLogging?.dynamicLogs
+			hiddenPaneNodes
 		};
 	}, shallowEqual);
 
@@ -129,14 +128,6 @@ export const NewRelic = React.memo((props: Props) => {
 	const [query, setQuery] = useState("");
 	const [unexpectedError, setUnexpectedError] = useState(false);
 	const messagesEndRef = useRef(null);
-
-	useEffect(() => {
-		// TODO
-		const El = document.getElementById("xyz")!;
-		if (El) {
-			El.scrollTo({ top: El.scrollHeight, behavior: "smooth" });
-		}
-	}, [derivedState.dynamicLogs?.results]);
 
 	const onSubmit = async (event: React.SyntheticEvent) => {
 		setUnexpectedError(false);
@@ -173,63 +164,6 @@ export const NewRelic = React.memo((props: Props) => {
 									<>
 										<div style={{ padding: "0 20px 0 40px" }}>
 											Click Open in IDE from New Relic One to start debugging issues.
-										</div>
-									</>
-								)}
-								<PaneNodeName
-									title={`Pixie Dynamic Logging${
-										derivedState.dynamicLogs?.status ? ` (${derivedState.dynamicLogs.status})` : ""
-									}`}
-									id="newrelic-pixie"
-									count={0}
-								></PaneNodeName>
-								{!hiddenPaneNodes["newrelic-pixie"] && (
-									<>
-										<div style={{ padding: "0 20px 0 40px" }}>
-											{derivedState.dynamicLogs && (
-												<div>
-													<table style={{ borderCollapse: "collapse" }}>
-														{derivedState.dynamicLogs &&
-															derivedState.dynamicLogs.results?.map((_, index) => {
-																return (
-																	<>
-																		{index === 0 && (
-																			<tr
-																				style={{
-																					borderTop: "1px solid #666",
-																					borderBottom: "2px solid #666"
-																				}}
-																			>
-																				{Object.keys(_).map(k => {
-																					return (
-																						<td
-																							style={{
-																								width: "25%",
-																								padding: "5px 0px 5px 0px",
-																								fontWeight: "bold"
-																							}}
-																						>
-																							{k}
-																						</td>
-																					);
-																				})}
-																			</tr>
-																		)}
-																		<tr style={{ borderBottom: "1px solid #666" }}>
-																			{Object.keys(_).map(k => {
-																				return (
-																					<td style={{ width: "25%", padding: "3px 0px 3px 0px" }}>
-																						{_[k]}
-																					</td>
-																				);
-																			})}
-																		</tr>
-																	</>
-																);
-															})}
-													</table>
-												</div>
-											)}
 										</div>
 									</>
 								)}

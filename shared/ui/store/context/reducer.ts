@@ -50,6 +50,7 @@ const initialState: ContextState = {
 	composeCodemarkActive: undefined,
 	errorsInboxOptions: undefined,
 	currentInstrumentation: undefined,
+	currentPixieDynamicLoggingOptions: undefined,
 	wantNewRelicOptions: undefined
 };
 
@@ -182,6 +183,12 @@ export function reduceContext(
 			return {
 				...state,
 				currentInstrumentation: action.payload.options
+			};
+		}
+		case ContextActionsType.SetCurrentPixieDynamicLoggingOptions: {
+			return {
+				...state,
+				currentPixieDynamicLoggingOptions: action.payload.options
 			};
 		}
 		case ContextActionsType.SetWantNewRelicOptions: {

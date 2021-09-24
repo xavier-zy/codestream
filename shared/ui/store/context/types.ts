@@ -1,3 +1,4 @@
+import { PixieDynamicLoggingFunctionParameter } from "@codestream/protocols/agent";
 import {
 	WebviewContext,
 	WebviewPanels,
@@ -43,6 +44,7 @@ export enum ContextActionsType {
 	SetCurrentPullRequest = "@context/SetCurrentPullRequest",
 	SetCurrentErrorsInboxOptions = "@context/SetCurrentErrorsInboxOptions",
 	SetCurrentInstrumentationOptions = "@context/SetCurrentInstrumentationOptions",
+	SetCurrentPixieDynamicLoggingOptions = "@context/SetCurrentPixieDynamicLoggingOptions",
 	SetCurrentPullRequestAndBranch = "@context/SetCurrentPullRequestAndBranch",
 	SetNewPullRequestOptions = "@context/SetNewPullRequestOptions",
 	SetStartWorkCard = "@context/SetStartWorkCard",
@@ -99,6 +101,12 @@ export interface ContextState extends WebviewContext {
 	pullRequestCheckoutBranch: boolean;
 	newPullRequestOptions?: { branch: NewPullRequestBranch };
 	currentInstrumentation?: any;
+	currentPixieDynamicLoggingOptions?: {
+		functionName: string;
+		functionParameters: { name: string }[];
+		functionReceiver?: string;
+		packageName: string;
+	};
 	errorsInboxOptions?: { stack?: string; customAttributes?: string; url?: string };
 
 	wantNewRelicOptions?: { repoId?: string; path?: string };

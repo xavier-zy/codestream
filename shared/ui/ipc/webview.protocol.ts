@@ -1,3 +1,4 @@
+import { PixieDynamicLoggingFunctionParameter } from "@codestream/protocols/agent";
 import { CodemarkType } from "@codestream/protocols/api";
 import { NotificationType } from "vscode-jsonrpc";
 import { Range } from "vscode-languageserver-types";
@@ -149,4 +150,15 @@ export interface InstrumentationOpen {
 
 export const InstrumentationOpenType = new NotificationType<InstrumentationOpen, void>(
 	`${IpcRoutes.Webview}/instrumentation/open`
+);
+
+export interface PixieDynamicLogging {
+	functionName: string;
+	functionParameters: PixieDynamicLoggingFunctionParameter[];
+	functionReceiver?: string;
+	packageName: string;
+}
+
+export const PixieDynamicLoggingType = new NotificationType<PixieDynamicLogging, void>(
+	`${IpcRoutes.Webview}/pixie/dynamicLogging`
 );

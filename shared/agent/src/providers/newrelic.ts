@@ -12,7 +12,9 @@ import {
 	ThirdPartyProviderConfig,
 	GetNewRelicAssigneesRequestType,
 	NewRelicUser,
-	ThirdPartyDisconnect
+	ThirdPartyDisconnect,
+	GetNewRelicAccountsRequestType,
+	GetNewRelicAccountsResponse
 } from "../protocol/agent.protocol";
 import { CSMe, CSNewRelicProviderInfo } from "../protocol/api.protocol";
 import { log, lspProvider } from "../system";
@@ -492,6 +494,30 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				}
 			);
 			return response.actor.account.pixie.pixieAccessToken;
+		} catch (e) {
+			Logger.error(e);
+			throw e;
+		}
+	}
+
+	@lspHandler(GetNewRelicAccountsRequestType)
+	@log()
+	async getAccounts(): Promise<GetNewRelicAccountsResponse> {
+		try {
+			await this.ensureConnected();
+			const response = await this.query<{
+				actor: {
+					accounts: { id: number; name: string }[];
+				};
+			}>(`{
+				actor {
+					accounts {
+						id,
+						name
+					}
+				}
+			}`);
+			return response.actor;
 		} catch (e) {
 			Logger.error(e);
 			throw e;

@@ -184,6 +184,9 @@ export const setCurrentErrorsInboxOptions = (
 export const setCurrentInstrumentationOptions = (options?: any) =>
 	action(ContextActionsType.SetCurrentInstrumentationOptions, { options });
 
+export const setCurrentPixieDynamicLoggingOptions = (options?: any) =>
+	action(ContextActionsType.SetCurrentPixieDynamicLoggingOptions, { options });
+
 export const setWantNewRelicOptions = (
 	projectType: RepoProjectType,
 	repoId?: string,
@@ -199,6 +202,9 @@ export const clearCurrentErrorsInboxOptions = () =>
 
 export const clearCurrentInstrumentationOptions = () =>
 	action(ContextActionsType.SetCurrentInstrumentationOptions, { options: {} });
+
+export const clearCurrentPixieDynamicLoggingOptions = () =>
+	action(ContextActionsType.SetCurrentPixieDynamicLoggingOptions, { options: {} });
 
 export const clearWantNewRelicOptions = () => action(ContextActionsType.SetWantNewRelicOptions, {});
 

@@ -1,6 +1,7 @@
 package com.codestream.protocols.webview
 
 import com.codestream.protocols.CodemarkType
+import com.codestream.protocols.agent.PixieDynamicLoggingFunctionParameter
 import org.eclipse.lsp4j.Range
 
 interface WebViewNotification {
@@ -135,4 +136,15 @@ class DidChangeApiVersionCompatibility : WebViewNotification {
 
 class DidLogout() : WebViewNotification {
     override fun getMethod(): String = "webview/didLogout"
+}
+
+object PixieNotifications {
+    class DynamicLogging(
+        val functionName: String,
+        val functionParameters: List<PixieDynamicLoggingFunctionParameter>,
+        val functionReceiver: String?,
+        val packageName: String
+    ) : WebViewNotification {
+        override fun getMethod(): String = "webview/pixie/dynamicLogging"
+    }
 }

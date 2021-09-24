@@ -4,7 +4,6 @@ import { NotificationType, RequestType } from "vscode-languageserver-protocol";
 
 export interface PixieDynamicLoggingFunctionParameter {
 	name: string;
-	type: string;
 }
 
 export interface PixieDynamicLoggingRequest {

@@ -506,7 +506,7 @@ function listenForEvents(store) {
 							);
 						} else {
 							console.error("missing apiKey, opening panel");
-							store.dispatch(openPanel(WebviewPanels.NewRelic));
+							// store.dispatch(openPanel(WebviewPanels.Observability));
 						}
 						break;
 					}

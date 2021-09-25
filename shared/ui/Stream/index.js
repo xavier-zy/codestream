@@ -769,9 +769,8 @@ const mapStateToProps = state => {
 	// const { scmInfo } = state.editorContext;
 	const team = state.teams[state.context.currentTeamId];
 	const acceptedPrereleaseTOS =
-		preferences.acceptedPrereleaseTOS || team.settings
-			? team.settings.acceptedPrereleaseTOS
-			: false;
+		preferences.acceptedPrereleaseTOS ||
+		(team.settings ? team.settings.acceptedPrereleaseTOS : false);
 
 	// console.warn("COMP: ", companies);
 	return {

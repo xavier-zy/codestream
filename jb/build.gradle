@@ -6,7 +6,7 @@ plugins {
 }
 
 group "com.codestream"
-version "11.0.16"
+version "11.0.17"
 
 sourceCompatibility = 1.8
 
@@ -147,6 +147,7 @@ copyDebugAgent.dependsOn buildDebugDeps
 
 task buildDebugDependencies {}
 buildDebugDependencies.dependsOn buildDebugDeps, copyDebugAgent
+
 
 
 

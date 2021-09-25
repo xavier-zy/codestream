@@ -22,7 +22,7 @@ import cx from "classnames";
 import { getConnectedSupportedPullRequestHosts } from "../store/providers/reducer";
 import { getPreferences } from "../store/users/reducer";
 import { getRepos } from "../store/repos/reducer";
-import { NewRelic } from "./NewRelic";
+import { Observability } from "./Observability";
 
 const PADDING_TOP = 25;
 
@@ -74,7 +74,7 @@ export const AVAILABLE_PANES = [
 	WebviewPanels.OpenPullRequests,
 	WebviewPanels.OpenReviews,
 	WebviewPanels.CodemarksForFile,
-	WebviewPanels.NewRelic,
+	WebviewPanels.Observability,
 	WebviewPanels.WorkInProgress,
 	WebviewPanels.Tasks,
 	WebviewPanels.NewRelic
@@ -366,8 +366,8 @@ export const Sidebar = React.memo(function Sidebar() {
 				return <IssueDropdown paneState={paneState} />;
 			case WebviewPanels.CodemarksForFile:
 				return <Codemarks paneState={paneState} />;
-			case WebviewPanels.NewRelic:
-				return <NewRelic paneState={paneState} />;
+			case WebviewPanels.Observability:
+				return <Observability paneState={paneState} />;
 		}
 		return null;
 	};

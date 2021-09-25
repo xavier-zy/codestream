@@ -6,15 +6,8 @@ import { isCurrentUserInternal } from "../store/users/reducer";
 import Button from "./Button";
 import { PROVIDER_MAPPINGS } from "./CrossPostIssueControls/types";
 import { Link } from "./Link";
-import { WebviewPanels } from "../ipc/webview.protocol.common";
 import { openPanel } from "./actions";
-import { IntegrationButtons, Provider } from "./IntegrationsPanel";
 import Icon from "./Icon";
-import {
-	ReposScm,
-	RepoProjectType,
-	GetReposScmRequestType
-} from "../protocols/agent/agent.protocol.scm";
 import { HostApi } from "../webview-api";
 
 class ConfigureNewRelic extends Component {
@@ -122,33 +115,41 @@ class ConfigureNewRelic extends Component {
 					<div id="controls">
 						<div id="token-controls" className="control-group">
 							<div className="control-group">
-								<label>
-									Already have a {providerName} User API Key? {this.renderApiKeyHelp()}
-								</label>
-								<input
-									id="configure-provider-initial-input"
-									className="input-text control"
-									style={{ width: "294px" }}
-									type="text"
-									name="apiKey"
-									tabIndex={1}
-									autoFocus
-									value={this.state.apiKey}
-									onChange={e => this.setState({ apiKey: e.target.value })}
-									onBlur={this.onBlurApiKey}
-									required={this.state.apiKeyTouched || this.state.formTouched}
-								/>
-								<Button
-									id="save-button"
-									className="control-button"
-									style={{ padding: "2px 10px", marginLeft: "10px" }}
-									tabIndex={2}
-									type="submit"
-									onClick={this.onSubmit}
-									loading={this.state.loading}
+								<label>Already have a {providerName} User API Key?</label>
+								<div
+									style={{
+										width: "100%",
+										display: "flex",
+										alignItems: "stretch"
+									}}
 								>
-									Connect
-								</Button>
+									<div style={{ position: "relative", flexGrow: 10 }}>
+										<input
+											id="configure-provider-initial-input"
+											className="input-text control"
+											type="text"
+											name="apiKey"
+											tabIndex={1}
+											autoFocus
+											value={this.state.apiKey}
+											onChange={e => this.setState({ apiKey: e.target.value })}
+											onBlur={this.onBlurApiKey}
+											required={this.state.apiKeyTouched || this.state.formTouched}
+										/>
+										{this.renderApiKeyHelp()}
+									</div>
+									<Button
+										id="save-button"
+										className="control-button"
+										style={{ padding: "2px 10px", marginLeft: "10px" }}
+										tabIndex={2}
+										type="submit"
+										onClick={this.onSubmit}
+										loading={this.state.loading}
+									>
+										Connect
+									</Button>
+								</div>
 								<p>
 									Don't have an API key?{" "}
 									<Link href="https://docs.newrelic.com/docs/apis/intro-apis/new-relic-api-keys/#user-api-key">
@@ -159,12 +160,10 @@ class ConfigureNewRelic extends Component {
 									<>
 										<div className="control-group" style={{ margin: "15px 0px" }}>
 											<input
-												id="configure-provider-initial-input"
 												className="input-text control"
 												type="text"
 												name="apiUrl"
 												tabIndex={1}
-												autoFocus
 												value={this.state.apiUrl}
 												onChange={e => this.setState({ apiUrl: e.target.value })}
 											/>

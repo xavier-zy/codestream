@@ -68,7 +68,7 @@ export enum WebviewPanels {
 	ErrorsInbox = "errorsinbox",
 	Instrumentation = "instrumentation",
 	CodeError = "code-error",
-	NewRelic = "newrelic",
+	Observability = "observability",
 	PixieDynamicLogging = "pixie-dynamic-logging"
 }
 
@@ -94,6 +94,7 @@ export const WebviewPanelNames = {
 	onboard: "Onboard",
 	"blame-map": "Blame Map",
 	newrelic: "Observability",
+	observability: "Observability",
 	"pixie-dynamic-logging": "Pixie Dynamic logging"
 };
 

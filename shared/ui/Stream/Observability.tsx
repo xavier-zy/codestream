@@ -9,7 +9,7 @@ import { TextInput } from "../Authentication/TextInput";
 import { Button } from "../src/components/Button";
 import { FormattedMessage } from "react-intl";
 import { IntegrationButtons, Provider } from "./IntegrationsPanel";
-import { configureAndConnectProvider } from "../store/providers/actions";
+import { configureAndConnectProvider, disconnectProvider } from "../store/providers/actions";
 import Icon from "./Icon";
 import Tooltip from "./Tooltip";
 import { setUserPreference } from "./actions";
@@ -18,6 +18,7 @@ import { HostApi } from "../webview-api";
 import { OpenUrlRequestType } from "@codestream/protocols/webview";
 import Timestamp from "./Timestamp";
 import styled from "styled-components";
+import { InlineMenu } from "../src/components/controls/InlineMenu";
 
 interface Props {
 	paneState: PaneState;
@@ -109,7 +110,7 @@ const ErrorRow = props => {
 		</Row>
 	);
 };
-export const NewRelic = React.memo((props: Props) => {
+export const Observability = React.memo((props: Props) => {
 	const dispatch = useDispatch();
 	const derivedState = useSelector((state: CodeStreamState) => {
 		const { providers = {}, newRelicData, preferences } = state;
@@ -143,11 +144,32 @@ export const NewRelic = React.memo((props: Props) => {
 		setLoading(false);
 	};
 
+	const settingsMenuItems = [
+		{
+			label: "Disconnect",
+			key: "disconnect",
+			action: () => dispatch(disconnectProvider("newrelic*com", "Sidebar"))
+		}
+	];
+
 	const { hiddenPaneNodes } = derivedState;
 	return (
 		<Root id="xyz" ref={messagesEndRef}>
-			<PaneHeader title="Observability" id={WebviewPanels.NewRelic}>
-				&nbsp;
+			<PaneHeader title="Observability" id={WebviewPanels.Observability}>
+				{derivedState.newRelicIsConnected ? (
+					<InlineMenu
+						title="Connected to New Relic"
+						key="settings-menu"
+						className="subtle no-padding"
+						noFocusOnSelect
+						noChevronDown
+						items={settingsMenuItems}
+					>
+						<Icon name="gear" title="Settings" placement="bottom" delay={1} />
+					</InlineMenu>
+				) : (
+					<>&nbsp;</>
+				)}
 			</PaneHeader>
 			{props.paneState !== PaneState.Collapsed && (
 				<PaneBody>

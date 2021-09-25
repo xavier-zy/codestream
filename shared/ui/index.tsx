@@ -506,7 +506,7 @@ function listenForEvents(store) {
 							);
 						} else {
 							console.error("missing apiKey, opening panel");
-							store.dispatch(openPanel("configure-provider-newrelic*com"));
+							store.dispatch(openPanel("configure-provider-newrelic-newrelic*com"));
 						}
 						break;
 					}

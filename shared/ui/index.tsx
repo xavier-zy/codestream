@@ -59,7 +59,7 @@ import { fetchCodemarks, openPanel } from "./Stream/actions";
 import { ContextState } from "./store/context/types";
 import { CodemarksState } from "./store/codemarks/types";
 import { EditorContextState } from "./store/editorContext/types";
-import { updateProviders } from "./store/providers/actions";
+import { configureProvider, updateProviders } from "./store/providers/actions";
 import { isConnected } from "./store/providers/reducer";
 import { apiCapabilitiesUpdated } from "./store/apiVersioning/actions";
 import { bootstrap, reset } from "./store/actions";
@@ -496,6 +496,20 @@ function listenForEvents(store) {
 			}
 			case RouteControllerType.NewRelic: {
 				switch (route.action) {
+					case "connect": {
+						const definedQuery = route as RouteWithQuery<{
+							apiKey: string;
+						}>;
+						if (definedQuery.query.apiKey) {
+							store.dispatch(
+								configureProvider("newrelic*com", { apiKey: definedQuery.query.apiKey }, true)
+							);
+						} else {
+							console.error("missing apiKey, opening panel");
+							store.dispatch(openPanel(WebviewPanels.NewRelic));
+						}
+						break;
+					}
 					case "errorsinbox": {
 						store.dispatch(closeAllPanels());
 

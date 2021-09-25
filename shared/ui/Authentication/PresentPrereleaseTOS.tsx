@@ -9,6 +9,7 @@ import { Checkbox } from "../src/components/Checkbox";
 import { Link } from "../Stream/Link";
 import { UpdateTeamSettingsRequestType } from "@codestream/protocols/agent";
 import { HostApi } from "../webview-api";
+import { setUserPreference } from "../Stream/actions";
 
 const Root = styled.div`
 	display: flex;
@@ -92,8 +93,14 @@ const DownloadLink = styled.div`
 `;
 
 export const PresentPrereleaseTOS = () => {
+	const dispatch = useDispatch();
 	const derivedState = useSelector((state: CodeStreamState) => {
-		return { team: state.teams[state.context.currentTeamId] };
+		const { teams, context, session, users } = state;
+		const team = teams[context.currentTeamId];
+		const user = users[session.userId!];
+		const currentUserIsAdmin = (team.adminIds || []).includes(user.id);
+
+		return { currentUserIsAdmin, team };
 	});
 
 	const [inAgreement, setInAgreement] = React.useState(false);
@@ -101,10 +108,15 @@ export const PresentPrereleaseTOS = () => {
 
 	const accept = async (event: React.SyntheticEvent) => {
 		setIsLoading(true);
-		await HostApi.instance.send(UpdateTeamSettingsRequestType, {
-			teamId: derivedState.team.id,
-			settings: { acceptedPrereleaseTOS: true }
-		});
+
+		if (derivedState.currentUserIsAdmin) {
+			await HostApi.instance.send(UpdateTeamSettingsRequestType, {
+				teamId: derivedState.team.id,
+				settings: { acceptedPrereleaseTOS: true }
+			});
+		} else {
+			dispatch(setUserPreference(["acceptedPrereleaseTOS"], true));
+		}
 
 		setIsLoading(false);
 	};

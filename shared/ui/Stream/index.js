@@ -757,7 +757,7 @@ export class SimpleStream extends PureComponent {
  * @param {Object} state.teams
  **/
 const mapStateToProps = state => {
-	const { configs, context, streams } = state;
+	const { configs, context, streams, preferences } = state;
 
 	// FIXME -- eventually we'll allow the user to switch to other streams, like DMs and channels
 	const teamStream = getStreamForTeam(streams, context.currentTeamId) || {};
@@ -768,6 +768,10 @@ const mapStateToProps = state => {
 	// rely on it here
 	// const { scmInfo } = state.editorContext;
 	const team = state.teams[state.context.currentTeamId];
+	const acceptedPrereleaseTOS =
+		preferences.acceptedPrereleaseTOS || team.settings
+			? team.settings.acceptedPrereleaseTOS
+			: false;
 
 	// console.warn("COMP: ", companies);
 	return {
@@ -788,7 +792,7 @@ const mapStateToProps = state => {
 		composeCodemarkActive: context.composeCodemarkActive,
 		isFirstPageview: context.isFirstPageview,
 		onboardingTestGroup: getTestGroup(state, "onboard-edu"),
-		acceptedPrereleaseTOS: team.settings ? team.settings.acceptedPrereleaseTOS : false,
+		acceptedPrereleaseTOS,
 		pendingProtocolHandlerUrl: context.pendingProtocolHandlerUrl
 	};
 };

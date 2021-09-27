@@ -532,11 +532,14 @@ function listenForEvents(store) {
 							break;
 						}
 
-						if (definedQuery.query.tag === "$TAG_NAME") {
+						if (definedQuery.query.tag === "$TAG_NAME" || definedQuery.query.tag === "null") {
 							definedQuery.query.tag = "";
 						}
 
-						if (definedQuery.query.commit === "$GIT_COMMIT") {
+						if (
+							definedQuery.query.commit === "$GIT_COMMIT" ||
+							definedQuery.query.commit === "null"
+						) {
 							definedQuery.query.commit = "";
 						}
 

@@ -35,7 +35,9 @@ import {
 	ResolveStackTraceResponse,
 	MatchReposRequestType,
 	MatchReposResponse,
-	NewRelicErrorGroup
+	NewRelicErrorGroup,
+	NormalizeUrlRequestType,
+	NormalizeUrlResponse
 } from "@codestream/protocols/agent";
 import { HostApi } from "..";
 import { CSCodeError } from "@codestream/protocols/api";
@@ -353,10 +355,21 @@ export function CodeErrorNav(props: Props) {
 				return;
 			}
 
+			const normalizationResponse = (await HostApi.instance.send(NormalizeUrlRequestType, {
+				url: targetRemote
+			})) as NormalizeUrlResponse;
+			if (!normalizationResponse || !normalizationResponse.normalizedUrl) {
+				setError({
+					title: "Error",
+					description: `Could not find a matching repo for the remote ${targetRemote}`
+				});
+				return;
+			}
+
 			const reposResponse = (await HostApi.instance.send(MatchReposRequestType, {
 				repos: [
 					{
-						remotes: [targetRemote],
+						remotes: [normalizationResponse.normalizedUrl],
 						knownCommitHashes: commit ? [commit] : []
 					}
 				]

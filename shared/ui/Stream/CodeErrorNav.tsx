@@ -10,6 +10,7 @@ import {
 	fetchCodeError,
 	fetchErrorGroup,
 	NewCodeErrorAttributes,
+	PENDING_CODE_ERROR_ID_PREFIX,
 	resolveStackTrace,
 	setErrorGroup
 } from "@codestream/webview/store/codeErrors/actions";
@@ -391,41 +392,45 @@ export function CodeErrorNav(props: Props) {
 				errorGroupResult.errorGroup?.errorTrace!?.stackTrace.map(_ => _.formatted)
 			)) as ResolveStackTraceResponse;
 
-			await dispatch(
-				addCodeErrors([
-					{
-						accountId: errorGroupResult.accountId,
-						id: derivedState.currentCodeErrorId!,
-						createdAt: new Date().getTime(),
-						modifiedAt: new Date().getTime(),
-						// these don't matter
-						assignees: [],
-						teamId: "",
-						streamId: "",
-						postId: "",
-						fileStreamIds: [],
-						status: "open",
-						numReplies: 0,
-						lastActivityAt: 0,
-						creatorId: "",
-						objectId: errorGroupGuid,
-						objectType: "ErrorGroup",
-						title: errorGroupResult.errorGroup?.title || "",
-						text: errorGroupResult.errorGroup?.message || undefined,
-						// storing the permanently parsed stack info
-						stackTraces: stackInfo.error
-							? [{ ...stackInfo, lines: [] }]
-							: [stackInfo.parsedStackInfo!],
-						objectInfo: {
-							repoId: repo.id,
-							remote: targetRemote,
-							accountId: errorGroupResult.accountId.toString(),
-							entityName: errorGroupResult?.errorGroup?.entityName || ""
+			if (
+				derivedState.currentCodeErrorId &&
+				derivedState.currentCodeErrorId?.indexOf(PENDING_CODE_ERROR_ID_PREFIX) === 0
+			) {
+				await dispatch(
+					addCodeErrors([
+						{
+							accountId: errorGroupResult.accountId,
+							id: derivedState.currentCodeErrorId!,
+							createdAt: new Date().getTime(),
+							modifiedAt: new Date().getTime(),
+							// these don't matter
+							assignees: [],
+							teamId: "",
+							streamId: "",
+							postId: "",
+							fileStreamIds: [],
+							status: "open",
+							numReplies: 0,
+							lastActivityAt: 0,
+							creatorId: "",
+							objectId: errorGroupGuid,
+							objectType: "ErrorGroup",
+							title: errorGroupResult.errorGroup?.title || "",
+							text: errorGroupResult.errorGroup?.message || undefined,
+							// storing the permanently parsed stack info
+							stackTraces: stackInfo.error
+								? [{ ...stackInfo, lines: [] }]
+								: [stackInfo.parsedStackInfo!],
+							objectInfo: {
+								repoId: repo.id,
+								remote: targetRemote,
+								accountId: errorGroupResult.accountId.toString(),
+								entityName: errorGroupResult?.errorGroup?.entityName || ""
+							}
 						}
-					}
-				])
-			);
-
+					])
+				);
+			}
 			HostApi.instance.track("Error Report Opened", {
 				"Error Group ID": errorGroupResult?.errorGroup?.guid,
 				"NR Organization ID": "",

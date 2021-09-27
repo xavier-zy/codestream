@@ -43,6 +43,8 @@ export const bootstrapCodeErrors = () => async dispatch => {
 export const addCodeErrors = (codeErrors: CSCodeError[]) =>
 	action(CodeErrorsActionsTypes.AddCodeErrors, codeErrors);
 
+export const removeCodeError = (id: string) => action(CodeErrorsActionsTypes.Delete, id);
+
 export const saveCodeErrors = (codeErrors: CSCodeError[]) =>
 	action(CodeErrorsActionsTypes.SaveCodeErrors, codeErrors);
 
@@ -382,7 +384,7 @@ export const setErrorGroup = (errorGroupGuid: string, data?: any) => async (
 	}
 };
 
-const PENDING_CODE_ERROR_ID_PREFIX = "PENDING";
+export const PENDING_CODE_ERROR_ID_PREFIX = "PENDING";
 export const PENDING_CODE_ERROR_ID_FORMAT = id => `${PENDING_CODE_ERROR_ID_PREFIX}-${id}`;
 
 /**
@@ -428,6 +430,9 @@ export const upgradePendingCodeError = (
 				"NR Account ID": newCodeError.accountId,
 				Trigger: source
 			});
+
+			// remove the pending codeError
+			dispatch(removeCodeError(codeErrorId!));
 
 			dispatch(
 				setCurrentCodeError(response.codeError.id, {

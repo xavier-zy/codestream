@@ -510,4 +510,28 @@ export namespace Strings {
 
 		return str;
 	}
+	/**
+	 * Returns an array of partial paths from a file system path
+	 *
+	 * @export
+	 * @param {string} path (/users/foo/bar/foo.js)
+	 * @param {string} [separator="/"]
+	 * @return {*} [users/foo/bar/foo.js, foo/bar/foo.js, bar/foo.js, foo.js]
+	 */
+	export function asPartialPaths(path: string, separator: string = "/"): string[] {
+		if (!path) return [];
+
+		if (path.indexOf(separator) === -1) return [path];
+		if (path[0] === separator) path = path.substr(1);
+
+		const split = path.split(separator);
+		const results = [];
+		let targetArray = split;
+		while (targetArray.length) {
+			results.push(targetArray.join(separator));
+			targetArray = targetArray.slice(1);
+		}
+
+		return results;
+	}
 }

@@ -252,6 +252,21 @@ export const AgentOpenUrlRequestType = new RequestType<AgentOpenUrlRequest, void
 	"codestream/url/open"
 );
 
+export interface AgentFileSearchRequest {
+	path: string;
+}
+
+export interface AgentFileSearchResponse {
+	files: string[];
+}
+
+export const AgentFileSearchRequestType = new RequestType<
+	AgentFileSearchRequest,
+	AgentFileSearchResponse,
+	void,
+	void
+>("codestream/files/search");
+
 export interface UIStateRequest {
 	context?: {
 		panelStack?: string[];

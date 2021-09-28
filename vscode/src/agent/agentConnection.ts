@@ -102,7 +102,9 @@ import {
 	UserDidCommitNotification,
 	DidSetEnvironmentNotificationType,
 	DidChangeProcessBufferNotification,
-	DidChangeProcessBufferNotificationType
+	DidChangeProcessBufferNotificationType,
+	AgentFileSearchRequest,
+	AgentFileSearchRequestType
 } from "@codestream/protocols/agent";
 import {
 	ChannelServiceType,
@@ -1141,8 +1143,23 @@ export class CodeStreamAgentConnection implements Disposable {
 		this._client.onNotification(DidSetEnvironmentNotificationType, e =>
 			this._onDidSetEnvironment.fire(e)
 		);
-
 		this._client.onRequest(AgentOpenUrlRequestType, e => this._onOpenUrl.fire(e));
+		this._client.onRequest(AgentFileSearchRequestType, async e => {
+			try {
+				const files = await workspace.findFiles(`**/${e.path}`);
+				return {
+					files: files.map(_ => _.fsPath)
+				};
+			} catch (ex) {
+				Logger.warn("AgentFileSearchRequestType", {
+					path: e?.path,
+					error: ex
+				});
+				return {
+					files: []
+				};
+			}
+		});
 	}
 
 	private async stop(): Promise<void> {

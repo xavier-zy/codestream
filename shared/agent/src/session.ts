@@ -3,7 +3,7 @@
 import { Agent as HttpAgent } from "http";
 import { Agent as HttpsAgent } from "https";
 import HttpsProxyAgent from "https-proxy-agent";
-import { isEqual } from "lodash-es";
+import { isEqual, uniq } from "lodash-es";
 import * as path from "path";
 import * as url from "url";
 import {
@@ -35,6 +35,7 @@ import { DocumentEventHandler } from "./documentEventHandler";
 import { GitRepository } from "./git/models/repository";
 import { Logger } from "./logger";
 import {
+	AgentFileSearchRequestType,
 	ApiRequestType,
 	ApiVersionCompatibility,
 	BaseAgentOptions,
@@ -100,7 +101,7 @@ import {
 	CSUser,
 	LoginResult
 } from "./protocol/api.protocol";
-import { log, memoize, registerDecoratedHandlers, registerProviders } from "./system";
+import { log, memoize, registerDecoratedHandlers, registerProviders, Strings } from "./system";
 import { testGroups } from "./testGroups";
 
 const envRegex = /https?:\/\/((?:(\w+)-)?api|localhost|(\w+))\.codestream\.(?:us|com)(?::\d+$)?/i;
@@ -1428,6 +1429,41 @@ export class CodeStreamSession {
 		}
 		if (this.isOnPrem && this.apiCapabilities.echoes) {
 			this.listenForEchoes();
+		}
+	}
+
+	async onFileSearch(path: string) {
+		if (!path) return { files: [] };
+
+		// reverse to start with the shortest path (aka least specific)
+		const paths = Strings.asPartialPaths(path).reverse();
+		let files: string[] = [];
+		try {
+			for (const path of paths) {
+				const fileSearchResponse = (
+					await this.agent.sendRequest(AgentFileSearchRequestType, { path: path })
+				).files;
+				if (!fileSearchResponse.length) {
+					// once there are no more results, just stop
+					break;
+				}
+				files = files.concat(fileSearchResponse);
+			}
+			// put the most specific files found first (aka greatest number of separators)
+			files = uniq(files).reverse();
+			if (files.length) {
+				Logger.log(`onFileSearch ${path} found ${files.length} file(s)`, {
+					files: files
+				});
+			}
+			return {
+				files: files
+			};
+		} catch (ex) {
+			Logger.warn(`Could not find file[s] for ${path}`, {
+				error: ex
+			});
+			return { files: [] };
 		}
 	}
 

@@ -201,17 +201,12 @@ export class NRManager {
 		parsedStackInfo.sha = sha;
 		parsedStackInfo.traceId = traceId;
 
-		let allFilePaths = undefined;
-		if (matchingRepoPath) {
-			allFilePaths = await this.getAllFiles(matchingRepoPath);
-		}
-
 		const resolvedStackInfo: CSStackTraceInfo = { ...parsedStackInfo, lines: [] };
 		for (const line of parsedStackInfo.lines) {
 			const resolvedLine =
-				line.error || !matchingRepoPath || !allFilePaths
+				line.error || !matchingRepoPath
 					? { ...line }
-					: await this.resolveStackTraceLine(line, sha, allFilePaths, matchingRepoPath);
+					: await this.resolveStackTraceLine(line, sha, matchingRepoPath);
 			resolvedStackInfo.lines.push(resolvedLine);
 			line.fileRelativePath = resolvedLine.fileRelativePath;
 		}
@@ -396,50 +391,18 @@ export class NRManager {
 		return bestMatchingFilePath;
 	}
 
-	// private async getMatchingRepo(repoRemote: string) {
-	// 	const { git, repositoryMappings } = SessionContainer.instance();
-	// 	const gitRepos = await git.getRepositories();
-	// 	let matchingRepo = undefined;
-	// 	const normalizedRepoRemote = await repositoryMappings.normalizeUrl({ url: repoRemote });
-	// 	if (normalizedRepoRemote && normalizedRepoRemote.normalizedUrl) {
-	// 		repoRemote = normalizedRepoRemote.normalizedUrl;
-	// 	}
-	// 	for (const gitRepo of gitRepos) {
-	// 		const remotes = await git.getRepoRemotes(gitRepo.path);
-	// 		for (const remote of remotes) {
-	// 			let compareRepo = repoRemote.toLowerCase();
-	// 			if (!compareRepo.startsWith("ssh://")) {
-	// 				compareRepo = `ssh://${compareRepo}`;
-	// 			}
-	// 			if (!compareRepo.endsWith(".git")) {
-	// 				compareRepo += ".git";
-	// 			}
-	// 			let remoteUri = remote.uri.toString().toLowerCase();
-	// 			if (!remoteUri.endsWith(".git")) {
-	// 				remoteUri += ".git";
-	// 			}
-	// 			Logger.log(`comparing remote ${remoteUri} to ${compareRepo}`);
-	// 			if (remoteUri === compareRepo) {
-	// 				matchingRepo = gitRepo;
-	// 				break;
-	// 			}
-	// 			let normalized = await repositoryMappings.normalizeUrl({ url: remoteUri });
-	// 			if (normalized && normalized.normalizedUrl === repoRemote) {
-	// 				matchingRepo = gitRepo;
-	// 				break;
-	// 			}
-	// 		}
-	// 	}
-	// 	return matchingRepo;
-	// }
-
 	private async resolveStackTraceLine(
 		line: CSStackTraceLine,
 		sha: string,
-		allFilePaths: string[],
 		matchingRepoPath: string
 	): Promise<CSStackTraceLine> {
-		const bestMatchingFilePath = NRManager.getBestMatchingPath(line.fileFullPath!, allFilePaths);
+		const fileSearchResponse = await SessionContainer.instance().session.onFileSearch(
+			line.fileFullPath || ""
+		);
+		const bestMatchingFilePath = NRManager.getBestMatchingPath(
+			line.fileFullPath!,
+			fileSearchResponse.files
+		);
 		if (!bestMatchingFilePath)
 			return { error: `Unable to find matching file for path ${line.fileFullPath!}` };
 
@@ -544,25 +507,5 @@ export class NRManager {
 			line: currentBufferLocation.lineStart,
 			column: currentBufferLocation.colStart
 		};
-	}
-
-	private async getAllFiles(
-		dirPath: string,
-		arrayOfFiles?: string[] | undefined
-	): Promise<string[]> {
-		arrayOfFiles = arrayOfFiles || [];
-		const files = await fsPromises.readdir(dirPath);
-		for (const file of files) {
-			// For demo purposes!!!
-			if (file !== "node_modules" && file !== ".git") {
-				const filePath = path.join(dirPath, file);
-				if ((await fsPromises.stat(filePath)).isDirectory()) {
-					arrayOfFiles = await this.getAllFiles(filePath, arrayOfFiles);
-				} else {
-					arrayOfFiles!.push(filePath);
-				}
-			}
-		}
-		return arrayOfFiles;
 	}
 }

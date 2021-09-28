@@ -53,4 +53,29 @@ describe("strings.ts", () => {
 			expect(Strings.trimStart("./foo", ".")).to.equal("/foo");
 		});
 	});
+
+	describe("asPartialPaths", () => {
+		it("good", () => {
+			expect(Strings.asPartialPaths("main.js")).to.deep.equal(["main.js"]);
+			expect(Strings.asPartialPaths("foo.bar.js")).to.deep.equal(["foo.bar.js"]);
+			expect(Strings.asPartialPaths("/users/test/foo/bar/main.js")).to.deep.equal([
+				"users/test/foo/bar/main.js",
+				"test/foo/bar/main.js",
+				"foo/bar/main.js",
+				"bar/main.js",
+				"main.js"
+			]);
+			expect(Strings.asPartialPaths("/users/test/foo/bar/main.js")).to.deep.equal([
+				"users/test/foo/bar/main.js",
+				"test/foo/bar/main.js",
+				"foo/bar/main.js",
+				"bar/main.js",
+				"main.js"
+			]);
+		});
+
+		it("bad", () => {
+			expect(Strings.asPartialPaths("")).to.deep.equal([]);
+		});
+	});
 });

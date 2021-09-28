@@ -121,7 +121,8 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		// could be cached in the _client instance.
 		this._client.setHeaders({
 			"Api-Key": this.accessToken!,
-			"Content-Type": "application/json"
+			"Content-Type": "application/json",
+			"NewRelic-Requesting-Services": "CodeStream"
 		});
 
 		return this._client;

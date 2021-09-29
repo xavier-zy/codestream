@@ -475,8 +475,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 	}
 
 	@log()
-	async getPixieToken() {
-		const accountId = this._providerInfo?.data?.accountId || 1;
+	async getPixieToken(accountId: number) {
 		try {
 			await this.ensureConnected();
 			const response = await this.query(

@@ -9,16 +9,24 @@ import * as protobuf from "protobufjs";
 import { SessionContainer } from "../container";
 import { Logger } from "../logger";
 import {
+	PixieCluster,
 	PixieDynamicLoggingCancelRequest,
 	PixieDynamicLoggingReponse,
 	PixieDynamicLoggingRequest,
 	PixieDynamicLoggingRequestType,
-	PixieDynamicLoggingResultNotification
+	PixieDynamicLoggingResultNotification,
+	PixieGetClustersRequest,
+	PixieGetClustersRequestType,
+	PixieGetClustersResponse,
+	PixieGetNamespacesRequest,
+	PixieGetNamespacesRequestType,
+	PixieGetNamespacesResponse, PixieGetPodsRequest, PixieGetPodsRequestType, PixieGetPodsResponse, PixiePod
 } from "../protocol/agent.protocol";
 import { NewRelicProvider } from "../providers/newrelic";
 import { CodeStreamSession } from "../session";
-import { getProvider } from "../system";
+import { getProvider, Strings } from "../system";
 import { lsp, lspHandler } from "../system/decorators/lsp";
+import padLeft = Strings.padLeft;
 
 // see: https://www.npmjs.com/package/protobufjs
 protobuf.util.Long = Long;
@@ -52,15 +60,8 @@ export class PixieManager {
 
 	private _dynamicLoggingActiveRequests = new Set<string>();
 
-	@lspHandler(PixieDynamicLoggingRequestType)
-	async dynamicLogging(request: PixieDynamicLoggingRequest): Promise<PixieDynamicLoggingReponse> {
-		const { session } = SessionContainer.instance();
-		const limitRows = request.limitRows || 50;
-		const limitSeconds = request.limitSeconds || 60;
-		const now = Date.now();
-		const expiration = now + limitSeconds * 1000;
-		const id = now.toString();
-
+	@lspHandler(PixieGetClustersRequestType)
+	async getClusters(request: PixieGetClustersRequest): Promise<PixieGetClustersResponse> {
 		const cloudApiPath = path.join(
 			os.homedir(),
 			".codestream",
@@ -72,43 +73,141 @@ export class PixieManager {
 		const cloudApiPackage = grpcLibrary.loadPackageDefinition(cloudApiProto);
 		const cloudApi = cloudApiPackage.px as any;
 
-		const vizierApiPath = path.join(
-			os.homedir(),
-			".codestream",
-			"protobuf",
-			"pixie",
-			"vizierapi.proto"
-		);
-		const vizierApiProto = await grpcProtoLoader.load(vizierApiPath);
-		const vizierApiPackage = grpcLibrary.loadPackageDefinition(vizierApiProto);
-		const vizierApi = vizierApiPackage.px as any;
-
-		// const clusterInfo = new cloudApi.cloudapi.VizierClusterInfo(
-		// 	"work.withpixie.ai",
-		// 	this.buildCredentials()
-		// );
-		// const response = clusterInfo.getClusterInfo({}, function(err: any, response: any) {
-		// 	console.log(err);
-		// 	console.log(response);
-		// });
-
-		// const response2 = clusterInfo.getClusterInfo(
-		// 	{
-		// 		id: {
-		// 			lowBits: Long.fromString("0x8dc079d73c05bc7d", false, 16),
-		// 			highBits: Long.fromString("0x0177fa3831de40f0", false, 16)
-		// 		}
-		// 	},
-		// 	function(err: any, response: any) {
-		// 		console.log(err);
-		// 		console.log(response);
-		// 	}
-		// );
-
-		const vizier = new vizierApi.api.vizierpb.VizierService(
+		const clusterInfo = new cloudApi.cloudapi.VizierClusterInfo(
 			"work.withpixie.ai",
-			await this.buildCredentials()
+			await this.buildCredentials(request.accountId)
 		);
+
+		return new Promise<PixieGetClustersResponse>((resolve, reject) => {
+			clusterInfo.getClusterInfo({}, function(err: any, response: { clusters: PixieCluster[] }) {
+				if (err) {
+					Logger.error(err.toString());
+				}
+				resolve({
+					clusters: response.clusters.map(_ => {
+						const id = {
+							high: newLong(_.id!.highBits),
+							low: newLong(_.id!.lowBits)
+						};
+						const clusterId = formatId(id);
+						return {
+							clusterId,
+							clusterName: _.clusterName
+						};
+					})
+				});
+			});
+		});
+	}
+
+	@lspHandler(PixieGetNamespacesRequestType)
+	async getNamespaces(request: PixieGetNamespacesRequest): Promise<PixieGetNamespacesResponse> {
+		const vizier = await this.getVizierService(request.accountId);
+
+		const script = `
+import px
+df = px.DataFrame(table='process_stats', start_time='-30s')
+df.namespace = df.ctx['namespace']
+df = df.groupby('namespace').agg()
+px.display(df[['namespace']])
+`;
+
+		const call = vizier.executeScript({
+			queryStr: script,
+			clusterId: request.clusterId
+		});
+
+
+		return new Promise<PixieGetNamespacesResponse>((resolve, reject) => {
+			let error: string | undefined;
+			let namespaces: string[] | undefined;
+			call.on("data", (response: any) => {
+				if (response?.data?.batch?.cols?.length) {
+					namespaces = colValue(response.data.batch.cols[0]) as string[];
+				}
+			});
+			call.on("error", (error: any) => {
+				reject(error.toString());
+			});
+			call.on("status", (status: any) => {
+				Logger.debug(status);
+			});
+			call.on("end", () => {
+				if (namespaces) {
+					resolve({
+						namespaces
+					});
+				} else {
+					reject(error || "Error fetching namespaces");
+				}
+			});
+		});
+	}
+
+	@lspHandler(PixieGetPodsRequestType)
+	async getPods(request: PixieGetPodsRequest): Promise<PixieGetPodsResponse> {
+		const vizier = await this.getVizierService(request.accountId);
+
+		const script = `
+import px
+namespace = '${request.namespace}'
+df = px.DataFrame(table='process_stats', start_time='-30s')
+df = df[df.ctx['namespace'] == namespace]
+df.pod = df.ctx['pod_name']
+px.display(df[['upid', 'pod']])`;
+
+		const call = vizier.executeScript({
+			queryStr: script,
+			clusterId: request.clusterId
+		});
+
+		return new Promise<PixieGetPodsResponse>((resolve, reject) => {
+			let error: string | undefined;
+			let pods: PixiePod[] | undefined;
+			call.on("data", (response: any) => {
+				const batch = response?.data?.batch;
+				if (batch?.cols?.length) {
+					pods = [];
+					const numRows = batch.numRows ? newLong(batch.numRows).toInt() : 0;
+					const upids = colValue<{ high: Long, low: Long }>(batch.cols[0]);
+					const names = colValue(batch.cols[1]) as string[];
+					for (let i = 0; i < numRows; i++) {
+						const upid = formatId(upids![i]);
+						pods.push({
+							upid: upid,
+							name: names[i] as string
+						});
+					}
+				}
+			});
+			call.on("error", (error: any) => {
+				reject(error.toString());
+			});
+			call.on("status", (status: any) => {
+				Logger.debug(status);
+			});
+			call.on("end", () => {
+				if (pods) {
+					resolve({
+						pods
+					});
+				} else {
+					reject(error || "Error fetching pods");
+				}
+			});
+		});
+	}
+
+	@lspHandler(PixieDynamicLoggingRequestType)
+	async dynamicLogging(request: PixieDynamicLoggingRequest): Promise<PixieDynamicLoggingReponse> {
+		const { session } = SessionContainer.instance();
+		const limitRows = request.limitRows || 50;
+		const limitSeconds = request.limitSeconds || 60;
+		const now = Date.now();
+		const expiration = now + limitSeconds * 1000;
+		const id = now.toString();
+
+		const vizier = await this.getVizierService(request.accountId);
 
 		let parametersScript = "";
 		for (const parameter of request.functionParameters) {
@@ -132,31 +231,36 @@ export class PixieManager {
 
 				const call = vizier.executeScript({
 					queryStr: script,
-					clusterId: "0177fa38-31de-40f0-8dc0-79d73c05bc7d",
+					// clusterId: "0177fa38-31de-40f0-8dc0-79d73c05bc7d",
+					clusterId: request.clusterId,
 					mutation: true
 				});
 				call.on("data", function(response: any) {
 					if (response.metaData) {
 						metaData = (response.metaData.relation.columns as any[]).map(c => c.columnName);
 					}
-					if (response.data?.batch?.cols) {
-						const cols = response.data?.batch?.cols;
-						const row: any = {};
+					const batch = response.data?.batch;
+					if (batch?.cols) {
+						const cols = batch.cols.map((c: any) => colValue(c));
+						const numRows = batch.numRows ? newLong(batch.numRows).toInt() : 0;
 						let hasData = false;
 
-						for (let i = 0; i < cols.length; i++) {
-							const value = colValue(cols[i]);
-							const key = metaData[i];
-							if (key) {
-								row[key] = value;
-								if (value) {
-									hasData = true;
+						for (let r = 0; r < numRows; r++) {
+							const row: any = {};
+							for (let c = 0; c < cols.length; c++) {
+								const values = cols[c];
+								const key = metaData[c];
+								if (key) {
+									const value = values[r];
+									row[key] = value;
+									if (value) {
+										hasData = true;
+									}
 								}
 							}
-						}
-
-						if (hasData) {
-							data.push(row);
+							if (hasData) {
+								data.push(row);
+							}
 						}
 					}
 				});
@@ -231,16 +335,15 @@ export class PixieManager {
 		this._dynamicLoggingActiveRequests.delete(request.id);
 	}
 
-	private async buildCredentials() {
+	private async buildCredentials(accountId: number) {
 		const nrProvider = getProvider("newrelic*com") as NewRelicProvider;
 		if (nrProvider != null) {
-			const token = await nrProvider.getPixieToken();
+			const token = await nrProvider.getPixieToken(accountId);
 			return grpcLibrary.credentials.combineChannelCredentials(
 				grpcLibrary.credentials.createSsl(),
 				grpcLibrary.credentials.createFromMetadataGenerator((params, callback) => {
 					const md = new grpcLibrary.Metadata();
 					md.set("authorization", "Bearer " + token);
-					// md.set("pixie-api-key", token);
 					md.set("pixie-api-client", "codestream");
 					return callback(null, md);
 				})
@@ -249,28 +352,61 @@ export class PixieManager {
 			throw new Error("Not connected to New Relic");
 		}
 	}
+
+	private async getVizierService(accountId: number) {
+		const vizierApi = await this.getVizierApi();
+		return new vizierApi.api.vizierpb.VizierService(
+			"work.withpixie.ai",
+			await this.buildCredentials(accountId)
+		);
+	}
+
+	private _vizierApi: any;
+	private async getVizierApi() {
+		if (this._vizierApi) {
+			return this._vizierApi;
+		}
+
+		const vizierApiPath = path.join(
+			os.homedir(),
+			".codestream",
+			"protobuf",
+			"pixie",
+			"vizierapi.proto"
+		);
+		const vizierApiProto = await grpcProtoLoader.load(vizierApiPath);
+		const vizierApiPackage = grpcLibrary.loadPackageDefinition(vizierApiProto);
+		this._vizierApi = vizierApiPackage.px as any;
+		return this._vizierApi;
+	}
 }
 
-function colValue(col: any): string | undefined {
-	if (col.uint128Data?.data?.length) {
-		const data = col.uint128Data.data[0];
-		const long = new Long(data.low, data.high, data.unsigned);
-		return long.toString();
+function colValue<T>(col: any): T[] | undefined {
+	if (col?.uint128Data?.data?.length) {
+		return col.uint128Data.data;
 	}
-	if (col.time64nsData?.data?.length) {
-		const data = col.time64nsData.data[0];
-		const long = new Long(data.low, data.high, data.unsigned);
-		return long.toString();
+	if (col?.time64nsData?.data?.length) {
+		return col.time64nsData.data.map((_: any) => newLong(_).toString());
 	}
-	if (col.int64Data?.data?.length) {
-		const data = col.int64Data.data[0];
-		const long = new Long(data.low, data.high, data.unsigned);
-		return long.toString();
+	if (col?.int64Data?.data?.length) {
+		return col.int64Data.data.map((_: any) => newLong(_).toString());
 	}
 
-	if (col.stringData?.data) {
-		return col.stringData.data[0];
+	if (col?.stringData?.data) {
+		return col.stringData.data as T[];
 	}
 
 	return undefined;
+}
+
+function newLong(longLike: any): Long {
+	return new Long(longLike.low, longLike.high, longLike.unsigned);
+}
+
+function formatId(id: { high: Long, low: Long }): string {
+	const highStr = padLeft(id.high.toString(16), 16, '0');
+	const lowStr = padLeft(id.low.toString(16), 16, '0');
+	const str = highStr + lowStr;
+	const formatted = `${str.substring(0, 8)}-${str.substring(8, 12)}-${str.substring(12, 16)}-${str.substring(16, 20)}-${str.substring(20, 32)}`;
+	return formatted;
 }

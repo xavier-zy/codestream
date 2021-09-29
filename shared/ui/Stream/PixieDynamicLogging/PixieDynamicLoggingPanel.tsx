@@ -1,17 +1,19 @@
-import { fetchErrorGroup } from "@codestream/webview/store/codeErrors/actions";
+import { NewRelicAccount, PixieCluster, PixiePod } from "@codestream/protocols/agent";
 import { pixieDynamicLogging } from "@codestream/webview/store/dynamicLogging/actions";
 import { isConnected } from "@codestream/webview/store/providers/reducer";
+import { Accounts } from "@codestream/webview/Stream/PixieDynamicLogging/Accounts";
+import { Clusters } from "@codestream/webview/Stream/PixieDynamicLogging/Clusters";
+import { Namespaces } from "@codestream/webview/Stream/PixieDynamicLogging/Namespaces";
+import { Pods } from "@codestream/webview/Stream/PixieDynamicLogging/Pods";
 import React, { useEffect } from "react";
-import { Content } from "../src/components/Carousel";
-import styled from "styled-components";
-import { PanelHeader } from "../src/components/PanelHeader";
-import { closePanel } from "./actions";
 import { shallowEqual, useDispatch, useSelector } from "react-redux";
-import { Dialog } from "../src/components/Dialog";
-import { CodeStreamState } from "../store";
-import MessageInput from "./MessageInput";
-import CancelButton from "./CancelButton";
-import Button from "./Button";
+import styled from "styled-components";
+import { Content } from "../../src/components/Carousel";
+import { Dialog } from "../../src/components/Dialog";
+import { PanelHeader } from "../../src/components/PanelHeader";
+import { CodeStreamState } from "../../store";
+import { closePanel } from "../actions";
+import Button from "../Button";
 
 const Root = styled.div`
 	color: var(--text-color);
@@ -32,6 +34,10 @@ const Root = styled.div`
 
 export const PixieDynamicLoggingPanel = () => {
 	const dispatch = useDispatch();
+	const [account, setAccount] = React.useState<NewRelicAccount | undefined>();
+	const [cluster, setCluster] = React.useState<PixieCluster | undefined>();
+	const [namespace, setNamespace] = React.useState<string | undefined>();
+	const [pod, setPod] = React.useState<PixiePod | undefined>();
 
 	return (
 		<Dialog maximizable wide noPadding onClose={() => dispatch(closePanel())}>
@@ -40,14 +46,49 @@ export const PixieDynamicLoggingPanel = () => {
 			</PanelHeader>
 			<div style={{ padding: "20px" }}>
 				<Content>
-					<PixieDynamicLogging />
+					<Accounts onSelect={setAccount} value={account} />
+					{account && (
+						<>
+							<br />
+							<Clusters account={account} onSelect={setCluster} value={cluster} />
+						</>
+					)}
+					{cluster && (
+						<>
+							<br />
+							<Namespaces
+								account={account}
+								cluster={cluster}
+								onSelect={setNamespace}
+								value={namespace}
+							/>
+						</>
+					)}
+					{namespace && (
+						<>
+							<br />
+							<Pods
+								account={account}
+								cluster={cluster}
+								namespace={namespace}
+								onSelect={setPod}
+								value={pod}
+							/>
+						</>
+					)}
+					<br />
+					<PixieDynamicLogging account={account} cluster={cluster} pod={pod} />
 				</Content>
 			</div>
 		</Dialog>
 	);
 };
 
-const PixieDynamicLogging = (props: { stack?: string[]; customAttributes?: any }) => {
+interface IPixieDynamicLoggingContext {
+	account?: NewRelicAccount;
+}
+
+const PixieDynamicLogging = props => {
 	const rootRef = React.useRef(null);
 
 	const dispatch = useDispatch();
@@ -81,7 +122,9 @@ const PixieDynamicLogging = (props: { stack?: string[]; customAttributes?: any }
 						if (derivedState.currentPixieDynamicLoggingOptions) {
 							dispatch(
 								pixieDynamicLogging({
-									upid: "00000008-0000-1a41-0000-0000072e8792",
+									accountId: props.account.id,
+									clusterId: props.cluster.clusterId,
+									upid: props.pod.upid,
 									...derivedState.currentPixieDynamicLoggingOptions
 								})
 							);

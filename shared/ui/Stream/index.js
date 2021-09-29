@@ -104,7 +104,7 @@ import { Keybindings } from "./Keybindings";
 import { FlowPanel, VideoLink } from "./Flow";
 import { CodeErrorForm } from "./CodeErrorForm";
 import { InstrumentationPanel } from "./InstrumentationPanel";
-import { PixieDynamicLoggingPanel } from "./PixieDynamicLoggingPanel";
+import { PixieDynamicLoggingPanel } from "./PixieDynamicLogging/PixieDynamicLoggingPanel";
 import { PRInfoModal } from "./SpatialView/PRInfoModal";
 import { GlobalNav } from "./GlobalNav";
 import { CheckEmailVsGit } from "./CheckEmailVsGit";

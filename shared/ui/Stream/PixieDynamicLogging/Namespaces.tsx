@@ -7,7 +7,7 @@ import React, { useEffect } from "react";
 export const Namespaces = props => {
 	const [isLoading, setIsLoading] = React.useState(false);
 	const [namespaces, setNamespaces] = React.useState<DropdownButtonItems[]>([]);
-	let error: string | undefined;
+	const [error, setError] = React.useState<string | undefined>();
 
 	useEffect(() => {
 		void loadNamespaces();
@@ -16,7 +16,6 @@ export const Namespaces = props => {
 	const loadNamespaces = async () => {
 		setIsLoading(true);
 		try {
-			debugger;
 			const response = await HostApi.instance.send(PixieGetNamespacesRequestType, {
 				accountId: props.account.id,
 				clusterId: props.cluster.clusterId
@@ -30,25 +29,28 @@ export const Namespaces = props => {
 					}
 				}))
 			);
-			error = undefined;
+			setError(undefined);
 			props.onSelect(response.namespaces[0]);
 		} catch (err) {
 			props.onSelect(undefined);
-			error = err.toString();
+			setError(err.toString());
 			setNamespaces([]);
 		}
 		setIsLoading(false);
 	};
 
 	return (
-		error
-			?
+		<div style={{ padding: "0px 0px 1px 0px" }}>
+			{error
+				?
 				<small className="explainer error-message">
 					{error}
 				</small>
-			:
+				:
 				<DropdownButton items={namespaces} isLoading={isLoading} size="compact" wrap>
 					{props.value || "Namespace"}
 				</DropdownButton>
+			}
+		</div>
 	);
 };

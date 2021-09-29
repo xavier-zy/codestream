@@ -113,7 +113,7 @@ const PixieDynamicLogging = props => {
 
 	return (
 		<Root ref={rootRef}>
-			<div style={{ padding: "0 20px 0 40px" }}>
+			<div>
 				<Button
 					id="discard-button"
 					className="control-button cancel"

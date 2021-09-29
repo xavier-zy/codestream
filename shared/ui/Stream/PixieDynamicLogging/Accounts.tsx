@@ -7,6 +7,7 @@ import React from "react";
 export const Accounts = props => {
 	const [isLoading, setIsLoading] = React.useState(false);
 	const [accounts, setAccounts] = React.useState<DropdownButtonItems[]>([]);
+	const [error, setError] = React.useState<string | undefined>();
 
 	useDidMount(() => {
 		void loadAccounts();
@@ -29,8 +30,17 @@ export const Accounts = props => {
 	};
 
 	return (
-		<DropdownButton items={accounts} isLoading={isLoading} size="compact" wrap>
-			{props.value?.name || "Account"}
-		</DropdownButton>
+		<div style={{ padding: "0px 0px 1px 0px" }}>
+			{error
+				?
+				<small className="explainer error-message">
+					{error}
+				</small>
+				:
+				<DropdownButton items={accounts} isLoading={isLoading} size="compact" wrap>
+					{props.value?.name || "Account"}
+				</DropdownButton>
+			}
+		</div>
 	);
 };

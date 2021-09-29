@@ -62,8 +62,8 @@ interface PixieLong {
 
 export interface PixieCluster {
 	id?: {
-		highBits: PixieLong
-		lowBits: PixieLong
+		highBits: PixieLong;
+		lowBits: PixieLong;
 	};
 	clusterId: string;
 	clusterName: string;

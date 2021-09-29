@@ -103,7 +103,6 @@ import {
 	DidSetEnvironmentNotificationType,
 	DidChangeProcessBufferNotification,
 	DidChangeProcessBufferNotificationType,
-	AgentFileSearchRequest,
 	AgentFileSearchRequestType
 } from "@codestream/protocols/agent";
 import {

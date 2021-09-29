@@ -1152,7 +1152,7 @@ export class CodeStreamAgentConnection implements Disposable {
 				};
 			} catch (ex) {
 				Logger.warn("AgentFileSearchRequestType", {
-					path: e?.path,
+					path: e ? e.path : "",
 					error: ex
 				});
 				return {

@@ -279,7 +279,11 @@ export interface CSReview extends CSEntity {
 
 export function isCSCodeError(object: any): object is CSCodeError {
 	const maybeCodeError: Partial<CSCodeError> = object;
-	return (maybeCodeError as any).stackInfo != null || maybeCodeError.stackTraces != null;
+	return (
+		maybeCodeError.objectId != null &&
+		maybeCodeError.objectType != null &&
+		maybeCodeError.objectType.toLowerCase() === "errorgroup"
+	);
 }
 
 export interface CSCodeErrorResolutions {

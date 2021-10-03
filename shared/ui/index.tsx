@@ -586,7 +586,7 @@ const confirmSwitchToTeam = function(
 			const switchInfo =
 				type === "feedback request" ? { reviewId: itemId } : { codemarkId: itemId };
 			confirmPopup({
-				title: "Switch organization?",
+				title: "Switch organizations?",
 				message: (
 					<span>
 						The {type} you are trying to view was created in{" "}
@@ -607,7 +607,7 @@ const confirmSwitchToTeam = function(
 						className: "control-button"
 					},
 					{
-						label: "Switch Organization",
+						label: "Switch Organizations",
 						className: "control-button",
 						wait: true,
 						action: () => {

@@ -166,7 +166,7 @@ export const Signup = (props: Props) => {
 		try {
 			const attributes = {
 				email,
-				username: email.split("@")[0],
+				username: email.split("@")[0].replace(/\+/g, ""),
 				password,
 				inviteCode: props.inviteCode,
 				checkForWebmail: checkForWebmailArg,

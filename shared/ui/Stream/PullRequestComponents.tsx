@@ -1109,6 +1109,9 @@ export const PRIAmRequested = styled.div`
 
 export const PRErrorBox = styled.div`
 	margin: 10px 10px 20px 0;
+	&.in-review {
+		margin: 10px 0 0 0;
+	}
 	border: 1px solid ${PENDING_BORDER_COLOR};
 	background: ${PENDING_BACKGROUND_COLOR};
 	border-radius: 5px;

@@ -107,7 +107,7 @@ import { isFeatureEnabled } from "@codestream/webview/store/apiVersioning/reduce
 import { getPost } from "../../store/posts/reducer";
 import { AddReactionIcon, Reactions } from "../Reactions";
 import { Attachments } from "../Attachments";
-import { PRSelectorButtons } from "../PullRequestComponents";
+import { PRErrorBox, PRSelectorButtons } from "../PullRequestComponents";
 import { PRProgress, PRProgressFill, PRProgressLine } from "../PullRequestFilesChangedList";
 
 export interface RepoMetadata {
@@ -764,17 +764,9 @@ const BaseReview = (props: BaseReviewProps) => {
 				)}
 
 				{props.headerError && props.headerError.message && (
-					<div
-						className="color-warning"
-						style={{
-							display: "flex",
-							padding: "10px 0",
-							whiteSpace: "normal",
-							alignItems: "flex-start"
-						}}
-					>
-						<Icon name="alert" />
-						<div style={{ paddingLeft: "10px" }}>
+					<PRErrorBox className="in-review">
+						<Icon name="alert" className="alert" />
+						<div className="message" style={{ whiteSpace: "normal" }}>
 							{props.headerError.message}
 							{canLocateRepo && singleRepo && (
 								<>
@@ -794,7 +786,7 @@ const BaseReview = (props: BaseReviewProps) => {
 								</>
 							)}
 						</div>
-					</div>
+					</PRErrorBox>
 				)}
 
 				<MetaSection>

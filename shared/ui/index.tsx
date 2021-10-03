@@ -572,32 +572,32 @@ export const parseProtocol = function(uriString: string | undefined): Route | un
 
 const confirmSwitchToTeam = function(
 	store: any,
-	options: { teamId: string; teamName: string },
+	options: { teamId: string; companyName: string },
 	type: string,
 	itemId: string
 ): boolean {
 	const { context, session, users } = store.getState();
 	const currentUser = session.userId ? (users[session.userId] as CSMe) : null;
 	const { currentTeamId } = context;
-	const { teamId, teamName } = options;
+	const { teamId, companyName } = options;
 
 	if (teamId && teamId !== currentTeamId) {
 		if (currentUser?.teamIds.includes(teamId)) {
 			const switchInfo =
 				type === "feedback request" ? { reviewId: itemId } : { codemarkId: itemId };
 			confirmPopup({
-				title: "Switch teams?",
+				title: "Switch organization?",
 				message: (
 					<span>
 						The {type} you are trying to view was created in{" "}
-						{teamName ? (
+						{companyName ? (
 							<span>
-								the <b>{teamName}</b>
+								the <b>{companyName}</b>
 							</span>
 						) : (
 							"another"
 						)}{" "}
-						team. You'll need to switch to that team to view it.
+						organization. You'll need to switch to that organization to view it.
 					</span>
 				),
 				centered: true,
@@ -607,7 +607,7 @@ const confirmSwitchToTeam = function(
 						className: "control-button"
 					},
 					{
-						label: "Switch Teams",
+						label: "Switch Organization",
 						className: "control-button",
 						wait: true,
 						action: () => {
@@ -620,7 +620,7 @@ const confirmSwitchToTeam = function(
 		} else {
 			confirmPopup({
 				title: "Not a member",
-				message: <span>You aren't a member of the team that owns this {type}.</span>,
+				message: <span>You aren't a member of the organization that owns this {type}.</span>,
 				centered: true,
 				buttons: [
 					{

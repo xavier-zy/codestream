@@ -463,7 +463,11 @@ export class CodeStreamApiProvider implements ApiProvider {
 
 		let pickedTeamReason;
 		let team: CSTeam | undefined;
-		const teams = response.teams.filter(_ => _.isEveryoneTeam);
+		let teams = response.teams.filter(_ => _.isEveryoneTeam);
+		if (!teams.length) {
+			// allow non-everyone team
+			teams = response.teams;
+		}
 
 		/*
 		NOTE - slack/msteams login, where the user is assigned to a team by the server, is deprecated

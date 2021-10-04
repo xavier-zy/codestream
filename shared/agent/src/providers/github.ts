@@ -2896,7 +2896,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 
 		const queries = request.queries;
 
-		const queriesSafe = request.queries.map(query => query.replace(/["']/g, "\\\""));
+		const queriesSafe = request.queries.map(query => query.replace(/["']/g, '\\"'));
 
 		// NOTE: there is also `reviewed-by` which `review-requested` translates to after the user
 		// has started or completed the review.

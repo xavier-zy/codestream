@@ -1,7 +1,5 @@
 "use strict";
-import {
-	OktaConfigurationData
-} from "../protocol/agent.protocol";
+import { OktaConfigurationData } from "../protocol/agent.protocol";
 import { CSOktaProviderInfo } from "../protocol/api.protocol";
 import { log, lspProvider } from "../system";
 import { ThirdPartyPostProviderBase } from "./provider";

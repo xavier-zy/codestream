@@ -34,7 +34,7 @@ import * as fs from "fs";
 import { memoize } from "lodash-es";
 import * as path from "path";
 import { CommitsChangedData, WorkspaceChangedData } from "../protocol/agent.protocol";
-import { Disposable, Event } from "vscode-languageserver";
+import { Disposable, Event, Range } from "vscode-languageserver";
 import { URI } from "vscode-uri";
 import { Logger } from "../logger";
 import { FileStatus } from "../protocol/api.protocol.models";
@@ -307,11 +307,12 @@ export class GitService implements IGitService, Disposable {
 		};
 	}
 
-	async getFileContentForRevision(uri: URI, ref: string): Promise<string | undefined>;
-	async getFileContentForRevision(path: string, ref: string): Promise<string | undefined>;
+	async getFileContentForRevision(uri: URI, ref: string, range?: Range): Promise<string | undefined>;
+	async getFileContentForRevision(path: string, ref: string, range?: Range): Promise<string | undefined>;
 	async getFileContentForRevision(
 		uriOrPath: URI | string,
-		ref: string
+		ref: string,
+		range?: Range
 	): Promise<string | undefined> {
 		const repoAndRelativePath = await this._getRepoAndRelativePath(uriOrPath);
 		if (!repoAndRelativePath) return undefined;
@@ -324,7 +325,18 @@ export class GitService implements IGitService, Disposable {
 				`${ref}:./${relativePath}`,
 				"--"
 			);
-			return Strings.normalizeFileContents(data);
+			let contents = Strings.normalizeFileContents(data);
+			if (range) {
+				const lines = contents.split("\n").slice(range.start.line, range.end.line + 1);
+				if (range.start.line === range.end.line) {
+					lines[0] = lines[0].substring(range.start.character, range.end.character);
+				} else {
+					lines[0] = lines[0].substring(range.start.character);
+					lines[lines.length - 1] = lines[lines.length - 1].substring(0, range.end.character);
+				}
+				contents = lines.join("\n");
+			}
+			return contents;
 		} catch (ex) {
 			const msg = ex && ex.toString();
 			if (

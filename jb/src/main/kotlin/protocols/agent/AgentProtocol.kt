@@ -135,7 +135,7 @@ class ReviewCoverageParams(val textDocument: TextDocument)
 
 class ReviewCoverageResult(val reviewIds: List<String?>)
 
-class DocumentMarkersParams(val textDocument: TextDocument, val applyFilters: Boolean)
+class DocumentMarkersParams(val textDocument: TextDocument, val gitSha: String?, val applyFilters: Boolean)
 
 class DocumentMarkersResult(val markers: List<DocumentMarker>, val markersNotLocated: Any)
 
@@ -332,8 +332,10 @@ class Stream(
 enum class StreamType {
     @SerializedName("channel")
     CHANNEL,
+
     @SerializedName("direct")
     DIRECT,
+
     @SerializedName("file")
     FILE
 }
@@ -361,7 +363,7 @@ class getPullRequestFilesParams(
     val params: getPullRequestFilesChangedParams
 )
 
-class PullRequestFile (
+class PullRequestFile(
     val sha: String,
     val previousFilename: String?,
     val filename: String,

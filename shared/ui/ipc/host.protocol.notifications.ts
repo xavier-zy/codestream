@@ -14,6 +14,7 @@ export interface ActiveEditorInfo {
 	fileName: string;
 	languageId?: string;
 	uri: string;
+	gitSha?: string;
 	metrics?: EditorMetrics;
 	selections: EditorSelection[];
 	visibleRanges: Range[];
@@ -52,6 +53,7 @@ export const HostDidChangeConfigNotificationType = new NotificationType<
 
 export interface HostDidChangeEditorSelectionNotification {
 	uri: string;
+	gitSha?: string;
 	selections: EditorSelection[];
 	visibleRanges: Range[];
 	lineCount?: number;

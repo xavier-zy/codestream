@@ -125,6 +125,7 @@ export interface CodeBlockSource {
 	file: string;
 	repoPath: string;
 	revision: string;
+	fixedGitSha?: boolean;
 	authors: BlameAuthor[];
 	remotes: { name: string; url: string }[];
 	branch?: string;

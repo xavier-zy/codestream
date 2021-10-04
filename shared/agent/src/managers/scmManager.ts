@@ -1153,12 +1153,14 @@ export class ScmManager {
 
 	private async getFileRangeInfo({
 		uri: documentUri,
+		gitSha,
 		range,
 		dirty,
 		contents,
 		skipBlame
 	}: GetRangeScmInfoRequest): Promise<GetRangeScmInfoResponse> {
 		const cc = Logger.getCorrelationContext();
+		const { git } = SessionContainer.instance();
 		range = Ranges.ensureStartBeforeEnd(range);
 		const uri = URI.parse(documentUri);
 
@@ -1170,14 +1172,22 @@ export class ScmManager {
 
 		let document;
 		if (contents == null) {
-			document = Container.instance().documents.get(documentUri);
-			if (document === undefined) {
-				const ex = new Error(`No document could be found for Uri(${documentUri})`);
-				Logger.error(ex, cc);
-				throw ex;
+			if (gitSha) {
+				contents = await git.getFileContentForRevision(uri, gitSha, range);
+				if (contents === undefined) {
+					const ex = new Error(`No document could be found for Uri(${documentUri}) @ ${gitSha}`);
+					Logger.error(ex, cc);
+					throw ex;
+				}
+			} else {
+				document = Container.instance().documents.get(documentUri);
+				if (document === undefined) {
+					const ex = new Error(`No document could be found for Uri(${documentUri})`);
+					Logger.error(ex, cc);
+					throw ex;
+				}
+				contents = document.getText(range);
 			}
-
-			contents = document.getText(range);
 		}
 
 		let gitError;
@@ -1185,7 +1195,6 @@ export class ScmManager {
 		let repoId;
 		let ignored;
 		if (uri.scheme === "file") {
-			const { git } = SessionContainer.instance();
 
 			try {
 				repoPath = await git.getRepoRoot(uri.fsPath);
@@ -1196,7 +1205,7 @@ export class ScmManager {
 					}
 
 					branch = await git.getCurrentBranch(uri.fsPath);
-					rev = await git.getFileCurrentRevision(uri.fsPath);
+					rev = gitSha || await git.getFileCurrentRevision(uri.fsPath);
 					const repo = await git.getRepositoryByFilePath(uri.fsPath);
 					repoId = repo && repo.id;
 					const repoHeadHash = await git.getRepoHeadRevision(repoPath);
@@ -1214,7 +1223,7 @@ export class ScmManager {
 					if (!skipBlame) {
 						let blameContents;
 						// Only fill out the blame contents if the file is dirty (so we can blame the dirty version)
-						if (dirty) {
+						if (dirty && !gitSha) {
 							if (document === undefined) {
 								document = Container.instance().documents.get(documentUri);
 								if (document === undefined) {
@@ -1230,6 +1239,7 @@ export class ScmManager {
 						const gitAuthors = await git.getFileAuthors(uri.fsPath, {
 							startLine: range.start.line,
 							endLine: range.end.line,
+							ref: gitSha,
 							contents: blameContents,
 							retryWithTrimmedEndOnFailure: true
 						});
@@ -1260,6 +1270,7 @@ export class ScmManager {
 							repoPath: repoPath,
 							repoId,
 							revision: rev!,
+							fixedGitSha: gitSha != null,
 							authors: authors || [],
 							remotes: remotes || [],
 							branch

@@ -149,6 +149,7 @@ interface ConnectedProps {
 	selectedStreams: {};
 	showChannels: string;
 	textEditorUri?: string;
+	textEditorGitSha?: string;
 	textEditorSelection?: EditorSelection;
 	teamProvider: "codestream" | "slack" | "msteams" | string;
 	teamTagsArray: any;
@@ -380,7 +381,7 @@ class CodemarkForm extends React.Component<Props, State> {
 			}
 			this.handleScmChange();
 		} else if (!isEditing) {
-			const { textEditorSelection, textEditorUri } = this.props;
+			const { textEditorSelection, textEditorUri, textEditorGitSha } = this.props;
 			if (textEditorSelection && textEditorUri) {
 				// In case there isn't already a range selection by user, change the selection to be the line the cursor is on
 				const isEmpty = isRangeEmpty(textEditorSelection);
@@ -390,7 +391,7 @@ class CodemarkForm extends React.Component<Props, State> {
 				} else {
 					const range = isEmpty ? forceAsLine(textEditorSelection) : textEditorSelection;
 					if (isEmpty) this.selectRangeInEditor(textEditorUri, range);
-					this.getScmInfoForSelection(textEditorUri, range, () => {
+					this.getScmInfoForSelection(textEditorUri, textEditorGitSha, range, () => {
 						// if (multiLocation) this.setState({ addingLocation: true, liveLocation: 1 });
 						this.focus();
 					});
@@ -422,7 +423,7 @@ class CodemarkForm extends React.Component<Props, State> {
 	}
 
 	componentDidUpdate(prevProps: Props) {
-		const { isEditing, textEditorSelection, textEditorUri } = this.props;
+		const { isEditing, textEditorSelection, textEditorUri, textEditorGitSha } = this.props;
 
 		const commentType = this.getCommentType();
 
@@ -443,7 +444,7 @@ class CodemarkForm extends React.Component<Props, State> {
 			// only update if we have a live location
 			this.state.liveLocation >= 0
 		) {
-			this.getScmInfoForSelection(textEditorUri!, forceAsLine(textEditorSelection!));
+			this.getScmInfoForSelection(textEditorUri!, textEditorGitSha, forceAsLine(textEditorSelection!));
 			this.props.onDidChangeSelection && this.props.onDidChangeSelection(textEditorSelection!);
 			// this.setState({ addingLocation: false });
 		}
@@ -478,9 +479,10 @@ class CodemarkForm extends React.Component<Props, State> {
 		});
 	}
 
-	private async getScmInfoForSelection(uri: string, range: Range, callback?: Function) {
+	private async getScmInfoForSelection(uri: string, gitSha?: string, range: Range, callback?: Function) {
 		const scmInfo = await HostApi.instance.send(GetRangeScmInfoRequestType, {
 			uri: uri,
+			gitSha: gitSha,
 			range: range,
 			dirty: true // should this be determined here? using true to be safe
 		});
@@ -537,9 +539,9 @@ class CodemarkForm extends React.Component<Props, State> {
 
 	// this doesn't appear to be used anywhere -Pez
 	handleSelectionChange = () => {
-		const { textEditorSelection, textEditorUri } = this.props;
+		const { textEditorSelection, textEditorUri, textEditorGitSha } = this.props;
 		if (textEditorSelection) {
-			this.getScmInfoForSelection(textEditorUri!, forceAsLine(textEditorSelection));
+			this.getScmInfoForSelection(textEditorUri!, textEditorGitSha, forceAsLine(textEditorSelection));
 		}
 	};
 
@@ -2618,6 +2620,7 @@ const mapStateToProps = (state: CodeStreamState): ConnectedProps => {
 		selectedStreams: preferences.selectedStreams || EMPTY_OBJECT,
 		showChannels: context.channelFilter,
 		textEditorUri: editorContext.textEditorUri,
+		textEditorGitSha: editorContext.textEditorGitSha,
 		textEditorSelection: getCurrentSelection(editorContext),
 		textEditorUriContext: textEditorUriContext,
 		textEditorUriHasPullRequestContext: !!(

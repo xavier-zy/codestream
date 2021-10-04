@@ -52,7 +52,7 @@ interface ReferenceLocationsById {
 	[id: string]: CSReferenceLocation;
 }
 
-interface GetLocationsResult {
+export interface GetLocationsResult {
 	locations: MarkerLocationsById;
 	missingLocations: MissingLocationsById;
 }

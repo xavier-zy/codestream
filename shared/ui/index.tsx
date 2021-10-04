@@ -244,6 +244,7 @@ function listenForEvents(store) {
 			context = {
 				activeFile: params.editor.fileName,
 				textEditorUri: params.editor.uri,
+				textEditorGitSha: params.editor.gitSha,
 				textEditorVisibleRanges: params.editor.visibleRanges,
 				textEditorLineCount: params.editor.lineCount,
 				metrics: params.editor.metrics,
@@ -258,6 +259,7 @@ function listenForEvents(store) {
 			context = {
 				activeFile: undefined,
 				textEditorUri: undefined,
+				textEditorGitSha: undefined,
 				textEditorSelections: [],
 				textEditorVisibleRanges: [],
 				scmInfo: undefined
@@ -294,6 +296,7 @@ function listenForEvents(store) {
 		store.dispatch(
 			setEditorContext({
 				textEditorUri: params.uri,
+				textEditorGitSha: params.gitSha,
 				textEditorVisibleRanges: params.visibleRanges,
 				textEditorSelections: params.selections,
 				textEditorLineCount: params.lineCount

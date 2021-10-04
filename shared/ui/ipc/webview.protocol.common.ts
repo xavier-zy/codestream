@@ -198,6 +198,7 @@ export interface EditorContext {
 	lastActiveFile?: string;
 	textEditorVisibleRanges?: Range[];
 	textEditorUri?: string;
+	textEditorGitSha?: string;
 	textEditorSelections?: EditorSelection[];
 	metrics?: EditorMetrics;
 	textEditorLineCount?: number;

@@ -21,6 +21,7 @@ object EditorNotifications {
 
     class DidChangeSelection(
         val uri: String?,
+        val gitSha: String?,
         val selections: List<EditorSelection>?,
         val visibleRanges: List<Range>?,
         val lineCount: Number

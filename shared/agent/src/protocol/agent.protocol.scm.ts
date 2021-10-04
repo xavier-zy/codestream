@@ -314,6 +314,7 @@ export const GetFileScmInfoRequestType = new RequestType<
 
 export interface GetRangeScmInfoRequest {
 	uri: string;
+	gitSha?: string;
 	range: Range;
 	dirty?: boolean;
 	contents?: string;
@@ -333,6 +334,7 @@ export interface GetRangeScmInfoResponse {
 		repoPath: string;
 		repoId?: string;
 		revision: string;
+		fixedGitSha?: boolean;
 		/**
 		 * authors come from git blame. we enrich the list with IDs
 		 * and usernames if the git blame email addresses match members

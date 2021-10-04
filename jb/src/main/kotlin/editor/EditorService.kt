@@ -5,6 +5,7 @@ import com.codestream.codeStream
 import com.codestream.extensions.displayPath
 import com.codestream.extensions.file
 import com.codestream.extensions.getOffset
+import com.codestream.extensions.gitSha
 import com.codestream.extensions.highlightTextAttributes
 import com.codestream.extensions.isRangeVisible
 import com.codestream.extensions.lighten
@@ -57,8 +58,15 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.KeyWithDefaultValue
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vcs.LocalFilePath
+import com.intellij.openapi.vcs.vfs.ContentRevisionVirtualFile
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.pom.Navigatable
 import com.intellij.ui.JBColor
+import git4idea.GitContentRevision
+import git4idea.GitRevisionNumber
+import git4idea.GitUtil
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
@@ -91,6 +99,7 @@ class EditorService(val project: Project) {
     private val logger = Logger.getInstance(EditorService::class.java)
     private val appSettings = ServiceManager.getService(ApplicationSettingsService::class.java)
 
+    private val gitDocuments = mutableSetOf<Document>()
     private val managedDocuments = mutableMapOf<Document, DocumentVersion>()
     private val managedEditors = mutableSetOf<Editor>()
     private val rangeHighlighters = mutableMapOf<Editor, MutableSet<RangeHighlighter>>()
@@ -102,6 +111,7 @@ class EditorService(val project: Project) {
     fun add(editor: Editor) {
         val document = editor.document
         val reviewFile = editor.document.file as? ReviewDiffVirtualFile
+
         if (reviewFile != null) {
             if (!reviewFile.canCreateMarker || reviewFile.side == ReviewDiffSide.LEFT) return
         } else {
@@ -115,8 +125,12 @@ class EditorService(val project: Project) {
         editor.scrollingModel.addVisibleAreaListener(VisibleAreaListenerImpl(project))
         NewCodemarkGutterIconManager(editor)
 
+        if (document.gitSha != null) {
+            gitDocuments.add(document)
+        }
+
         // Enable LSP document management only for local files
-        if (reviewFile != null) return
+        if (reviewFile != null || document.gitSha != null) return
         agentService.onDidStart {
             synchronized(managedDocuments) {
                 if (!managedDocuments.contains(document)) {
@@ -132,6 +146,7 @@ class EditorService(val project: Project) {
 
     fun remove(editor: Editor) {
         val agentService = project.agentService ?: return
+        gitDocuments.remove(editor.document)
         managedEditors.remove(editor)
         rangeHighlighters.remove(editor)
 
@@ -212,11 +227,18 @@ class EditorService(val project: Project) {
         for ((document, _) in managedDocuments) {
             updateMarkers(document)
         }
+        for (document in gitDocuments) {
+            updateMarkers(document)
+        }
     }
 
     fun updateMarkers(uri: String) {
         val document = managedDocuments.keys.find { it.uri == uri }
         document?.let {
+            updateMarkers(it)
+        }
+        val gitDocuments = gitDocuments.filter { it.uri == uri }
+        gitDocuments.forEach {
             updateMarkers(it)
         }
     }
@@ -259,7 +281,7 @@ class EditorService(val project: Project) {
         val markers = if (uri == null || session.userLoggedIn == null || !appSettings.showMarkers) {
             emptyList()
         } else {
-            val result = agent.documentMarkers(DocumentMarkersParams(TextDocument(uri), true))
+            val result = agent.documentMarkers(DocumentMarkersParams(TextDocument(uri), document.gitSha,true))
             result.markers
         }
 
@@ -390,6 +412,7 @@ class EditorService(val project: Project) {
                 EditorInformation(
                     displayPath,
                     document.uri,
+                    document.gitSha,
                     EditorMetrics(
                         colorsScheme.editorFontSize,
                         lineHeight,
@@ -485,9 +508,20 @@ class EditorService(val project: Project) {
         }
     }
 
-    suspend fun reveal(uri: String, range: Range?, atTop: Boolean? = null): Boolean {
+    suspend fun reveal(uri: String, sha: String?, range: Range?, atTop: Boolean? = null): Boolean {
         val future = CompletableDeferred<Boolean>()
         ApplicationManager.getApplication().invokeLater {
+            if (sha != null) {
+                val localFilePath = LocalFilePath("uri", false)
+                val revisionNumber = GitRevisionNumber(sha)
+                val revision = GitContentRevision.createRevision(localFilePath, revisionNumber, project)
+                val vFile: VirtualFile = ContentRevisionVirtualFile.create(revision)
+                val navigatable: Navigatable = OpenFileDescriptor(project, vFile)
+                navigatable.navigate(true)
+                future.complete(true)
+                return@invokeLater
+            }
+
             val editor = FileEditorManager.getInstance(project).selectedTextEditor
             editor?.let {
                 if (it.document.uri == uri && (range == null || it.isRangeVisible(range))) {

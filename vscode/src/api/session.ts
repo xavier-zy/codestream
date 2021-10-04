@@ -587,26 +587,15 @@ export class CodeStreamSession implements Disposable {
 		try {
 			this.setStatus(SessionStatus.SigningIn);
 
-			if (!teamId) {
-				// If there is a configuration settings for a team, use that above others
-				teamId = Container.config.team
-					? undefined
-					: Container.context.workspaceState.get(WorkspaceState.TeamId);
-			}
-
 			let response;
 			if (typeof passwordOrToken === "string") {
 				response = await Container.agent.sendRequest(PasswordLoginRequestType, {
 					email: email,
-					password: passwordOrToken,
-					team: Container.config.team,
-					teamId: teamId
+					password: passwordOrToken
 				});
 			} else {
 				response = await Container.agent.sendRequest(TokenLoginRequestType, {
-					token: passwordOrToken,
-					team: Container.config.team,
-					teamId: teamId
+					token: passwordOrToken
 				});
 			}
 

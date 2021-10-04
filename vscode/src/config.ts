@@ -20,6 +20,5 @@ export interface Config {
 	showMarkerCodeLens: boolean;
 	showMarkerGlyphs: boolean;
 	showShortcutTipOnSelection: boolean;
-	team: string;
 	traceLevel: TraceLevel;
 }

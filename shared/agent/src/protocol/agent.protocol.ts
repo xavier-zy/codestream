@@ -128,8 +128,6 @@ export interface AgentOptions extends BaseAgentOptions {
 	email: string;
 	passwordOrToken: string | AccessToken;
 	signupToken: string;
-	team: string;
-	teamId: string;
 }
 
 export interface AgentState {

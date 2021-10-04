@@ -1106,8 +1106,7 @@ export class WebviewController implements Disposable {
 				debug: Logger.isDebugging,
 				email: Container.config.email,
 				serverUrl: this.session.serverUrl,
-				showHeadshots: Container.config.showAvatars,
-				team: Container.config.team
+				showHeadshots: Container.config.showAvatars
 			},
 			environmentInfo: this.session.environmentInfo,
 			ide: {

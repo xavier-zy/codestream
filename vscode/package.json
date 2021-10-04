@@ -162,12 +162,7 @@
 					"description": "Specifies whether to show a shortcut key tip attached to the selection when you select code",
 					"scope": "window"
 				},
-				"codestream.team": {
-					"type": "string",
-					"default": null,
-					"description": "Specifies an optional team to use to connect to the CodeStream service",
-					"scope": "window"
-				},
+				 
 				"codestream.traceLevel": {
 					"type": "string",
 					"default": "verbose",

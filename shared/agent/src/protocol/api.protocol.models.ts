@@ -397,6 +397,7 @@ export interface CSCompany extends CSEntity {
 	testGroups?: {
 		[key: string]: string;
 	};
+	domainJoining?: string[];
 }
 
 export interface CSTeam extends CSEntity {

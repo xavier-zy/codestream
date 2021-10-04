@@ -2456,7 +2456,12 @@ export class CodeStreamApiProvider implements ApiProvider {
 					message += `: ${data.message}`;
 				}
 				if (data.info) {
-					message += `\n${data.info.name || data.info}`;
+					if (data.info.name) {
+						message += `\n${data.info.name || data.info}`;
+					}
+					if (data.message === "Validation error") {
+						message += ` ${Array.from(Objects.values(data.info)).join(", ")}`;
+					}
 				}
 			} catch {}
 		}

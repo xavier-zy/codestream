@@ -71,6 +71,7 @@ export const JoinCompanyRequestType = new RequestType<
 export interface UpdateCompanyRequest {
 	companyId: string;
 	name?: string;
+	domainJoining?: string[];
 }
 
 export interface UpdateCompanyResponse {

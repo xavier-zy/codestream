@@ -1,7 +1,10 @@
 import React, { useCallback, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { HostApi } from "../webview-api";
-import { UpdateTeamSettingsRequestType } from "@codestream/protocols/agent";
+import {
+	UpdateCompanyRequestType,
+	UpdateTeamSettingsRequestType
+} from "@codestream/protocols/agent";
 import { Button } from "../src/components/Button";
 import { Dialog, ButtonRow } from "../src/components/Dialog";
 import { Link } from "./Link";
@@ -196,6 +199,13 @@ export function TeamSetup(props: Props) {
 		...derivedState.issuesSettings
 	});
 
+	const [domainError, setDomainError] = useState("");
+	const [domains, setDomainsText] = useState<string>(
+		derivedState.company && derivedState.company.domainJoining != null
+			? derivedState.company.domainJoining.join(",")
+			: ""
+	);
+
 	const authenticationItems = mapFilter(derivedState.codeHostProviders, id => {
 		const label = PROVIDER_MAPPINGS[providers[id].name].displayName;
 		if (providers[id].forEnterprise || providers[id].isEnterprise) return;
@@ -322,10 +332,29 @@ export function TeamSetup(props: Props) {
 		setIsLoading(true);
 		const teamId = derivedState.team.id;
 		try {
-			// await HostApi.instance.send(UpdateTeamRequestType, {
-			// 	teamId,
-			// 	name: teamName
-			// });
+			try {
+				setDomainError("");
+				const domainsArray = domains
+					.replace(/ /g, "")
+					.replace(/(?:\r\n|\r|\n)/g, "")
+					.split(",")
+					.filter(Boolean);
+				if (domainsArray?.length) {
+					for (const d of domainsArray) {
+						if (d.indexOf(".") === -1) {
+							throw new Error(`${d} is an invalid domain`);
+						}
+					}
+				}
+				await HostApi.instance.send(UpdateCompanyRequestType, {
+					companyId: derivedState.company.id!,
+					domainJoining: domainsArray
+				});
+			} catch (ex) {
+				setDomainError(ex.message ? ex.message : ex.toString());
+				setIsLoading(false);
+				return;
+			}
 
 			const autoJoinRepos = keyFilter(autoJoinReposField);
 			await HostApi.instance.send(UpdateTeamSettingsRequestType, {
@@ -422,6 +451,27 @@ export function TeamSetup(props: Props) {
 							</Link>
 						</Checkbox>
 						*/}
+						<h3>Joining this Organization</h3>
+						<p className="explainer">
+							Allow people with emails from the following domains to join automatically:
+						</p>
+
+						<textarea
+							style={{ width: "100%", height: "100px" }}
+							name="domains"
+							value={domains}
+							onChange={event => setDomainsText(event.target.value)}
+						/>
+						<small>If you want to add more than one domain, separate each one with a comma</small>
+						{domainError && (
+							<>
+								<br />
+								<small className="explainer error-message">{domainError}</small>
+							</>
+						)}
+
+						<br />
+						<br />
 						<h3>Integration Options</h3>
 						<p className="explainer">
 							Streamline integrations for your teammates by limiting the options that CodeStream

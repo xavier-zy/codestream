@@ -396,15 +396,17 @@ export class NRManager {
 		sha: string,
 		matchingRepoPath: string
 	): Promise<CSStackTraceLine> {
-		const fileSearchResponse = await SessionContainer.instance().session.onFileSearch(
-			line.fileFullPath || ""
-		);
+		const fileFullPath = line.fileFullPath || "";
+		if (!fileFullPath) {
+			return { error: `Unable to find file path for line` };
+		}
+		const fileSearchResponse = await SessionContainer.instance().session.onFileSearch(fileFullPath);
 		const bestMatchingFilePath = NRManager.getBestMatchingPath(
-			line.fileFullPath!,
+			fileFullPath,
 			fileSearchResponse.files
 		);
 		if (!bestMatchingFilePath)
-			return { error: `Unable to find matching file for path ${line.fileFullPath!}` };
+			return { error: `Unable to find matching file for path ${fileFullPath}` };
 
 		if (!sha) {
 			return {

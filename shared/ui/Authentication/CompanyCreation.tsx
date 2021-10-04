@@ -61,6 +61,7 @@ export function CompanyCreation(props: {
 		companyName?: string;
 		allowDomainJoining?: boolean;
 	}>({
+		allowDomainJoining: true,
 		companyName: initialCompanyName
 			? initialCompanyName.charAt(0).toUpperCase() + initialCompanyName.slice(1)
 			: ""
@@ -132,7 +133,7 @@ export function CompanyCreation(props: {
 				const { team, company } = await HostApi.instance.send(CreateCompanyRequestType, {
 					name: organizationSettings.companyName!,
 					domainJoining:
-						organizationSettings?.allowDomainJoining == true && domain ? [domain] : undefined
+						organizationSettings.allowDomainJoining == true && domain ? [domain] : undefined
 				});
 				HostApi.instance.track("New Organization Created", {
 					"Domain Joining": props.isWebmail
@@ -284,7 +285,7 @@ export function CompanyCreation(props: {
 									<br />
 									<TextInput
 										name="company"
-										value={organizationSettings?.companyName || ""}
+										value={organizationSettings.companyName || ""}
 										onValidityChanged={onValidityChanged}
 										validate={isTeamNameValid}
 										onChange={(value: string) => {
@@ -303,6 +304,7 @@ export function CompanyCreation(props: {
 										<CheckboxRow>
 											<Checkbox
 												name="allowDomainBaseJoining"
+												checked={organizationSettings.allowDomainJoining}
 												onChange={(value: boolean) => {
 													setOrganizationSettings({
 														...organizationSettings,

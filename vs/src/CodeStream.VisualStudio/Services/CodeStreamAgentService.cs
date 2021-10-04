@@ -222,20 +222,17 @@ namespace CodeStream.VisualStudio.Services {
 			}
 		}
 
-		public Task<JToken> LoginViaTokenAsync(JToken token, string team, string teamId = null) {
+		public Task<JToken> LoginViaTokenAsync(JToken token, string teamId = null) {
 			return SendCoreAsync<JToken>("codestream/login/token", new TokenLoginRequest {
 				Token = token,
-				Team = team,
 				TeamId = teamId
 			});
 		}
 
 		public Task<JToken> LoginAsync(string email, string password, string serverUrl, string teamId) {
-			var settingsManager = _settingsServiceFactory.GetOrCreate(nameof(LoginAsync));
 			return SendCoreAsync<JToken>(PasswordLoginRequestType.MethodName, new PasswordLoginRequest {
 				Email = email,
 				Password = password,
-				Team = settingsManager?.Team,
 				TeamId = teamId
 			});
 		}
@@ -279,7 +276,6 @@ namespace CodeStream.VisualStudio.Services {
 						Capabilities = capabilitiesObject,
 						Configs = new Configs {
 							Email = settingsManager.Email,
-							Team = settingsManager.Team,
 							ShowAvatars = settingsManager.ShowAvatars,
 							ServerUrl = settingsManager.ServerUrl,
 							TraceLevel = settingsManager.GetAgentTraceLevel()
@@ -329,7 +325,6 @@ namespace CodeStream.VisualStudio.Services {
 					Capabilities = capabilitiesObject,
 					Configs = new Configs {
 						Email = (string)state["email"],
-						Team = settings.Options.Team,
 						ShowAvatars = settings.Options.ShowAvatars,
 						ServerUrl = settings.Options.ServerUrl,
 						TraceLevel = settingsManager.GetAgentTraceLevel()

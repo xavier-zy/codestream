@@ -506,7 +506,6 @@ namespace CodeStream.VisualStudio.Core.Models {
 		public string Email { get; set; }
 		public T PasswordOrToken { get; set; }
 		public string SignupToken { get; set; }
-		public string Team { get; set; }
 		public string TeamId { get; set; }
 		public Extension Extension { get; set; }
 		public Ide Ide { get; set; }
@@ -527,7 +526,6 @@ namespace CodeStream.VisualStudio.Core.Models {
 	public class TokenLoginRequest {
 		public JToken Token { get; set; }
 		public string TeamId { get; set; }
-		public string Team { get; set; }
 	}
 
 	public class TextDocumentIdentifier {

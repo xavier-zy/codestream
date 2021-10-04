@@ -18,7 +18,7 @@ namespace CodeStream.VisualStudio.Core.Services {
 		Task<GetUserResponse> GetUserAsync(string userId);
 		Task<GetStreamResponse> GetStreamAsync(string streamId);
 		Task<CsDirectStream> CreateDirectStreamAsync(List<string> memberIds);
-		Task<JToken> LoginViaTokenAsync(JToken token, string team, string teamId = null);
+		Task<JToken> LoginViaTokenAsync(JToken token, string teamId = null);
 		Task<JToken> OtcLoginRequestAsync(OtcLoginRequest request);
 		Task<JToken> LoginAsync(string email, string password, string serverUrl, string teamId);
 		Task<JToken> LogoutAsync();

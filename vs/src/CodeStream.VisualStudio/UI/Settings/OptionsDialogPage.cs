@@ -82,19 +82,6 @@ namespace CodeStream.VisualStudio.UI.Settings {
 		}
 
 		[Category("Authentication")]
-		[DisplayName("Team")]
-		[Description("Specifies an optional team to connect to the CodeStream service")]
-		public string Team {
-			get => _team;
-			set {
-				if (_team != value) {
-					_team = value;
-					NotifyPropertyChanged();
-				}
-			}
-		}
-
-		[Category("Authentication")]
 		[DisplayName("Auto Sign In")]
 		[Description("Specifies whether to automatically sign in to CodeStream")]
 		public bool AutoSignIn {

@@ -98,11 +98,6 @@ namespace CodeStream.VisualStudio.Services {
 			set => DialogPage.ServerUrl = value.IsNullOrWhiteSpace() ? value : value.TrimEnd('/');
 		}
 
-		public string Team {
-			get => DialogPage.Team;
-			set => DialogPage.Team = value;
-		}
-
 		public bool ShowMarkerGlyphs {
 			get => DialogPage.ShowMarkerGlyphs;
 			set => DialogPage.ShowMarkerGlyphs = value;

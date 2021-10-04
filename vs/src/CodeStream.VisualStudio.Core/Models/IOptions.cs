@@ -4,7 +4,6 @@ using CodeStream.VisualStudio.Core.Logging;
 namespace CodeStream.VisualStudio.Core.Models {
 	public interface IOptions {
 		string Email { get; set; }
-		string Team { get; set; }
 		bool ShowAvatars { get; set; }
 		bool AutoSignIn { get; set; }
 

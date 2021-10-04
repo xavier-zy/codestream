@@ -84,7 +84,6 @@ namespace CodeStream.VisualStudio.Core.Models {
 		public string ServerUrl { get; set; }
 		public string Email { get; set; }
 		public bool ShowAvatars { get; set; }
-		public string Team { get; set; }
 		public bool AutoHideMarkers { get; set; }
 		public bool ShowMarkerGlyphs { get; set; }
 		public TraceLevel TraceLevel { get; set; }

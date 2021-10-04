@@ -65,7 +65,7 @@ namespace CodeStream.VisualStudio.Core.Controllers {
 					Log.Debug("Attempting to AutoSignIn");
 					try {
 						var teamId = _webviewUserSettingsService?.TryGetTeamId(_sessionService.SolutionName);
-						var loginResponse = await _codeStreamAgent.LoginViaTokenAsync(token, _settingsManager.Team, teamId);
+						var loginResponse = await _codeStreamAgent.LoginViaTokenAsync(token, teamId);
 						processResponse = ProcessLoginError(loginResponse);
 						Log.Debug($"{nameof(processResponse)} Success={processResponse?.Success}");
 						if (!processResponse.Success) {

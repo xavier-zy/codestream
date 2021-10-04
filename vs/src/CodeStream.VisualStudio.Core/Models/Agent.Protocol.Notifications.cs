@@ -166,7 +166,6 @@ namespace CodeStream.VisualStudio.Core.Models {
 	public class OtcLoginRequest {
 		public string Code { get; set; }
 		public string TeamId { get; set; }
-		public string Team { get; set; }
 		public bool? Alias { get; set; }
 	}
 

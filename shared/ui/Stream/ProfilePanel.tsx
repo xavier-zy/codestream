@@ -169,7 +169,7 @@ export const ProfilePanel = () => {
 			confirmPopup({
 				title: "Not Possible",
 				message:
-					"As the only admin on your team, you may not delete your account. Please contact customer service.",
+					"As the only admin in your organization, you may not delete your account. Please contact customer service.",
 				centered: true,
 				buttons: [{ label: "Go Back", className: "control-button" }]
 			});

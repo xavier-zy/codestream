@@ -1,23 +1,21 @@
 import React from "react";
 import { connect, useDispatch, useSelector } from "react-redux";
 import { CodeStreamState } from "../store";
-import { CSMe } from "../protocols/agent/api.protocol.models";
 import { WebviewPanels } from "../ipc/webview.protocol.common";
 import Icon from "./Icon";
 import Tooltip, { TipTitle, placeArrowTopRight } from "./Tooltip";
 import { Link } from "./Link";
 import cx from "classnames";
 import { getCodeCollisions } from "../store/users/reducer";
-import { EMPTY_STATUS } from "./StartWork";
-import { openPanel } from "./actions";
+import { openPanel, setUserPreference } from "./actions";
 import { PlusMenu } from "./PlusMenu";
+import { TeamMenu } from "./TeamMenu";
 import { EllipsisMenu } from "./EllipsisMenu";
 import {
 	setCurrentReview,
 	clearCurrentPullRequest,
 	setCreatePullRequest
 } from "../store/context/actions";
-import CancelButton from "./CancelButton";
 import { setCurrentCodemark } from "../store/context/actions";
 import { HostApi } from "../webview-api";
 import {
@@ -25,19 +23,18 @@ import {
 	ReviewCloseDiffRequestType
 } from "@codestream/protocols/webview";
 import { HeadshotName } from "../src/components/HeadshotName";
+import { difference as _difference } from "lodash-es";
 
 const sum = (total, num) => total + Math.round(num);
 
 export function GlobalNav() {
 	const dispatch = useDispatch();
 	const derivedState = useSelector((state: CodeStreamState) => {
-		const { umis, preferences = {} } = state;
-		const currentUser = state.users[state.session.userId!] as CSMe;
-		let status =
-			currentUser.status && "label" in currentUser.status ? currentUser.status : EMPTY_STATUS;
+		const { umis, preferences } = state;
 
 		return {
-			status,
+			clickedPlus: preferences.clickedPlus,
+			clickedInvite: preferences.clickedInvite,
 			currentUserId: state.session.userId,
 			activePanel: state.context.panelStack[0],
 			totalUnread: Object.values(umis.unreads).reduce(sum, 0),
@@ -54,6 +51,7 @@ export function GlobalNav() {
 
 	const [ellipsisMenuOpen, setEllipsisMenuOpen] = React.useState();
 	const [plusMenuOpen, setPlusMenuOpen] = React.useState();
+	const [teamMenuOpen, setTeamMenuOpen] = React.useState();
 
 	const {
 		activePanel,
@@ -80,12 +78,21 @@ export function GlobalNav() {
 		<div className="unread-badge">.</div>
 	) : null;
 
+	const plusUMI = derivedState.clickedPlus ? null : <div className="unread-badge">.</div>;
+	const teamUMI = derivedState.clickedInvite ? null : <div className="unread-badge">.</div>;
+
 	const toggleEllipsisMenu = event => {
 		setEllipsisMenuOpen(ellipsisMenuOpen ? undefined : event.target.closest("label"));
 	};
 
 	const togglePlusMenu = event => {
+		if (!derivedState.clickedPlus) dispatch(setUserPreference(["clickedPlus"], true));
 		setPlusMenuOpen(plusMenuOpen ? undefined : event.target.closest("label"));
+	};
+
+	const toggleTeamMenu = event => {
+		if (!derivedState.clickedInvite) dispatch(setUserPreference(["clickedInvite"], true));
+		setTeamMenuOpen(teamMenuOpen ? undefined : event.target.closest("label"));
 	};
 
 	const go = panel => {
@@ -144,6 +151,7 @@ export function GlobalNav() {
 								delay={1}
 								trigger={["hover"]}
 							/>
+							<span className="unread">{plusUMI}</span>
 						</span>
 						{plusMenuOpen && (
 							<PlusMenu closeMenu={() => setPlusMenuOpen(undefined)} menuTarget={plusMenuOpen} />
@@ -237,9 +245,22 @@ export function GlobalNav() {
 						>
 							<span>
 								<Icon name="activity" />
-								{<span className={umisClass}>{totalUMICount}</span>}
+								<span className={umisClass}>{totalUMICount}</span>
 							</span>
 						</Tooltip>
+					</label>
+					<label
+						className={cx({ active: teamMenuOpen })}
+						onClick={toggleTeamMenu}
+						id="global-nav-people-label"
+					>
+						<span>
+							<Icon name="team" title="My Team" placement="bottom" delay={1} trigger={["hover"]} />
+							<span className="unread">{teamUMI}</span>
+						</span>
+						{teamMenuOpen && (
+							<TeamMenu closeMenu={() => setTeamMenuOpen(undefined)} menuTarget={teamMenuOpen} />
+						)}
 					</label>
 					<label
 						className={cx({ selected: selected(WebviewPanels.FilterSearch) })}
@@ -268,6 +289,7 @@ export function GlobalNav() {
 							onPopupAlign={placeArrowTopRight}
 						/>
 					</label>
+					{/*
 					<label
 						className={cx({ selected: selected(WebviewPanels.Flow) })}
 						onClick={e => go(WebviewPanels.Flow)}
@@ -279,6 +301,7 @@ export function GlobalNav() {
 							</span>
 						</Tooltip>
 					</label>
+					*/}
 					{/*<label
 						className={cx({ selected: selected(WebviewPanels.Team) })}
 						onClick={e => go(WebviewPanels.Team)}
@@ -335,7 +358,6 @@ export function GlobalNav() {
 			);
 		}
 	}, [
-		derivedState.status.label,
 		activePanel,
 		totalUnread,
 		totalMentions,
@@ -345,6 +367,7 @@ export function GlobalNav() {
 		currentPullRequestId,
 		currentCodemarkId,
 		plusMenuOpen,
+		teamMenuOpen,
 		ellipsisMenuOpen
 	]);
 }

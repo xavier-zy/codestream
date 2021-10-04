@@ -26,7 +26,7 @@ import { DropdownButton } from "./Review/DropdownButton";
 import { confirmPopup } from "./Confirm";
 import styled from "styled-components";
 import { getCodeCollisions } from "../store/users/reducer";
-import { openPanel, openModal } from "../store/context/actions";
+import { openPanel, openModal, closeModal } from "../store/context/actions";
 import { isFeatureEnabled } from "../store/apiVersioning/reducer";
 import { ProfileLink } from "../src/components/ProfileLink";
 import copy from "copy-to-clipboard";
@@ -57,7 +57,7 @@ export const UL = styled.ul`
 	li {
 		position: relative;
 		font-weight: normal;
-		padding: 3px 10px 2px 40px;
+		padding: 3px 20px 2px 20px;
 		margin: 0;
 		// cursor: pointer;
 		list-style: none;
@@ -97,11 +97,10 @@ export const MapRow = styled.div`
 	> div {
 		width: calc(50% - 10px);
 		flex-grow: 1;
-		padding: 5px 0px;
+		padding: 3px 0px;
 		overflow: hidden;
 		text-overflow: ellipsis;
 	}
-	border-top: 1px solid var(--base-border-color);
 `;
 
 const StyledUserStatus = styled(UserStatus)`
@@ -119,12 +118,20 @@ export const Section = styled.div`
 	border-bottom: 1px solid var(--base-border-color);
 `;
 
+const HR = styled.div`
+	margin-top: 20px;
+	border-top: 1px solid var(--base-border-color);
+`;
+
+const H3 = styled.h3`
+	margin-left: 20px;
+`;
+
 interface Props extends ConnectedProps {
 	paneState: PaneState;
 }
 
 interface ConnectedProps {
-	webviewFocused: boolean;
 	teamId: string;
 	invite: Function;
 	invited: any[];
@@ -144,6 +151,7 @@ interface ConnectedProps {
 	setUserStatus: Function;
 	openPanel: Function;
 	openModal: Function;
+	closeModal: Function;
 	switchToTeam: Function;
 	isCurrentUserAdmin: boolean;
 	adminIds: string[];
@@ -177,7 +185,7 @@ interface State {
 	showInvitePopup: boolean;
 }
 
-class TeamPanel extends React.Component<Props, State> {
+class Invite extends React.Component<Props, State> {
 	initialState = {
 		loading: false,
 		isInviting: false,
@@ -658,420 +666,120 @@ class TeamPanel extends React.Component<Props, State> {
 		const suggested = this.state.suggested
 			.filter(u => !invitingEmails[u.email])
 			.filter(_ => !_.email.match(/noreply/));
-		const mappedBlame = keyFilter(blameMap);
-
-		const teamMenuItems = userTeams.map(team => {
-			const isCurrentTeam = team.id === teamId;
-			return {
-				key: team.id,
-				label: team.name,
-				// icon: isCurrentTeam ? <Icon name="check" /> : undefined,
-				checked: isCurrentTeam,
-				noHover: isCurrentTeam,
-				action: () => {
-					if (!isCurrentTeam) this.props.switchToTeam(team.id);
-				}
-			};
-		}) as any;
-
-		teamMenuItems.push(
-			{ label: "-" },
-			{
-				key: "create-team",
-				icon: <Icon name="plus" />,
-				label: "Create New Team",
-				action: () => {
-					this.props.openModal(WebviewModals.CreateTeam);
-				}
-			}
-		);
-
-		const settingsMenuItems = [
-			{
-				label: "Change Team Name",
-				key: "change-team-name",
-				action: () => this.props.openModal(WebviewModals.ChangeTeamName)
-			},
-			{ label: "-" },
-			{
-				label: "Onboarding Settings...",
-				key: "onboarding-settings",
-				action: () => this.props.openModal(WebviewModals.TeamSetup),
-				disabled: !this.props.autoJoinSupported
-			},
-			{
-				label: "Feedback Request Settings...",
-				key: "review-settings",
-				action: () => this.props.openModal(WebviewModals.ReviewSettings)
-			},
-			{
-				label: "Live View Settings",
-				key: "live-view-settings",
-				submenu: [
-					{
-						label: "Always On",
-						checked: xraySetting === "on",
-						action: () => this.changeXray("on")
-					},
-					{
-						label: "Always Off",
-						checked: xraySetting === "off",
-						action: () => this.changeXray("off")
-					},
-					{
-						label: "User Selectable",
-						checked: !xraySetting || xraySetting === "user",
-						action: () => this.changeXray("user")
-					},
-					{ label: "-", action: () => {} },
-					{
-						label: "What is Live View?",
-						action: () => {
-							HostApi.instance.send(OpenUrlRequestType, {
-								url: "https://docs.codestream.com/userguide/features/myteam-section/"
-							});
-						}
-					}
-				]
-			},
-			{ label: "-" },
-			{ label: "Delete Team", action: () => this.deleteTeam() }
-		];
 
 		return (
-			<>
-				{this.state.showInvitePopup && (
-					<Modal translucent>
-						<Dialog
-							wide
-							title="Invite a Teammate"
-							onClose={() => this.setState({ showInvitePopup: false })}
-						>
-							<p>
-								Enter the email address of your teammate below to send an invitation to collaborate
-								on CodeStream.
-							</p>
-							<form className="standard-form" onSubmit={this.onSubmit} style={{ padding: "0" }}>
-								{this.renderFieldset()}
-							</form>
-						</Dialog>
-					</Modal>
-				)}
-				<PaneHeader
-					title="My Team"
-					subtitle={
+			<Dialog wide title="Invite" onClose={() => this.props.closeModal()}>
+				<form className="standard-form" onSubmit={this.onSubmit} style={{ padding: "0" }}>
+					{this.renderFieldset()}
+				</form>
+				<div style={{ margin: "0 -20px" }}>
+					{this.props.invited.length > 0 && (
 						<>
-							<InlineMenu
-								key="team-display-options"
-								className="subtle no-padding"
-								noFocusOnSelect
-								items={teamMenuItems}
-							>
-								{this.props.teamName}
-							</InlineMenu>
-						</>
-					}
-					id={WebviewPanels.NewComment}
-					warning={
-						collisions.nav.length > 0 ? (
-							<Icon
-								name="alert"
-								className="nav-conflict toggle-target"
-								title={"Possible Merge Conflict w/" + collisions.nav.join(", ")}
-								placement="top"
-							/>
-						) : null
-					}
-				>
-					<Icon
-						onClick={() => this.setState({ showInvitePopup: true })}
-						name="add-user"
-						title="Invite"
-						placement="bottom"
-						delay={1}
-					/>
-					{this.props.isCurrentUserAdmin && (
-						<InlineMenu
-							key="team-display-options"
-							className="subtle no-padding"
-							noFocusOnSelect
-							noChevronDown
-							items={settingsMenuItems}
-						>
-							<Icon name="gear" title="Team Settings" placement="bottom" delay={1} />
-						</InlineMenu>
-					)}
-					{this.props.isCurrentUserAdmin && (
-						<Icon
-							onClick={() => this.props.openPanel(WebviewPanels.Export)}
-							name="export"
-							title="Export Data"
-							placement="bottom"
-							delay={1}
-						/>
-					)}
-				</PaneHeader>
-				{this.props.paneState !== PaneState.Collapsed && (
-					<PaneBody className="team-pane-body">
-						<PaneNode>
-							<PaneNodeName id="team/teammates" title="Current Members" />
-							{!this.props.hiddenPaneNodes["team/teammates"] && (
-								<UL>
-									{this.props.members.map(user => (
-										<React.Fragment key={user.email}>
-											<li key={user.email}>
-												{this.renderAdminUser(user)}
-												<ProfileLink id={user.id}>
-													<Headshot person={user} />
-													<b className="wide-text">{user.fullName} </b>
-													<CSText as="span" muted>
-														@{user.username}{" "}
-													</CSText>
-												</ProfileLink>
-											</li>
-											<StyledUserStatus user={user} />
-											{user.id !== currentUserId && this.renderModifiedRepos(user)}
-										</React.Fragment>
-									))}
-									<form
-										className="standard-form"
-										onSubmit={this.onSubmit}
-										style={{ padding: "0 20px 0 40px" }}
-									>
-										{this.renderFieldset()}
-									</form>
-								</UL>
+							<HR />
+							<H3>Outstanding Invitations</H3>
+
+							{!this.props.emailSupported && (
+								<div className="color-warning" style={{ padding: "0 20px 10px 20px" }}>
+									NOTE: Outgoing email is currently not configured. To invite a teammate, click
+									"email" or copy the invite code.
+								</div>
 							)}
-						</PaneNode>
-						{this.props.invited.length > 0 && (
-							<PaneNode id="outstanding-invitations">
-								<PaneNodeName
-									id="team/invitations"
-									title="Outstanding Invitations"
-									count={this.props.invited.length}
-								/>
-								{!this.props.emailSupported && (
-									<div className="color-warning" style={{ padding: "0 20px 10px 20px" }}>
-										NOTE: Outgoing email is currently not configured. To invite a teammate, click
-										"email" or copy the invite code.
-									</div>
-								)}
-								{!this.props.hiddenPaneNodes["team/invitations"] && (
-									<UL>
-										{this.props.invited.map(user => {
-											const body = encodeURIComponent(
-												`1. Download and install CodeStream: https://www.codestream.com/roadmap\n\n2. Paste in your invitation code: ${user.inviteCode}\n\n`
-											);
-											const subject = "Invitation to CodeStream";
-											const title = user.inviteCode ? (
-												this.props.emailSupported ? (
-													<div>
-														Sometimes emails from CodeStream are blocked.
-														<div style={{ height: "10px" }}></div>
-														<a href={`mailto:${user.email}?Subject=${subject}&body=${body}`}>
-															Click Here
-														</a>{" "}
-														to email an invitation from you.
-													</div>
-												) : (
-													undefined
-												)
+							{!this.props.hiddenPaneNodes["team/invitations"] && (
+								<UL>
+									{this.props.invited.map(user => {
+										const body = encodeURIComponent(
+											`1. Download and install CodeStream: https://www.codestream.com/roadmap\n\n2. Paste in your invitation code: ${user.inviteCode}\n\n`
+										);
+										const subject = "Invitation to CodeStream";
+										const title = user.inviteCode ? (
+											this.props.emailSupported ? (
+												<div>
+													Sometimes emails from CodeStream are blocked.
+													<div style={{ height: "10px" }}></div>
+													<a href={`mailto:${user.email}?Subject=${subject}&body=${body}`}>
+														Click Here
+													</a>{" "}
+													to email an invitation from you.
+												</div>
 											) : (
 												undefined
-											);
-											return (
-												<li key={user.email}>
-													<div className="committer-email">
-														{user.email}
-														<div className="float-right">
-															{this.props.isCurrentUserAdmin && (
-																<>
-																	<a onClick={e => this.kick(user)}>remove</a>
-																	<span style={{ padding: "0 5px" }}>&middot;</span>
-																</>
-															)}
-															{!this.props.emailSupported && (
-																<>
-																	<a onClick={e => copy(user.inviteCode)}>copy code</a>
-																	<span style={{ padding: "0 5px" }}>&middot;</span>
-																</>
-															)}
-															{this.props.emailSupported ? (
-																<Tooltip
-																	title={title}
-																	placement="topRight"
-																	align={{ offset: [35, -5] }}
-																>
-																	{this.renderEmailUser(user)}
-																</Tooltip>
-															) : (
-																<a href={`mailto:${user.email}?Subject=${subject}&body=${body}`}>
-																	email
-																</a>
-															)}
-														</div>
-													</div>
-													{!this.props.emailSupported && (
-														<div>
-															<CSText as="span" muted>
-																{user.inviteCode}
-															</CSText>
-														</div>
-													)}
-												</li>
-											);
-										})}
-									</UL>
-								)}
-							</PaneNode>
-						)}
-						{suggested.length > 0 && (
-							<PaneNode>
-								<PaneNodeName
-									id="team/suggestions"
-									title="Suggested Teammates"
-									subtitle="from your git history"
-								/>
-								{!this.props.hiddenPaneNodes["team/suggestions"] && (
-									<UL>
-										{suggested.map(user => (
+											)
+										) : (
+											undefined
+										);
+										return (
 											<li key={user.email}>
 												<div className="committer-email">
-													{user.fullName}{" "}
-													<CSText as="span" muted>
-														{user.email}
-													</CSText>
+													{user.email}
 													<div className="float-right">
-														<a onClick={e => this.removeSuggestion(user)}>remove</a>
-														<span style={{ padding: "0 5px" }}>&middot;</span>
-														{this.renderEmailUser(user, "invite")}
+														{this.props.isCurrentUserAdmin && (
+															<>
+																<a onClick={e => this.kick(user)}>remove</a>
+																<span style={{ padding: "0 5px" }}>&middot;</span>
+															</>
+														)}
+														{!this.props.emailSupported && (
+															<>
+																<a onClick={e => copy(user.inviteCode)}>copy code</a>
+																<span style={{ padding: "0 5px" }}>&middot;</span>
+															</>
+														)}
+														{this.props.emailSupported ? (
+															<Tooltip
+																title={title}
+																placement="topRight"
+																align={{ offset: [35, -5] }}
+															>
+																{this.renderEmailUser(user)}
+															</Tooltip>
+														) : (
+															<a href={`mailto:${user.email}?Subject=${subject}&body=${body}`}>
+																email
+															</a>
+														)}
 													</div>
 												</div>
+												{!this.props.emailSupported && (
+													<div>
+														<CSText as="span" muted>
+															{user.inviteCode}
+														</CSText>
+													</div>
+												)}
 											</li>
-										))}
-									</UL>
-								)}
-							</PaneNode>
-						)}
-						{(this.props.isCurrentUserAdmin || mappedBlame.length > 0) && (
-							<PaneNode>
-								<PaneNodeName
-									id="team/blame-map"
-									title="Blame Map"
-									subtitle="reassign code responsibility"
-								/>
-								{!this.props.hiddenPaneNodes["team/blame-map"] && (
-									<>
-										<MapRow>
-											<div>
-												<b>Code Authored By</b>
+										);
+									})}
+								</UL>
+							)}
+						</>
+					)}
+					{suggested.length > 0 && (
+						<>
+							<HR />
+							<H3>Suggested Teammates</H3>
+							{!this.props.hiddenPaneNodes["team/suggestions"] && (
+								<UL>
+									{suggested.map(user => (
+										<li key={user.email}>
+											<div className="committer-email">
+												{user.fullName}{" "}
+												<CSText as="span" muted>
+													{user.email}
+												</CSText>
+												<div className="float-right">
+													<a onClick={e => this.removeSuggestion(user)}>remove</a>
+													<span style={{ padding: "0 5px" }}>&middot;</span>
+													{this.renderEmailUser(user, "invite")}
+												</div>
 											</div>
-											<div>
-												<b>Now Handled By</b>
-											</div>
-										</MapRow>
-										{mappedBlame.map(email => (
-											<MapRow key={email}>
-												<div>{email.replace(/\*/g, ".")}</div>
-												<div>
-													{this.props.isCurrentUserAdmin ? (
-														<SelectPeople
-															title="Handled By"
-															multiSelect={false}
-															value={[]}
-															extraItems={[
-																{ label: "-" },
-																{
-																	icon: <Icon name="trash" />,
-																	label: "Delete Mapping",
-																	key: "remove",
-																	action: () => this.onBlameMapUserChange(email)
-																}
-															]}
-															onChange={person => this.onBlameMapUserChange(email, person)}
-														>
-															<HeadshotName
-																id={blameMap[email]}
-																onClick={() => {} /* noop onclick to get cursor pointer */}
-															/>
-															<Icon name="chevron-down" />
-														</SelectPeople>
-													) : (
-														<HeadshotName id={blameMap[email]} />
-													)}
-												</div>
-											</MapRow>
-										))}
-										{mappedBlame.length === 0 && !addingBlameMap && (
-											<MapRow>
-												<div>
-													<i style={{ opacity: 0.5 }}>example@acme.com</i>
-												</div>
-												<div>
-													<i style={{ opacity: 0.5 }}>newhire@acme.com</i>
-												</div>
-											</MapRow>
-										)}
-
-										{this.props.isCurrentUserAdmin && !addingBlameMap && (
-											<MapRow>
-												<div>
-													<a onClick={() => this.setState({ addingBlameMap: true })}>Add mapping</a>
-												</div>
-											</MapRow>
-										)}
-										{addingBlameMap && (
-											<MapRow>
-												<div style={{ position: "relative" }}>
-													<input
-														style={{ width: "100%", paddingRight: "30px !important" }}
-														className="input-text"
-														id="blame-map-email"
-														type="text"
-														value={this.state.blameMapEmail}
-														onChange={this.onBlameMapEmailChange}
-														placeholder="Email..."
-														autoFocus={true}
-													/>
-													{suggested.length > 0 && (
-														<div style={{ position: "absolute", right: "15px", top: "7px" }}>
-															<InlineMenu
-																className="big-chevron"
-																items={suggested.map(suggestion => {
-																	return {
-																		label: suggestion.email,
-																		action: () => this.setState({ blameMapEmail: suggestion.email })
-																	};
-																})}
-															></InlineMenu>
-														</div>
-													)}
-												</div>
-												<div>
-													{EMAIL_REGEX.test(this.state.blameMapEmail) && (
-														<SelectPeople
-															title="Handled By"
-															multiSelect={false}
-															value={[]}
-															onChange={person =>
-																this.onBlameMapUserChange(this.state.blameMapEmail, person)
-															}
-														>
-															Select Person <Icon name="chevron-down" />
-														</SelectPeople>
-													)}
-												</div>
-											</MapRow>
-										)}
-									</>
-								)}
-							</PaneNode>
-						)}
-						<div style={{ height: "50px" }} />
-						<br />
-					</PaneBody>
-				)}
-			</>
+										</li>
+									))}
+								</UL>
+							)}
+						</>
+					)}
+				</div>
+			</Dialog>
 		);
 	}
 }
@@ -1143,7 +851,6 @@ const mapStateToProps = state => {
 		currentUserEmail: currentUser.email,
 		members: [currentUser, ..._sortBy(teammates, m => (m.fullName || "").toLowerCase())],
 		invited: _sortBy(invited, "email"),
-		webviewFocused: context.hasFocus,
 		xrayEnabled,
 		multipleReviewersApprove,
 		emailSupported,
@@ -1158,19 +865,13 @@ const mapStateToProps = state => {
 	};
 };
 
-const ConnectedTeamPanel = connect(mapStateToProps, {
+const ConnectedInvite = connect(mapStateToProps, {
 	invite,
 	setUserStatus,
 	openPanel,
 	openModal,
+	closeModal,
 	switchToTeam
-})(TeamPanel);
+})(Invite);
 
-export { ConnectedTeamPanel as TeamPanel };
-
-const LocalChanges = styled.div`
-	text-align: center;
-	padding: 1px;
-	display: flex;
-	justify-content: space-around;
-`;
+export { ConnectedInvite as Invite };

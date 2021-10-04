@@ -66,7 +66,7 @@ _defaultPaneSettings[WebviewPanels.CodemarksForFile] = {};
 // default this one to not show
 _defaultPaneSettings[WebviewPanels.WorkInProgress] = { removed: true };
 _defaultPaneSettings[WebviewPanels.Tasks] = {};
-_defaultPaneSettings[WebviewPanels.Team] = {};
+// _defaultPaneSettings[WebviewPanels.Team] = {};
 export const DEFAULT_PANE_SETTINGS = _defaultPaneSettings;
 
 export const AVAILABLE_PANES = [
@@ -74,8 +74,8 @@ export const AVAILABLE_PANES = [
 	WebviewPanels.OpenReviews,
 	WebviewPanels.CodemarksForFile,
 	WebviewPanels.WorkInProgress,
-	WebviewPanels.Tasks,
-	WebviewPanels.Team
+	WebviewPanels.Tasks
+	// WebviewPanels.Team
 ];
 
 export const COLLAPSED_SIZE = 22;
@@ -363,8 +363,6 @@ export const Sidebar = React.memo(function Sidebar() {
 				return <IssueDropdown paneState={paneState} />;
 			case WebviewPanels.CodemarksForFile:
 				return <Codemarks paneState={paneState} />;
-			case WebviewPanels.Team:
-				return <TeamPanel paneState={paneState} />;
 		}
 		return null;
 	};

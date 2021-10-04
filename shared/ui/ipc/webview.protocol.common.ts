@@ -46,7 +46,6 @@ export enum WebviewPanels {
 	NewComment = "new-comment",
 	NewIssue = "new-issue",
 	NewReview = "new-review",
-	Team = "people",
 	Profile = "profile",
 	PullRequest = "pull-request",
 	Review = "review",
@@ -86,7 +85,8 @@ export const WebviewPanelNames = {
 	"open-reviews": "Feedback Requests",
 	"codemarks-for-file": "Codemarks",
 	tasks: "Issues",
-	onboard: "Onboard"
+	onboard: "Onboard",
+	"blame-map": "Blame Map"
 };
 
 export enum WebviewModals {
@@ -105,7 +105,9 @@ export enum WebviewModals {
 	Keybindings = "keybindings",
 	Notifications = "notifications",
 	ReviewSettings = "review-settings",
-	Invite = "invite"
+	Invite = "invite",
+	BlameMap = "blame-map",
+	Team = "people"
 }
 
 export interface WebviewContext {

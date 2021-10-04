@@ -1063,6 +1063,7 @@ export const InviteTeammates = (props: { className: string; skip: Function; unwr
 		return {
 			providers: state.providers,
 			dontSuggestInvitees,
+			companyName: team ? state.companies[team.companyId]?.name : "your organization",
 			teamMembers: team ? getTeamMembers(state) : []
 		};
 	}, shallowEqual);
@@ -1177,7 +1178,7 @@ export const InviteTeammates = (props: { className: string; skip: Function; unwr
 	const component = () => {
 		return (
 			<div className="body">
-				<h3>Invite your teammates</h3>
+				<h3>Invite teammates to {derivedState.companyName}</h3>
 				{suggestedInvitees.length === 0 && (
 					<p className="explainer">We recommend exploring CodeStream with your team</p>
 				)}

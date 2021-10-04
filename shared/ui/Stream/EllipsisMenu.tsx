@@ -332,7 +332,7 @@ export function EllipsisMenu(props: EllipsisMenuProps) {
 					key: "flow",
 					action: () => dispatch(openPanel(WebviewPanels.Flow))
 				},
-				{ label: "Onboard", key: "onboard", action: () => go(WebviewPanels.Onboard) },
+				// { label: "Onboard", key: "onboard", action: () => go(WebviewPanels.Onboard) },
 				{
 					label: "What's New",
 					key: "whats-new",

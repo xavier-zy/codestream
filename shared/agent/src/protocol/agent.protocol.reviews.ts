@@ -83,6 +83,7 @@ export const CreateShareableReviewRequestType = new RequestType<
 export interface FetchReviewsRequest {
 	reviewIds?: string[];
 	streamId?: string;
+	streamIds?: string[];
 	before?: number;
 	byLastAcivityAt?: boolean;
 }

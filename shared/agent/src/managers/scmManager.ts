@@ -158,6 +158,7 @@ export class ScmManager {
 		let branches: (string | undefined)[] = [];
 		let remotes: GitRemote[][] = [];
 		let user: CSMe | undefined = undefined;
+		let withSubDirectoriesDepth: number | undefined = undefined;
 		try {
 			const { git } = SessionContainer.instance();
 			repositories = Array.from(await git.getRepositories());
@@ -173,6 +174,14 @@ export class ScmManager {
 			if (request && request.includeConnectedProviders) {
 				user = (await SessionContainer.instance().users.getMe()).user;
 			}
+			if (
+				request &&
+				request.withSubDirectoriesDepth != null &&
+				request.withSubDirectoriesDepth > 0
+			) {
+				// only allow 2!
+				withSubDirectoriesDepth = 2;
+			}
 		} catch (ex) {
 			gitError = ex.toString();
 			Logger.error(ex, cc);
@@ -186,14 +195,24 @@ export class ScmManager {
 		if (request && request.includeConnectedProviders) {
 			response.repositories = await Promise.all(
 				repositories.map(async (repo, index) => {
-					const repoScm = GitRepositoryExtensions.toRepoScm(repo, branches[index], remotes[index]);
+					const repoScm = GitRepositoryExtensions.toRepoScm(
+						repo,
+						branches[index],
+						remotes[index],
+						withSubDirectoriesDepth
+					);
 					repoScm.providerId = (await repo.getPullRequestProvider(user))?.providerId;
 					return repoScm;
 				})
 			);
 		} else {
 			response.repositories = repositories.map((repo, index) =>
-				GitRepositoryExtensions.toRepoScm(repo, branches[index], remotes[index])
+				GitRepositoryExtensions.toRepoScm(
+					repo,
+					branches[index],
+					remotes[index],
+					withSubDirectoriesDepth
+				)
 			);
 		}
 

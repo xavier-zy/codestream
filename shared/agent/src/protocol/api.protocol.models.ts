@@ -688,8 +688,20 @@ export interface CSMePreferences {
 	acceptedTOS?: boolean;
 
 	[key: string]: any;
+	activityFilter?: ActivityFilter;
 }
 
+export interface RepoSetting {
+	/** repo id */
+	id: string;
+	/** filter paths, like src/foo/bar */
+	paths?: string[];
+}
+
+export interface ActivityFilter {
+	mode: "everyone" | "openInIde" | "selectedRepos";
+	settings: { repos: RepoSetting[] };
+}
 export interface CSMeStatus {
 	label: string;
 	ticketId: string;

@@ -16,14 +16,19 @@ import {
 	FetchActivityRequestType,
 	PostPlus,
 	CodemarkPlus,
-	PinReplyToCodemarkRequestType
+	PinReplyToCodemarkRequestType,
+	GetReposScmRequestType,
+	ReposScm,
+	DirectoryTree,
+	ChangeDataType,
+	DidChangeDataNotificationType
 } from "@codestream/protocols/agent";
 import { savePosts } from "../store/posts/actions";
 import { addOlderActivity } from "../store/activityFeed/actions";
 import { saveCodemarks } from "../store/codemarks/actions";
 import { safe, emptyArray } from "../utils";
-import { markStreamRead } from "./actions";
-import { CSUser, CodemarkType, CSReview } from "@codestream/protocols/api";
+import { markStreamRead, setUserPreference } from "./actions";
+import { CSUser, CSReview, ActivityFilter, RepoSetting } from "@codestream/protocols/api";
 import { resetLastReads } from "../store/unreads/actions";
 import { PanelHeader } from "../src/components/PanelHeader";
 import { getPost, getThreadPosts } from "../store/posts/reducer";
@@ -38,6 +43,15 @@ import { Headshot } from "../src/components/Headshot";
 import { ProfileLink } from "../src/components/ProfileLink";
 import { Keybindings } from "./Keybindings";
 import { Dialog } from "../src/components/Dialog";
+
+interface MenuItem {
+	label: any;
+	checked?: boolean;
+	key?: string;
+	title?: string;
+	action?: Function;
+	submenu?: MenuItem[];
+}
 
 // see comment in SmartFormattedList.tsx
 const FormattedPluralAlias = FormattedPlural as any;
@@ -60,28 +74,155 @@ export const ActivityPanel = () => {
 	const dispatch = useDispatch();
 	const derivedState = useSelector((state: CodeStreamState) => {
 		const usernames = userSelectors.getUsernames(state);
-
+		const { preferences } = state;
 		return {
 			usernames,
 			users: state.users,
 			noCodemarksAtAll: !codemarkSelectors.teamHasCodemarks(state),
+			postsByStreamId: state.posts.byStream,
 			currentUserName: state.users[state.session.userId!].username,
+			currentUserId: state.session.userId,
 			activity: getActivity(state),
 			hasMoreActivity: state.activityFeed.hasMore,
 			codemarkTypeFilter: state.context.codemarkTypeFilter,
 			umis: state.umis,
 			webviewFocused: state.context.hasFocus,
-			repos: state.repos
-			// apiCapabilities: state.apiVersioning.apiCapabilities
+			repos: state.repos,
+			activityFilter: preferences.activityFilter || { mode: "openInIde", settings: { repos: [] } }
 		};
 	});
 
+	const [activityFilterMenuItems, setActivityFilterMenuItems] = React.useState<any[] | undefined>(
+		undefined
+	);
+	const [ellipsisMenuOpen, setEllipsisMenuOpen] = React.useState();
+	const toggleEllipsisMenu = event => {
+		setEllipsisMenuOpen(ellipsisMenuOpen ? undefined : event.target.closest("label"));
+	};
+	const [repos, setRepos] = React.useState<ReposScm[]>([]);
 	const [maximized, setMaximized] = React.useState(false);
 
+	const activity = React.useMemo(() => {
+		let _activity = derivedState.activity;
+
+		if (!repos?.length) {
+			return _activity;
+		}
+
+		let repoSettings: RepoSetting[] = [];
+		let isFallback = false;
+		if (derivedState.activityFilter.mode === "selectedRepos") {
+			repoSettings = derivedState.activityFilter?.settings?.repos || [];
+			let mappedRepoIds = repos.map(_ => _.id);
+
+			repoSettings = repoSettings?.filter(_ => _.id != null && mappedRepoIds.includes(_.id));
+
+			if (!repoSettings.length) {
+				// couldn't find a matching repo open in the ide, fallback to open in IDE
+				isFallback = true;
+			}
+		}
+		if (isFallback || derivedState.activityFilter.mode === "openInIde") {
+			repoSettings = repos
+				?.filter(_ => _.id != null)
+				.map(_ => {
+					return { id: _.id!, paths: [] };
+				});
+		} else if (!repoSettings.length) return _activity;
+
+		const filtered = _activity.map(_ => {
+			if (_.type === "codemark") {
+				const stream = derivedState.postsByStreamId[_.record.streamId];
+				const post = stream[_.record.postId];
+
+				if (
+					post?.mentionedUserIds?.includes(derivedState.currentUserId!) ||
+					_.record.assignees?.includes(derivedState.currentUserId!)
+				) {
+					return _;
+				}
+				let found: any = undefined;
+				for (const repoSetting of repoSettings) {
+					const match = _.record.markers?.find(m => {
+						let isPathMatch = true;
+						if (repoSetting.paths && repoSetting.paths[0] != null) {
+							isPathMatch = (m.file || "").replace(/\\/g, "/").indexOf(repoSetting.paths![0]) === 0;
+						}
+						return isPathMatch && repoSetting.id === m.repoId;
+					});
+					found = match ? _ : undefined;
+					if (found) {
+						return found;
+					}
+				}
+				return found;
+			} else if (_.type === "review") {
+				if (_.record.reviewers?.includes(derivedState.currentUserId!)) {
+					return _;
+				}
+
+				let found: any = undefined;
+				for (const repoSetting of repoSettings) {
+					const match = _.record.reviewChangesets?.find(m => {
+						let isPathMatch = true;
+						if (repoSetting.paths && repoSetting.paths[0] != null) {
+							isPathMatch = !!m.modifiedFiles.find(
+								_ => (_.file || "").replace(/\\/g, "/").indexOf(repoSetting.paths![0]) === 0
+							);
+						}
+						return isPathMatch && repoSetting.id === m.repoId;
+					});
+					found = match ? _ : undefined;
+					if (found) {
+						return found;
+					}
+				}
+				return found;
+			}
+			return null;
+		});
+		return filtered.filter(Boolean);
+	}, [derivedState.activity, repos, derivedState.activityFilter, derivedState.postsByStreamId]);
+
+	const filterLabel = React.useMemo(() => {
+		if (derivedState.activityFilter.mode === "selectedRepos") {
+			let repoSettings = derivedState.activityFilter?.settings?.repos || [];
+			if (repoSettings.length) {
+				let mappedRepoIds = repos.map(_ => _.id);
+				repoSettings = repoSettings?.filter(_ => _.id != null && mappedRepoIds.includes(_.id));
+
+				// couldn't find a matching repo open in the ide, fallback to open in IDE
+				if (!repoSettings.length) {
+					console.error("falling back to openInIDE");
+					return "my IDE";
+				}
+
+				const labels: string[] = [];
+				for (const repoSetting of repoSettings) {
+					const foundRepo = repos.find(_ => _.id === repoSetting.id);
+
+					labels.push(
+						`${foundRepo?.folder?.name || `selected repo`}${
+							repoSetting.paths ? " (" + repoSetting.paths[0] + ")" : ""
+						}`
+					);
+				}
+
+				return labels ? labels.join(", ") : "selected repos";
+			}
+			return "selected repos";
+		}
+		if (derivedState.activityFilter.mode === "openInIde") {
+			return "my IDE";
+		}
+
+		return "my organization";
+	}, [derivedState.activity, repos]);
+
 	const fetchActivity = React.useCallback(async () => {
-		const response = await HostApi.instance.send(FetchActivityRequestType, {
+		let response = await HostApi.instance.send(FetchActivityRequestType, {
 			limit: 50,
-			before: safe(() => _last(derivedState.activity)!.record.postId)
+			before: safe(() => _last(activity)!.record.postId)
 		});
 		dispatch(savePosts(response.posts));
 		dispatch(saveCodemarks(response.codemarks));
@@ -92,15 +233,180 @@ export const ActivityPanel = () => {
 				hasMore: Boolean(response.more)
 			})
 		);
-	}, [derivedState.activity]);
+	}, [activity]);
+
+	const renderFilter = async () => {
+		const repoResponse = await HostApi.instance.send(GetReposScmRequestType, {
+			inEditorOnly: true,
+			withSubDirectoriesDepth: 2
+		});
+
+		if (repoResponse && repoResponse.repositories) {
+			setRepos(repoResponse.repositories);
+			const selectedReposSubMenuItems: any[] = [];
+			const menuTreeBuilder = (r: DirectoryTree) => {
+				const checked = () => {
+					if (derivedState.activityFilter.mode === "selectedRepos") {
+						const repo = derivedState.activityFilter.settings?.repos?.find(_ => _.id === r.id);
+						if (repo && repoResponse.repositories?.find(_ => _.id === repo.id)) {
+							if (repo.paths && repo.paths.length) {
+								const path = (repo.paths[0] || "").replace(/\\/g, "/");
+								if (r.partialPath) {
+									const joined = r.partialPath.join("/");
+									return joined === path || path.indexOf(joined) === 0;
+								}
+							}
+						}
+						return false;
+					}
+					return false;
+				};
+				const menuItem: MenuItem = {
+					key: r.id + "-" + r.name,
+					checked: checked(),
+					label: r.name,
+					action: () => {
+						dispatch(
+							setUserPreference(["activityFilter"], {
+								mode: "selectedRepos",
+								settings: {
+									repos: [
+										{
+											id: r.id,
+											paths: [r.partialPath.join("/")]
+										}
+									]
+								}
+							} as ActivityFilter)
+						);
+						HostApi.instance.track("Activity Feed Filtered ", {
+							"Selected Filter": "Folder"
+						});
+					}
+				};
+				if (r?.children != null && r?.children.length) {
+					const menuItems: MenuItem[] = [];
+					r.children.forEach((child: any) => {
+						menuItems.push(menuTreeBuilder(child));
+					});
+					menuItem.submenu = menuItems;
+				}
+				return menuItem;
+			};
+
+			const mappedRepoIds = derivedState.activityFilter.settings?.repos.map(_ => _.id) || [];
+			const hasASelectedRepo = !!repoResponse.repositories?.find(
+				r => r.id && mappedRepoIds.includes(r.id)
+			);
+			repoResponse.repositories.forEach(_ => {
+				const checked = () => {
+					if (derivedState.activityFilter.mode === "selectedRepos") {
+						const repo = derivedState.activityFilter.settings?.repos?.find(r => r.id === _.id);
+						return !!(repo && repoResponse.repositories?.find(r => r.id === repo.id));
+					}
+					return false;
+				};
+
+				const repoMenu = {
+					key: _.id,
+					checked: checked(),
+					label: _.folder.name,
+					action: () => {
+						dispatch(
+							setUserPreference(["activityFilter"], {
+								mode: "selectedRepos",
+								settings: {
+									repos: [
+										{
+											id: _.id
+										}
+									]
+								}
+							} as ActivityFilter)
+						);
+						HostApi.instance.track("Activity Feed Filtered ", {
+							"Selected Filter": "Folder"
+						});
+					}
+				} as any;
+				selectedReposSubMenuItems.push(repoMenu);
+				if (_.directories && _.directories.children != null && _.directories.children.length) {
+					const submenuItems: any[] = [];
+					_.directories.children.forEach(child => {
+						submenuItems.push(menuTreeBuilder(child));
+					});
+					repoMenu.submenu = submenuItems;
+				}
+			});
+			const mainFilterChoices = [
+				{
+					checked: derivedState.activityFilter.mode === "everyone",
+					key: "everyone",
+					label: "Activity from everyone in the organization",
+					action: () => {
+						dispatch(
+							setUserPreference(["activityFilter"], {
+								mode: "everyone",
+								settings: {}
+							} as ActivityFilter)
+						);
+						HostApi.instance.track("Activity Feed Filtered ", {
+							"Selected Filter": "Everyone"
+						});
+					}
+				},
+				{
+					checked:
+						derivedState.activityFilter.mode === "openInIde" ||
+						(derivedState.activityFilter.mode === "selectedRepos" && !hasASelectedRepo),
+					key: "openInIde",
+					label: "Activity associated with code open in my IDE",
+					action: () => {
+						dispatch(
+							setUserPreference(["activityFilter"], {
+								mode: "openInIde",
+								settings: {}
+							} as ActivityFilter)
+						);
+						HostApi.instance.track("Activity Feed Filtered ", {
+							"Selected Filter": "Open Repos"
+						});
+					}
+				},
+				{
+					checked: derivedState.activityFilter.mode === "selectedRepos" && hasASelectedRepo,
+					label: "Activity associated with code in selected folder",
+					key: "selectedRepos",
+					submenu: selectedReposSubMenuItems
+				}
+			] as MenuItem[];
+			setActivityFilterMenuItems(mainFilterChoices);
+		}
+
+		return { repos: repoResponse?.repositories || [] };
+	};
+
+	React.useEffect(() => {
+		renderFilter();
+	}, [derivedState.activityFilter]);
 
 	useDidMount(() => {
 		if (derivedState.webviewFocused)
 			HostApi.instance.track("Page Viewed", { "Page Name": "Activity Feed" });
 
-		if (derivedState.activity.length === 0) fetchActivity();
+		renderFilter().then(() => {
+			if (activity.length === 0) fetchActivity();
+		});
+
+		const disposable = HostApi.instance.on(DidChangeDataNotificationType, (e: any) => {
+			if (e.type === ChangeDataType.Workspace) {
+				renderFilter();
+			}
+		});
+
 		return () => {
 			dispatch(resetLastReads());
+			disposable.dispose();
 		};
 	});
 
@@ -112,12 +418,12 @@ export const ActivityPanel = () => {
 
 	const { targetRef, rootRef } = useIntersectionObserver(entries => {
 		if (!entries[0].isIntersecting) return;
-		if (!derivedState.hasMoreActivity || derivedState.activity.length === 0) return;
+		if (!derivedState.hasMoreActivity || activity.length === 0) return;
 		fetchActivity();
 	});
 
 	const renderActivity = () => {
-		if (derivedState.activity.length === 0 && !derivedState.hasMoreActivity) {
+		if (activity.length === 0 && !derivedState.hasMoreActivity) {
 			return (
 				<div style={{ height: "75vh" }}>
 					<Keybindings>
@@ -130,7 +436,7 @@ export const ActivityPanel = () => {
 			);
 		}
 
-		return derivedState.activity.map(({ type, record }) => {
+		return activity.map(({ type, record }) => {
 			const person = derivedState.users[record.creatorId || ""];
 			if (!person) return null;
 
@@ -263,28 +569,6 @@ export const ActivityPanel = () => {
 		});
 	};
 
-	// const showActivityLabels = {
-	// 	all: "all activity",
-	// 	[CodemarkType.Comment]: "comments",
-	// 	[CodemarkType.Review]: "code reviews",
-	// 	[CodemarkType.Issue]: "issues"
-	// };
-
-	// const menuItems = [
-	// 	{ label: "All Activity", action: "all" },
-	// 	{ label: "-" },
-	// 	{ label: "Comments", icon: <Icon name="comment" />, action: CodemarkType.Comment },
-	// 	{ label: "Issues", icon: <Icon name="issue" />, action: CodemarkType.Issue }
-	// ];
-	// if (derivedState.apiCapabilities.lightningCodeReviews) {
-	// 	menuItems.push({
-	// 		label: "Code Reviews",
-	// 		icon: <Icon name="review" />,
-	// 		action: CodemarkType.Review
-	// 	});
-	// }
-
-	// console.warn("RENDERING ACTIVITY!");
 	return (
 		<Dialog
 			wide
@@ -293,7 +577,29 @@ export const ActivityPanel = () => {
 			onMinimize={() => setMaximized(false)}
 			onClose={() => dispatch(closeAllPanels())}
 		>
-			<PanelHeader title="Activity" />
+			<PanelHeader title="Activity">
+				{activityFilterMenuItems && (
+					<>
+						<span>Activity associated with code in </span>
+						<label onClick={toggleEllipsisMenu} id="activity-filter" style={{ cursor: "pointer" }}>
+							<Icon name="repo" className="smaller" />
+							{filterLabel}
+							<Icon
+								name="chevron-down-thin"
+								className="smaller"
+								style={{ verticalAlign: "-2px" }}
+							/>
+							{ellipsisMenuOpen && (
+								<Menu
+									items={activityFilterMenuItems}
+									action={() => setEllipsisMenuOpen(undefined)}
+									align="bottomLeft"
+								/>
+							)}
+						</label>
+					</>
+				)}
+			</PanelHeader>
 			<div
 				style={{
 					height: maximized ? "calc(100vh - 50px)" : "calc(100vh - 120px)",
@@ -304,7 +610,7 @@ export const ActivityPanel = () => {
 					<div ref={rootRef} className="channel-list vscroll">
 						{renderActivity()}
 						{derivedState.hasMoreActivity &&
-							(derivedState.activity.length === 0 ? (
+							(activity.length === 0 ? (
 								<LoadingMessage>Loading latest activity...</LoadingMessage>
 							) : (
 								<LoadingMessage ref={targetRef}>Loading more...</LoadingMessage>

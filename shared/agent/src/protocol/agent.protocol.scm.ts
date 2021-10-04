@@ -181,6 +181,20 @@ export interface ReposScm {
 	 * return the providerId
 	 */
 	providerId?: string;
+	directories?: DirectoryTree;
+}
+
+export interface DirectoryTree {
+	depth: number;
+	children: DirectoryTree[];
+	/** name of the directory */
+	name: string;
+	/** path to the directory */
+	fullPath: string;
+	/** repo id */
+	id: string | undefined;
+	/** in a path like foo/bar this is ["foo","bar"] */
+	partialPath: string[];
 }
 
 export interface GetReposScmRequest {
@@ -201,6 +215,14 @@ export interface GetReposScmRequest {
 	 * Set this flag to also return the providerId if a repo is connected to one
 	 */
 	includeConnectedProviders?: boolean;
+
+	/**
+	 * if set to a number, will return a tree structure of directories within this repo up to the specific depth
+	 *
+	 * @type {number}
+	 * @memberof GetReposScmRequest
+	 */
+	withSubDirectoriesDepth?: number;
 }
 
 export interface GetReposScmResponse {

@@ -82,6 +82,12 @@ export class CodemarksManager extends CachedEntityManagerBase<CSCodemark> {
 			if (request.streamId != null && request.streamId !== codemark.streamId) {
 				continue;
 			}
+			if (request.streamIds != null && !request.streamIds.includes(codemark.streamId)) {
+				continue;
+			}
+			if (request.codemarkIds != null && !request.codemarkIds.includes(codemark.id)) {
+				continue;
+			}
 
 			if (!(await this.canSeeCodemark(codemark))) {
 				continue;

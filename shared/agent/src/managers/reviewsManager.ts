@@ -125,6 +125,9 @@ export class ReviewsManager extends CachedEntityManagerBase<CSReview> {
 			if (request.reviewIds?.length ?? 0 > 0) {
 				reviews = reviews.filter(r => request.reviewIds!.includes(r.id));
 			}
+			if (request.streamIds?.length ?? 0 > 0) {
+				reviews = reviews.filter(r => request.streamIds!.includes(r.streamId));
+			}
 		}
 
 		return { reviews };

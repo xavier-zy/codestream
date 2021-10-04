@@ -137,6 +137,8 @@ export const CreateCodemarkPermalinkRequestType = new RequestType<
 
 export interface FetchCodemarksRequest {
 	streamId?: string;
+	streamIds?: string[];
+	codemarkIds?: string[];
 	before?: number;
 	byLastAcivityAt?: boolean;
 }

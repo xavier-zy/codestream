@@ -307,8 +307,16 @@ export class GitService implements IGitService, Disposable {
 		};
 	}
 
-	async getFileContentForRevision(uri: URI, ref: string, range?: Range): Promise<string | undefined>;
-	async getFileContentForRevision(path: string, ref: string, range?: Range): Promise<string | undefined>;
+	async getFileContentForRevision(
+		uri: URI,
+		ref: string,
+		range?: Range
+	): Promise<string | undefined>;
+	async getFileContentForRevision(
+		path: string,
+		ref: string,
+		range?: Range
+	): Promise<string | undefined>;
 	async getFileContentForRevision(
 		uriOrPath: URI | string,
 		ref: string,

@@ -1195,7 +1195,6 @@ export class ScmManager {
 		let repoId;
 		let ignored;
 		if (uri.scheme === "file") {
-
 			try {
 				repoPath = await git.getRepoRoot(uri.fsPath);
 				if (repoPath !== undefined) {
@@ -1205,7 +1204,7 @@ export class ScmManager {
 					}
 
 					branch = await git.getCurrentBranch(uri.fsPath);
-					rev = gitSha || await git.getFileCurrentRevision(uri.fsPath);
+					rev = gitSha || (await git.getFileCurrentRevision(uri.fsPath));
 					const repo = await git.getRepositoryByFilePath(uri.fsPath);
 					repoId = repo && repo.id;
 					const repoHeadHash = await git.getRepoHeadRevision(repoPath);

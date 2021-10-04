@@ -22,7 +22,6 @@ import { Dispatch } from "../store/common";
 import { CodeError, BaseCodeErrorHeader, ExpandedAuthor, Description } from "./CodeError";
 import ScrollBox from "./ScrollBox";
 import KeystrokeDispatcher from "../utilities/keystroke-dispatcher";
-import { CodeErrorForm } from "./CodeErrorForm";
 import { isFeatureEnabled } from "../store/apiVersioning/reducer";
 import Icon from "./Icon";
 import { isConnected } from "../store/providers/reducer";
@@ -605,9 +604,6 @@ export function CodeErrorNav(props: Props) {
 		);
 	}
 
-	if (isEditing && codeError) {
-		return <CodeErrorForm editingCodeError={codeError} />;
-	}
 	return (
 		<Root>
 			<div

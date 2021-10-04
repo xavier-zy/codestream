@@ -50,7 +50,6 @@ import Menu from "../Menu";
 import { confirmPopup } from "../Confirm";
 import { createCodemark } from "@codestream/webview/store/codemarks/actions";
 import { Link } from "../Link";
-import { CodeErrorForm } from "../CodeErrorForm";
 import { Dispatch } from "@codestream/webview/store/common";
 import { Loading } from "@codestream/webview/Container/Loading";
 import { getPost } from "../../store/posts/reducer";
@@ -1285,33 +1284,29 @@ const CodeErrorForCodeError = (props: PropsWithCodeError) => {
 		}
 	}, [codeError, derivedState.repos]);
 
-	if (isEditing) {
-		return <CodeErrorForm editingCodeError={props.codeError} />;
-	} else {
-		return (
-			<>
-				{shareModalOpen && (
-					<SharingModal
-						codeError={props.codeError}
-						post={derivedState.post}
-						onClose={() => setShareModalOpen(false)}
-					/>
-				)}
-				<BaseCodeError
-					{...baseProps}
-					parsedStack={props.parsedStack}
+	return (
+		<>
+			{shareModalOpen && (
+				<SharingModal
 					codeError={props.codeError}
 					post={derivedState.post}
-					repoInfo={repoInfo}
-					isFollowing={derivedState.userIsFollowing}
-					currentUserId={derivedState.currentUser.id}
-					renderFooter={renderFooter}
-					setIsEditing={setIsEditing}
-					headerError={preconditionError}
+					onClose={() => setShareModalOpen(false)}
 				/>
-			</>
-		);
-	}
+			)}
+			<BaseCodeError
+				{...baseProps}
+				parsedStack={props.parsedStack}
+				codeError={props.codeError}
+				post={derivedState.post}
+				repoInfo={repoInfo}
+				isFollowing={derivedState.userIsFollowing}
+				currentUserId={derivedState.currentUser.id}
+				renderFooter={renderFooter}
+				setIsEditing={setIsEditing}
+				headerError={preconditionError}
+			/>
+		</>
+	);
 };
 
 const CodeErrorForId = (props: PropsWithId) => {

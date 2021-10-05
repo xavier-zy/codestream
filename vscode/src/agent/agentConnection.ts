@@ -429,9 +429,10 @@ export class CodeStreamAgentConnection implements Disposable {
 			});
 		}
 
-		fetch(uri: Uri) {
+		fetch(uri: Uri, sha?: string) {
 			return this._connection.sendRequest(FetchDocumentMarkersRequestType, {
 				textDocument: { uri: uri.toString() },
+				gitSha: sha,
 				applyFilters: true
 			});
 		}
@@ -654,7 +655,7 @@ export class CodeStreamAgentConnection implements Disposable {
 		}
 
 		getFileContentsAtRevision(
-			repoId: string,
+			repoId: string | undefined,
 			path: string,
 			sha: string
 		): Promise<GetFileContentsAtRevisionResponse> {

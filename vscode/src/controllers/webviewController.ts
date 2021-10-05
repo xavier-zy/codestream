@@ -711,8 +711,10 @@ export class WebviewController implements Disposable {
 	private async onEditorSelectionChanged(webview: WebviewLike, e: TextEditorSelectionChangeEvent) {
 		if (e.textEditor !== this._lastEditor || !this.isSupportedEditor(e.textEditor)) return;
 
+		const { fileUri, sha } = csUri.Uris.getFileUriAndSha(e.textEditor.document.uri);
 		webview.notify(HostDidChangeEditorSelectionNotificationType, {
-			uri: e.textEditor.document.uri.toString(true),
+			uri: fileUri.toString(true),
+			gitSha: sha,
 			selections: Editor.toEditorSelections(e.selections),
 			visibleRanges: Editor.toSerializableRange(e.textEditor.visibleRanges),
 			lineCount: e.textEditor.document.lineCount
@@ -725,8 +727,10 @@ export class WebviewController implements Disposable {
 	) {
 		if (e.textEditor !== this._lastEditor || !this.isSupportedEditor(e.textEditor)) return;
 
+		const { fileUri, sha } = csUri.Uris.getFileUriAndSha(e.textEditor.document.uri);
 		webview.notify(HostDidChangeEditorVisibleRangesNotificationType, {
-			uri: e.textEditor.document.uri.toString(true),
+			uri: fileUri.toString(true),
+			gitSha: sha,
 			selections: Editor.toEditorSelections(e.textEditor.selections),
 			visibleRanges: Editor.toSerializableRange(e.visibleRanges),
 			lineCount: e.textEditor.document.lineCount
@@ -735,7 +739,7 @@ export class WebviewController implements Disposable {
 
 	private isSupportedEditor(textEditor: TextEditor): boolean {
 		const uri = textEditor.document.uri;
-		if (uri.scheme !== "file" && uri.scheme !== "codestream-diff") return false;
+		if (uri.scheme !== "file" && uri.scheme !== "codestream-diff" && uri.scheme !== "codestream-git") return false;
 
 		const csRangeDiffInfo = Strings.parseCSReviewDiffUrl(uri.toString());
 		if (
@@ -889,8 +893,15 @@ export class WebviewController implements Disposable {
 			}
 			case EditorRevealRangeRequestType.method: {
 				webview.onIpcRequest(EditorRevealRangeRequestType, e, async (_type, params) => {
+					let uri = Uri.parse(params.uri);
+					if (params.sha) {
+						uri = uri.with({
+							scheme: "codestream-git",
+							query: `sha=${params.sha}`
+						});
+					}
 					const success = await Editor.revealRange(
-						Uri.parse(params.uri),
+						uri,
 						Editor.fromSerializableRange(params.range),
 						this._lastEditor,
 						{

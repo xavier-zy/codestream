@@ -65,6 +65,7 @@ export const HostDidChangeEditorSelectionNotificationType = new NotificationType
 
 export interface HostDidChangeEditorVisibleRangesNotification {
 	uri: string;
+	gitSha?: string;
 	selections: EditorSelection[];
 	visibleRanges: Range[];
 	lineCount?: number;

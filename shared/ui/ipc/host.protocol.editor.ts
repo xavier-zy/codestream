@@ -32,7 +32,8 @@ export const EditorHighlightRangeRequestType = new RequestType<
 
 export interface EditorRevealRangeRequest {
 	uri: string;
-	range: Range;
+	sha?: string;
+	range: Range;	
 	preserveFocus?: boolean;
 	atTop?: boolean;
 }

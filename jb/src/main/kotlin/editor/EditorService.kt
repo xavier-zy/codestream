@@ -214,6 +214,7 @@ class EditorService(val project: Project) {
                     project.webViewService?.postNotification(
                         EditorNotifications.DidChangeVisibleRanges(
                             editor.document.uri,
+                            editor.document.gitSha,
                             editor.selections,
                             editor.visibleRanges,
                             editor.document.lineCount

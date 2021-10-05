@@ -3,6 +3,7 @@ import { ReviewDiffContentProvider } from "providers/diffContentProvider";
 import { ExtensionContext, workspace } from "vscode";
 import { WebviewLike } from "webviews/webviewLike";
 import { InstrumentationDecorationProvider } from "providers/instrumentationDecorationProvider";
+import { GitContentProvider } from "providers/gitContentProvider";
 import { BaseAgentOptions, CodeStreamAgentConnection } from "./agent/agentConnection";
 import { CodeStreamSession } from "./api/session";
 import { Commands } from "./commands";
@@ -48,6 +49,7 @@ export class Container {
 		context.subscriptions.push((this._codeActions = new CodeStreamCodeActionProvider()));
 		context.subscriptions.push((this._codeLens = new CodemarkCodeLensProvider()));
 		context.subscriptions.push((this._diffContents = new ReviewDiffContentProvider()));
+		context.subscriptions.push((this._gitContents = new GitContentProvider()));
 		context.subscriptions.push((this._markerDecorations = new CodemarkDecorationProvider()));
 		context.subscriptions.push(
 			(this._instrumentationDecorationProvider = new InstrumentationDecorationProvider())
@@ -134,6 +136,11 @@ export class Container {
 	private static _diffContents: ReviewDiffContentProvider;
 	static get diffContents() {
 		return this._diffContents;
+	}
+
+	private static _gitContents: GitContentProvider;
+	static get gitContents() {
+		return this._gitContents;
 	}
 
 	private static _context: ExtensionContext;

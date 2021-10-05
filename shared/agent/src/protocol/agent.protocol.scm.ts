@@ -519,9 +519,9 @@ export interface GetFileContentsAtRevisionRequest {
 	/**
 	 * CodeStream repositoryId
 	 * */
-	repoId: string;
+	repoId?: string;
 	/**
-	 * relative file path
+	 * Absolute file path or relative if repoId is specified
 	 * */
 	path: string;
 	/**

@@ -1501,19 +1501,27 @@ export class ScmManager {
 	): Promise<GetFileContentsAtRevisionResponse> {
 		const { git, repositoryMappings } = SessionContainer.instance();
 
-		const repo = await git.getRepositoryById(request.repoId);
 		let repoPath;
-		if (repo) {
-			repoPath = repo.path;
+		if (request.repoId) {
+			const repo = await git.getRepositoryById(request.repoId)
+			if (repo) {
+				repoPath = repo.path;
+			} else {
+				repoPath = await repositoryMappings.getByRepoId(request.repoId);
+			}
 		} else {
-			repoPath = await repositoryMappings.getByRepoId(request.repoId);
+			repoPath = await git.getRepoRoot(request.path);
 		}
 
 		if (!repoPath) {
-			throw new Error(`getFileContentsAtRevision: Could not load repo with ID ${request.repoId}`);
+			if (request.repoId) {
+				throw new Error(`getFileContentsAtRevision: Could not load repo with ID ${request.repoId}`);
+			} else {
+				throw new Error(`getFileContentsAtRevision: Could not find repo for file ${request.path}`);
+			}
 		}
 
-		const filePath = paths.join(repoPath, request.path);
+		const filePath = request.repoId ? paths.join(repoPath, request.path) : request.path;
 		if (request.fetchAllRemotes) {
 			await git.fetchAllRemotes(repoPath);
 		}

@@ -232,7 +232,7 @@ export const jumpToStackLine = (
 	);
 
 	const revealResponse = await HostApi.instance.send(EditorRevealRangeRequestType, {
-		uri: `file://${path!}`,
+		uri: `file://${path!.replace(/\\/g, "/")}`,
 		preserveFocus: true,
 		range
 	});

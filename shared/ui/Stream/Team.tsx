@@ -676,19 +676,16 @@ class Team extends React.Component<Props, State> {
 				<div style={{ margin: "0 -20px" }}>
 					<UL>
 						{this.props.members.map(user => (
-							<React.Fragment key={user.email}>
-								<li key={user.email}>
-									{this.renderAdminUser(user)}
-									<ProfileLink id={user.id}>
-										<Headshot person={user} />
-										<b className="wide-text">{user.fullName} </b>
-										<CSText as="span" muted>
-											@{user.username}{" "}
-										</CSText>
-									</ProfileLink>
-								</li>
-								{user.id !== currentUserId && this.renderModifiedRepos(user)}
-							</React.Fragment>
+							<li key={user.email}>
+								{this.renderAdminUser(user)}
+								<ProfileLink id={user.id}>
+									<Headshot person={user} />
+									<b className="wide-text">{user.fullName} </b>
+									<CSText as="span" muted>
+										@{user.username}{" "}
+									</CSText>
+								</ProfileLink>
+							</li>
 						))}
 					</UL>
 					{this.props.invited.length > 0 && (

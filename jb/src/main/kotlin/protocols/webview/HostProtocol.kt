@@ -36,8 +36,7 @@ class Configs(
     val email: String?,
     val showHeadshots: Boolean,
     val debug: Boolean,
-    val showFeedbackSmiley: Boolean,
-    val team: String?
+    val showFeedbackSmiley: Boolean
 )
 
 class Ide(

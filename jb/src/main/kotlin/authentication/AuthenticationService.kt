@@ -75,8 +75,7 @@ class AuthenticationService(val project: Project) {
                 agent.loginToken(
                     LoginWithTokenParams(
                         token,
-                        settings.state.teamId,
-                        appSettings.team
+                        settings.state.teamId
                     )
                 ).await()
 

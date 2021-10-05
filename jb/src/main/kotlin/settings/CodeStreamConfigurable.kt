@@ -37,7 +37,6 @@ class CodeStreamConfigurable : SearchableConfigurable {
             state.serverUrl = if (gui.serverUrl.text.isNullOrEmpty()) gui.serverUrl.text else gui.serverUrl.text.trimEnd('/')
             state.disableStrictSSL = gui.disableStrictSSL.isSelected
             state.avatars = gui.showAvatars.isSelected
-            state.team = gui.team.text
             state.showFeedbackSmiley = gui.showFeedbackSmiley.isSelected
             state.showMarkers = gui.showMarkers.isSelected
             state.showNewCodemarkGutterIconOnHover = showNewCodemarkGutterIconOnHover
@@ -59,7 +58,6 @@ class CodeStreamConfigurable : SearchableConfigurable {
                 serverUrl.text = it.serverUrl
                 disableStrictSSL.isSelected = it.disableStrictSSL
                 showAvatars.isSelected = it.avatars
-                team.text = it.team
                 showFeedbackSmiley.isSelected = it.showFeedbackSmiley
                 showMarkers.isSelected = it.showMarkers
                 showNewCodemarkGutterIconOnHover.isSelected = it.showNewCodemarkGutterIconOnHover

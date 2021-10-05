@@ -28,8 +28,7 @@ class InitializationOptions(
 
 class LoginWithTokenParams(
     val token: JsonElement,
-    val teamId: String?,
-    val team: String?
+    val teamId: String?
 )
 
 class LoginResult(

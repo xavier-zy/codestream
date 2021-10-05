@@ -11,7 +11,6 @@ public class CodeStreamConfigurableGUI {
     private JTextField serverUrl;
     private JCheckBox disableStrictSSL;
     private JCheckBox showAvatars;
-    private JTextField team;
     private JCheckBox showFeedbackSmiley;
     private JCheckBox autoHideMarkers;
     private JCheckBox showMarkers;
@@ -38,10 +37,6 @@ public class CodeStreamConfigurableGUI {
 
     public JCheckBox getShowAvatars() {
         return showAvatars;
-    }
-
-    public JTextField getTeam() {
-        return team;
     }
 
     public JCheckBox getShowFeedbackSmiley() {

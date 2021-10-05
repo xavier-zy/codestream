@@ -34,7 +34,6 @@ data class ApplicationSettingsServiceState(
     var serverUrl: String = API_PROD,
     var disableStrictSSL: Boolean = false,
     var avatars: Boolean = true,
-    var team: String? = null,
     var showFeedbackSmiley: Boolean = true,
     var showMarkers: Boolean = true,
     var showNewCodemarkGutterIconOnHover: Boolean = true,
@@ -66,7 +65,6 @@ class ApplicationSettingsService : PersistentStateComponent<ApplicationSettingsS
     val ideInfo get() = Ide()
     val traceLevel get() = if (logger.isDebugEnabled) TraceLevel.DEBUG else TraceLevel.VERBOSE
     val isDebugging get() = DEBUG
-    val team get() = state.team
     val autoHideMarkers get() = state.autoHideMarkers
     val showMarkers get() = state.showMarkers
     val showNewCodemarkGutterIconOnHover get() = state.showNewCodemarkGutterIconOnHover
@@ -134,7 +132,6 @@ class ApplicationSettingsService : PersistentStateComponent<ApplicationSettingsS
             state.email,
             state.avatars,
             isDebugging,
-            state.showFeedbackSmiley,
-            state.team
+            state.showFeedbackSmiley
         )
 }

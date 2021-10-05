@@ -1074,7 +1074,7 @@ export const InviteTeammates = (props: { className: string; skip: Function; unwr
 		new Array(50).fill(true)
 	);
 	const [sendingInvites, setSendingInvites] = useState(false);
-	const [skipSuggestedField, setSkipSuggestedField] = useState<{ [email: string]: boolean }>({});
+	const [addSuggestedField, setAddSuggestedField] = useState<{ [email: string]: boolean }>({});
 	const [suggestedInvitees, setSuggestedInvitees] = useState<any[]>([]);
 
 	useDidMount(() => {
@@ -1160,7 +1160,7 @@ export const InviteTeammates = (props: { className: string; skip: Function; unwr
 		while (index <= suggestedInvitees.length) {
 			if (suggestedInvitees[index]) {
 				const email = suggestedInvitees[index].email;
-				if (!skipSuggestedField[email]) await inviteEmail(email, "Onboarding Suggestion");
+				if (addSuggestedField[email]) await inviteEmail(email, "Onboarding Suggestion");
 			}
 			index++;
 		}
@@ -1190,11 +1190,11 @@ export const InviteTeammates = (props: { className: string; skip: Function; unwr
 								return (
 									<Checkbox
 										name={user.email}
-										checked={skipSuggestedField[user.email]}
+										checked={addSuggestedField[user.email]}
 										onChange={() => {
-											setSkipSuggestedField({
-												...skipSuggestedField,
-												[user.email]: !skipSuggestedField[user.email]
+											setAddSuggestedField({
+												...addSuggestedField,
+												[user.email]: !addSuggestedField[user.email]
 											});
 										}}
 									>
@@ -1231,7 +1231,7 @@ export const InviteTeammates = (props: { className: string; skip: Function; unwr
 						<Link onClick={addInvite}>+ Add another</Link>
 					</LinkRow>
 					<div>
-						<Legacy.default className="row-button" isLoading={sendingInvites} onClick={sendInvites}>
+						<Legacy.default className="row-button" loading={sendingInvites} onClick={sendInvites}>
 							<div className="copy">Send invites</div>
 							<Icon name="chevron-right" />
 						</Legacy.default>

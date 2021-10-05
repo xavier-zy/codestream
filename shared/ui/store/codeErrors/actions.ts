@@ -231,14 +231,15 @@ export const jumpToStackLine = (
 		Position.create(line! - 1, column != null ? column : 2147483647)
 	);
 
+	const normalizedPath = path!.replace(/\\/g, "/");
 	const revealResponse = await HostApi.instance.send(EditorRevealRangeRequestType, {
-		uri: `file://${path!.replace(/\\/g, "/")}`,
+		uri: `file://${normalizedPath}`,
 		preserveFocus: true,
 		range
 	});
 	if (revealResponse?.success) {
 		highlightRange({
-			uri: `file://${path!}`,
+			uri: `file://${normalizedPath}`,
 			range,
 			highlight: true
 		});

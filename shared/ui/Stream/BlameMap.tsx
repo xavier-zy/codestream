@@ -39,7 +39,7 @@ export function BlameMap() {
 		const currentUser = state.users[state.session.userId!];
 		const isCurrentUserAdmin = adminIds.includes(state.session.userId!);
 		const blameMap = team.settings ? team.settings.blameMap : EMPTY_HASH;
-		const mappedBlame = keyFilter(blameMap);
+		const mappedBlame = keyFilter(blameMap || {});
 		const dontSuggestInvitees = team.settings
 			? team.settings.dontSuggestInvitees || EMPTY_HASH_2
 			: EMPTY_HASH_2;

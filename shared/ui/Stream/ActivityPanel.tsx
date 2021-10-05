@@ -83,13 +83,15 @@ export const ActivityPanel = () => {
 			postsByStreamId: state.posts.byStream,
 			currentUserName: state.users[state.session.userId!].username,
 			currentUserId: state.session.userId,
+			currentTeamId: state.context.currentTeamId,
 			activity: getActivity(state),
 			hasMoreActivity: state.activityFeed.hasMore,
 			codemarkTypeFilter: state.context.codemarkTypeFilter,
 			umis: state.umis,
 			webviewFocused: state.context.hasFocus,
 			repos: state.repos,
-			activityFilter: preferences.activityFilter || DEFAULT_ACTIVITY_FILTER
+			activityFilter:
+				preferences[state.context.currentTeamId]?.activityFilter || DEFAULT_ACTIVITY_FILTER
 		};
 	});
 
@@ -104,6 +106,17 @@ export const ActivityPanel = () => {
 	};
 	const [repos, setRepos] = React.useState<ReposScm[]>([]);
 	const [maximized, setMaximized] = React.useState(false);
+
+	const setActivityPreferences = (
+		data: ActivityFilter,
+		src: "Folder" | "Everyone" | "Open Repos"
+	) => {
+		dispatch(setUserPreference([derivedState.currentTeamId, "activityFilter"], data));
+
+		HostApi.instance.track("Activity Feed Filtered", {
+			"Selected Filter": src
+		});
+	};
 
 	const activity = React.useMemo(() => {
 		let _activity = derivedState.activity;
@@ -282,22 +295,20 @@ export const ActivityPanel = () => {
 					checked: checked(),
 					label: r.name,
 					action: () => {
-						dispatch(
-							setUserPreference(["activityFilter"], {
+						setActivityPreferences(
+							{
 								mode: "selectedRepos",
 								settings: {
 									repos: [
 										{
-											id: r.id,
+											id: r.id!,
 											paths: [r.partialPath.join("/")]
 										}
 									]
 								}
-							} as ActivityFilter)
+							},
+							"Folder"
 						);
-						HostApi.instance.track("Activity Feed Filtered ", {
-							"Selected Filter": "Folder"
-						});
 					}
 				};
 				if (r?.children != null && r?.children.length) {
@@ -329,21 +340,19 @@ export const ActivityPanel = () => {
 					checked: checked(),
 					label: _.folder.name,
 					action: () => {
-						dispatch(
-							setUserPreference(["activityFilter"], {
+						setActivityPreferences(
+							{
 								mode: "selectedRepos",
 								settings: {
 									repos: [
 										{
-											id: _.id
+											id: _.id!
 										}
 									]
 								}
-							} as ActivityFilter)
+							},
+							"Folder"
 						);
-						HostApi.instance.track("Activity Feed Filtered ", {
-							"Selected Filter": "Folder"
-						});
 					}
 				} as any;
 				selectedReposSubMenuItems.push(repoMenu);
@@ -361,15 +370,15 @@ export const ActivityPanel = () => {
 					key: "everyone",
 					label: "Activity from everyone in the organization",
 					action: () => {
-						dispatch(
-							setUserPreference(["activityFilter"], {
+						setActivityPreferences(
+							{
 								mode: "everyone",
-								settings: {}
-							} as ActivityFilter)
+								settings: {
+									repos: []
+								}
+							},
+							"Everyone"
 						);
-						HostApi.instance.track("Activity Feed Filtered ", {
-							"Selected Filter": "Everyone"
-						});
 					}
 				},
 				{
@@ -379,15 +388,15 @@ export const ActivityPanel = () => {
 					key: "openInIde",
 					label: "Activity associated with code open in my IDE",
 					action: () => {
-						dispatch(
-							setUserPreference(["activityFilter"], {
+						setActivityPreferences(
+							{
 								mode: "openInIde",
-								settings: {}
-							} as ActivityFilter)
+								settings: {
+									repos: []
+								}
+							},
+							"Open Repos"
 						);
-						HostApi.instance.track("Activity Feed Filtered ", {
-							"Selected Filter": "Open Repos"
-						});
 					}
 				},
 				{

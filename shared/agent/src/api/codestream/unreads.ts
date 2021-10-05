@@ -122,16 +122,20 @@ export class CodeStreamUnreads {
 			const { scm } = SessionContainer.instance();
 
 			let repoSettings: RepoSetting[] = [];
-			if (preferences.activityFilter) {
-				if (preferences.activityFilter.mode === "openInIde") {
+			const activityFilterByTeam =
+				preferences && preferences[this._api.teamId] && preferences[this._api.teamId].activityFilter
+					? preferences[this._api.teamId].activityFilter
+					: undefined;
+			if (activityFilterByTeam) {
+				if (activityFilterByTeam.mode === "openInIde") {
 					repoSettings =
 						(await scm.getRepos({ inEditorOnly: true }))?.repositories
 							?.filter(_ => _.id)
 							.map(_ => {
 								return { id: _.id!, paths: [] };
 							}) || [];
-				} else if (preferences.activityFilter.mode === "selectedRepos") {
-					repoSettings = preferences.activityFilter?.settings?.repos || [];
+				} else if (activityFilterByTeam.mode === "selectedRepos") {
+					repoSettings = activityFilterByTeam?.settings?.repos || [];
 				}
 			}
 			return repoSettings;

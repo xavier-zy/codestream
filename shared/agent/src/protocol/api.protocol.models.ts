@@ -689,7 +689,8 @@ export interface CSMePreferences {
 	acceptedTOS?: boolean;
 
 	[key: string]: any;
-	activityFilter?: ActivityFilter;
+	/** teamId to settings */
+	activityFilter?: { [key: string]: ActivityFilter | undefined };
 }
 
 export interface RepoSetting {

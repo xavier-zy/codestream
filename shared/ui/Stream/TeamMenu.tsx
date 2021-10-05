@@ -29,7 +29,7 @@ export function TeamMenu(props: TeamMenuProps) {
 		const adminIds = team.adminIds || [];
 		const isCurrentUserAdmin = adminIds.includes(state.session.userId!);
 		const blameMap = team.settings ? team.settings.blameMap : EMPTY_HASH;
-		const mappedBlame = keyFilter(blameMap);
+		const mappedBlame = keyFilter(blameMap || EMPTY_HASH);
 		return {
 			isCurrentUserAdmin,
 			mappedBlame,

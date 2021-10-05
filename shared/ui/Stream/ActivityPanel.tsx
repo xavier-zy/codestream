@@ -580,14 +580,17 @@ export const ActivityPanel = () => {
 			<PanelHeader title="Activity">
 				{activityFilterMenuItems && (
 					<>
-						<span>Activity associated with code in </span>
+						<span>
+							{derivedState.activityFilter.mode === "everyone"
+								? "Activity from everyone in"
+								: "Activity associated with code in"}{" "}
+						</span>
 						<label onClick={toggleEllipsisMenu} id="activity-filter" style={{ cursor: "pointer" }}>
-							<Icon name="repo" className="smaller" />
 							{filterLabel}
 							<Icon
 								name="chevron-down-thin"
 								className="smaller"
-								style={{ verticalAlign: "-2px" }}
+								style={{ verticalAlign: "-1px" }}
 							/>
 							{ellipsisMenuOpen && (
 								<Menu

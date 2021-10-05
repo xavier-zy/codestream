@@ -134,14 +134,27 @@ export const ActivityPanel = () => {
 		} else if (!repoSettings.length) return _activity;
 
 		const filtered = _activity.map(_ => {
-			if (_.type === "codemark") {
-				const stream = derivedState.postsByStreamId[_.record.streamId];
-				const post = stream[_.record.postId];
+			const streams = derivedState.postsByStreamId[_.record.streamId];
+			const post = streams[_.record.postId];
+			if (post) {
+				if (post.mentionedUserIds?.includes(derivedState.currentUserId!)) {
+					return _;
+				}
+				// check replies as well
+				const parentPosts = Object.values(streams).find(_ => {
+					return _.parentPostId &&
+						_.parentPostId === post.id &&
+						_.mentionedUserIds?.includes(derivedState.currentUserId!)
+						? _
+						: null;
+				});
+				if (parentPosts) {
+					return _;
+				}
+			}
 
-				if (
-					post?.mentionedUserIds?.includes(derivedState.currentUserId!) ||
-					_.record.assignees?.includes(derivedState.currentUserId!)
-				) {
+			if (_.type === "codemark") {
+				if (_.record.assignees?.includes(derivedState.currentUserId!)) {
 					return _;
 				}
 				let found: any = undefined;

@@ -154,42 +154,6 @@ export class CodeStreamUnreads {
 					streamIds: streamIds
 				})
 			).codemarks;
-			if (codemarks && codemarks.length) {
-				posts = posts
-					.filter(_ => {
-						if (_.mentionedUserIds && _.mentionedUserIds.includes(this._api.userId)) {
-							return _;
-						}
-						if (_.codemarkId) {
-							const codemark = codemarks.find(c => c.id === _.codemarkId);
-							if (codemark) {
-								if (codemark.assignees && codemark.assignees.includes(this._api.userId)) {
-									return _;
-								}
-
-								let found: any = undefined;
-								for (const repoSetting of repoSettings) {
-									const match = codemark.markers?.find(m => {
-										// there is a match if there is a path set and the file starts with the repoSetting path AND the repoIds match
-										let isPathMatch = true;
-										if (repoSetting.paths && repoSetting.paths[0] != null) {
-											isPathMatch =
-												(m.file || "").replace(/\\/g, "/").indexOf(repoSetting.paths![0]) === 0;
-										}
-										return isPathMatch && repoSetting.id === m.repoId;
-									});
-									found = match ? _ : undefined;
-									if (found) {
-										return found;
-									}
-								}
-								return found;
-							}
-						}
-						return undefined;
-					})
-					.filter(Boolean);
-			}
 
 			const reviews = (
 				await SessionContainer.instance().reviews.get({
@@ -197,42 +161,66 @@ export class CodeStreamUnreads {
 				})
 			).reviews;
 
-			if (reviews && reviews.length) {
-				posts = posts
-					.filter(_ => {
-						if (_.mentionedUserIds && _.mentionedUserIds.includes(this._api.userId)) {
-							return _;
-						}
-						if (_.reviewId) {
-							const review = reviews.find(c => c.id === _.reviewId);
-							if (review) {
-								if (review.reviewers && review.reviewers.includes(this._api.userId)) {
-									return _;
-								}
-								let found: any = undefined;
-								for (const repoSetting of repoSettings) {
-									const match = review.reviewChangesets?.find(m => {
-										// there is a match if there is a path set and the file starts with the repoSetting path AND the repoIds match
-										let isPathMatch = true;
-										if (repoSetting.paths && repoSetting.paths[0] != null) {
-											isPathMatch = !!m.modifiedFiles.find(
-												_ => (_.file || "").replace(/\\/g, "/").indexOf(repoSetting.paths![0]) === 0
-											);
-										}
-										return isPathMatch && repoSetting.id === m.repoId;
-									});
-									found = match ? _ : undefined;
-									if (found) {
-										return found;
-									}
-								}
-								return found;
+			posts = posts
+				.filter(_ => {
+					if (_.mentionedUserIds && _.mentionedUserIds.includes(this._api.userId)) {
+						return _;
+					}
+					if (_.codemarkId) {
+						const codemark = codemarks.find(c => c.id === _.codemarkId);
+						if (codemark) {
+							if (codemark.assignees && codemark.assignees.includes(this._api.userId)) {
+								return _;
 							}
+
+							let found: any = undefined;
+							for (const repoSetting of repoSettings) {
+								const match = codemark.markers?.find(m => {
+									// there is a match if there is a path set and the file starts with the repoSetting path AND the repoIds match
+									let isPathMatch = true;
+									if (repoSetting.paths && repoSetting.paths[0] != null) {
+										isPathMatch =
+											(m.file || "").replace(/\\/g, "/").indexOf(repoSetting.paths![0]) === 0;
+									}
+									return isPathMatch && repoSetting.id === m.repoId;
+								});
+								found = match ? _ : undefined;
+								if (found) {
+									return found;
+								}
+							}
+							return found;
 						}
-						return undefined;
-					})
-					.filter(Boolean);
-			}
+					}
+					if (_.reviewId) {
+						const review = reviews.find(c => c.id === _.reviewId);
+						if (review) {
+							if (review.reviewers && review.reviewers.includes(this._api.userId)) {
+								return _;
+							}
+							let found: any = undefined;
+							for (const repoSetting of repoSettings) {
+								const match = review.reviewChangesets?.find(m => {
+									// there is a match if there is a path set and the file starts with the repoSetting path AND the repoIds match
+									let isPathMatch = true;
+									if (repoSetting.paths && repoSetting.paths[0] != null) {
+										isPathMatch = !!m.modifiedFiles.find(
+											_ => (_.file || "").replace(/\\/g, "/").indexOf(repoSetting.paths![0]) === 0
+										);
+									}
+									return isPathMatch && repoSetting.id === m.repoId;
+								});
+								found = match ? _ : undefined;
+								if (found) {
+									return found;
+								}
+							}
+							return found;
+						}
+					}
+					return undefined;
+				})
+				.filter(Boolean);
 		} catch (ex) {
 			debugger;
 			Logger.error(ex);

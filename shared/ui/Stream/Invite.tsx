@@ -684,98 +684,94 @@ class Invite extends React.Component<Props, State> {
 									"email" or copy the invite code.
 								</div>
 							)}
-							{!this.props.hiddenPaneNodes["team/invitations"] && (
-								<UL>
-									{this.props.invited.map(user => {
-										const body = encodeURIComponent(
-											`1. Download and install CodeStream: https://www.codestream.com/roadmap\n\n2. Paste in your invitation code: ${user.inviteCode}\n\n`
-										);
-										const subject = "Invitation to CodeStream";
-										const title = user.inviteCode ? (
-											this.props.emailSupported ? (
-												<div>
-													Sometimes emails from CodeStream are blocked.
-													<div style={{ height: "10px" }}></div>
-													<a href={`mailto:${user.email}?Subject=${subject}&body=${body}`}>
-														Click Here
-													</a>{" "}
-													to email an invitation from you.
-												</div>
-											) : (
-												undefined
-											)
+							<UL>
+								{this.props.invited.map(user => {
+									const body = encodeURIComponent(
+										`1. Download and install CodeStream: https://www.codestream.com/roadmap\n\n2. Paste in your invitation code: ${user.inviteCode}\n\n`
+									);
+									const subject = "Invitation to CodeStream";
+									const title = user.inviteCode ? (
+										this.props.emailSupported ? (
+											<div>
+												Sometimes emails from CodeStream are blocked.
+												<div style={{ height: "10px" }}></div>
+												<a href={`mailto:${user.email}?Subject=${subject}&body=${body}`}>
+													Click Here
+												</a>{" "}
+												to email an invitation from you.
+											</div>
 										) : (
 											undefined
-										);
-										return (
-											<li key={user.email}>
-												<div className="committer-email">
-													{user.email}
-													<div className="float-right">
-														{this.props.isCurrentUserAdmin && (
-															<>
-																<a onClick={e => this.kick(user)}>remove</a>
-																<span style={{ padding: "0 5px" }}>&middot;</span>
-															</>
-														)}
-														{!this.props.emailSupported && (
-															<>
-																<a onClick={e => copy(user.inviteCode)}>copy code</a>
-																<span style={{ padding: "0 5px" }}>&middot;</span>
-															</>
-														)}
-														{this.props.emailSupported ? (
-															<Tooltip
-																title={title}
-																placement="topRight"
-																align={{ offset: [35, -5] }}
-															>
-																{this.renderEmailUser(user)}
-															</Tooltip>
-														) : (
-															<a href={`mailto:${user.email}?Subject=${subject}&body=${body}`}>
-																email
-															</a>
-														)}
-													</div>
+										)
+									) : (
+										undefined
+									);
+									return (
+										<li key={user.email}>
+											<div className="committer-email">
+												{user.email}
+												<div className="float-right">
+													{this.props.isCurrentUserAdmin && (
+														<>
+															<a onClick={e => this.kick(user)}>remove</a>
+															<span style={{ padding: "0 5px" }}>&middot;</span>
+														</>
+													)}
+													{!this.props.emailSupported && (
+														<>
+															<a onClick={e => copy(user.inviteCode)}>copy code</a>
+															<span style={{ padding: "0 5px" }}>&middot;</span>
+														</>
+													)}
+													{this.props.emailSupported ? (
+														<Tooltip
+															title={title}
+															placement="topRight"
+															align={{ offset: [35, -5] }}
+														>
+															{this.renderEmailUser(user)}
+														</Tooltip>
+													) : (
+														<a href={`mailto:${user.email}?Subject=${subject}&body=${body}`}>
+															email
+														</a>
+													)}
 												</div>
-												{!this.props.emailSupported && (
-													<div>
-														<CSText as="span" muted>
-															{user.inviteCode}
-														</CSText>
-													</div>
-												)}
-											</li>
-										);
-									})}
-								</UL>
-							)}
+											</div>
+											{!this.props.emailSupported && (
+												<div>
+													<CSText as="span" muted>
+														{user.inviteCode}
+													</CSText>
+												</div>
+											)}
+										</li>
+									);
+								})}
+							</UL>
 						</>
 					)}
 					{suggested.length > 0 && (
 						<>
 							<HR />
 							<H3>Suggested Teammates</H3>
-							{!this.props.hiddenPaneNodes["team/suggestions"] && (
-								<UL>
-									{suggested.map(user => (
-										<li key={user.email}>
-											<div className="committer-email">
-												{user.fullName}{" "}
-												<CSText as="span" muted>
-													{user.email}
-												</CSText>
-												<div className="float-right">
-													<a onClick={e => this.removeSuggestion(user)}>remove</a>
-													<span style={{ padding: "0 5px" }}>&middot;</span>
-													{this.renderEmailUser(user, "invite")}
-												</div>
+							<UL>
+								{suggested.map(user => (
+									<li key={user.email}>
+										<div className="committer-email">
+											{user.fullName}{" "}
+											<CSText as="span" muted>
+												{user.email}
+											</CSText>
+											<div className="float-right">
+												<a onClick={e => this.removeSuggestion(user)}>remove</a>
+												<span style={{ padding: "0 5px" }}>&middot;</span>
+												{this.renderEmailUser(user, "invite")}
 											</div>
-										</li>
-									))}
-								</UL>
-							)}
+										</div>
+									</li>
+								))}
+							</UL>
 						</>
 					)}
 				</div>

@@ -10,7 +10,7 @@ import { includes as _includes, sortBy as _sortBy, last as _last } from "lodash-
 import { CodeStreamState } from "../store";
 import { setCurrentCodemark, setCurrentReview, closeAllPanels } from "../store/context/actions";
 import { getActivity } from "../store/activityFeed/reducer";
-import { useDidMount, useIntersectionObserver } from "../utilities/hooks";
+import { useDidMount, useIntersectionObserver, usePrevious } from "../utilities/hooks";
 import { HostApi } from "../webview-api";
 import {
 	FetchActivityRequestType,
@@ -70,6 +70,7 @@ const EmptyMessage = styled.div`
 	}
 `;
 
+const DEFAULT_ACTIVITY_FILTER = { mode: "openInIde", settings: { repos: [] } };
 export const ActivityPanel = () => {
 	const dispatch = useDispatch();
 	const derivedState = useSelector((state: CodeStreamState) => {
@@ -88,9 +89,11 @@ export const ActivityPanel = () => {
 			umis: state.umis,
 			webviewFocused: state.context.hasFocus,
 			repos: state.repos,
-			activityFilter: preferences.activityFilter || { mode: "openInIde", settings: { repos: [] } }
+			activityFilter: preferences.activityFilter || DEFAULT_ACTIVITY_FILTER
 		};
 	});
+
+	const previousActivityFilter = usePrevious(derivedState.activityFilter);
 
 	const [activityFilterMenuItems, setActivityFilterMenuItems] = React.useState<any[] | undefined>(
 		undefined
@@ -294,7 +297,8 @@ export const ActivityPanel = () => {
 				return menuItem;
 			};
 
-			const mappedRepoIds = derivedState.activityFilter.settings?.repos.map(_ => _.id) || [];
+			const mappedRepoIds =
+				derivedState.activityFilter.settings?.repos?.filter(_ => _.id).map(_ => _.id) || [];
 			const hasASelectedRepo = !!repoResponse.repositories?.find(
 				r => r.id && mappedRepoIds.includes(r.id)
 			);
@@ -387,7 +391,9 @@ export const ActivityPanel = () => {
 	};
 
 	React.useEffect(() => {
-		renderFilter();
+		if (JSON.stringify(previousActivityFilter) !== JSON.stringify(derivedState.activityFilter)) {
+			renderFilter();
+		}
 	}, [derivedState.activityFilter]);
 
 	useDidMount(() => {

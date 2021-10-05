@@ -278,4 +278,17 @@ at org.mortbay.thread.QueuedThreadPool$PoolThread.run(QueuedThreadPool.java:582)
 			});
 		});
 	});
+
+	it("stack with unknown source", () => {
+		const result = Parser("\tsun.reflect.GeneratedMethodAccessor77.invoke(Unknown Source)");
+		expect(result).to.deep.equals({
+			lines: [
+				{
+					method: "sun.reflect.GeneratedMethodAccessor77.invoke",
+					fileFullPath: undefined,
+					line: undefined
+				}
+			]
+		});
+	});
 });

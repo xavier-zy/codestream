@@ -355,6 +355,8 @@ export class NRManager {
 	}
 
 	static getBestMatchingPath(pathSuffix: string, allFilePaths: string[]) {
+		if (!pathSuffix) return undefined;
+
 		const pathSuffixParts = pathSuffix
 			.split("/")
 			.slice()

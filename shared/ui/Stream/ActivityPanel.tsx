@@ -43,7 +43,6 @@ import { Headshot } from "../src/components/Headshot";
 import { ProfileLink } from "../src/components/ProfileLink";
 import { Keybindings } from "./Keybindings";
 import { Dialog } from "../src/components/Dialog";
-import { ellipsis } from "polished";
 
 interface MenuItem {
 	label: any;

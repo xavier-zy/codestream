@@ -230,7 +230,7 @@ export function EllipsisMenu(props: EllipsisMenuProps) {
 					label: "View Profile",
 					action: () => {
 						dispatch(setProfileUser(derivedState.currentUserId));
-						go(WebviewPanels.Profile);
+						popup(WebviewModals.Profile);
 					}
 				},
 				{ label: "Change Profile Photo", action: () => popup(WebviewModals.ChangeAvatar) },

@@ -503,7 +503,7 @@ class Team extends React.Component<Props, State> {
 
 		const revokeAdmin = { label: "Revoke Admin", action: () => this.revoke(user) };
 		const promoteAdmin = { label: "Make Admin", action: () => this.promote(user) };
-		const kickUser = { label: "Remove from Team", action: () => this.confirmKick(user) };
+		const kickUser = { label: "Remove from Org", action: () => this.confirmKick(user) };
 
 		const isUserAdmin = adminIds.includes(user.id);
 		if (isCurrentUserAdmin && user.id !== this.props.currentUserId) {

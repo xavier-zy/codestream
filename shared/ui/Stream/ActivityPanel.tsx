@@ -43,6 +43,7 @@ import { Headshot } from "../src/components/Headshot";
 import { ProfileLink } from "../src/components/ProfileLink";
 import { Keybindings } from "./Keybindings";
 import { Dialog } from "../src/components/Dialog";
+import { ellipsis } from "polished";
 
 interface MenuItem {
 	label: any;
@@ -608,12 +609,12 @@ export const ActivityPanel = () => {
 			<PanelHeader title="Activity">
 				{activityFilterMenuItems && (
 					<>
-						<span>
-							{derivedState.activityFilter.mode === "everyone"
-								? "Activity from everyone in"
-								: "Activity associated with code in"}{" "}
-						</span>
 						<label onClick={toggleEllipsisMenu} id="activity-filter" style={{ cursor: "pointer" }}>
+							<span>
+								{derivedState.activityFilter.mode === "everyone"
+									? "Activity from everyone in"
+									: "Activity associated with code in"}{" "}
+							</span>
 							{filterLabel}
 							<Icon
 								name="chevron-down-thin"
@@ -624,7 +625,7 @@ export const ActivityPanel = () => {
 								<Menu
 									items={activityFilterMenuItems}
 									action={() => setEllipsisMenuOpen(undefined)}
-									align="bottomLeft"
+									target={ellipsisMenuOpen}
 								/>
 							)}
 						</label>

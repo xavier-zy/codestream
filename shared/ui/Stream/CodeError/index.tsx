@@ -1256,13 +1256,18 @@ const CodeErrorForCodeError = (props: PropsWithCodeError) => {
 
 			return (
 				<Footer className="replies-to-review" style={{ borderTop: "none", marginTop: 0 }}>
-					{derivedState.replies?.length > 0 && <MetaLabel>Activity</MetaLabel>}
-					<RepliesToPost
-						streamId={props.codeError.streamId}
-						parentPostId={props.codeError.postId}
-						itemId={props.codeError.id}
-						numReplies={props.codeError.numReplies}
-					/>
+					{props.codeError.postId && (
+						<>
+							{derivedState.replies?.length > 0 && <MetaLabel>Activity</MetaLabel>}
+							<RepliesToPost
+								streamId={props.codeError.streamId}
+								parentPostId={props.codeError.postId}
+								itemId={props.codeError.id}
+								numReplies={props.codeError.numReplies}
+							/>
+						</>
+					)}
+
 					{InputContainer && (
 						<InputContainer>
 							<ReplyInput codeError={codeError} />

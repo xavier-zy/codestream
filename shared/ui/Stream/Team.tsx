@@ -672,7 +672,7 @@ class Team extends React.Component<Props, State> {
 			? "teamMemberSelection.invite"
 			: "teamMemberSelection.getInviteCode";
 		return (
-			<Dialog wide title="My Team" onClose={() => this.props.closeModal()}>
+			<Dialog wide title="My Organization" onClose={() => this.props.closeModal()}>
 				<div style={{ margin: "0 -20px" }}>
 					<UL>
 						{this.props.members.map(user => (

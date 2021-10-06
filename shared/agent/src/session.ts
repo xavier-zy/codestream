@@ -1,9 +1,5 @@
 "use strict";
 
-import {
-	MigrationStatusChangedEvent,
-	MigrationMiddlewareManager
-} from "./api/middleware/migrationMiddleware";
 import { Agent as HttpAgent } from "http";
 import { Agent as HttpsAgent } from "https";
 import HttpsProxyAgent from "https-proxy-agent";
@@ -55,7 +51,6 @@ import {
 	DidChangeConnectionStatusNotification,
 	DidChangeConnectionStatusNotificationType,
 	DidChangeDataNotificationType,
-	DidChangeMigrationStatusNotificationType,
 	DidChangeServerUrlNotificationType,
 	DidChangeVersionCompatibilityNotificationType,
 	DidEncounterMaintenanceModeNotificationType,
@@ -402,9 +397,6 @@ export class CodeStreamSession {
 		versionManager.onDidChangeCompatibility(this.onVersionCompatibilityChanged, this);
 		versionManager.onDidChangeApiCompatibility(this.onApiVersionCompatibilityChanged, this);
 
-		const migrationManager = new MigrationMiddlewareManager(this._api);
-		migrationManager.onDidChangeMigrationStatus(this.onDidChangeMigrationStatus, this);
-
 		// this.connection.onHover(e => MarkerHandler.onHover(e));
 
 		registerDecoratedHandlers(this.agent);
@@ -653,11 +645,6 @@ export class CodeStreamSession {
 				});
 			}
 		}
-	}
-
-	@log()
-	private async onDidChangeMigrationStatus(e: MigrationStatusChangedEvent) {
-		this.agent.sendNotification(DidChangeMigrationStatusNotificationType, e);
 	}
 
 	private _api: ApiProvider | undefined;

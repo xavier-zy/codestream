@@ -191,9 +191,7 @@ export const SetModifiedReposRequestType = new RequestType<
 	void
 >("codestream/user/setModifiedRepos");
 
-export interface GetMeRequest {
-	ignoreCache?: boolean;
-}
+export interface GetMeRequest {}
 
 export interface GetMeResponse {
 	user: CSMe;

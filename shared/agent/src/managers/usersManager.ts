@@ -8,7 +8,6 @@ import {
 	FetchUsersRequest,
 	FetchUsersRequestType,
 	FetchUsersResponse,
-	GetMeRequest,
 	GetMeRequestType,
 	GetMeResponse,
 	GetPreferencesRequestType,
@@ -152,9 +151,7 @@ export class UsersManager extends CachedEntityManagerBase<CSUser> {
 	}
 
 	@lspHandler(GetMeRequestType)
-	async getMe(request?: GetMeRequest): Promise<GetMeResponse> {
-		if (request && request.ignoreCache) return await this.session.api.getMe();
-
+	async getMe(): Promise<GetMeResponse> {
 		if (this.session.userId !== undefined) {
 			const cachedMe = await this.getById(this.session.userId);
 			if (cachedMe !== undefined) {

@@ -100,9 +100,7 @@ import {
 	UpdateUserRequestType,
 	UserDidCommitNotificationType,
 	UserDidCommitNotification,
-	DidSetEnvironmentNotificationType,
-	DidChangeMigrationStatusNotification,
-	DidChangeMigrationStatusNotificationType
+	DidSetEnvironmentNotificationType
 } from "@codestream/protocols/agent";
 import {
 	ChannelServiceType,
@@ -983,11 +981,6 @@ export class CodeStreamAgentConnection implements Disposable {
 		await Container.webview.onServerUrlChanged(e);
 	}
 
-	@log()
-	private async onMigrationChanged(e: DidChangeMigrationStatusNotification) {
-		await Container.webview.onMigrationStatusChanged(e);
-	}
-
 	@started
 	async sendNotification<NT extends NotificationType<any, any>>(
 		type: NT,
@@ -1108,10 +1101,6 @@ export class CodeStreamAgentConnection implements Disposable {
 		this._client.onNotification(
 			DidChangeApiVersionCompatibilityNotificationType,
 			this.onApiVersionCompatibilityChanged.bind(this)
-		);
-		this._client.onNotification(
-			DidChangeMigrationStatusNotificationType,
-			this.onMigrationChanged.bind(this)
 		);
 
 		this._client.onNotification(DidLoginNotificationType, e => this._onDidLogin.fire(e));

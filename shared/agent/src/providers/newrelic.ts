@@ -51,6 +51,26 @@ interface NewRelicEntity {
 	type: string;
 }
 
+const MetricsLookupBackoffs = [
+	{
+		// short lived data lives in MetricRaw
+		table: "MetricRaw",
+		since: "10 minutes"
+	},
+	{
+		table: "Metric",
+		since: "1 day"
+	},
+	{
+		table: "Metric",
+		since: "3 day"
+	},
+	{
+		table: "Metric",
+		since: "7 day"
+	}
+];
+
 @lspProvider("newrelic")
 export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProviderInfo> {
 	constructor(session: CodeStreamSession, config: ThirdPartyProviderConfig) {
@@ -244,38 +264,6 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			});
 		}
 		return undefined;
-	}
-
-	private async getEntityIdFromErrorGroupGuid(
-		errorGroupGuid: string,
-		accountId: number
-	): Promise<string | undefined> {
-		try {
-			const response = await this.query(
-				`query fetchErrorsInboxData($accountId:Int!) {
-				actor {
-				  account(id: $accountId) {
-					nrql(query: "FROM Metric SELECT entity.guid WHERE error.group.guid = '${Strings.santizeGraphqlValue(
-						errorGroupGuid
-					)}' SINCE 7 day ago LIMIT 1") { nrql results }
-				  }
-				}
-			  }
-			  `,
-				{
-					accountId: accountId
-				}
-			);
-
-			const results = response.actor?.account?.nrql?.results[0] || {};
-			return results ? results["entity.guid"] : undefined;
-		} catch (ex) {
-			Logger.error(ex, "NR: getEntityIdFromErrorGroupGuid", {
-				errorGroupGuid: errorGroupGuid,
-				accountId: accountId
-			});
-			return undefined;
-		}
 	}
 
 	private async getEntityRepoRelationship(
@@ -524,6 +512,57 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		}
 	}
 
+	private async getEntityIdFromErrorGroupGuid(
+		accountId: number,
+		errorGroupGuid: string
+	): Promise<string | undefined> {
+		try {
+			const results = await this.fetchErrorGroupData(accountId, errorGroupGuid);
+			return results ? results["entity.guid"] : undefined;
+		} catch (ex) {
+			Logger.error(ex, "NR: getEntityIdFromErrorGroupGuid", {
+				errorGroupGuid: errorGroupGuid,
+				accountId: accountId
+			});
+			return undefined;
+		}
+	}
+
+	private async fetchErrorGroupData(accountId: number, errorGroupGuid: string) {
+		for (const item of MetricsLookupBackoffs) {
+			try {
+				let response = await this.query(
+					`query fetchErrorsInboxData($accountId:Int!) {
+					actor {
+					  account(id: $accountId) {
+						nrql(query: "FROM ${
+							item.table
+						} SELECT entity.guid, error.group.guid, error.group.message, error.group.name, error.group.source, error.group.nrql WHERE error.group.guid = '${Strings.santizeGraphqlValue(
+						errorGroupGuid
+					)}' SINCE ${item.since} ago LIMIT 1") { nrql results }
+					  }
+					}
+				  }
+				  `,
+					{
+						accountId: accountId
+					}
+				);
+				const results = response.actor.account.nrql.results[0];
+				if (results) {
+					return results;
+				}
+			} catch (ex) {
+				Logger.warn("NR: lookup failure", {
+					accountId,
+					errorGroupGuid,
+					item
+				});
+			}
+		}
+		return undefined;
+	}
+
 	@lspHandler(GetNewRelicErrorGroupRequestType)
 	@log()
 	async getNewRelicErrorGroupData(
@@ -539,22 +578,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			const parsedId = this.parseId(errorGroupGuid)!;
 			accountId = parsedId.accountId;
 
-			let response = await this.query(
-				`query fetchErrorsInboxData($accountId:Int!) {
-					actor {
-					  account(id: $accountId) {
-						nrql(query: "FROM Metric SELECT entity.guid, error.group.guid, error.group.message, error.group.name, error.group.source, error.group.nrql WHERE error.group.guid = '${Strings.santizeGraphqlValue(
-							errorGroupGuid
-						)}' SINCE 7 day ago LIMIT 1") { nrql results }
-					  }
-					}
-				  }
-				  `,
-				{
-					accountId: accountId
-				}
-			);
-			const results = response.actor.account.nrql.results[0];
+			const results = await this.fetchErrorGroupData(accountId, errorGroupGuid);
 			if (results) {
 				entityId = results["entity.guid"];
 				errorGroup = {
@@ -569,7 +593,6 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					timestamp: results["timestamp"],
 					errorGroupUrl: `${this.productUrl}/redirect/errors-inbox/${errorGroupGuid}`,
 					entityUrl: `${this.productUrl}/redirect/entity/${results["entity.guid"]}`,
-					// TODO fix me
 					state: "UNRESOLVED",
 					states: ["RESOLVED", "IGNORED", "UNRESOLVED"]
 				};
@@ -580,7 +603,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				}
 
 				if (entityId) {
-					response = await this.query(
+					let response = await this.query(
 						`{
 						actor {
 						  entity(guid: "${entityId}") {
@@ -603,27 +626,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				};
 
 				if (!request.traceId) {
-					Logger.warn("NR: missing traceId, fetching the latest");
-					// HACK to find a traceId if none supplied -- find the latest traceId
-					const queryAsString = `
-					query fetchErrorsInboxData($accountId:Int!) {
-						actor {
-						  account(id: $accountId) {
-							nrql(query: "FROM ErrorTrace SELECT * WHERE entityGuid = '${entityId}' and message = '${results[
-						"error.group.message"
-					].replace(/'/g, "\\'")}' LIMIT 1") { 
-						results 
-					}
-						  }
-						}
-					  }
-					  `;
-					const tracesResponse = await this.query(queryAsString, {
-						accountId: accountId
-					});
-					if (tracesResponse?.actor?.account?.nrql?.results?.length) {
-						request.traceId = tracesResponse?.actor.account.nrql.results[0].traceId;
-					}
+					throw new Error("MissingTraceId");
 				}
 
 				const errorGroupState = await this.getErrorGroupState(errorGroupGuid);
@@ -953,7 +956,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 
 			const repoEntityId = response.referenceEntityCreateOrUpdateRepository.created[0];
 			const entityId =
-				request.entityId || (await this.getEntityIdFromErrorGroupGuid(errorGroupGuid, accountId));
+				request.entityId || (await this.getEntityIdFromErrorGroupGuid(accountId, errorGroupGuid));
 			if (entityId) {
 				const entityRelationshipUserDefinedCreateOrReplaceResponse = await this.mutate<{
 					errors?: { message: string }[];

@@ -603,6 +603,7 @@ export function CodeErrorNav(props: Props) {
 			</DelayedRender>
 		);
 	}
+	if (codeError == null) return null;
 
 	return (
 		<Root>

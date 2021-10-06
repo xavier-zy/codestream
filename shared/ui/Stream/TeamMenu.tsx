@@ -78,18 +78,16 @@ export function TeamMenu(props: TeamMenuProps) {
 			key: "invite"
 		}
 	] as any;
-	if (derivedState.isCurrentUserAdmin || derivedState.mappedBlame.length > 0) {
-		menuItems.push(
-			{ label: "-" },
-			{
-				icon: <Icon name="arrow-right" />,
-				label: "Blame Map",
-				subtextWide: "Reassign code responsibility",
-				action: () => go(WebviewModals.BlameMap),
-				key: "blame"
-			}
-		);
-	}
+	menuItems.push(
+		{ label: "-" },
+		{
+			icon: <Icon name="arrow-right" />,
+			label: "Blame Map",
+			subtextWide: "Reassign code responsibility",
+			action: () => go(WebviewModals.BlameMap),
+			key: "blame"
+		}
+	);
 
 	if (derivedState.isCurrentUserAdmin) {
 		menuItems.push(

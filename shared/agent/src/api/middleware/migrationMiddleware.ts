@@ -45,7 +45,7 @@ export class MigrationMiddleware implements CodeStreamApiMiddleware {
 		if (context.response === undefined) return;
 
 		const apiMigrating = context.response.headers.get("X-CS-Migration-Error") || "";
-		if (apiMigrating) {
+		if (!apiMigrating) {
 			return;
 		}
 

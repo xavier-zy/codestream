@@ -255,7 +255,14 @@ export function GlobalNav() {
 						id="global-nav-people-label"
 					>
 						<span>
-							<Icon name="team" title="My Organization" placement="bottom" delay={1} trigger={["hover"]} />
+							<Icon
+								name="team"
+								title="My Organization"
+								placement="bottomRight"
+								delay={1}
+								trigger={["hover"]}
+								align={{ offset: [16, 0] }}
+							/>
 							<span className="unread">{teamUMI}</span>
 						</span>
 						{teamMenuOpen && (

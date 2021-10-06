@@ -46,7 +46,7 @@ export enum WebviewPanels {
 	NewComment = "new-comment",
 	NewIssue = "new-issue",
 	NewReview = "new-review",
-	Profile = "profile",
+	Profile = "profile", // DO NOT USE
 	PullRequest = "pull-request",
 	Review = "review",
 	Status = "status",
@@ -107,7 +107,8 @@ export enum WebviewModals {
 	ReviewSettings = "review-settings",
 	Invite = "invite",
 	BlameMap = "blame-map",
-	Team = "people"
+	Team = "people",
+	Profile = "profile"
 }
 
 export interface WebviewContext {

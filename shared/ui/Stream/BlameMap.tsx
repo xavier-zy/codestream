@@ -1,14 +1,7 @@
 import React from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { WebviewPanels, WebviewModals } from "../ipc/webview.protocol.common";
 import Icon from "./Icon";
 import { closeModal, openModal } from "./actions";
-import Menu from "./Menu";
-import {
-	setCurrentReview,
-	clearCurrentPullRequest,
-	setCreatePullRequest
-} from "../store/context/actions";
 import { CodeStreamState } from "../store";
 import { keyFilter, mapFilter } from "../utils";
 import { confirmPopup } from "./Confirm";
@@ -18,8 +11,9 @@ import { EMAIL_REGEX, MapRow } from "./TeamPanel";
 import { SelectPeople } from "../src/components/SelectPeople";
 import { HostApi } from "../webview-api";
 import {
-	GetLatestCommittersRequestType,
-	UpdateTeamSettingsRequestType
+	AddBlameMapRequestType,
+	DeleteBlameMapRequestType,
+	GetLatestCommittersRequestType
 } from "@codestream/protocols/agent";
 import { CSUser } from "@codestream/protocols/api";
 import { HeadshotName } from "../src/components/HeadshotName";
@@ -37,7 +31,6 @@ export function BlameMap() {
 
 		const adminIds = team.adminIds || [];
 		const currentUser = state.users[state.session.userId!];
-		const isCurrentUserAdmin = adminIds.includes(state.session.userId!);
 		const blameMap = team.settings ? team.settings.blameMap : EMPTY_HASH;
 		const mappedBlame = keyFilter(blameMap || {});
 		const dontSuggestInvitees = team.settings
@@ -66,7 +59,6 @@ export function BlameMap() {
 			return user;
 		});
 		return {
-			isCurrentUserAdmin,
 			mappedBlame,
 			blameMap: blameMap || EMPTY_HASH,
 			teamId: team.id,
@@ -77,7 +69,7 @@ export function BlameMap() {
 		};
 	});
 
-	const { mappedBlame, blameMap, isCurrentUserAdmin } = derivedState;
+	const { mappedBlame, blameMap } = derivedState;
 
 	const [blameMapEmail, setBlameMapEmail] = React.useState("");
 	const [addingBlameMap, setAddingBlameMap] = React.useState(false);
@@ -89,7 +81,7 @@ export function BlameMap() {
 
 	const getSuggestedInvitees = async () => {
 		// for now, suggested invitees are only available to admins
-		if (!isCurrentUserAdmin) return;
+		// if (!isCurrentUserAdmin) return;
 
 		const result = await HostApi.instance.send(GetLatestCommittersRequestType, {});
 		const committers = result ? result.scm : undefined;
@@ -120,13 +112,19 @@ export function BlameMap() {
 		else addBlameMap(email, "");
 	};
 
-	const addBlameMap = async (author: string, assigneeId: string) => {
-		await HostApi.instance.send(UpdateTeamSettingsRequestType, {
-			teamId: derivedState.teamId,
-			// we need to replace . with * to allow for the creation of deeply-nested
-			// team settings, since that's how they're stored in mongo
-			settings: { blameMap: { [author.replace(/\./g, "*")]: assigneeId } }
-		});
+	const addBlameMap = async (email: string, userId: string) => {
+		if (userId) {
+			await HostApi.instance.send(AddBlameMapRequestType, {
+				teamId: derivedState.teamId,
+				userId,
+				email
+			});
+		} else {
+			await HostApi.instance.send(DeleteBlameMapRequestType, {
+				teamId: derivedState.teamId,
+				email
+			});
+		}
 		setBlameMapEmail("");
 		setAddingBlameMap(false);
 	};
@@ -134,8 +132,9 @@ export function BlameMap() {
 	return (
 		<Dialog wide title="Blame Map" onClose={() => dispatch(closeModal())}>
 			<p className="explainer">
-				Your team's blame map allows you to reassign code responsibility for coworkers who have
-				changed the projects they work on, or who have left your organization.
+				Your organization's blame map allows you to reassign code responsibility for coworkers with
+				multiple email addresses, or who have left your organization. This impacts who gets
+				at-mentioned in code comments, and suggested as reviewers for Feedback Requests.
 			</p>
 			<MapRow>
 				<div>
@@ -149,32 +148,28 @@ export function BlameMap() {
 				<MapRow key={email}>
 					<div>{email.replace(/\*/g, ".")}</div>
 					<div>
-						{isCurrentUserAdmin ? (
-							<SelectPeople
-								title="Handled By"
-								multiSelect={false}
-								value={[]}
-								extraItems={[
-									{ label: "-" },
-									{
-										icon: <Icon name="trash" />,
-										label: "Delete Mapping",
-										key: "remove",
-										action: () => onBlameMapUserChange(email)
-									}
-								]}
-								onChange={person => onBlameMapUserChange(email, person)}
-							>
-								<HeadshotName
-									id={blameMap[email]}
-									className="no-padding"
-									onClick={() => {} /* noop onclick to get cursor pointer */}
-								/>
-								<Icon name="chevron-down" />
-							</SelectPeople>
-						) : (
-							<HeadshotName id={blameMap[email]} className="no-padding" />
-						)}
+						<SelectPeople
+							title="Handled By"
+							multiSelect={false}
+							value={[]}
+							extraItems={[
+								{ label: "-" },
+								{
+									icon: <Icon name="trash" />,
+									label: "Delete Mapping",
+									key: "remove",
+									action: () => onBlameMapUserChange(email)
+								}
+							]}
+							onChange={person => onBlameMapUserChange(email, person)}
+						>
+							<HeadshotName
+								id={blameMap[email]}
+								className="no-padding"
+								onClick={() => {} /* noop onclick to get cursor pointer */}
+							/>
+							<Icon name="chevron-down" />
+						</SelectPeople>
 					</div>
 				</MapRow>
 			))}
@@ -188,7 +183,7 @@ export function BlameMap() {
 					</div>
 				</MapRow>
 			)}
-			{isCurrentUserAdmin && !addingBlameMap && (
+			{!addingBlameMap && (
 				<MapRow>
 					<div>
 						<a onClick={() => setAddingBlameMap(true)}>Add mapping</a>
@@ -199,7 +194,7 @@ export function BlameMap() {
 				<MapRow>
 					<div style={{ position: "relative" }}>
 						<input
-							style={{ width: "100%", paddingRight: "30px !important" }}
+							style={{ width: "calc(100% - 10px)" }}
 							className="input-text"
 							id="blame-map-email"
 							type="text"

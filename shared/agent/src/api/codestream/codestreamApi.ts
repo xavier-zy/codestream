@@ -22,6 +22,8 @@ import {
 	ChangeDataType,
 	CreateCompanyRequest,
 	CreateCompanyRequestType,
+	DeleteBlameMapRequest,
+	DeleteBlameMapRequestType,
 	DeleteMarkerRequest,
 	DeleteMarkerResponse,
 	DeleteMeUserRequest,
@@ -1783,6 +1785,11 @@ export class CodeStreamApiProvider implements ApiProvider {
 			{ email: request.email, userId: request.userId },
 			this._token
 		);
+	}
+
+	@lspHandler(DeleteBlameMapRequestType)
+	async deleteBlameMap(request: DeleteBlameMapRequest) {
+		await this.put(`/delete-blame-map/${request.teamId}`, { email: request.email }, this._token);
 	}
 
 	@log()

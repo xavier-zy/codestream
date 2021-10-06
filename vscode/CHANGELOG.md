@@ -1,5 +1,18 @@
 # Change Log
 
+## [11.1.0] - 2021-10-7
+
+### Added
+
+- Adds support for allowing people to join your CodeStream organization when signing up with specific email domains
+- Adds the ability to filter the Activity Feed to just discussions about repos open in your IDE, or even specific folders (i.e. monorepo scenarios)
+
+### Changed
+
+- Eliminates the concept of a team on CodeStream, with everyone from a company now being in a single CodeStream organization
+- Replaces the My Team section of the sidebar with a My Organization menu at the top of the CodeStream pane
+- Eliminates invitation codes, with teammates now accepting invitations simply by signing up with the email address the invitation was sent to
+
 ## [11.0.16] - 2021-9-24
 
 ### Fixed

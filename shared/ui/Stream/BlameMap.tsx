@@ -31,6 +31,7 @@ export function BlameMap() {
 
 		const adminIds = team.adminIds || [];
 		const currentUser = state.users[state.session.userId!];
+		const isCurrentUserAdmin = adminIds.includes(state.session.userId!);
 		const blameMap = team.settings ? team.settings.blameMap : EMPTY_HASH;
 		const mappedBlame = keyFilter(blameMap || {});
 		const dontSuggestInvitees = team.settings
@@ -59,7 +60,9 @@ export function BlameMap() {
 			return user;
 		});
 		return {
+			isCurrentUserAdmin,
 			mappedBlame,
+			currentUserId: state.session.userId!,
 			blameMap: blameMap || EMPTY_HASH,
 			teamId: team.id,
 			autoJoinSupported: isFeatureEnabled(state, "autoJoin"),
@@ -69,7 +72,7 @@ export function BlameMap() {
 		};
 	});
 
-	const { mappedBlame, blameMap } = derivedState;
+	const { mappedBlame, blameMap, isCurrentUserAdmin } = derivedState;
 
 	const [blameMapEmail, setBlameMapEmail] = React.useState("");
 	const [addingBlameMap, setAddingBlameMap] = React.useState(false);
@@ -102,7 +105,7 @@ export function BlameMap() {
 			if (members.find(user => user.email === email)) return;
 			if (invited.find(user => user.email === email)) return;
 			if (dontSuggestInvitees[email.replace(/\./g, "*")]) return;
-			suggested.push({ email, fullName: committers[email] || email });
+			newSuggested.push({ email, fullName: committers[email] || email });
 		});
 		setSuggested(newSuggested);
 	};
@@ -136,6 +139,11 @@ export function BlameMap() {
 				multiple email addresses, or who have left your organization. This impacts who gets
 				at-mentioned in code comments, and suggested as reviewers for Feedback Requests.
 			</p>
+			{!isCurrentUserAdmin && (
+				<p className="explainer">
+					Note that as a non-admin you can only add yourself as a blame map recipient.
+				</p>
+			)}
 			<MapRow>
 				<div>
 					<b>Code Authored By</b>
@@ -152,15 +160,20 @@ export function BlameMap() {
 							title="Handled By"
 							multiSelect={false}
 							value={[]}
-							extraItems={[
-								{ label: "-" },
-								{
-									icon: <Icon name="trash" />,
-									label: "Delete Mapping",
-									key: "remove",
-									action: () => onBlameMapUserChange(email)
-								}
-							]}
+							onlyPerson={isCurrentUserAdmin ? undefined : derivedState.currentUserId}
+							extraItems={
+								derivedState.isCurrentUserAdmin
+									? [
+											{ label: "-" },
+											{
+												icon: <Icon name="trash" />,
+												label: "Delete Mapping",
+												key: "remove",
+												action: () => onBlameMapUserChange(email)
+											}
+									  ]
+									: undefined
+							}
 							onChange={person => onBlameMapUserChange(email, person)}
 						>
 							<HeadshotName
@@ -194,7 +207,10 @@ export function BlameMap() {
 				<MapRow>
 					<div style={{ position: "relative" }}>
 						<input
-							style={{ width: "calc(100% - 10px)" }}
+							style={{
+								width: "calc(100% - 10px)",
+								paddingRight: suggested.length > 0 ? "30px !important" : "5px"
+							}}
 							className="input-text"
 							id="blame-map-email"
 							type="text"
@@ -222,6 +238,7 @@ export function BlameMap() {
 							<SelectPeople
 								title="Handled By"
 								multiSelect={false}
+								onlyPerson={isCurrentUserAdmin ? undefined : derivedState.currentUserId}
 								value={[]}
 								onChange={person => onBlameMapUserChange(blameMapEmail, person)}
 							>

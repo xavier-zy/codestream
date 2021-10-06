@@ -288,8 +288,6 @@ export const ProfilePanel = () => {
 							<StyledUserStatus user={person} />
 						</Row>
 					)}
-					<MetaLabel>Local Modifications</MetaLabel>
-					<ModifiedRepos id={person.id} showModifiedAt />
 					{isMe && (
 						<div style={{ marginTop: "75px" }}>
 							<Button variant="destructive" onClick={cancelAccount}>

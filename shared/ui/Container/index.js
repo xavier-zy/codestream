@@ -9,6 +9,7 @@ import { HostApi } from "../webview-api";
 import { ReloadWebviewRequestType, RestartRequestType } from "../ipc/webview.protocol";
 import { Loading } from "./Loading";
 import RoadBlock from "../Stream/RoadBlock";
+import { MigrationRoadBlock } from "../Stream/MigrationRoadBlock";
 import Dismissable from "../Stream/Dismissable";
 import { SearchContextProvider } from "../Stream/SearchContextProvider";
 import { upgradeRecommendedDismissed } from "../store/versioning/actions";
@@ -29,6 +30,7 @@ const mapStateToProps = state => {
 		bootstrapped: state.bootstrapped,
 		connectivityError: state.connectivity.error,
 		loggedIn: Boolean(state.session.userId),
+		migration: state.migration,
 		inMaintenanceMode: Boolean(state.session.inMaintenanceMode),
 		company: team ? state.companies[team.companyId] : undefined,
 		versioning: state.versioning,
@@ -126,6 +128,8 @@ const Root = connect(mapStateToProps)(props => {
 				{getIdeInstallationInstructions(props)}
 			</RoadBlock>
 		);
+	if (props.migration && (props.migration.migrating || props.migration.requiresRestart))
+		return <MigrationRoadBlock migration={props.migration}></MigrationRoadBlock>;
 	if (props.inMaintenanceMode)
 		return (
 			<RoadBlock title="Pardon the Interruption">

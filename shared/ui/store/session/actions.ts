@@ -55,6 +55,32 @@ export const logout = () => async (dispatch, getState: () => CodeStreamState) =>
 	dispatch(setBootstrapped(true));
 };
 
+export const restart = () => async (dispatch, getState: () => CodeStreamState) => {
+	const { accessToken } = await HostApi.instance.send(GetAccessTokenRequestType, {});
+	const { configs, context, users, session } = getState();
+	const user = users[session.userId!] as CSMe;
+
+	dispatch(setBootstrapped(false));
+	dispatch(reset());
+
+	await HostApi.instance.send(LogoutRequestType, {});
+	const response = await HostApi.instance.send(TokenLoginRequestType, {
+		token: {
+			email: user.email,
+			value: accessToken,
+			url: configs.serverUrl,
+			providerAccess: context.chatProviderAccess as any
+		}
+	});
+
+	if (isLoginFailResponse(response)) {
+		logError("Failed to restart", { ...response, userId: user.id, email: user.email });
+		return dispatch(setBootstrapped(true));
+	}
+
+	return dispatch(onLogin(response));
+};
+
 export const switchToTeam = (
 	teamId: string,
 	options?: { codemarkId?: string; reviewId?: string }

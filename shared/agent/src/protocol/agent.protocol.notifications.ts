@@ -362,3 +362,13 @@ export const DidChangeBranchNotificationType = new NotificationType<
 	DidChangeBranchNotification,
 	void
 >("codestream/didChangeBranch");
+
+export interface DidChangeMigrationStatusNotification {
+	requiresRestart?: boolean;
+	migrating?: boolean;
+}
+
+export const DidChangeMigrationStatusNotificationType = new NotificationType<
+	DidChangeMigrationStatusNotification,
+	void
+>("codestream/didChangeMigrationStatus");

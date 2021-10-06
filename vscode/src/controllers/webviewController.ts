@@ -11,6 +11,8 @@ import {
 	DidChangeDataNotificationType,
 	DidChangeDocumentMarkersNotification,
 	DidChangeDocumentMarkersNotificationType,
+	DidChangeMigrationNotification as DidChangeMigrationStatusNotification,
+	DidChangeMigrationNotificationType as DidChangeMigrationStatusNotificationType,
 	DidChangeServerUrlNotification,
 	DidChangeServerUrlNotificationType,
 	DidChangeVersionCompatibilityNotification,
@@ -615,6 +617,14 @@ export class WebviewController implements Disposable {
 	@log()
 	async onServerUrlChanged(e: DidChangeServerUrlNotification) {
 		this._webview!.notify(DidChangeServerUrlNotificationType, e);
+	}
+
+	@log()
+	async onMigrationStatusChanged(e: DidChangeMigrationStatusNotification) {
+		if (!this.visible) {
+			await this.show();
+		}
+		this._webview!.notify(DidChangeMigrationStatusNotificationType, e);
 	}
 
 	@log()

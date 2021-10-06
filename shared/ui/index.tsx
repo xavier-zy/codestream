@@ -39,7 +39,8 @@ import {
 	GetDocumentFromMarkerRequestType,
 	DidEncounterMaintenanceModeNotificationType,
 	VerifyConnectivityRequestType,
-	ExecuteThirdPartyRequestUntypedType
+	ExecuteThirdPartyRequestUntypedType,
+	DidChangeMigrationStatusNotificationType
 } from "@codestream/protocols/agent";
 import { CSApiCapabilities, CodemarkType, CSMe } from "@codestream/protocols/api";
 import translations from "./translations/en";
@@ -74,7 +75,7 @@ import {
 } from "./store/context/actions";
 import { URI } from "vscode-uri";
 import { moveCursorToLine } from "./Stream/api-functions";
-import { setMaintenanceMode } from "./store/session/actions";
+import { restart, setMaintenanceMode } from "./store/session/actions";
 import { updateModifiedReposDebounced } from "./store/users/actions";
 import { logWarning } from "./logger";
 import { fetchReview } from "./store/reviews/actions";
@@ -82,6 +83,7 @@ import { openPullRequestByUrl } from "./store/providerPullRequests/actions";
 import { updateCapabilities } from "./store/capabilities/actions";
 import { confirmPopup } from "./Stream/Confirm";
 import { switchToTeam } from "./store/session/actions";
+import { apiMigrating } from "./store/migration/actions";
 
 export { HostApi };
 
@@ -175,6 +177,27 @@ function listenForEvents(store) {
 		} else if (e.compatibility === ApiVersionCompatibility.ApiUpgradeRecommended) {
 			store.dispatch(apiUpgradeRecommended(e.missingCapabilities || {}));
 		}
+	});
+
+	api.on(DidChangeMigrationStatusNotificationType, e => {
+		if (e.requiresRestart) {
+			store.dispatch(
+				apiMigrating({
+					migrating: false,
+					requiresRestart: false
+				})
+			);
+			store.dispatch(closeAllPanels());
+			store.dispatch(restart());
+			return;
+		}
+
+		store.dispatch(
+			apiMigrating({
+				migrating: e.migrating,
+				requiresRestart: false
+			})
+		);
 	});
 
 	api.on(DidChangeDataNotificationType, ({ type, data }) => {

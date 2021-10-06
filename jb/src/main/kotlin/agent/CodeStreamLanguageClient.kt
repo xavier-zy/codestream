@@ -95,6 +95,15 @@ class CodeStreamLanguageClient(private val project: Project) : LanguageClient {
         project.authenticationService?.onApiVersionChanged(notification)
     }
 
+    @JsonNotification("codestream/didChangeMigrationStatus")
+    fun didChangeApiMigrationStatus(json: JsonElement) {
+        ApplicationManager.getApplication().invokeLater {
+            project.codeStream?.show {
+                project.webViewService?.postNotification("codestream/didChangeMigrationStatus", json, true)
+            }
+        }
+    }
+
     @JsonNotification("codestream/didEncounterMaintenanceMode")
     fun didEncounterMaintenanceMode(json: JsonElement) {
         ApplicationManager.getApplication().invokeLater {

@@ -57,6 +57,8 @@ import { DocumentsState } from "./documents/types";
 import { reduceReviews } from "./reviews/reducer";
 import { reduceProviderPullRequests } from "./providerPullRequests/reducer";
 import { ProviderPullRequestsState } from "./providerPullRequests/types";
+import { reduceApiMigration } from "./migration/reducer";
+import { MigrationState } from "./migration/types";
 
 const pluginVersion = (state = "", action) => {
 	if (action.type === "@pluginVersion/Set") return action.payload;
@@ -77,6 +79,7 @@ const reducer = combineReducers({
 	documentMarkers: reduceDocumentMarkers,
 	editorContext: reduceEditorContext,
 	ide: reduceIde,
+	migration: reduceApiMigration,
 	pluginVersion,
 	posts: reducePosts,
 	preferences: reducePreferences,
@@ -125,6 +128,7 @@ export interface CodeStreamState {
 	documentMarkers: DocumentMarkersState;
 	editorContext: EditorContextState;
 	ide: IdeState;
+	migration: MigrationState;
 	pluginVersion: string;
 	posts: PostsState;
 	preferences: PreferencesState;

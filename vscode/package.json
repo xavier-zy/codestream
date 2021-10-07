@@ -162,7 +162,6 @@
 					"description": "Specifies whether to show a shortcut key tip attached to the selection when you select code",
 					"scope": "window"
 				},
-				 
 				"codestream.traceLevel": {
 					"type": "string",
 					"default": "verbose",

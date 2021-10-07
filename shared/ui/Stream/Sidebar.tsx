@@ -67,6 +67,7 @@ _defaultPaneSettings[WebviewPanels.CodemarksForFile] = {};
 // default this one to not show
 _defaultPaneSettings[WebviewPanels.WorkInProgress] = { removed: true };
 _defaultPaneSettings[WebviewPanels.Tasks] = {};
+_defaultPaneSettings[WebviewPanels.Observability] = {};
 // _defaultPaneSettings[WebviewPanels.Team] = {};
 export const DEFAULT_PANE_SETTINGS = _defaultPaneSettings;
 
@@ -77,7 +78,7 @@ export const AVAILABLE_PANES = [
 	WebviewPanels.Observability,
 	WebviewPanels.WorkInProgress,
 	WebviewPanels.Tasks,
-	WebviewPanels.NewRelic
+	WebviewPanels.Observability
 ];
 
 export const COLLAPSED_SIZE = 22;

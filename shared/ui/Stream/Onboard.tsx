@@ -191,7 +191,7 @@ export const ButtonRow = styled.div`
 	}
 `;
 
-const LinkRow = styled.div`
+export const LinkRow = styled.div`
 	margin-top: 10px;
 	text-align: right;
 	a {

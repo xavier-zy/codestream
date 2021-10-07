@@ -21,10 +21,6 @@ import { ChangeTeamName } from "./ChangeTeamName";
 import { ChangeCompanyName } from "./ChangeCompanyName";
 import { BlameMap } from "./BlameMap";
 import { Team } from "./Team";
-import { AddNewRelic } from "./AddNewRelic";
-
-import { AddNewRelicNodeJS } from "./NewRelicWizards/AddNewRelicNodeJS";
-import { AddNewRelicJava } from "./NewRelicWizards/AddNewRelicJava";
 
 import { TeamSetup } from "./TeamSetup";
 import { Invite } from "./Invite";
@@ -288,7 +284,7 @@ export class SimpleStream extends PureComponent {
 		const { q } = this.state;
 
 		// this will show for any old, lingering users that have not accepted as part of a new registration
-		if (!acceptedTOS) return <PresentTOS />;
+		// if (!acceptedTOS) return <PresentTOS />;
 
 		// FIXME -- remove this before October 19th
 		if (!acceptedPrereleaseTOS) return <PresentPrereleaseTOS />;
@@ -407,11 +403,6 @@ export class SimpleStream extends PureComponent {
 						{activeModal === WebviewModals.BlameMap && <BlameMap />}
 						{activeModal === WebviewModals.Invite && <Invite />}
 						{activeModal === WebviewModals.Team && <Team />}
-						{activeModal === WebviewModals.AddNewRelic && <AddNewRelic />}
-
-						{activeModal === WebviewModals.AddNewRelicNodeJS && <AddNewRelicNodeJS />}
-						{activeModal === WebviewModals.AddNewRelicJava && <AddNewRelicJava />}
-
 						{activeModal === WebviewModals.TeamSetup && <TeamSetup />}
 						{activeModal === WebviewModals.Keybindings && (
 							<Keybindings onClick={this.props.closeModal}>

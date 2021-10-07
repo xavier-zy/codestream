@@ -22,7 +22,7 @@ import Tooltip, { TipTitle } from "./Tooltip";
 import { CSText } from "../src/components/CSText";
 import cx from "classnames";
 import Timestamp from "./Timestamp";
-import { DropdownButton } from "./Review/DropdownButton";
+import { DropdownButton } from "./DropdownButton";
 import { confirmPopup } from "./Confirm";
 import styled from "styled-components";
 import { getCodeCollisions } from "../store/users/reducer";

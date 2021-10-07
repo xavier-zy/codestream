@@ -220,6 +220,18 @@ export const ActivityPanel = () => {
 					}
 				}
 				return found;
+			} else if (_.type === "codeError") {
+				let found: any = undefined;
+				for (const repoSetting of repoSettings) {
+					const match = _.record.stackTraces?.find(m => {
+						return repoSetting.id === m.repoId;
+					});
+					found = match ? _ : undefined;
+					if (found) {
+						return found;
+					}
+				}
+				return found;
 			}
 			return null;
 		});

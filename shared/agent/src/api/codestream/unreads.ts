@@ -165,6 +165,12 @@ export class CodeStreamUnreads {
 				})
 			).reviews;
 
+			const codeErrors = (
+				await SessionContainer.instance().codeErrors.get({
+					streamIds: streamIds
+				})
+			).codeErrors;
+
 			posts = posts
 				.filter(_ => {
 					if (_.mentionedUserIds && _.mentionedUserIds.includes(this._api.userId)) {
@@ -213,6 +219,22 @@ export class CodeStreamUnreads {
 										);
 									}
 									return isPathMatch && repoSetting.id === m.repoId;
+								});
+								found = match ? _ : undefined;
+								if (found) {
+									return found;
+								}
+							}
+							return found;
+						}
+					}
+					if (_.codeErrorId) {
+						const codeError = codeErrors.find(c => c.id === _.reviewId);
+						if (codeError) {
+							let found: any = undefined;
+							for (const repoSetting of repoSettings) {
+								const match = codeError.stackTraces?.find(m => {
+									return repoSetting.id === m.repoId;
 								});
 								found = match ? _ : undefined;
 								if (found) {

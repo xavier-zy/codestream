@@ -27,6 +27,9 @@ export class CodeErrorsManager extends CachedEntityManagerBase<CSCodeError> {
 			if (request.codeErrorIds?.length ?? 0 > 0) {
 				codeErrors = codeErrors.filter(e => request.codeErrorIds!.includes(e.id));
 			}
+			if (request.streamIds?.length ?? 0 > 0) {
+				codeErrors = codeErrors.filter(e => request.streamIds!.includes(e.streamId));
+			}
 		}
 
 		return { codeErrors };

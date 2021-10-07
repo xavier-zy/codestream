@@ -77,8 +77,7 @@ export const AVAILABLE_PANES = [
 	WebviewPanels.CodemarksForFile,
 	WebviewPanels.Observability,
 	WebviewPanels.WorkInProgress,
-	WebviewPanels.Tasks,
-	WebviewPanels.Observability
+	WebviewPanels.Tasks
 ];
 
 export const COLLAPSED_SIZE = 22;

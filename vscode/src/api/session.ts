@@ -357,6 +357,11 @@ export class CodeStreamSession implements Disposable {
 	}
 
 	@signedIn
+	get company() {
+		return this._state!.company;
+	}
+
+	@signedIn
 	get user() {
 		return this._state!.user;
 	}
@@ -522,6 +527,11 @@ export class CodeStreamSession implements Disposable {
 		return this._state!.hasSingleTeam();
 	}
 
+	@signedIn
+	hasSingleCompany(): boolean {
+		return this._state!.hasSingleCompany();
+	}
+
 	async login(email: string, password: string, teamId?: string): Promise<LoginResult>;
 	async login(email: string, token: AccessToken, teamId?: string): Promise<LoginResult>;
 	async login(
@@ -668,8 +678,18 @@ export class CodeStreamSession implements Disposable {
 				Logger.error(ex, "failed to update workspaceState");
 			}
 		}
+		let companyId = "";
+		if (teamId) {
+			const team = response.loginResponse.teams.find(_ => _.id === teamId);
+			if (team) {
+				const company = response.loginResponse.companies.find(_ => _.id === team.companyId);
+				if (company) {
+					companyId = company.id;
+				}
+			}
+		}
 
-		this._state = new SessionState(this, teamId, response.loginResponse);
+		this._state = new SessionState(this, companyId, teamId, response.loginResponse);
 
 		this._disposableAuthenticated = Disposable.from(
 			Container.agent.onDidChangeDocumentMarkers(this.onDocumentMarkersChanged, this),

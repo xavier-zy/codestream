@@ -66,6 +66,7 @@ export const CreateShareableCodeErrorRequestType = new RequestType<
 export interface FetchCodeErrorsRequest {
 	codeErrorIds?: string[];
 	streamId?: string;
+	streamIds?: string[];
 	before?: number;
 	byLastAcivityAt?: boolean;
 }

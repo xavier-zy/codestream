@@ -77,6 +77,7 @@ export class BroadcasterEvents implements Disposable {
 	private _disposable: Disposable | undefined;
 	private readonly _broadcaster: Broadcaster;
 	private _subscribedStreamIds = new Set<string>();
+	private _subscribedObjectIds = new Set<string>();
 
 	constructor(private readonly _options: BroadcasterEventsInitializer) {
 		this._broadcaster = new Broadcaster(this._options.api, this._options.httpsAgent);
@@ -136,10 +137,26 @@ export class BroadcasterEvents implements Disposable {
 	}
 
 	@log()
+	subscribeToObject(objectId: string) {
+		if (!this._subscribedObjectIds.has(objectId)) {
+			this._broadcaster.subscribe([`object-${objectId}`]);
+			this._subscribedObjectIds.add(objectId);
+		}
+	}
+
+	@log()
 	unsubscribeFromStream(streamId: string) {
 		if (this._subscribedStreamIds.has(streamId)) {
 			this._broadcaster.unsubscribe([`stream-${streamId}`]);
 			this._subscribedStreamIds.delete(streamId);
+		}
+	}
+
+	@log()
+	unsubscribeFromObject(objectId: string) {
+		if (this._subscribedObjectIds.has(objectId)) {
+			this._broadcaster.unsubscribe([`object-${objectId}`]);
+			this._subscribedStreamIds.delete(objectId);
 		}
 	}
 

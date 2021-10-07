@@ -175,6 +175,7 @@ import {
 	CSApiCapabilities,
 	CSApiFeatures,
 	CSChannelStream,
+	CSCodeError,
 	CSCompany,
 	CSCompleteSignupRequest,
 	CSConfirmRegistrationRequest,
@@ -721,6 +722,13 @@ export class CodeStreamApiProvider implements ApiProvider {
 			case MessageType.CodeErrors: {
 				e.data = await SessionContainer.instance().codeErrors.resolve(e, { onlyIfNeeded: false });
 				if (e.data == null || e.data.length === 0) return;
+
+				if (this._events !== undefined) {
+					for (const codeError of e.data as CSCodeError[]) {
+						this._events.subscribeToObject(codeError.id);
+					}
+				}
+
 				break;
 			}
 			case MessageType.Streams:
@@ -1307,6 +1315,10 @@ export class CodeStreamApiProvider implements ApiProvider {
 			response.posts.sort((a: CSPost, b: CSPost) => (a.seqNum as number) - (b.seqNum as number));
 		}
 
+		(response.codeErrors || []).forEach(codeError => {
+			this._events?.subscribeToObject(codeError.id);
+		});
+
 		return response;
 	}
 
@@ -1440,7 +1452,7 @@ export class CodeStreamApiProvider implements ApiProvider {
 	}
 
 	@log()
-	fetchCodeErrors(request: FetchCodeErrorsRequest): Promise<FetchCodeErrorsResponse> {
+	async fetchCodeErrors(request: FetchCodeErrorsRequest): Promise<FetchCodeErrorsResponse> {
 		const params: CSGetCodeErrorsRequest = {
 			teamId: this.teamId
 		};
@@ -1452,7 +1464,15 @@ export class CodeStreamApiProvider implements ApiProvider {
 			params.streamIds = request.streamIds;
 		}
 		*/
-		return this.get<CSGetCodeErrorsResponse>(`/code-errors?${qs.stringify(params)}`, this._token);
+		const response = await this.get<CSGetCodeErrorsResponse>(
+			`/code-errors?${qs.stringify(params)}`,
+			this._token
+		);
+		(response.codeErrors || []).forEach(codeError => {
+			this._events?.subscribeToObject(codeError.id);
+		});
+
+		return response;
 	}
 
 	@log()

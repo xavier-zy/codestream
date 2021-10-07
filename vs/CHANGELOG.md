@@ -1,5 +1,11 @@
 # Change Log
 
+## [11.1.1] - 2021-10-7
+
+### Fixed
+
+- Fixes an issue where some users couldn't switch to certain organizations
+
 ## [11.1.0] - 2021-10-7
 
 ### Added

@@ -1281,11 +1281,13 @@ export class CodeStreamApiProvider implements ApiProvider {
 			limit = 100;
 		}
 
-		const params: { [k: string]: any } = { teamId: this.teamId, limit };
+		const params: { [k: string]: any } = { teamId: this.teamId, limit, includeFollowed: true };
 
+		/* The need to pass streamId is deprecated
 		if (request.streamId) {
 			params.streamId = request.streamId;
 		}
+		*/
 		if (request.before) {
 			params.before = request.before;
 		}
@@ -1445,10 +1447,11 @@ export class CodeStreamApiProvider implements ApiProvider {
 		if (request.codeErrorIds?.length ?? 0 > 0) {
 			params.ids = request.codeErrorIds;
 		}
-		if (request.streamId != null) {
-			params.streamId = request.streamId;
+		/* The need to pass streamId or streamIds is deprecated
+		if (request.streamIds != null) {
+			params.streamIds = request.streamIds;
 		}
-
+		*/
 		return this.get<CSGetCodeErrorsResponse>(`/code-errors?${qs.stringify(params)}`, this._token);
 	}
 

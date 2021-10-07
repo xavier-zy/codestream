@@ -73,8 +73,12 @@ export function EllipsisMenu(props: EllipsisMenuProps) {
 					noHover: isCurrentCompany,
 					action: () => {
 						if (isCurrentCompany) return;
-						const team = userTeams.find(_ => _.companyId === company.id && _.isEveryoneTeam);
-						if (team) dispatch(switchToTeam(team.id));
+						const team = userTeams.find(_ => _.companyId === company.id);
+						if (team) {
+							dispatch(switchToTeam(team.id));
+						} else {
+							console.error(`Could not switch to a team in ${company.id}`);
+						}
 					}
 				};
 			}) as any;

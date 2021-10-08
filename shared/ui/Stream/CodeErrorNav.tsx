@@ -413,7 +413,7 @@ export function CodeErrorNav(props: Props) {
 							lastActivityAt: 0,
 							creatorId: "",
 							objectId: errorGroupGuid,
-							objectType: "ErrorGroup",
+							objectType: "errorGroup",
 							title: errorGroupResult.errorGroup?.title || "",
 							text: errorGroupResult.errorGroup?.message || undefined,
 							// storing the permanently parsed stack info

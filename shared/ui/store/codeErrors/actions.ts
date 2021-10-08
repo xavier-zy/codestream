@@ -54,7 +54,7 @@ export const updateCodeErrors = (codeErrors: CSCodeError[]) =>
 export interface NewCodeErrorAttributes {
 	accountId?: number;
 	objectId?: string;
-	objectType?: "ErrorGroup";
+	objectType?: "errorGroup";
 	objectInfo?: any;
 	title: string;
 	text?: string;

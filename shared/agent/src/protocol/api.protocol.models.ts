@@ -340,7 +340,7 @@ export interface CSCodeError extends CSEntity {
 	permalink?: string;
 	resolvedAt?: number;
 	objectId?: string;
-	objectType?: "ErrorGroup";
+	objectType?: "errorGroup";
 	objectInfo?: { [key: string]: string };
 	accountId?: number;
 }

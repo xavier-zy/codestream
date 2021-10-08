@@ -127,7 +127,7 @@ export function getErrorGroup(
 	state: CodeErrorsState,
 	codeError: CSCodeError | undefined
 ): any | undefined {
-	if (!codeError || codeError.objectType !== "ErrorGroup" || !codeError.objectId) return undefined;
+	if (!codeError || codeError.objectType !== "errorGroup" || !codeError.objectId) return undefined;
 	return state.errorGroups[codeError.objectId!]?.errorGroup;
 }
 

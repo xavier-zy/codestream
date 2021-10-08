@@ -144,3 +144,18 @@ export const AddNewRelicIncludeRequestType = new RequestType<
 	void,
 	void
 >("codestream/nr/addNewRelicInclude");
+
+export interface GetNewRelicSignupJwtTokenRequest {
+
+}
+
+export interface GetNewRelicSignupJwtTokenResponse {
+	token: string;
+}
+
+export const GetNewRelicSignupJwtTokenRequestType = new RequestType<
+	GetNewRelicSignupJwtTokenRequest,
+	GetNewRelicSignupJwtTokenResponse,
+	void,
+	void
+>("codestream/nr/openNewRelicSignupUrl");

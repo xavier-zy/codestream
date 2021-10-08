@@ -9,6 +9,8 @@ import { Link } from "./Link";
 import { openPanel } from "./actions";
 import Icon from "./Icon";
 import { HostApi } from "../webview-api";
+import { GetNewRelicSignupJwtTokenRequestType } from "@codestream/protocols/agent";
+import { OpenUrlRequestType } from "@codestream/protocols/webview";
 
 class ConfigureNewRelic extends Component {
 	initialState = {
@@ -96,6 +98,17 @@ class ConfigureNewRelic extends Component {
 		return this.state.apiKey.length === 0;
 	};
 
+	onClickSignup = async campaign => {
+		const { token } = await HostApi.instance.send(GetNewRelicSignupJwtTokenRequestType, {});
+		const url =
+			"https://landing.service.newrelic.com/codestream/signup" +
+			`?token=${token}` +
+			`&utm_source=codestream` +
+			`&utm_medium=${this.props.ide.name}` +
+			`&utm_campaign=${campaign}`;
+		void HostApi.instance.send(OpenUrlRequestType, { url });
+	};
+
 	render() {
 		const { providerId, headerChildren, showSignupUrl } = this.props;
 		const { name } = this.props.providers[providerId] || {};
@@ -152,7 +165,12 @@ class ConfigureNewRelic extends Component {
 								</div>
 								<p>
 									Don't have an API key?{" "}
-									<Link href="https://docs.newrelic.com/docs/apis/intro-apis/new-relic-api-keys/#user-api-key">
+									<Link
+										onClick={e => {
+											e.preventDefault();
+											this.onClickSignup("nr_getapikey");
+										}}
+									>
 										Create one now
 									</Link>
 								</p>
@@ -178,9 +196,9 @@ class ConfigureNewRelic extends Component {
 								<Button
 									style={{ marginTop: "5px" }}
 									className="row-button"
-									onClick={event => {
-										event.preventDefault();
-										HostApi.instance.send(OpenUrlRequestType, { url: "https://one.newrelic.com" });
+									onClick={e => {
+										e.preventDefault();
+										this.onClickSignup("nr_signup");
 									}}
 								>
 									<Icon name="newrelic" />
@@ -197,8 +215,8 @@ class ConfigureNewRelic extends Component {
 }
 
 const mapStateToProps = state => {
-	const { providers } = state;
-	return { providers, isInternalUser: isCurrentUserInternal(state) };
+	const { providers, ide } = state;
+	return { providers, ide, isInternalUser: isCurrentUserInternal(state) };
 };
 
 const component = connect(mapStateToProps, {

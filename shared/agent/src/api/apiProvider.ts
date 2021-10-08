@@ -168,7 +168,9 @@ import {
 	UpdateStreamMembershipResponse,
 	UpdateUserRequest,
 	UpdateUserResponse,
-	VerifyConnectivityResponse
+	VerifyConnectivityResponse,
+	GetNewRelicSignupJwtTokenRequest,
+	GetNewRelicSignupJwtTokenResponse
 } from "../protocol/agent.protocol";
 import {
 	CSApiCapabilities,
@@ -506,6 +508,8 @@ export interface ApiProvider {
 		sharing?: boolean;
 		subId?: string;
 	}): Promise<CSMe>;
+
+	getNewRelicSignupJwtToken(request: GetNewRelicSignupJwtTokenRequest): Promise<GetNewRelicSignupJwtTokenResponse>;
 
 	verifyConnectivity(): Promise<VerifyConnectivityResponse>;
 	setServerUrl(url: string): void;

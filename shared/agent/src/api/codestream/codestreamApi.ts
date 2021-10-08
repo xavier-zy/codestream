@@ -30,6 +30,8 @@ import {
 	DeleteMeUserRequestType,
 	DeleteMeUserResponse,
 	DidChangeDataNotificationType,
+	GetNewRelicSignupJwtTokenRequest, GetNewRelicSignupJwtTokenRequestType,
+	GetNewRelicSignupJwtTokenResponse,
 	JoinCompanyRequest,
 	JoinCompanyRequestType,
 	JoinCompanyResponse,
@@ -2302,6 +2304,11 @@ export class CodeStreamApiProvider implements ApiProvider {
 		// because we're not dealing with json data in the request
 		const response = await fetch(url, { method: "post", body: formData, headers });
 		return await response.json();
+	}
+
+	@lspHandler(GetNewRelicSignupJwtTokenRequestType)
+	async getNewRelicSignupJwtToken(request: GetNewRelicSignupJwtTokenRequest): Promise<GetNewRelicSignupJwtTokenResponse> {
+		return this.get<GetNewRelicSignupJwtTokenResponse>(`/signup-jwt`, this._token);
 	}
 
 	async delete<R extends object>(url: string, token?: string): Promise<R> {

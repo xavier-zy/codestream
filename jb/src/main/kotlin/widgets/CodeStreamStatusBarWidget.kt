@@ -58,10 +58,10 @@ class CodeStreamStatusBarWidget(val project: Project) : StatusBarWidget, StatusB
         }
 
         val userLoggedIn = sessionService.userLoggedIn ?: return "$prefix Sign in..."
-        val username = if (userLoggedIn.teamsCount == 1) {
+        val username = if (userLoggedIn.companiesCount == 1) {
             userLoggedIn.user.username
         } else {
-            userLoggedIn.user.username + " - " + userLoggedIn.team.name
+            userLoggedIn.user.username + " - " + userLoggedIn.company.name
         }
 
         val suffix = when (sessionService.mentions) {

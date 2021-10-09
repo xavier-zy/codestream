@@ -41,15 +41,20 @@ class LoginResult(
         get() = loginResponse?.teams?.find { it.id == state?.teamId }
             ?: throw IllegalStateException("User's teams does not contain their own team")
 
+    val company: CSCompany
+        get() = loginResponse?.companies?.find { it.id == team.companyId }
+            ?: throw IllegalStateException("User's companies does not contain their own company")
+
     val userLoggedIn: UserLoggedIn
         get() = loginResponse?.let {
-            return UserLoggedIn(it.user, team, state!!, it.teams.size)
+            return UserLoggedIn(it.user, team, company, state!!, it.teams.size, it.companies.size)
         } ?: throw IllegalStateException("LoginResult has no loginResponse")
 }
 
 class LoginResponse(
     val user: CSUser,
     val teams: List<CSTeam>,
+    val companies: List<CSCompany>,
     val accessToken: String
 )
 
@@ -63,7 +68,14 @@ class LoginState(
     val token: JsonObject?
 )
 
-class UserLoggedIn(val user: CSUser, val team: CSTeam, val state: LoginState, val teamsCount: Int) {
+class UserLoggedIn(
+    val user: CSUser,
+    val team: CSTeam,
+    val company: CSCompany,
+    val state: LoginState,
+    val teamsCount: Int,
+    val companiesCount: Int
+) {
     val userId get() = state.userId
     val teamId get() = state.teamId
 }
@@ -99,8 +111,14 @@ class CSPreferences(
 
 class CSTeam(
     val id: String,
+    val companyId: String,
     val name: String,
     val providerInfo: ProviderInfo?
+)
+
+class CSCompany(
+    val id: String,
+    val name: String
 )
 
 class ProviderInfo(

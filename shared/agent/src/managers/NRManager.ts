@@ -110,6 +110,10 @@ export class NRManager {
 		let lang = this.guessStackTraceLanguage(lines);
 		if (lang) {
 			return StackTraceParsers[lang](whole);
+		} else {
+			Logger.error(new Error("GuessStackLanguageFailed"), "language guess failed", {
+				languageGuess: lang
+			});
 		}
 
 		// otherwise we'll go through each in turn and try to parse anyway?
@@ -123,7 +127,11 @@ export class NRManager {
 			return info;
 		}
 
-		throw new Error("unable to parse stack trace, no meaningful data could be extracted");
+		const errorMessage = "unable to parse stack trace, no meaningful data could be extracted";
+		Logger.error(new Error("ParseStackTraceFailed"), errorMessage, {
+			languageGuess: lang
+		});
+		throw new Error(errorMessage);
 	}
 
 	// parses the passed stack, tries to determine if any of the user's open repos match it, and if so,

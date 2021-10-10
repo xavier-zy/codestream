@@ -1436,7 +1436,7 @@ export class CodeStreamSession {
 		}
 	}
 
-	async onFileSearch(path: string) {
+	async onFileSearch(basePath: string, path: string) {
 		if (!path) return { files: [] };
 
 		// reverse to start with the shortest path (aka least specific)
@@ -1445,7 +1445,7 @@ export class CodeStreamSession {
 		try {
 			for (const path of paths) {
 				const fileSearchResponse = (
-					await this.agent.sendRequest(AgentFileSearchRequestType, { path: path })
+					await this.agent.sendRequest(AgentFileSearchRequestType, { basePath, path })
 				).files;
 				if (!fileSearchResponse.length) {
 					// once there are no more results, just stop

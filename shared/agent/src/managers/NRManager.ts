@@ -410,7 +410,10 @@ export class NRManager {
 		if (!fileFullPath) {
 			return { error: `Unable to find file path for line` };
 		}
-		const fileSearchResponse = await SessionContainer.instance().session.onFileSearch(fileFullPath);
+		const fileSearchResponse = await SessionContainer.instance().session.onFileSearch(
+			matchingRepoPath,
+			fileFullPath
+		);
 		const bestMatchingFilePath = NRManager.getBestMatchingPath(
 			fileFullPath,
 			fileSearchResponse.files

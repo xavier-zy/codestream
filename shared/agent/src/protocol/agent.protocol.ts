@@ -253,6 +253,7 @@ export const AgentOpenUrlRequestType = new RequestType<AgentOpenUrlRequest, void
 );
 
 export interface AgentFileSearchRequest {
+	basePath: string;
 	path: string;
 }
 

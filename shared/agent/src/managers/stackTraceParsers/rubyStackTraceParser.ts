@@ -13,10 +13,10 @@ export function Parser(stack: string): CSStackTraceInfo {
 		// so we build it once
 		regex = Strings.regexBuilder`
 			^
-			\s+
+			(\s+)? // optional spaces 
 			(.+?\.rb) // path
 			:
-			\s*
+			(\s*)? // optional spaces
 			(\d+) // line
 			:in
 			\s+
@@ -44,7 +44,7 @@ export function Parser(stack: string): CSStackTraceInfo {
 			regex.lastIndex++;
 		}
 
-		const [, path, line, method] = m;
+		const [, optionalSpaces, path, moreOptionalSpaces, line, method] = m;
 		let lineNum: number | undefined = parseInt(line, 10);
 		if (isNaN(lineNum)) lineNum = undefined;
 		info.lines.push({

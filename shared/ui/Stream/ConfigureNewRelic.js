@@ -99,9 +99,12 @@ class ConfigureNewRelic extends Component {
 	};
 
 	onClickSignup = async campaign => {
-		const { token } = await HostApi.instance.send(GetNewRelicSignupJwtTokenRequestType, {});
+		const { token, baseLandingUrl } = await HostApi.instance.send(
+			GetNewRelicSignupJwtTokenRequestType,
+			{}
+		);
 		const url =
-			"https://landing.service.newrelic.com/codestream/signup" +
+			`${baseLandingUrl}/codestream/signup` +
 			`?token=${token}` +
 			`&utm_source=codestream` +
 			`&utm_medium=${this.props.ide.name}` +

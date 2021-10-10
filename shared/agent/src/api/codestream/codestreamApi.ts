@@ -30,7 +30,8 @@ import {
 	DeleteMeUserRequestType,
 	DeleteMeUserResponse,
 	DidChangeDataNotificationType,
-	GetNewRelicSignupJwtTokenRequest, GetNewRelicSignupJwtTokenRequestType,
+	GetNewRelicSignupJwtTokenRequest,
+	GetNewRelicSignupJwtTokenRequestType,
 	GetNewRelicSignupJwtTokenResponse,
 	JoinCompanyRequest,
 	JoinCompanyRequestType,
@@ -2307,8 +2308,18 @@ export class CodeStreamApiProvider implements ApiProvider {
 	}
 
 	@lspHandler(GetNewRelicSignupJwtTokenRequestType)
-	async getNewRelicSignupJwtToken(request: GetNewRelicSignupJwtTokenRequest): Promise<GetNewRelicSignupJwtTokenResponse> {
-		return this.get<GetNewRelicSignupJwtTokenResponse>(`/signup-jwt`, this._token);
+	async getNewRelicSignupJwtToken(
+		request: GetNewRelicSignupJwtTokenRequest
+	): Promise<GetNewRelicSignupJwtTokenResponse> {
+		const response = await this.get<GetNewRelicSignupJwtTokenResponse>(`/signup-jwt`, this._token);
+		const baseLandingUrl =
+			this.baseUrl === "https://nr-preview.codestream.us"
+				? "https://landing.staging-service.newrelic.com"
+				: "https://landing.service.newrelic.com";
+		return {
+			...response,
+			baseLandingUrl
+		};
 	}
 
 	async delete<R extends object>(url: string, token?: string): Promise<R> {

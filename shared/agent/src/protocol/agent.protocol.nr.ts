@@ -145,12 +145,11 @@ export const AddNewRelicIncludeRequestType = new RequestType<
 	void
 >("codestream/nr/addNewRelicInclude");
 
-export interface GetNewRelicSignupJwtTokenRequest {
-
-}
+export interface GetNewRelicSignupJwtTokenRequest {}
 
 export interface GetNewRelicSignupJwtTokenResponse {
 	token: string;
+	baseLandingUrl: string;
 }
 
 export const GetNewRelicSignupJwtTokenRequestType = new RequestType<

@@ -194,17 +194,33 @@ export class PubnubConnection implements BroadcasterConnection {
 			status.category === Pubnub.CATEGORIES.PNAccessDeniedCategory
 		) {
 			// an access denied message, in direct response to a subscription attempt
-			let response;
-			try {
-				response = JSON.parse((status as any).errorData.response.text);
-			} catch (error) {
-				// this is really a total failsafe, but if we can't determine the payload
-				// for some reason, we assume the worst
-				this._debug("Could not parse AccessDenied response");
-				this.reset();
-				return;
+			const channels = status.errorData.payload.channels;
+			this._debug(`Access denied for channels: ${channels}`);
+			const criticalChannels: string[] = [],
+				nonCriticalChannels: string[] = [];
+			// HACK: whether a channel is critical should be passed as an option and processed through the
+			// chain, but the changes to the code are too complicated ... this all needs a refactor anyway
+			status.errorData?.payload?.channels.forEach((channel: string) => {
+				if (channel.startsWith("object-")) {
+					nonCriticalChannels.push(channel);
+				} else {
+					criticalChannels.push(channel);
+				}
+			});
+
+			if (criticalChannels.length > 0) {
+				this._debug(`Access denied for critical channels: ${criticalChannels}`);
+				this.subscriptionFailure(criticalChannels);
 			}
-			this.subscriptionFailure(response.payload.channels || []);
+			if (nonCriticalChannels.length > 0) {
+				this.unsubscribe(nonCriticalChannels);
+				if (this._statusCallback) {
+					this._statusCallback!({
+						status: BroadcasterStatusType.NonCriticalFailure,
+						channels: nonCriticalChannels
+					});
+				}
+			}
 		} else if (
 			(status as any).error &&
 			(status.operation === Pubnub.OPERATIONS.PNHeartbeatOperation ||

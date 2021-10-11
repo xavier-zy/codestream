@@ -198,6 +198,11 @@ export class BroadcasterEvents implements Disposable {
 				// TODO: let the extension know we have trouble?
 				// the indicated channels have not been subscribed to, what do we do?
 				break;
+
+			case BroadcasterStatusType.NonCriticalFailure:
+				Logger.warn(`Non-critical subscriptions failed, giving up: ${e.channels}`);
+				this._broadcaster.unsubscribe(e.channels || []);
+				break;
 		}
 	}
 

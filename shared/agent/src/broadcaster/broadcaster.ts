@@ -87,6 +87,7 @@ export enum BroadcasterStatusType {
 	Reset = "Reset", // indicates that during catching up on history, there are too many messages or it's been too long...
 	// the client should retrieve fresh data from the server as if it is a fresh login
 	Aborted = "Aborted", // an aborted state, usually the result of a bad broadcaster token, client must reinitialize
+	NonCriticalFailure = "NonCriticalFailure", // a failure of non-critical channels, client should log and drop
 
 	// the statuses below are used only for testing, normally these are private and black-boxed
 	Confirmed = "Confirmed", // indicates subscriptions have been confirmed
@@ -363,6 +364,10 @@ export class Broadcaster {
 
 			case BroadcasterStatusType.Failed:
 				return this.subscriptionFailure(status.channels!);
+
+			case BroadcasterStatusType.NonCriticalFailure:
+				this.emitStatus(BroadcasterStatusType.NonCriticalFailure, status.channels);
+				return;
 
 			case BroadcasterStatusType.Reset:
 				return this.reset();

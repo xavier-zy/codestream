@@ -225,7 +225,8 @@ export const jumpToStackLine = (
 		return;
 	}
 
-	const { line, column, path } = currentPosition;
+	const { path } = currentPosition;
+	const { line, column } = sha ? stackLine : currentPosition;
 	const range = Range.create(
 		Position.create(line! - 1, column != null ? column : 0),
 		Position.create(line! - 1, column != null ? column : 2147483647)
@@ -235,7 +236,8 @@ export const jumpToStackLine = (
 	const revealResponse = await HostApi.instance.send(EditorRevealRangeRequestType, {
 		uri: `file://${normalizedPath}`,
 		preserveFocus: true,
-		range
+		range,
+		sha
 	});
 	if (revealResponse?.success) {
 		highlightRange({

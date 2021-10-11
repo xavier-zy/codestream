@@ -398,7 +398,7 @@ class Marker(
 )
 
 class GetFileContentsAtRevisionParams(
-    val repoId: String,
+    val repoId: String?,
     val path: String,
     val sha: String
 )

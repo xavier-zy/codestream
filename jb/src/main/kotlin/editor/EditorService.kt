@@ -15,6 +15,7 @@ import com.codestream.extensions.selections
 import com.codestream.extensions.textDocumentIdentifier
 import com.codestream.extensions.uri
 import com.codestream.extensions.visibleRanges
+import com.codestream.git.getCSGitFile
 import com.codestream.protocols.agent.DocumentMarker
 import com.codestream.protocols.agent.DocumentMarkersParams
 import com.codestream.protocols.agent.Marker
@@ -58,15 +59,9 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.KeyWithDefaultValue
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vcs.LocalFilePath
-import com.intellij.openapi.vcs.vfs.ContentRevisionVirtualFile
 import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.pom.Navigatable
 import com.intellij.ui.JBColor
-import git4idea.GitContentRevision
-import git4idea.GitRevisionNumber
-import git4idea.GitUtil
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
@@ -282,7 +277,7 @@ class EditorService(val project: Project) {
         val markers = if (uri == null || session.userLoggedIn == null || !appSettings.showMarkers) {
             emptyList()
         } else {
-            val result = agent.documentMarkers(DocumentMarkersParams(TextDocument(uri), document.gitSha,true))
+            val result = agent.documentMarkers(DocumentMarkersParams(TextDocument(uri), document.gitSha, true))
             result.markers
         }
 
@@ -511,14 +506,12 @@ class EditorService(val project: Project) {
 
     suspend fun reveal(uri: String, sha: String?, range: Range?, atTop: Boolean? = null): Boolean {
         val future = CompletableDeferred<Boolean>()
+
         ApplicationManager.getApplication().invokeLater {
             if (sha != null) {
-                val localFilePath = LocalFilePath("uri", false)
-                val revisionNumber = GitRevisionNumber(sha)
-                val revision = GitContentRevision.createRevision(localFilePath, revisionNumber, project)
-                val vFile: VirtualFile = ContentRevisionVirtualFile.create(revision)
+                val vFile = getCSGitFile(uri, sha, project)
                 val navigatable: Navigatable = OpenFileDescriptor(project, vFile)
-                navigatable.navigate(true)
+                navigatable.navigate(false)
                 future.complete(true)
                 return@invokeLater
             }

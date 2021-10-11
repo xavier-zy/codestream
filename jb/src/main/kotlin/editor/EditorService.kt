@@ -60,7 +60,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.KeyWithDefaultValue
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.pom.Navigatable
 import com.intellij.ui.JBColor
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.GlobalScope
@@ -510,8 +509,8 @@ class EditorService(val project: Project) {
         ApplicationManager.getApplication().invokeLater {
             if (sha != null) {
                 val vFile = getCSGitFile(uri, sha, project)
-                val navigatable: Navigatable = OpenFileDescriptor(project, vFile)
-                navigatable.navigate(false)
+                val editorManager = FileEditorManager.getInstance(project)
+                editorManager.openTextEditor(OpenFileDescriptor(project, vFile, range?.start?.line ?: 0, 0), false)
                 future.complete(true)
                 return@invokeLater
             }

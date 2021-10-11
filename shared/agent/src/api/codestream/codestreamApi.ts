@@ -1292,7 +1292,7 @@ export class CodeStreamApiProvider implements ApiProvider {
 			limit = 100;
 		}
 
-		const params: { [k: string]: any } = { teamId: this.teamId, limit, includeFollowed: true };
+		const params: { [k: string]: any } = { teamId: this.teamId, limit /*, includeFollowed: true*/ };
 
 		/* The need to pass streamId is deprecated
 		if (request.streamId) {

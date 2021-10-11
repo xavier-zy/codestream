@@ -72,6 +72,7 @@
         <action id="CodeStream.SignOut" class="com.codestream.actions.SignOut" text="CodeStream: Sign out"/>
         <action id="CodeStream.ReloadWebview" class="com.codestream.actions.ReloadWebview" text="CodeStream: Reload webview"/>
         <action id="CodeStream.OpenDevTools" class="com.codestream.actions.OpenDevTools" text="CodeStream: Open webview dev tools"/>
+        <action id="CodeStream.TestUrlHandler" class="com.codestream.actions.TestUrlHandler" text="CodeStream: Test URL handler"/>
 
         <group id="com.codestream.Actions" popup="true" text="CodeStream" icon="/images/codestream-color.svg" class="com.codestream.actions.CodeStreamActionGroup">
             <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="EditorPopupMenu2"/>

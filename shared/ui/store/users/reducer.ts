@@ -146,7 +146,12 @@ export const getStreamMembers = createSelector(
 			: streamOrId;
 	},
 	(users: UsersState, stream?: CSStream) => {
-		if (stream == undefined || stream.type === StreamType.File || stream.memberIds == undefined)
+		if (
+			stream == undefined ||
+			stream.type === StreamType.File ||
+			stream.type === StreamType.Object ||
+			stream.memberIds == undefined
+		)
 			return [];
 
 		return mapFilter(stream.memberIds, id => {

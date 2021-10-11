@@ -52,13 +52,21 @@ import {
 	UpdateStreamMembershipRequestType,
 	UpdateStreamMembershipResponse
 } from "../protocol/agent.protocol";
-import { CSChannelStream, CSDirectStream, CSStream, StreamType } from "../protocol/api.protocol";
+import {
+	CSChannelStream,
+	CSDirectStream,
+	CSObjectStream,
+	CSStream,
+	StreamType
+} from "../protocol/api.protocol";
 import { lsp, lspHandler } from "../system";
 import { KeyValue } from "./cache/baseCache";
 import { CachedEntityManagerBase, Id } from "./entityManager";
 
 @lsp
-export class StreamsManager extends CachedEntityManagerBase<CSChannelStream | CSDirectStream> {
+export class StreamsManager extends CachedEntityManagerBase<
+	CSChannelStream | CSDirectStream | CSObjectStream
+> {
 	@lspHandler(FetchStreamsRequestType)
 	async get(request?: FetchStreamsRequest): Promise<FetchStreamsResponse> {
 		let streams = await this.getAllCached();
@@ -127,7 +135,7 @@ export class StreamsManager extends CachedEntityManagerBase<CSChannelStream | CS
 
 	async cacheGet(
 		criteria: KeyValue<CSStream>[]
-	): Promise<CSChannelStream | CSDirectStream | undefined> {
+	): Promise<CSChannelStream | CSDirectStream | CSObjectStream | undefined> {
 		const cached = await super.cacheGet(criteria);
 		if (cached) {
 			return cached;
@@ -139,7 +147,7 @@ export class StreamsManager extends CachedEntityManagerBase<CSChannelStream | CS
 	async cacheSet(
 		entity: CSStream,
 		oldEntity?: CSStream
-	): Promise<CSChannelStream | CSDirectStream | undefined> {
+	): Promise<CSChannelStream | CSDirectStream | CSObjectStream | undefined> {
 		switch (entity.type) {
 			case StreamType.Channel:
 			case StreamType.Direct:

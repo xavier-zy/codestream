@@ -187,6 +187,7 @@ import {
 	CSMePreferences,
 	CSMsTeamsConversationRequest,
 	CSMsTeamsConversationResponse,
+	CSObjectStream,
 	CSPost,
 	CSRepository,
 	CSReview,
@@ -296,7 +297,7 @@ export interface CodeErrorsRTMessage {
 
 export interface StreamsRTMessage {
 	type: MessageType.Streams;
-	data: (CSChannelStream | CSDirectStream)[];
+	data: (CSChannelStream | CSDirectStream | CSObjectStream)[];
 }
 
 export interface TeamsRTMessage {
@@ -321,6 +322,7 @@ export interface EchoMessage {
 export interface RawRTMessage {
 	type: MessageType;
 	data?: any;
+	blockUntilProcessed?: boolean;
 }
 
 export type RTMessage =
@@ -509,7 +511,9 @@ export interface ApiProvider {
 		subId?: string;
 	}): Promise<CSMe>;
 
-	getNewRelicSignupJwtToken(request: GetNewRelicSignupJwtTokenRequest): Promise<GetNewRelicSignupJwtTokenResponse>;
+	getNewRelicSignupJwtToken(
+		request: GetNewRelicSignupJwtTokenRequest
+	): Promise<GetNewRelicSignupJwtTokenResponse>;
 
 	verifyConnectivity(): Promise<VerifyConnectivityResponse>;
 	setServerUrl(url: string): void;

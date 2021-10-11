@@ -27,6 +27,7 @@ import {
 	CSChannelStream,
 	CSDirectStream,
 	CSGetMeResponse,
+	CSObjectStream,
 	CSRepository,
 	CSSlackProviderInfo,
 	CSTeam,
@@ -397,12 +398,13 @@ export class SlackSharingApiProvider {
 	@log({
 		exit: (r: FetchStreamsResponse) =>
 			`\n${r.streams
-				.map(
-					s =>
-						`\t${s.id} = ${s.name}${s.priority == null ? "" : `, p=${s.priority}`}${
-							s.type === StreamType.Direct ? `, closed=${s.isClosed}` : ""
-						}`
-				)
+				.filter(s => s.type !== StreamType.Object)
+				.map(ss => {
+					const s = ss as CSChannelStream | CSDirectStream;
+					return `\t${s.id} = ${s.name}${s.priority == null ? "" : `, p=${s.priority}`}${
+						s.type === StreamType.Direct ? `, closed=${s.isClosed}` : ""
+					}`;
+				})
 				.join("\n")}\ncompleted`
 	})
 	async fetchStreams(request: FetchStreamsRequest) {
@@ -438,7 +440,9 @@ export class SlackSharingApiProvider {
 
 			const userMaps = await this.ensureUserMaps();
 
-			const pendingRequestsQueue: DeferredStreamRequest<CSChannelStream | CSDirectStream>[] = [];
+			const pendingRequestsQueue: DeferredStreamRequest<
+				CSChannelStream | CSDirectStream | CSObjectStream
+			>[] = [];
 
 			const [channels, groups, ims] = await Promise.all([
 				this.fetchChannels(
@@ -488,7 +492,7 @@ export class SlackSharingApiProvider {
 		enter: q => `fetching ${q.length} stream(s) in the background...`
 	})
 	protected async processPendingStreamsQueue(
-		queue: DeferredStreamRequest<CSChannelStream | CSDirectStream>[]
+		queue: DeferredStreamRequest<CSChannelStream | CSDirectStream | CSObjectStream>[]
 	) {
 		const cc = Logger.getCorrelationContext();
 
@@ -498,7 +502,7 @@ export class SlackSharingApiProvider {
 
 		const notifyThrottle = 4000;
 		let timeSinceLastNotification = new Date().getTime();
-		const completed: (CSChannelStream | CSDirectStream)[] = [];
+		const completed: (CSChannelStream | CSDirectStream | CSObjectStream)[] = [];
 
 		let failed = 0;
 		while (queue.length) {
@@ -560,8 +564,8 @@ export class SlackSharingApiProvider {
 	private async fetchChannels(
 		channels: any | undefined,
 		countsByChannel: { [id: string]: any } | undefined,
-		pendingQueue: DeferredStreamRequest<CSChannelStream | CSDirectStream>[]
-	): Promise<(CSChannelStream | CSDirectStream)[]> {
+		pendingQueue: DeferredStreamRequest<CSChannelStream | CSDirectStream | CSObjectStream>[]
+	): Promise<(CSChannelStream | CSDirectStream | CSObjectStream)[]> {
 		const cc = Logger.getCorrelationContext();
 
 		if (channels === undefined) {
@@ -671,8 +675,8 @@ export class SlackSharingApiProvider {
 		groups: any | undefined,
 		usernamesById: Map<string, string>,
 		countsByGroup: { [id: string]: any } | undefined,
-		pendingQueue: DeferredStreamRequest<CSChannelStream | CSDirectStream>[]
-	): Promise<(CSChannelStream | CSDirectStream)[]> {
+		pendingQueue: DeferredStreamRequest<CSChannelStream | CSDirectStream | CSObjectStream>[]
+	): Promise<(CSChannelStream | CSDirectStream | CSObjectStream)[]> {
 		const cc = Logger.getCorrelationContext();
 
 		if (groups === undefined) {
@@ -706,7 +710,7 @@ export class SlackSharingApiProvider {
 		const streams = [];
 		let pending:
 			| {
-					action(): Promise<CSChannelStream | CSDirectStream>;
+					action(): Promise<CSChannelStream | CSDirectStream | CSObjectStream>;
 					grouping: number;
 					id: string;
 					priority: number;
@@ -806,8 +810,8 @@ export class SlackSharingApiProvider {
 		ims: any | undefined,
 		usernamesById: Map<string, string>,
 		countsByIM: { [id: string]: any } | undefined,
-		pendingQueue: DeferredStreamRequest<CSChannelStream | CSDirectStream>[]
-	): Promise<(CSChannelStream | CSDirectStream)[]> {
+		pendingQueue: DeferredStreamRequest<CSChannelStream | CSDirectStream | CSObjectStream>[]
+	): Promise<(CSChannelStream | CSDirectStream | CSObjectStream)[]> {
 		const cc = Logger.getCorrelationContext();
 
 		if (ims === undefined) {

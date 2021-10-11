@@ -103,7 +103,6 @@ export function GlobalNav() {
 	};
 
 	const close = () => {
-		console.warn("CLOSING");
 		dispatch(setCreatePullRequest());
 		dispatch(clearCurrentPullRequest());
 		dispatch(setCurrentReview());

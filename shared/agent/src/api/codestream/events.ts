@@ -209,6 +209,25 @@ export class BroadcasterEvents implements Disposable {
 
 	private fireMessage(message: { [key: string]: any }) {
 		const { requestId, messageId, ...messages } = message;
+
+		// process streams before anything else, because a new stream and a new post in it
+		// can be received at the same time, and we need the stream to be resolved first for
+		// unreads to be handled correctly
+		if (messages.streams || messages.stream) {
+			const streams = message.streams || [];
+			if (messages.stream) {
+				streams.push(messages.stream);
+			}
+			const data = CodeStreamApiProvider.normalizeResponse<any>(streams);
+			this._onDidReceiveMessage.fire({
+				type: MessageType.Streams,
+				data: Array.isArray(data) ? data : [data],
+				blockUntilProcessed: true
+			});
+			delete messages.streams;
+			delete messages.stream;
+		}
+
 		for (const [dataType, rawData] of Object.entries(messages)) {
 			try {
 				const type = messageToType[dataType];

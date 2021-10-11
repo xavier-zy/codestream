@@ -249,6 +249,7 @@ import {
 	CSMeStatus,
 	CSMsTeamsConversationRequest,
 	CSMsTeamsConversationResponse,
+	CSObjectStream,
 	CSPinReplyToCodemarkRequest,
 	CSPinReplyToCodemarkResponse,
 	CSPost,
@@ -335,6 +336,7 @@ export class CodeStreamApiProvider implements ApiProvider {
 	private _preferences: CodeStreamPreferences | undefined;
 	private _features: CSApiFeatures | undefined;
 	private _debouncedSetModifiedReposUpdate: (request: SetModifiedReposRequest) => {};
+	private _messageProcessingPromise: Promise<void> | undefined;
 
 	readonly capabilities: Capabilities = {
 		channelMute: true,
@@ -652,7 +654,7 @@ export class CodeStreamApiProvider implements ApiProvider {
 			socketCluster: this._socketCluster,
 			supportsEcho: session.isOnPrem && (!!session.apiCapabilities.echoes || false)
 		});
-		this._events.onDidReceiveMessage(this.onPubnubMessageReceived, this);
+		this._events.onDidReceiveMessage(this.onPubnubMessageReceivedWithBlocking, this);
 
 		/* No longer need to subscribe to streams
 		if (types === undefined || types.includes(MessageType.Streams)) {
@@ -668,10 +670,35 @@ export class CodeStreamApiProvider implements ApiProvider {
 		this._onDidSubscribe.fire();
 	}
 
+	private async onPubnubMessageReceivedWithBlocking(e: RawRTMessage) {
+		// allow for certain message types that need to be processed with higher priority than others
+		if (this._messageProcessingPromise) {
+			// wait for higher priority messages
+			await this._messageProcessingPromise;
+		}
+		if (e.blockUntilProcessed) {
+			// make other message processing wait
+			this._messageProcessingPromise = new Promise<void>(async (resolve, reject) => {
+				try {
+					await this.onPubnubMessageReceived(e);
+				} catch (error) {
+					reject(error);
+					delete this._messageProcessingPromise;
+					return;
+				}
+				resolve();
+				delete this._messageProcessingPromise;
+			});
+		} else {
+			this.onPubnubMessageReceived(e);
+		}
+	}
+
 	private async onPubnubMessageReceived(e: RawRTMessage) {
 		if (this._subscribedMessageTypes !== undefined && !this._subscribedMessageTypes.has(e.type)) {
 			return;
 		}
+
 		// Resolve any directives in the message data
 		switch (e.type) {
 			case MessageType.Codemarks:
@@ -739,7 +766,7 @@ export class CodeStreamApiProvider implements ApiProvider {
 				if (e.data == null || e.data.length === 0) return;
 
 				if (this._events !== undefined) {
-					for (const stream of e.data as (CSChannelStream | CSDirectStream)[]) {
+					for (const stream of e.data as (CSChannelStream | CSDirectStream | CSObjectStream)[]) {
 						if (
 							CodeStreamApiProvider.isStreamSubscriptionRequired(stream, this.userId, this.teamId)
 						) {
@@ -1292,7 +1319,11 @@ export class CodeStreamApiProvider implements ApiProvider {
 			limit = 100;
 		}
 
-		const params: { [k: string]: any } = { teamId: this.teamId, limit /*, includeFollowed: true*/ };
+		const params: { [k: string]: any } = {
+			teamId: this.teamId,
+			limit
+			//includeFollowed: true
+		};
 
 		/* The need to pass streamId is deprecated
 		if (request.streamId) {
@@ -1583,29 +1614,28 @@ export class CodeStreamApiProvider implements ApiProvider {
 			request.types.length === 0 ||
 			(request.types.includes(StreamType.Channel) && request.types.includes(StreamType.Direct))
 		) {
-			return this.getStreams<CSGetStreamsResponse<CSChannelStream | CSDirectStream>>(
-				`/streams?teamId=${this.teamId}`,
-				this._token
-			);
+			return this.getStreams<
+				CSGetStreamsResponse<CSChannelStream | CSDirectStream | CSObjectStream>
+			>(`/streams?teamId=${this.teamId}` /*&includeFollowed`*/, this._token);
 		}
 
-		return this.getStreams<CSGetStreamsResponse<CSChannelStream | CSDirectStream>>(
-			`/streams?teamId=${this.teamId}&type=${request.types[0]}`,
+		return this.getStreams<CSGetStreamsResponse<CSChannelStream | CSDirectStream | CSObjectStream>>(
+			`/streams?teamId=${this.teamId}&type=${request.types[0]}` /*&includeFollowed`*/,
 			this._token
 		);
 	}
 
 	@log()
 	fetchUnreadStreams(request: FetchUnreadStreamsRequest) {
-		return this.getStreams<CSGetStreamsResponse<CSChannelStream | CSDirectStream>>(
-			`/streams?teamId=${this.teamId}&unread`,
+		return this.getStreams<CSGetStreamsResponse<CSChannelStream | CSDirectStream | CSObjectStream>>(
+			`/streams?teamId=${this.teamId}&unread` /*&includeFollowed`*/,
 			this._token
 		);
 	}
 
 	@log()
 	async getStream(request: GetStreamRequest) {
-		return this.get<CSGetStreamResponse<CSChannelStream | CSDirectStream>>(
+		return this.get<CSGetStreamResponse<CSChannelStream | CSDirectStream | CSObjectStream>>(
 			`/streams/${request.streamId}`,
 			this._token
 		);
@@ -1708,7 +1738,7 @@ export class CodeStreamApiProvider implements ApiProvider {
 		return this.updateStream<CSChannelStream>(request.streamId, { isArchived: false });
 	}
 
-	private async updateStream<T extends CSChannelStream | CSDirectStream>(
+	private async updateStream<T extends CSChannelStream | CSDirectStream | CSObjectStream>(
 		streamId: string,
 		changes: { [key: string]: any }
 	) {

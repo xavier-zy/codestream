@@ -388,14 +388,15 @@ export interface CSRepository extends CSEntity {
 export enum StreamType {
 	Channel = "channel",
 	Direct = "direct",
-	File = "file"
+	File = "file",
+	Object = "object"
 }
 
 export enum ChannelServiceType {
 	Vsls = "vsls"
 }
 
-export interface CSChannelStream extends CSEntity {
+export interface CSBaseStream extends CSEntity {
 	isArchived: boolean;
 	privacy: "public" | "private";
 	sortId: string;
@@ -403,7 +404,8 @@ export interface CSChannelStream extends CSEntity {
 	mostRecentPostCreatedAt?: number;
 	mostRecentPostId?: string;
 	purpose?: string;
-
+}
+export interface CSChannelStream extends CSBaseStream {
 	type: StreamType.Channel;
 	name: string;
 	memberIds?: string[];
@@ -415,32 +417,16 @@ export interface CSChannelStream extends CSEntity {
 	priority?: number;
 }
 
-export interface CSDirectStream extends CSEntity {
-	isArchived: boolean;
-	isClosed?: boolean;
-	privacy: "public" | "private";
-	sortId: string;
-	teamId: string;
-	mostRecentPostCreatedAt?: number;
-	mostRecentPostId?: string;
-	purpose?: string;
-
+export interface CSDirectStream extends CSBaseStream {
 	type: StreamType.Direct;
 	name?: string;
 	memberIds: string[];
+	isClosed?: boolean;
 
 	priority?: number;
 }
 
-export interface CSFileStream extends CSEntity {
-	isArchived: boolean;
-	privacy: "public" | "private";
-	sortId: string;
-	teamId: string;
-	mostRecentPostCreatedAt?: number;
-	mostRecentPostId?: string;
-	purpose?: string;
-
+export interface CSFileStream extends CSBaseStream {
 	type: StreamType.File;
 	file: string;
 	repoId: string;
@@ -448,7 +434,17 @@ export interface CSFileStream extends CSEntity {
 	editingUsers?: any;
 }
 
-export type CSStream = CSChannelStream | CSDirectStream | CSFileStream;
+export interface CSObjectStream extends CSBaseStream {
+	type: StreamType.Object;
+	memberIds: string[];
+	objectId: string;
+	objectType: string;
+	accountID: number;
+
+	priority?: number;
+}
+
+export type CSStream = CSChannelStream | CSDirectStream | CSFileStream | CSObjectStream;
 
 export interface CSTeamMSTeamsProviderInfo {
 	teamId?: string;

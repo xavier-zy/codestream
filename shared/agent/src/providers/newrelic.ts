@@ -690,25 +690,30 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					actor: {
 						entity: {
 							name: string;
-							stackTrace: {
-								frames: { filepath?: string; line?: number; name?: string; formatted: string }[];
+							exception: {
+								message?: string;
+								stackTrace: {
+									frames: { filepath?: string; line?: number; name?: string; formatted: string }[];
+								};
 							};
 						};
 					};
 				}>(
-					`query getTrace($entityId: EntityGuid!, $traceId: String!) {
+					`query getTrace($entityId: EntityGuid!, $occurrenceId: String!) {
 				actor {
 				  entity(guid: $entityId) {
 					... on ApmApplicationEntity {
 					  name
-					  stackTrace(occurrenceId: $traceId) {
+					  exception(occurrenceId: $occurrenceId) {
 						message
-						frames {
+						stackTrace {
+						 frames {
 							filepath
 							formatted
 							line
 							name
-						}
+						 }
+					    }
 					  }
 					}
 				  }
@@ -717,14 +722,14 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			  `,
 					{
 						entityId: entityId,
-						traceId: request.traceId
+						occurrenceId: request.traceId
 					}
 				);
 
-				if (stackTraceResult?.actor?.entity) {
+				if (stackTraceResult?.actor?.entity?.exception?.stackTrace) {
 					errorGroup.errorTrace = {
 						path: stackTraceResult.actor.entity.name,
-						stackTrace: stackTraceResult.actor.entity.stackTrace.frames
+						stackTrace: stackTraceResult.actor.entity.exception.stackTrace.frames
 					};
 					errorGroup.hasStackTrace = true;
 				}

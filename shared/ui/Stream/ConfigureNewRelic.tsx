@@ -3,19 +3,41 @@ import { connect } from "react-redux";
 import { configureProvider } from "../store/providers/actions";
 import { setWantNewRelicOptions } from "../store/context/actions";
 import { isCurrentUserInternal } from "../store/users/reducer";
+import { isConnected } from "../store/providers/reducer";
 import Button from "./Button";
 import { PROVIDER_MAPPINGS } from "./CrossPostIssueControls/types";
 import { Link } from "./Link";
-import { openPanel } from "./actions";
+import { openPanel, closePanel } from "./actions";
 import Icon from "./Icon";
 import { HostApi } from "../webview-api";
 import { GetNewRelicSignupJwtTokenRequestType } from "@codestream/protocols/agent";
 import { OpenUrlRequestType } from "@codestream/protocols/webview";
+import { closeAllPanels } from "../store/context/actions";
 
-class ConfigureNewRelic extends Component {
+interface Props {
+	isNewRelicConnected?: boolean;
+	isInternalUser?: boolean;
+	showSignupUrl: boolean;
+	disablePostConnectOnboarding?: boolean;
+	providerId: string;
+	originLocation?: string;
+	headerChildren?: any;
+	providers?: any;
+	ide: {
+		name: string;
+	};
+	closeAllPanels: Function;
+	configureProvider: Function;
+	onClose?: Function;
+	onSubmited?: Function;
+}
+
+class ConfigureNewRelic extends Component<Props> {
 	initialState = {
+		loading: false,
 		apiKey: "",
 		apiKeyTouched: false,
+		// this is the default url we show in the textbox
 		apiUrl: "https://api.newrelic.com",
 		formTouched: false,
 		showSignupUrl: true,
@@ -29,12 +51,19 @@ class ConfigureNewRelic extends Component {
 		el && el.focus();
 	}
 
+	componentDidUpdate(prevProps, prevState) {
+		// automatically close the panel
+		if (this.props.isNewRelicConnected && !prevProps.isNewRelicConnected && !this.state.apiKey) {
+			this.props.closeAllPanels();
+		}
+	}
+
 	onSubmit = async e => {
 		e.preventDefault();
 		if (this.isFormInvalid()) return;
 		const { providerId } = this.props;
 		const { apiKey, apiUrl } = this.state;
-		let url = apiUrl.toLowerCase();
+		let url: string | undefined = apiUrl.toLowerCase();
 		if (url === this.initialState.apiUrl || url === `${this.initialState.apiUrl}/`) {
 			// if it's the default, dont save it.
 			url = undefined;
@@ -154,19 +183,22 @@ class ConfigureNewRelic extends Component {
 										/>
 										{this.renderApiKeyHelp()}
 									</div>
+								</div>
+								<div className="control-group" style={{ margin: "15px 0px" }}>
 									<Button
 										id="save-button"
-										className="control-button"
-										style={{ padding: "2px 10px", marginLeft: "10px" }}
 										tabIndex={2}
-										type="submit"
+										style={{ marginTop: "0px" }}
+										className="row-button"
 										onClick={this.onSubmit}
 										loading={this.state.loading}
 									>
-										Connect
+										<Icon name="newrelic" />
+										<div className="copy"> Connect to New Relic One</div>
+										<Icon name="chevron-right" />
 									</Button>
 								</div>
-								<p>
+								<div>
 									Don't have an API key?{" "}
 									<Link
 										onClick={e => {
@@ -176,7 +208,7 @@ class ConfigureNewRelic extends Component {
 									>
 										Create one now
 									</Link>
-								</p>
+								</div>
 								{this.props.isInternalUser && (
 									<>
 										<div className="control-group" style={{ margin: "15px 0px" }}>
@@ -219,11 +251,19 @@ class ConfigureNewRelic extends Component {
 
 const mapStateToProps = state => {
 	const { providers, ide } = state;
-	return { providers, ide, isInternalUser: isCurrentUserInternal(state) };
+	const connected = isConnected(state, { id: "newrelic*com" });
+	return {
+		providers,
+		ide,
+		isNewRelicConnected: connected,
+		isInternalUser: isCurrentUserInternal(state)
+	};
 };
 
 const component = connect(mapStateToProps, {
 	isCurrentUserInternal,
+	isConnected,
+	closeAllPanels,
 	configureProvider,
 	openPanel,
 	setWantNewRelicOptions

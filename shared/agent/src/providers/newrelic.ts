@@ -26,7 +26,6 @@ import { lspHandler } from "../system";
 import { CodeStreamSession } from "../session";
 import { SessionContainer } from "../container";
 import { Strings } from "../system/string";
-import { UsersManager } from "managers/usersManager";
 
 export interface Directive {
 	type: "assignRepository" | "removeAssignee" | "setAssignee" | "setState";
@@ -70,6 +69,12 @@ const MetricsLookupBackoffs = [
 		since: "7 day"
 	}
 ];
+
+class AccessTokenError extends Error {
+	constructor(public text: string, public innerError: any, public isAccessTokenError: boolean) {
+		super(text);
+	}
+}
 
 @lspProvider("newrelic")
 export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProviderInfo> {
@@ -196,17 +201,42 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			Logger.warn(`NR: query caught:`, ex);
 			const exType = this._isSuppressedException(ex);
 			if (exType !== undefined) {
-				this.trySetThirdPartyProviderInfo(ex, exType);
-
 				// this throws the error but won't log to sentry (for ordinary network errors that seem temporary)
 				throw new InternalError(exType, { error: ex });
 			} else {
+				const accessTokenError = this.getAccessTokenError(ex);
+				if (accessTokenError) {
+					throw new AccessTokenError(accessTokenError.message, ex, true);
+				}
+
 				// this is an unexpected error, throw the exception normally
 				throw ex;
 			}
 		}
 
 		return response;
+	}
+
+	private getAccessTokenError(ex: any): { message: string } | undefined {
+		let requestError = ex as {
+			response: {
+				errors: {
+					extensions: {
+						error_code: string;
+					};
+					message: string;
+				}[];
+			};
+		};
+		if (
+			requestError &&
+			requestError.response &&
+			requestError.response.errors &&
+			requestError.response.errors.length
+		) {
+			return requestError.response.errors.find(_ => _.extensions.error_code === "BAD_API_KEY");
+		}
+		return undefined;
 	}
 
 	@lspHandler(GetNewRelicDataRequestType)
@@ -529,7 +559,11 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 	}
 
 	private async fetchErrorGroupData(accountId: number, errorGroupGuid: string) {
+		let breakError;
 		for (const item of MetricsLookupBackoffs) {
+			if (breakError) {
+				throw breakError;
+			}
 			try {
 				let response = await this.query(
 					`query fetchErrorsInboxData($accountId:Int!) {
@@ -558,6 +592,18 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					errorGroupGuid,
 					item
 				});
+				let accessTokenError = ex as {
+					message: string;
+					innerError?: { message: string };
+					isAccessTokenError: boolean;
+				};
+				if (
+					accessTokenError &&
+					accessTokenError.innerError &&
+					accessTokenError.isAccessTokenError
+				) {
+					breakError = new Error(accessTokenError.message);
+				}
 			}
 		}
 		return undefined;

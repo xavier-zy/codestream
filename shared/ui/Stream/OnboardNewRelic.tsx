@@ -314,14 +314,14 @@ export const OnboardNewRelic = React.memo(function OnboardNewRelic() {
 							<div className="body">
 								<h1>You're good to go!</h1>
 								<p className="explainer">
-									Click the button to see the data that is being collected by your app.
+									Head to New Relic to see your application's data.
 								</p>
 								<CenterRow>
 									<Button
 										size="xl"
 										onClick={() => {
 											const url =
-												"https://one.newrelic.com/launcher/errors-inbox.launcher?platform[timeRange][duration]=1814400000&platform[$isFallbackTimeRange]=false&pane=eyJuZXJkbGV0SWQiOiJlcnJvcnMtaW5ib3guaG9tZSIsIndvcmtsb2FkSWQiOiJNekl6TmpRd01ueE9VakY4VjA5U1MweFBRVVI4TkRnek1EUSIsImZpbHRlcnMiOiIoYGVycm9yLmdyb3VwLm1ldGFkYXRhLnN0YXRlYCA9ICdVbnJlc29sdmVkJykifQ==&state=ba914d3f-66a9-e79c-8e40-e9ac45356e0d";
+												"https://one.newrelic.com/launcher/nr1-core.explorer";
 											HostApi.instance.send(OpenUrlRequestType, { url });
 											dispatch(setOnboardStep(0));
 											dispatch(closePanel());

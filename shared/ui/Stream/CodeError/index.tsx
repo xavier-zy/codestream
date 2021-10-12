@@ -636,7 +636,7 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 									title={
 										derivedState.isCurrentUserInternal
 											? props.codeError?.id
-											: props.errorGroup?.errorGroupUrl && props.codeError.title
+											: props.errorGroup?.errorGroupUrl && props.codeError?.title
 											? "Open Error on New Relic"
 											: ""
 									}

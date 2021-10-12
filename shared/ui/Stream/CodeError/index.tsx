@@ -41,7 +41,11 @@ import {
 } from "@codestream/webview/store/codeErrors/reducer";
 import MessageInput, { AttachmentField } from "../MessageInput";
 import styled from "styled-components";
-import { getTeamMates, findMentionedUserIds } from "@codestream/webview/store/users/reducer";
+import {
+	getTeamMates,
+	findMentionedUserIds,
+	isCurrentUserInternal
+} from "@codestream/webview/store/users/reducer";
 import { createPost, markItemRead } from "../actions";
 import { getThreadPosts } from "@codestream/webview/store/posts/reducer";
 import { DropdownButton, DropdownButtonItems } from "../DropdownButton";
@@ -243,7 +247,8 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 	const derivedState = useSelector((state: CodeStreamState) => {
 		return {
 			isConnectedToNewRelic: isConnected(state, { id: "newrelic*com" }),
-			codeErrorCreator: getCodeErrorCreator(state)
+			codeErrorCreator: getCodeErrorCreator(state),
+			isCurrentUserInternal: isCurrentUserInternal(state)
 		};
 	});
 	const [items, setItems] = React.useState<MenuItem[]>([]);
@@ -627,23 +632,26 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 					<ApmServiceTitle>
 						<ConditionalNewRelic
 							connected={
-								<>
-									{props.errorGroup?.errorGroupUrl && props.codeError.title && (
-										<>
-											<Tooltip title="Open Error on New Relic" placement="bottom" delay={1}>
-												<span>
-													<Link href={props.errorGroup.errorGroupUrl!}>
-														{props.codeError.title}
-													</Link>{" "}
-													<Icon name="link-external" className="open-external"></Icon>
-												</span>
-											</Tooltip>
-										</>
+								<Tooltip
+									title={
+										derivedState.isCurrentUserInternal
+											? props.codeError?.id
+											: props.errorGroup?.errorGroupUrl && props.codeError.title
+											? "Open Error on New Relic"
+											: ""
+									}
+									placement="bottom"
+									delay={1}
+								>
+									{props.errorGroup?.errorGroupUrl && props.codeError.title ? (
+										<span>
+											<Link href={props.errorGroup.errorGroupUrl!}>{props.codeError.title}</Link>{" "}
+											<Icon name="link-external" className="open-external"></Icon>
+										</span>
+									) : (
+										<span>{props.codeError.title}</span>
 									)}
-									{!props.errorGroup?.errorGroupUrl && props.codeError?.title && (
-										<span> {props.codeError.title}</span>
-									)}
-								</>
+								</Tooltip>
 							}
 							disconnected={
 								<>

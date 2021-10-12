@@ -184,7 +184,7 @@ export function CodeErrorNav(props: Props) {
 
 	const pendingErrorGroupGuid = derivedState.currentCodeErrorData?.pendingErrorGroupGuid;
 	const pendingEntityId = derivedState.currentCodeErrorData?.pendingEntityId;
-	const traceId = derivedState.currentCodeErrorData?.traceId;
+	const occurrenceId = derivedState.currentCodeErrorData?.occurrenceId;
 	const remote = derivedState.currentCodeErrorData?.remote;
 	const commit = derivedState.currentCodeErrorData?.commit;
 
@@ -298,7 +298,7 @@ export function CodeErrorNav(props: Props) {
 			resolveStackTrace(
 				codeError?.objectInfo?.repoId!,
 				codeError?.stackTraces ? codeError?.stackTraces[0].sha || "" : "",
-				traceId!,
+				occurrenceId!,
 				errorGroup?.errorTrace!?.stackTrace.map(_ => _.formatted)
 			)
 				.then((stackInfo: ResolveStackTraceResponse) => {
@@ -327,7 +327,7 @@ export function CodeErrorNav(props: Props) {
 			const errorGroupGuid = pendingErrorGroupGuid;
 			const errorGroupResult = await HostApi.instance.send(GetNewRelicErrorGroupRequestType, {
 				errorGroupGuid: errorGroupGuid!,
-				traceId: traceId!
+				occurrenceId: occurrenceId!
 			});
 
 			if (!errorGroupResult || errorGroupResult?.error?.message) {
@@ -387,7 +387,7 @@ export function CodeErrorNav(props: Props) {
 			const stackInfo = (await resolveStackTrace(
 				repo.id!,
 				commit!,
-				traceId!,
+				occurrenceId!,
 				errorGroupResult.errorGroup?.errorTrace!?.stackTrace.map(_ => _.formatted)
 			)) as ResolveStackTraceResponse;
 

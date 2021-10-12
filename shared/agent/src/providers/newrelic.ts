@@ -671,8 +671,8 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					// "URL path": { type: "string", value: "value" }
 				};
 
-				if (!request.traceId) {
-					throw new Error("MissingTraceId");
+				if (!request.occurrenceId) {
+					throw new Error("MissingOccurrenceId");
 				}
 
 				const errorGroupState = await this.getErrorGroupState(errorGroupGuid);
@@ -722,7 +722,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			  `,
 					{
 						entityId: entityId,
-						occurrenceId: request.traceId
+						occurrenceId: request.occurrenceId
 					}
 				);
 

@@ -519,6 +519,7 @@ function listenForEvents(store) {
 						const definedQuery = route as RouteWithQuery<{
 							errorGroupGuid: string;
 							traceId?: string;
+							occurrenceId?: string;
 							src?: string;
 							entityId?: string;
 							hash?: string;
@@ -527,6 +528,9 @@ function listenForEvents(store) {
 							tag?: string;
 							ide?: string;
 						}>;
+
+						definedQuery.query.occurrenceId =
+							definedQuery.query.occurrenceId || definedQuery.query.traceId;
 
 						// if the user isn't logged in we'll queue this url
 						// up for post-login processing
@@ -550,7 +554,7 @@ function listenForEvents(store) {
 							.dispatch(
 								findErrorGroupByObjectId(
 									definedQuery.query.errorGroupGuid,
-									definedQuery.query.traceId
+									definedQuery.query.occurrenceId
 								)
 							)
 							.then(codeError => {

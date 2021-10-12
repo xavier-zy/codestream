@@ -181,21 +181,21 @@ export const fetchCodeError = (codeErrorId: string) => async dispatch => {
  *	resolved line number that gives the full path and line of the
  * @param repoId
  * @param sha
- * @param traceId
+ * @param occurrenceId
  * @param stackTrace
  * @returns ResolveStackTraceResponse
  */
 export const resolveStackTrace = (
 	repoId: string,
 	sha: string,
-	traceId: string,
+	occurrenceId: string,
 	stackTrace: string[]
 ) => {
 	return HostApi.instance.send(ResolveStackTraceRequestType, {
 		stackTrace,
 		repoId,
 		sha,
-		traceId
+		occurrenceId
 	});
 };
 
@@ -320,7 +320,7 @@ export const clearProviderError = (
 	}
 };
 
-export const fetchErrorGroup = (codeError: CSCodeError, traceId?: string) => async (
+export const fetchErrorGroup = (codeError: CSCodeError, occurrenceId?: string) => async (
 	dispatch,
 	getState: () => CodeStreamState
 ) => {
@@ -332,7 +332,7 @@ export const fetchErrorGroup = (codeError: CSCodeError, traceId?: string) => asy
 		return dispatch(
 			fetchNewRelicErrorGroup({
 				errorGroupGuid: objectId!,
-				traceId: traceId || codeError.stackTraces[0].traceId!
+				occurrenceId: occurrenceId || codeError.stackTraces[0].occurrenceId!
 			})
 		).then((result: GetNewRelicErrorGroupResponse) => {
 			dispatch(_isLoadingErrorGroup(objectId, { isLoading: true }));
@@ -347,10 +347,10 @@ export const fetchErrorGroup = (codeError: CSCodeError, traceId?: string) => asy
  * Try to find a codeError by its objectId
  *
  * @param objectId
- * @param traceId
+ * @param occurrenceId
  * @returns
  */
-export const findErrorGroupByObjectId = (objectId: string, traceId?: string) => async (
+export const findErrorGroupByObjectId = (objectId: string, occurrenceId?: string) => async (
 	dispatch,
 	getState: () => CodeStreamState
 ) => {
@@ -358,20 +358,20 @@ export const findErrorGroupByObjectId = (objectId: string, traceId?: string) => 
 		const locator = (state: CodeStreamState, oid: string, tid?: string) => {
 			const codeError = Object.values(state.codeErrors.codeErrors).find(
 				(_: CSCodeError) =>
-					_.objectId === oid && (tid ? _.stackTraces.find(st => st.traceId === tid) : true)
+					_.objectId === oid && (tid ? _.stackTraces.find(st => st.occurrenceId === tid) : true)
 			);
 			return codeError;
 		};
 		const state = getState();
 		if (!state.codeErrors.bootstrapped) {
 			return dispatch(bootstrapCodeErrors()).then((_: any) => {
-				return locator(getState(), objectId, traceId);
+				return locator(getState(), objectId, occurrenceId);
 			});
 		} else {
-			return locator(state, objectId, traceId);
+			return locator(state, objectId, occurrenceId);
 		}
 	} catch (error) {
-		logError(`failed to findErrorGroupByObjectId: ${error}`, { objectId, traceId });
+		logError(`failed to findErrorGroupByObjectId: ${error}`, { objectId, occurrenceId });
 	}
 	return undefined;
 };

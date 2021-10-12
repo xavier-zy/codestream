@@ -143,7 +143,7 @@ export class NRManager {
 		stackTrace,
 		repoId,
 		sha,
-		traceId
+		occurrenceId
 	}: ResolveStackTraceRequest): Promise<ResolveStackTraceResponse> {
 		const { git, repos, repositoryMappings } = SessionContainer.instance();
 		const matchingRepo = await git.getRepositoryById(repoId);
@@ -207,7 +207,7 @@ export class NRManager {
 		}
 		parsedStackInfo.repoId = repoId;
 		parsedStackInfo.sha = sha;
-		parsedStackInfo.traceId = traceId;
+		parsedStackInfo.occurrenceId = occurrenceId;
 
 		const resolvedStackInfo: CSStackTraceInfo = { ...parsedStackInfo, lines: [] };
 		for (const line of parsedStackInfo.lines) {

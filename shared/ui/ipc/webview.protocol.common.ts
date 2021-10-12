@@ -134,7 +134,7 @@ export interface CodeErrorData {
 	pendingRequiresConnection?: boolean;
 	pendingErrorGroupGuid?: string;
 	pendingEntityId?: string;
-	traceId?: string;
+	occurrenceId?: string;
 	lineIndex?: number;
 }
 

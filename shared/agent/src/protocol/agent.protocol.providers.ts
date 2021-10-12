@@ -869,7 +869,7 @@ export const GetNewRelicDataRequestType = new RequestType<
 
 export interface GetNewRelicErrorGroupRequest {
 	errorGroupGuid: string;
-	traceId: string;
+	occurrenceId: string;
 	entityId?: string;
 	src?: string;
 }
@@ -887,7 +887,7 @@ export interface NewRelicErrorGroup {
 	entityType?: string; //ApmApplicationEntity |
 	entityName?: string;
 
-	traceId?: string;
+	occurrenceId?: string;
 
 	entityUrl?: string;
 	errorGroupUrl?: string;

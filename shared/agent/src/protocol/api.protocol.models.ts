@@ -305,7 +305,7 @@ export interface CSStackTraceLine {
 
 export interface CSStackTraceInfo {
 	// TODO required??
-	traceId?: string;
+	occurrenceId?: string;
 	text?: string;
 	repoId?: string;
 	sha?: string;

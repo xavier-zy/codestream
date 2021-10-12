@@ -149,6 +149,7 @@ export interface CommandOptions {
 	 * If true, errors won't be logged
 	 */
 	readonly throwRawExceptions?: boolean;
+	readonly timeout?: number;
 }
 
 export function runCommand(command: string, args: any[], options: CommandOptions = {}) {

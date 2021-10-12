@@ -387,7 +387,12 @@ export class GitService implements IGitService, Disposable {
 	async fetchAllRemotes(repoPath: string): Promise<boolean> {
 		try {
 			await git(
-				{ cwd: repoPath, env: { GIT_TERMINAL_PROMPT: "0" }, throwRawExceptions: true },
+				{
+					cwd: repoPath,
+					env: { GIT_TERMINAL_PROMPT: "0" },
+					throwRawExceptions: true,
+					timeout: 10 * 1000
+				},
 				"fetch",
 				"--all"
 			);

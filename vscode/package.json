@@ -555,7 +555,19 @@
 					"group": "navigation"
 				}
 			]
-		}
+		},
+		"resourceLabelFormatters": [
+			{
+				"scheme": "codestream-git",
+				"authority": "*",
+				"formatting": {
+					"label": "${path} (${query.shortSha})",
+					"separator": "/",
+					"workspaceSuffix": "CodeStream",
+					"stripPathStartingSeparator": true
+				}
+			}
+		]
 	},
 	"activationEvents": [
 		"onStartupFinished"

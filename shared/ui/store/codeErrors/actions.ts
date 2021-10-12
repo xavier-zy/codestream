@@ -243,7 +243,8 @@ export const jumpToStackLine = (
 		highlightRange({
 			uri: `file://${normalizedPath}`,
 			range,
-			highlight: true
+			highlight: true,
+			sha
 		});
 	}
 };

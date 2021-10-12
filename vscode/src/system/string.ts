@@ -378,13 +378,11 @@ export namespace Strings {
 	}
 
 	export function parseGitUrl(uri: Uri): { path: string; sha: string } {
-		const queryParamsStrings = uri.query.split("&");
-		const queryParams = queryParamsStrings.map(_ => _.split("="));
-		const shaParam = queryParams.find(_ => _[0] === "sha");
-		if (!shaParam) {
-			throw new Error(`Git URI ${uri} does not contain a sha query parameter`);
+		const params = JSON.parse(uri.query);
+		const { sha } = params;
+		if (!sha) {
+			throw new Error(`Git URI ${uri} does not contain a sha property in the query`);
 		}
-		const sha = shaParam[1];
 
 		return {
 			path: uri.fsPath,

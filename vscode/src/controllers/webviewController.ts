@@ -103,6 +103,7 @@ import { NotificationType, RequestType } from "vscode-languageclient";
 import { Strings } from "system/string";
 import { openUrl } from "urlHandler";
 import { toLoggableIpcMessage, WebviewLike } from "webviews/webviewLike";
+import { toCSGitUri } from "providers/gitContentProvider";
 import {
 	CodeStreamSession,
 	SessionSignedOutReason,
@@ -880,8 +881,12 @@ export class WebviewController implements Disposable {
 			}
 			case EditorHighlightRangeRequestType.method: {
 				webview.onIpcRequest(EditorHighlightRangeRequestType, e, async (_type, params) => {
+					let uri = Uri.parse(params.uri);
+					if (params.sha) {
+						uri = toCSGitUri(uri, params.sha);
+					}
 					const success = await Editor.highlightRange(
-						Uri.parse(params.uri),
+						uri,
 						Editor.fromSerializableRange(params.range),
 						this._lastEditor,
 						!params.highlight
@@ -895,10 +900,7 @@ export class WebviewController implements Disposable {
 				webview.onIpcRequest(EditorRevealRangeRequestType, e, async (_type, params) => {
 					let uri = Uri.parse(params.uri);
 					if (params.sha) {
-						uri = uri.with({
-							scheme: "codestream-git",
-							query: `sha=${params.sha}`
-						});
+						uri = toCSGitUri(uri, params.sha);
 					}
 					const success = await Editor.revealRange(
 						uri,

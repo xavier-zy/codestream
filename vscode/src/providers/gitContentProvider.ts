@@ -27,3 +27,13 @@ export class GitContentProvider implements TextDocumentContentProvider, Disposab
 		this._disposable.dispose();
 	}
 }
+
+export function toCSGitUri(uri: Uri, sha: string): Uri {
+	return uri.with({
+		scheme: "codestream-git",
+		query: JSON.stringify({
+			sha: sha,
+			shortSha: sha.substr(0, 7)
+		})
+	});
+}

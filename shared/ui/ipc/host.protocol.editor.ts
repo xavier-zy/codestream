@@ -16,6 +16,7 @@ export const GetActiveEditorContextRequestType = new RequestType<
 
 export interface EditorHighlightRangeRequest {
 	uri: string;
+	sha?: string;
 	range: Range;
 	highlight: boolean;
 }

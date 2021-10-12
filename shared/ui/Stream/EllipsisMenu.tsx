@@ -338,7 +338,7 @@ export function EllipsisMenu(props: EllipsisMenuProps) {
 				},
 				// { label: "Onboard", key: "onboard", action: () => go(WebviewPanels.Onboard) },
 				{
-					label: "Onboard New Relic",
+					label: "New Relic Setup",
 					key: "onboard-newrelic",
 					action: () => go(WebviewPanels.OnboardNewRelic)
 				},

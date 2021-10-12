@@ -377,8 +377,8 @@ export function CodeErrorNav(props: Props) {
 
 			if (reposResponse?.repos?.length === 0) {
 				setError({
-					title: "Error",
-					description: `Could not find a repo for the remote ${targetRemote}`
+					title: "Repo Not Found",
+					description: `Please open the following repository: ${targetRemote}`
 				});
 				return;
 			}

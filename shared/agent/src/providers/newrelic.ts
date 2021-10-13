@@ -1227,23 +1227,23 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 	@log()
 	async setAssignee(request: {
 		errorGroupGuid: string;
-		userId: string;
+		emailAddress: string;
 	}): Promise<Directives | undefined> {
 		try {
 			await this.ensureConnected();
-			// TODO fix me
-			const response = await this._setAssignee(request);
 
-			// TODO fix me
+			const response = await this._setAssigneeByEmail(request!);
+			const assignee = response.errorsInboxAssignErrorGroup.assignment.userInfo;
+
 			return {
 				directives: [
 					{
 						type: "setAssignee",
 						data: {
 							assignee: {
-								email: "cheese@cheese.com",
-								id: 1,
-								name: "cheese"
+								email: assignee.email,
+								id: assignee.id,
+								name: assignee.name
 							}
 						}
 					}
@@ -1262,8 +1262,8 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 	}): Promise<Directives | undefined> {
 		try {
 			await this.ensureConnected();
-			// TODO fix me
-			const response = await this._setAssignee({ ...request, userId: "0" });
+
+			await this._setAssigneeByUserId({ ...request, userId: request.userId || "0" });
 
 			return {
 				directives: [
@@ -1505,22 +1505,44 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		return undefined;
 	}
 
-	private _setAssignee(request: { errorGroupGuid: string; userId: string }) {
+	private _setAssigneeByEmail(request: { errorGroupGuid: string; emailAddress: string }) {
 		return this.query(
-			`mutation removeUser($errorGroupGuid: String!, userId: Int!) {
-					errorTrackingAssignErrorGroup(id: $errorGroupGuid, assignment: {userId: $userId}) {
-					  errors {
-						description
-						type
-					  }
-					  assignedUser {
-						email
-						gravatar
-						id
-						name
-					  }
+			`mutation errorsInboxAssignErrorGroup($email: String!, $errorGroupGuid: ID!) {
+			errorsInboxAssignErrorGroup(assignment: {userEmail: $email}, id: $errorGroupGuid) {
+			  assignment {
+				email
+				userInfo {
+				  email
+				  gravatar
+				  id
+				  name
+				}
+			  }
+			}
+		  }
+		  `,
+			{
+				email: request.emailAddress,
+				errorGroupGuid: request.errorGroupGuid
+			}
+		);
+	}
+
+	private _setAssigneeByUserId(request: { errorGroupGuid: string; userId: string }) {
+		return this.query(
+			`mutation errorsInboxAssignErrorGroup($userId: Int!, $errorGroupGuid: ID!) {
+				errorsInboxAssignErrorGroup(assignment: {userId: $userId}, id: $errorGroupGuid) {
+				  assignment {
+					email
+					userInfo {
+					  email
+					  gravatar
+					  id
+					  name
 					}
-				  }`,
+				  }
+				}
+			  }`,
 			{
 				errorGroupGuid: request.errorGroupGuid,
 				userId: parseInt(request.userId, 10)

@@ -265,7 +265,8 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 		dispatch(
 			api("setAssignee", {
 				errorGroupGuid: props.errorGroup?.guid!,
-				userId: userId
+				userId: userId,
+				emailAddress: "fix-me"
 			})
 		);
 	};

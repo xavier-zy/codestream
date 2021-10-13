@@ -320,7 +320,7 @@ export const AddAppMonitoringDotNetCore = (props: {
 						</fieldset>
 					</div>
 				</Dialog>
-				<SkipLink onClick={() => props.skip()}>I'll do this later</SkipLink>
+				<SkipLink onClick={() => props.skip(999)}>I'll do this later</SkipLink>
 			</div>
 		</Step>
 	);

@@ -11,6 +11,7 @@ import { useDidMount } from "../utilities/hooks";
 import { markItemRead } from "./actions";
 import { isUnread } from "../store/users/reducer";
 import { isFeatureEnabled } from "../store/apiVersioning/reducer";
+import { LoadingMessage } from "../src/components/LoadingMessage";
 
 export function CodeErrorView() {
 	const dispatch = useDispatch();
@@ -52,7 +53,9 @@ export function CodeErrorView() {
 	if (codeError == undefined)
 		return (
 			<DelayedRender>
-				<Loading />
+				<div style={{ display: "flex", height: "100vh", alignItems: "center" }}>
+					<LoadingMessage>Loading Error Group...</LoadingMessage>
+				</div>
 			</DelayedRender>
 		);
 

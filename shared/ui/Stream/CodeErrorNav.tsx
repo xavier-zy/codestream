@@ -29,7 +29,7 @@ import { ConfigureNewRelic } from "./ConfigureNewRelic";
 import Dismissable from "./Dismissable";
 import { bootstrapCodeErrors } from "@codestream/webview/store/codeErrors/actions";
 import { DelayedRender } from "../Container/DelayedRender";
-import { Loading } from "../Container/Loading";
+import { LoadingMessage } from "../src/components/LoadingMessage";
 import {
 	GetNewRelicErrorGroupRequestType,
 	ResolveStackTraceResponse,
@@ -599,7 +599,9 @@ export function CodeErrorNav(props: Props) {
 	if (isLoading) {
 		return (
 			<DelayedRender>
-				<Loading />
+				<div style={{ display: "flex", height: "100vh", alignItems: "center" }}>
+					<LoadingMessage>Loading Error Group...</LoadingMessage>
+				</div>
 			</DelayedRender>
 		);
 	}
@@ -683,7 +685,7 @@ export function CodeErrorNav(props: Props) {
 										parsedStack={parsedStack}
 										codeError={codeError!}
 										errorGroup={errorGroup}
-										stackFrameClickDisabled={!!repoError}
+										stackFrameClickDisabled={!!(repoError || repoWarning)}
 									/>
 								</StyledCodeError>
 							</div>

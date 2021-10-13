@@ -40,6 +40,7 @@ export interface DropdownButtonProps extends ButtonProps {
 	/** if true, prevents e.stopPropagation() from being called onclick */
 	preventStopPropagation?: boolean;
 	onButtonClicked?: Function;
+	noChevronDown?: boolean;
 }
 
 // operates in two modes. if splitDropdown is false (the default), it's a dropdown menu.
@@ -115,7 +116,9 @@ export function DropdownButton(props: React.PropsWithChildren<DropdownButtonProp
 						}}
 						narrow
 					>
-						<Icon name="chevron-down-thin" className="chevron-down" />
+						{props.noChevronDown ? null : (
+							<Icon name="chevron-down-thin" className="chevron-down" />
+						)}
 					</Button>
 				</span>
 			) : (
@@ -134,7 +137,7 @@ export function DropdownButton(props: React.PropsWithChildren<DropdownButtonProp
 					ref={buttonRef}
 				>
 					{props.children}
-					<Icon name="chevron-down-thin" className="chevron-down" />
+					{props.noChevronDown ? null : <Icon name="chevron-down-thin" className="chevron-down" />}
 				</Button>
 			)}
 			{menuIsOpen && buttonRef.current && (

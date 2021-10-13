@@ -72,6 +72,7 @@ import { isConnected } from "@codestream/webview/store/providers/reducer";
 import { Modal } from "../Modal";
 import { ConfigureNewRelic } from "../ConfigureNewRelic";
 import { ConditionalNewRelic } from "./ConditionalComponent";
+import { OpenUrlRequestType } from "@codestream/protocols/webview";
 
 interface SimpleError {
 	/**
@@ -251,7 +252,7 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 			isCurrentUserInternal: isCurrentUserInternal(state)
 		};
 	});
-	const [items, setItems] = React.useState<MenuItem[]>([]);
+	const [items, setItems] = React.useState<DropdownButtonItems[]>([]);
 	const [states, setStates] = React.useState<DropdownButtonItems[] | undefined>(undefined);
 	const [openConnectionModal, setOpenConnectionModal] = React.useState(false);
 	const [isStateChanging, setIsStateChanging] = React.useState(false);
@@ -418,6 +419,19 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 		// } else {
 		// 	setItems([{ label: "-", key: "none" }]);
 		// }
+
+		if (props.errorGroup && props.errorGroup.errorGroupUrl) {
+			setItems([
+				{
+					label: "Set Assignee on New Relic",
+					action: () => {
+						HostApi.instance.send(OpenUrlRequestType, {
+							url: props.errorGroup?.errorGroupUrl || ""
+						});
+					}
+				}
+			]);
+		}
 	};
 
 	useEffect(() => {
@@ -434,6 +448,7 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 		buildStates();
 		buildAssignees();
 	});
+
 	return (
 		<>
 			{openConnectionModal && (
@@ -562,14 +577,15 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 						)}
 
 						<>
-							<div style={{ display: "inline-block", width: "10px" }} />
-							<InlineMenu
+							<div style={{ display: "inline-block", width: "5px" }} />
+							<DropdownButton
 								items={items}
-								allowEmpty={true}
 								preventStopPropagation={!derivedState.isConnectedToNewRelic}
 								// onChevronClick={e =>
 								// 	!derivedState.isConnectedToNewRelic ? setOpenConnectionModal(true) : undefined
 								// }
+								variant="secondary"
+								size="compact"
 								noChevronDown={true}
 							>
 								<ConditionalNewRelic
@@ -603,21 +619,22 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 										/>
 									}
 								/>
-							</InlineMenu>
+							</DropdownButton>
 						</>
 
 						<>
 							{props.post && <AddReactionIcon post={props.post} className="in-review" />}
 							{props.children ||
 								(codeError && (
-									<Button variant="secondary">
+									<>
+										<div style={{ display: "inline-block", width: "5px" }} />
 										<BaseCodeErrorMenu
 											codeError={codeError}
 											errorGroup={props.errorGroup}
 											collapsed={collapsed}
 											setIsEditing={props.setIsEditing}
 										/>
-									</Button>
+									</>
 								))}
 						</>
 					</div>
@@ -715,6 +732,7 @@ export const BaseCodeErrorMenu = (props: BaseCodeErrorMenuProps) => {
 		if (props.errorGroup) {
 			items.push({
 				label: "Refresh",
+				icon: <Icon name="refresh" />,
 				key: "refresh",
 				action: async () => {
 					setIsLoading(true);
@@ -727,11 +745,13 @@ export const BaseCodeErrorMenu = (props: BaseCodeErrorMenuProps) => {
 		items = items.concat([
 			{
 				label: "Share",
+				icon: <Icon name="share" />,
 				key: "share",
 				action: () => setShareModalOpen(true)
 			},
 			{
-				label: "Copy link",
+				label: "Copy Link",
+				icon: <Icon name="copy" />,
 				key: "copy-permalink",
 				action: () => {
 					if (permalinkRef && permalinkRef.current) {
@@ -743,6 +763,7 @@ export const BaseCodeErrorMenu = (props: BaseCodeErrorMenuProps) => {
 			{
 				label: derivedState.userIsFollowing ? "Unfollow" : "Follow",
 				key: "toggle-follow",
+				icon: <Icon name="eye" />,
 				action: () => {
 					const value = !derivedState.userIsFollowing;
 					const changeType = value ? "Followed" : "Unfollowed";
@@ -761,6 +782,7 @@ export const BaseCodeErrorMenu = (props: BaseCodeErrorMenuProps) => {
 		if (codeError?.creatorId === derivedState.currentUser.id) {
 			items.push({
 				label: "Delete",
+				icon: <Icon name="trash" />,
 				action: () => {
 					confirmPopup({
 						title: "Are you sure?",
@@ -811,23 +833,17 @@ export const BaseCodeErrorMenu = (props: BaseCodeErrorMenuProps) => {
 
 	return (
 		<>
-			<KebabIcon
-				className="kebab"
-				onClickCapture={e => {
-					e.preventDefault();
-					e.stopPropagation();
-					if (menuState.open) {
-						setMenuState({ open: false });
-					} else {
-						setMenuState({
-							open: true,
-							target: e.currentTarget.closest("button")
-						});
-					}
-				}}
+			<DropdownButton
+				items={menuItems}
+				selectedKey={props.errorGroup?.state || "UNKNOWN"}
+				isLoading={isLoading}
+				variant="secondary"
+				size="compact"
+				noChevronDown
+				wrap
 			>
 				<Icon loading={isLoading} name="kebab-horizontal" />
-			</KebabIcon>
+			</DropdownButton>
 			<textarea
 				readOnly
 				key="permalink-offscreen"
@@ -1015,7 +1031,7 @@ const BaseCodeError = (props: BaseCodeErrorProps) => {
 					{props.repoInfo?.branch && (
 						<DataRow>
 							<DataLabel>Build:</DataLabel>
-							<DataValue>{props.repoInfo.branch.substr(0, 8)}</DataValue>
+							<DataValue>{props.repoInfo.branch.substr(0, 7)}</DataValue>
 						</DataRow>
 					)}
 				</div>
@@ -1025,7 +1041,7 @@ const BaseCodeError = (props: BaseCodeErrorProps) => {
 				{stackTrace && (
 					<Meta>
 						<MetaLabel>Stack Trace</MetaLabel>
-						<ClickLines className="code" tabIndex={0} onKeyDown={handleKeyDown}>
+						<ClickLines id="stack-trace" className="code" tabIndex={0} onKeyDown={handleKeyDown}>
 							{(stackTrace || []).map((line, i) => {
 								if (!line || !line.fileFullPath) return null;
 
@@ -1251,6 +1267,12 @@ const CodeErrorForCodeError = (props: PropsWithCodeError) => {
 		if (!props.collapsed && webviewFocused) {
 			HostApi.instance.track("Page Viewed", { "Page Name": "Code Error Details" });
 		}
+
+		requestAnimationFrame(() => {
+			const $stackTrace = document.getElementById("stack-trace");
+			if ($stackTrace) $stackTrace.focus();
+		});
+
 		return () => {
 			// cleanup this disposable on unmount. it may or may not have been set.
 			disposableDidChangeDataNotification && disposableDidChangeDataNotification.dispose();

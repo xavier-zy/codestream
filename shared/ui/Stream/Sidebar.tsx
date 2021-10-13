@@ -189,6 +189,7 @@ export const Sidebar = React.memo(function Sidebar() {
 		size: number;
 	}[] = derivedState.sidebarPaneOrder
 		.filter(id => showPullRequests || id !== WebviewPanels.OpenPullRequests)
+		.filter(id => AVAILABLE_PANES.includes(id))
 		.map(id => {
 			const settings = sidebarPanes[id] || {};
 			const defaults = DEFAULT_PANE_SETTINGS[id] || {};

@@ -249,9 +249,11 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 		return {
 			isConnectedToNewRelic: isConnected(state, { id: "newrelic*com" }),
 			codeErrorCreator: getCodeErrorCreator(state),
-			isCurrentUserInternal: isCurrentUserInternal(state)
+			isCurrentUserInternal: isCurrentUserInternal(state),
+			ideName: encodeURIComponent(state.ide.name || "")
 		};
 	});
+
 	const [items, setItems] = React.useState<DropdownButtonItems[]>([]);
 	const [states, setStates] = React.useState<DropdownButtonItems[] | undefined>(undefined);
 	const [openConnectionModal, setOpenConnectionModal] = React.useState(false);
@@ -427,7 +429,9 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 					label: "Set Assignee on New Relic",
 					action: () => {
 						HostApi.instance.send(OpenUrlRequestType, {
-							url: props.errorGroup?.errorGroupUrl || ""
+							url:
+								props.errorGroup!.errorGroupUrl! +
+								`&utm_source=codestream&utm_medium=ide-${derivedState.ideName}&utm_campaign=error_group_link`
 						});
 					}
 				}
@@ -663,7 +667,14 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 								>
 									{props.errorGroup?.errorGroupUrl && props.codeError.title ? (
 										<span>
-											<Link href={props.errorGroup.errorGroupUrl!}>{props.codeError.title}</Link>{" "}
+											<Link
+												href={
+													props.errorGroup.errorGroupUrl! +
+													`&utm_source=codestream&utm_medium=ide-${derivedState.ideName}&utm_campaign=error_group_link`
+												}
+											>
+												{props.codeError.title}
+											</Link>{" "}
 											<Icon name="link-external" className="open-external"></Icon>
 										</span>
 									) : (

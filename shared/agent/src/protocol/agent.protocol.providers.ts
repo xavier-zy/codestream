@@ -982,6 +982,7 @@ export interface ObservabilityError {
 	occurrenceId: string;
 	count: number;
 	lastOccurrence: number;
+	errorGroupUrl?: string;
 }
 
 export interface ObservabilityRepoError {

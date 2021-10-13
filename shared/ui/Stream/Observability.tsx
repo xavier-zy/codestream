@@ -12,7 +12,10 @@ import Tooltip from "./Tooltip";
 import { setUserPreference } from "./actions";
 import { Row } from "./CrossPostIssueControls/IssueDropdown";
 import { HostApi } from "../webview-api";
-import { HostDidChangeWorkspaceFoldersNotificationType } from "@codestream/protocols/webview";
+import {
+	HostDidChangeWorkspaceFoldersNotificationType,
+	OpenUrlRequestType
+} from "@codestream/protocols/webview";
 import Timestamp from "./Timestamp";
 import styled from "styled-components";
 import { InlineMenu } from "../src/components/controls/InlineMenu";
@@ -97,6 +100,12 @@ const ErrorRow = (props: {
 	url?: string;
 	onClick?: Function;
 }) => {
+	const derivedState = useSelector((state: CodeStreamState) => {
+		return {
+			ideName: encodeURIComponent(state.ide.name || "")
+		};
+	}, shallowEqual);
+
 	return (
 		<Row
 			className="pr-row"
@@ -116,6 +125,11 @@ const ErrorRow = (props: {
 						onClick={e => {
 							e.preventDefault();
 							e.stopPropagation();
+							HostApi.instance.send(OpenUrlRequestType, {
+								url:
+									props.url +
+									`&utm_source=codestream&utm_medium=ide-${derivedState.ideName}&utm_campaign=error_group_link`
+							});
 						}}
 					>
 						<Icon
@@ -505,20 +519,21 @@ export const Observability = React.memo((props: Props) => {
 																<>
 																	{observabilityErrors
 																		.filter(oe => oe.repoId === or.repoId)
-																		.map((ugh: any) => {
+																		.map(ugh => {
 																			return ugh.errors.map(err => {
 																				return (
 																					<ErrorRow
 																						title={`${err.errorClass} (${err.count})`}
 																						tooltip={err.message}
 																						timestamp={err.lastOccurrence}
+																						url={err.errorGroupUrl}
 																						onClick={e => {
 																							dispatch(
 																								openErrorGroup(
 																									err.errorGroupGuid,
 																									err.occurrenceId,
 																									{
-																										remote: ugh.remote,
+																										remote: or.repoRemote,
 																										pendingEntityId: err.entityId,
 																										occurrenceId: err.occurrenceId,
 																										pendingErrorGroupGuid: err.errorGroupGuid

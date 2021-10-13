@@ -368,15 +368,43 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		);
 	}
 
-	private async getErrorGroupGuid(name: string, message: string, entityGuid: string) {
+	private async getErrorGroupFromId(errorGroupGuid: string) {
+		try {
+			return this.query(
+				`query getErrorGroup($errorGroupGuid:ID!){
+			actor {
+			  errorsInbox {
+				errorGroup(id: $errorGroupGuid) {				  
+				  url											 
+				}
+			  }
+			}
+		  }									  
+	  `,
+				{
+					errorGroupGuid: errorGroupGuid
+				}
+			);
+		} catch (ex) {
+			Logger.error(ex, "NR: getErrorGroupFromId");
+		}
+		return undefined;
+	}
+
+	private async getErrorGroupFromNameMessageEntity(
+		name: string,
+		message: string,
+		entityGuid: string
+	) {
 		return this.query(
-			` query foo($name: String!, $message:String!, $entityGuid:EntityGuid!){
+			`query getErrorGroupGuid($name: String!, $message:String!, $entityGuid:EntityGuid!){
 			actor {
 			  errorsInbox {
 				errorGroup(errorEvent: {name: $name, 
 				  message: $message, 
 				  entityGuid: $entityGuid}) {
-				  id											 
+				  id
+				  url											 
 				}
 			  }
 			}
@@ -415,7 +443,9 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				const response = await this.query<any>(
 					`query  {
 				actor {
-				  entitySearch(query: "type='APPLICATION'  and name LIKE '${request.appName}'", sortBy:MOST_RELEVANT) { 
+				  entitySearch(query: "type='APPLICATION' and name LIKE '${Strings.santizeGraphqlValue(
+						request.appName
+					)}'", sortBy:MOST_RELEVANT) { 
 					results {			 
 					  entities {					
 						guid
@@ -630,7 +660,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 
 							for (const errorTrace of errorTraces) {
 								try {
-									const response = await this.getErrorGroupGuid(
+									const response = await this.getErrorGroupFromNameMessageEntity(
 										errorTrace.errorClass,
 										errorTrace.message,
 										errorTrace.entityGuid
@@ -646,7 +676,8 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 											errorGroupGuid: response.actor.errorsInbox.errorGroup.id,
 											occurrenceId: errorTrace.occurrenceId,
 											count: errorTrace.length,
-											lastOccurrence: errorTrace.lastOccurrence
+											lastOccurrence: errorTrace.lastOccurrence,
+											errorGroupUrl: response.actor.errorsInbox.errorGroup.url
 										});
 										if (observabilityErrors.length > 4) {
 											break;
@@ -1042,6 +1073,11 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					state: "UNRESOLVED",
 					states: ["RESOLVED", "IGNORED", "UNRESOLVED"]
 				};
+
+				const errorGroupResult = await this.getErrorGroupFromId(errorGroupGuid);
+				if (errorGroupResult) {
+					errorGroup.errorGroupUrl = errorGroupResult.actor.errorsInbox.errorGroup.url;
+				}
 
 				const repo = await this.getEntityRepoRelationship(entityId);
 				if (repo) {

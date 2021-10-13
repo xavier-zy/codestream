@@ -2,9 +2,6 @@
 import { MessageType } from "../api/apiProvider";
 import {
 	NewRelicErrorGroup,
-	GetNewRelicDataRequest,
-	GetNewRelicDataRequestType,
-	GetNewRelicDataResponse,
 	GetNewRelicErrorGroupRequest,
 	GetNewRelicErrorGroupRequestType,
 	GetNewRelicErrorGroupResponse,
@@ -14,18 +11,32 @@ import {
 	NewRelicUser,
 	ThirdPartyDisconnect,
 	GetNewRelicAccountsRequestType,
-	GetNewRelicAccountsResponse
+	GetNewRelicAccountsResponse,
+	GetObservabilityErrorsRequest,
+	GetObservabilityErrorsRequestType,
+	GetObservabilityErrorsResponse,
+	ReposScm,
+	GetObservabilityReposRequestType,
+	GetObservabilityReposRequest,
+	GetObservabilityReposResponse,
+	EntityAccount,
+	GetObservabilityEntitiesRequestType,
+	GetObservabilityEntitiesResponse,
+	ObservabilityError,
+	GetObservabilityEntitiesRequest
 } from "../protocol/agent.protocol";
 import { CSMe, CSNewRelicProviderInfo } from "../protocol/api.protocol";
 import { log, lspProvider } from "../system";
 import { ThirdPartyIssueProviderBase } from "./provider";
-import { GraphQLClient } from "graphql-request";
+import request, { GraphQLClient } from "graphql-request";
 import { InternalError, ReportSuppressedMessages } from "../agentError";
 import { Logger } from "../logger";
 import { lspHandler } from "../system";
 import { CodeStreamSession } from "../session";
 import { SessionContainer } from "../container";
 import { Strings } from "../system/string";
+import { groupBy as _groupBy, sortBy as _sortBy } from "lodash-es";
+import { GitRemoteParser } from "../git/parsers/remoteParser";
 
 export interface Directive {
 	type: "assignRepository" | "removeAssignee" | "setAssignee" | "setState";
@@ -55,10 +66,6 @@ const MetricsLookupBackoffs = [
 		// short lived data lives in MetricRaw
 		table: "MetricRaw",
 		since: "10 minutes"
-	},
-	{
-		table: "Metric",
-		since: "1 day"
 	},
 	{
 		table: "Metric",
@@ -239,39 +246,432 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		return undefined;
 	}
 
-	@lspHandler(GetNewRelicDataRequestType)
-	@log()
-	async getNewRelicData(request: GetNewRelicDataRequest): Promise<GetNewRelicDataResponse> {
-		try {
-			await this.ensureConnected();
-			const accountId = this._providerInfo?.data?.accountId;
-			if (!accountId) {
-				throw new Error("must provide an accountId");
+	private async getEntitiesByEntityIds(
+		entityGuids: string[]
+	): Promise<
+		{
+			guid: string;
+			name: String;
+			tags: { key: string; values: string[] }[];
+		}[]
+	> {
+		const queryResponse = await this.query(
+			`query searchByGuids($guids:[EntityGuid]!){
+			actor {
+				entities(guids: $guids) {
+					guid
+					name
+					tags {
+					  key
+					  values				 
+					}
+			  	}
 			}
-			// !!! NEED ESCAPING HERE !!!!
-			const query = `
-{
-	actor {
-		account(id:${accountId}) {
-			nrql(query: "${request.query}") {
-				results
+		  }
+		  `,
+			{
+				entityGuids: entityGuids
 			}
-		}
+		);
+		return queryResponse.actor.entities;
 	}
-}
-`;
-			//{"query":"{  actor {    account(id: ${accountId}) {    nrql(query: \"${request.query}\") {        results     }    }  }}", "variables":""}`;
-			const response = await this.query(query);
-			const results = response?.actor?.account?.nrql?.results;
-			if (results) {
-				return { data: results as GetNewRelicDataResponse };
-			} else {
-				Logger.warn("NR: Invalid NRQL results:", results);
-				throw new Error("Invalid NRQL results");
+
+	private async getEntitiesByRepoRemote(
+		remotes: string[]
+	): Promise<
+		{
+			guid: string;
+			name: String;
+			tags: { key: string; values: string[] }[];
+		}[]
+	> {
+		let set = new Set();
+		await Promise.all(
+			remotes.map(async _ => {
+				const variants = await GitRemoteParser.getRepoRemoteVariants(_);
+				variants.forEach(v => {
+					set.add(`tags.url = '${v.value}'`);
+				});
+				return true;
+			})
+		);
+		const remoteFilter = Array.from(set).join(" OR ");
+		const queryResponse = await this.query(`{
+			actor {
+			  entitySearch(query: "type = 'REPOSITORY' and (${remoteFilter})") {
+				count
+				query
+				results {
+				  entities {
+					guid
+					name
+					tags {
+					  key
+					  values
+					}
+				  }
+				}
+			  }
+			}
+		  }
+		  `);
+		return queryResponse.actor.entitySearch.results.entities;
+	}
+
+	private async getFingerprintedErrorTraces(accountId: number, applicationGuid: string) {
+		return this.query(
+			`query fetchErrorsInboxData($accountId:Int!) {
+				actor {
+				  account(id: $accountId) {
+					nrql(query: "SELECT id, fingerprint, appName, error.class, message, entityGuid FROM ErrorTrace WHERE fingerprint IS NOT NULL and entityGuid='${applicationGuid}'  SINCE 3 days ago LIMIT 500") { nrql results }
+				  }
+				}
+			  }
+			  `,
+			{
+				accountId: accountId
+			}
+		);
+	}
+
+	private async findRelatedEntity(guid: string) {
+		return this.query(
+			` query fetchRelatedEntities($guid:EntityGuid!){
+			actor {
+			  entity(guid: $guid) {
+				relatedEntities(filter: {direction: BOTH, relationshipTypes: {include: BUILT_FROM}}) {
+				  results {
+					source {
+					  entity {
+						name
+						guid
+						type
+					  }
+					}
+					target {
+					  entity {
+						name
+						guid
+						type
+					  }
+					}
+					type
+				  }
+				}
+			  }
+			}
+		  }
+		  `,
+			{
+				guid: guid
+			}
+		);
+	}
+
+	private async getErrorGroupGuid(name: string, message: string, entityGuid: string) {
+		return this.query(
+			` query foo($name: String!, $message:String!, $entityGuid:EntityGuid!){
+			actor {
+			  errorsInbox {
+				errorGroup(errorEvent: {name: $name, 
+				  message: $message, 
+				  entityGuid: $entityGuid}) {
+				  id											 
+				}
+			  }
+			}
+		  }									  
+	  `,
+			{
+				name: name,
+				message: message,
+				entityGuid: entityGuid
+			}
+		);
+	}
+
+	private _applicationEntitiesCache: GetObservabilityEntitiesResponse | undefined = undefined;
+
+	@lspHandler(GetObservabilityEntitiesRequestType)
+	@log({
+		timed: true
+	})
+	async getEntities(
+		request: GetObservabilityEntitiesRequest
+	): Promise<GetObservabilityEntitiesResponse> {
+		try {
+			if (this._applicationEntitiesCache != null) {
+				Logger.debug("NR: query entities (from cache)");
+				return this._applicationEntitiesCache;
+			}
+
+			let results: any[] = [];
+			let nextCursor: any = undefined;
+			// let i = 0;
+			//	while (true) {
+
+			if (request.appName != null) {
+				// try to find the entity based on the app / remote name
+				const response = await this.query<any>(
+					`query  {
+				actor {
+				  entitySearch(query: "type='APPLICATION'  and name LIKE '${request.appName}'", sortBy:MOST_RELEVANT) { 
+					results {			 
+					  entities {					
+						guid
+						name
+					  }
+					}
+				  }
+				}
+			  }`
+				);
+
+				results = results.concat(
+					response.actor.entitySearch.results.entities.map((_: any) => {
+						return {
+							guid: _.guid,
+							name: _.name
+						};
+					})
+				);
+			}
+
+			const response = await this.query<any>(
+				`query search($cursor:String) {
+			actor {
+			  entitySearch(query: "type='APPLICATION'", sortBy:MOST_RELEVANT) { 
+				results(cursor:$cursor) {
+				 nextCursor
+				  entities {					
+					guid
+					name
+				  }
+				}
+			  }
+			}
+		  }`,
+				{
+					cursor: nextCursor
+				}
+			);
+
+			results = results.concat(
+				response.actor.entitySearch.results.entities.map((_: any) => {
+					return {
+						guid: _.guid,
+						name: _.name
+					};
+				})
+			);
+			// nextCursor = response.actor.entitySearch.results.nextCursor;
+			// i++;
+			// if (!nextCursor) {
+			// 	break;
+			// } else {
+			// 	Logger.log("NR: query entities ", {
+			// 		i: i
+			// 	});
+			// }
+			//	}
+			results.sort((a, b) => a.name.localeCompare(b.name));
+
+			results = [...new Map(results.map(item => [item["guid"], item])).values()];
+			this._applicationEntitiesCache = {
+				entities: results
+			};
+			return {
+				entities: results
+			};
+		} catch (ex) {
+			Logger.error(ex, "NR: getEntities");
+		}
+		return {
+			entities: []
+		};
+	}
+
+	@lspHandler(GetObservabilityReposRequestType)
+	@log({
+		timed: true
+	})
+	async getObservabilityRepos(request: GetObservabilityReposRequest) {
+		const response: GetObservabilityReposResponse = { repos: [] };
+		try {
+			const { scm } = SessionContainer.instance();
+			const reposResponse = await scm.getRepos({ inEditorOnly: true, includeRemotes: true });
+			let filteredRepos: ReposScm[] | undefined = reposResponse?.repositories;
+			if (request?.filters?.length) {
+				const repoIds = request.filters.map(_ => _.repoId);
+				filteredRepos = reposResponse.repositories?.filter(r => r.id && repoIds.includes(r.id))!;
+			}
+
+			filteredRepos = filteredRepos?.filter(_ => _.id);
+			if (!filteredRepos || !filteredRepos.length) return response;
+
+			for (const repo of filteredRepos) {
+				if (!repo.remotes) continue;
+
+				const remotes = repo.remotes.map(_ => {
+					return (_ as any).uri!.toString();
+				});
+
+				const entities = await this.getEntitiesByRepoRemote(remotes);
+				response.repos.push({
+					repoId: repo.id!,
+					repoName: repo.folder.name,
+					repoRemote: remotes[0],
+					hasRepoAssociation: entities.filter(_ => _.tags.find(t => t.key === "url")).length > 0,
+
+					// @ts-ignore
+					entityAccounts: entities
+						.map(entity => {
+							const accountIdTag = entity.tags.find(_ => _.key === "accountId");
+							if (!accountIdTag) {
+								return undefined;
+							}
+							const accountIdValue = parseInt(accountIdTag.values[0] || "0", 10);
+							return {
+								accountId: accountIdValue,
+								accountName: entity.tags.find(_ => _.key === "account")?.values[0] || "Account",
+								entityGuid: entity.guid,
+								entityName: entity.name
+							} as EntityAccount;
+						})
+						.filter(Boolean)
+				});
 			}
 		} catch (ex) {
-			return { data: {} };
+			Logger.error(ex, "NR: getObservabilityRepos");
 		}
+
+		return response;
+	}
+
+	@lspHandler(GetObservabilityErrorsRequestType)
+	@log({
+		timed: true
+	})
+	async getObservabilityErrors(request: GetObservabilityErrorsRequest) {
+		const response: GetObservabilityErrorsResponse = { repos: [] };
+
+		try {
+			// NOTE: might be able to eliminate some of this if we can get a list of entities
+			const { scm } = SessionContainer.instance();
+			const reposResponse = await scm.getRepos({ inEditorOnly: true, includeRemotes: true });
+			let filteredRepos: ReposScm[] | undefined = reposResponse?.repositories;
+			if (request?.filters?.length) {
+				const repoIds = request.filters.map(_ => _.repoId);
+				filteredRepos = reposResponse.repositories?.filter(r => r.id && repoIds.includes(r.id))!;
+			}
+			filteredRepos = filteredRepos?.filter(_ => _.id);
+
+			if (!filteredRepos || !filteredRepos.length) return response;
+
+			for (const repo of filteredRepos) {
+				if (!repo.remotes) continue;
+
+				const observabilityErrors: ObservabilityError[] = [];
+				const remotes = repo.remotes.map(_ => {
+					return (_ as any).uri!.toString();
+				});
+
+				const entities = await this.getEntitiesByRepoRemote(remotes);
+				if (entities) {
+					const entityFilter = request.filters?.find(_ => _.repoId === repo.id!);
+					for (const entity of entities.filter((_, index) =>
+						entityFilter && entityFilter.entityGuid
+							? _.guid === entityFilter.entityGuid
+							: index == 0
+					)) {
+						const accountIdTag = entity.tags.find(_ => _.key === "accountId");
+						if (!accountIdTag) {
+							Logger.warn("NR: count not find accountId for entity", {
+								entityGuid: entity.guid
+							});
+							continue;
+						}
+
+						const accountIdValue = parseInt(accountIdTag.values[0] || "0", 10);
+						const urlTag = entity.tags.find(_ => _.key === "url");
+						const urlValue = urlTag?.values[0];
+
+						const related = await this.findRelatedEntity(entity.guid);
+						const applicationGuid = related.actor.entity.relatedEntities.results.find(
+							(r: any) => r.type === "BUILT_FROM"
+						)?.source.entity.guid;
+
+						if (!applicationGuid) continue;
+
+						const response = await this.getFingerprintedErrorTraces(
+							accountIdValue,
+							applicationGuid
+						);
+						if (response.actor.account.nrql.results) {
+							const groupedByFingerprint = _groupBy(
+								response.actor.account.nrql.results,
+								"fingerprint"
+							);
+							const errorTraces = [];
+							for (const k of Object.keys(groupedByFingerprint)) {
+								const groupedObject = _sortBy(groupedByFingerprint[k], r => -r.timestamp);
+								const lastObject = groupedObject[0];
+								errorTraces.push({
+									fingerPrintId: k,
+									length: groupedObject.length,
+									appName: lastObject.appName,
+									lastOccurrence: lastObject.timestamp,
+									occurrenceId: lastObject.id,
+									errorClass: lastObject["error.class"],
+									message: lastObject.message,
+									entityGuid: lastObject.entityGuid
+								});
+							}
+
+							for (const errorTrace of errorTraces) {
+								try {
+									const response = await this.getErrorGroupGuid(
+										errorTrace.errorClass,
+										errorTrace.message,
+										errorTrace.entityGuid
+									);
+
+									if (response && response.actor.errorsInbox.errorGroup) {
+										observabilityErrors.push({
+											entityId: errorTrace.entityGuid,
+											appName: errorTrace.appName,
+											errorClass: errorTrace.errorClass,
+											message: errorTrace.message,
+											remote: urlValue!,
+											errorGroupGuid: response.actor.errorsInbox.errorGroup.id,
+											occurrenceId: errorTrace.occurrenceId,
+											count: errorTrace.length,
+											lastOccurrence: errorTrace.lastOccurrence
+										});
+										if (observabilityErrors.length > 4) {
+											break;
+										}
+									}
+								} catch (ex) {
+									Logger.warn("NR: internal error getErrorGroupGuid", {
+										ex: ex
+									});
+								}
+							}
+						}
+					}
+				} else {
+				}
+				response.repos.push({
+					repoId: repo.id!,
+					repoName: repo.folder.name,
+					errors: observabilityErrors!
+				});
+			}
+		} catch (ex) {
+			Logger.error(ex, "getObservabilityErrors");
+		}
+		return response as any;
 	}
 
 	private parseId(idLike: string): NewRelicId | undefined {
@@ -944,8 +1344,9 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 
 	@log()
 	async assignRepository(request: {
-		accountId?: string;
-		errorGroupGuid: string;
+		/** this is a field that can be parsed to get an accountId */
+		parseableAccountId: string;
+		errorGroupGuid?: string;
 		entityId?: string;
 		name?: string;
 		url: string;
@@ -953,8 +1354,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		try {
 			await this.ensureConnected();
 
-			const errorGroupGuid = request.errorGroupGuid;
-			const parsedId = this.parseId(errorGroupGuid)!;
+			const parsedId = this.parseId(request.parseableAccountId)!;
 			const accountId = parsedId.accountId;
 			const name = request.name;
 
@@ -1007,7 +1407,8 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 
 			const repoEntityId = response.referenceEntityCreateOrUpdateRepository.created[0];
 			const entityId =
-				request.entityId || (await this.getEntityIdFromErrorGroupGuid(accountId, errorGroupGuid));
+				request.entityId ||
+				(await this.getEntityIdFromErrorGroupGuid(accountId, request.errorGroupGuid!));
 			if (entityId) {
 				const entityRelationshipUserDefinedCreateOrReplaceResponse = await this.mutate<{
 					errors?: { message: string }[];
@@ -1048,6 +1449,11 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 							type: "assignRepository",
 							data: {
 								id: request.errorGroupGuid,
+								entityGuid:
+									response.referenceEntityCreateOrUpdateRepository &&
+									response.referenceEntityCreateOrUpdateRepository.created
+										? response.referenceEntityCreateOrUpdateRepository.created[0]
+										: undefined,
 								repo: {
 									accountId: accountId,
 									name: request.name,

@@ -59,8 +59,6 @@ import { DocumentsState } from "./documents/types";
 import { reduceReviews } from "./reviews/reducer";
 import { reduceProviderPullRequests } from "./providerPullRequests/reducer";
 import { ProviderPullRequestsState } from "./providerPullRequests/types";
-import { reduceNewRelicData } from "./newrelic/reducer";
-import { NewRelicDataState } from "./newrelic/types";
 import { reduceDynamicLogging } from "./dynamicLogging/reducer";
 import { DynamicLoggingState } from "./dynamicLogging/types";
 
@@ -99,7 +97,6 @@ const reducer = combineReducers({
 	apiVersioning: reduceApiVersioning,
 	providerPullRequests: reduceProviderPullRequests,
 	codeErrors: reduceCodeErrors,
-	newRelicData: reduceNewRelicData,
 	dynamicLogging: reduceDynamicLogging
 });
 
@@ -149,6 +146,5 @@ export interface CodeStreamState {
 	users: UsersState;
 	versioning: VersioningState;
 	codeErrors: CodeErrorsState;
-	newRelicData: NewRelicDataState;
 	dynamicLogging: DynamicLoggingState;
 }

@@ -93,7 +93,7 @@ const PixieDynamicLogging = props => {
 
 	const dispatch = useDispatch();
 	const derivedState = useSelector((state: CodeStreamState) => {
-		const { providers = {}, newRelicData, preferences } = state;
+		const { providers = {}, preferences } = state;
 		const newRelicIsConnected =
 			providers["newrelic*com"] && isConnected(state, { id: "newrelic*com" });
 		return {

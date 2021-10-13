@@ -21,12 +21,12 @@ import { addStreams } from "../streams/actions";
 import { CodeStreamState } from "..";
 import { mapFilter } from "@codestream/webview/utils";
 import { addPosts } from "../posts/actions";
-import { createPost, createPostAndCodeError } from "@codestream/webview/Stream/actions";
+import { createPost, createPostAndCodeError, openPanel } from "@codestream/webview/Stream/actions";
 import { getTeamMembers } from "../users/reducer";
 import { phraseList } from "@codestream/webview/utilities/strings";
 import { Position, Range } from "vscode-languageserver-types";
 import { highlightRange } from "../../Stream/api-functions";
-import { EditorRevealRangeRequestType } from "@codestream/protocols/webview";
+import { EditorRevealRangeRequestType, WebviewPanels } from "@codestream/protocols/webview";
 import { setCurrentCodeError } from "../context/actions";
 import { getCodeError } from "./reducer";
 
@@ -386,6 +386,25 @@ export const setErrorGroup = (errorGroupGuid: string, data?: any) => async (
 	} catch (error) {
 		logError(`failed to _setErrorGroup: ${error}`, { errorGroupGuid });
 	}
+};
+
+export const openErrorGroup = (
+	errorGroupGuid: string,
+	occurrenceId?: string,
+	data: any = {}
+) => async (dispatch, getState: () => CodeStreamState) => {
+	dispatch(findErrorGroupByObjectId(errorGroupGuid, occurrenceId)).then(codeError => {
+		// if we found an existing codeError, it exists in the data store
+		const pendingId = codeError ? codeError.id : PENDING_CODE_ERROR_ID_FORMAT(errorGroupGuid);
+
+		// NOTE don't really like this "PENDING" business, but it's something to say we need to CREATE a codeError
+		// rationalie is: instead of creating _another_ codeError router-like UI,
+		// just re-use the CodeErrorNav component which already does some work for
+		// directing / opening a codeError
+		dispatch(setCurrentCodeError(pendingId, data));
+
+		dispatch(openPanel(WebviewPanels.CodemarksForFile));
+	});
 };
 
 export const PENDING_CODE_ERROR_ID_PREFIX = "PENDING";

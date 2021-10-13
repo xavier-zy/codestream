@@ -230,6 +230,7 @@ export interface ButtonProps extends PropsWithChildren<{}> {
 	className?: string;
 	tabIndex?: number;
 	narrow?: boolean;
+	style?: any;
 }
 
 export function getButtonProps<P extends ButtonProps>(props: P): ButtonProps {

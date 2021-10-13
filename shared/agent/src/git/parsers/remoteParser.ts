@@ -103,6 +103,52 @@ export class GitRemoteParser {
 			match[9].replace(/^\/+/g, emptyStr).replace(/\.git\/?$/, emptyStr)
 		];
 	}
+	/**
+	 *  Returns the https and ssh variants for a git remote
+	 *
+	 * @static
+	 * @param {string} httpOrSshEndpoint
+	 * @return {*}  {(Promise<
+	 * 		{
+	 * 			type: "ssh" | "https" | string;
+	 * 			value: string;
+	 * 		}[]
+	 * 	>)}
+	 * @memberof GitRemoteParser
+	 */
+	static async getRepoRemoteVariants(
+		httpOrSshEndpoint: string
+	): Promise<
+		{
+			type: "ssh" | "https" | string;
+			value: string;
+		}[]
+	> {
+		let results: any[] = [];
+		if (!httpOrSshEndpoint) return results;
+
+		let parsed;
+		try {
+			parsed = await GitRemoteParser.parseGitUrl(httpOrSshEndpoint);
+		} catch (ex) {}
+		if (parsed) {
+			if (httpOrSshEndpoint.indexOf("git") === 0) {
+				results.push({ type: "ssh", value: httpOrSshEndpoint });
+				results.push({ type: "https", value: `https://${parsed[1]}/${parsed[2]}.git` });
+				results.push({ type: "https", value: `https://${parsed[1]}/${parsed[2]}` });
+			} else if (httpOrSshEndpoint.indexOf("http") === 0) {
+				results.push({ type: "https", value: httpOrSshEndpoint });
+				results.push({ type: "ssh", value: `git@${parsed[1]}:${parsed[2]}.git` });
+			}
+		} else {
+			results.push({
+				type: httpOrSshEndpoint.indexOf("http") === 0 ? "https" : "ssh",
+				value: httpOrSshEndpoint
+			});
+		}
+
+		return results;
+	}
 
 	static async parseGitUrl(url: string): Promise<[string, string, string]> {
 		let match = urlRegex.exec(url);

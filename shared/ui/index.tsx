@@ -92,6 +92,7 @@ import { fetchReview } from "./store/reviews/actions";
 import {
 	fetchCodeError,
 	findErrorGroupByObjectId,
+	openErrorGroup,
 	PENDING_CODE_ERROR_ID_FORMAT as toPendingCodeErrorId
 } from "./store/codeErrors/actions";
 import { openPullRequestByUrl } from "./store/providerPullRequests/actions";
@@ -549,42 +550,20 @@ function listenForEvents(store) {
 						) {
 							definedQuery.query.commit = "";
 						}
+						const state = store.getState();
 
-						store
-							.dispatch(
-								findErrorGroupByObjectId(
-									definedQuery.query.errorGroupGuid,
-									definedQuery.query.occurrenceId
-								)
-							)
-							.then(codeError => {
-								const state = store.getState();
-
-								// if we found an existing codeError, it exists in the data store
-								const pendingId = codeError
-									? codeError.id
-									: toPendingCodeErrorId(definedQuery.query.errorGroupGuid);
-
-								// NOTE don't really like this "PENDING" business, but it's something to say we need to CREATE a codeError
-								// rationalie is: instead of creating _another_ codeError router-like UI,
-								// just re-use the CodeErrorNav component which already does some work for
-								// directing / opening a codeError
-								store.dispatch(
-									setCurrentCodeError(pendingId, {
-										...definedQuery.query,
-										// cache the sessionStart here in case the IDE is restarted
-										sessionStart: state.context.sessionStart,
-										pendingEntityId: definedQuery.query.entityId,
-										pendingErrorGroupGuid: definedQuery.query.errorGroupGuid,
-										pendingRequiresConnection: !isConnected(state, {
-											id: "newrelic*com"
-										})
-									})
-								);
-
-								store.dispatch(openPanel(WebviewPanels.CodemarksForFile));
-							});
-
+						store.dispatch(
+							openErrorGroup(definedQuery.query.errorGroupGuid, definedQuery.query.occurrenceId, {
+								...definedQuery.query,
+								// cache the sessionStart here in case the IDE is restarted
+								sessionStart: state.context.sessionStart,
+								pendingEntityId: definedQuery.query.entityId,
+								pendingErrorGroupGuid: definedQuery.query.errorGroupGuid,
+								pendingRequiresConnection: !isConnected(state, {
+									id: "newrelic*com"
+								})
+							})
+						);
 						break;
 					}
 

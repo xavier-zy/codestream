@@ -848,25 +848,6 @@ export const WebviewErrorRequestType = new RequestType<WebviewErrorRequest, void
 	`codestream/webview/error`
 );
 
-export interface NewRelicData {
-	[key: string]: any;
-}
-
-export interface GetNewRelicDataRequest {
-	query: string;
-}
-
-export interface GetNewRelicDataResponse {
-	data: NewRelicData;
-}
-
-export const GetNewRelicDataRequestType = new RequestType<
-	GetNewRelicDataRequest,
-	GetNewRelicDataResponse,
-	void,
-	void
->("codestream/newrelic/data");
-
 export interface GetNewRelicErrorGroupRequest {
 	errorGroupGuid: string;
 	occurrenceId: string;
@@ -986,3 +967,77 @@ export const GetNewRelicAccountsRequestType = new RequestType<
 	void,
 	void
 >("codestream/newrelic/accounts");
+
+export interface GetObservabilityErrorsRequest {
+	filters?: { repoId: string; entityGuid?: string }[];
+}
+
+export interface ObservabilityError {
+	entityId: string;
+	appName: string;
+	errorClass: string;
+	message: string;
+	remote: string;
+	errorGroupGuid: string;
+	occurrenceId: string;
+	count: number;
+	lastOccurrence: number;
+}
+
+export interface ObservabilityRepoError {
+	repoId: string;
+	repoName: string;
+	errors: ObservabilityError[];
+}
+
+export interface ObservabilityRepo {
+	repoId: string;
+	repoName: string;
+	repoRemote: string;
+	hasRepoAssociation?: boolean;
+	entityAccounts: EntityAccount[];
+}
+
+export interface GetObservabilityErrorsResponse {
+	repos: ObservabilityRepoError[];
+}
+export const GetObservabilityErrorsRequestType = new RequestType<
+	GetObservabilityErrorsRequest,
+	GetObservabilityErrorsResponse,
+	void,
+	void
+>("codestream/newrelic/errors");
+
+export interface GetObservabilityReposRequest {
+	filters?: { repoId: string; entityGuid?: string }[];
+}
+
+export interface EntityAccount {
+	accountId: number;
+	accountName: string;
+	entityGuid: string;
+	entityName: string;
+}
+
+export interface GetObservabilityReposResponse {
+	repos: ObservabilityRepo[];
+}
+export const GetObservabilityReposRequestType = new RequestType<
+	GetObservabilityReposRequest,
+	GetObservabilityReposResponse,
+	void,
+	void
+>("codestream/newrelic/repos");
+
+export interface GetObservabilityEntitiesRequest {
+	appName?: string;
+}
+export interface GetObservabilityEntitiesResponse {
+	entities: { guid: string; name: string }[];
+}
+export const GetObservabilityEntitiesRequestType = new RequestType<
+	GetObservabilityEntitiesRequest,
+	GetObservabilityEntitiesResponse,
+	void,
+	void
+>("codestream/newrelic/entities");

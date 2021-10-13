@@ -521,7 +521,8 @@ export function CodeErrorNav(props: Props) {
 						url: r.remote,
 						name: r.name,
 						entityId: pendingEntityId,
-						errorGroupGuid: codeError?.objectId || pendingErrorGroupGuid!
+						errorGroupGuid: codeError?.objectId || pendingErrorGroupGuid!,
+						parseableAccountId: codeError?.objectId || pendingErrorGroupGuid!
 					};
 					dispatch(api("assignRepository", payload)).then(_ => {
 						setIsLoading(true);

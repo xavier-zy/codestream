@@ -3,7 +3,6 @@ import { Button, getButtonProps, ButtonProps } from "../src/components/Button";
 import styled from "styled-components";
 import Icon from "./Icon";
 import Menu from "./Menu";
-import { mapFilter } from "@codestream/webview/utils";
 
 // This implementation isn't quite ideal.
 // [The <Menu/> should appear below the caret button as if they are connected -this part is done now -Pez]

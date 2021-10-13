@@ -50,7 +50,6 @@ export enum ContextActionsType {
 	SetStartWorkCard = "@context/SetStartWorkCard",
 	SetOnboardStep = "@context/SetOnboardStep",
 	SetIsFirstPageview = "@context/SetIsFirstPageview",
-	SetNewRelicData = "@context/SetNewRelicData",
 	SetPendingProtocolHandlerUrl = "@context/SetPendingProtocolHandlerUrl",
 	SetWantNewRelicOptions = "@context/SetWantNewRelicOptions"
 }

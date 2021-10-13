@@ -659,7 +659,7 @@ export function CodeErrorNav(props: Props) {
 								}}
 							>
 								{/* TODO perhaps consolidate these? */}
-								{(repoWarning || repoWarning) && (
+								{(repoError || repoWarning) && (
 									<CodeErrorErrorBox>
 										<Icon name="alert" className="alert" />
 										<div className="message">
@@ -685,7 +685,7 @@ export function CodeErrorNav(props: Props) {
 										parsedStack={parsedStack}
 										codeError={codeError!}
 										errorGroup={errorGroup}
-										stackFrameClickDisabled={!!(repoError || repoWarning)}
+										stackFrameClickDisabled={!!repoError}
 									/>
 								</StyledCodeError>
 							</div>

@@ -5,6 +5,8 @@ import { CSMe, CSMePreferences, CSMeStatus, CSPresenceStatus, CSUser } from "./a
 
 export interface FetchUsersRequest {
 	userIds?: string[];
+	codeErrorId?: string;
+	allCodeErrors?: boolean;
 }
 
 export interface FetchUsersResponse {

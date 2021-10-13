@@ -1305,11 +1305,20 @@ export class CodeStreamApiProvider implements ApiProvider {
 	}
 
 	@log()
-	fetchPostReplies(request: FetchPostRepliesRequest) {
-		return this.get<CSGetPostsResponse>(
+	async fetchPostReplies(request: FetchPostRepliesRequest) {
+		const post = await SessionContainer.instance().posts.getById(request.postId);
+		const response = await this.get<CSGetPostsResponse>(
 			`/posts?teamId=${this.teamId}&streamId=${request.streamId}&parentPostId=${request.postId}`,
 			this._token
 		);
+
+		// when fetching replies to code errors, we may end up with authors that aren't part of the
+		// current team, we'll need to fetch and store those authors
+		if (post.codeErrorId) {
+			await this.fetchAndStoreUnknownCodeErrorFollowers(response.posts, post.codeErrorId);
+		}
+
+		return response;
 	}
 
 	@log()
@@ -1353,7 +1362,38 @@ export class CodeStreamApiProvider implements ApiProvider {
 			this._events?.subscribeToObject(codeError.id);
 		});
 
+		await this.fetchAndStoreUnknownCodeErrorFollowers(response.posts);
+
 		return response;
+	}
+
+	@log()
+	async fetchAndStoreUnknownCodeErrorFollowers(posts: CSPost[], codeErrorId?: string) {
+		const unknownAuthorIds: string[] = [];
+		for (const post of posts) {
+			if (
+				!unknownAuthorIds.includes(post.creatorId) &&
+				!(await SessionContainer.instance().users.getByIdFromCache(post.creatorId))
+			) {
+				unknownAuthorIds.push(post.creatorId);
+			}
+		}
+
+		if (unknownAuthorIds.length > 0) {
+			const request: FetchUsersRequest = {
+				userIds: unknownAuthorIds
+			};
+			if (codeErrorId) {
+				request.codeErrorId = codeErrorId;
+			} else {
+				request.allCodeErrors = true;
+			}
+			const usersResponse = await this.fetchUsers(request);
+			await SessionContainer.instance().users.resolve({
+				type: MessageType.Users,
+				data: usersResponse.users
+			});
+		}
 	}
 
 	@log()
@@ -1924,10 +1964,19 @@ export class CodeStreamApiProvider implements ApiProvider {
 
 	@log()
 	async fetchUsers(request: FetchUsersRequest) {
-		const response = await this.get<CSGetUsersResponse>(
-			`/users?teamId=${this.teamId}`,
-			this._token
-		);
+		let path;
+		if (request.codeErrorId) {
+			path = `/users?codeErrorId=${request.codeErrorId}`;
+		} else if (request.allCodeErrors) {
+			path = "/users?allCodeErrors";
+		} else {
+			path = `/users?teamId=${this.teamId}`;
+		}
+		if (request.userIds) {
+			path += `&ids=${request.userIds.join(",")}`;
+		}
+
+		const response = await this.get<CSGetUsersResponse>(path, this._token);
 
 		if (this._user === undefined) {
 			const meResponse = await this.getMe();
@@ -1936,7 +1985,8 @@ export class CodeStreamApiProvider implements ApiProvider {
 
 		// Find ourselves and replace it with our model
 		const index = response.users.findIndex(u => u.id === this._userId);
-		response.users.splice(index, 1, this._user);
+		if (index !== -1) response.users.splice(index, 1, this._user);
+
 		return response;
 	}
 

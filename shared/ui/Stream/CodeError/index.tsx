@@ -1056,7 +1056,7 @@ const BaseCodeError = (props: BaseCodeErrorProps) => {
 										placement="bottom"
 										delay={1}
 									>
-										<DisabledClickLine className="monospace">
+										<DisabledClickLine key={"disabled-line" + i} className="monospace">
 											<span>
 												<span style={{ opacity: ".6" }}>{line.method}</span>({mline}:
 												<strong>{line.line}</strong>
@@ -1065,7 +1065,11 @@ const BaseCodeError = (props: BaseCodeErrorProps) => {
 										</DisabledClickLine>
 									</Tooltip>
 								) : (
-									<ClickLine className={className} onClick={e => onClickStackLine(e, i)}>
+									<ClickLine
+										key={"click-line" + i}
+										className={className}
+										onClick={e => onClickStackLine(e, i)}
+									>
 										<span>
 											<span style={{ opacity: ".6" }}>{line.method}</span>({mline}:
 											<strong>{line.line}</strong>

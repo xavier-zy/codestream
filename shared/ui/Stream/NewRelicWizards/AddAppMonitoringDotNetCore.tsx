@@ -92,7 +92,7 @@ export const AddAppMonitoringDotNetCore = (props: {
 			// FIXME: what should we really do here?
 			dispatch(closeModal());
 		}
-	}, ["repo"]);
+	}, [repo]);
 
 	// const onSubmit = async (event: React.SyntheticEvent) => {
 	// 	setUnexpectedError(false);
@@ -119,7 +119,7 @@ export const AddAppMonitoringDotNetCore = (props: {
 	// 			setStep(1);
 	// 		}
 	// 	},
-	// 	["key"]
+	// 	[licenseKey]
 	// );
 
 	const onSetAppName = useCallback(
@@ -132,7 +132,7 @@ export const AddAppMonitoringDotNetCore = (props: {
 				setStep(1);
 			}
 		},
-		["appName"]
+		[appName]
 	);
 
 	const onInstallLibrary = async (event: React.SyntheticEvent) => {

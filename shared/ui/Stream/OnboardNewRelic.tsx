@@ -214,11 +214,12 @@ export const OnboardNewRelic = React.memo(function OnboardNewRelic() {
 
 	const [isLoadingData, setIsLoadingData] = useState(false);
 	const [loadedData, setLoadedData] = useState(false);
+	const [projectType, setProjectType] = useState<RepoProjectType | undefined>();
 
 	const skip = (plus: number = 1) => setStep(currentStep + plus);
 
 	const setStep = (step: number) => {
-		if (step === NUM_STEPS) {
+		if (step >= NUM_STEPS) {
 			dispatch(setOnboardStep(0));
 			dispatch(closePanel());
 			return;
@@ -290,12 +291,17 @@ export const OnboardNewRelic = React.memo(function OnboardNewRelic() {
 
 						<AddAppMonitoringIntro
 							className={className(1)}
-							skip={skip}
+							instrument={projectType => {
+								setProjectType(projectType);
+								skip();
+							}}
+							later={() => setStep(NUM_STEPS)}
 							newRelicOptions={newRelicOptions || {}}
 						/>
 						<AddAppMonitoring
 							className={className(2)}
 							skip={skip}
+							projectType={projectType}
 							newRelicOptions={newRelicOptions || {}}
 						/>
 						{/*
@@ -313,15 +319,12 @@ export const OnboardNewRelic = React.memo(function OnboardNewRelic() {
 						<Step className={className(CONGRATULATIONS_STEP)}>
 							<div className="body">
 								<h1>You're good to go!</h1>
-								<p className="explainer">
-									Head to New Relic to see your application's data.
-								</p>
+								<p className="explainer">Head to New Relic to see your application's data.</p>
 								<CenterRow>
 									<Button
 										size="xl"
 										onClick={() => {
-											const url =
-												"https://one.newrelic.com/launcher/nr1-core.explorer";
+											const url = "https://one.newrelic.com/launcher/nr1-core.explorer";
 											HostApi.instance.send(OpenUrlRequestType, { url });
 											dispatch(setOnboardStep(0));
 											dispatch(closePanel());
@@ -585,7 +588,8 @@ const PullRequests = (props: { className: string; skip: Function }) => {
 
 const AddAppMonitoringIntro = (props: {
 	className: string;
-	skip: Function;
+	instrument: Function;
+	later: Function;
 	newRelicOptions: NewRelicOptions;
 }) => {
 	const nodeJSDetected = props.newRelicOptions.projectType === RepoProjectType.NodeJS;
@@ -623,7 +627,10 @@ const AddAppMonitoringIntro = (props: {
 					</DialogRow>
 					<Sep />
 					<IntegrationButtons noBorder noPadding>
-						<Provider onClick={() => props.skip()} variant={nodeJSVariant}>
+						<Provider
+							onClick={() => props.instrument(RepoProjectType.NodeJS)}
+							variant={nodeJSVariant}
+						>
 							<Icon name="node" />
 							Node JS
 							<div style={{ position: "absolute", fontSize: "10px", bottom: "-5px", right: "4px" }}>
@@ -634,14 +641,17 @@ const AddAppMonitoringIntro = (props: {
 							<Icon name="php" />
 							PHP
 						</Provider>
-						<Provider onClick={() => props.skip()} variant={javaVariant}>
+						<Provider onClick={() => props.instrument(RepoProjectType.Java)} variant={javaVariant}>
 							<Icon name="java" />
 							Java
 							<div style={{ position: "absolute", fontSize: "10px", bottom: "-5px", right: "4px" }}>
 								{props.newRelicOptions.projectType === RepoProjectType.Java && <>detected</>}
 							</div>
 						</Provider>
-						<Provider onClick={() => props.skip()} variant={dotNetVariant}>
+						<Provider
+							onClick={() => props.instrument(RepoProjectType.DotNetCore)}
+							variant={dotNetVariant}
+						>
 							<Icon name="dot-net" />
 							Microsft.NET
 							<div style={{ position: "absolute", fontSize: "10px", bottom: "-5px", right: "4px" }}>
@@ -656,7 +666,7 @@ const AddAppMonitoringIntro = (props: {
 						Ruby, Python, Go and C users <Link href="">click here</Link>
 					</SkipLink>
 				</Dialog>
-				<SkipLink onClick={() => props.skip(2)}>I'll do this later</SkipLink>
+				<SkipLink onClick={() => props.later()}>I'll do this later</SkipLink>
 			</div>
 		</Step>
 	);
@@ -665,18 +675,31 @@ const AddAppMonitoringIntro = (props: {
 const AddAppMonitoring = (props: {
 	className: string;
 	skip: Function;
+	projectType: RepoProjectType | undefined;
 	newRelicOptions: NewRelicOptions;
 }) => {
-	switch (props.newRelicOptions.projectType) {
+	switch (props.projectType) {
 		case RepoProjectType.NodeJS:
-			return AddAppMonitoringNodeJS(props);
+			return <AddAppMonitoringNodeJS {...props} />;
 		case RepoProjectType.Java:
-			return AddAppMonitoringJava(props);
+			return <AddAppMonitoringJava {...props} />;
 		case RepoProjectType.DotNetCore:
-			return AddAppMonitoringDotNetCore(props);
+			return <AddAppMonitoringDotNetCore {...props} />;
 		default:
 			// FIXME
-			return <></>;
+			return (
+				<Step className={props.className}>
+					<div className="body">
+						<h1>Unknown Framework</h1>
+						<p className="explainer">Click OK to continue to CodeStream.</p>
+						<CenterRow>
+							<Button size="xl" onClick={() => props.skip(999)}>
+								OK
+							</Button>
+						</CenterRow>
+					</div>
+				</Step>
+			);
 	}
 };
 

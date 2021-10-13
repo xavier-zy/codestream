@@ -63,14 +63,14 @@ export const AddAppMonitoringNodeJS = (props: {
 				setFiles(response.files);
 			}
 		})();
-	}, ["repoPath"]);
+	}, [repoPath]);
 
 	useEffect(() => {
 		if (!repo) {
 			// FIXME: what should we really do here?
 			dispatch(closeModal());
 		}
-	}, ["repo"]);
+	}, [repo]);
 
 	const onSubmit = async (event: React.SyntheticEvent) => {
 		setUnexpectedError(false);
@@ -97,7 +97,7 @@ export const AddAppMonitoringNodeJS = (props: {
 				setStep(1);
 			}
 		},
-		["key"]
+		[licenseKey]
 	);
 
 	const onSetAppName = useCallback(
@@ -110,7 +110,7 @@ export const AddAppMonitoringNodeJS = (props: {
 				setStep(2);
 			}
 		},
-		["appName"]
+		[appName]
 	);
 
 	const onInstallLibrary = async (event: React.SyntheticEvent) => {

@@ -213,6 +213,10 @@ export const jumpToStackLine = (
 		})
 	);
 
+	if (!stackLine.fileRelativePath) {
+		console.error(`Unable to jump to stack trace line: missing fileRelativePath`);
+		return;
+	}
 	const currentPosition = await HostApi.instance.send(ResolveStackTracePositionRequestType, {
 		sha,
 		repoId,

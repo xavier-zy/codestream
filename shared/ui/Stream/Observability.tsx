@@ -225,8 +225,17 @@ export const Observability = React.memo((props: Props) => {
 										dispatch(configureAndConnectProvider("newrelic*com", "Observability Section"))
 									}
 								>
-									<Icon name="newrelic" />
-									Connect to New Relic One
+									<span
+										style={{
+											fontSize: "smaller",
+											overflow: "hidden",
+											textOverflow: "ellipsis",
+											whiteSpace: "nowrap"
+										}}
+									>
+										<Icon name="newrelic" />
+										Connect to New Relic One
+									</span>
 								</Provider>
 							</IntegrationButtons>
 						</>

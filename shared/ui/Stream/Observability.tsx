@@ -239,8 +239,9 @@ export const Observability = React.memo((props: Props) => {
 		undefined
 	);
 	const [observabilityErrors, setObservabilityErrors] = useState<ObservabilityRepoError[]>([]);
-	const previousHiddenPaneNodes = usePrevious(derivedState.hiddenPaneNodes);
 	const [observabilityRepos, setObservabilityRepos] = useState<ObservabilityRepo[]>([]);
+	const previousHiddenPaneNodes = usePrevious(derivedState.hiddenPaneNodes);
+	const previousNewRelicIsConnected = usePrevious(derivedState.newRelicIsConnected);
 
 	const buildFilters = (repoIds: string[]) => {
 		return repoIds.map(repoId => {
@@ -272,38 +273,38 @@ export const Observability = React.memo((props: Props) => {
 			});
 		}
 	};
+	const _useDidMount = () => {
+		if (!derivedState.newRelicIsConnected) return;
 
-	useDidMount(() => {
-		const _useDidMount = () => {
-			HostApi.instance
-				.send(GetObservabilityReposRequestType, {})
-				.then((_: GetObservabilityReposResponse) => {
-					setObservabilityRepos(_.repos || []);
-					let repoIds = _.repos?.filter(r => r.repoId).map(r => r.repoId!) || [];
-					const hiddenRepos = Object.keys(hiddenPaneNodes)
-						.filter(_ => {
-							return _.indexOf("newrelic-errors-in-repo-") === 0 && hiddenPaneNodes[_] === true;
+		HostApi.instance
+			.send(GetObservabilityReposRequestType, {})
+			.then((_: GetObservabilityReposResponse) => {
+				setObservabilityRepos(_.repos || []);
+				let repoIds = _.repos?.filter(r => r.repoId).map(r => r.repoId!) || [];
+				const hiddenRepos = Object.keys(hiddenPaneNodes)
+					.filter(_ => {
+						return _.indexOf("newrelic-errors-in-repo-") === 0 && hiddenPaneNodes[_] === true;
+					})
+					.map(r => r.replace("newrelic-errors-in-repo-", ""));
+				repoIds = repoIds.filter(r => !hiddenRepos.includes(r));
+
+				if (repoIds.length) {
+					loading(repoIds, true);
+
+					HostApi.instance
+						.send(GetObservabilityErrorsRequestType, {
+							filters: buildFilters(repoIds)
 						})
-						.map(r => r.replace("newrelic-errors-in-repo-", ""));
-					repoIds = repoIds.filter(r => !hiddenRepos.includes(r));
-
-					if (repoIds.length) {
-						loading(repoIds, true);
-
-						HostApi.instance
-							.send(GetObservabilityErrorsRequestType, {
-								filters: buildFilters(repoIds)
-							})
-							.then(response => {
-								if (response?.repos) {
-									setObservabilityErrors(response.repos!);
-								}
-								loading(repoIds, false);
-							});
-					}
-				});
-		};
-
+						.then(response => {
+							if (response?.repos) {
+								setObservabilityErrors(response.repos!);
+							}
+							loading(repoIds, false);
+						});
+				}
+			});
+	};
+	useDidMount(() => {
 		_useDidMount();
 
 		const disposable = HostApi.instance.on(HostDidChangeWorkspaceFoldersNotificationType, () => {
@@ -316,6 +317,14 @@ export const Observability = React.memo((props: Props) => {
 	});
 
 	useEffect(() => {
+		if (derivedState.newRelicIsConnected && !previousNewRelicIsConnected) {
+			_useDidMount();
+		}
+	}, [derivedState.newRelicIsConnected]);
+
+	useEffect(() => {
+		if (!derivedState.newRelicIsConnected) return;
+
 		if (previousHiddenPaneNodes) {
 			Object.keys(derivedState.hiddenPaneNodes).forEach(_ => {
 				if (_.indexOf("newrelic-errors-in-repo-") > -1) {

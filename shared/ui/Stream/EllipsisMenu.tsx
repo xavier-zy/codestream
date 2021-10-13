@@ -248,23 +248,25 @@ export function EllipsisMenu(props: EllipsisMenuProps) {
 		{
 			label: "View",
 			action: "view",
-			submenu: derivedState.sidebarPaneOrder.map(id => {
-				const settings = derivedState.sidebarPanePreferences[id] || DEFAULT_PANE_SETTINGS[id];
-				return {
-					key: id,
-					label: WebviewPanelNames[id],
-					checked: !settings.removed,
-					action: () => {
-						dispatch(setUserPreference(["sidebarPanes", id, "removed"], !settings.removed));
-						if (!settings.removed) {
-							HostApi.instance.track("Sidebar Adjusted", {
-								Section: id,
-								Adjustment: "Hidden"
-							});
+			submenu: derivedState.sidebarPaneOrder
+				.filter(id => AVAILABLE_PANES.includes(id))
+				.map(id => {
+					const settings = derivedState.sidebarPanePreferences[id] || DEFAULT_PANE_SETTINGS[id];
+					return {
+						key: id,
+						label: WebviewPanelNames[id],
+						checked: !settings.removed,
+						action: () => {
+							dispatch(setUserPreference(["sidebarPanes", id, "removed"], !settings.removed));
+							if (!settings.removed) {
+								HostApi.instance.track("Sidebar Adjusted", {
+									Section: id,
+									Adjustment: "Hidden"
+								});
+							}
 						}
-					}
-				};
-			})
+					};
+				})
 		},
 		{
 			label: "Notifications",

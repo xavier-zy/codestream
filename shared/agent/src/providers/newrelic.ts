@@ -28,7 +28,7 @@ import {
 import { CSMe, CSNewRelicProviderInfo } from "../protocol/api.protocol";
 import { log, lspProvider } from "../system";
 import { ThirdPartyIssueProviderBase } from "./provider";
-import request, { GraphQLClient } from "graphql-request";
+import { GraphQLClient } from "graphql-request";
 import { InternalError, ReportSuppressedMessages } from "../agentError";
 import { Logger } from "../logger";
 import { lspHandler } from "../system";
@@ -1040,6 +1040,108 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		return undefined;
 	}
 
+	private async getStackTrace(entityId: string, occurrenceId: string) {
+		let fingerprintId = 0;
+		try {
+			let parsed = parseInt(occurrenceId, 10);
+			fingerprintId = isNaN(parsed) ? 0 : parsed;
+			if (fingerprintId > 0) {
+				occurrenceId = "";
+			}
+		} catch {}
+
+		let response = undefined;
+		try {
+			response = await this.query<{
+				actor: {
+					entity: {
+						name: string;
+						exception?: {
+							message?: string;
+							stackTrace: {
+								frames: { filepath?: string; line?: number; name?: string; formatted: string }[];
+							};
+						};
+						crash?: {
+							message?: string;
+							stackTrace: {
+								frames: { filepath?: string; line?: number; name?: string; formatted: string }[];
+							};
+						};
+					};
+				};
+			}>(
+				`query getTrace($entityId: EntityGuid!, $occurrenceId: String!, $fingerprintId:Int!) {
+			actor {
+			  entity(guid: $entityId) {
+				... on ApmApplicationEntity {
+				  name
+				  exception(occurrenceId: $occurrenceId) {
+					message
+					stackTrace {
+					  frames {
+						filepath
+						formatted
+						line
+						name
+					  }
+					}
+				  }
+				}
+				... on BrowserApplicationEntity {
+				  guid
+				  name
+				  exception(fingerprint: $fingerprintId) {
+					message
+					stackTrace {
+					  frames {
+						column
+						line
+						formatted
+						name
+					  }
+					}
+				  }
+				}
+				... on MobileApplicationEntity {
+				  guid
+				  name
+				  exception(occurrenceId: $occurrenceId) {
+					stackTrace {
+					  frames {
+						line
+						formatted
+						name
+					  }
+					}
+				  }
+				  crash(occurrenceId: $occurrenceId) {
+					stackTrace {
+					  frames {
+						line
+						formatted
+						name
+					  }
+					}
+				  }
+				}
+			  }
+			}
+		  }
+		  `,
+				{
+					entityId: entityId,
+					occurrenceId: occurrenceId,
+					fingerprintId: fingerprintId
+				}
+			);
+		} catch (ex) {
+			Logger.error(ex, "NR: getStackTrace");
+		}
+
+		return response;
+	}
+
 	@lspHandler(GetNewRelicErrorGroupRequestType)
 	@log()
 	async getNewRelicErrorGroupData(
@@ -1122,50 +1224,13 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					Logger.warn("NR: missing errorGroup state");
 				}
 
-				const stackTraceResult = await this.query<{
-					actor: {
-						entity: {
-							name: string;
-							exception: {
-								message?: string;
-								stackTrace: {
-									frames: { filepath?: string; line?: number; name?: string; formatted: string }[];
-								};
-							};
-						};
-					};
-				}>(
-					`query getTrace($entityId: EntityGuid!, $occurrenceId: String!) {
-				actor {
-				  entity(guid: $entityId) {
-					... on ApmApplicationEntity {
-					  name
-					  exception(occurrenceId: $occurrenceId) {
-						message
-						stackTrace {
-						 frames {
-							filepath
-							formatted
-							line
-							name
-						 }
-					    }
-					  }
-					}
-				  }
-				}
-			  }
-			  `,
-					{
-						entityId: entityId,
-						occurrenceId: request.occurrenceId
-					}
-				);
-
+				const stackTraceResult = await this.getStackTrace(entityId, request.occurrenceId);
 				if (stackTraceResult?.actor?.entity?.exception?.stackTrace) {
 					errorGroup.errorTrace = {
 						path: stackTraceResult.actor.entity.name,
-						stackTrace: stackTraceResult.actor.entity.exception.stackTrace.frames
+						stackTrace: stackTraceResult.actor.entity.crash
+							? stackTraceResult.actor.entity.crash.stackTrace.frames
+							: stackTraceResult.actor.entity.exception.stackTrace.frames
 					};
 					errorGroup.hasStackTrace = true;
 				}

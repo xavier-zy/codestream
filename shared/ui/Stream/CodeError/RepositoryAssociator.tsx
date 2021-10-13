@@ -12,6 +12,13 @@ import { CSCodeError } from "@codestream/protocols/api";
 import { logWarning } from "../../logger";
 import { DropdownButton } from "../DropdownButton";
 import { useDidMount } from "@codestream/webview/utilities/hooks";
+import styled from "styled-components";
+
+const Ellipsize = styled.div`
+	button {
+		max-width: calc(100vw - 40px);
+	}
+`;
 
 interface EnhancedRepoScm {
 	/**
@@ -49,6 +56,7 @@ export function RepositoryAssociator(props: {
 		(ReposScm & EnhancedRepoScm)[] | undefined
 	>(undefined);
 	const [selected, setSelected] = React.useState<any>(undefined);
+	const [forkedRepository, setForkedRepository] = React.useState(false);
 
 	useDidMount(() => {
 		if (!repositoryError) return;
@@ -76,6 +84,7 @@ export function RepositoryAssociator(props: {
 									(derivedState.repos[id] ? derivedState.repos[id].name : "") + ` (${remoteUrl})`
 							});
 						}
+						setForkedRepository(true);
 					} else {
 						const id = repo.id || "";
 						if (!repo.remotes || !repo.remotes[0].types || !id) continue;
@@ -136,28 +145,33 @@ export function RepositoryAssociator(props: {
 			]}
 		>
 			<p>{repositoryError.description}</p>
-			<DropdownButton
-				items={
-					openRepositories
-						?.sort((a, b) => a.name.localeCompare(b.name))
-						.map(_ => {
-							return {
-								key: _.id,
-								label: _.name,
-								action: () => {
-									setSelected(_);
-									props.onSelected && props.onSelected(_);
-								}
-							};
-						}) || []
-				}
-				selectedKey={selected ? selected.id : null}
-				variant={selected ? "secondary" : "primary"}
-				size="compact"
-				wrap
-			>
-				{selected ? selected.name : "select a repo"}
-			</DropdownButton>
+			{forkedRepository && (
+				<p>If this is a forked repository, please select the upstream remote.</p>
+			)}
+			<Ellipsize>
+				<DropdownButton
+					items={
+						openRepositories
+							?.sort((a, b) => a.name.localeCompare(b.name))
+							.map(_ => {
+								return {
+									key: _.id,
+									label: _.name,
+									action: () => {
+										setSelected(_);
+										props.onSelected && props.onSelected(_);
+									}
+								};
+							}) || []
+					}
+					selectedKey={selected ? selected.id : null}
+					variant={selected ? "secondary" : "primary"}
+					size="compact"
+					wrap
+				>
+					{selected ? selected.name : "select a repo"}
+				</DropdownButton>
+			</Ellipsize>
 		</Dismissable>
 	);
 }

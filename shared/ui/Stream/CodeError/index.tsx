@@ -1313,6 +1313,8 @@ const CodeErrorForCodeError = (props: PropsWithCodeError) => {
 		if (!stackInfo) stackInfo = (codeError as any).stackInfo; // this is for old code, maybe can remove after a while?
 		if (stackInfo && stackInfo.repoId) {
 			const repo = derivedState.repos[stackInfo.repoId];
+			if (!repo) return undefined;
+
 			return { repoName: repo.name, branch: stackInfo.sha! };
 		} else {
 			return undefined;

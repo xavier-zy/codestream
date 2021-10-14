@@ -8,7 +8,6 @@ import {
 	NewRelicConfigurationData,
 	ThirdPartyProviderConfig,
 	GetNewRelicAssigneesRequestType,
-	NewRelicUser,
 	ThirdPartyDisconnect,
 	GetNewRelicAccountsRequestType,
 	GetNewRelicAccountsResponse,
@@ -23,7 +22,18 @@ import {
 	GetObservabilityEntitiesRequestType,
 	GetObservabilityEntitiesResponse,
 	ObservabilityError,
-	GetObservabilityEntitiesRequest
+	GetObservabilityEntitiesRequest,
+	GetObservabilityErrorAssignmentsRequestType,
+	GetObservabilityErrorAssignmentsResponse,
+	GetObservabilityErrorAssignmentsRequest,
+	ObservabilityErrorCore,
+	GetObservabilityErrorGroupMetadataResponse,
+	GetObservabilityErrorGroupMetadataRequestType,
+	GetObservabilityErrorGroupMetadataRequest,
+	ErrorGroupResponse,
+	RelatedEntity,
+	ErrorGroupsResponse,
+	StackTraceResponse
 } from "../protocol/agent.protocol";
 import { CSMe, CSNewRelicProviderInfo } from "../protocol/api.protocol";
 import { log, lspProvider } from "../system";
@@ -85,6 +95,8 @@ class AccessTokenError extends Error {
 
 @lspProvider("newrelic")
 export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProviderInfo> {
+	private _newRelicUserId: number | undefined = undefined;
+
 	constructor(session: CodeStreamSession, config: ThirdPartyProviderConfig) {
 		super(session, config);
 	}
@@ -133,6 +145,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 	async onDisconnected(request?: ThirdPartyDisconnect) {
 		// delete the graphql client so it will be reconstructed if a new token is applied
 		delete this._client;
+		delete this._newRelicUserId;
 		super.onDisconnected(request);
 	}
 
@@ -248,193 +261,6 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		return undefined;
 	}
 
-	private async getEntitiesByEntityIds(
-		entityGuids: string[]
-	): Promise<
-		{
-			guid: string;
-			name: String;
-			tags: { key: string; values: string[] }[];
-		}[]
-	> {
-		const queryResponse = await this.query(
-			`query searchByGuids($guids:[EntityGuid]!){
-			actor {
-				entities(guids: $guids) {
-					guid
-					name
-					tags {
-					  key
-					  values				 
-					}
-			  	}
-			}
-		  }
-		  `,
-			{
-				entityGuids: entityGuids
-			}
-		);
-		return queryResponse.actor.entities;
-	}
-
-	private async getEntitiesByRepoRemote(
-		remotes: string[]
-	): Promise<
-		{
-			guid: string;
-			name: String;
-			tags: { key: string; values: string[] }[];
-		}[]
-	> {
-		let set = new Set();
-		await Promise.all(
-			remotes.map(async _ => {
-				const variants = await GitRemoteParser.getRepoRemoteVariants(_);
-				variants.forEach(v => {
-					set.add(`tags.url = '${v.value}'`);
-				});
-				return true;
-			})
-		);
-		const remoteFilter = Array.from(set).join(" OR ");
-
-		if (!remoteFilter.length) return [];
-
-		const queryResponse = await this.query<{
-			actor: {
-				entitySearch: {
-					results: {
-						entities: {
-							guid: string;
-							name: String;
-							tags: { key: string; values: string[] }[];
-						}[];
-					};
-				};
-			};
-		}>(`{
-			actor {
-			  entitySearch(query: "type = 'REPOSITORY' and (${remoteFilter})") {
-				count
-				query
-				results {
-				  entities {
-					guid
-					name
-					tags {
-					  key
-					  values
-					}
-				  }
-				}
-			  }
-			}
-		  }
-		  `);
-		return queryResponse.actor.entitySearch.results.entities;
-	}
-
-	private async getFingerprintedErrorTraces(accountId: number, applicationGuid: string) {
-		return this.query(
-			`query fetchErrorsInboxData($accountId:Int!) {
-				actor {
-				  account(id: $accountId) {
-					nrql(query: "SELECT id, fingerprint, appName, error.class, message, entityGuid FROM ErrorTrace WHERE fingerprint IS NOT NULL and entityGuid='${applicationGuid}'  SINCE 3 days ago LIMIT 500") { nrql results }
-				  }
-				}
-			  }
-			  `,
-			{
-				accountId: accountId
-			}
-		);
-	}
-
-	private async findRelatedEntity(guid: string) {
-		return this.query(
-			` query fetchRelatedEntities($guid:EntityGuid!){
-			actor {
-			  entity(guid: $guid) {
-				relatedEntities(filter: {direction: BOTH, relationshipTypes: {include: BUILT_FROM}}) {
-				  results {
-					source {
-					  entity {
-						name
-						guid
-						type
-					  }
-					}
-					target {
-					  entity {
-						name
-						guid
-						type
-					  }
-					}
-					type
-				  }
-				}
-			  }
-			}
-		  }
-		  `,
-			{
-				guid: guid
-			}
-		);
-	}
-
-	private async getErrorGroupFromId(errorGroupGuid: string) {
-		try {
-			return this.query(
-				`query getErrorGroup($errorGroupGuid:ID!){
-			actor {
-			  errorsInbox {
-				errorGroup(id: $errorGroupGuid) {				  
-				  url											 
-				}
-			  }
-			}
-		  }									  
-	  `,
-				{
-					errorGroupGuid: errorGroupGuid
-				}
-			);
-		} catch (ex) {
-			Logger.error(ex, "NR: getErrorGroupFromId");
-		}
-		return undefined;
-	}
-
-	private async getErrorGroupFromNameMessageEntity(
-		name: string,
-		message: string,
-		entityGuid: string
-	) {
-		return this.query(
-			`query getErrorGroupGuid($name: String!, $message:String!, $entityGuid:EntityGuid!){
-			actor {
-			  errorsInbox {
-				errorGroup(errorEvent: {name: $name, 
-				  message: $message, 
-				  entityGuid: $entityGuid}) {
-				  id
-				  url											 
-				}
-			  }
-			}
-		  }									  
-	  `,
-			{
-				name: name,
-				message: message,
-				entityGuid: entityGuid
-			}
-		);
-	}
-
 	private _applicationEntitiesCache: GetObservabilityEntitiesResponse | undefined = undefined;
 
 	@lspHandler(GetObservabilityEntitiesRequestType)
@@ -460,7 +286,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				const response = await this.query<any>(
 					`query  {
 				actor {
-				  entitySearch(query: "type='APPLICATION' and name LIKE '${Strings.santizeGraphqlValue(
+				  entitySearch(query: "type='APPLICATION' and name LIKE '${Strings.sanitizeGraphqlValue(
 						request.appName
 					)}'", sortBy:MOST_RELEVANT) { 
 					results {			 
@@ -536,6 +362,70 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		return {
 			entities: []
 		};
+	}
+
+	@lspHandler(GetObservabilityErrorGroupMetadataRequestType)
+	@log({
+		timed: true
+	})
+	async getErrorGroupMetadata(
+		request: GetObservabilityErrorGroupMetadataRequest
+	): Promise<GetObservabilityErrorGroupMetadataResponse | undefined> {
+		if (!request.errorGroupGuid) return undefined;
+
+		try {
+			const metricResponse = await this.getMetric(request.errorGroupGuid);
+			if (!metricResponse) return undefined;
+
+			const mappedEntity = await this.findMappedRemoteByEntity(metricResponse?.entityGuid);
+			return {
+				entityId: metricResponse?.entityGuid,
+				occurrenceId: metricResponse?.traceId!,
+				remote: mappedEntity?.url
+			} as GetObservabilityErrorGroupMetadataResponse;
+		} catch (ex) {
+			Logger.error(ex, "NR: getErrorGroupMetadata", {
+				request: request
+			});
+		}
+		return undefined;
+	}
+
+	@lspHandler(GetObservabilityErrorAssignmentsRequestType)
+	@log({
+		timed: true
+	})
+	async getObservabilityErrorAssignments(request: GetObservabilityErrorAssignmentsRequest) {
+		const response: GetObservabilityErrorAssignmentsResponse = { items: [] };
+
+		try {
+			const { users } = SessionContainer.instance();
+			const me = await users.getMe();
+
+			const result = await this.getErrorsInboxAssignments(me.user.email);
+			if (result) {
+				response.items = result.actor.errorsInbox.errorGroups.results
+					.filter(_ => {
+						// dont show IGNORED or RESOLVED errors
+						return !_.state || _.state === "UNRESOLVED";
+					})
+					.map((_: any) => {
+						return {
+							entityId: _.entityGuid,
+							errorGroupGuid: _.id,
+							errorClass: _.name,
+							message: _.message,
+							errorGroupUrl: _.url
+						} as ObservabilityErrorCore;
+					});
+			}
+		} catch (ex) {
+			Logger.warn("NR: getObservabilityErrorAssignments", {
+				error: ex
+			});
+		}
+
+		return response;
 	}
 
 	@lspHandler(GetObservabilityReposRequestType)
@@ -722,224 +612,6 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		return response as any;
 	}
 
-	private parseId(idLike: string): NewRelicId | undefined {
-		try {
-			const parsed = Buffer.from(idLike, "base64").toString("utf-8");
-			if (!parsed) return undefined;
-
-			const split = parsed.split(/\|/);
-			//"140272|ERT|ERR_GROUP|12076a73-fc88-3205-92d3-b785d12e08b6"
-			const [accountId, unknownAbbreviation, entityType, unknownGuid] = split;
-			return {
-				accountId: accountId != null ? parseInt(accountId, 10) : 0,
-				unknownAbbreviation,
-				entityType,
-				unknownGuid
-			};
-		} catch (e) {
-			Logger.warn("NR: " + e.message, {
-				idLike
-			});
-		}
-		return undefined;
-	}
-
-	private async getEntityRepoRelationship(
-		entityId: string
-	): Promise<
-		| {
-				name: string;
-				urls: string[];
-		  }
-		| undefined
-	> {
-		let repositoryEntityId;
-
-		try {
-			const relatedEntitesResponse0 = await this.query<any>(
-				`
-	query getRelatedEntities($guid:EntityGuid!) {
-	actor {
-	  entity(guid: $guid) {
-		relatedEntities(filter: {direction: BOTH, relationshipTypes: {include: BUILT_FROM}}) {
-		  results {
-			source {
-				entity {
-				  name
-				  guid
-				  type
-				}
-			}
-			target {
-			  entity {
-				name
-				guid
-				type
-			  }
-			}
-			type
-		  }
-		}
-	  }
-	}
-  }
-  `,
-				{
-					guid: entityId
-				}
-			);
-
-			const repositoryEntity = relatedEntitesResponse0?.actor?.entity?.relatedEntities?.results.find(
-				(_: any) => _.source.entity.guid === entityId
-			);
-			if (repositoryEntity) {
-				repositoryEntityId = repositoryEntity.target?.entity?.guid;
-
-				if (repositoryEntityId) {
-					const relatedEntitiesResponse = await this.query<{
-						actor: {
-							entity?: {
-								relatedEntities: {
-									results: {
-										target: {
-											entity: NewRelicEntity;
-										};
-										type: string;
-									}[];
-								};
-							};
-						};
-					}>(
-						`query getRelatedEntities($guid:EntityGuid!) {
-			actor {
-			  entity(guid:$guid) {
-				relatedEntities(filter: {direction: BOTH, relationshipTypes: {include: BUILT_FROM}}) {
-				  results {
-					target {
-					  entity {
-						name
-						guid
-						type
-						tags {
-							key
-							values
-						}
-					  }
-					}
-					type
-				  }
-				}
-				name
-				type
-				tags {
-				  values
-				  key
-				}
-			  }
-			}
-		  }`,
-						{
-							guid: repositoryEntityId
-						}
-					);
-					if (!relatedEntitiesResponse?.actor.entity) {
-						Logger.warn(`NR: relatedEntitiesResponse?.actor.entity=null`);
-						return undefined;
-					}
-					const remote = relatedEntitiesResponse?.actor?.entity?.relatedEntities?.results.find(
-						(_: {
-							type: string;
-							target: {
-								entity: NewRelicEntity;
-							};
-						}) => _.type === "BUILT_FROM"
-					);
-					if (!remote) {
-						Logger.warn(`NR: BUILT_FROM remote=null`);
-						return undefined;
-					}
-					if (remote.target?.entity?.type === "REPOSITORY") {
-						const urlTag = remote.target.entity.tags.find(
-							(_: { key: string; values: string[] }) => _.key === "url"
-						);
-						if (urlTag) {
-							const result = {
-								name: remote.target.entity.name,
-								urls: urlTag.values
-							};
-							Logger.log(`NR: found urlTag`, {
-								result: result
-							});
-
-							return result;
-						} else {
-							Logger.warn(`NR: key=url is null`);
-						}
-					} else {
-						Logger.warn(`NR: type=REPOSITORY is null`);
-					}
-				} else {
-					Logger.warn(`NR: repositoryEntityId=null`);
-				}
-			} else {
-				Logger.warn(`NR: repositoryEntity=null`);
-			}
-		} catch (ex) {
-			Logger.error(ex, "NR: getEntityRepoRelationship", {
-				repositoryEntityId: repositoryEntityId,
-				entityId: entityId
-			});
-		}
-
-		return undefined;
-	}
-
-	private async getErrorGroupState(
-		errorGroupGuid: string
-	): Promise<
-		| {
-				actor: {
-					errorsInbox: {
-						errorGroup: {
-							assignedUser?: NewRelicUser;
-							state?: "RESOLVED" | "IGNORED" | "UNRESOLVED" | string;
-						};
-					};
-				};
-		  }
-		| undefined
-	> {
-		try {
-			return this.query(
-				`query getErrorGroup($errorGroupGuid: ID!) {
-			actor {
-			  errorsInbox {
-				errorGroup(id: $errorGroupGuid) {
-				  assignedUser {
-					email
-					gravatar
-					id
-					name
-				  }
-				  id
-				  state
-				}
-			  }
-			}
-		  }
-		   `,
-				{
-					errorGroupGuid: errorGroupGuid
-				}
-			);
-		} catch (ex) {
-			Logger.warn("NR: " + ex.message, {
-				errorGroupGuid: errorGroupGuid
-			});
-			return undefined;
-		}
-	}
-
 	@log()
 	async getPixieToken(accountId: number) {
 		try {
@@ -985,177 +657,9 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			}`);
 			return response.actor;
 		} catch (e) {
-			Logger.error(e);
+			Logger.error(e, "NR: getAccounts");
 			throw e;
 		}
-	}
-
-	private async getEntityIdFromErrorGroupGuid(
-		accountId: number,
-		errorGroupGuid: string
-	): Promise<string | undefined> {
-		try {
-			const results = await this.fetchErrorGroupData(accountId, errorGroupGuid);
-			return results ? results["entity.guid"] : undefined;
-		} catch (ex) {
-			Logger.error(ex, "NR: getEntityIdFromErrorGroupGuid", {
-				errorGroupGuid: errorGroupGuid,
-				accountId: accountId
-			});
-			return undefined;
-		}
-	}
-
-	private async fetchErrorGroupData(accountId: number, errorGroupGuid: string) {
-		let breakError;
-		for (const item of MetricsLookupBackoffs) {
-			if (breakError) {
-				throw breakError;
-			}
-			try {
-				let response = await this.query(
-					`query fetchErrorsInboxData($accountId:Int!) {
-					actor {
-					  account(id: $accountId) {
-						nrql(query: "FROM ${
-							item.table
-						} SELECT entity.guid, error.group.guid, error.group.message, error.group.name, error.group.source, error.group.nrql WHERE error.group.guid = '${Strings.santizeGraphqlValue(
-						errorGroupGuid
-					)}' SINCE ${item.since} ago LIMIT 1") { nrql results }
-					  }
-					}
-				  }
-				  `,
-					{
-						accountId: accountId
-					}
-				);
-				const results = response.actor.account.nrql.results[0];
-				if (results) {
-					return results;
-				}
-			} catch (ex) {
-				Logger.warn("NR: lookup failure", {
-					accountId,
-					errorGroupGuid,
-					item
-				});
-				let accessTokenError = ex as {
-					message: string;
-					innerError?: { message: string };
-					isAccessTokenError: boolean;
-				};
-				if (
-					accessTokenError &&
-					accessTokenError.innerError &&
-					accessTokenError.isAccessTokenError
-				) {
-					breakError = new Error(accessTokenError.message);
-				}
-			}
-		}
-		return undefined;
-	}
-
-	private async getStackTrace(entityId: string, occurrenceId: string) {
-		let fingerprintId = 0;
-		try {
-			if (occurrenceId.match(/^-?\d+$/)) {
-				fingerprintId = parseInt(occurrenceId, 10);
-				occurrenceId = "";
-			}
-		} catch {}
-
-		let response = undefined;
-		try {
-			response = await this.query<{
-				actor: {
-					entity: {
-						name: string;
-						exception?: {
-							message?: string;
-							stackTrace: {
-								frames: { filepath?: string; line?: number; name?: string; formatted: string }[];
-							};
-						};
-						crash?: {
-							message?: string;
-							stackTrace: {
-								frames: { filepath?: string; line?: number; name?: string; formatted: string }[];
-							};
-						};
-					};
-				};
-			}>(
-				`query getTrace($entityId: EntityGuid!, $occurrenceId: String!, $fingerprintId:Int!) {
-			actor {
-			  entity(guid: $entityId) {
-				... on ApmApplicationEntity {
-				  name
-				  exception(occurrenceId: $occurrenceId) {
-					message
-					stackTrace {
-					  frames {
-						filepath
-						formatted
-						line
-						name
-					  }
-					}
-				  }
-				}
-				... on BrowserApplicationEntity {
-				  guid
-				  name
-				  exception(fingerprint: $fingerprintId) {
-					message
-					stackTrace {
-					  frames {
-						column
-						line
-						formatted
-						name
-					  }
-					}
-				  }
-				}
-				... on MobileApplicationEntity {
-				  guid
-				  name
-				  exception(occurrenceId: $occurrenceId) {
-					stackTrace {
-					  frames {
-						line
-						formatted
-						name
-					  }
-					}
-				  }
-				  crash(occurrenceId: $occurrenceId) {
-					stackTrace {
-					  frames {
-						line
-						formatted
-						name
-					  }
-					}
-				  }
-				}
-			  }
-			}
-		  }
-		  `,
-				{
-					entityId: entityId,
-					occurrenceId: occurrenceId,
-					fingerprintId: fingerprintId
-				}
-			);
-		} catch (ex) {
-			Logger.error(ex, "NR: getStackTrace");
-		}
-
-		return response;
 	}
 
 	@lspHandler(GetNewRelicErrorGroupRequestType)
@@ -1168,6 +672,10 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		let entityId: string = "";
 		try {
 			await this.ensureConnected();
+
+			if (!request.occurrenceId) {
+				throw new Error("MissingOccurrenceId");
+			}
 
 			const errorGroupGuid = request.errorGroupGuid;
 			const parsedId = this.parseId(errorGroupGuid)!;
@@ -1192,31 +700,6 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					states: ["RESOLVED", "IGNORED", "UNRESOLVED"]
 				};
 
-				const errorGroupResult = await this.getErrorGroupFromId(errorGroupGuid);
-				if (errorGroupResult) {
-					errorGroup.errorGroupUrl = errorGroupResult.actor.errorsInbox.errorGroup.url;
-				}
-
-				const repo = await this.getEntityRepoRelationship(entityId);
-				if (repo) {
-					errorGroup.entity = { repo: repo };
-				}
-
-				if (entityId) {
-					let response = await this.query(
-						`{
-						actor {
-						  entity(guid: "${entityId}") {
-							alertSeverity
-							name
-						  }
-						}
-					  }
-				  `
-					);
-					errorGroup.entityName = response.actor.entity.name;
-					errorGroup.entityAlertingSeverity = response.actor.entity.alertSeverity;
-				}
 				errorGroup.attributes = {
 					Timestamp: { type: "timestamp", value: errorGroup.timestamp }
 					// TODO fix me
@@ -1225,19 +708,32 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					// "URL path": { type: "string", value: "value" }
 				};
 
-				if (!request.occurrenceId) {
-					throw new Error("MissingOccurrenceId");
+				const errorGroupResponse = await this.getErrorGroup(errorGroupGuid, entityId);
+				errorGroup.errorGroupUrl = errorGroupResponse.actor.errorsInbox.errorGroup.url;
+				errorGroup.entityName = errorGroupResponse.actor.entity.name;
+				errorGroup.entityAlertingSeverity = errorGroupResponse.actor.entity.alertSeverity;
+				errorGroup.state = errorGroupResponse.actor.errorsInbox.errorGroup.state || "UNRESOLVED";
+
+				const assignee = errorGroupResponse.actor.errorsInbox.errorGroup.assignment;
+				if (assignee) {
+					errorGroup.assignee = {
+						email: assignee.email,
+						id: assignee.userInfo?.id,
+						name: assignee.userInfo?.name,
+						gravatar: assignee.userInfo?.gravatar
+					};
 				}
 
-				const errorGroupState = await this.getErrorGroupState(errorGroupGuid);
-				if (errorGroupState) {
-					errorGroup.state = errorGroupState.actor.errorsInbox.errorGroup.state || "UNRESOLVED";
-					const assignee = errorGroupState.actor.errorsInbox.errorGroup.assignedUser;
-					if (assignee) {
-						errorGroup.assignee = assignee;
-					}
-				} else {
-					Logger.warn("NR: missing errorGroup state");
+				const builtFromRepo = this.findBuiltFrom(
+					errorGroupResponse.actor.entity.relatedEntities.results
+				);
+				if (builtFromRepo) {
+					errorGroup.entity = {
+						repo: {
+							name: builtFromRepo.name,
+							urls: [builtFromRepo.url]
+						}
+					};
 				}
 
 				const stackTraceResult = await this.getStackTrace(entityId, request.occurrenceId);
@@ -1251,14 +747,19 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					errorGroup.hasStackTrace = true;
 				}
 
-				Logger.debug("NR: ErrorGroup found", {
-					errorGroupGuid: errorGroup.guid
+				Logger.log("NR: ErrorGroup found", {
+					errorGroupGuid: errorGroup.guid,
+					occurrenceId: request.occurrenceId,
+					entityId: entityId,
+					hasErrorGroup: errorGroup != null,
+					hasStackTrace: errorGroup?.hasStackTrace
 				});
 			} else {
 				Logger.warn(
 					`NR: No errorGroup results errorGroupGuid (${errorGroupGuid}) in account (${accountId})`,
 					{
 						request: request,
+						entityId: entityId,
 						accountId: accountId
 					}
 				);
@@ -1318,7 +819,6 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				Object.keys(committers.scm).map((_: string) => {
 					return {
 						id: _,
-						displayName: _,
 						email: _,
 						group: "GIT"
 					};
@@ -1329,10 +829,10 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		// TODO fix me get users from NR
 
 		// users.push({
-		// 	id: "a",
-		// 	displayName: "A",
-		// 	email: "a@a.com",
-		// 	avatarUrl: "A",
+		// 	id: "123",
+		// 	displayName: "Some One",
+		// 	email: "someone@newrelic.com",
+		// 	avatarUrl: "http://...",
 		// 	group: "NR"
 		// });
 
@@ -1347,10 +847,9 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		emailAddress: string;
 	}): Promise<Directives | undefined> {
 		try {
-			await this.ensureConnected();
-
-			const response = await this._setAssigneeByEmail(request!);
-			const assignee = response.errorsInboxAssignErrorGroup.assignment.userInfo;
+			const response = await this.setAssigneeByEmail(request!);
+			const assignment = response.errorsInboxAssignErrorGroup.assignment;
+			// won't be a userInfo object if assigning by email
 
 			return {
 				directives: [
@@ -1358,9 +857,9 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 						type: "setAssignee",
 						data: {
 							assignee: {
-								email: assignee.email,
-								id: assignee.id,
-								name: assignee.name
+								email: assignment.email,
+								id: assignment?.userInfo?.id,
+								name: assignment?.userInfo?.name
 							}
 						}
 					}
@@ -1375,12 +874,11 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 	@log()
 	async removeAssignee(request: {
 		errorGroupGuid: string;
-		userId: string;
+		emailAddress?: string;
+		userId?: string;
 	}): Promise<Directives | undefined> {
 		try {
-			await this.ensureConnected();
-
-			await this._setAssigneeByUserId({ ...request, userId: request.userId || "0" });
+			await this.setAssigneeByUserId({ ...request, userId: "0" });
 
 			return {
 				directives: [
@@ -1592,6 +1090,235 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		}
 	}
 
+	@log()
+	private async getUserId(): Promise<number | undefined> {
+		try {
+			if (this._newRelicUserId != null) {
+				return this._newRelicUserId;
+			}
+
+			const response = await this.query(`{ actor {	user { id } } }`);
+			const id = response.actor?.user?.id;
+			if (id) {
+				this._newRelicUserId = parseInt(id, 10);
+				return this._newRelicUserId;
+			}
+		} catch (ex) {
+			Logger.warn("NR: getUserId " + ex.message);
+		}
+		return undefined;
+	}
+
+	private async getEntityIdFromErrorGroupGuid(
+		accountId: number,
+		errorGroupGuid: string
+	): Promise<string | undefined> {
+		try {
+			const results = await this.fetchErrorGroupData(accountId, errorGroupGuid);
+			return results ? results["entity.guid"] : undefined;
+		} catch (ex) {
+			Logger.error(ex, "NR: getEntityIdFromErrorGroupGuid", {
+				errorGroupGuid: errorGroupGuid,
+				accountId: accountId
+			});
+			return undefined;
+		}
+	}
+
+	private async fetchErrorGroupData(accountId: number, errorGroupGuid: string) {
+		let breakError;
+		for (const item of MetricsLookupBackoffs) {
+			if (breakError) {
+				throw breakError;
+			}
+			try {
+				let response = await this.query(
+					`query fetchErrorsInboxData($accountId:Int!) {
+					actor {
+					  account(id: $accountId) {
+						nrql(query: "FROM ${
+							item.table
+						} SELECT entity.guid, error.group.guid, error.group.message, error.group.name, error.group.source, error.group.nrql WHERE error.group.guid = '${Strings.sanitizeGraphqlValue(
+						errorGroupGuid
+					)}' SINCE ${item.since} ago LIMIT 1") { nrql results }
+					  }
+					}
+				  }
+				  `,
+					{
+						accountId: accountId
+					}
+				);
+				const results = response.actor.account.nrql.results[0];
+				if (results) {
+					return results;
+				}
+			} catch (ex) {
+				Logger.warn("NR: lookup failure", {
+					accountId,
+					errorGroupGuid,
+					item
+				});
+				let accessTokenError = ex as {
+					message: string;
+					innerError?: { message: string };
+					isAccessTokenError: boolean;
+				};
+				if (
+					accessTokenError &&
+					accessTokenError.innerError &&
+					accessTokenError.isAccessTokenError
+				) {
+					breakError = new Error(accessTokenError.message);
+				}
+			}
+		}
+		return undefined;
+	}
+
+	private async getStackTrace(entityId: string, occurrenceId: string) {
+		let fingerprintId = 0;
+		try {
+			// BrowserApplicationEntity uses a fingerprint instead of an occurrence and it's a number
+			if (occurrenceId.match(/^-?\d+$/)) {
+				fingerprintId = parseInt(occurrenceId, 10);
+				occurrenceId = "";
+			}
+		} catch {}
+
+		let response = undefined;
+		try {
+			response = await this.query<StackTraceResponse>(
+				`query getTrace($entityId: EntityGuid!, $occurrenceId: String!, $fingerprintId:Int!) {
+			actor {
+			  entity(guid: $entityId) {
+				... on ApmApplicationEntity {
+				  name
+				  exception(occurrenceId: $occurrenceId) {
+					message
+					stackTrace {
+					  frames {
+						filepath
+						formatted
+						line
+						name
+					  }
+					}
+				  }
+				}
+				... on BrowserApplicationEntity {
+				  guid
+				  name
+				  exception(fingerprint: $fingerprintId) {
+					message
+					stackTrace {
+					  frames {
+						column
+						line
+						formatted
+						name
+					  }
+					}
+				  }
+				}
+				... on MobileApplicationEntity {
+				  guid
+				  name
+				  exception(occurrenceId: $occurrenceId) {
+					stackTrace {
+					  frames {
+						line
+						formatted
+						name
+					  }
+					}
+				  }
+				  crash(occurrenceId: $occurrenceId) {
+					stackTrace {
+					  frames {
+						line
+						formatted
+						name
+					  }
+					}
+				  }
+				}
+			  }
+			}
+		  }
+		  `,
+				{
+					entityId: entityId,
+					occurrenceId: occurrenceId,
+					fingerprintId: fingerprintId
+				}
+			);
+		} catch (ex) {
+			Logger.error(ex, "NR: getStackTrace");
+		}
+
+		return response;
+	}
+
+	private async getErrorGroup(
+		errorGroupGuid: string,
+		entityGuid: string
+	): Promise<ErrorGroupResponse> {
+		return this.query(
+			`query getErrorGroup($errorGroupGuid: ID!, $entityGuid: EntityGuid!) {
+			actor {
+			  entity(guid: $entityGuid) {
+				alertSeverity
+				name
+				relatedEntities(filter: {direction: BOTH, relationshipTypes: {include: BUILT_FROM}}) {
+				  results {
+					source {
+					  entity {
+						name
+						guid
+						type
+					  }
+					}
+					target {
+					  entity {
+						name
+						guid
+						type
+						tags {
+							key
+							values
+						}
+					  }
+					}
+					type
+				  }
+				}
+			  }
+			  errorsInbox {
+				errorGroup(id: $errorGroupGuid) {
+				  url
+				  assignment {
+					email
+					userInfo {
+					  gravatar
+					  id
+					  name
+					}
+				  }
+				  id
+				  state
+				}
+			  }
+			}
+		  }
+		  `,
+			{
+				errorGroupGuid: errorGroupGuid,
+				entityGuid: entityGuid
+			}
+		);
+	}
+
 	private async buildErrorDetailSettings(
 		accountId: number,
 		entityId: string,
@@ -1622,7 +1349,318 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		return undefined;
 	}
 
-	private _setAssigneeByEmail(request: { errorGroupGuid: string; emailAddress: string }) {
+	private async getEntitiesByRepoRemote(
+		remotes: string[]
+	): Promise<
+		{
+			guid: string;
+			name: String;
+			tags: { key: string; values: string[] }[];
+		}[]
+	> {
+		const set = new Set();
+		await Promise.all(
+			remotes.map(async _ => {
+				const variants = await GitRemoteParser.getRepoRemoteVariants(_);
+				variants.forEach(v => {
+					set.add(`tags.url = '${v.value}'`);
+				});
+				return true;
+			})
+		);
+		const remoteFilter = Array.from(set).join(" OR ");
+
+		if (!remoteFilter.length) return [];
+
+		const queryResponse = await this.query<{
+			actor: {
+				entitySearch: {
+					results: {
+						entities: {
+							guid: string;
+							name: String;
+							tags: { key: string; values: string[] }[];
+						}[];
+					};
+				};
+			};
+		}>(`{
+			actor {
+			  entitySearch(query: "type = 'REPOSITORY' and (${remoteFilter})") {
+				count
+				query
+				results {
+				  entities {
+					guid
+					name
+					tags {
+					  key
+					  values
+					}
+				  }
+				}
+			  }
+			}
+		  }
+		  `);
+		return queryResponse.actor.entitySearch.results.entities;
+	}
+
+	private async getFingerprintedErrorTraces(accountId: number, applicationGuid: string) {
+		return this.query(
+			`query fetchErrorsInboxData($accountId:Int!) {
+				actor {
+				  account(id: $accountId) {
+					nrql(query: "SELECT id, fingerprint, appName, error.class, message, entityGuid FROM ErrorTrace WHERE fingerprint IS NOT NULL and entityGuid='${applicationGuid}'  SINCE 3 days ago LIMIT 500") { nrql results }
+				  }
+				}
+			  }
+			  `,
+			{
+				accountId: accountId
+			}
+		);
+	}
+
+	private async findRelatedEntity(
+		guid: string
+	): Promise<{
+		actor: {
+			entity: {
+				relatedEntities: {
+					results: RelatedEntity[];
+				};
+			};
+		};
+	}> {
+		return this.query(
+			`query fetchRelatedEntities($guid:EntityGuid!){
+			actor {
+			  entity(guid: $guid) {
+				relatedEntities(filter: {direction: BOTH, relationshipTypes: {include: BUILT_FROM}}) {
+				  results {
+					source {
+					  entity {
+						name
+						guid
+						type
+					  }
+					}
+					target {
+					  entity {
+						name
+						guid
+						type
+						tags {
+							key
+							values
+						}
+					  }
+					}
+					type
+				  }
+				}
+			  }
+			}
+		  }
+		  `,
+			{
+				guid: guid
+			}
+		);
+	}
+
+	private async getErrorGroupFromNameMessageEntity(
+		name: string,
+		message: string,
+		entityGuid: string
+	) {
+		return this.query(
+			`query getErrorGroupGuid($name: String!, $message:String!, $entityGuid:EntityGuid!){
+			actor {
+			  errorsInbox {
+				errorGroup(errorEvent: {name: $name, 
+				  message: $message, 
+				  entityGuid: $entityGuid}) {
+				  id
+				  url											 
+				}
+			  }
+			}
+		  }									  
+	  `,
+			{
+				name: name,
+				message: message,
+				entityGuid: entityGuid
+			}
+		);
+	}
+
+	private async getErrorsInboxAssignments(
+		emailAddress: string,
+		userId?: number
+	): Promise<ErrorGroupsResponse | undefined> {
+		try {
+			if (userId == null || userId == 0) {
+				// TODO fix me. remove this once we have a userId on a connection
+				userId = await this.getUserId();
+			}
+			return this.query(
+				`query getAssignments($userId: Int, $emailAddress: String!) {
+				actor {
+				  errorsInbox {
+					errorGroups(filter: {isAssigned: true, assignment: {userId: $userId, userEmail: $emailAddress}}) {
+					  results {
+						url
+						state
+						name
+						message
+						id
+						entityGuid
+					  }
+					}
+				  }
+				}
+			  }
+			  
+  `,
+				{
+					userId: userId,
+					emailAddress: emailAddress
+				}
+			);
+		} catch (ex) {
+			Logger.warn("NR: getErrorsInboxAssignments", {
+				userId: userId,
+				emailAddress: emailAddress != null
+			});
+			return undefined;
+		}
+	}
+	/**
+	 * from an errorGroupGuid, returns a traceId and an entityId
+	 *
+	 * @private
+	 * @param {string} errorGroupGuid
+	 * @return {*}  {(Promise<
+	 * 		| {
+	 * 				entityGuid: string;
+	 * 				traceId: string;
+	 * 		  }
+	 * 		| undefined
+	 * 	>)}
+	 * @memberof NewRelicProvider
+	 */
+	private async getMetric(
+		errorGroupGuid: string
+	): Promise<
+		| {
+				entityGuid: string;
+				traceId: string;
+		  }
+		| undefined
+	> {
+		try {
+			let accountId = this.parseId(errorGroupGuid)?.accountId!;
+			const response = await this.query<{
+				actor: {
+					account: {
+						errorGroups: {
+							results: {
+								["error.group.name"]: string;
+								["error.group.message"]: string;
+							}[];
+						};
+					};
+				};
+			}>(
+				`query getMetric($accountId: Int!) {
+					actor {
+					  account(id: $accountId) {
+						errorGroups: nrql(query: "FROM Metric SELECT error.group.name,error.group.message WHERE error.group.guid = '${Strings.sanitizeGraphqlValue(
+							errorGroupGuid
+						)}' SINCE 7 day ago LIMIT 1") {
+						  results
+						}
+					  }
+					}
+				  }				  
+			`,
+				{
+					accountId: accountId
+				}
+			);
+			if (response) {
+				const metricResult = response.actor.account.errorGroups.results[0];
+				const response2 = await this.query<{
+					actor: {
+						account: {
+							errorEvents: {
+								results: {
+									entityGuid: string;
+									id: string;
+								}[];
+							};
+						};
+					};
+				}>(
+					`query getMetric($accountId: Int!) {
+						actor {
+						  account(id: $accountId) {
+							errorEvents: nrql(query: "FROM ErrorTrace SELECT * WHERE error.class LIKE '${Strings.sanitizeGraphqlValue(
+								metricResult["error.group.name"]
+							)}' AND error.message LIKE '${Strings.sanitizeGraphqlValue(
+						metricResult["error.group.message"]
+					)}' SINCE 1 week ago LIMIT 1") {
+							  results
+							}
+						  }
+						}
+					  }					  
+			`,
+					{
+						accountId: accountId
+					}
+				);
+
+				if (response2) {
+					const errorTraceResult = response2.actor.account.errorEvents.results[0];
+					if (errorTraceResult) {
+						return {
+							entityGuid: errorTraceResult.entityGuid,
+							traceId: errorTraceResult.id
+						};
+					}
+				}
+			}
+		} catch (ex) {
+			Logger.error(ex, "NR: getMetric", {
+				errorGroupGuid: errorGroupGuid
+			});
+		}
+		return undefined;
+	}
+
+	private async findMappedRemoteByEntity(
+		entityGuid: string
+	): Promise<
+		| {
+				url: string;
+				name: string;
+		  }
+		| undefined
+	> {
+		if (!entityGuid) return undefined;
+
+		const relatedEntityResponse = await this.findRelatedEntity(entityGuid);
+		if (relatedEntityResponse) {
+			return this.findBuiltFrom(relatedEntityResponse.actor.entity.relatedEntities.results);
+		}
+		return undefined;
+	}
+
+	private setAssigneeByEmail(request: { errorGroupGuid: string; emailAddress: string }) {
 		return this.query(
 			`mutation errorsInboxAssignErrorGroup($email: String!, $errorGroupGuid: ID!) {
 			errorsInboxAssignErrorGroup(assignment: {userEmail: $email}, id: $errorGroupGuid) {
@@ -1645,7 +1683,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		);
 	}
 
-	private _setAssigneeByUserId(request: { errorGroupGuid: string; userId: string }) {
+	private setAssigneeByUserId(request: { errorGroupGuid: string; userId: string }) {
 		return this.query(
 			`mutation errorsInboxAssignErrorGroup($userId: Int!, $errorGroupGuid: ID!) {
 				errorsInboxAssignErrorGroup(assignment: {userId: $userId}, id: $errorGroupGuid) {
@@ -1665,5 +1703,51 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				userId: parseInt(request.userId, 10)
 			}
 		);
+	}
+
+	private findBuiltFrom(
+		relatedEntities: RelatedEntity[]
+	):
+		| {
+				url: string;
+				name: string;
+		  }
+		| undefined {
+		if (!relatedEntities || !relatedEntities.length) return undefined;
+
+		const buildFrom = relatedEntities.find(_ => _.type === "BUILT_FROM");
+		if (buildFrom) {
+			const targetUrl = buildFrom.target.entity.tags.find((_: any) => _.key === "url");
+			if (targetUrl && targetUrl.values && targetUrl.values.length) {
+				return {
+					url: targetUrl.values[0],
+					name: buildFrom.target.entity.name
+				};
+			}
+		}
+
+		return undefined;
+	}
+
+	private parseId(idLike: string): NewRelicId | undefined {
+		try {
+			const parsed = Buffer.from(idLike, "base64").toString("utf-8");
+			if (!parsed) return undefined;
+
+			const split = parsed.split(/\|/);
+			//"140272|ERT|ERR_GROUP|12076a73-fc88-3205-92d3-b785d12e08b6"
+			const [accountId, unknownAbbreviation, entityType, unknownGuid] = split;
+			return {
+				accountId: accountId != null ? parseInt(accountId, 10) : 0,
+				unknownAbbreviation,
+				entityType,
+				unknownGuid
+			};
+		} catch (e) {
+			Logger.warn("NR: " + e.message, {
+				idLike
+			});
+		}
+		return undefined;
 	}
 }

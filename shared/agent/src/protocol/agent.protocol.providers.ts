@@ -856,10 +856,10 @@ export interface GetNewRelicErrorGroupRequest {
 }
 
 export interface NewRelicUser {
-	email: string;
-	gravatar: string;
-	id: number;
-	name: string;
+	email?: string;
+	gravatar?: string;
+	id?: number;
+	name?: string;
 }
 
 export interface NewRelicErrorGroup {
@@ -972,17 +972,20 @@ export interface GetObservabilityErrorsRequest {
 	filters?: { repoId: string; entityGuid?: string }[];
 }
 
-export interface ObservabilityError {
+export interface ObservabilityErrorCore {
 	entityId: string;
-	appName: string;
 	errorClass: string;
 	message: string;
-	remote: string;
 	errorGroupGuid: string;
+	errorGroupUrl?: string;
+}
+
+export interface ObservabilityError extends ObservabilityErrorCore {
+	appName: string;
+	remote: string;
 	occurrenceId: string;
 	count: number;
 	lastOccurrence: number;
-	errorGroupUrl?: string;
 }
 
 export interface ObservabilityRepoError {
@@ -1042,3 +1045,120 @@ export const GetObservabilityEntitiesRequestType = new RequestType<
 	void,
 	void
 >("codestream/newrelic/entities");
+
+export interface GetObservabilityErrorAssignmentsRequest {}
+export interface GetObservabilityErrorAssignmentsResponse {
+	items: ObservabilityErrorCore[];
+}
+export const GetObservabilityErrorAssignmentsRequestType = new RequestType<
+	GetObservabilityErrorAssignmentsRequest,
+	GetObservabilityErrorAssignmentsResponse,
+	void,
+	void
+>("codestream/newrelic/assignments");
+
+export interface GetObservabilityErrorGroupMetadataRequest {
+	errorGroupGuid: string;
+}
+export interface GetObservabilityErrorGroupMetadataResponse {
+	occurrenceId: string;
+	entityId?: string;
+	entityGuid?: string;
+	remote?: string;
+}
+
+export const GetObservabilityErrorGroupMetadataRequestType = new RequestType<
+	GetObservabilityErrorGroupMetadataRequest,
+	GetObservabilityErrorGroupMetadataResponse,
+	void,
+	void
+>("codestream/newrelic/errorGroup/metadata");
+
+export interface ErrorGroupResponse {
+	actor: {
+		entity: {
+			alertSeverity: "CRITICAL" | "NOT_ALERTING" | "NOT_CONFIGURED" | "WARNING" | undefined;
+			name: string;
+			relatedEntities: {
+				results: any[];
+			};
+		};
+		errorsInbox: {
+			errorGroup: {
+				id: string;
+				state: string;
+				url: string;
+				assignment: {
+					email: string;
+					userInfo: {
+						gravatar: string;
+						id: number;
+						name: string;
+					};
+				};
+			};
+		};
+	};
+}
+
+export interface ErrorGroupsResponse {
+	actor: {
+		errorsInbox: {
+			errorGroups: {
+				results: {
+					url: string;
+					state: string;
+					name: string;
+					message: string;
+					id: string;
+					entityGuid: string;
+				}[];
+			};
+		};
+	};
+}
+
+export interface RelatedEntity {
+	source: {
+		entity: {
+			guid: string;
+			name: string;
+			type: string;
+		};
+	};
+	target: {
+		entity: {
+			guid: string;
+			name: string;
+			type: string;
+			tags: {
+				key: string;
+				values: string[];
+			}[];
+		};
+	};
+	type: string;
+}
+
+interface CrashOrException {
+	message?: string;
+	stackTrace: StackTrace;
+}
+
+interface EntityCrash extends CrashOrException {}
+
+interface EntityException extends CrashOrException {}
+
+interface StackTrace {
+	frames: { filepath?: string; line?: number; name?: string; formatted: string }[];
+}
+
+export interface StackTraceResponse {
+	actor: {
+		entity: {
+			name: string;
+			exception?: EntityException;
+			crash?: EntityCrash;
+		};
+	};
+}

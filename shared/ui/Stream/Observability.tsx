@@ -4,7 +4,6 @@ import { PaneHeader, PaneBody, PaneState, PaneNode, PaneNodeName } from "../src/
 import { WebviewPanels } from "../ipc/webview.protocol.common";
 import { CodeStreamState } from "../store";
 import { isConnected } from "../store/providers/reducer";
-import { Button } from "../src/components/Button";
 import { Provider } from "./IntegrationsPanel";
 import { configureAndConnectProvider, disconnectProvider } from "../store/providers/actions";
 import Icon from "./Icon";
@@ -22,17 +21,22 @@ import { InlineMenu } from "../src/components/controls/InlineMenu";
 import { useDidMount, usePrevious } from "../utilities/hooks";
 import {
 	EntityAccount,
-	GetObservabilityEntitiesRequestType,
+	ObservabilityErrorCore,
+	GetObservabilityErrorAssignmentsRequestType,
+	GetObservabilityErrorAssignmentsResponse,
 	GetObservabilityErrorsRequestType,
+	GetObservabilityErrorGroupMetadataResponse,
+	GetObservabilityErrorGroupMetadataRequestType,
 	GetObservabilityReposRequestType,
 	GetObservabilityReposResponse,
 	ObservabilityRepo,
-	ObservabilityRepoError
+	ObservabilityRepoError,
+	DidChangeObservabilityDataNotificationType
 } from "@codestream/protocols/agent";
 
 import { keyBy as _keyBy } from "lodash-es";
-import { api, openErrorGroup } from "../store/codeErrors/actions";
-import { DropdownButton } from "./DropdownButton";
+import { openErrorGroup } from "../store/codeErrors/actions";
+import { EntityAssociator } from "./EntityAssociator";
 
 interface Props {
 	paneState: PaneState;
@@ -150,91 +154,6 @@ const ErrorRow = (props: {
 
 const EMPTY_ARRAY = [];
 
-interface EntityAssociatorProps {
-	remote: string;
-	remoteName: string;
-	onSuccess: Function;
-}
-
-const EntityAssociator = React.memo((props: EntityAssociatorProps) => {
-	const dispatch = useDispatch<any>();
-
-	const [entities, setEntities] = useState<{ guid: string; name: string }[]>([]);
-	const [selected, setSelected] = useState<{ guid: string; name: string } | undefined>(undefined);
-	const [isLoading, setIsLoading] = useState(false);
-
-	useDidMount(() => {
-		HostApi.instance
-			.send(GetObservabilityEntitiesRequestType, { appName: props.remoteName })
-			.then(_ => {
-				setEntities(_.entities);
-			});
-	});
-
-	const items =
-		entities.map(_ => {
-			return {
-				key: _.guid,
-				label: _.name,
-				action: () => {
-					setSelected(_);
-				}
-			};
-		}) || [];
-
-	return (
-		<div>
-			<p>Associate this repo with an entity on New Relic in order to see errors</p>
-			<DropdownButton
-				items={items}
-				selectedKey={selected ? selected.guid : undefined}
-				variant={"secondary"}
-				//size="compact"
-				wrap
-			>
-				{selected ? selected.name : "Select entity from New Relic"}
-			</DropdownButton>{" "}
-			<Button
-				isLoading={isLoading}
-				disabled={isLoading || !selected}
-				onClick={e => {
-					e.preventDefault();
-					setIsLoading(true);
-
-					const payload = {
-						url: props.remote,
-						name: props.remoteName,
-						applicationEntityGuid: selected?.guid,
-						entityId: selected?.guid,
-						parseableAccountId: selected?.guid
-					};
-					dispatch(api("assignRepository", payload)).then(_ => {
-						setTimeout(() => {
-							if (_?.directives) {
-								console.log("assignRepository", {
-									directives: _?.directives
-								});
-								props.onSuccess &&
-									props.onSuccess({
-										entityGuid: _?.directives.find(d => d.type === "assignRepository")?.data
-											?.entityGuid
-									});
-							} else {
-								console.log("Could not find directive", {
-									payload: payload
-								});
-							}
-							setIsLoading(false);
-						}, 2500);
-					});
-				}}
-			>
-				Add Repository
-			</Button>
-		</div>
-	);
-});
-
 export const Observability = React.memo((props: Props) => {
 	const dispatch = useDispatch();
 	const derivedState = useSelector((state: CodeStreamState) => {
@@ -253,6 +172,13 @@ export const Observability = React.memo((props: Props) => {
 	const [loadingErrors, setLoadingErrors] = useState<{ [repoId: string]: boolean } | undefined>(
 		undefined
 	);
+	const [loadingAssignmentErrorsClick, setLoadingAssignmentErrorsClick] = useState<{
+		[errorGroupGuid: string]: boolean;
+	}>({});
+	const [loadingAssigments, setLoadingAssigments] = useState<boolean>(false);
+	const [observabilityAssignments, setObservabilityAssignments] = useState<
+		ObservabilityErrorCore[]
+	>([]);
 	const [observabilityErrors, setObservabilityErrors] = useState<ObservabilityRepoError[]>([]);
 	const [observabilityRepos, setObservabilityRepos] = useState<ObservabilityRepo[]>([]);
 	const previousHiddenPaneNodes = usePrevious(derivedState.hiddenPaneNodes);
@@ -288,8 +214,24 @@ export const Observability = React.memo((props: Props) => {
 			});
 		}
 	};
+
+	const loadAssignments = () => {
+		if (hiddenPaneNodes["newrelic-errors-assigned-to-me"] !== true) {
+			setLoadingAssigments(true);
+
+			HostApi.instance
+				.send(GetObservabilityErrorAssignmentsRequestType, {})
+				.then((_: GetObservabilityErrorAssignmentsResponse) => {
+					setObservabilityAssignments(_.items);
+					setLoadingAssigments(false);
+				});
+		}
+	};
+
 	const _useDidMount = () => {
 		if (!derivedState.newRelicIsConnected) return;
+
+		loadAssignments();
 
 		HostApi.instance
 			.send(GetObservabilityReposRequestType, {})
@@ -325,9 +267,20 @@ export const Observability = React.memo((props: Props) => {
 		const disposable = HostApi.instance.on(HostDidChangeWorkspaceFoldersNotificationType, () => {
 			_useDidMount();
 		});
+		const disposable1 = HostApi.instance.on(
+			DidChangeObservabilityDataNotificationType,
+			(e: any) => {
+				if (e.type === "Assignment") {
+					setTimeout(() => {
+						loadAssignments();
+					}, 2500);
+				}
+			}
+		);
 
 		return () => {
 			disposable && disposable.dispose();
+			disposable1 && disposable1.dispose();
 		};
 	});
 
@@ -428,6 +381,76 @@ export const Observability = React.memo((props: Props) => {
 		return "(select)";
 	};
 
+	const renderAssignments = () => {
+		return (
+			<>
+				<PaneNodeName
+					title="Errors assigned to me"
+					id="newrelic-errors-assigned-to-me"
+				></PaneNodeName>
+				<>
+					{!hiddenPaneNodes["newrelic-errors-assigned-to-me"] && (
+						<>
+							{loadingAssigments ? (
+								<>
+									<ErrorRow isLoading={true} title="Loading..."></ErrorRow>
+								</>
+							) : (
+								<>
+									{observabilityAssignments.length == 0 ? (
+										<>
+											<ErrorRow title={"No errors to display"}></ErrorRow>
+										</>
+									) : (
+										<>
+											{observabilityAssignments.map(_ => {
+												return (
+													<ErrorRow
+														title={_.errorClass}
+														isLoading={loadingAssignmentErrorsClick[_.errorGroupGuid]}
+														tooltip={_.message}
+														url={_.errorGroupUrl}
+														onClick={async e => {
+															setLoadingAssignmentErrorsClick({
+																...loadingAssignmentErrorsClick,
+																[_.errorGroupGuid]: true
+															});
+															const response = (await HostApi.instance.send(
+																GetObservabilityErrorGroupMetadataRequestType,
+																{ errorGroupGuid: _.errorGroupGuid }
+															)) as GetObservabilityErrorGroupMetadataResponse;
+															if (response) {
+																dispatch(
+																	openErrorGroup(_.errorGroupGuid, response.occurrenceId, {
+																		remote: response.remote,
+																		sessionStart: derivedState.sessionStart,
+																		pendingEntityId: response.entityId,
+																		occurrenceId: response.occurrenceId,
+																		pendingErrorGroupGuid: _.errorGroupGuid
+																	})
+																);
+																setLoadingAssignmentErrorsClick({
+																	...loadingAssignmentErrorsClick,
+																	[_.errorGroupGuid]: false
+																});
+															} else {
+																console.error("could not open error group");
+															}
+														}}
+													></ErrorRow>
+												);
+											})}
+										</>
+									)}
+								</>
+							)}
+						</>
+					)}
+				</>
+			</>
+		);
+	};
+
 	const { hiddenPaneNodes } = derivedState;
 	return (
 		<Root>
@@ -453,6 +476,7 @@ export const Observability = React.memo((props: Props) => {
 					{derivedState.newRelicIsConnected ? (
 						<>
 							<PaneNode>
+								{renderAssignments()}
 								{observabilityRepos.length == 0 ? (
 									<>
 										{loadingErrors && Object.keys(loadingErrors).length > 0 && (

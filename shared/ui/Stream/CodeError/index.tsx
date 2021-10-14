@@ -1,6 +1,7 @@
 import React, { PropsWithChildren, useEffect } from "react";
 import { CardProps, getCardProps, CardFooter } from "@codestream/webview/src/components/Card";
 import {
+	DidChangeObservabilityDataNotificationType,
 	FollowCodeErrorRequestType,
 	GetNewRelicAssigneesRequestType,
 	ResolveStackTraceResponse
@@ -13,12 +14,11 @@ import {
 	MetaLabel,
 	MetaSectionCollapsed,
 	HeaderActions,
-	KebabIcon,
 	BigTitle
 } from "../Codemark/BaseCodemark";
-import { CSUser, CSCodeError, CodemarkType, CSPost, CSRepository } from "@codestream/protocols/api";
+import { CSUser, CSCodeError, CSPost } from "@codestream/protocols/api";
 import { CodeStreamState } from "@codestream/webview/store";
-import { useSelector, useDispatch, shallowEqual } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import Icon from "../Icon";
 import Tooltip from "../Tooltip";
 import { replaceHtml, emptyArray } from "@codestream/webview/utils";
@@ -34,17 +34,14 @@ import {
 } from "@codestream/webview/store/codeErrors/actions";
 import { setCurrentCodeError } from "@codestream/webview/store/context/actions";
 import { DelayedRender } from "@codestream/webview/Container/DelayedRender";
-import {
-	getCodeError,
-	getCodeErrorCreator,
-	getErrorGroup
-} from "@codestream/webview/store/codeErrors/reducer";
+import { getCodeError, getCodeErrorCreator } from "@codestream/webview/store/codeErrors/reducer";
 import MessageInput, { AttachmentField } from "../MessageInput";
 import styled from "styled-components";
 import {
 	getTeamMates,
 	findMentionedUserIds,
-	isCurrentUserInternal
+	isCurrentUserInternal,
+	getTeamMembers
 } from "@codestream/webview/store/users/reducer";
 import { createPost, markItemRead } from "../actions";
 import { getThreadPosts } from "@codestream/webview/store/posts/reducer";
@@ -52,7 +49,6 @@ import { DropdownButton, DropdownButtonItems } from "../DropdownButton";
 import { RepliesToPost } from "../Posts/RepliesToPost";
 import Menu from "../Menu";
 import { confirmPopup } from "../Confirm";
-import { createCodemark } from "@codestream/webview/store/codemarks/actions";
 import { Link } from "../Link";
 import { Dispatch } from "@codestream/webview/store/common";
 import { Loading } from "@codestream/webview/Container/Loading";
@@ -64,7 +60,6 @@ import Timestamp from "../Timestamp";
 import { Button } from "@codestream/webview/src/components/Button";
 import { ButtonRow, Dialog } from "@codestream/webview/src/components/Dialog";
 import { Headshot } from "@codestream/webview/src/components/Headshot";
-import { InlineMenu, MenuItem } from "@codestream/webview/src/components/controls/InlineMenu";
 import { SharingModal } from "../SharingModal";
 import { PROVIDER_MAPPINGS } from "../CrossPostIssueControls/types";
 import { NewRelicErrorGroup } from "@codestream/protocols/agent";
@@ -72,7 +67,6 @@ import { isConnected } from "@codestream/webview/store/providers/reducer";
 import { Modal } from "../Modal";
 import { ConfigureNewRelic } from "../ConfigureNewRelic";
 import { ConditionalNewRelic } from "./ConditionalComponent";
-import { OpenUrlRequestType } from "@codestream/protocols/webview";
 
 interface SimpleError {
 	/**
@@ -244,13 +238,15 @@ const STATES_TO_DISPLAY_STRINGS = {
 // if child props are passed in, we assume they are the action buttons/menu for the header
 export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeaderProps>) => {
 	const { codeError, collapsed } = props;
-	const dispatch = useDispatch();
+	const dispatch = useDispatch<any>();
 	const derivedState = useSelector((state: CodeStreamState) => {
 		return {
 			isConnectedToNewRelic: isConnected(state, { id: "newrelic*com" }),
 			codeErrorCreator: getCodeErrorCreator(state),
 			isCurrentUserInternal: isCurrentUserInternal(state),
-			ideName: encodeURIComponent(state.ide.name || "")
+			ideName: encodeURIComponent(state.ide.name || ""),
+			teamMembers: getTeamMembers(state),
+			emailAddress: state.session.userId ? state.users[state.session.userId]?.email : ""
 		};
 	});
 
@@ -258,34 +254,54 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 	const [states, setStates] = React.useState<DropdownButtonItems[] | undefined>(undefined);
 	const [openConnectionModal, setOpenConnectionModal] = React.useState(false);
 	const [isStateChanging, setIsStateChanging] = React.useState(false);
+	const [isAssigneeChanging, setIsAssigneeChanging] = React.useState(false);
 
-	const onSetAssignee = async userId => {
+	const notify = (emailAddress?: string) => {
+		// if no email address or it's you
+		if (!emailAddress || derivedState.emailAddress.toLowerCase() === emailAddress.toLowerCase()) {
+			HostApi.instance.emit(DidChangeObservabilityDataNotificationType.method, {
+				type: "Assignment"
+			});
+		}
+	};
+	const setAssignee = async (emailAddress: string) => {
 		if (!props.errorGroup) return;
 
+		setIsAssigneeChanging(true);
 		await dispatch(upgradePendingCodeError(props.codeError.id, "Assignee Change"));
-
-		dispatch(
+		await dispatch(
 			api("setAssignee", {
 				errorGroupGuid: props.errorGroup?.guid!,
-				userId: userId,
-				emailAddress: "fix-me"
+				emailAddress: emailAddress
 			})
 		);
+
+		notify(emailAddress);
+		setTimeout(_ => {
+			setIsAssigneeChanging(false);
+		}, 1);
 	};
 
-	const onRemoveAssignee = async (e: React.SyntheticEvent<Element, Event>, userId) => {
+	const removeAssignee = async (e: React.SyntheticEvent<Element, Event>, emailAddress, userId) => {
 		if (!props.errorGroup) return;
+
 		// dont allow this to bubble to the parent item which would call setAssignee
 		e.stopPropagation();
+		setIsAssigneeChanging(true);
 
 		await dispatch(upgradePendingCodeError(props.codeError.id, "Assignee Change"));
-
-		dispatch(
+		await dispatch(
 			api("removeAssignee", {
 				errorGroupGuid: props.errorGroup?.guid!,
+				emailAddress: emailAddress,
 				userId: userId
 			})
 		);
+
+		notify(emailAddress);
+		setTimeout(_ => {
+			setIsAssigneeChanging(false);
+		}, 1);
 	};
 
 	const buildStates = () => {
@@ -309,6 +325,7 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 										state: _
 									})
 								);
+								notify();
 								setIsStateChanging(false);
 							}
 						};
@@ -330,14 +347,13 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 	const buildAssignees = async () => {
 		if (collapsed) return;
 
-		let _items: MenuItem[] = [
-			{ type: "search", label: "", placeholder: "User name", key: "search" }
-		];
+		let assigneeItems: DropdownButtonItems[] = [{ type: "search", label: "", key: "search" }];
 
 		if (props.errorGroup && props.errorGroup.assignee) {
 			const a = props.errorGroup.assignee;
-			_items.push({ label: "-", key: "sep-assignee" });
-			_items.push({
+			const label = a.name || a.email;
+			assigneeItems.push({ label: "-", key: "sep-assignee" });
+			assigneeItems.push({
 				label: (
 					<span style={{ fontSize: "10px", fontWeight: "bold", opacity: 0.7 }}>
 						CURRENT ASSIGNEE
@@ -346,18 +362,17 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 				noHover: true,
 				disabled: true
 			});
-			_items.push({
+			assigneeItems.push({
 				icon: <Headshot size={16} display="inline-block" person={{ email: a.email }} />,
 				key: a.email,
-				label: a.name,
-				searchLabel: a.name,
-				subtext: a.email,
+				label: label,
+				subtext: label === a.email ? undefined : a.email,
 				floatRight: {
 					label: (
 						<Icon
 							name="x"
 							onClick={e => {
-								onRemoveAssignee(e, a.id);
+								removeAssignee(e, a.email, a.id);
 							}}
 						/>
 					)
@@ -365,77 +380,68 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 			});
 		}
 
-		// if (derivedState.isConnectedToNewRelic) {
-		// 	const { users } = await HostApi.instance.send(GetNewRelicAssigneesRequestType, {});
+		if (derivedState.isConnectedToNewRelic) {
+			const { users } = await HostApi.instance.send(GetNewRelicAssigneesRequestType, {});
 
-		// 	const usersFromGit = users.filter(_ => _.group === "GIT");
-		// 	if (usersFromGit.length) {
-		// 		_items.push({ label: "-", key: "sep-git" });
-		// 		_items.push({
-		// 			label: (
-		// 				<span style={{ fontSize: "10px", fontWeight: "bold", opacity: 0.7 }}>
-		// 					SUGGESTIONS FROM GIT
-		// 				</span>
-		// 			),
-		// 			noHover: true,
-		// 			disabled: true
-		// 		});
-		// 		_items = _items.concat(
-		// 			usersFromGit.map(_ => {
-		// 				return {
-		// 					icon: <Headshot size={16} display="inline-block" person={{ email: _.email }} />,
-		// 					key: _.id,
-		// 					label: _.displayName,
-		// 					searchLabel: _.displayName,
-		// 					subtext: _.email,
-		// 					action: () => onSetAssignee(_.id)
-		// 				};
-		// 			})
-		// 		);
-		// 	}
-		// 	const usersFromNr = users.filter(_ => _.group === "NR");
-		// 	if (usersFromNr.length) {
-		// 		_items.push({ label: "-", key: "sep-nr" });
-		// 		_items.push({
-		// 			label: (
-		// 				<span style={{ fontSize: "10px", fontWeight: "bold", opacity: 0.7 }}>
-		// 					OTHER TEAMMATES
-		// 				</span>
-		// 			),
-		// 			noHover: true,
-		// 			disabled: true
-		// 		});
-		// 		_items = _items.concat(
-		// 			usersFromNr.map(_ => {
-		// 				return {
-		// 					icon: <Headshot size={16} display="inline-block" person={{ email: _.email }} />,
-		// 					key: _.id,
-		// 					label: _.displayName,
-		// 					searchLabel: _.displayName,
-		// 					subtext: _.email,
-		// 					action: () => onSetAssignee(_.id)
-		// 				};
-		// 			})
-		// 		);
-		// 	}
-		// 	setItems(_items);
-		// } else {
-		// 	setItems([{ label: "-", key: "none" }]);
-		// }
-
-		if (props.errorGroup && props.errorGroup.errorGroupUrl) {
-			setItems([
-				{
-					label: "Set Assignee on New Relic",
-					action: () => {
-						HostApi.instance.send(OpenUrlRequestType, {
-							url:
-								props.errorGroup!.errorGroupUrl! +
-								`&utm_source=codestream&utm_medium=ide-${derivedState.ideName}&utm_campaign=error_group_link`
-						});
-					}
-				}
-			]);
+			const usersFromGit = users.filter(_ => _.group === "GIT");
+			if (usersFromGit.length) {
+				assigneeItems.push({ label: "-", key: "sep-git" });
+				assigneeItems.push({
+					label: (
+						<span style={{ fontSize: "10px", fontWeight: "bold", opacity: 0.7 }}>
+							SUGGESTIONS FROM GIT
+						</span>
+					),
+					noHover: true,
+					disabled: true
+				});
+				assigneeItems = assigneeItems.concat(
+					usersFromGit.map(_ => {
+						const label = _.displayName || _.email;
+						return {
+							icon: <Headshot size={16} display="inline-block" person={{ email: _.email }} />,
+							key: _.id,
+							label: label,
+							searchLabel: _.displayName || _.email,
+							subtext: label === _.email ? undefined : _.email,
+							action: () => setAssignee(_.email)
+						};
+					})
+				);
+			}
+			const usersFromGitByEmail = usersFromGit.map(_ => _.email);
+			// only show users not already shown
+			const usersFromCodeStream = derivedState.teamMembers.filter(
+				_ => !usersFromGitByEmail.includes(_.email)
+			);
+			if (usersFromCodeStream.length) {
+				assigneeItems.push({ label: "-", key: "sep-nr" });
+				assigneeItems.push({
+					label: (
+						<span style={{ fontSize: "10px", fontWeight: "bold", opacity: 0.7 }}>
+							OTHER TEAMMATES
+						</span>
+					),
+					noHover: true,
+					disabled: true
+				});
+				assigneeItems = assigneeItems.concat(
+					usersFromCodeStream.map(_ => {
+						const label = _.fullName || _.email;
+						return {
+							icon: <Headshot size={16} display="inline-block" person={{ email: _.email }} />,
+							key: _.id,
+							label: _.fullName || _.email,
+							searchLabel: _.fullName || _.username,
+							subtext: label === _.email ? undefined : _.email,
+							action: () => setAssignee(_.email)
+						};
+					})
+				);
+			}
+			setItems(assigneeItems);
+		} else {
+			setItems([{ label: "-", key: "none" }]);
 		}
 	};
 
@@ -489,7 +495,6 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 									setOpenConnectionModal(false);
 								}}
 								onSubmited={async e => {
-									//	await dispatch(fetchErrorGroup(props.codeError));
 									setOpenConnectionModal(false);
 								}}
 							/>
@@ -598,17 +603,25 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 										<>
 											{props.errorGroup && (
 												<>
-													{/* no assignee */}
-													{(!props.errorGroup.assignee || !props.errorGroup.assignee.email) && (
-														<Icon name="person" />
-													)}
-													{/* has assignee */}
-													{props.errorGroup.assignee && props.errorGroup.assignee.email && (
-														<Headshot
-															size={20}
-															display="inline-block"
-															person={{ email: props.errorGroup.assignee.email! }}
-														/>
+													{isAssigneeChanging ? (
+														<>
+															<Icon name="sync" className="spin" />
+														</>
+													) : (
+														<>
+															{/* no assignee */}
+															{(!props.errorGroup.assignee || !props.errorGroup.assignee.email) && (
+																<Icon name="person" />
+															)}
+															{/* has assignee */}
+															{props.errorGroup.assignee && props.errorGroup.assignee.email && (
+																<Headshot
+																	size={20}
+																	display="inline-block"
+																	person={{ email: props.errorGroup.assignee.email! }}
+																/>
+															)}
+														</>
 													)}
 												</>
 											)}

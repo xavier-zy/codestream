@@ -487,7 +487,7 @@ export namespace Strings {
 		);
 	}
 
-	export function santizeGraphqlValue(value: string) {
+	export function sanitizeGraphqlValue(value: string) {
 		return value?.replace(/'/g, "").replace(/"/g, "");
 	}
 

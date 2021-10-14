@@ -452,120 +452,139 @@ export const Observability = React.memo((props: Props) => {
 					{derivedState.newRelicIsConnected ? (
 						<>
 							<PaneNode>
-								{observabilityRepos.map((or: ObservabilityRepo) => {
-									return (
-										<>
-											<PaneNodeName
-												title={"Recent errors in " + or.repoName}
-												id={"newrelic-errors-in-repo-" + or.repoId}
-												subtitle={
-													!or.entityAccounts || or.entityAccounts.length < 2 ? (
-														undefined
+								{observabilityRepos.length == 0 ? (
+									<>
+										{loadingErrors && Object.keys(loadingErrors).length > 0 && (
+											<>
+												<PaneNodeName
+													title="Recent errors"
+													id="newrelic-errors-empty"
+												></PaneNodeName>
+												{!hiddenPaneNodes["newrelic-errors-empty"] && (
+													<ErrorRow title="No repositories found"></ErrorRow>
+												)}
+											</>
+										)}
+									</>
+								) : (
+									<>
+										{observabilityRepos.map((or: ObservabilityRepo) => {
+											return (
+												<>
+													<PaneNodeName
+														title={"Recent errors in " + or.repoName}
+														id={"newrelic-errors-in-repo-" + or.repoId}
+														subtitle={
+															!or.entityAccounts || or.entityAccounts.length < 2 ? (
+																undefined
+															) : (
+																<>
+																	<InlineMenu
+																		key="codemark-display-options"
+																		className="subtle no-padding"
+																		noFocusOnSelect
+																		items={or.entityAccounts.map((ea, index) => {
+																			return {
+																				label: ea.entityName,
+																				subtle:
+																					ea.accountName && ea.accountName.length > 15
+																						? ea.accountName.substr(0, 15) + "..."
+																						: ea.accountName,
+																				key: ea.entityGuid,
+																				//icon: <Icon name="file" />,
+																				action: () => {
+																					selectEntityAccount(ea.entityGuid, or.repoId);
+																					const newPreferences = derivedState.observabilityRepoEntities.filter(
+																						_ => _.repoId !== or.repoId
+																					);
+																					newPreferences.push({
+																						repoId: or.repoId,
+																						entityGuid: ea.entityGuid
+																					});
+																					dispatch(
+																						setUserPreference(
+																							["observabilityRepoEntities"],
+																							newPreferences
+																						)
+																					);
+																				},
+																				checked: !!derivedState.observabilityRepoEntities.find(
+																					_ =>
+																						_.repoId === or.repoId && _.entityGuid === ea.entityGuid
+																				)
+																			};
+																		})}
+																		title="Entities"
+																	>
+																		{buildSelectedLabel(or.repoId, or.entityAccounts)}
+																	</InlineMenu>
+																</>
+															)
+														}
+													></PaneNodeName>
+													{loadingErrors && loadingErrors[or.repoId] ? (
+														<>
+															<ErrorRow isLoading={true} title="Loading..."></ErrorRow>
+														</>
 													) : (
 														<>
-															<InlineMenu
-																key="codemark-display-options"
-																className="subtle no-padding"
-																noFocusOnSelect
-																items={or.entityAccounts.map((ea, index) => {
-																	return {
-																		label: ea.entityName,
-																		subtle:
-																			ea.accountName && ea.accountName.length > 15
-																				? ea.accountName.substr(0, 15) + "..."
-																				: ea.accountName,
-																		key: ea.entityGuid,
-																		//icon: <Icon name="file" />,
-																		action: () => {
-																			selectEntityAccount(ea.entityGuid, or.repoId);
-																			const newPreferences = derivedState.observabilityRepoEntities.filter(
-																				_ => _.repoId !== or.repoId
-																			);
-																			newPreferences.push({
-																				repoId: or.repoId,
-																				entityGuid: ea.entityGuid
-																			});
-																			dispatch(
-																				setUserPreference(
-																					["observabilityRepoEntities"],
-																					newPreferences
-																				)
-																			);
-																		},
-																		checked: !!derivedState.observabilityRepoEntities.find(
-																			_ => _.repoId === or.repoId && _.entityGuid === ea.entityGuid
-																		)
-																	};
-																})}
-																title="Entities"
-															>
-																{buildSelectedLabel(or.repoId, or.entityAccounts)}
-															</InlineMenu>
-														</>
-													)
-												}
-											></PaneNodeName>
-											{loadingErrors && loadingErrors[or.repoId] ? (
-												<>
-													<ErrorRow isLoading={true} title="Loading..."></ErrorRow>
-												</>
-											) : (
-												<>
-													{!hiddenPaneNodes["newrelic-errors-in-repo-" + or.repoId] && (
-														<>
-															{observabilityErrors?.find(
-																oe => oe.repoId === or.repoId && oe.errors.length > 0
-															) ? (
+															{!hiddenPaneNodes["newrelic-errors-in-repo-" + or.repoId] && (
 																<>
-																	{observabilityErrors
-																		.filter(oe => oe.repoId === or.repoId)
-																		.map(ugh => {
-																			return ugh.errors.map(err => {
-																				return (
-																					<ErrorRow
-																						title={`${err.errorClass} (${err.count})`}
-																						tooltip={err.message}
-																						timestamp={err.lastOccurrence}
-																						url={err.errorGroupUrl}
-																						onClick={e => {
-																							dispatch(
-																								openErrorGroup(
-																									err.errorGroupGuid,
-																									err.occurrenceId,
-																									{
-																										remote: or.repoRemote,
-																										pendingEntityId: err.entityId,
-																										occurrenceId: err.occurrenceId,
-																										pendingErrorGroupGuid: err.errorGroupGuid
-																									}
-																								)
-																							);
-																						}}
-																					/>
-																				);
-																			});
-																		})}
+																	{observabilityErrors?.find(
+																		oe => oe.repoId === or.repoId && oe.errors.length > 0
+																	) ? (
+																		<>
+																			{observabilityErrors
+																				.filter(oe => oe.repoId === or.repoId)
+																				.map(ugh => {
+																					return ugh.errors.map(err => {
+																						return (
+																							<ErrorRow
+																								title={`${err.errorClass} (${err.count})`}
+																								tooltip={err.message}
+																								timestamp={err.lastOccurrence}
+																								url={err.errorGroupUrl}
+																								onClick={e => {
+																									dispatch(
+																										openErrorGroup(
+																											err.errorGroupGuid,
+																											err.occurrenceId,
+																											{
+																												remote: or.repoRemote,
+																												pendingEntityId: err.entityId,
+																												occurrenceId: err.occurrenceId,
+																												pendingErrorGroupGuid: err.errorGroupGuid
+																											}
+																										)
+																									);
+																								}}
+																							/>
+																						);
+																					});
+																				})}
+																		</>
+																	) : or.hasRepoAssociation ? (
+																		<ErrorRow title="No errors to display" />
+																	) : (
+																		<div style={{ padding: "0px 35px" }}>
+																			<EntityAssociator
+																				onSuccess={e => {
+																					fetchEntityRepo(e.entityGuid, or.repoId);
+																				}}
+																				remote={or.repoRemote}
+																				remoteName={or.repoName}
+																			/>
+																		</div>
+																	)}
 																</>
-															) : or.hasRepoAssociation ? (
-																<ErrorRow title="No errors to display" />
-															) : (
-																<div style={{ padding: "0px 35px" }}>
-																	<EntityAssociator
-																		onSuccess={e => {
-																			fetchEntityRepo(e.entityGuid, or.repoId);
-																		}}
-																		remote={or.repoRemote}
-																		remoteName={or.repoName}
-																	/>
-																</div>
 															)}
 														</>
 													)}
 												</>
-											)}
-										</>
-									);
-								})}
+											);
+										})}
+									</>
+								)}
 							</PaneNode>
 						</>
 					) : (

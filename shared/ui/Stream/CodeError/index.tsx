@@ -67,6 +67,7 @@ import { isConnected } from "@codestream/webview/store/providers/reducer";
 import { Modal } from "../Modal";
 import { ConfigureNewRelic } from "../ConfigureNewRelic";
 import { ConditionalNewRelic } from "./ConditionalComponent";
+import { invite } from "../actions";
 
 interface SimpleError {
 	/**
@@ -267,19 +268,57 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 	const setAssignee = async (emailAddress: string) => {
 		if (!props.errorGroup) return;
 
-		setIsAssigneeChanging(true);
-		await dispatch(upgradePendingCodeError(props.codeError.id, "Assignee Change"));
-		await dispatch(
-			api("setAssignee", {
-				errorGroupGuid: props.errorGroup?.guid!,
-				emailAddress: emailAddress
-			})
-		);
+		const _setAssignee = async () => {
+			setIsAssigneeChanging(true);
+			await dispatch(upgradePendingCodeError(props.codeError.id, "Assignee Change"));
+			await dispatch(
+				api("setAssignee", {
+					errorGroupGuid: props.errorGroup?.guid!,
+					emailAddress: emailAddress
+				})
+			);
 
-		notify(emailAddress);
-		setTimeout(_ => {
-			setIsAssigneeChanging(false);
-		}, 1);
+			notify(emailAddress);
+			setTimeout(_ => {
+				setIsAssigneeChanging(false);
+			}, 1);
+		};
+		if (derivedState.emailAddress.toLowerCase() === emailAddress.toLowerCase()) {
+			_setAssignee();
+			return;
+		}
+
+		confirmPopup({
+			title: "Invite to CodeStream?",
+			message: (
+				<span>
+					Assign the error to <b>{emailAddress}</b> and invite them to join CodeStream
+				</span>
+			),
+			centered: true,
+			buttons: [
+				{
+					label: "Cancel",
+					className: "control-button btn-secondary",
+					action: () => {
+						_setAssignee();
+					}
+				},
+				{
+					label: "Invite",
+					className: "control-button",
+					wait: true,
+					action: () => {
+						dispatch(
+							invite({
+								email: emailAddress
+							})
+						);
+						_setAssignee();
+					}
+				}
+			]
+		});
 	};
 
 	const removeAssignee = async (e: React.SyntheticEvent<Element, Event>, emailAddress, userId) => {
@@ -349,9 +388,11 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 
 		let assigneeItems: DropdownButtonItems[] = [{ type: "search", label: "", key: "search" }];
 
+		let assigneeEmail;
 		if (props.errorGroup && props.errorGroup.assignee) {
 			const a = props.errorGroup.assignee;
 			const label = a.name || a.email;
+			assigneeEmail = a.email;
 			assigneeItems.push({ label: "-", key: "sep-assignee" });
 			assigneeItems.push({
 				label: (
@@ -381,7 +422,10 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 		}
 
 		if (derivedState.isConnectedToNewRelic) {
-			const { users } = await HostApi.instance.send(GetNewRelicAssigneesRequestType, {});
+			let { users } = await HostApi.instance.send(GetNewRelicAssigneesRequestType, {});
+			if (assigneeEmail) {
+				users = users.filter(_ => _.email !== assigneeEmail);
+			}
 
 			const usersFromGit = users.filter(_ => _.group === "GIT");
 			if (usersFromGit.length) {
@@ -400,7 +444,7 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 						const label = _.displayName || _.email;
 						return {
 							icon: <Headshot size={16} display="inline-block" person={{ email: _.email }} />,
-							key: _.id,
+							key: _.id || `git-${_.email}`,
 							label: label,
 							searchLabel: _.displayName || _.email,
 							subtext: label === _.email ? undefined : _.email,
@@ -411,9 +455,14 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 			}
 			const usersFromGitByEmail = usersFromGit.map(_ => _.email);
 			// only show users not already shown
-			const usersFromCodeStream = derivedState.teamMembers.filter(
+			let usersFromCodeStream = derivedState.teamMembers.filter(
 				_ => !usersFromGitByEmail.includes(_.email)
 			);
+
+			if (assigneeEmail) {
+				// if we have an assignee don't re-include them here
+				usersFromCodeStream = usersFromCodeStream.filter(_ => _.email !== assigneeEmail);
+			}
 			if (usersFromCodeStream.length) {
 				assigneeItems.push({ label: "-", key: "sep-nr" });
 				assigneeItems.push({

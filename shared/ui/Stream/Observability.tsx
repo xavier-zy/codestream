@@ -243,6 +243,7 @@ export const Observability = React.memo((props: Props) => {
 			providers["newrelic*com"] && isConnected(state, { id: "newrelic*com" });
 		const hiddenPaneNodes = preferences.hiddenPaneNodes || EMPTY_HASH;
 		return {
+			sessionStart: state.context.sessionStart,
 			newRelicIsConnected,
 			hiddenPaneNodes,
 			observabilityRepoEntities: preferences.observabilityRepoEntities || EMPTY_ARRAY
@@ -551,6 +552,7 @@ export const Observability = React.memo((props: Props) => {
 																											err.occurrenceId,
 																											{
 																												remote: or.repoRemote,
+																												sessionStart: derivedState.sessionStart,
 																												pendingEntityId: err.entityId,
 																												occurrenceId: err.occurrenceId,
 																												pendingErrorGroupGuid: err.errorGroupGuid

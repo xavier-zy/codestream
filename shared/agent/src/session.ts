@@ -4,6 +4,7 @@ import { Agent as HttpAgent } from "http";
 import { Agent as HttpsAgent } from "https";
 import HttpsProxyAgent from "https-proxy-agent";
 import { isEqual, uniq } from "lodash-es";
+import glob from "glob-promise";
 import * as path from "path";
 import * as url from "url";
 import {
@@ -1452,6 +1453,16 @@ export class CodeStreamSession {
 					break;
 				}
 				files = files.concat(fileSearchResponse);
+			}
+			if (!files.length) {
+				for (const path of paths) {
+					const globSearchResults = await glob(basePath + "/**/" + path);
+					if (!globSearchResults.length) {
+						// once there are no more results, just stop
+						break;
+					}
+					files = files.concat(globSearchResults);
+				}
 			}
 			// put the most specific files found first (aka greatest number of separators)
 			files = uniq(files).reverse();

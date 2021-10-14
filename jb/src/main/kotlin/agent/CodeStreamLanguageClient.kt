@@ -22,6 +22,8 @@ import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
+import com.intellij.psi.search.FilenameIndex
+import com.intellij.psi.search.GlobalSearchScope
 import git4idea.GitUtil
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -174,9 +176,12 @@ class CodeStreamLanguageClient(private val project: Project) : LanguageClient {
     fun fileSearch(json: JsonElement): CompletableFuture<FileSearchResponse> {
         val request = gson.fromJson<FileSearchRequest>(json[0])
 
-        val files = FileUtils.listFiles(File(request.basePath), SuffixFileFilter(request.path), TrueFileFilter.INSTANCE)
-        val paths = files.map { it.absolutePath }
-        return CompletableFuture.completedFuture(FileSearchResponse(paths));
+        val fileFuture = CompletableFuture<FileSearchResponse>()
+        ApplicationManager.getApplication().invokeLater {
+            val files = FilenameIndex.getFilesByName(project, request.path, GlobalSearchScope.projectScope(project)).map { it.virtualFile.path}
+            fileFuture.complete(FileSearchResponse(files))
+        }
+        return fileFuture
     }
 
     @JsonNotification("codestream/didSetEnvironment")

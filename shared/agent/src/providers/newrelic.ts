@@ -298,7 +298,22 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			})
 		);
 		const remoteFilter = Array.from(set).join(" OR ");
-		const queryResponse = await this.query(`{
+
+		if (!remoteFilter.length) return [];
+
+		const queryResponse = await this.query<{
+			actor: {
+				entitySearch: {
+					results: {
+						entities: {
+							guid: string;
+							name: String;
+							tags: { key: string; values: string[] }[];
+						}[];
+					};
+				};
+			};
+		}>(`{
 			actor {
 			  entitySearch(query: "type = 'REPOSITORY' and (${remoteFilter})") {
 				count
@@ -609,7 +624,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				});
 
 				const entities = await this.getEntitiesByRepoRemote(remotes);
-				if (entities) {
+				if (entities?.length) {
 					const entityFilter = request.filters?.find(_ => _.repoId === repo.id!);
 					for (const entity of entities.filter((_, index) =>
 						entityFilter && entityFilter.entityGuid

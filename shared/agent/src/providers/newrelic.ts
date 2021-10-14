@@ -241,7 +241,9 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			requestError.response.errors &&
 			requestError.response.errors.length
 		) {
-			return requestError.response.errors.find(_ => _.extensions.error_code === "BAD_API_KEY");
+			return requestError.response.errors.find(
+				_ => _.extensions && _.extensions.error_code === "BAD_API_KEY"
+			);
 		}
 		return undefined;
 	}

@@ -1060,9 +1060,8 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 	private async getStackTrace(entityId: string, occurrenceId: string) {
 		let fingerprintId = 0;
 		try {
-			let parsed = parseInt(occurrenceId, 10);
-			fingerprintId = isNaN(parsed) ? 0 : parsed;
-			if (fingerprintId > 0) {
+			if (occurrenceId.match(/^-?\d+$/)) {
+				fingerprintId = parseInt(occurrenceId, 10);
 				occurrenceId = "";
 			}
 		} catch {}

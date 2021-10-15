@@ -30,6 +30,7 @@ import { highlightRange } from "../../Stream/api-functions";
 import { EditorRevealRangeRequestType, WebviewPanels } from "@codestream/protocols/webview";
 import { setCurrentCodeError } from "../context/actions";
 import { getCodeError } from "./reducer";
+import { confirmPopup } from "@codestream/webview/Stream/Confirm";
 
 export const reset = () => action("RESET");
 
@@ -402,6 +403,34 @@ export const openErrorGroup = (
 	occurrenceId?: string,
 	data: any = {}
 ) => async (dispatch, getState: () => CodeStreamState) => {
+	const response = await findCodeError({
+		objectId: errorGroupGuid,
+		objectType: "errorGroup"
+	});
+	if (response.unauthorized) {
+		HostApi.instance.track("Error Report Roadblocked", {
+			"Error Group ID": errorGroupGuid,
+			// FIXME: i don't have a fucking clue how we're going to get this, especially at this point in the flow
+			"NR Organization ID": "",
+			"NR Account ID": response.accountId
+		});
+		const orgDesc = response.ownedBy ? `the ${response.ownedBy} organization` : "another company";
+		confirmPopup({
+			title: "Error Can't Be Opened",
+			message: `This error can't be displayed because it's owned by ${orgDesc} on CodeStream.`,
+			centered: true,
+			buttons: [
+				{
+					label: "OK",
+					className: "control-button"
+				}
+			]
+		});
+		return;
+	} else if (response.codeError) {
+		await dispatch(addCodeErrors([response.codeError]));
+	}
+
 	dispatch(findErrorGroupByObjectId(errorGroupGuid, occurrenceId)).then(codeError => {
 		// if we found an existing codeError, it exists in the data store
 		const pendingId = codeError ? codeError.id : PENDING_CODE_ERROR_ID_FORMAT(errorGroupGuid);

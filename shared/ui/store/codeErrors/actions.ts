@@ -421,7 +421,7 @@ export const openErrorGroup = (
 			"NR Organization ID": "",
 			"NR Account ID": response.accountId
 		});
-		const orgDesc = response.ownedBy ? `the ${response.ownedBy} organization` : "another company";
+		const orgDesc = response.ownedBy ? `the ${response.ownedBy} organization` : "another organization";
 		confirmPopup({
 			title: "Error Can't Be Opened",
 			message: `This error can't be displayed because it's owned by ${orgDesc} on CodeStream.`,

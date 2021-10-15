@@ -283,7 +283,11 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 				setIsAssigneeChanging(false);
 			}, 1);
 		};
-		if (derivedState.emailAddress.toLowerCase() === emailAddress.toLowerCase()) {
+		// if it's me, or someone that is already on the team -- just assign them without asking to invite
+		if (
+			derivedState.emailAddress.toLowerCase() === emailAddress.toLowerCase() ||
+			derivedState.teamMembers.find(_ => _.email.toLowerCase() === emailAddress.toLowerCase())
+		) {
 			_setAssignee();
 			return;
 		}

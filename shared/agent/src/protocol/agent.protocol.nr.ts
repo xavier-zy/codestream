@@ -158,3 +158,12 @@ export const GetNewRelicSignupJwtTokenRequestType = new RequestType<
 	void,
 	void
 >("codestream/nr/openNewRelicSignupUrl");
+
+export interface LookupNewRelicOrganizationsRequest {
+	accountIds: number[];
+}
+
+export type LookupNewRelicOrganizationsResponse = {
+	accountId: number;
+	orgId: number;
+}[];

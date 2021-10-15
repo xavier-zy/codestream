@@ -1,11 +1,14 @@
 "use strict";
 import { GraphQLClient } from "graphql-request";
+import { groupBy as _groupBy, memoize, sortBy as _sortBy } from "lodash-es";
 import { ResponseError } from "vscode-jsonrpc/lib/messages";
 import { InternalError, ReportSuppressedMessages } from "../agentError";
 import { SessionContainer } from "../container";
+import { GitRemoteParser } from "../git/parsers/remoteParser";
 import { Logger } from "../logger";
 import {
 	EntityAccount,
+	EntitySearchResponse,
 	ERROR_NR_CONNECTION_INVALID_API_KEY,
 	ERROR_NR_CONNECTION_MISSING_API_KEY,
 	ERROR_NR_CONNECTION_MISSING_URL,
@@ -18,6 +21,8 @@ import {
 	GetNewRelicErrorGroupRequestType,
 	GetNewRelicErrorGroupResponse,
 	GetObservabilityEntitiesRequest,
+	GetObservabilityEntitiesRequestType,
+	GetObservabilityEntitiesResponse,
 	GetObservabilityErrorAssignmentsRequest,
 	GetObservabilityErrorAssignmentsRequestType,
 	GetObservabilityErrorAssignmentsResponse,
@@ -35,20 +40,15 @@ import {
 	ObservabilityError,
 	ObservabilityErrorCore,
 	RelatedEntity,
+	ReposScm,
 	ThirdPartyDisconnect,
-	ThirdPartyProviderConfig,
-	EntitySearchResponse,
-	GetObservabilityEntitiesResponse,
-	GetObservabilityEntitiesRequestType,
-	ReposScm
+	ThirdPartyProviderConfig
 } from "../protocol/agent.protocol";
 import { CSNewRelicProviderInfo } from "../protocol/api.protocol";
 import { CodeStreamSession } from "../session";
 import { log, lspHandler, lspProvider } from "../system";
 import { Strings } from "../system/string";
 import { ThirdPartyIssueProviderBase } from "./provider";
-import { memoize, groupBy as _groupBy, sortBy as _sortBy } from "lodash-es";
-import { GitRemoteParser } from "../git/parsers/remoteParser";
 
 export interface Directive {
 	type: "assignRepository" | "removeAssignee" | "setAssignee" | "setState";
@@ -220,13 +220,19 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			request.apiKey
 		);
 		const { userId, accounts } = await this.validateApiKey(client);
+		Logger.log(`Found ${accounts.length} New Relic accounts`);
+		const response = await this.session.api.lookupNewRelicOrganizations({
+			accountIds: accounts.map(_ => _.id)
+		});
+		Logger.log(`Found ${response.length} associated New Relic organizations`);
 		await this.session.api.setThirdPartyProviderToken({
 			providerId: this.providerConfig.id,
 			token: request.apiKey,
 			data: {
 				userId,
 				accountId: request.accountId,
-				apiUrl: request.apiUrl
+				apiUrl: request.apiUrl,
+				orgIds: response.map(_ => _.orgId)
 			}
 		});
 	}

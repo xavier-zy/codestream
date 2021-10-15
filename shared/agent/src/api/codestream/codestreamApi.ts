@@ -1,6 +1,7 @@
 "use strict";
 
 import AbortController from "abort-controller";
+import FormData from "form-data";
 import { Agent as HttpAgent } from "http";
 import { Agent as HttpsAgent } from "https";
 import HttpsProxyAgent from "https-proxy-agent";
@@ -15,49 +16,23 @@ import { Container, SessionContainer } from "../../container";
 import { Logger } from "../../logger";
 import { isDirective, resolve, safeDecode, safeEncode } from "../../managers/operations";
 import {
+	AccessToken,
 	AddBlameMapRequest,
 	AddBlameMapRequestType,
-	AddMarkersResponse,
-	AgentOpenUrlRequestType,
-	ChangeDataType,
-	CreateCompanyRequest,
-	CreateCompanyRequestType,
-	DeleteBlameMapRequest,
-	DeleteBlameMapRequestType,
-	DeleteMarkerRequest,
-	DeleteMarkerResponse,
-	DeleteMeUserRequest,
-	DeleteMeUserRequestType,
-	DeleteMeUserResponse,
-	DidChangeDataNotificationType,
-	GetNewRelicSignupJwtTokenRequest,
-	GetNewRelicSignupJwtTokenRequestType,
-	GetNewRelicSignupJwtTokenResponse,
-	JoinCompanyRequest,
-	JoinCompanyRequestType,
-	JoinCompanyResponse,
-	MarkItemReadRequest,
-	MatchReposRequestType,
-	ReportingMessageType,
-	RepoScmStatus,
-	UpdateCompanyRequest,
-	UpdateCompanyRequestType,
-	UpdateCompanyResponse,
-	UpdateInvisibleRequest,
-	UpdatePostSharingDataRequest,
-	UpdateTeamResponse
-} from "../../protocol/agent.protocol";
-import {
-	AccessToken,
 	AddEnterpriseProviderHostRequest,
 	AddEnterpriseProviderHostResponse,
+	AddMarkersResponse,
 	AddReferenceLocationRequest,
+	AgentOpenUrlRequestType,
 	ArchiveStreamRequest,
 	Capabilities,
+	ChangeDataType,
 	CloseStreamRequest,
 	CreateChannelStreamRequest,
 	CreateCodemarkPermalinkRequest,
 	CreateCodemarkRequest,
+	CreateCompanyRequest,
+	CreateCompanyRequestType,
 	CreateDirectStreamRequest,
 	CreateExternalPostRequest,
 	CreateMarkerLocationRequest,
@@ -67,17 +42,25 @@ import {
 	CreateTeamRequest,
 	CreateTeamRequestType,
 	CreateTeamTagRequestType,
-	DeleteCodemarkRequest,
+	DeleteBlameMapRequest,
+	DeleteBlameMapRequestType,
 	DeleteCodeErrorRequest,
+	DeleteCodemarkRequest,
+	DeleteMarkerRequest,
+	DeleteMarkerResponse,
+	DeleteMeUserRequest,
+	DeleteMeUserRequestType,
+	DeleteMeUserResponse,
 	DeletePostRequest,
 	DeleteReviewRequest,
 	DeleteTeamTagRequestType,
 	DeleteUserRequest,
 	DeleteUserResponse,
+	DidChangeDataNotificationType,
 	EditPostRequest,
-	FetchCodemarksRequest,
 	FetchCodeErrorsRequest,
 	FetchCodeErrorsResponse,
+	FetchCodemarksRequest,
 	FetchCompaniesRequest,
 	FetchCompaniesResponse,
 	FetchFileStreamsRequest,
@@ -97,18 +80,21 @@ import {
 	FetchUsersRequest,
 	FindCodeErrorRequest,
 	FindCodeErrorResponse,
-	FollowCodemarkRequest,
-	FollowCodemarkResponse,
 	FollowCodeErrorRequest,
 	FollowCodeErrorResponse,
+	FollowCodemarkRequest,
+	FollowCodemarkResponse,
 	FollowReviewRequest,
 	FollowReviewResponse,
-	GetCodemarkRequest,
 	GetCodeErrorRequest,
 	GetCodeErrorResponse,
+	GetCodemarkRequest,
 	GetCompanyRequest,
 	GetCompanyResponse,
 	GetMarkerRequest,
+	GetNewRelicSignupJwtTokenRequest,
+	GetNewRelicSignupJwtTokenRequestType,
+	GetNewRelicSignupJwtTokenResponse,
 	GetPostRequest,
 	GetPostsRequest,
 	GetPreferencesResponse,
@@ -120,14 +106,21 @@ import {
 	GetUnreadsRequest,
 	GetUserRequest,
 	InviteUserRequest,
+	JoinCompanyRequest,
+	JoinCompanyRequestType,
+	JoinCompanyResponse,
 	JoinStreamRequest,
 	KickUserRequest,
 	KickUserResponse,
 	LeaveStreamRequest,
 	LoginFailResponse,
+	LookupNewRelicOrganizationsRequest,
+	LookupNewRelicOrganizationsResponse,
+	MarkItemReadRequest,
 	MarkPostUnreadRequest,
 	MarkStreamReadRequest,
 	MatchReposRequest,
+	MatchReposRequestType,
 	MatchReposResponse,
 	MoveMarkerResponse,
 	MuteStreamRequest,
@@ -138,6 +131,7 @@ import {
 	ReactToPostRequest,
 	RemoveEnterpriseProviderHostRequest,
 	RenameStreamRequest,
+	ReportingMessageType,
 	SendPasswordResetEmailRequest,
 	SendPasswordResetEmailRequestType,
 	SetCodemarkPinnedRequest,
@@ -150,9 +144,14 @@ import {
 	ThirdPartyProviderSetTokenRequestData,
 	UnarchiveStreamRequest,
 	Unreads,
-	UpdateCodemarkRequest,
 	UpdateCodeErrorRequest,
+	UpdateCodemarkRequest,
+	UpdateCompanyRequest,
+	UpdateCompanyRequestType,
+	UpdateCompanyResponse,
+	UpdateInvisibleRequest,
 	UpdateMarkerRequest,
+	UpdatePostSharingDataRequest,
 	UpdatePreferencesRequest,
 	UpdatePresenceRequest,
 	UpdateReviewRequest,
@@ -207,11 +206,11 @@ import {
 	CSEditPostResponse,
 	CSFileStream,
 	CSGetApiCapabilitiesResponse,
-	CSGetCodemarkResponse,
-	CSGetCodemarksResponse,
 	CSGetCodeErrorResponse,
 	CSGetCodeErrorsRequest,
 	CSGetCodeErrorsResponse,
+	CSGetCodemarkResponse,
+	CSGetCodemarksResponse,
 	CSGetCompaniesResponse,
 	CSGetCompanyResponse,
 	CSGetInviteInfoRequest,
@@ -260,7 +259,6 @@ import {
 	CSRefreshableProviderInfos,
 	CSRegisterRequest,
 	CSRegisterResponse,
-	CSRemoveProviderHostRequest,
 	CSRemoveProviderHostResponse,
 	CSSetCodemarkPinnedRequest,
 	CSSetCodemarkPinnedResponse,
@@ -270,10 +268,10 @@ import {
 	CSTeam,
 	CSTeamTagRequest,
 	CSTrackProviderPostRequest,
-	CSUpdateCodemarkRequest,
-	CSUpdateCodemarkResponse,
 	CSUpdateCodeErrorRequest,
 	CSUpdateCodeErrorResponse,
+	CSUpdateCodemarkRequest,
+	CSUpdateCodemarkResponse,
 	CSUpdateMarkerRequest,
 	CSUpdateMarkerResponse,
 	CSUpdatePostSharingDataRequest,
@@ -308,7 +306,6 @@ import {
 import { CodeStreamPreferences } from "../preferences";
 import { BroadcasterEvents } from "./events";
 import { CodeStreamUnreads } from "./unreads";
-import FormData from "form-data";
 
 @lsp
 export class CodeStreamApiProvider implements ApiProvider {
@@ -2451,6 +2448,16 @@ export class CodeStreamApiProvider implements ApiProvider {
 			...response,
 			baseLandingUrl
 		};
+	}
+
+	lookupNewRelicOrganizations(
+		request: LookupNewRelicOrganizationsRequest
+	): Promise<LookupNewRelicOrganizationsResponse> {
+		return this.post<LookupNewRelicOrganizationsRequest, LookupNewRelicOrganizationsResponse>(
+			`/lookup-nr-orgs`,
+			request,
+			this._token
+		);
 	}
 
 	async delete<R extends object>(url: string, token?: string): Promise<R> {

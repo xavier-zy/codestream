@@ -29,10 +29,10 @@ import {
 	CreatePostResponse,
 	CreateRepoRequest,
 	CreateRepoResponse,
-	DeleteCodemarkRequest,
-	DeleteCodemarkResponse,
 	DeleteCodeErrorRequest,
 	DeleteCodeErrorResponse,
+	DeleteCodemarkRequest,
+	DeleteCodemarkResponse,
 	DeleteMarkerRequest,
 	DeleteMarkerResponse,
 	DeletePostRequest,
@@ -43,10 +43,10 @@ import {
 	DeleteUserResponse,
 	EditPostRequest,
 	EditPostResponse,
-	FetchCodemarksRequest,
-	FetchCodemarksResponse,
 	FetchCodeErrorsRequest,
 	FetchCodeErrorsResponse,
+	FetchCodemarksRequest,
+	FetchCodemarksResponse,
 	FetchCompaniesRequest,
 	FetchCompaniesResponse,
 	FetchFileStreamsRequest,
@@ -77,21 +77,23 @@ import {
 	FetchUsersResponse,
 	FindCodeErrorRequest,
 	FindCodeErrorResponse,
-	FollowCodemarkRequest,
-	FollowCodemarkResponse,
 	FollowCodeErrorRequest,
 	FollowCodeErrorResponse,
+	FollowCodemarkRequest,
+	FollowCodemarkResponse,
 	FollowReviewRequest,
 	FollowReviewResponse,
-	GetCodemarkRequest,
-	GetCodemarkResponse,
 	GetCodeErrorRequest,
 	GetCodeErrorResponse,
+	GetCodemarkRequest,
+	GetCodemarkResponse,
 	GetCompanyRequest,
 	GetCompanyResponse,
 	GetMarkerRequest,
 	GetMarkerResponse,
 	GetMeResponse,
+	GetNewRelicSignupJwtTokenRequest,
+	GetNewRelicSignupJwtTokenResponse,
 	GetPostRequest,
 	GetPostResponse,
 	GetPostsRequest,
@@ -117,6 +119,8 @@ import {
 	KickUserResponse,
 	LeaveStreamRequest,
 	LeaveStreamResponse,
+	LookupNewRelicOrganizationsRequest,
+	LookupNewRelicOrganizationsResponse,
 	MarkItemReadRequest,
 	MarkItemReadResponse,
 	MarkPostUnreadRequest,
@@ -148,10 +152,10 @@ import {
 	UnarchiveStreamRequest,
 	UnarchiveStreamResponse,
 	Unreads,
-	UpdateCodemarkRequest,
-	UpdateCodemarkResponse,
 	UpdateCodeErrorRequest,
 	UpdateCodeErrorResponse,
+	UpdateCodemarkRequest,
+	UpdateCodemarkResponse,
 	UpdateInvisibleRequest,
 	UpdateInvisibleResponse,
 	UpdateMarkerRequest,
@@ -170,16 +174,14 @@ import {
 	UpdateStreamMembershipResponse,
 	UpdateUserRequest,
 	UpdateUserResponse,
-	VerifyConnectivityResponse,
-	GetNewRelicSignupJwtTokenRequest,
-	GetNewRelicSignupJwtTokenResponse
+	VerifyConnectivityResponse
 } from "../protocol/agent.protocol";
 import {
 	CSApiCapabilities,
 	CSApiFeatures,
 	CSChannelStream,
-	CSCodemark,
 	CSCodeError,
+	CSCodemark,
 	CSCompany,
 	CSDirectStream,
 	CSLoginResponse,
@@ -517,6 +519,10 @@ export interface ApiProvider {
 	getNewRelicSignupJwtToken(
 		request: GetNewRelicSignupJwtTokenRequest
 	): Promise<GetNewRelicSignupJwtTokenResponse>;
+
+	lookupNewRelicOrganizations(
+		request: LookupNewRelicOrganizationsRequest
+	): Promise<LookupNewRelicOrganizationsResponse>;
 
 	verifyConnectivity(): Promise<VerifyConnectivityResponse>;
 	setServerUrl(url: string): void;

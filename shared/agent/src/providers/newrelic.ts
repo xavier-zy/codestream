@@ -910,7 +910,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					occurrenceId: request.occurrenceId,
 					entityGuid: entityGuid,
 					hasErrorGroup: errorGroup != null,
-					hasStackTrace: errorGroup?.hasStackTrace
+					hasStackTrace: errorGroup?.hasStackTrace === true
 				});
 			} else {
 				Logger.warn(

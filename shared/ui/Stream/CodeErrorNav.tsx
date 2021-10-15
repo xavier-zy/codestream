@@ -385,52 +385,64 @@ export function CodeErrorNav(props: Props) {
 				return;
 			}
 
-			const repo = reposResponse.repos[0];
-			const stackInfo = (await resolveStackTrace(
-				repo.id!,
-				commit!,
-				occurrenceId!,
-				errorGroupResult.errorGroup?.errorTrace!?.stackTrace.map(_ => _.formatted)
-			)) as ResolveStackTraceResponse;
+			if (errorGroupResult?.errorGroup && !errorGroupResult.errorGroup.hasStackTrace) {
+				setError({
+					title: "Missing Stack Trace",
+					description:
+						"This error report does not have a stack trace associated with it and cannot be displayed."
+				});
+			} else {
+				const repo = reposResponse.repos[0];
+				const stackInfo = (await resolveStackTrace(
+					repo.id!,
+					commit!,
+					occurrenceId!,
+					errorGroupResult.errorGroup?.errorTrace!?.stackTrace.map(_ => _.formatted)
+				)) as ResolveStackTraceResponse;
 
-			if (
-				derivedState.currentCodeErrorId &&
-				derivedState.currentCodeErrorId?.indexOf(PENDING_CODE_ERROR_ID_PREFIX) === 0
-			) {
-				await dispatch(
-					addCodeErrors([
-						{
-							accountId: errorGroupResult.accountId,
-							id: derivedState.currentCodeErrorId!,
-							createdAt: new Date().getTime(),
-							modifiedAt: new Date().getTime(),
-							// these don't matter
-							assignees: [],
-							teamId: "",
-							streamId: "",
-							postId: "",
-							fileStreamIds: [],
-							status: "open",
-							numReplies: 0,
-							lastActivityAt: 0,
-							creatorId: "",
-							objectId: errorGroupGuid,
-							objectType: "errorGroup",
-							title: errorGroupResult.errorGroup?.title || "",
-							text: errorGroupResult.errorGroup?.message || undefined,
-							// storing the permanently parsed stack info
-							stackTraces: stackInfo.error
-								? [{ ...stackInfo, lines: [] }]
-								: [stackInfo.parsedStackInfo!],
-							objectInfo: {
-								repoId: repo.id,
-								remote: targetRemote,
-								accountId: errorGroupResult.accountId.toString(),
-								entityName: errorGroupResult?.errorGroup?.entityName || ""
+				if (
+					derivedState.currentCodeErrorId &&
+					derivedState.currentCodeErrorId?.indexOf(PENDING_CODE_ERROR_ID_PREFIX) === 0
+				) {
+					await dispatch(
+						addCodeErrors([
+							{
+								accountId: errorGroupResult.accountId,
+								id: derivedState.currentCodeErrorId!,
+								createdAt: new Date().getTime(),
+								modifiedAt: new Date().getTime(),
+								// these don't matter
+								assignees: [],
+								teamId: "",
+								streamId: "",
+								postId: "",
+								fileStreamIds: [],
+								status: "open",
+								numReplies: 0,
+								lastActivityAt: 0,
+								creatorId: "",
+								objectId: errorGroupGuid,
+								objectType: "errorGroup",
+								title: errorGroupResult.errorGroup?.title || "",
+								text: errorGroupResult.errorGroup?.message || undefined,
+								// storing the permanently parsed stack info
+								stackTraces: stackInfo.error
+									? [{ ...stackInfo, lines: [] }]
+									: [stackInfo.parsedStackInfo!],
+								objectInfo: {
+									repoId: repo.id,
+									remote: targetRemote,
+									accountId: errorGroupResult.accountId.toString(),
+									entityName: errorGroupResult?.errorGroup?.entityName || ""
+								}
 							}
-						}
-					])
-				);
+						])
+					);
+				}
+				setParsedStack(stackInfo);
+				setIsResolved(true);
+				setRepoError(stackInfo?.error);
+				setRepoWarning(stackInfo?.warning);
 			}
 			HostApi.instance.track("Error Report Opened", {
 				"Error Group ID": errorGroupResult?.errorGroup?.guid,
@@ -438,11 +450,6 @@ export function CodeErrorNav(props: Props) {
 				"NR Account ID": errorGroupResult.accountId,
 				"Entry Point": "Open in IDE Flow"
 			});
-
-			setParsedStack(stackInfo);
-			setIsResolved(true);
-			setRepoError(stackInfo?.error);
-			setRepoWarning(stackInfo?.warning);
 		} catch (ex) {
 			console.warn(ex);
 			setError({

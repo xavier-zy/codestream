@@ -331,10 +331,11 @@ export const clearProviderError = (
 	}
 };
 
-export const fetchErrorGroup = (codeError: CSCodeError, occurrenceId?: string) => async (
-	dispatch,
-	getState: () => CodeStreamState
-) => {
+export const fetchErrorGroup = (
+	codeError: CSCodeError,
+	occurrenceId?: string,
+	entityGuid?: string
+) => async (dispatch, getState: () => CodeStreamState) => {
 	let objectId;
 	try {
 		// this is an errorGroupGuid
@@ -343,7 +344,8 @@ export const fetchErrorGroup = (codeError: CSCodeError, occurrenceId?: string) =
 		return dispatch(
 			fetchNewRelicErrorGroup({
 				errorGroupGuid: objectId!,
-				occurrenceId: occurrenceId || codeError.stackTraces[0].occurrenceId!
+				occurrenceId: occurrenceId || codeError.stackTraces[0].occurrenceId!,
+				entityGuid: entityGuid
 			})
 		).then((result: GetNewRelicErrorGroupResponse) => {
 			dispatch(_isLoadingErrorGroup(objectId, { isLoading: true }));

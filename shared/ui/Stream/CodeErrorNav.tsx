@@ -327,7 +327,8 @@ export function CodeErrorNav(props: Props) {
 			const errorGroupGuid = pendingErrorGroupGuid;
 			const errorGroupResult = await HostApi.instance.send(GetNewRelicErrorGroupRequestType, {
 				errorGroupGuid: errorGroupGuid!,
-				occurrenceId: occurrenceId!
+				occurrenceId: occurrenceId!,
+				entityGuid: pendingEntityId
 			});
 
 			if (!errorGroupResult || errorGroupResult?.error?.message) {

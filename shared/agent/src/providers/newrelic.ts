@@ -37,7 +37,6 @@ import {
 	RelatedEntity,
 	ThirdPartyDisconnect,
 	ThirdPartyProviderConfig,
-	StackTraceResponse,
 	EntitySearchResponse,
 	GetObservabilityEntitiesResponse,
 	GetObservabilityEntitiesRequestType,
@@ -356,7 +355,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				return this._applicationEntitiesCache;
 			}
 
-			let results: any[] = [];
+			let results: { guid: string; name: string }[] = [];
 			let nextCursor: any = undefined;
 			// let i = 0;
 			//	while (true) {
@@ -749,7 +748,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 	): Promise<GetNewRelicErrorGroupResponse | undefined> {
 		let errorGroup: NewRelicErrorGroup | undefined = undefined;
 		let accountId = 0;
-		let entityId: string = "";
+		let entityGuid: string = "";
 		try {
 			await this.ensureConnected();
 
@@ -763,11 +762,11 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 
 			const results = await this.fetchErrorGroupData(accountId, errorGroupGuid);
 			if (results) {
-				entityId = results["entity.guid"];
+				entityGuid = results["entity.guid"];
 				errorGroup = {
 					entity: {},
 					accountId: accountId,
-					entityGuid: entityId,
+					entityGuid: entityGuid,
 					guid: results["error.group.guid"],
 					title: results["error.group.name"],
 					message: results["error.group.message"],
@@ -788,49 +787,55 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					// "URL path": { type: "string", value: "value" }
 				};
 
-				const errorGroupResponse = await this.getErrorGroup(errorGroupGuid, entityId);
-				errorGroup.errorGroupUrl = errorGroupResponse.actor.errorsInbox.errorGroup.url;
-				errorGroup.entityName = errorGroupResponse.actor.entity.name;
-				errorGroup.entityAlertingSeverity = errorGroupResponse.actor.entity.alertSeverity;
-				errorGroup.state = errorGroupResponse.actor.errorsInbox.errorGroup.state || "UNRESOLVED";
-
-				const assignee = errorGroupResponse.actor.errorsInbox.errorGroup.assignment;
-				if (assignee) {
-					errorGroup.assignee = {
-						email: assignee.email,
-						id: assignee.userInfo?.id,
-						name: assignee.userInfo?.name,
-						gravatar: assignee.userInfo?.gravatar
-					};
-				}
-
-				const builtFromRepo = this.findBuiltFrom(
-					errorGroupResponse.actor.entity.relatedEntities.results
+				const errorGroupResponse = await this.getErrorGroup(
+					errorGroupGuid,
+					entityGuid,
+					request.occurrenceId
 				);
-				if (builtFromRepo) {
-					errorGroup.entity = {
-						repo: {
-							name: builtFromRepo.name,
-							urls: [builtFromRepo.url]
-						}
-					};
-				}
 
-				const stackTraceResult = await this.getStackTrace(entityId, request.occurrenceId);
-				if (stackTraceResult?.actor?.entity?.exception?.stackTrace) {
-					errorGroup.errorTrace = {
-						path: stackTraceResult.actor.entity.name,
-						stackTrace: stackTraceResult.actor.entity.crash
-							? stackTraceResult.actor.entity.crash.stackTrace.frames
-							: stackTraceResult.actor.entity.exception.stackTrace.frames
-					};
-					errorGroup.hasStackTrace = true;
+				if (errorGroupResponse) {
+					errorGroup.errorGroupUrl = errorGroupResponse.actor.errorsInbox.errorGroup.url;
+					errorGroup.entityName = errorGroupResponse.actor.entity.name;
+					errorGroup.entityAlertingSeverity = errorGroupResponse.actor.entity.alertSeverity;
+					errorGroup.state = errorGroupResponse.actor.errorsInbox.errorGroup.state || "UNRESOLVED";
+
+					const assignee = errorGroupResponse.actor.errorsInbox.errorGroup.assignment;
+					if (assignee) {
+						errorGroup.assignee = {
+							email: assignee.email,
+							id: assignee.userInfo?.id,
+							name: assignee.userInfo?.name,
+							gravatar: assignee.userInfo?.gravatar
+						};
+					}
+
+					const builtFromRepo = this.findBuiltFrom(
+						errorGroupResponse.actor.entity.relatedEntities.results
+					);
+					if (builtFromRepo) {
+						errorGroup.entity = {
+							repo: {
+								name: builtFromRepo.name,
+								urls: [builtFromRepo.url]
+							}
+						};
+					}
+
+					if (errorGroupResponse.actor?.entity?.exception?.stackTrace) {
+						errorGroup.errorTrace = {
+							path: errorGroupResponse.actor.entity.name,
+							stackTrace: errorGroupResponse.actor.entity.crash
+								? errorGroupResponse.actor.entity.crash.stackTrace.frames
+								: errorGroupResponse.actor.entity.exception.stackTrace.frames
+						};
+						errorGroup.hasStackTrace = true;
+					}
 				}
 
 				Logger.log("NR: ErrorGroup found", {
 					errorGroupGuid: errorGroup.guid,
 					occurrenceId: request.occurrenceId,
-					entityId: entityId,
+					entityGuid: entityGuid,
 					hasErrorGroup: errorGroup != null,
 					hasStackTrace: errorGroup?.hasStackTrace
 				});
@@ -839,7 +844,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					`NR: No errorGroup results errorGroupGuid (${errorGroupGuid}) in account (${accountId})`,
 					{
 						request: request,
-						entityId: entityId,
+						entityGuid: entityGuid,
 						accountId: accountId
 					}
 				);
@@ -849,7 +854,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 						message: `Could not find error info for that errorGroupGuid in account (${accountId})`,
 						details: (await this.buildErrorDetailSettings(
 							accountId,
-							entityId,
+							entityGuid,
 							errorGroupGuid
 						)) as any
 					}
@@ -874,7 +879,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 
 			result.details = (await this.buildErrorDetailSettings(
 				accountId,
-				entityId,
+				entityGuid,
 				request.errorGroupGuid
 			)) as any;
 
@@ -1256,7 +1261,11 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		return undefined;
 	}
 
-	private async getStackTrace(entityId: string, occurrenceId: string) {
+	private async getErrorGroup(
+		errorGroupGuid: string,
+		entityGuid: string,
+		occurrenceId: string
+	): Promise<ErrorGroupResponse> {
 		let fingerprintId = 0;
 		try {
 			// BrowserApplicationEntity uses a fingerprint instead of an occurrence and it's a number
@@ -1266,142 +1275,118 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			}
 		} catch {}
 
-		let response = undefined;
-		try {
-			response = await this.query<StackTraceResponse>(
-				`query getTrace($entityId: EntityGuid!, $occurrenceId: String!, $fingerprintId:Int!) {
-			actor {
-			  entity(guid: $entityId) {
-				... on ApmApplicationEntity {
-				  name
-				  exception(occurrenceId: $occurrenceId) {
-					message
-					stackTrace {
-					  frames {
-						filepath
-						formatted
-						line
-						name
-					  }
-					}
-				  }
-				}
-				... on BrowserApplicationEntity {
-				  guid
-				  name
-				  exception(fingerprint: $fingerprintId) {
-					message
-					stackTrace {
-					  frames {
-						column
-						line
-						formatted
-						name
-					  }
-					}
-				  }
-				}
-				... on MobileApplicationEntity {
-				  guid
-				  name
-				  exception(occurrenceId: $occurrenceId) {
-					stackTrace {
-					  frames {
-						line
-						formatted
-						name
-					  }
-					}
-				  }
-				  crash(occurrenceId: $occurrenceId) {
-					stackTrace {
-					  frames {
-						line
-						formatted
-						name
-					  }
-					}
-				  }
-				}
-			  }
-			}
-		  }
-		  `,
-				{
-					entityId: entityId,
-					occurrenceId: occurrenceId,
-					fingerprintId: fingerprintId
-				}
-			);
-		} catch (ex) {
-			Logger.error(ex, "NR: getStackTrace");
-		}
-
-		return response;
-	}
-
-	private async getErrorGroup(
-		errorGroupGuid: string,
-		entityGuid: string
-	): Promise<ErrorGroupResponse> {
 		return this.query(
-			`query getErrorGroup($errorGroupGuid: ID!, $entityGuid: EntityGuid!) {
-			actor {
-			  entity(guid: $entityGuid) {
-				alertSeverity
-				name
-				relatedEntities(filter: {direction: BOTH, relationshipTypes: {include: BUILT_FROM}}) {
-				  results {
-					source {
-					  entity {
-						name
-						guid
-						type
-					  }
-					}
-					target {
-					  entity {
-						name
-						guid
-						type
-						tags {
-							key
-							values
+			`query getErrorGroup($errorGroupGuid:ID!, $entityGuid:EntityGuid!, $occurrenceId:String!, $fingerprintId:Int!) {
+				actor {
+				  entity(guid: $entityGuid) {
+					... on ApmApplicationEntity {
+					  name
+					  exception(occurrenceId: $occurrenceId) {
+						message
+						stackTrace {
+						  frames {
+							filepath
+							formatted
+							line
+							name
+						  }
 						}
 					  }
 					}
-					type
-				  }
-				}
-			  }
-			  errorsInbox {
-				errorGroup(id: $errorGroupGuid) {
-				  url
-				  assignment {
-					email
-					userInfo {
-					  gravatar
-					  id
+					... on BrowserApplicationEntity {
+					  guid
 					  name
+					  exception(fingerprint: $fingerprintId) {
+						message
+						stackTrace {
+						  frames {
+							column
+							line
+							formatted
+							name
+						  }
+						}
+					  }
+					}
+					... on MobileApplicationEntity {
+					  guid
+					  name
+					  exception(occurrenceId: $occurrenceId) {
+						stackTrace {
+						  frames {
+							line
+							formatted
+							name
+						  }
+						}
+					  }
+					  crash(occurrenceId: $occurrenceId) {
+						stackTrace {
+						  frames {
+							line
+							formatted
+							name
+						  }
+						}
+					  }
+					}
+					alertSeverity
+					name
+					relatedEntities(filter: {direction: BOTH, relationshipTypes: {include: BUILT_FROM}}) {
+					  results {
+						source {
+						  entity {
+							name
+							guid
+							type
+						  }
+						}
+						target {
+						  entity {
+							name
+							guid
+							type
+							tags {
+							  key
+							  values
+							}
+						  }
+						}
+						type
+					  }
 					}
 				  }
-				  id
-				  state
+				  errorsInbox {
+					errorGroup(id: $errorGroupGuid) {
+					  url
+					  assignment {
+						email
+						userInfo {
+						  gravatar
+						  id
+						  name
+						}
+					  }
+					  id
+					  state
+					}
+				  }
 				}
 			  }
-			}
-		  }
+			  
 		  `,
 			{
 				errorGroupGuid: errorGroupGuid,
-				entityGuid: entityGuid
+				entityGuid: entityGuid,
+				occurrenceId: occurrenceId,
+				fingerprintId: fingerprintId
 			}
 		);
 	}
 
 	private async buildErrorDetailSettings(
 		accountId: number,
-		entityId: string,
+		entityGuid: string,
 		errorGroupGuid: string
 	) {
 		let meUser = undefined;
@@ -1419,7 +1404,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				settings: {
 					accountId: accountId,
 					errorGroupGuid: errorGroupGuid,
-					entityId: entityId,
+					entityGuid: entityGuid,
 					codeStreamUserId: meUser?.user?.id,
 					codeStreamTeamId: session?.teamId,
 					apiUrl: this.apiUrl

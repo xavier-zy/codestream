@@ -851,7 +851,7 @@ export const WebviewErrorRequestType = new RequestType<WebviewErrorRequest, void
 export interface GetNewRelicErrorGroupRequest {
 	errorGroupGuid: string;
 	occurrenceId: string;
-	entityId?: string;
+	entityGuid?: string;
 	src?: string;
 }
 
@@ -1074,11 +1074,25 @@ export const GetObservabilityErrorGroupMetadataRequestType = new RequestType<
 	void
 >("codestream/newrelic/errorGroup/metadata");
 
+interface CrashOrException {
+	message?: string;
+	stackTrace: StackTrace;
+}
+
+interface EntityCrash extends CrashOrException {}
+
+interface EntityException extends CrashOrException {}
+
+interface StackTrace {
+	frames: { filepath?: string; line?: number; name?: string; formatted: string }[];
+}
 export interface ErrorGroupResponse {
 	actor: {
 		entity: {
 			alertSeverity: "CRITICAL" | "NOT_ALERTING" | "NOT_CONFIGURED" | "WARNING" | undefined;
 			name: string;
+			exception?: EntityException;
+			crash?: EntityCrash;
 			relatedEntities: {
 				results: any[];
 			};
@@ -1138,29 +1152,6 @@ export interface RelatedEntity {
 		};
 	};
 	type: string;
-}
-
-interface CrashOrException {
-	message?: string;
-	stackTrace: StackTrace;
-}
-
-interface EntityCrash extends CrashOrException {}
-
-interface EntityException extends CrashOrException {}
-
-interface StackTrace {
-	frames: { filepath?: string; line?: number; name?: string; formatted: string }[];
-}
-
-export interface StackTraceResponse {
-	actor: {
-		entity: {
-			name: string;
-			exception?: EntityException;
-			crash?: EntityCrash;
-		};
-	};
 }
 
 export interface EntitySearchResponse {

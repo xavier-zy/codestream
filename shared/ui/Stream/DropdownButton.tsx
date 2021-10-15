@@ -22,6 +22,7 @@ export interface DropdownButtonItems {
 	onSelect?: () => void; // callback for when you select an item with a splitDropdown
 	type?: string;
 	floatRight?: any;
+	placeholder?: string;
 }
 
 export interface DropdownButtonProps extends ButtonProps {

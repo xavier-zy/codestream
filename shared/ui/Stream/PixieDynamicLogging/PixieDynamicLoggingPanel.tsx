@@ -1,4 +1,5 @@
 import { NewRelicAccount, PixieCluster, PixiePod } from "@codestream/protocols/agent";
+import { Button } from "@codestream/webview/src/components/Button";
 import { pixieDynamicLogging } from "@codestream/webview/store/dynamicLogging/actions";
 import { isConnected } from "@codestream/webview/store/providers/reducer";
 import { Accounts } from "@codestream/webview/Stream/PixieDynamicLogging/Accounts";
@@ -8,12 +9,11 @@ import { Pods } from "@codestream/webview/Stream/PixieDynamicLogging/Pods";
 import React, { useEffect } from "react";
 import { shallowEqual, useDispatch, useSelector } from "react-redux";
 import styled from "styled-components";
-import { Content } from "../../src/components/Carousel";
 import { Dialog } from "../../src/components/Dialog";
 import { PanelHeader } from "../../src/components/PanelHeader";
 import { CodeStreamState } from "../../store";
-import { closePanel } from "../actions";
-import Button from "../Button";
+import { closePanel, setUserPreference } from "../actions";
+import { DropdownButton } from "../DropdownButton";
 
 const Root = styled.div`
 	color: var(--text-color);
@@ -32,6 +32,13 @@ const Root = styled.div`
 	}
 `;
 
+const DropdownWrapper = styled.div`
+	margin: 5px 0;
+	label {
+		display: block;
+	}
+`;
+
 export const PixieDynamicLoggingPanel = () => {
 	const dispatch = useDispatch();
 	const [account, setAccount] = React.useState<NewRelicAccount | undefined>();
@@ -39,47 +46,73 @@ export const PixieDynamicLoggingPanel = () => {
 	const [namespace, setNamespace] = React.useState<string | undefined>();
 	const [pod, setPod] = React.useState<PixiePod | undefined>();
 
+	const setAndSaveAccount = account => {
+		setAccount(account);
+		setCluster(undefined);
+		setNamespace(undefined);
+		setPod(undefined);
+		if (account) dispatch(setUserPreference(["pixieDefaultAccountId"], account.id.toString()));
+	};
+
+	const setAndSaveCluster = cluster => {
+		setCluster(cluster);
+		setNamespace(undefined);
+		setPod(undefined);
+		if (cluster) dispatch(setUserPreference(["pixieDefaultClusterId"], cluster.clusterId));
+	};
+
+	const setAndSaveNamespace = namespace => {
+		setNamespace(namespace);
+		setPod(undefined);
+		if (namespace) dispatch(setUserPreference(["pixieDefaultNamespace"], namespace));
+	};
+
+	const setAndSavePod = pod => {
+		setPod(pod);
+		if (pod) dispatch(setUserPreference(["pixieDefaultPodUpid"], pod.upid));
+	};
+
 	return (
 		<Dialog maximizable wide noPadding onClose={() => dispatch(closePanel())}>
-			<PanelHeader title="Pixie Dynamic Logging">
-				<div style={{ height: "5px" }} />
-			</PanelHeader>
-			<div style={{ padding: "20px" }}>
-				<Content>
-					<Accounts onSelect={setAccount} value={account} />
-					{account && (
-						<>
-							<br />
-							<Clusters account={account} onSelect={setCluster} value={cluster} />
-						</>
-					)}
-					{cluster && (
-						<>
-							<br />
-							<Namespaces
-								account={account}
-								cluster={cluster}
-								onSelect={setNamespace}
-								value={namespace}
-							/>
-						</>
-					)}
-					{namespace && (
-						<>
-							<br />
-							<Pods
-								account={account}
-								cluster={cluster}
-								namespace={namespace}
-								onSelect={setPod}
-								value={pod}
-							/>
-						</>
-					)}
-					<br />
-					<PixieDynamicLogging account={account} cluster={cluster} pod={pod} />
-				</Content>
+			<PanelHeader title="Pixie Dynamic Logging"></PanelHeader>
+			<div style={{ padding: "0 20px 20px 20px" }}>
+				<DropdownWrapper>
+					<label>Account:</label>
+					<Accounts onSelect={setAndSaveAccount} value={account} />
+				</DropdownWrapper>
+				{account && (
+					<DropdownWrapper>
+						<label>Cluster:</label>
+						<Clusters account={account} onSelect={setAndSaveCluster} value={cluster} />
+					</DropdownWrapper>
+				)}
+				{cluster && (
+					<DropdownWrapper>
+						<label>Namespace:</label>
+						<Namespaces
+							account={account}
+							cluster={cluster}
+							onSelect={setAndSaveNamespace}
+							value={namespace}
+						/>
+					</DropdownWrapper>
+				)}
+				{namespace && (
+					<DropdownWrapper>
+						<label>Pod:</label>
+						<Pods
+							account={account}
+							cluster={cluster}
+							namespace={namespace}
+							onSelect={setAndSavePod}
+							value={pod}
+						/>
+					</DropdownWrapper>
+				)}
 			</div>
+			{account && cluster && pod && (
+				<PixieDynamicLogging account={account} cluster={cluster} pod={pod} />
+			)}
 		</Dialog>
 	);
 };
@@ -103,6 +136,9 @@ const PixieDynamicLogging = props => {
 		};
 	}, shallowEqual);
 
+	const [minutes, setMinutes] = React.useState(1);
+	const [isLoading, setIsLoading] = React.useState(false);
+
 	useEffect(() => {
 		// TODO
 		const El = document.getElementById("xyz")!;
@@ -111,69 +147,105 @@ const PixieDynamicLogging = props => {
 		}
 	}, [derivedState.dynamicLogs?.results]);
 
+	const startLogging = async time => {
+		setMinutes(time);
+		if (derivedState.currentPixieDynamicLoggingOptions) {
+			setIsLoading(true);
+			await dispatch(
+				pixieDynamicLogging({
+					accountId: props.account.id,
+					clusterId: props.cluster.clusterId,
+					upid: props.pod.upid,
+					limitSeconds: time * 60,
+					...derivedState.currentPixieDynamicLoggingOptions
+				})
+			);
+			setIsLoading(false);
+		}
+	};
+
+	const hasStatus = derivedState.dynamicLogs && derivedState.dynamicLogs.status;
 	return (
 		<Root ref={rootRef}>
-			<div>
-				<Button
-					id="discard-button"
-					className="control-button cancel"
-					type="button"
-					onClick={() => {
-						if (derivedState.currentPixieDynamicLoggingOptions) {
-							dispatch(
-								pixieDynamicLogging({
-									accountId: props.account.id,
-									clusterId: props.cluster.clusterId,
-									upid: props.pod.upid,
-									...derivedState.currentPixieDynamicLoggingOptions
-								})
-							);
+			<div
+				style={{
+					padding: "20px",
+					borderTop: "1px solid var(--base-border-color)"
+				}}
+			>
+				{!hasStatus ? (
+					<DropdownButton
+						items={[1, 2, 3, 4, 5, 10].map(time => {
+							return {
+								label: `Capture for ${time} minute${time > 1 ? "s" : ""}`,
+								key: `${time}`,
+								action: () => startLogging(time)
+							};
+						})}
+						splitDropdown
+						splitDropdownInstantAction
+						isLoading={isLoading}
+						disabled={
+							!derivedState.currentPixieDynamicLoggingOptions ||
+							!!(derivedState.dynamicLogs && derivedState.dynamicLogs.status)
 						}
-					}}
-				>
-					Capture
-				</Button>
-				{derivedState.dynamicLogs && (
+					>
+						Capture for {minutes} minute{minutes > 1 ? "s" : ""}
+					</DropdownButton>
+				) : (
 					<div>
-						<div>Status: {derivedState.dynamicLogs?.status}</div>
-						<table style={{ borderCollapse: "collapse" }}>
-							{derivedState.dynamicLogs &&
-								derivedState.dynamicLogs.results?.map((_, index) => {
-									return (
-										<>
-											{index === 0 && (
-												<tr
-													style={{
-														borderTop: "1px solid #666",
-														borderBottom: "2px solid #666"
-													}}
-												>
+						<div style={{ display: "flex", alignItems: "center" }}>
+							<div style={{ marginRight: "10px" }}>Status: {derivedState.dynamicLogs?.status}</div>
+							{!derivedState.dynamicLogs?.status?.match("Done") && (
+								<div style={{ marginLeft: "auto" }}>
+									<Button variant="destructive" size="compact">
+										Stop
+									</Button>
+								</div>
+							)}
+						</div>
+						{derivedState.dynamicLogs && derivedState.dynamicLogs.results?.length > 0 && (
+							<div style={{ height: "10px" }} />
+						)}
+
+						<div style={{ width: "100%", overflowX: "auto" }}>
+							<table style={{ borderCollapse: "collapse", width: "100%" }}>
+								{derivedState.dynamicLogs &&
+									derivedState.dynamicLogs.results?.map((_, index) => {
+										return (
+											<>
+												{index === 0 && (
+													<tr
+														style={{
+															borderTop: "1px solid #888",
+															borderBottom: "2px solid #888"
+														}}
+													>
+														{Object.keys(_).map(k => {
+															return (
+																<td
+																	style={{
+																		width: "25%",
+																		padding: "5px 1px",
+																		fontWeight: "bold"
+																	}}
+																>
+																	{k}
+																</td>
+															);
+														})}
+													</tr>
+												)}
+												<tr style={{ borderBottom: "1px solid #888" }}>
 													{Object.keys(_).map(k => {
-														return (
-															<td
-																style={{
-																	width: "25%",
-																	padding: "5px 0px 5px 0px",
-																	fontWeight: "bold"
-																}}
-															>
-																{k}
-															</td>
-														);
+														return <td style={{ width: "25%", padding: "3px 1px" }}>{_[k]}</td>;
 													})}
 												</tr>
-											)}
-											<tr style={{ borderBottom: "1px solid #666" }}>
-												{Object.keys(_).map(k => {
-													return (
-														<td style={{ width: "25%", padding: "3px 0px 3px 0px" }}>{_[k]}</td>
-													);
-												})}
-											</tr>
-										</>
-									);
-								})}
-						</table>
+											</>
+										);
+									})}
+							</table>
+						</div>
 					</div>
 				)}
 			</div>

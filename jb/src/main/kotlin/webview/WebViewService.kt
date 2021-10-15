@@ -41,7 +41,7 @@ class WebViewService(val project: Project) : Disposable {
     lateinit var webView: WebView
 
     private val htmlFile: File get() = if (WEBVIEW_PATH != null) {
-        File(WEBVIEW_PATH)
+        File(WEBVIEW_PATH,"webview.html")
     } else {
         extractedHtmlFile
     }

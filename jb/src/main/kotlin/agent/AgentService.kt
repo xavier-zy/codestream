@@ -1,5 +1,6 @@
 package com.codestream.agent
 
+import com.codestream.AGENT_PATH
 import com.codestream.DEBUG
 import com.codestream.authenticationService
 import com.codestream.extensions.baseUri
@@ -185,23 +186,36 @@ class AgentService(private val project: Project) : Disposable {
 
     private fun createProcess(): Process {
         val process = if (DEBUG) {
-            val temp = createTempDir("codestream")
-            temp.deleteOnExit()
-
-            val agentJs = File(temp, "agent.js")
-            val agentJsMap = File(temp, "agent.js.map")
-            // val agentLog = File(temp, "agent.log")
-            FileUtils.copyToFile(javaClass.getResourceAsStream("/agent/agent.js"), agentJs)
-            try {
-                FileUtils.copyToFile(javaClass.getResourceAsStream("/agent/agent.js.map"), agentJsMap)
-            } catch (ex: Exception) {
-                logger.warn("Could not extract agent.js.map", ex)
+            val agentDir = if (AGENT_PATH != null) {
+                File(AGENT_PATH)
+            } else {
+                createTempDir("codestream").also {
+                    it.deleteOnExit()
+                }
             }
-            logger.info("CodeStream LSP agent extracted to ${agentJs.absolutePath}")
+
+            val agentJs = File(agentDir, "agent.js")
+            val agentJsMap = File(agentDir, "agent.js.map")
+
+            if (AGENT_PATH == null) {
+                FileUtils.copyToFile(javaClass.getResourceAsStream("/agent/agent.js"), agentJs)
+                try {
+                    FileUtils.copyToFile(javaClass.getResourceAsStream("/agent/agent.js.map"), agentJsMap)
+                } catch (ex: Exception) {
+                    logger.warn("Could not extract agent.js.map", ex)
+                }
+                logger.info("CodeStream LSP agent extracted to ${agentJs.absolutePath}")
+            }
+
+            val port = if (AGENT_PATH == null) {
+                debugPort
+            } else {
+                debugPortSeed // fixed on 6010 so we can just keep "Attach to agent" running
+            }
             GeneralCommandLine(
                 "node",
                 "--nolazy",
-                "--inspect=$debugPort",
+                "--inspect=$port",
                 agentJs.absolutePath,
                 "--stdio"
             ).withEnvironment("NODE_OPTIONS", "").createProcess()

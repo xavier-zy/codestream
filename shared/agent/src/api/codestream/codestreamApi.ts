@@ -740,6 +740,9 @@ export class CodeStreamApiProvider implements ApiProvider {
 				if (this._unreads !== undefined) {
 					this._unreads.update(e.data as CSPost[], oldPosts);
 				}
+
+				await this.checkForUnknownCodeErrorFollowers(e.data as CSPost[]);
+
 				break;
 			case MessageType.Repositories:
 				e.data = await SessionContainer.instance().repos.resolve(e, { onlyIfNeeded: false });
@@ -1395,6 +1398,42 @@ export class CodeStreamApiProvider implements ApiProvider {
 				type: MessageType.Users,
 				data: usersResponse.users
 			});
+			Container.instance().agent.sendNotification(DidChangeDataNotificationType, {
+				type: ChangeDataType.Users,
+				data: usersResponse.users
+			});
+		}
+	}
+
+	@log()
+	async checkForUnknownCodeErrorFollowers(posts: CSPost[]) {
+		const codeErrorPosts: { [key: string]: CSPost[] } = {};
+		const postsManager = SessionContainer.instance().posts;
+		for (const post of posts) {
+			let codeErrorPost: CSPost | undefined;
+			if (post.codeErrorId) {
+				codeErrorPost = post;
+			} else if (post.parentPostId) {
+				const parentPost = await postsManager.getById(post.parentPostId);
+				if (parentPost && parentPost.codeErrorId) {
+					codeErrorPost = parentPost;
+				} else if (parentPost && parentPost.parentPostId) {
+					const grandparentPost = await postsManager.getById(parentPost.parentPostId);
+					if (grandparentPost && grandparentPost.codeErrorId) {
+						codeErrorPost = grandparentPost;
+					}
+				}
+			}
+
+			if (codeErrorPost) {
+				codeErrorPosts[codeErrorPost.codeErrorId!] =
+					codeErrorPosts[codeErrorPost.codeErrorId!] || [];
+				codeErrorPosts[codeErrorPost.codeErrorId!].push(post);
+			}
+		}
+
+		for (const codeErrorId in codeErrorPosts) {
+			await this.fetchAndStoreUnknownCodeErrorFollowers(codeErrorPosts[codeErrorId], codeErrorId);
 		}
 	}
 

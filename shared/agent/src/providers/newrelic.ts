@@ -8,6 +8,7 @@ import {
 	uniq as _uniq
 } from "lodash-es";
 import { ResponseError } from "vscode-jsonrpc/lib/messages";
+import { URI } from "vscode-uri";
 import { InternalError, ReportSuppressedMessages } from "../agentError";
 import { SessionContainer } from "../container";
 import { GitRemoteParser } from "../git/parsers/remoteParser";
@@ -538,8 +539,16 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			if (!filteredRepos || !filteredRepos.length) return response;
 
 			for (const repo of filteredRepos) {
-				if (!repo.remotes) continue;
-
+				if (!repo.id || !repo.remotes || !repo.remotes.length) {
+					Logger.warn(
+						"NR: getObservabilityRepos skipping repo with missing id and/or repo.remotes",
+						{
+							repo: repo
+						}
+					);
+					continue;
+				}
+				const folderName = this.getRepoName(repo.folder);
 				let remotes: string[] = [];
 				for (const remote of repo.remotes) {
 					if (remote.name === "origin" || remote.remoteWeight === 0) {
@@ -582,7 +591,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 
 				response.repos.push({
 					repoId: repo.id!,
-					repoName: repo.folder.name,
+					repoName: folderName,
 					repoRemote: remote,
 					hasRepoAssociation: remoteUrls?.length > 0,
 
@@ -727,7 +736,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				}
 				response.repos.push({
 					repoId: repo.id!,
-					repoName: repo.folder.name,
+					repoName: this.getRepoName(repo.folder),
 					errors: observabilityErrors!
 				});
 			}
@@ -1920,5 +1929,21 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			});
 		}
 		return undefined;
+	}
+
+	private getRepoName(folder: { name?: string; uri: string }) {
+		try {
+			let folderName = (folder.name ||
+				URI.parse(folder.uri)
+					.fsPath.split(/[\\/]+/)
+					.pop())!;
+			return folderName;
+		} catch (ex) {
+			Logger.warn("NR: getRepoName", {
+				folder: folder,
+				error: ex
+			});
+		}
+		return "repo";
 	}
 }

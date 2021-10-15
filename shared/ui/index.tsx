@@ -719,7 +719,10 @@ function listenForEvents(store) {
 			}
 		}
 
-		store.dispatch({ type: `ADD_DYNAMICLOGGING`, payload: { status: e.status, results: results } });
+		store.dispatch({
+			type: `ADD_DYNAMICLOGGING`,
+			payload: { status: e.status, metaData: e.metaData, results: results }
+		});
 	});
 }
 

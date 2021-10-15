@@ -229,38 +229,37 @@ const PixieDynamicLogging = props => {
 								</div>
 							)}
 						</div>
-						{derivedState.dynamicLogs && derivedState.dynamicLogs.results?.length > 0 && (
+						{derivedState.dynamicLogs && derivedState.dynamicLogs.results && (
 							<div style={{ height: "10px" }} />
 						)}
 
 						<div style={{ width: "100%", overflowX: "auto" }}>
 							<table style={{ borderCollapse: "collapse", width: "100%" }}>
+								<tr
+									style={{
+										borderTop: "1px solid #888",
+										borderBottom: "2px solid #888"
+									}}
+								>
+									{derivedState.dynamicLogs &&
+										derivedState.dynamicLogs.metaData?.slice(3)?.map((_, index) => {
+											return (
+												<td
+													style={{
+														width: "25%",
+														padding: "5px 1px",
+														fontWeight: "bold"
+													}}
+												>
+													{_}
+												</td>
+											);
+										})}
+								</tr>
 								{derivedState.dynamicLogs &&
 									derivedState.dynamicLogs.results?.map((_, index) => {
 										return (
 											<>
-												{index === 0 && (
-													<tr
-														style={{
-															borderTop: "1px solid #888",
-															borderBottom: "2px solid #888"
-														}}
-													>
-														{Object.keys(_).map(k => {
-															return (
-																<td
-																	style={{
-																		width: "25%",
-																		padding: "5px 1px",
-																		fontWeight: "bold"
-																	}}
-																>
-																	{k}
-																</td>
-															);
-														})}
-													</tr>
-												)}
 												<tr style={{ borderBottom: "1px solid #888" }}>
 													{Object.keys(_).map(k => {
 														return <td style={{ width: "25%", padding: "3px 1px" }}>{_[k]}</td>;

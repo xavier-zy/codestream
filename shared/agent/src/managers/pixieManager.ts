@@ -273,7 +273,6 @@ px.display(df[['upid', 'pod']])`;
 					if (batch?.cols) {
 						const cols = batch.cols.map((c: any) => colValue(c));
 						const numRows = batch.numRows ? newLong(batch.numRows).toInt() : 0;
-						let hasData = false;
 
 						for (let r = 0; r < numRows; r++) {
 							const row: any = {};
@@ -283,14 +282,9 @@ px.display(df[['upid', 'pod']])`;
 								if (key) {
 									const value = values[r];
 									row[key] = value;
-									if (value) {
-										hasData = true;
-									}
 								}
 							}
-							if (hasData) {
-								data.push(row);
-							}
+							data.push(row);
 						}
 					}
 				});

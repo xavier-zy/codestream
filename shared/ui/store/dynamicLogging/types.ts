@@ -7,6 +7,7 @@ export enum DynamicLoggingActionsTypes {
 export type DynamicLoggingState = {
 	dynamicLogs: {
 		status?: string;
+		metaData?: any[];
 		results: any[];
 	};
 };

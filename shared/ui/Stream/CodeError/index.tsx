@@ -431,8 +431,10 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 				users = users.filter(_ => _.email !== assigneeEmail);
 			}
 
-			const usersFromGit = users.filter(_ => _.group === "GIT");
+			let usersFromGit = users.filter(_ => _.group === "GIT");
 			if (usersFromGit.length) {
+				// take no more than 100
+				usersFromGit = usersFromGit.slice(0, 100);
 				assigneeItems.push({ label: "-", key: "sep-git" });
 				assigneeItems.push({
 					label: (

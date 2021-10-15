@@ -147,6 +147,7 @@ export function CodeErrorNav(props: Props) {
 		const errorGroup = getErrorGroup(state.codeErrors, codeError) as NewRelicErrorGroup;
 
 		const result = {
+			demoMode: state.preferences.demoMode,
 			codeErrorStateBootstrapped: state.codeErrors.bootstrapped,
 			currentCodeErrorId: state.context.currentCodeErrorId,
 			currentCodeErrorData: state.context.currentCodeErrorData,
@@ -661,7 +662,7 @@ export function CodeErrorNav(props: Props) {
 								}}
 							>
 								{/* TODO perhaps consolidate these? */}
-								{(repoError || repoWarning) && (
+								{(repoError || repoWarning) && !derivedState.demoMode && (
 									<CodeErrorErrorBox>
 										<Icon name="alert" className="alert" />
 										<div className="message">

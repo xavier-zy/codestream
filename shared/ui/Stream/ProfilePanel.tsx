@@ -7,7 +7,7 @@ import { CodeStreamState } from "../store";
 import { useDidMount } from "../utilities/hooks";
 import { HostApi } from "../webview-api";
 import { PanelHeader } from "../src/components/PanelHeader";
-import { openModal, closeModal } from "./actions";
+import { openModal, closeModal, setUserPreference } from "./actions";
 import Icon from "./Icon";
 import { Headshot } from "../src/components/Headshot";
 import { MetaLabel } from "./Codemark/BaseCodemark";
@@ -20,6 +20,7 @@ import { confirmPopup } from "./Confirm";
 import { logout } from "../store/session/actions";
 import { Button } from "../src/components/Button";
 import { Dialog } from "../src/components/Dialog";
+import { isCurrentUserInternal } from "../store/users/reducer";
 
 const Root = styled.div`
 	.edit-headshot {
@@ -101,6 +102,8 @@ export const ProfilePanel = () => {
 		const team = teams[context.currentTeamId];
 
 		return {
+			isInternalUser: isCurrentUserInternal(state),
+			demoMode: state.preferences.demoMode,
 			person,
 			team,
 			isMe: person ? person.id === session.userId : false,
@@ -263,7 +266,23 @@ export const ProfilePanel = () => {
 					)}
 					{person.lastLogin && (
 						<Row>
-							<MetaLabel>Last Login</MetaLabel>
+							<MetaLabel
+								style={derivedState.isInternalUser ? { cursor: "pointer" } : undefined}
+								title={
+									derivedState.isInternalUser
+										? `Demo Mode: ${derivedState.demoMode ? "ON" : "OFF"}`
+										: ""
+								}
+								onClick={
+									derivedState.isInternalUser
+										? e => {
+												dispatch(setUserPreference(["demoMode"], !derivedState.demoMode));
+										  }
+										: undefined
+								}
+							>
+								Last Login
+							</MetaLabel>
 							<Value>
 								<Timestamp className="no-padding" time={person.lastLogin} relative />
 							</Value>

@@ -764,6 +764,7 @@ export interface CSMePreferences {
 	[key: string]: any;
 	/** teamId to settings */
 	activityFilter?: { [key: string]: ActivityFilter | undefined };
+	demoMode?: boolean;
 }
 
 export interface RepoSetting {

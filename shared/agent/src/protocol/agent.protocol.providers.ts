@@ -1162,3 +1162,17 @@ export interface StackTraceResponse {
 		};
 	};
 }
+
+export interface EntitySearchResponse {
+	actor: {
+		entitySearch: {
+			results: {
+				entities: {
+					guid: string;
+					name: String;
+					tags: { key: string; values: string[] }[];
+				}[];
+			};
+		};
+	};
+}

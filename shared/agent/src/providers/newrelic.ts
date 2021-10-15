@@ -1,11 +1,8 @@
 "use strict";
 import { GraphQLClient } from "graphql-request";
-import { groupBy as _groupBy, sortBy as _sortBy } from "lodash-es";
 import { ResponseError } from "vscode-jsonrpc/lib/messages";
 import { InternalError, ReportSuppressedMessages } from "../agentError";
-import { MessageType } from "../api/apiProvider";
 import { SessionContainer } from "../container";
-import { GitRemoteParser } from "../git/parsers/remoteParser";
 import { Logger } from "../logger";
 import {
 	EntityAccount,
@@ -38,15 +35,21 @@ import {
 	ObservabilityError,
 	ObservabilityErrorCore,
 	RelatedEntity,
-	StackTraceResponse,
 	ThirdPartyDisconnect,
-	ThirdPartyProviderConfig
+	ThirdPartyProviderConfig,
+	StackTraceResponse,
+	EntitySearchResponse,
+	GetObservabilityEntitiesResponse,
+	GetObservabilityEntitiesRequestType,
+	ReposScm
 } from "../protocol/agent.protocol";
-import { CSMe, CSNewRelicProviderInfo } from "../protocol/api.protocol";
+import { CSNewRelicProviderInfo } from "../protocol/api.protocol";
 import { CodeStreamSession } from "../session";
 import { log, lspHandler, lspProvider } from "../system";
 import { Strings } from "../system/string";
 import { ThirdPartyIssueProviderBase } from "./provider";
+import { memoize, groupBy as _groupBy, sortBy as _sortBy } from "lodash-es";
+import { GitRemoteParser } from "../git/parsers/remoteParser";
 
 export interface Directive {
 	type: "assignRepository" | "removeAssignee" | "setAssignee" | "setState";
@@ -96,9 +99,14 @@ class AccessTokenError extends Error {
 @lspProvider("newrelic")
 export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProviderInfo> {
 	private _newRelicUserId: number | undefined = undefined;
+	private _memoizedGetRepoRemoteVariants: any;
 
 	constructor(session: CodeStreamSession, config: ThirdPartyProviderConfig) {
 		super(session, config);
+		this._memoizedGetRepoRemoteVariants = memoize(
+			this.getRepoRemoteVariants,
+			(remotes: string[]) => remotes
+		);
 	}
 
 	get displayName() {
@@ -1421,16 +1429,9 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		return undefined;
 	}
 
-	private async getEntitiesByRepoRemote(
-		remotes: string[]
-	): Promise<
-		{
-			guid: string;
-			name: String;
-			tags: { key: string; values: string[] }[];
-		}[]
-	> {
+	private async getRepoRemoteVariants(remotes: string[]): Promise<string> {
 		const set = new Set();
+
 		await Promise.all(
 			remotes.map(async _ => {
 				const variants = await GitRemoteParser.getRepoRemoteVariants(_);
@@ -1442,21 +1443,22 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		);
 		const remoteFilter = Array.from(set).join(" OR ");
 
+		return remoteFilter;
+	}
+
+	private async getEntitiesByRepoRemote(
+		remotes: string[]
+	): Promise<
+		{
+			guid: string;
+			name: String;
+			tags: { key: string; values: string[] }[];
+		}[]
+	> {
+		const remoteFilter = await this._memoizedGetRepoRemoteVariants(remotes);
 		if (!remoteFilter.length) return [];
 
-		const queryResponse = await this.query<{
-			actor: {
-				entitySearch: {
-					results: {
-						entities: {
-							guid: string;
-							name: String;
-							tags: { key: string; values: string[] }[];
-						}[];
-					};
-				};
-			};
-		}>(`{
+		const queryResponse = await this.query<EntitySearchResponse>(`{
 			actor {
 			  entitySearch(query: "type = 'REPOSITORY' and (${remoteFilter})") {
 				count

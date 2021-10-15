@@ -127,6 +127,8 @@ export class GitRemoteParser {
 		let results: any[] = [];
 		if (!httpOrSshEndpoint) return results;
 
+		httpOrSshEndpoint = httpOrSshEndpoint.replace("ssh://", "");
+
 		let parsed;
 		try {
 			parsed = await GitRemoteParser.parseGitUrl(httpOrSshEndpoint);

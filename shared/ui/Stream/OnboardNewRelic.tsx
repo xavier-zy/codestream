@@ -31,7 +31,11 @@ import { FormattedMessage } from "react-intl";
 import { isEmailValid } from "../Authentication/Signup";
 import { OpenUrlRequestType, WebviewPanels } from "@codestream/protocols/webview";
 import { TelemetryRequestType } from "@codestream/protocols/agent";
-import { setOnboardStep, setShowFeedbackSmiley } from "../store/context/actions";
+import {
+	setOnboardStep,
+	setShowFeedbackSmiley,
+	setWantNewRelicOptions
+} from "../store/context/actions";
 import { getTestGroup } from "../store/context/reducer";
 import {
 	Step,
@@ -185,6 +189,27 @@ export const OnboardNewRelic = React.memo(function OnboardNewRelic() {
 
 	useDidMount(() => {
 		setTimeout(() => positionDots(), 250);
+		(async () => {
+			const reposResponse = await HostApi.instance.send(GetReposScmRequestType, {
+				inEditorOnly: true,
+				guessProjectTypes: true
+			});
+			if (!reposResponse.error) {
+				const knownRepo = (reposResponse.repositories || []).find(repo => {
+					return repo.id && repo.projectType !== RepoProjectType.Unknown;
+				});
+				if (knownRepo) {
+					dispatch(
+						setWantNewRelicOptions(
+							knownRepo.projectType!,
+							knownRepo.id,
+							knownRepo.path,
+							knownRepo.projects
+						)
+					);
+				}
+			}
+		})();
 	});
 
 	// check when you connect to a host provider

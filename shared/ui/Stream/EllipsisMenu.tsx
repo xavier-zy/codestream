@@ -251,7 +251,8 @@ export function EllipsisMenu(props: EllipsisMenuProps) {
 			submenu: derivedState.sidebarPaneOrder
 				.filter(id => AVAILABLE_PANES.includes(id))
 				.map(id => {
-					const settings = derivedState.sidebarPanePreferences[id] || DEFAULT_PANE_SETTINGS[id];
+					const settings =
+						derivedState.sidebarPanePreferences[id] || DEFAULT_PANE_SETTINGS[id] || {};
 					return {
 						key: id,
 						label: WebviewPanelNames[id],

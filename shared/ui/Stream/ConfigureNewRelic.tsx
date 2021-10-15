@@ -1,18 +1,17 @@
-import React, { Component } from "react";
-import { connect } from "react-redux";
-import { configureProvider } from "../store/providers/actions";
-import { setWantNewRelicOptions } from "../store/context/actions";
-import { isCurrentUserInternal } from "../store/users/reducer";
-import { isConnected } from "../store/providers/reducer";
-import Button from "./Button";
-import { PROVIDER_MAPPINGS } from "./CrossPostIssueControls/types";
-import { Link } from "./Link";
-import { openPanel, closePanel } from "./actions";
-import Icon from "./Icon";
-import { HostApi } from "../webview-api";
 import { GetNewRelicSignupJwtTokenRequestType } from "@codestream/protocols/agent";
 import { OpenUrlRequestType } from "@codestream/protocols/webview";
-import { closeAllPanels } from "../store/context/actions";
+import React, { Component } from "react";
+import { connect } from "react-redux";
+import { closeAllPanels, setWantNewRelicOptions } from "../store/context/actions";
+import { configureProvider } from "../store/providers/actions";
+import { isConnected } from "../store/providers/reducer";
+import { isCurrentUserInternal } from "../store/users/reducer";
+import { HostApi } from "../webview-api";
+import { openPanel } from "./actions";
+import Button from "./Button";
+import { PROVIDER_MAPPINGS } from "./CrossPostIssueControls/types";
+import Icon from "./Icon";
+import { Link } from "./Link";
 
 interface Props {
 	isNewRelicConnected?: boolean;
@@ -41,7 +40,8 @@ class ConfigureNewRelic extends Component<Props> {
 		apiUrl: "https://api.newrelic.com",
 		formTouched: false,
 		showSignupUrl: true,
-		disablePostConnectOnboarding: false
+		disablePostConnectOnboarding: false,
+		error: null
 	};
 
 	state = this.initialState;
@@ -73,45 +73,52 @@ class ConfigureNewRelic extends Component<Props> {
 		// set the access token ... sending the fourth argument as true here lets the
 		// configureProvider function know that they can mark New Relic as connected as soon
 		// as the access token entered by the user has been saved to the server
-		this.props.configureProvider(
-			providerId,
-			{ apiKey, apiUrl: url },
-			true,
-			this.props.originLocation
-		);
 		this.setState({ loading: true });
-
-		// if (!this.props.disablePostConnectOnboarding) {
-		// 	const reposResponse = await HostApi.instance.send(GetReposScmRequestType, {
-		// 		inEditorOnly: true,
-		// 		guessProjectTypes: true
-		// 	});
-		// 	if (!reposResponse.error) {
-		// 		const knownRepo = (reposResponse.repositories || []).find(repo => {
-		// 			return repo.id && repo.projectType !== RepoProjectType.Unknown;
-		// 		});
-		// 		if (knownRepo) {
-		// 			this.props.setWantNewRelicOptions(
-		// 				knownRepo.projectType,
-		// 				knownRepo.id,
-		// 				knownRepo.path,
-		// 				knownRepo.projects
-		// 			);
-		// 		}
-		// 	}
-		// }
-
-		setTimeout(() => {
+		try {
+			await this.props.configureProvider(
+				providerId,
+				{ apiKey, apiUrl: url },
+				true,
+				this.props.originLocation,
+				true
+			);
+			this.setState({ error: undefined });
+			// if (!this.props.disablePostConnectOnboarding) {
+			// 	const reposResponse = await HostApi.instance.send(GetReposScmRequestType, {
+			// 		inEditorOnly: true,
+			// 		guessProjectTypes: true
+			// 	});
+			// 	if (!reposResponse.error) {
+			// 		const knownRepo = (reposResponse.repositories || []).find(repo => {
+			// 			return repo.id && repo.projectType !== RepoProjectType.Unknown;
+			// 		});
+			// 		if (knownRepo) {
+			// 			this.props.setWantNewRelicOptions(
+			// 				knownRepo.projectType,
+			// 				knownRepo.id,
+			// 				knownRepo.path,
+			// 				knownRepo.projects
+			// 			);
+			// 		}
+			// 	}
+			// }
 			if (this.props.onSubmited) {
 				this.props.onSubmited(e);
 			}
 			// if (!this.props.disablePostConnectOnboarding) {
 			// 	this.props.openPanel(WebviewPanels.OnboardNewRelic);
 			// }
-		}, 3000);
+		} catch (ex) {
+			this.setState({ error: ex.message });
+		}
+		this.setState({ loading: false });
 	};
 
-	renderError = () => {};
+	renderError = () => {
+		if (this.state.error) {
+			return <small className="error-message">{this.state.error}</small>;
+		}
+	};
 
 	onBlurApiKey = () => {
 		this.setState({ apiKeyTouched: true });

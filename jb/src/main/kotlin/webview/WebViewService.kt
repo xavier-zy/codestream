@@ -24,6 +24,7 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.launch
 import org.apache.commons.io.FileUtils
+import org.eclipse.lsp4j.jsonrpc.messages.ResponseError
 import java.io.File
 import java.nio.charset.Charset
 import java.util.concurrent.CompletableFuture
@@ -120,12 +121,21 @@ class WebViewService(val project: Project) : Disposable {
         FileUtils.write(htmlFile, htmlContent, utf8)
     }
 
-    fun postResponse(id: String, params: Any?, error: String? = null) {
-        val message = jsonObject(
-            "id" to id,
-            "params" to gson.toJsonTree(params),
-            "error" to error
-        )
+    fun postResponse(id: String, params: Any?, error: String? = null, responseError: ResponseError? = null) {
+        val message = if (responseError != null) {
+            jsonObject(
+                "id" to id,
+                "params" to gson.toJsonTree(params),
+                "error" to gson.toJsonTree(responseError)
+            )
+        } else {
+            jsonObject(
+                "id" to id,
+                "params" to gson.toJsonTree(params),
+                "error" to error
+            )
+        }
+
         postMessage(message, true)
     }
 

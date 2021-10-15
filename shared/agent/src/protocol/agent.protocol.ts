@@ -42,6 +42,8 @@ export * from "./agent.protocol.newrelic";
 export * from "./agent.protocol.nr";
 export * from "./agent.protocol.pixie";
 
+export * from "./agent.protocol.errors";
+
 export interface Document {
 	uri: string;
 	isDirty?: boolean;

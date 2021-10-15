@@ -1,52 +1,52 @@
 "use strict";
+import { GraphQLClient } from "graphql-request";
+import { groupBy as _groupBy, sortBy as _sortBy } from "lodash-es";
+import { ResponseError } from "vscode-jsonrpc/lib/messages";
+import { InternalError, ReportSuppressedMessages } from "../agentError";
 import { MessageType } from "../api/apiProvider";
+import { SessionContainer } from "../container";
+import { GitRemoteParser } from "../git/parsers/remoteParser";
+import { Logger } from "../logger";
 import {
-	NewRelicErrorGroup,
+	EntityAccount,
+	ERROR_NR_CONNECTION_INVALID_API_KEY,
+	ERROR_NR_CONNECTION_MISSING_API_KEY,
+	ERROR_NR_CONNECTION_MISSING_URL,
+	ErrorGroupResponse,
+	ErrorGroupsResponse,
+	GetNewRelicAccountsRequestType,
+	GetNewRelicAccountsResponse,
+	GetNewRelicAssigneesRequestType,
 	GetNewRelicErrorGroupRequest,
 	GetNewRelicErrorGroupRequestType,
 	GetNewRelicErrorGroupResponse,
-	NewRelicConfigurationData,
-	ThirdPartyProviderConfig,
-	GetNewRelicAssigneesRequestType,
-	ThirdPartyDisconnect,
-	GetNewRelicAccountsRequestType,
-	GetNewRelicAccountsResponse,
+	GetObservabilityEntitiesRequest,
+	GetObservabilityErrorAssignmentsRequest,
+	GetObservabilityErrorAssignmentsRequestType,
+	GetObservabilityErrorAssignmentsResponse,
+	GetObservabilityErrorGroupMetadataRequest,
+	GetObservabilityErrorGroupMetadataRequestType,
+	GetObservabilityErrorGroupMetadataResponse,
 	GetObservabilityErrorsRequest,
 	GetObservabilityErrorsRequestType,
 	GetObservabilityErrorsResponse,
-	ReposScm,
-	GetObservabilityReposRequestType,
 	GetObservabilityReposRequest,
+	GetObservabilityReposRequestType,
 	GetObservabilityReposResponse,
-	EntityAccount,
-	GetObservabilityEntitiesRequestType,
-	GetObservabilityEntitiesResponse,
+	NewRelicConfigurationData,
+	NewRelicErrorGroup,
 	ObservabilityError,
-	GetObservabilityEntitiesRequest,
-	GetObservabilityErrorAssignmentsRequestType,
-	GetObservabilityErrorAssignmentsResponse,
-	GetObservabilityErrorAssignmentsRequest,
 	ObservabilityErrorCore,
-	GetObservabilityErrorGroupMetadataResponse,
-	GetObservabilityErrorGroupMetadataRequestType,
-	GetObservabilityErrorGroupMetadataRequest,
-	ErrorGroupResponse,
 	RelatedEntity,
-	ErrorGroupsResponse,
-	StackTraceResponse
+	StackTraceResponse,
+	ThirdPartyDisconnect,
+	ThirdPartyProviderConfig
 } from "../protocol/agent.protocol";
 import { CSMe, CSNewRelicProviderInfo } from "../protocol/api.protocol";
-import { log, lspProvider } from "../system";
-import { ThirdPartyIssueProviderBase } from "./provider";
-import { GraphQLClient } from "graphql-request";
-import { InternalError, ReportSuppressedMessages } from "../agentError";
-import { Logger } from "../logger";
-import { lspHandler } from "../system";
 import { CodeStreamSession } from "../session";
-import { SessionContainer } from "../container";
+import { log, lspHandler, lspProvider } from "../system";
 import { Strings } from "../system/string";
-import { groupBy as _groupBy, sortBy as _sortBy } from "lodash-es";
-import { GitRemoteParser } from "../git/parsers/remoteParser";
+import { ThirdPartyIssueProviderBase } from "./provider";
 
 export interface Directive {
 	type: "assignRepository" | "removeAssignee" | "setAssignee" | "setState";
@@ -118,6 +118,10 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 
 	get apiUrl() {
 		const data = this._providerInfo && this._providerInfo.data;
+		return this.getApiUrlCore(data);
+	}
+
+	private getApiUrlCore(data?: { apiUrl?: string; usingEU?: boolean; [key: string]: any }): string {
 		if (data) {
 			if (data.apiUrl) {
 				return Strings.trimEnd(data.apiUrl, "/").toLowerCase();
@@ -150,54 +154,122 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 	}
 
 	protected async client(): Promise<GraphQLClient> {
-		if (this._client === undefined) {
-			const options: { [key: string]: any } = {};
-			if (this._httpsAgent) {
-				options.agent = this._httpsAgent;
-			}
-			this._client = new GraphQLClient(this.graphQlBaseUrl, options);
-		}
-		if (!this.accessToken) {
-			throw new Error("Could not get a New Relic API key");
-		}
-
-		// set accessToken on a per-usage basis... possible for accessToken
-		// to be revoked from the source (github.com) and a stale accessToken
-		// could be cached in the _client instance.
-		this._client.setHeaders({
+		const client =
+			this._client || (this._client = this.createClient(this.graphQlBaseUrl, this.accessToken));
+		client.setHeaders({
 			"Api-Key": this.accessToken!,
 			"Content-Type": "application/json",
 			"NewRelic-Requesting-Services": "CodeStream"
 		});
+		return client;
+	}
 
-		return this._client;
+	protected createClient(graphQlBaseUrl?: string, accessToken?: string): GraphQLClient {
+		if (!graphQlBaseUrl) {
+			throw new ResponseError(ERROR_NR_CONNECTION_MISSING_URL, "Could not get a New Relic API URL");
+		}
+		if (!accessToken) {
+			throw new ResponseError(
+				ERROR_NR_CONNECTION_MISSING_API_KEY,
+				"Could not get a New Relic API key"
+			);
+		}
+		const options: { [key: string]: any } = {};
+		if (this._httpsAgent) {
+			options.agent = this._httpsAgent;
+		}
+		const client = new GraphQLClient(graphQlBaseUrl, options);
+
+		// set accessToken on a per-usage basis... possible for accessToken
+		// to be revoked from the source (github.com) and a stale accessToken
+		// could be cached in the _client instance.
+		client.setHeaders({
+			"Api-Key": accessToken!,
+			"Content-Type": "application/json",
+			"NewRelic-Requesting-Services": "CodeStream"
+		});
+
+		return client;
 	}
 
 	@log()
 	async configure(request: NewRelicConfigurationData) {
+		// FIXME - this rather sucks as a way to ensure we have the access token
+		// const userPromise = new Promise<void>(resolve => {
+		// 	this.session.api.onDidReceiveMessage(e => {
+		// 		if (e.type !== MessageType.Users) return;
+		//
+		// 		const me = e.data.find((u: any) => u.id === this.session.userId) as CSMe | null | undefined;
+		// 		if (me == null) return;
+		//
+		// 		const providerInfo = this.getProviderInfo(me);
+		// 		if (providerInfo == null || !providerInfo.accessToken) return;
+		//
+		// 		resolve();
+		// 	});
+		// });
+		const client = this.createClient(
+			this.getApiUrlCore({ apiUrl: request.apiUrl }) + "/graphql",
+			request.apiKey
+		);
+		const { userId, accounts } = await this.validateApiKey(client);
 		await this.session.api.setThirdPartyProviderToken({
 			providerId: this.providerConfig.id,
 			token: request.apiKey,
 			data: {
+				userId,
 				accountId: request.accountId,
 				apiUrl: request.apiUrl
 			}
 		});
+	}
 
-		// FIXME - this rather sucks as a way to ensure we have the access token
-		return new Promise<void>(resolve => {
-			this.session.api.onDidReceiveMessage(e => {
-				if (e.type !== MessageType.Users) return;
-
-				const me = e.data.find((u: any) => u.id === this.session.userId) as CSMe | null | undefined;
-				if (me == null) return;
-
-				const providerInfo = this.getProviderInfo(me);
-				if (providerInfo == null || !providerInfo.accessToken) return;
-
-				resolve();
-			});
-		});
+	private async validateApiKey(
+		client: GraphQLClient
+	): Promise<{
+		userId: number;
+		organizationId?: number;
+		accounts: any[];
+	}> {
+		try {
+			const response = await client.request<{
+				actor: {
+					user: {
+						id: number;
+					};
+					organization?: {
+						id: number;
+					};
+					accounts: [
+						{
+							id: number;
+							name: string;
+						}
+					];
+				};
+			}>(`{
+				actor {
+					user {
+						id
+					}
+					accounts {
+						id,
+						name
+					}
+				}
+			}`);
+			return {
+				userId: response.actor.user.id,
+				accounts: response.actor.accounts,
+				organizationId: response.actor.organization?.id
+			};
+		} catch (ex) {
+			const accessTokenError = this.getAccessTokenError(ex);
+			throw new ResponseError(
+				ERROR_NR_CONNECTION_INVALID_API_KEY,
+				accessTokenError?.message || ex.message || ex.toString()
+			);
+		}
 	}
 
 	async mutate<T>(query: string, variables: any = undefined) {

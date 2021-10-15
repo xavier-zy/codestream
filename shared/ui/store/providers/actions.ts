@@ -153,7 +153,8 @@ export const configureProvider = (
 	providerId: string,
 	data: { [key: string]: any },
 	setConnectedWhenConfigured = false,
-	connectionLocation?: ViewLocation
+	connectionLocation?: ViewLocation,
+	throwOnError = false
 ) => async (dispatch, getState) => {
 	const { providers } = getState();
 	const provider = providers[providerId];
@@ -176,6 +177,9 @@ export const configureProvider = (
 		}
 	} catch (error) {
 		logError(`Failed to connect ${provider.name}: ${error}`);
+		if (throwOnError) {
+			throw error;
+		}
 	}
 };
 

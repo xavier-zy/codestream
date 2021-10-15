@@ -47,6 +47,7 @@ import com.teamdev.jxbrowser.js.JsAccessible
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.launch
+import org.eclipse.lsp4j.jsonrpc.ResponseErrorException
 import java.util.concurrent.CompletableFuture
 
 class WebViewRouter(val project: Project) {
@@ -69,8 +70,13 @@ class WebViewRouter(val project: Project) {
         } catch (e: Exception) {
             logger.warn(e)
             if (message.id != null) {
-                logger.debug("Posting response ${message.id} - Error: ${e.message}")
-                project.webViewService?.postResponse(message.id, null, e.message)
+                if (e is ResponseErrorException) {
+                    logger.debug("Posting response ${message.id} - Error: ${e.responseError.message}")
+                    project.webViewService?.postResponse(message.id, null, null, e.responseError)
+                } else {
+                    logger.debug("Posting response ${message.id} - Error: ${e.message}")
+                    project.webViewService?.postResponse(message.id, null, e.message, null)
+                }
             }
         }
     }

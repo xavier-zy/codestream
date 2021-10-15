@@ -1,6 +1,12 @@
 "use strict";
 import { GraphQLClient } from "graphql-request";
-import { groupBy as _groupBy, memoize, sortBy as _sortBy } from "lodash-es";
+import {
+	memoize,
+	groupBy as _groupBy,
+	sortBy as _sortBy,
+	flatten as _flatten,
+	uniq as _uniq
+} from "lodash-es";
 import { ResponseError } from "vscode-jsonrpc/lib/messages";
 import { InternalError, ReportSuppressedMessages } from "../agentError";
 import { SessionContainer } from "../container";
@@ -534,19 +540,54 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			for (const repo of filteredRepos) {
 				if (!repo.remotes) continue;
 
-				const remotes = repo.remotes.map(_ => {
-					return (_ as any).uri!.toString();
-				});
+				let remotes: string[] = [];
+				for (const remote of repo.remotes) {
+					if (remote.name === "origin" || remote.remoteWeight === 0) {
+						// this is the origin remote
+						remotes = [remote.uri.toString().replace("ssh://", "")];
+						break;
+					} else {
+						remotes.push(remote.uri.toString());
+					}
+				}
 
-				const entities = await this.getEntitiesByRepoRemote(remotes);
+				const entitiesResponse = await this.getEntitiesByRepoRemote(remotes);
+
+				let remoteUrls: (string | undefined)[] = [];
+				if (entitiesResponse?.entities) {
+					// find all the unique remotes in all the entities found
+					remoteUrls = _uniq(
+						_flatten(
+							entitiesResponse.entities.map(_ => {
+								return _.tags.find(t => t.key === "url")?.values;
+							})
+						)
+					).filter(Boolean);
+				}
+				let remote = "";
+				if (remoteUrls && remoteUrls[0]) {
+					if (remoteUrls.length > 1) {
+						// if for some reason we have > 1 (user has bad remotes, or remotes that point to other places WITH entity mappings)
+						Logger.warn("");
+						Logger.warn("NR: getEntitiesByRepoRemote FOUND MORE THAN 1 UNIQUE REMOTE", {
+							remotes: remotes,
+							entityRemotes: remoteUrls
+						});
+						Logger.warn("");
+					}
+					remote = remoteUrls[0];
+				} else {
+					remote = remotes[0];
+				}
+
 				response.repos.push({
 					repoId: repo.id!,
 					repoName: repo.folder.name,
-					repoRemote: remotes[0],
-					hasRepoAssociation: entities.filter(_ => _.tags.find(t => t.key === "url")).length > 0,
+					repoRemote: remote,
+					hasRepoAssociation: remoteUrls?.length > 0,
 
 					// @ts-ignore
-					entityAccounts: entities
+					entityAccounts: entitiesResponse?.entities
 						.map(entity => {
 							const accountIdTag = entity.tags.find(_ => _.key === "accountId");
 							if (!accountIdTag) {
@@ -598,10 +639,10 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					return (_ as any).uri!.toString();
 				});
 
-				const entities = await this.getEntitiesByRepoRemote(remotes);
-				if (entities?.length) {
+				const entitiesReponse = await this.getEntitiesByRepoRemote(remotes);
+				if (entitiesReponse?.entities?.length) {
 					const entityFilter = request.filters?.find(_ => _.repoId === repo.id!);
-					for (const entity of entities.filter((_, index) =>
+					for (const entity of entitiesReponse.entities.filter((_, index) =>
 						entityFilter && entityFilter.entityGuid
 							? _.guid === entityFilter.entityGuid
 							: index == 0
@@ -1420,38 +1461,61 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		return undefined;
 	}
 
-	private async getRepoRemoteVariants(remotes: string[]): Promise<string> {
-		const set = new Set();
+	private async getRepoRemoteVariants(remotes: string[]): Promise<string[]> {
+		const set = new Set<string>();
 
 		await Promise.all(
 			remotes.map(async _ => {
 				const variants = await GitRemoteParser.getRepoRemoteVariants(_);
 				variants.forEach(v => {
-					set.add(`tags.url = '${v.value}'`);
+					set.add(v.value);
 				});
 				return true;
 			})
 		);
-		const remoteFilter = Array.from(set).join(" OR ");
 
-		return remoteFilter;
+		return Array.from(set);
 	}
-
+	/**
+	 * Finds any Repositories mapped to a remote[s]
+	 *
+	 * @private
+	 * @param {string[]} remotes
+	 * @return {*}  {(Promise<
+	 * 		| {
+	 * 				entities?: {
+	 * 					guid: string;
+	 * 					name: String;
+	 * 					tags: { key: string; values: string[] }[];
+	 * 				}[];
+	 * 				remotes?: string[];
+	 * 		  }
+	 * 		| undefined
+	 * 	>)}
+	 * @memberof NewRelicProvider
+	 */
 	private async getEntitiesByRepoRemote(
 		remotes: string[]
 	): Promise<
-		{
-			guid: string;
-			name: String;
-			tags: { key: string; values: string[] }[];
-		}[]
+		| {
+				entities?: {
+					guid: string;
+					name: String;
+					tags: { key: string; values: string[] }[];
+				}[];
+				remotes?: string[];
+		  }
+		| undefined
 	> {
-		const remoteFilter = await this._memoizedGetRepoRemoteVariants(remotes);
-		if (!remoteFilter.length) return [];
+		try {
+			const remoteVariants: string[] = await this._memoizedGetRepoRemoteVariants(remotes);
+			if (!remoteVariants.length) return undefined;
 
-		const queryResponse = await this.query<EntitySearchResponse>(`{
+			const remoteFilters = remoteVariants.map((_: string) => `tags.url = '${_}'`).join(" OR ");
+
+			const queryResponse = await this.query<EntitySearchResponse>(`{
 			actor {
-			  entitySearch(query: "type = 'REPOSITORY' and (${remoteFilter})") {
+			  entitySearch(query: "type = 'REPOSITORY' and (${remoteFilters})") {
 				count
 				query
 				results {
@@ -1468,7 +1532,16 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			}
 		  }
 		  `);
-		return queryResponse.actor.entitySearch.results.entities;
+			return {
+				entities: queryResponse.actor.entitySearch.results.entities,
+				remotes: remoteVariants
+			};
+		} catch (ex) {
+			Logger.warn("NR: getEntitiesByRepoRemote", {
+				error: ex
+			});
+			return undefined;
+		}
 	}
 
 	private async getFingerprintedErrorTraces(accountId: number, applicationGuid: string) {

@@ -204,9 +204,12 @@ export interface ReposScm {
 	 */
 	remotes?: {
 		repoPath: string;
+		name?: string;
 		path: string;
+		uri?: any;
 		domain: string;
 		webUrl: string;
+		remoteWeight?: number;
 		types?: { url: string; type: string }[];
 	}[];
 	/**

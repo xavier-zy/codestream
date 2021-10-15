@@ -1,11 +1,21 @@
-import { NewRelicAccount, PixieCluster, PixiePod } from "@codestream/protocols/agent";
+import {
+	NewRelicAccount,
+	PixieCluster,
+	PixieDynamicLoggingReponse,
+	PixieDynamicLoggingRequestType,
+	PixiePod
+} from "@codestream/protocols/agent";
 import { Button } from "@codestream/webview/src/components/Button";
-import { pixieDynamicLogging } from "@codestream/webview/store/dynamicLogging/actions";
+import {
+	pixieDynamicLogging,
+	pixieDynamicLoggingCancel
+} from "@codestream/webview/store/dynamicLogging/actions";
 import { isConnected } from "@codestream/webview/store/providers/reducer";
 import { Accounts } from "@codestream/webview/Stream/PixieDynamicLogging/Accounts";
 import { Clusters } from "@codestream/webview/Stream/PixieDynamicLogging/Clusters";
 import { Namespaces } from "@codestream/webview/Stream/PixieDynamicLogging/Namespaces";
 import { Pods } from "@codestream/webview/Stream/PixieDynamicLogging/Pods";
+import { HostApi } from "@codestream/webview/webview-api";
 import React, { useEffect } from "react";
 import { shallowEqual, useDispatch, useSelector } from "react-redux";
 import styled from "styled-components";
@@ -138,6 +148,8 @@ const PixieDynamicLogging = props => {
 
 	const [minutes, setMinutes] = React.useState(1);
 	const [isLoading, setIsLoading] = React.useState(false);
+	const [isCancelling, setIsCancelling] = React.useState(false);
+	const [loggingId, setLoggingId] = React.useState("");
 
 	useEffect(() => {
 		// TODO
@@ -151,20 +163,31 @@ const PixieDynamicLogging = props => {
 		setMinutes(time);
 		if (derivedState.currentPixieDynamicLoggingOptions) {
 			setIsLoading(true);
-			await dispatch(
-				pixieDynamicLogging({
+			const result: PixieDynamicLoggingReponse = await HostApi.instance.send(
+				PixieDynamicLoggingRequestType,
+				{
 					accountId: props.account.id,
 					clusterId: props.cluster.clusterId,
 					upid: props.pod.upid,
 					limitSeconds: time * 60,
 					...derivedState.currentPixieDynamicLoggingOptions
-				})
+				}
 			);
-			setIsLoading(false);
+			setLoggingId(result.id);
+			setTimeout(() => setIsLoading(false), 2000);
 		}
 	};
 
-	const hasStatus = derivedState.dynamicLogs && derivedState.dynamicLogs.status;
+	const stopLogging = async () => {
+		setIsCancelling(true);
+		await dispatch(pixieDynamicLoggingCancel({ id: loggingId }));
+		setTimeout(() => setIsCancelling(false), 2000);
+	};
+
+	const hasStatus =
+		derivedState.dynamicLogs &&
+		derivedState.dynamicLogs.status &&
+		derivedState.dynamicLogs.status !== "Cancelled";
 	return (
 		<Root ref={rootRef}>
 			<div
@@ -185,10 +208,7 @@ const PixieDynamicLogging = props => {
 						splitDropdown
 						splitDropdownInstantAction
 						isLoading={isLoading}
-						disabled={
-							!derivedState.currentPixieDynamicLoggingOptions ||
-							!!(derivedState.dynamicLogs && derivedState.dynamicLogs.status)
-						}
+						disabled={!derivedState.currentPixieDynamicLoggingOptions}
 					>
 						Capture for {minutes} minute{minutes > 1 ? "s" : ""}
 					</DropdownButton>
@@ -198,7 +218,12 @@ const PixieDynamicLogging = props => {
 							<div style={{ marginRight: "10px" }}>Status: {derivedState.dynamicLogs?.status}</div>
 							{!derivedState.dynamicLogs?.status?.match("Done") && (
 								<div style={{ marginLeft: "auto" }}>
-									<Button variant="destructive" size="compact">
+									<Button
+										variant="destructive"
+										size="compact"
+										onClick={stopLogging}
+										isLoading={isCancelling}
+									>
 										Stop
 									</Button>
 								</div>

@@ -33,7 +33,7 @@ export interface PixieDynamicLoggingCancelRequest {
 	id: string;
 }
 
-export const PixieDynamicLoggingCancelRequest = new RequestType<
+export const PixieDynamicLoggingCancelRequestType = new RequestType<
 	PixieDynamicLoggingCancelRequest,
 	void,
 	void,

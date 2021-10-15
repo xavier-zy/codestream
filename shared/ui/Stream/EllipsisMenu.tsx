@@ -249,7 +249,7 @@ export function EllipsisMenu(props: EllipsisMenuProps) {
 			label: "View",
 			action: "view",
 			submenu: derivedState.sidebarPaneOrder.map(id => {
-				const settings = derivedState.sidebarPanePreferences[id] || DEFAULT_PANE_SETTINGS[id];
+				const settings = derivedState.sidebarPanePreferences[id] || DEFAULT_PANE_SETTINGS[id] || {};
 				return {
 					key: id,
 					label: WebviewPanelNames[id],

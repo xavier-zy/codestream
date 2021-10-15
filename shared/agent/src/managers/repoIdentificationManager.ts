@@ -18,7 +18,7 @@ export class RepoIdentificationManager {
 			return { projectType: RepoProjectType.Java };
 		} else {
 			const dotNetCore = await this.repoIsDotNetCore(repo, files);
-			if (dotNetCore) {
+			if (dotNetCore && dotNetCore.projects && dotNetCore.projects.length) {
 				return {
 					projectType: RepoProjectType.DotNetCore,
 					projects: dotNetCore.projects

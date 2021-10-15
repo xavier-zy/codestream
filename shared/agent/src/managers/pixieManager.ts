@@ -293,12 +293,12 @@ px.display(df[['upid', 'pod']])`;
 						err.message ===
 						"14 UNAVAILABLE: rpc error: code = Unavailable desc = probe installation in progress"
 					) {
-						callStatus = "Installing probe";
+						callStatus = "Installing probe...";
 					} else if (
 						err.message ===
 						"14 UNAVAILABLE: rpc error: code = Unavailable desc = Schema is not ready yet"
 					) {
-						callStatus = "Setting up schema";
+						callStatus = "Setting up schema...";
 					} else {
 						error = err.toString();
 					}
@@ -308,11 +308,11 @@ px.display(df[['upid', 'pod']])`;
 						if (
 							s.details === "rpc error: code = Unavailable desc = probe installation in progress"
 						) {
-							callStatus = "Installing probe";
+							callStatus = "Installing probe...";
 						} else if (
 							s.details === "rpc error: code = Unavailable desc = Schema is not ready yet"
 						) {
-							callStatus = "Setting up schema";
+							callStatus = "Setting up schema...";
 						} else {
 							callStatus = s.details;
 						}
@@ -339,6 +339,7 @@ px.display(df[['upid', 'pod']])`;
 						error,
 						done
 					});
+
 					if (!done) {
 						setTimeout(poller, 5000);
 					} else {

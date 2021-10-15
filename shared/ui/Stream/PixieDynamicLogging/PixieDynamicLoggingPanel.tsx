@@ -136,13 +136,26 @@ const PixieDynamicLogging = props => {
 
 	const dispatch = useDispatch();
 	const derivedState = useSelector((state: CodeStreamState) => {
-		const { providers = {}, preferences } = state;
+		const { providers = {}, context, dynamicLogging } = state;
 		const newRelicIsConnected =
 			providers["newrelic*com"] && isConnected(state, { id: "newrelic*com" });
+
+		const dynamicLogs = dynamicLogging?.dynamicLogs;
+		const status =
+			dynamicLogs?.status === "Capturing" ? (
+				<span>
+					Capturing calls to <b>{context.currentPixieDynamicLoggingOptions?.functionName}</b>...
+				</span>
+			) : (
+				dynamicLogs?.status
+			);
+		const hasStatus = status && status !== "Cancelled";
 		return {
 			newRelicIsConnected,
-			currentPixieDynamicLoggingOptions: state.context.currentPixieDynamicLoggingOptions,
-			dynamicLogs: state.dynamicLogging?.dynamicLogs
+			currentPixieDynamicLoggingOptions: context.currentPixieDynamicLoggingOptions,
+			dynamicLogs,
+			hasStatus,
+			status
 		};
 	}, shallowEqual);
 
@@ -184,10 +197,6 @@ const PixieDynamicLogging = props => {
 		setTimeout(() => setIsCancelling(false), 2000);
 	};
 
-	const hasStatus =
-		derivedState.dynamicLogs &&
-		derivedState.dynamicLogs.status &&
-		derivedState.dynamicLogs.status !== "Cancelled";
 	return (
 		<Root ref={rootRef}>
 			<div
@@ -196,7 +205,7 @@ const PixieDynamicLogging = props => {
 					borderTop: "1px solid var(--base-border-color)"
 				}}
 			>
-				{!hasStatus ? (
+				{!derivedState.hasStatus ? (
 					<DropdownButton
 						items={[1, 2, 3, 4, 5, 10].map(time => {
 							return {
@@ -215,9 +224,18 @@ const PixieDynamicLogging = props => {
 				) : (
 					<div>
 						<div style={{ display: "flex", alignItems: "center" }}>
-							<div style={{ marginRight: "10px" }}>Status: {derivedState.dynamicLogs?.status}</div>
-							{!derivedState.dynamicLogs?.status?.match("Done") && (
-								<div style={{ marginLeft: "auto" }}>
+							<div style={{ marginRight: "10px" }}>{derivedState.status}</div>
+							<div style={{ marginLeft: "auto" }}>
+								{derivedState.dynamicLogs?.status?.match("Done") ? (
+									<Button
+										variant="destructive"
+										size="compact"
+										onClick={stopLogging}
+										isLoading={isCancelling}
+									>
+										Reset
+									</Button>
+								) : (
 									<Button
 										variant="destructive"
 										size="compact"
@@ -226,8 +244,8 @@ const PixieDynamicLogging = props => {
 									>
 										Stop
 									</Button>
-								</div>
-							)}
+								)}
+							</div>
 						</div>
 						{derivedState.dynamicLogs && derivedState.dynamicLogs.results && (
 							<div style={{ height: "10px" }} />

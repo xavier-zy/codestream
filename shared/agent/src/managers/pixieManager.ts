@@ -11,6 +11,7 @@ import { Logger } from "../logger";
 import {
 	PixieCluster,
 	PixieDynamicLoggingCancelRequest,
+	PixieDynamicLoggingCancelRequestType,
 	PixieDynamicLoggingReponse,
 	PixieDynamicLoggingRequest,
 	PixieDynamicLoggingRequestType,
@@ -359,7 +360,7 @@ px.display(df[['upid', 'pod']])`;
 		return promise;
 	}
 
-	@lspHandler(PixieDynamicLoggingCancelRequest)
+	@lspHandler(PixieDynamicLoggingCancelRequestType)
 	dynamicLoggingCancel(request: PixieDynamicLoggingCancelRequest) {
 		this._dynamicLoggingActiveRequests.delete(request.id);
 	}

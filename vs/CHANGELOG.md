@@ -1,5 +1,11 @@
 # Change Log
 
+## [11.1.2] - 2021-10-15
+
+### Fixed
+
+- Fixes an issue that prevented some users from accessing the username menu and switching organizations
+
 ## [11.1.1] - 2021-10-7
 
 ### Fixed

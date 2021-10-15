@@ -617,7 +617,6 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 	})
 	async getObservabilityErrors(request: GetObservabilityErrorsRequest) {
 		const response: GetObservabilityErrorsResponse = { repos: [] };
-
 		try {
 			// NOTE: might be able to eliminate some of this if we can get a list of entities
 			const { scm } = SessionContainer.instance();
@@ -807,21 +806,37 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			const parsedId = this.parseId(errorGroupGuid)!;
 			accountId = parsedId.accountId;
 
-			const results = await this.fetchErrorGroupData(accountId, errorGroupGuid);
-			if (results) {
-				entityGuid = results["entity.guid"];
+			// we're going to attempt to run these in parallel
+			// if we have an entityGuid in the request
+			let metricsResponse;
+			let errorGroupResponse;
+
+			let inParallel = false;
+			if (request.entityGuid) {
+				entityGuid = request.entityGuid;
+				[metricsResponse, errorGroupResponse] = await Promise.all([
+					this.fetchMetricsData(accountId, errorGroupGuid),
+					this.fetchErrorGroup(errorGroupGuid, entityGuid, request.occurrenceId)
+				]);
+				inParallel = true;
+			} else {
+				metricsResponse = await this.fetchMetricsData(accountId, errorGroupGuid);
+			}
+			Logger.debug(`NR: getNewRelicErrorGroupData inParallel=${inParallel}`);
+
+			if (metricsResponse) {
+				entityGuid = metricsResponse["entity.guid"];
 				errorGroup = {
 					entity: {},
 					accountId: accountId,
 					entityGuid: entityGuid,
-					guid: results["error.group.guid"],
-					title: results["error.group.name"],
-					message: results["error.group.message"],
-					nrql: results["error.group.nrql"],
-					source: results["error.group.source"],
-					timestamp: results["timestamp"],
+					guid: metricsResponse["error.group.guid"],
+					title: metricsResponse["error.group.name"],
+					message: metricsResponse["error.group.message"],
+					source: metricsResponse["error.group.source"],
+					timestamp: metricsResponse["timestamp"],
 					errorGroupUrl: `${this.productUrl}/redirect/errors-inbox/${errorGroupGuid}`,
-					entityUrl: `${this.productUrl}/redirect/entity/${results["entity.guid"]}`,
+					entityUrl: `${this.productUrl}/redirect/entity/${metricsResponse["entity.guid"]}`,
 					state: "UNRESOLVED",
 					states: ["RESOLVED", "IGNORED", "UNRESOLVED"]
 				};
@@ -834,11 +849,13 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					// "URL path": { type: "string", value: "value" }
 				};
 
-				const errorGroupResponse = await this.getErrorGroup(
-					errorGroupGuid,
-					entityGuid,
-					request.occurrenceId
-				);
+				if (!inParallel) {
+					errorGroupResponse = await this.fetchErrorGroup(
+						errorGroupGuid,
+						entityGuid,
+						request.occurrenceId
+					);
+				}
 
 				if (errorGroupResponse) {
 					errorGroup.errorGroupUrl = errorGroupResponse.actor.errorsInbox.errorGroup.url;
@@ -1155,7 +1172,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			const repoEntityId = response.referenceEntityCreateOrUpdateRepository.created[0];
 			const entityId =
 				request.entityId ||
-				(await this.getEntityIdFromErrorGroupGuid(accountId, request.errorGroupGuid!));
+				(await this.getEntityGuidFromErrorGroupGuid(accountId, request.errorGroupGuid!));
 			if (entityId) {
 				const entityRelationshipUserDefinedCreateOrReplaceResponse = await this.mutate<{
 					errors?: { message: string }[];
@@ -1241,12 +1258,12 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		return undefined;
 	}
 
-	private async getEntityIdFromErrorGroupGuid(
+	private async getEntityGuidFromErrorGroupGuid(
 		accountId: number,
 		errorGroupGuid: string
 	): Promise<string | undefined> {
 		try {
-			const results = await this.fetchErrorGroupData(accountId, errorGroupGuid);
+			const results = await this.fetchMetricsData(accountId, errorGroupGuid);
 			return results ? results["entity.guid"] : undefined;
 		} catch (ex) {
 			Logger.error(ex, "NR: getEntityIdFromErrorGroupGuid", {
@@ -1257,8 +1274,24 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		}
 	}
 
-	private async fetchErrorGroupData(accountId: number, errorGroupGuid: string) {
+	private async fetchMetricsData(
+		accountId: number,
+		errorGroupGuid: string
+	): Promise<
+		| { [Identifier: string]: any }
+		// | {
+		// 		["entity.guid"]: string;
+		// 		["error.group.guid"]: string;
+		// 		["error.group.message"]: string;
+		// 		["error.group.name"]: string;
+		// 		["error.group.source"]: string;
+		//   }
+		// | { [Identifier: string]: string }[]
+		| undefined
+	> {
 		let breakError;
+		// NOTE: if we eventually get a timestamp, we don't need to do this
+		// but recent errors only exist in MetricRaw
 		for (const item of MetricsLookupBackoffs) {
 			if (breakError) {
 				throw breakError;
@@ -1270,9 +1303,9 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					  account(id: $accountId) {
 						nrql(query: "FROM ${
 							item.table
-						} SELECT entity.guid, error.group.guid, error.group.message, error.group.name, error.group.source, error.group.nrql WHERE error.group.guid = '${Strings.sanitizeGraphqlValue(
+						} SELECT entity.guid, error.group.guid, error.group.message, error.group.name, error.group.source WHERE error.group.guid = '${Strings.sanitizeGraphqlValue(
 						errorGroupGuid
-					)}' SINCE ${item.since} ago LIMIT 1") { nrql results }
+					)}' SINCE ${item.since} ago LIMIT 1") { results }
 					  }
 					}
 				  }
@@ -1308,7 +1341,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		return undefined;
 	}
 
-	private async getErrorGroup(
+	private async fetchErrorGroup(
 		errorGroupGuid: string,
 		entityGuid: string,
 		occurrenceId: string

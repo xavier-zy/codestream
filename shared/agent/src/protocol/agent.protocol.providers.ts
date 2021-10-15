@@ -880,7 +880,6 @@ export interface NewRelicErrorGroup {
 	guid: string;
 	title: string;
 	message: string;
-	nrql: string;
 	source: string;
 	timestamp: number;
 

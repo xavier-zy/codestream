@@ -16,6 +16,9 @@ export function reduceDynamicLogging(
 				dynamicLogs: action.payload
 			};
 		}
+		case DynamicLoggingActionsTypes.ClearDynamicLogging: {
+			return initialState;
+		}
 		case "RESET":
 			return initialState;
 		default:

@@ -1,7 +1,8 @@
 import { Index } from "../common";
 
 export enum DynamicLoggingActionsTypes {
-	AddDynamicLogging = "ADD_DYNAMICLOGGING"
+	AddDynamicLogging = "ADD_DYNAMICLOGGING",
+	ClearDynamicLogging = "CLEAR_DYNAMICLOGGING"
 }
 
 export type DynamicLoggingState = {

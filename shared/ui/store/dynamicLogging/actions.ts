@@ -21,3 +21,5 @@ export const pixieDynamicLoggingCancel = (
 ) => async dispatch => {
 	return await HostApi.instance.send(PixieDynamicLoggingCancelRequestType, request);
 };
+
+export const clearDynamicLogging = () => action(DynamicLoggingActionsTypes.ClearDynamicLogging);

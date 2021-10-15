@@ -109,6 +109,7 @@ import { PresentTOS } from "../Authentication/PresentTOS";
 import { PresentPrereleaseTOS } from "../Authentication/PresentPrereleaseTOS";
 import { Loading } from "../Container/Loading";
 import { DelayedRender } from "../Container/DelayedRender";
+import { clearDynamicLogging } from "../store/dynamicLogging/actions";
 
 const EMAIL_MATCH_REGEX = new RegExp(
 	"[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*",
@@ -220,6 +221,7 @@ export class SimpleStream extends PureComponent {
 	}
 
 	handlePixieDynamicLoggingType(e) {
+		this.props.clearDynamicLogging();
 		this.props.setCurrentPixieDynamicLoggingOptions(e);
 		this.props.openPanel(WebviewPanels.PixieDynamicLogging);
 	}
@@ -788,6 +790,7 @@ const mapStateToProps = state => {
 
 export default connect(mapStateToProps, {
 	...actions,
+	clearDynamicLogging,
 	setCurrentReview,
 	setCurrentReviewOptions,
 	setCurrentPullRequest,

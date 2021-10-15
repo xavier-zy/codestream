@@ -90,7 +90,9 @@ import { updateModifiedReposDebounced } from "./store/users/actions";
 import { logWarning } from "./logger";
 import { fetchReview } from "./store/reviews/actions";
 import {
+	addCodeErrors,
 	fetchCodeError,
+	findCodeError,
 	findErrorGroupByObjectId,
 	openErrorGroup,
 	PENDING_CODE_ERROR_ID_FORMAT as toPendingCodeErrorId
@@ -529,6 +531,40 @@ function listenForEvents(store) {
 							tag?: string;
 							ide?: string;
 						}>;
+
+						const response = await findCodeError({
+							objectId: definedQuery.query.errorGroupGuid,
+							objectType: "errorGroup"
+						});
+						if (response.unauthorized) {
+							HostApi.instance.track("Error Report Roadblocked", {
+								"Error Group ID": definedQuery.query.errorGroupGuid,
+								// FIXME: i don't have a fucking clue how we're going to get this, especially at this point in the flow
+								"NR Organization ID": "",
+								"NR Account ID": response.accountId
+							});
+							const orgDesc = response.ownedBy
+								? `the ${response.ownedBy} organization`
+								: "another company";
+							confirmPopup({
+								title: "Error Can't Be Opened",
+								message: (
+									<span>
+										This error can't be displayed because it's owned by ${orgDesc} on CodeStream.
+									</span>
+								),
+								centered: true,
+								buttons: [
+									{
+										label: "OK",
+										className: "control-button"
+									}
+								]
+							});
+							return;
+						} else if (response.codeError) {
+							await store.dispatch(addCodeErrors([response.codeError]));
+						}
 
 						definedQuery.query.occurrenceId =
 							definedQuery.query.occurrenceId || definedQuery.query.traceId;

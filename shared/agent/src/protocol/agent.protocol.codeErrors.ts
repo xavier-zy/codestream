@@ -14,6 +14,7 @@ import {
 	CSUpdateCodeErrorRequest,
 	CSUpdateCodeErrorResponse
 } from "./api.protocol";
+import { CSObjectStream, CSPost } from "./api.protocol.models";
 
 export interface CodeErrorPlus extends CSCodeError {
 	errorGroup?: NewRelicErrorGroup;
@@ -79,6 +80,28 @@ export const FetchCodeErrorsRequestType = new RequestType<
 	void,
 	void
 >("codestream/codeErrors");
+
+export interface FindCodeErrorRequest {
+	objectId: string;
+	objectType: string;
+}
+
+export interface FindCodeErrorResponse {
+	notFound?: boolean;
+	unauthorized?: boolean;
+	codeError?: CSCodeError;
+	post?: CSPost;
+	stream?: CSObjectStream;
+	accountId?: string;
+	ownedBy?: string;
+}
+
+export const FindCodeErrorRequestType = new RequestType<
+	FindCodeErrorRequest,
+	FindCodeErrorResponse,
+	void,
+	void
+>("codestream/codeErrors/find");
 
 export interface DeleteCodeErrorRequest {
 	id: string;

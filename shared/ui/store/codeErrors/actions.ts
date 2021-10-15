@@ -8,6 +8,7 @@ import {
 	CreateShareableCodeErrorRequestType,
 	GetCodeErrorRequestType,
 	FetchCodeErrorsRequestType,
+	FindCodeErrorRequestType,
 	ResolveStackTraceRequestType,
 	ResolveStackTracePositionRequestType,
 	UpdateCodeErrorResponse,
@@ -251,6 +252,10 @@ export const jumpToStackLine = (
 			sha
 		});
 	}
+};
+
+export const findCodeError = async request => {
+	return await HostApi.instance.send(FindCodeErrorRequestType, request);
 };
 
 export const updateCodeError = request => async dispatch => {

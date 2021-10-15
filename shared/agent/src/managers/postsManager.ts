@@ -2331,6 +2331,12 @@ export class PostsManager extends EntityManagerBase<CSPost> {
 
 export async function resolveCreatePostResponse(response: CreatePostResponse) {
 	const container = SessionContainer.instance();
+	if (response.streams) {
+		await container.streams.resolve({
+			type: MessageType.Streams,
+			data: response.streams
+		});
+	}
 	if (response.codemark) {
 		await container.codemarks.resolve({
 			type: MessageType.Codemarks,
@@ -2353,12 +2359,6 @@ export async function resolveCreatePostResponse(response: CreatePostResponse) {
 		await container.repos.resolve({
 			type: MessageType.Repositories,
 			data: response.repos
-		});
-	}
-	if (response.streams) {
-		await container.streams.resolve({
-			type: MessageType.Streams,
-			data: response.streams
 		});
 	}
 }

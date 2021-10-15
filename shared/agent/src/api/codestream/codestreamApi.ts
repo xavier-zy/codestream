@@ -95,6 +95,8 @@ import {
 	FetchTeamsRequest,
 	FetchUnreadStreamsRequest,
 	FetchUsersRequest,
+	FindCodeErrorRequest,
+	FindCodeErrorResponse,
 	FollowCodemarkRequest,
 	FollowCodemarkResponse,
 	FollowCodeErrorRequest,
@@ -1547,6 +1549,16 @@ export class CodeStreamApiProvider implements ApiProvider {
 		});
 
 		return response;
+	}
+
+	@log()
+	async findCodeError(request: FindCodeErrorRequest): Promise<FindCodeErrorResponse> {
+		return this.get<FindCodeErrorResponse>(
+			`/code-errors/find/object?objectId=${encodeURIComponent(request.objectId)}&objectType=${
+				request.objectType
+			}`,
+			this._token
+		);
 	}
 
 	@log()

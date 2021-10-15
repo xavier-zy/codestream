@@ -48,7 +48,7 @@ import {
 	GetNewRelicErrorGroupRequestType,
 	PixieDynamicLoggingResultNotification
 } from "@codestream/protocols/agent";
-import { CSApiCapabilities, CodemarkType, CSMe } from "@codestream/protocols/api";
+import { CSApiCapabilities, CodemarkType, CSCodeError, CSMe } from "@codestream/protocols/api";
 import translations from "./translations/en";
 // import translationsEs from "./translations/es";
 import { apiUpgradeRecommended, apiUpgradeRequired } from "./store/apiVersioning/actions";
@@ -484,14 +484,20 @@ function listenForEvents(store) {
 					switch (route.action) {
 						case "open": {
 							if (route.id) {
-								if (confirmSwitchToTeam(store, route.query, "code error", route.id)) return;
-
-								const { codeErrors } = store.getState();
-								const codeError = getCodeError(codeErrors, route.id);
-								store.dispatch(closeAllPanels());
+								let { codeErrors } = store.getState();
+								let codeError = getCodeError(codeErrors, route.id);
 								if (!codeError) {
 									await store.dispatch(fetchCodeError(route.id));
+									let { codeErrors } = store.getState(); // i luv redux
+									codeError = getCodeError(codeErrors, route.id);
 								}
+								if (
+									confirmSwitchToTeam(store, { ...route.query, codeError }, "code error", route.id)
+								) {
+									return;
+								}
+
+								store.dispatch(closeAllPanels());
 								store.dispatch(setCurrentCodeError(route.id));
 							}
 							break;
@@ -793,7 +799,7 @@ export const parseProtocol = function(uriString: string | undefined): Route | un
 
 const confirmSwitchToTeam = function(
 	store: any,
-	options: { teamId: string; companyName: string },
+	options: { teamId: string; companyName: string; codeError?: CSCodeError },
 	type: string,
 	itemId: string
 ): boolean {
@@ -802,6 +808,28 @@ const confirmSwitchToTeam = function(
 	const { currentTeamId } = context;
 	const { teamId, companyName } = options;
 
+	if (type === "code error") {
+		if (
+			!options.codeError ||
+			!currentUser ||
+			!(options.codeError.followerIds || []).includes(currentUser.id)
+		) {
+			confirmPopup({
+				title: "No access",
+				message: <span>You don't have access to this {type}.</span>,
+				centered: true,
+				buttons: [
+					{
+						label: "OK",
+						className: "control-button"
+					}
+				]
+			});
+			return true;
+		} else {
+			return false;
+		}
+	}
 	if (teamId && teamId !== currentTeamId) {
 		if (currentUser?.teamIds.includes(teamId)) {
 			const switchInfo =

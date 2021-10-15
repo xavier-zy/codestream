@@ -285,7 +285,8 @@ export const Observability = React.memo((props: Props) => {
 	});
 
 	useEffect(() => {
-		if (derivedState.newRelicIsConnected && !previousNewRelicIsConnected) {
+		// must use a type check for === false or we might get a double update when previousNewRelicIsConnected is undefined (before its set)
+		if (derivedState.newRelicIsConnected && previousNewRelicIsConnected === false) {
 			_useDidMount();
 		}
 	}, [derivedState.newRelicIsConnected]);

@@ -662,10 +662,12 @@ const AddAppMonitoringIntro = (props: {
 								{nodeJSDetected && <>detected</>}
 							</div>
 						</Provider>
+						{/*
 						<Provider variant="neutral">
 							<Icon name="php" />
 							PHP
 						</Provider>
+						*/}
 						<Provider onClick={() => props.instrument(RepoProjectType.Java)} variant={javaVariant}>
 							<Icon name="java" />
 							Java
@@ -688,7 +690,8 @@ const AddAppMonitoringIntro = (props: {
 						</Provider>
 					</IntegrationButtons>
 					<SkipLink onClick={() => {}}>
-						Ruby, Python, Go and C users <Link href="">click here</Link>
+						PHP, Ruby, Python, Go and C users{" "}
+						<Link href="https://developer.newrelic.com/instant-observability/">click here</Link>
 					</SkipLink>
 				</Dialog>
 				<SkipLink onClick={() => props.later()}>I'll do this later</SkipLink>

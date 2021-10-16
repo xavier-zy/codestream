@@ -83,7 +83,7 @@ export const PixieDynamicLoggingPanel = () => {
 	};
 
 	return (
-		<Dialog maximizable wide noPadding onClose={() => dispatch(closePanel())}>
+		<Dialog wide noPadding onClose={() => dispatch(closePanel())}>
 			<PanelHeader title="Pixie Dynamic Logging"></PanelHeader>
 			<div style={{ padding: "0 20px 20px 20px" }}>
 				<DropdownWrapper>

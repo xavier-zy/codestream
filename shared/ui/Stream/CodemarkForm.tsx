@@ -56,7 +56,12 @@ import {
 } from "@codestream/protocols/webview";
 import { getCurrentSelection } from "../store/editorContext/reducer";
 import Headshot from "./Headshot";
-import { getTeamMembers, getTeamTagsArray, getTeamMates } from "../store/users/reducer";
+import {
+	getTeamMembers,
+	getTeamTagsArray,
+	getTeamMates,
+	getActiveMemberIds
+} from "../store/users/reducer";
 import MessageInput, { AttachmentField } from "./MessageInput";
 import { getCurrentTeamProvider } from "../store/teams/reducer";
 import { getCodemark } from "../store/codemarks/reducer";
@@ -136,7 +141,7 @@ interface Props extends ConnectedProps {
 interface ConnectedProps {
 	teamMates: CSUser[];
 	teamMembers: CSUser[];
-	removedMemberIds: string[];
+	activeMemberIds: string[];
 	channelStreams: CSChannelStream[];
 	channel: CSStream;
 	issueProvider?: ThirdPartyProviderConfig;
@@ -444,7 +449,11 @@ class CodemarkForm extends React.Component<Props, State> {
 			// only update if we have a live location
 			this.state.liveLocation >= 0
 		) {
-			this.getScmInfoForSelection(textEditorUri!, textEditorGitSha, forceAsLine(textEditorSelection!));
+			this.getScmInfoForSelection(
+				textEditorUri!,
+				textEditorGitSha,
+				forceAsLine(textEditorSelection!)
+			);
 			this.props.onDidChangeSelection && this.props.onDidChangeSelection(textEditorSelection!);
 			// this.setState({ addingLocation: false });
 		}
@@ -479,7 +488,12 @@ class CodemarkForm extends React.Component<Props, State> {
 		});
 	}
 
-	private async getScmInfoForSelection(uri: string, gitSha?: string, range: Range, callback?: Function) {
+	private async getScmInfoForSelection(
+		uri: string,
+		gitSha?: string,
+		range: Range,
+		callback?: Function
+	) {
 		const scmInfo = await HostApi.instance.send(GetRangeScmInfoRequestType, {
 			uri: uri,
 			gitSha: gitSha,
@@ -541,7 +555,11 @@ class CodemarkForm extends React.Component<Props, State> {
 	handleSelectionChange = () => {
 		const { textEditorSelection, textEditorUri, textEditorGitSha } = this.props;
 		if (textEditorSelection) {
-			this.getScmInfoForSelection(textEditorUri!, textEditorGitSha, forceAsLine(textEditorSelection));
+			this.getScmInfoForSelection(
+				textEditorUri!,
+				textEditorGitSha,
+				forceAsLine(textEditorSelection)
+			);
 		}
 	};
 
@@ -589,7 +607,7 @@ class CodemarkForm extends React.Component<Props, State> {
 
 	handleScmChange = () => {
 		const { codeBlocks } = this.state;
-		const { blameMap = {}, inviteUsersOnTheFly, removedMemberIds } = this.props;
+		const { blameMap = {}, inviteUsersOnTheFly, activeMemberIds } = this.props;
 
 		this.setState({ codeBlockInvalid: false });
 
@@ -622,7 +640,7 @@ class CodemarkForm extends React.Component<Props, State> {
 					});
 				} else if (author.id) {
 					// if it's a registered teammate who has not been explicitly removed from the team, mention them
-					if (!removedMemberIds.includes(author.id)) mentionAuthors.push(author);
+					if (activeMemberIds.includes(author.id)) mentionAuthors.push(author);
 				} else if (inviteUsersOnTheFly) {
 					// else offer to send the person an email
 					unregisteredAuthors.push(author);
@@ -2588,7 +2606,7 @@ const mapStateToProps = (state: CodeStreamState): ConnectedProps => {
 
 	const team = teams[context.currentTeamId];
 	const adminIds = team.adminIds || EMPTY_ARRAY;
-	const removedMemberIds = team.removedMemberIds || EMPTY_ARRAY;
+	const activeMemberIds = getActiveMemberIds(team);
 	const isCurrentUserAdmin = adminIds.includes(session.userId || "");
 	const blameMap = team.settings ? team.settings.blameMap : EMPTY_OBJECT;
 	const inviteUsersOnTheFly =
@@ -2600,7 +2618,7 @@ const mapStateToProps = (state: CodeStreamState): ConnectedProps => {
 		channel,
 		teamMates,
 		teamMembers,
-		removedMemberIds,
+		activeMemberIds,
 		currentTeamId: state.context.currentTeamId,
 		blameMap: blameMap || EMPTY_OBJECT,
 		isCurrentUserAdmin,

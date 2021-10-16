@@ -1,4 +1,4 @@
-import { CSUser, CSStream, StreamType, CSPost } from "@codestream/protocols/api";
+import { CSUser, CSStream, StreamType, CSTeam } from "@codestream/protocols/api";
 import { createSelector } from "reselect";
 import { mapFilter, toMapBy, emptyArray } from "../../utils";
 import { ActionType } from "../common";
@@ -57,8 +57,19 @@ export const isCurrentUserInternal = (state: CodeStreamState) => {
 	return ["codestream.com", "newrelic.com"].includes(email.split("@")[1]);
 };
 
+export const getActiveMemberIds = (team: CSTeam) => {
+	return difference(
+		difference(team.memberIds, team.removedMemberIds || []),
+		team.foreignMemberIds || []
+	);
+};
+
+export const isActiveMember = (team: CSTeam, userId: string) => {
+	return getActiveMemberIds(team).includes(userId);
+};
+
 export const getTeamMembers = createSelector(getCurrentTeam, getUsers, (team, users) => {
-	const memberIds = difference(team.memberIds, team.removedMemberIds || []);
+	const memberIds = getActiveMemberIds(team);
 	return mapFilter(memberIds, (id: string) => {
 		const user: CSUser = users[id];
 		return user && !user.deactivated && !user.externalUserId ? user : undefined;

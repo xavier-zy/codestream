@@ -25,7 +25,7 @@ import Timestamp from "./Timestamp";
 import { DropdownButton } from "./DropdownButton";
 import { confirmPopup } from "./Confirm";
 import styled from "styled-components";
-import { getCodeCollisions } from "../store/users/reducer";
+import { getCodeCollisions, getActiveMemberIds } from "../store/users/reducer";
 import { openPanel, openModal } from "../store/context/actions";
 import { isFeatureEnabled } from "../store/apiVersioning/reducer";
 import { ProfileLink } from "../src/components/ProfileLink";
@@ -1084,7 +1084,7 @@ const mapStateToProps = state => {
 	const team = teams[context.currentTeamId];
 	const company = companies[team.companyId];
 
-	const memberIds = _difference(team.memberIds, team.removedMemberIds || []);
+	const memberIds = getActiveMemberIds(team);
 	const teammates = mapFilter(memberIds, id => {
 		const user = users[id as string];
 		if (!user || !user.isRegistered || user.deactivated || user.externalUserId) return;

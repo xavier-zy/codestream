@@ -6,6 +6,7 @@ import { CodeStreamState } from "../store";
 import { keyFilter, mapFilter } from "../utils";
 import { confirmPopup } from "./Confirm";
 import { isFeatureEnabled } from "../store/apiVersioning/reducer";
+import { getActiveMemberIds } from "../store/users/reducer";
 import { Dialog } from "../src/components/Dialog";
 import { EMAIL_REGEX, MapRow } from "./TeamPanel";
 import { SelectPeople } from "../src/components/SelectPeople";
@@ -37,7 +38,7 @@ export function BlameMap() {
 		const dontSuggestInvitees = team.settings
 			? team.settings.dontSuggestInvitees || EMPTY_HASH_2
 			: EMPTY_HASH_2;
-		const memberIds = _difference(team.memberIds, team.removedMemberIds || []);
+		const memberIds = getActiveMemberIds(team);
 		const teammates = mapFilter(memberIds, id => {
 			const user = state.users[id as string];
 			if (!user || !user.isRegistered || user.deactivated || user.externalUserId) return;

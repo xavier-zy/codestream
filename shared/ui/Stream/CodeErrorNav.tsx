@@ -385,7 +385,11 @@ export function CodeErrorNav(props: Props) {
 				return;
 			}
 
-			if (errorGroupResult?.errorGroup && !errorGroupResult.errorGroup.hasStackTrace) {
+			if (
+				errorGroupResult &&
+				errorGroupResult.errorGroup &&
+				!errorGroupResult.errorGroup.hasStackTrace
+			) {
 				setError({
 					title: "Missing Stack Trace",
 					description:

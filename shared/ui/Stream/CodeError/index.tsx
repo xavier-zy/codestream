@@ -839,51 +839,55 @@ export const BaseCodeErrorMenu = (props: BaseCodeErrorMenuProps) => {
 						document.execCommand("copy");
 					}
 				}
-			},
-			{
-				label: derivedState.userIsFollowing ? "Unfollow" : "Follow",
-				key: "toggle-follow",
-				icon: <Icon name="eye" />,
-				action: () => {
-					const value = !derivedState.userIsFollowing;
-					const changeType = value ? "Followed" : "Unfollowed";
-					HostApi.instance.send(FollowCodeErrorRequestType, {
-						id: codeError.id,
-						value
-					});
-					HostApi.instance.track("Notification Change", {
-						Change: `Code Error ${changeType}`,
-						"Source of Change": "Code Error menu"
-					});
-				}
 			}
+			// commented out until we have back-end support as per
+			// https://trello.com/c/MhAWDZNF/6886-remove-delete-and-follow-unfollow
+			// {
+			// 	label: derivedState.userIsFollowing ? "Unfollow" : "Follow",
+			// 	key: "toggle-follow",
+			// 	icon: <Icon name="eye" />,
+			// 	action: () => {
+			// 		const value = !derivedState.userIsFollowing;
+			// 		const changeType = value ? "Followed" : "Unfollowed";
+			// 		HostApi.instance.send(FollowCodeErrorRequestType, {
+			// 			id: codeError.id,
+			// 			value
+			// 		});
+			// 		HostApi.instance.track("Notification Change", {
+			// 			Change: `Code Error ${changeType}`,
+			// 			"Source of Change": "Code Error menu"
+			// 		});
+			// 	}
+			// }
 		]);
 
-		if (codeError?.creatorId === derivedState.currentUser.id) {
-			items.push({
-				label: "Delete",
-				icon: <Icon name="trash" />,
-				action: () => {
-					confirmPopup({
-						title: "Are you sure?",
-						message: "Deleting a code error cannot be undone.",
-						centered: true,
-						buttons: [
-							{ label: "Go Back", className: "control-button" },
-							{
-								label: "Delete Code Error",
-								className: "delete",
-								wait: true,
-								action: () => {
-									dispatch(deleteCodeError(codeError.id));
-									dispatch(setCurrentCodeError());
-								}
-							}
-						]
-					});
-				}
-			});
-		}
+		// commented out until we have back-end support as per
+		// https://trello.com/c/MhAWDZNF/6886-remove-delete-and-follow-unfollow
+		// if (codeError?.creatorId === derivedState.currentUser.id) {
+		// 	items.push({
+		// 		label: "Delete",
+		// 		icon: <Icon name="trash" />,
+		// 		action: () => {
+		// 			confirmPopup({
+		// 				title: "Are you sure?",
+		// 				message: "Deleting a code error cannot be undone.",
+		// 				centered: true,
+		// 				buttons: [
+		// 					{ label: "Go Back", className: "control-button" },
+		// 					{
+		// 						label: "Delete Code Error",
+		// 						className: "delete",
+		// 						wait: true,
+		// 						action: () => {
+		// 							dispatch(deleteCodeError(codeError.id));
+		// 							dispatch(setCurrentCodeError());
+		// 						}
+		// 					}
+		// 				]
+		// 			});
+		// 		}
+		// 	});
+		// }
 
 		return items;
 	}, [codeError, collapsed, props.errorGroup]);

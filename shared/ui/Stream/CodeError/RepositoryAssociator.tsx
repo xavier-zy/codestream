@@ -29,6 +29,9 @@ interface EnhancedRepoScm {
 	 * remote url
 	 */
 	remote: string;
+
+	/** unique string */
+	key: string;
 }
 
 export function RepositoryAssociator(props: {
@@ -56,7 +59,7 @@ export function RepositoryAssociator(props: {
 		(ReposScm & EnhancedRepoScm)[] | undefined
 	>(undefined);
 	const [selected, setSelected] = React.useState<any>(undefined);
-	const [forkedRepository, setForkedRepository] = React.useState(false);
+	const [multiRemoteRepository, setMultiRemoteRepository] = React.useState(false);
 
 	useDidMount(() => {
 		if (!repositoryError) return;
@@ -80,17 +83,20 @@ export function RepositoryAssociator(props: {
 							results.push({
 								...repo,
 								remote: remoteUrl!,
+								key: btoa(remoteUrl!),
 								name:
 									(derivedState.repos[id] ? derivedState.repos[id].name : "") + ` (${remoteUrl})`
 							});
 						}
-						setForkedRepository(true);
+						setMultiRemoteRepository(true);
 					} else {
 						const id = repo.id || "";
 						if (!repo.remotes || !repo.remotes[0].types || !id) continue;
+						const url = repo.remotes[0].types.find(_ => _.type === "fetch")?.url!;
 						results.push({
 							...repo,
-							remote: repo.remotes[0].types.find(_ => _.type === "fetch")?.url!,
+							key: btoa(url),
+							remote: url,
 							name: derivedState.repos[id] ? derivedState.repos[id].name : ""
 						});
 					}
@@ -145,7 +151,7 @@ export function RepositoryAssociator(props: {
 			]}
 		>
 			<p>{repositoryError.description}</p>
-			{forkedRepository && (
+			{multiRemoteRepository && (
 				<p>If this is a forked repository, please select the upstream remote.</p>
 			)}
 			<Ellipsize>
@@ -155,7 +161,7 @@ export function RepositoryAssociator(props: {
 							?.sort((a, b) => a.name.localeCompare(b.name))
 							.map(_ => {
 								return {
-									key: _.id,
+									key: _.key,
 									label: _.name,
 									action: () => {
 										setSelected(_);

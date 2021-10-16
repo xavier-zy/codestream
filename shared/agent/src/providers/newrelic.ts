@@ -572,6 +572,12 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 							})
 						)
 					).filter(Boolean);
+					Logger.log("NR: found entities matching remotes", {
+						remotes: remotes,
+						entities: entitiesResponse?.entities?.map(_ => {
+							return { guid: _.guid, name: _.name };
+						})
+					});
 				}
 				let remote = "";
 				if (remoteUrls && remoteUrls[0]) {

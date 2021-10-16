@@ -593,15 +593,13 @@ export const Observability = React.memo((props: Props) => {
 																	) : or.hasRepoAssociation ? (
 																		<ErrorRow title="No errors to display" />
 																	) : (
-																		<div style={{ padding: "0px 35px" }}>
-																			<EntityAssociator
-																				onSuccess={e => {
-																					fetchEntityRepo(e.entityGuid, or.repoId);
-																				}}
-																				remote={or.repoRemote}
-																				remoteName={or.repoName}
-																			/>
-																		</div>
+																		<EntityAssociator
+																			onSuccess={e => {
+																				fetchEntityRepo(e.entityGuid, or.repoId);
+																			}}
+																			remote={or.repoRemote}
+																			remoteName={or.repoName}
+																		/>
 																	)}
 																</>
 															)}

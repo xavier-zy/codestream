@@ -1,6 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { useSelector, useDispatch, shallowEqual } from "react-redux";
-import { PaneHeader, PaneBody, PaneState, PaneNode, PaneNodeName } from "../src/components/Pane";
+import {
+	PaneHeader,
+	PaneBody,
+	PaneState,
+	PaneNode,
+	PaneNodeName,
+	NoContent
+} from "../src/components/Pane";
 
 import { Button } from "../src/components/Button";
 
@@ -52,8 +59,10 @@ export const EntityAssociator = React.memo((props: EntityAssociatorProps) => {
 		}) || [];
 
 	return (
-		<div>
-			<p>Associate this repo with an entity on New Relic in order to see errors</p>
+		<NoContent style={{ marginLeft: "40px" }}>
+			<p style={{ marginTop: 0 }}>
+				Associate this repo with an entity on New Relic in order to see errors
+			</p>
 			<DropdownButton
 				items={items}
 				selectedKey={selected ? selected.guid : undefined}
@@ -61,7 +70,7 @@ export const EntityAssociator = React.memo((props: EntityAssociatorProps) => {
 				//size="compact"
 				wrap
 			>
-				{selected ? selected.name : "Select entity from New Relic"}
+				{selected ? selected.name : "Select entity"}
 			</DropdownButton>{" "}
 			<Button
 				isLoading={isLoading}
@@ -98,8 +107,8 @@ export const EntityAssociator = React.memo((props: EntityAssociatorProps) => {
 					});
 				}}
 			>
-				Add Repository
+				Associate
 			</Button>
-		</div>
+		</NoContent>
 	);
 });

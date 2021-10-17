@@ -367,6 +367,12 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 								);
 								notify();
 								setIsStateChanging(false);
+
+								HostApi.instance.track("Error Status Changed", {
+									"Error Group ID": props.errorGroup?.guid,
+									"NR Account ID": props.errorGroup?.accountId,
+									"Error Status": STATES_TO_ACTION_STRINGS[_]
+								});
 							}
 						};
 					}) as DropdownButtonItems[]

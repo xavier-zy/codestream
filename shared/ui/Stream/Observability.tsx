@@ -620,6 +620,10 @@ export const Observability = React.memo((props: Props) => {
 																	) : (
 																		<EntityAssociator
 																			onSuccess={async e => {
+																				HostApi.instance.track("NR Entity Association", {
+																					"Repo ID": or.repoId
+																				});
+
 																				await fetchObservabilityRepos(e.entityGuid, or.repoId);
 																				fetchObservabilityErrors(e.entityGuid, or.repoId);
 																			}}

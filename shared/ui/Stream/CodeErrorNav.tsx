@@ -546,6 +546,10 @@ export function CodeErrorNav(props: Props) {
 								setRepoAssociationError(undefined);
 								resolve(true);
 
+								HostApi.instance.track("NR Repo Association", {
+									"Error Group ID": payload.errorGroupGuid
+								});
+
 								onConnected(
 									_.directives.find(_ => _.type === "assignRepository").data.repo.urls[0]
 								);

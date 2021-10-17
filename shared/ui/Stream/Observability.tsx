@@ -418,26 +418,31 @@ export const Observability = React.memo((props: Props) => {
 																...loadingAssignmentErrorsClick,
 																[_.errorGroupGuid]: true
 															});
-															const response = (await HostApi.instance.send(
-																GetObservabilityErrorGroupMetadataRequestType,
-																{ errorGroupGuid: _.errorGroupGuid }
-															)) as GetObservabilityErrorGroupMetadataResponse;
-															if (response) {
-																dispatch(
-																	openErrorGroup(_.errorGroupGuid, response.occurrenceId, {
-																		remote: response.remote,
-																		sessionStart: derivedState.sessionStart,
-																		pendingEntityId: response.entityId,
-																		occurrenceId: response.occurrenceId,
-																		pendingErrorGroupGuid: _.errorGroupGuid
-																	})
-																);
+															try {
+																const response = (await HostApi.instance.send(
+																	GetObservabilityErrorGroupMetadataRequestType,
+																	{ errorGroupGuid: _.errorGroupGuid }
+																)) as GetObservabilityErrorGroupMetadataResponse;
+																if (response && response.occurrenceId && response.entityId) {
+																	dispatch(
+																		openErrorGroup(_.errorGroupGuid, response.occurrenceId, {
+																			remote: response.remote,
+																			sessionStart: derivedState.sessionStart,
+																			pendingEntityId: response.entityId,
+																			occurrenceId: response.occurrenceId,
+																			pendingErrorGroupGuid: _.errorGroupGuid
+																		})
+																	);
+																} else {
+																	console.error("could not open error group");
+																}
+															} catch (ex) {
+																console.error(ex);
+															} finally {
 																setLoadingAssignmentErrorsClick({
 																	...loadingAssignmentErrorsClick,
 																	[_.errorGroupGuid]: false
 																});
-															} else {
-																console.error("could not open error group");
 															}
 														}}
 													></ErrorRow>

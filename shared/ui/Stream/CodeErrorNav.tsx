@@ -447,9 +447,8 @@ export function CodeErrorNav(props: Props) {
 				setRepoError(stackInfo?.error);
 				setRepoWarning(stackInfo?.warning);
 			}
-			HostApi.instance.track("Error Report Opened", {
+			HostApi.instance.track("Error Opened", {
 				"Error Group ID": errorGroupResult?.errorGroup?.guid,
-				"NR Organization ID": "",
 				"NR Account ID": errorGroupResult.accountId,
 				"Entry Point": "Open in IDE Flow"
 			});

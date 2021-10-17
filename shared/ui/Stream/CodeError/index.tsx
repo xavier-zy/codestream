@@ -663,9 +663,7 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 											{props.errorGroup && (
 												<>
 													{isAssigneeChanging ? (
-														<>
-															<Icon name="sync" className="spin" />
-														</>
+														<Icon name="sync" className="spin" />
 													) : (
 														<>
 															{/* no assignee */}
@@ -1206,28 +1204,26 @@ const BaseCodeError = (props: BaseCodeErrorProps) => {
 const renderMetaSectionCollapsed = (props: BaseCodeErrorProps) => {
 	if (!props.isFollowing) return null;
 	return (
-		<>
-			<MetaSectionCollapsed>
-				{props.isFollowing && (
-					<span>
-						<Icon
-							className="detail-icon"
-							title="You are following this code error"
-							placement="bottomLeft"
-							align={{ offset: [-18, 4] }}
-							name="eye"
-						/>
+		<MetaSectionCollapsed>
+			{props.isFollowing && (
+				<span>
+					<Icon
+						className="detail-icon"
+						title="You are following this code error"
+						placement="bottomLeft"
+						align={{ offset: [-18, 4] }}
+						name="eye"
+					/>
+				</span>
+			)}
+			{props.codeError.numReplies > 0 && (
+				<Tooltip title="Show replies" placement="bottom">
+					<span className="detail-icon">
+						<Icon name="comment" /> {props.codeError.numReplies}
 					</span>
-				)}
-				{props.codeError.numReplies > 0 && (
-					<Tooltip title="Show replies" placement="bottom">
-						<span className="detail-icon">
-							<Icon name="comment" /> {props.codeError.numReplies}
-						</span>
-					</Tooltip>
-				)}
-			</MetaSectionCollapsed>
-		</>
+				</Tooltip>
+			)}
+		</MetaSectionCollapsed>
 	);
 };
 

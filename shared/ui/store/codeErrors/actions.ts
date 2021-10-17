@@ -494,9 +494,8 @@ export const upgradePendingCodeError = (
 				objectInfo
 			};
 			const response = (await dispatch(createPostAndCodeError(newCodeError))) as any;
-			HostApi.instance.track("Error Report Created", {
+			HostApi.instance.track("Error Created", {
 				"Error Group ID": "",
-				"NR Organization ID": "",
 				"NR Account ID": newCodeError.accountId,
 				Trigger: source
 			});

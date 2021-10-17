@@ -6,6 +6,7 @@ import { Dialog } from "@codestream/webview/src/components/Dialog";
 import { CodeStreamState } from "@codestream/webview/store";
 import { ConfigureNewRelic } from "@codestream/webview/Stream/ConfigureNewRelic";
 import { DropdownButton, DropdownButtonItems } from "@codestream/webview/Stream/DropdownButton";
+import { Link } from "@codestream/webview/Stream/Link";
 import { useDidMount } from "@codestream/webview/utilities/hooks";
 import { HostApi } from "@codestream/webview/webview-api";
 import React, { useEffect } from "react";
@@ -74,8 +75,11 @@ export const Clusters = props => {
 							<span className="panel-title">Pixie Not Installed</span>
 						</div>
 						<div style={{ textAlign: "center" }}>
-							Dynamic Logging requires that you have Pixie set up to monitor your Kubernetes
-							cluster.
+							Dynamic Logging requires that you have&nbsp;
+							<Link href="https://docs.newrelic.com/docs/auto-telemetry-pixie/install-auto-telemetry-pixie/">
+								Pixie set up to monitor
+							</Link>
+							&nbsp;your Kubernetes cluster.
 						</div>
 					</div>
 				</Dialog>

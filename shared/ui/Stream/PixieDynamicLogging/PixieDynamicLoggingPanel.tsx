@@ -151,6 +151,7 @@ export const PixieDynamicLoggingPanel = () => {
 								onSubmited={async e => {
 									// setOpenConnectionModal(false);
 								}}
+								originLocation={"Pixie Logging"}
 							/>
 						</div>
 					</Dialog>

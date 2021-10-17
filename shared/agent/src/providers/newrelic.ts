@@ -1823,7 +1823,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			const response = await this.query<{
 				actor: {
 					account: {
-						errorGroups: {
+						nrql: {
 							results: {
 								["entity.guid"]: string;
 								["error.group.name"]: string;
@@ -1836,7 +1836,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				`query getMetric($accountId: Int!) {
 					actor {
 					  account(id: $accountId) {
-						errorGroups: nrql(query: "FROM Metric SELECT entity.guid,error.group.name,error.group.message WHERE error.group.guid = '${Strings.sanitizeGraphqlValue(
+						nrql(query: "FROM Metric SELECT entity.guid,error.group.name,error.group.message WHERE error.group.guid = '${Strings.sanitizeGraphqlValue(
 							errorGroupGuid
 						)}' SINCE 7 day ago LIMIT 1") {
 						  results
@@ -1850,11 +1850,18 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				}
 			);
 			if (response) {
-				const metricResult = response.actor.account.errorGroups.results[0];
+				const metricResult = response.actor.account.nrql.results[0];
+				if (!metricResult) {
+					Logger.warn("NR: getMetric missing metricResult", {
+						accountId: accountId,
+						errorGroupGuid: errorGroupGuid
+					});
+					return undefined;
+				}
 				const response2 = await this.query<{
 					actor: {
 						account: {
-							errorEvents: {
+							nrql: {
 								results: {
 									entityGuid: string;
 									id: string;
@@ -1866,7 +1873,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					`query getMetric($accountId: Int!) {
 						actor {
 						  account(id: $accountId) {
-							errorEvents: nrql(query: "FROM ErrorTrace SELECT * WHERE error.class LIKE '${Strings.sanitizeGraphqlValue(
+							nrql(query: "FROM ErrorTrace SELECT * WHERE error.class LIKE '${Strings.sanitizeGraphqlValue(
 								metricResult["error.group.name"]
 							)}' AND error.message LIKE '${Strings.sanitizeGraphqlValue(
 						metricResult["error.group.message"]
@@ -1885,7 +1892,15 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				);
 
 				if (response2) {
-					const errorTraceResult = response2.actor.account.errorEvents.results[0];
+					const errorTraceResult = response2.actor.account.nrql.results[0];
+					if (!errorTraceResult) {
+						Logger.warn("NR: getMetric missing errorTraceResult", {
+							accountId: accountId,
+							errorGroupGuid: errorGroupGuid,
+							metricResult: metricResult
+						});
+						return undefined;
+					}
 					if (errorTraceResult) {
 						return {
 							entityGuid: metricResult["entity.guid"],

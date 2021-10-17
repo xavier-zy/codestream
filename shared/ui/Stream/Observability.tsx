@@ -261,6 +261,7 @@ export const Observability = React.memo((props: Props) => {
 				}
 			});
 	};
+
 	useDidMount(() => {
 		_useDidMount();
 
@@ -458,16 +459,27 @@ export const Observability = React.memo((props: Props) => {
 		<Root>
 			<PaneHeader title="Observability" id={WebviewPanels.Observability}>
 				{derivedState.newRelicIsConnected ? (
-					<InlineMenu
-						title="Connected to New Relic"
-						key="settings-menu"
-						className="subtle no-padding"
-						noFocusOnSelect
-						noChevronDown
-						items={settingsMenuItems}
-					>
-						<Icon name="gear" title="Settings" placement="bottom" delay={1} />
-					</InlineMenu>
+					<>
+						<Icon
+							name="refresh"
+							title="Refresh"
+							placement="bottom"
+							delay={1}
+							onClick={e => {
+								_useDidMount();
+							}}
+						/>
+						<InlineMenu
+							title="Connected to New Relic"
+							key="settings-menu"
+							className="subtle no-padding"
+							noFocusOnSelect
+							noChevronDown
+							items={settingsMenuItems}
+						>
+							<Icon name="gear" title="Settings" placement="bottom" delay={1} />
+						</InlineMenu>
+					</>
 				) : (
 					<>&nbsp;</>
 				)}

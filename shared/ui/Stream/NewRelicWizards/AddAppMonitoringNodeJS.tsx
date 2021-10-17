@@ -40,8 +40,8 @@ export const AddAppMonitoringNodeJS = (props: {
 		return { repo, repoPath: path };
 	});
 
-	const [licenseKey, setLicenseKey] = useState("****");
 	const [appName, setAppName] = useState("");
+	const [licenseKey, setLicenseKey] = useState("");
 	const [files, setFiles] = useState<string[]>([]);
 	const [selectedFile, setSelectedFile] = useState("");
 	const [installingLibrary, setInstallingLibrary] = useState(false);
@@ -55,12 +55,14 @@ export const AddAppMonitoringNodeJS = (props: {
 
 	useEffect(() => {
 		(async () => {
-			const response = (await HostApi.instance.send(FindCandidateMainFilesRequestType, {
-				type: RepoProjectType.NodeJS,
-				path: repoPath!
-			})) as FindCandidateMainFilesResponse;
-			if (!response.error) {
-				setFiles(response.files);
+			if (repoPath) {
+				const response = (await HostApi.instance.send(FindCandidateMainFilesRequestType, {
+					type: RepoProjectType.NodeJS,
+					path: repoPath
+				})) as FindCandidateMainFilesResponse;
+				if (!response.error) {
+					setFiles(response.files);
+				}
 			}
 		})();
 	}, [repoPath]);
@@ -71,47 +73,6 @@ export const AddAppMonitoringNodeJS = (props: {
 			dispatch(closeModal());
 		}
 	}, [repo]);
-
-	const onSubmit = async (event: React.SyntheticEvent) => {
-		setUnexpectedError(false);
-		event.preventDefault();
-
-		setLoading(true);
-		try {
-			dispatch(closeModal());
-		} catch (error) {
-			logError(`Unexpected error during New Relic installation: ${error}`);
-			setUnexpectedError(true);
-		}
-		// @ts-ignore
-		setLoading(false);
-	};
-
-	const onSetLicenseKey = useCallback(
-		key => {
-			setLicenseKey(key);
-			if (key) {
-				setUnexpectedError(false);
-				// setStep(2);
-			} else {
-				setStep(1);
-			}
-		},
-		[licenseKey]
-	);
-
-	const onSetAppName = useCallback(
-		name => {
-			setAppName(name);
-			if (name) {
-				setUnexpectedError(false);
-				// setStep(3);
-			} else {
-				setStep(2);
-			}
-		},
-		[appName]
-	);
 
 	const onInstallLibrary = async (event: React.SyntheticEvent) => {
 		event.preventDefault();
@@ -125,7 +86,7 @@ export const AddAppMonitoringNodeJS = (props: {
 			setUnexpectedError(true);
 		} else {
 			setUnexpectedError(false);
-			setStep(3);
+			setStep(step + 1);
 		}
 		setInstallingLibrary(false);
 	};
@@ -144,7 +105,7 @@ export const AddAppMonitoringNodeJS = (props: {
 			setUnexpectedError(true);
 		} else {
 			setUnexpectedError(false);
-			setStep(4);
+			setStep(step + 1);
 		}
 		setCreatingConfig(false);
 	};
@@ -162,7 +123,7 @@ export const AddAppMonitoringNodeJS = (props: {
 			setUnexpectedError(true);
 		} else {
 			setUnexpectedError(false);
-			setStep(5);
+			setStep(step + 1);
 		}
 		setInsertingRequire(false);
 
@@ -251,7 +212,7 @@ export const AddAppMonitoringNodeJS = (props: {
 											<TextInput
 												name="appName"
 												value={appName}
-												onChange={onSetAppName}
+												onChange={value => setAppName(value)}
 												nativeProps={{ id: "appName" }}
 												autoFocus
 											/>
@@ -267,6 +228,30 @@ export const AddAppMonitoringNodeJS = (props: {
 									<InstallRow className={step > 1 ? "row-active" : ""}>
 										<StepNumber>2</StepNumber>
 										<div>
+											Paste your{" "}
+											<Link href="https://docs.newrelic.com/docs/apis/intro-apis/new-relic-api-keys/#ingest-license-key">
+												New Relic license key
+											</Link>
+											:
+											<TextInput
+												name="licenseKey"
+												value={licenseKey}
+												onChange={value => setLicenseKey(value)}
+												nativeProps={{ id: "licenseKey" }}
+												autoFocus
+											/>
+										</div>
+										<Button
+											isDone={step > 2}
+											onClick={() => setStep(3)}
+											disabled={licenseKey.length == 0}
+										>
+											Save
+										</Button>
+									</InstallRow>
+									<InstallRow className={step > 2 ? "row-active" : ""}>
+										<StepNumber>3</StepNumber>
+										<div>
 											<label>
 												Install the node module in your repo:
 												<br />
@@ -276,33 +261,47 @@ export const AddAppMonitoringNodeJS = (props: {
 										<Button
 											onClick={onInstallLibrary}
 											isLoading={installingLibrary}
-											isDone={step > 2}
+											isDone={step > 3}
 										>
 											Install
 										</Button>
 									</InstallRow>
-									<InstallRow className={step > 2 ? "row-active" : ""}>
-										<StepNumber>3</StepNumber>
-										<div>
+									<InstallRow className={step > 3 ? "row-active" : ""}>
+										<StepNumber>4</StepNumber>
+										<div style={{ maxWidth: "100%", overflow: "hidden", textOverflow: "ellipsis" }}>
 											<label>
 												Create a custom configuration file in
 												<br />
-												<code>{repoPath?.replace("codestream-server-demo", "server")}</code>
+												<code>
+													{(repoPath || "").split("/").map(part => (
+														<span>
+															{part ? "/" : ""}
+															{part}
+															<wbr />
+														</span>
+													))}
+												</code>
 											</label>
 										</div>
 										<Button
 											onClick={onCreateConfigFile}
 											isLoading={creatingConfig}
-											isDone={step > 3}
+											isDone={step > 4}
 										>
 											Create
 										</Button>
 									</InstallRow>
-									<InstallRow className={step > 3 ? "row-active" : ""}>
-										<StepNumber>4</StepNumber>
+									<InstallRow className={step > 4 ? "row-active" : ""}>
+										<StepNumber>5</StepNumber>
 										<div>
 											<label>
-												Add <code>require("newrelic")</code> to{" "}
+												Add{" "}
+												<code>
+													require
+													<wbr />
+													("newrelic")
+												</code>{" "}
+												to{" "}
 											</label>
 											<code>
 												<InlineMenu
@@ -317,19 +316,19 @@ export const AddAppMonitoringNodeJS = (props: {
 										<Button
 											onClick={onRequireNewRelic}
 											isLoading={insertingRequire}
-											isDone={step > 4}
+											isDone={step > 5}
 										>
 											Add
 										</Button>
 									</InstallRow>
-									<InstallRow className={step > 4 ? "row-active" : ""}>
+									<InstallRow className={step > 5 ? "row-active" : ""}>
 										<StepNumber>6</StepNumber>
 										<div>
 											<label>
 												Restart your application to start sending your data to New Relic
 											</label>
 										</div>
-										<Button onClick={() => props.skip()} isDone={step > 5}>
+										<Button onClick={() => props.skip()} isDone={step > 6}>
 											OK
 										</Button>
 									</InstallRow>

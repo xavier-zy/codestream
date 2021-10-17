@@ -5,6 +5,7 @@ import path from "path";
 import { CodeStreamSession } from "../session";
 import { lsp } from "../system/decorators/lsp";
 import { ReposScm, RepoProjectType, IdentifyRepoResult } from "../protocol/agent.protocol";
+import { Logger } from "../logger";
 
 @lsp
 export class RepoIdentificationManager {

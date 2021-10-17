@@ -213,8 +213,27 @@ export const AddAppMonitoringJava = (props: {
 												Download and install the agent in your repo
 												<br />
 												<code>
-													curl -O
-													https://download.newrelic.com/newrelic/java-agent/newrelic-agent/current/newrelic-java.zip
+													curl -O https:
+													<wbr />
+													//download
+													<wbr />
+													.newrelic
+													<wbr />
+													.com
+													<wbr />
+													/newrelic
+													<wbr />
+													/java-agent
+													<wbr />
+													/newrelic-agent
+													<wbr />
+													/current
+													<wbr />
+													/newrelic-
+													<wbr />
+													java
+													<wbr />
+													.zip
 												</code>
 											</label>
 										</div>

@@ -71,6 +71,9 @@ export const StepNumber = styled.div`
 	color: var(--button-foreground-color);
 	// background: var(--text-color-highlight);
 	// color: var(--base-background-color);
+	@media only screen and (max-width: 450px) {
+		display: none;
+	}
 `;
 
 export const InstallRow = styled.div`
@@ -100,6 +103,9 @@ export const InstallRow = styled.div`
 	}
 	button {
 		width: 65px;
+	}
+	code {
+		white-space: normal !important;
 	}
 `;
 

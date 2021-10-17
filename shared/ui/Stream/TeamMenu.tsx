@@ -93,11 +93,12 @@ export function TeamMenu(props: TeamMenuProps) {
 		menuItems.push(
 			{ label: "-" },
 			{
-				icon: <Icon name="gear" />,
+				icon: <Icon name="pencil" />,
 				label: "Change Organization Name",
 				key: "change-team-name",
 				action: () => go(WebviewModals.ChangeCompanyName)
 			},
+			{ label: "-" },
 			{
 				icon: <Icon name="gear" />,
 				label: "Onboarding Settings...",
@@ -114,7 +115,7 @@ export function TeamMenu(props: TeamMenuProps) {
 			{ label: "-" },
 			{
 				icon: <Icon name="download" />,
-				label: "Export Data...",
+				label: "Export Data",
 				key: "export",
 				action: () => goPanel(WebviewPanels.Export)
 			},

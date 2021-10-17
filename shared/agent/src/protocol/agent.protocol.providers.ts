@@ -850,7 +850,8 @@ export const WebviewErrorRequestType = new RequestType<WebviewErrorRequest, void
 
 export interface GetNewRelicErrorGroupRequest {
 	errorGroupGuid: string;
-	occurrenceId: string;
+	/** allow the lookup of errors without stack traces */
+	occurrenceId?: string;
 	entityGuid?: string;
 	src?: string;
 }
@@ -1060,9 +1061,8 @@ export interface GetObservabilityErrorGroupMetadataRequest {
 	errorGroupGuid: string;
 }
 export interface GetObservabilityErrorGroupMetadataResponse {
-	occurrenceId: string;
+	occurrenceId?: string;
 	entityId?: string;
-	entityGuid?: string;
 	remote?: string;
 }
 

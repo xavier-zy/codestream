@@ -278,11 +278,8 @@ export function CodeErrorNav(props: Props) {
 		if (!errorGroup) return;
 
 		if (!errorGroup.hasStackTrace) {
-			setError({
-				title: "Missing Stack Trace",
-				description:
-					"This error report does not have a stack trace associated with it and cannot be displayed."
-			});
+			setIsResolved(true);
+			return;
 		}
 
 		if (!isResolved) {
@@ -318,6 +315,7 @@ export function CodeErrorNav(props: Props) {
 		if (!pendingErrorGroupGuid) {
 			return;
 		}
+
 		console.warn("onConnected started");
 		setIsLoading(true);
 		setRepoAssociationError(undefined);
@@ -342,111 +340,118 @@ export function CodeErrorNav(props: Props) {
 			if (errorGroupResult?.errorGroup != null) {
 				dispatch(setErrorGroup(errorGroupGuid, errorGroupResult.errorGroup!));
 			}
-			let targetRemote = newRemote || remote;
-			if (errorGroupResult?.errorGroup?.entity?.repo?.urls != null) {
-				targetRemote = errorGroupResult?.errorGroup?.entity?.repo?.urls[0]!;
-			}
-			if (!targetRemote) {
-				setRepoAssociationError({
-					title: "Missing Repository Info",
-					description: `In order to view this stack trace, please select a repository to associate with ${
-						errorGroup ? errorGroup.entityName + " " : ""
-					}on New Relic.`
-				});
-				return;
-			}
 
-			const normalizationResponse = (await HostApi.instance.send(NormalizeUrlRequestType, {
-				url: targetRemote
-			})) as NormalizeUrlResponse;
-			if (!normalizationResponse || !normalizationResponse.normalizedUrl) {
-				setError({
-					title: "Error",
-					description: `Could not find a matching repo for the remote ${targetRemote}`
-				});
-				return;
-			}
-
-			const reposResponse = (await HostApi.instance.send(MatchReposRequestType, {
-				repos: [
-					{
-						remotes: [normalizationResponse.normalizedUrl],
-						knownCommitHashes: commit ? [commit] : []
-					}
-				]
-			})) as MatchReposResponse;
-
-			if (reposResponse?.repos?.length === 0) {
-				setError({
-					title: "Repo Not Found",
-					description: `Please open the following repository: ${targetRemote}`
-				});
-				return;
-			}
-
+			let repo;
+			let stackInfo;
+			let targetRemote;
 			if (
 				errorGroupResult &&
 				errorGroupResult.errorGroup &&
 				!errorGroupResult.errorGroup.hasStackTrace
 			) {
-				setError({
-					title: "Missing Stack Trace",
-					description:
-						"This error report does not have a stack trace associated with it and cannot be displayed."
-				});
+				setIsResolved(true);
+				setRepoWarning("There is no stack trace associated with this error.");
 			} else {
-				const repo = reposResponse.repos[0];
-				const stackInfo = (await resolveStackTrace(
+				targetRemote = newRemote || remote;
+				if (errorGroupResult?.errorGroup?.entity?.repo?.urls != null) {
+					targetRemote = errorGroupResult?.errorGroup?.entity?.repo?.urls[0]!;
+				}
+				if (!targetRemote) {
+					setRepoAssociationError({
+						title: "Missing Repository Info",
+						description: `In order to view this stack trace, please select a repository to associate with ${
+							errorGroup ? errorGroup.entityName + " " : ""
+						}on New Relic.`
+					});
+					return;
+				}
+
+				const normalizationResponse = (await HostApi.instance.send(NormalizeUrlRequestType, {
+					url: targetRemote
+				})) as NormalizeUrlResponse;
+				if (!normalizationResponse || !normalizationResponse.normalizedUrl) {
+					setError({
+						title: "Error",
+						description: `Could not find a matching repo for the remote ${targetRemote}`
+					});
+					return;
+				}
+
+				const reposResponse = (await HostApi.instance.send(MatchReposRequestType, {
+					repos: [
+						{
+							remotes: [normalizationResponse.normalizedUrl],
+							knownCommitHashes: commit ? [commit] : []
+						}
+					]
+				})) as MatchReposResponse;
+
+				if (reposResponse?.repos?.length === 0) {
+					setError({
+						title: "Repo Not Found",
+						description: `Please open the following repository: ${targetRemote}`
+					});
+					return;
+				}
+
+				repo = reposResponse.repos[0];
+				stackInfo = (await resolveStackTrace(
 					repo.id!,
 					commit!,
 					occurrenceId!,
 					errorGroupResult.errorGroup?.errorTrace!?.stackTrace.map(_ => _.formatted)
 				)) as ResolveStackTraceResponse;
-
-				if (
-					derivedState.currentCodeErrorId &&
-					derivedState.currentCodeErrorId?.indexOf(PENDING_CODE_ERROR_ID_PREFIX) === 0
-				) {
-					await dispatch(
-						addCodeErrors([
-							{
-								accountId: errorGroupResult.accountId,
-								id: derivedState.currentCodeErrorId!,
-								createdAt: new Date().getTime(),
-								modifiedAt: new Date().getTime(),
-								// these don't matter
-								assignees: [],
-								teamId: "",
-								streamId: "",
-								postId: "",
-								fileStreamIds: [],
-								status: "open",
-								numReplies: 0,
-								lastActivityAt: 0,
-								creatorId: "",
-								objectId: errorGroupGuid,
-								objectType: "errorGroup",
-								title: errorGroupResult.errorGroup?.title || "",
-								text: errorGroupResult.errorGroup?.message || undefined,
-								// storing the permanently parsed stack info
-								stackTraces: stackInfo.error
-									? [{ ...stackInfo, lines: [] }]
-									: [stackInfo.parsedStackInfo!],
-								objectInfo: {
-									repoId: repo.id,
-									remote: targetRemote,
-									accountId: errorGroupResult.accountId.toString(),
-									entityName: errorGroupResult?.errorGroup?.entityName || ""
-								}
-							}
-						])
-					);
-				}
-				setParsedStack(stackInfo);
-				setIsResolved(true);
-				setRepoError(stackInfo?.error);
-				setRepoWarning(stackInfo?.warning);
 			}
+			if (
+				derivedState.currentCodeErrorId &&
+				derivedState.currentCodeErrorId?.indexOf(PENDING_CODE_ERROR_ID_PREFIX) === 0
+			) {
+				const actualStackInfo = stackInfo
+					? stackInfo.error
+						? [{ ...stackInfo, lines: [] }]
+						: [stackInfo.parsedStackInfo!]
+					: [];
+				await dispatch(
+					addCodeErrors([
+						{
+							accountId: errorGroupResult.accountId,
+							id: derivedState.currentCodeErrorId!,
+							createdAt: new Date().getTime(),
+							modifiedAt: new Date().getTime(),
+							// these don't matter
+							assignees: [],
+							teamId: "",
+							streamId: "",
+							postId: "",
+							fileStreamIds: [],
+							status: "open",
+							numReplies: 0,
+							lastActivityAt: 0,
+							creatorId: "",
+							objectId: errorGroupGuid,
+							objectType: "errorGroup",
+							title: errorGroupResult.errorGroup?.title || "",
+							text: errorGroupResult.errorGroup?.message || undefined,
+							// storing the permanently parsed stack info
+							stackTraces: actualStackInfo,
+							objectInfo: {
+								repoId: repo?.id,
+								remote: targetRemote,
+								accountId: errorGroupResult.accountId.toString(),
+								entityName: errorGroupResult?.errorGroup?.entityName || ""
+							}
+						}
+					])
+				);
+			}
+			if (stackInfo) {
+				setParsedStack(stackInfo);
+				setRepoError(stackInfo.error);
+				setRepoWarning(stackInfo.warning);
+			}
+
+			setIsResolved(true);
+
 			HostApi.instance.track("Error Opened", {
 				"Error Group ID": errorGroupResult?.errorGroup?.guid,
 				"NR Account ID": errorGroupResult.accountId,

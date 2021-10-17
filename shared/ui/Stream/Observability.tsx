@@ -423,7 +423,7 @@ export const Observability = React.memo((props: Props) => {
 																	GetObservabilityErrorGroupMetadataRequestType,
 																	{ errorGroupGuid: _.errorGroupGuid }
 																)) as GetObservabilityErrorGroupMetadataResponse;
-																if (response && response.occurrenceId && response.entityId) {
+																if (response) {
 																	dispatch(
 																		openErrorGroup(_.errorGroupGuid, response.occurrenceId, {
 																			remote: response.remote,

@@ -469,13 +469,13 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		if (!request.errorGroupGuid) return undefined;
 
 		try {
-			const metricResponse = await this.getMetric(request.errorGroupGuid);
+			const metricResponse = await this.getMetricData(request.errorGroupGuid);
 			if (!metricResponse) return undefined;
 
 			const mappedEntity = await this.findMappedRemoteByEntity(metricResponse?.entityGuid);
 			return {
 				entityId: metricResponse?.entityGuid,
-				occurrenceId: metricResponse?.traceId!,
+				occurrenceId: metricResponse?.traceId,
 				remote: mappedEntity?.url
 			} as GetObservabilityErrorGroupMetadataResponse;
 		} catch (ex) {
@@ -846,10 +846,6 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		let accountId = 0;
 		let entityGuid: string = "";
 		try {
-			if (!request.occurrenceId) {
-				throw new Error("MissingOccurrenceId");
-			}
-
 			const errorGroupGuid = request.errorGroupGuid;
 			const parsedId = this.parseId(errorGroupGuid)!;
 			accountId = parsedId.accountId;
@@ -1386,19 +1382,20 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 	private async fetchErrorGroup(
 		errorGroupGuid: string,
 		entityGuid: string,
-		occurrenceId: string
+		occurrenceId?: string
 	): Promise<ErrorGroupResponse> {
 		let fingerprintId = 0;
 		try {
 			// BrowserApplicationEntity uses a fingerprint instead of an occurrence and it's a number
-			if (occurrenceId.match(/^-?\d+$/)) {
+			if (occurrenceId && occurrenceId.match(/^-?\d+$/)) {
 				fingerprintId = parseInt(occurrenceId, 10);
 				occurrenceId = "";
 			}
 		} catch {}
 
-		return this.query(
-			`query getErrorGroup($errorGroupGuid:ID!, $entityGuid:EntityGuid!, $occurrenceId:String!, $fingerprintId:Int!) {
+		if (occurrenceId) {
+			return this.query(
+				`query getErrorGroup($errorGroupGuid:ID!, $entityGuid:EntityGuid!, $occurrenceId:String!, $fingerprintId:Int!) {
 				actor {
 				  entity(guid: $entityGuid) {
 					... on ApmApplicationEntity {
@@ -1497,13 +1494,71 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			  }
 			  
 		  `,
-			{
-				errorGroupGuid: errorGroupGuid,
-				entityGuid: entityGuid,
-				occurrenceId: occurrenceId,
-				fingerprintId: fingerprintId
-			}
-		);
+				{
+					errorGroupGuid: errorGroupGuid,
+					entityGuid: entityGuid,
+					occurrenceId: occurrenceId,
+					fingerprintId: fingerprintId
+				}
+			);
+		} else {
+			return this.query(
+				`query getErrorGroup($errorGroupGuid:ID!, $entityGuid:EntityGuid!) {
+				actor {
+				  entity(guid: $entityGuid) {					 
+					alertSeverity
+					name
+					relatedEntities(filter: {direction: BOTH, relationshipTypes: {include: BUILT_FROM}}) {
+					  results {
+						source {
+						  entity {
+							name
+							guid
+							type
+						  }
+						}
+						target {
+						  entity {
+							name
+							guid
+							type
+							tags {
+							  key
+							  values
+							}
+						  }
+						}
+						type
+					  }
+					}
+				  }
+				  errorsInbox {
+					errorGroup(id: $errorGroupGuid) {
+					  url
+					  assignment {
+						email
+						userInfo {
+						  gravatar
+						  id
+						  name
+						}
+					  }
+					  id
+					  state
+					}
+				  }
+				}
+			  }
+			  
+		  `,
+				{
+					errorGroupGuid: errorGroupGuid,
+					entityGuid: entityGuid,
+					occurrenceId: occurrenceId,
+					fingerprintId: fingerprintId
+				}
+			);
+		}
 	}
 
 	private async buildErrorDetailSettings(
@@ -1795,6 +1850,29 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			return undefined;
 		}
 	}
+
+	private async getEntityGuidFromErrorGroupId(errorGroupGuid: string): Promise<string> {
+		const response = await this.query(
+			`query getErrorGroup($id:ID) {
+actor {
+  errorsInbox {
+	errorGroup(id:$id) {
+	  entityGuid
+	}
+  }
+}
+}`,
+			{
+				id: errorGroupGuid
+			}
+		);
+		let entityGuid;
+		if (response?.actor?.errorsInbox?.errorGroup) {
+			entityGuid = response.actor.errorsInbox.errorGroup.entityGuid;
+		}
+		return entityGuid;
+	}
+
 	/**
 	 * from an errorGroupGuid, returns a traceId and an entityId
 	 *
@@ -1809,18 +1887,33 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 	 * 	>)}
 	 * @memberof NewRelicProvider
 	 */
-	private async getMetric(
+	private async getMetricData(
 		errorGroupGuid: string
 	): Promise<
 		| {
 				entityGuid: string;
-				traceId: string;
+				traceId?: string;
 		  }
 		| undefined
 	> {
 		try {
-			let accountId = this.parseId(errorGroupGuid)?.accountId!;
-			const response = await this.query<{
+			if (!errorGroupGuid) {
+				Logger.warn("NR: getMetric missing errorGroupGuid");
+				return undefined;
+			}
+
+			const accountId = this.parseId(errorGroupGuid)?.accountId!;
+
+			const entityGuid = await this.getEntityGuidFromErrorGroupId(errorGroupGuid);
+			if (!entityGuid) {
+				Logger.warn("NR: getMetric missing entityGuid", {
+					accountId: accountId,
+					errorGroupGuid: errorGroupGuid
+				});
+				return undefined;
+			}
+
+			const response1 = await this.query<{
 				actor: {
 					account: {
 						nrql: {
@@ -1849,14 +1942,16 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					accountId: accountId
 				}
 			);
-			if (response) {
-				const metricResult = response.actor.account.nrql.results[0];
+			if (response1) {
+				const metricResult = response1.actor.account.nrql.results[0];
 				if (!metricResult) {
 					Logger.warn("NR: getMetric missing metricResult", {
 						accountId: accountId,
 						errorGroupGuid: errorGroupGuid
 					});
-					return undefined;
+					return {
+						entityGuid: entityGuid
+					};
 				}
 				const response2 = await this.query<{
 					actor: {
@@ -1899,11 +1994,13 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 							errorGroupGuid: errorGroupGuid,
 							metricResult: metricResult
 						});
-						return undefined;
+						return {
+							entityGuid: entityGuid
+						};
 					}
 					if (errorTraceResult) {
 						return {
-							entityGuid: metricResult["entity.guid"],
+							entityGuid: entityGuid || metricResult["entity.guid"],
 							traceId: errorTraceResult.id
 						};
 					}

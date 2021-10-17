@@ -1,5 +1,10 @@
-import { PixieGetClustersRequestType } from "@codestream/protocols/agent";
+import {
+	ERROR_PIXIE_NOT_CONFIGURED,
+	PixieGetClustersRequestType
+} from "@codestream/protocols/agent";
+import { Dialog } from "@codestream/webview/src/components/Dialog";
 import { CodeStreamState } from "@codestream/webview/store";
+import { ConfigureNewRelic } from "@codestream/webview/Stream/ConfigureNewRelic";
 import { DropdownButton, DropdownButtonItems } from "@codestream/webview/Stream/DropdownButton";
 import { useDidMount } from "@codestream/webview/utilities/hooks";
 import { HostApi } from "@codestream/webview/webview-api";
@@ -9,7 +14,8 @@ import { shallowEqual, useSelector } from "react-redux";
 export const Clusters = props => {
 	const [isLoading, setIsLoading] = React.useState(false);
 	const [clusters, setClusters] = React.useState<DropdownButtonItems[]>([]);
-	const [error, setError] = React.useState<string | undefined>();
+	const [errorMessage, setErrorMessage] = React.useState<string | undefined>();
+	const [errorCode, setErrorCode] = React.useState<number | undefined>();
 
 	const defaultClusterId = useSelector(
 		(state: CodeStreamState) => state.preferences.pixieDefaultClusterId
@@ -44,14 +50,16 @@ export const Clusters = props => {
 				);
 			}
 			setClusters(newClusters);
-			setError(undefined);
+			setErrorCode(undefined);
+			setErrorMessage(undefined);
 			if (defaultClusterId) {
 				props.onSelect(response.clusters.find(_ => _.clusterId === defaultClusterId));
 			}
 			// props.onSelect(response.clusters[0]);
 		} catch (err) {
 			props.onSelect(undefined);
-			setError(err.toString());
+			setErrorCode(err.code);
+			setErrorMessage(err.message || err.toString());
 			setClusters([]);
 		}
 		setIsLoading(false);
@@ -59,9 +67,23 @@ export const Clusters = props => {
 
 	return (
 		<div style={{ padding: "0px 0px 1px 0px" }}>
-			{error ? (
-				<small className="explainer error-message">{error}</small>
-			) : (
+			{errorCode === ERROR_PIXIE_NOT_CONFIGURED && (
+				<Dialog narrow title="">
+					<div className="embedded-panel">
+						<div className="panel-header" style={{ background: "none" }}>
+							<span className="panel-title">Pixie Not Installed</span>
+						</div>
+						<div style={{ textAlign: "center" }}>
+							Dynamic Logging requires that you have Pixie set up to monitor your Kubernetes
+							cluster.
+						</div>
+					</div>
+				</Dialog>
+			)}
+			{errorCode !== ERROR_PIXIE_NOT_CONFIGURED && errorMessage != null && (
+				<small className="explainer error-message">{errorMessage}</small>
+			)}
+			{errorCode == null && (
 				<DropdownButton items={clusters} isLoading={isLoading} size="compact" wrap fillParent>
 					{props.value?.clusterName || "Make Selection"}
 				</DropdownButton>

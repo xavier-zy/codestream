@@ -19,6 +19,7 @@ import {
 	ERROR_NR_CONNECTION_INVALID_API_KEY,
 	ERROR_NR_CONNECTION_MISSING_API_KEY,
 	ERROR_NR_CONNECTION_MISSING_URL,
+	ERROR_PIXIE_NOT_CONFIGURED,
 	ErrorGroupResponse,
 	ErrorGroupsResponse,
 	GetNewRelicAccountsRequestType,
@@ -771,10 +772,16 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					accountId: accountId
 				}
 			);
-			return response.actor.account.pixie.pixieAccessToken;
+			const token = response.actor.account.pixie.pixieAccessToken;
+
+			if (token == null) {
+				throw new ResponseError(ERROR_PIXIE_NOT_CONFIGURED, "Unable to fetch Pixie token");
+			}
+
+			return token;
 		} catch (e) {
 			Logger.error(e);
-			throw e;
+			throw new ResponseError(ERROR_PIXIE_NOT_CONFIGURED, e.message || e.toString());
 		}
 	}
 

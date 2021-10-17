@@ -99,12 +99,12 @@ export function RepositoryAssociator(props: {
 						if (!repo.remotes || !repo.remotes[0].types || !id) continue;
 						const url = repo.remotes[0].types.find(_ => _.type === "fetch")?.url!;
 						const name = derivedState.repos[id] ? derivedState.repos[id].name : "repo";
-
+						const label = `${name} (${url})`;
 						results.push({
 							...repo,
 							key: btoa(url),
 							remote: url,
-							label: name,
+							label: label,
 							name: name
 						});
 					}

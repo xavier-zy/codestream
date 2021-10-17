@@ -23,6 +23,7 @@ export class ConfigureNewRelicPanel extends Component {
 					providerId={providerId}
 					onClose={this.props.closePanel}
 					onSubmited={this.props.closePanel}
+					originLocation={this.props.originLocation}
 				/>
 			</div>
 		);

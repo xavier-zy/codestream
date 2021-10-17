@@ -274,6 +274,10 @@ export const Observability = React.memo((props: Props) => {
 					setTimeout(() => {
 						loadAssignments();
 					}, 2500);
+				} else if (e.type === "RepositoryAssociation") {
+					setTimeout(() => {
+						_useDidMount();
+					}, 2500);
 				}
 			}
 		);
@@ -319,10 +323,10 @@ export const Observability = React.memo((props: Props) => {
 		}
 	}, [derivedState.hiddenPaneNodes]);
 
-	const fetchEntityRepo = (entityGuid: string, repoId) => {
+	const fetchObservabilityRepos = (entityGuid: string, repoId) => {
 		loading(repoId, true);
 
-		HostApi.instance
+		return HostApi.instance
 			.send(GetObservabilityReposRequestType, {
 				filters: [{ repoId: repoId, entityGuid: entityGuid }]
 			})
@@ -337,7 +341,7 @@ export const Observability = React.memo((props: Props) => {
 			});
 	};
 
-	const selectEntityAccount = (entityGuid: string, repoId) => {
+	const fetchObservabilityErrors = (entityGuid: string, repoId) => {
 		loading(repoId, true);
 
 		HostApi.instance
@@ -354,10 +358,7 @@ export const Observability = React.memo((props: Props) => {
 			})
 			.catch(_ => {
 				console.warn(_);
-				setLoadingErrors({
-					...loadingErrors,
-					[repoId]: false
-				});
+				loading(repoId, false);
 			});
 	};
 
@@ -510,16 +511,31 @@ export const Observability = React.memo((props: Props) => {
 																		className="subtle no-padding"
 																		noFocusOnSelect
 																		items={or.entityAccounts.map((ea, index) => {
+																			let checked = false;
+																			// if we dont have a setting for this, we choose the first one
+																			if (
+																				Object.keys(derivedState.observabilityRepoEntities || {})
+																					.length === 0 &&
+																				index === 0
+																			) {
+																				checked = true;
+																			} else {
+																				const setting = derivedState.observabilityRepoEntities.find(
+																					_ =>
+																						_.repoId === or.repoId && _.entityGuid === ea.entityGuid
+																				);
+																				checked = !!setting;
+																			}
 																			return {
 																				label: ea.entityName,
 																				subtle:
-																					ea.accountName && ea.accountName.length > 15
-																						? ea.accountName.substr(0, 15) + "..."
+																					ea.accountName && ea.accountName.length > 25
+																						? ea.accountName.substr(0, 25) + "..."
 																						: ea.accountName,
 																				key: ea.entityGuid,
 																				//icon: <Icon name="file" />,
 																				action: () => {
-																					selectEntityAccount(ea.entityGuid, or.repoId);
+																					fetchObservabilityErrors(ea.entityGuid, or.repoId);
 																					const newPreferences = derivedState.observabilityRepoEntities.filter(
 																						_ => _.repoId !== or.repoId
 																					);
@@ -534,10 +550,7 @@ export const Observability = React.memo((props: Props) => {
 																						)
 																					);
 																				},
-																				checked: !!derivedState.observabilityRepoEntities.find(
-																					_ =>
-																						_.repoId === or.repoId && _.entityGuid === ea.entityGuid
-																				)
+																				checked: checked
 																			};
 																		})}
 																		title="Entities"
@@ -594,8 +607,9 @@ export const Observability = React.memo((props: Props) => {
 																		<ErrorRow title="No errors to display" />
 																	) : (
 																		<EntityAssociator
-																			onSuccess={e => {
-																				fetchEntityRepo(e.entityGuid, or.repoId);
+																			onSuccess={async e => {
+																				await fetchObservabilityRepos(e.entityGuid, or.repoId);
+																				fetchObservabilityErrors(e.entityGuid, or.repoId);
 																			}}
 																			remote={or.repoRemote}
 																			remoteName={or.repoName}

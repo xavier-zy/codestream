@@ -11,6 +11,7 @@ export interface Props {
 		onClick: React.MouseEventHandler;
 		isSecondary?: boolean;
 		disabled?: boolean;
+		loading?: boolean;
 	}[];
 }
 
@@ -21,7 +22,7 @@ const StyledButton = styled(Button)`
 export default class Dismissable extends React.Component<Props, State> {
 	static defaultProps = {
 		title: "",
-		buttons: [{ text: "Dismiss", onClick: () => {}, isSecondary: false }]
+		buttons: [{ text: "Dismiss", onClick: () => {}, isSecondary: false, loading: false }]
 	};
 
 	render() {
@@ -37,6 +38,7 @@ export default class Dismissable extends React.Component<Props, State> {
 								<div className="button-group">
 									{buttons.map(button => (
 										<StyledButton
+											loading={button.loading}
 											isSecondary={button.isSecondary}
 											disabled={button.disabled}
 											className="control-button"

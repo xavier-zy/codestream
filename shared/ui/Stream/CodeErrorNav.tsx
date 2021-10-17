@@ -9,7 +9,6 @@ import {
 	api,
 	fetchCodeError,
 	fetchErrorGroup,
-	NewCodeErrorAttributes,
 	PENDING_CODE_ERROR_ID_PREFIX,
 	resolveStackTrace,
 	setErrorGroup
@@ -17,7 +16,7 @@ import {
 import { CodeStreamState } from "../store";
 import { getCodeError, getErrorGroup } from "../store/codeErrors/reducer";
 import { Meta, BigTitle, Header } from "./Codemark/BaseCodemark";
-import { closePanel, createPostAndCodeError, markItemRead } from "./actions";
+import { closePanel, markItemRead } from "./actions";
 import { Dispatch } from "../store/common";
 import { CodeError, BaseCodeErrorHeader, ExpandedAuthor, Description } from "./CodeError";
 import ScrollBox from "./ScrollBox";
@@ -530,30 +529,38 @@ export function CodeErrorNav(props: Props) {
 					exit();
 				}}
 				onSubmit={r => {
-					const payload = {
-						url: r.remote,
-						name: r.name,
-						entityId: pendingEntityId,
-						errorGroupGuid: codeError?.objectId || pendingErrorGroupGuid!,
-						parseableAccountId: codeError?.objectId || pendingErrorGroupGuid!
-					};
-					dispatch(api("assignRepository", payload)).then(_ => {
-						setIsLoading(true);
-						if (_?.directives) {
-							console.log("assignRepository", {
-								directives: _?.directives
-							});
-							setRepoAssociationError(undefined);
-							onConnected(_.directives.find(_ => _.type === "assignRepository").data.repo.urls[0]);
-						} else {
-							console.log("Could not find directive", {
-								payload: payload
-							});
-							setError({
-								title: "Failed to associate repository",
-								description: _?.error
-							});
-						}
+					return new Promise((resolve, reject) => {
+						const payload = {
+							url: r.remote,
+							name: r.name,
+							entityId: pendingEntityId,
+							errorGroupGuid: codeError?.objectId || pendingErrorGroupGuid!,
+							parseableAccountId: codeError?.objectId || pendingErrorGroupGuid!
+						};
+						dispatch(api("assignRepository", payload)).then(_ => {
+							setIsLoading(true);
+							if (_?.directives) {
+								console.log("assignRepository", {
+									directives: _?.directives
+								});
+								setRepoAssociationError(undefined);
+								resolve(true);
+
+								onConnected(
+									_.directives.find(_ => _.type === "assignRepository").data.repo.urls[0]
+								);
+							} else {
+								console.log("Could not find directive", {
+									payload: payload
+								});
+								resolve(true);
+
+								setError({
+									title: "Failed to associate repository",
+									description: _?.error
+								});
+							}
+						});
 					});
 				}}
 			/>

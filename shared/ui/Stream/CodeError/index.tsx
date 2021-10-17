@@ -2,7 +2,6 @@ import React, { PropsWithChildren, useEffect } from "react";
 import { CardProps, getCardProps, CardFooter } from "@codestream/webview/src/components/Card";
 import {
 	DidChangeObservabilityDataNotificationType,
-	FollowCodeErrorRequestType,
 	GetNewRelicAssigneesRequestType,
 	ResolveStackTraceResponse
 } from "@codestream/protocols/agent";
@@ -26,13 +25,11 @@ import { useDidMount } from "@codestream/webview/utilities/hooks";
 import { HostApi } from "../..";
 import {
 	api,
-	deleteCodeError,
 	fetchCodeError,
 	fetchErrorGroup,
 	jumpToStackLine,
 	upgradePendingCodeError
 } from "@codestream/webview/store/codeErrors/actions";
-import { setCurrentCodeError } from "@codestream/webview/store/context/actions";
 import { DelayedRender } from "@codestream/webview/Container/DelayedRender";
 import { getCodeError, getCodeErrorCreator } from "@codestream/webview/store/codeErrors/reducer";
 import MessageInput, { AttachmentField } from "../MessageInput";

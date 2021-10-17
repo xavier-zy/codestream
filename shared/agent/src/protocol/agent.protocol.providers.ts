@@ -1114,6 +1114,20 @@ export interface ErrorGroupResponse {
 	};
 }
 
+export interface Entity {
+	account?: {
+		name: string;
+		id: number;
+	};
+	guid: string;
+	name: string;
+	type?: string;
+	tags?: {
+		key: string;
+		values: string[];
+	}[];
+}
+
 export interface ErrorGroupsResponse {
 	actor: {
 		errorsInbox: {
@@ -1133,22 +1147,10 @@ export interface ErrorGroupsResponse {
 
 export interface RelatedEntity {
 	source: {
-		entity: {
-			guid: string;
-			name: string;
-			type: string;
-		};
+		entity: Entity;
 	};
 	target: {
-		entity: {
-			guid: string;
-			name: string;
-			type: string;
-			tags: {
-				key: string;
-				values: string[];
-			}[];
-		};
+		entity: Entity;
 	};
 	type: string;
 }
@@ -1157,11 +1159,7 @@ export interface EntitySearchResponse {
 	actor: {
 		entitySearch: {
 			results: {
-				entities: {
-					guid: string;
-					name: String;
-					tags: { key: string; values: string[] }[];
-				}[];
+				entities: Entity[];
 			};
 		};
 	};

@@ -5,7 +5,8 @@ import {
 	groupBy as _groupBy,
 	sortBy as _sortBy,
 	flatten as _flatten,
-	uniq as _uniq
+	uniq as _uniq,
+	uniqBy as _uniqBy
 } from "lodash-es";
 import { ResponseError } from "vscode-jsonrpc/lib/messages";
 import { URI } from "vscode-uri";
@@ -50,7 +51,8 @@ import {
 	RelatedEntity,
 	ReposScm,
 	ThirdPartyDisconnect,
-	ThirdPartyProviderConfig
+	ThirdPartyProviderConfig,
+	Entity
 } from "../protocol/agent.protocol";
 import { CSNewRelicProviderInfo } from "../protocol/api.protocol";
 import { CodeStreamSession } from "../session";
@@ -106,12 +108,12 @@ class AccessTokenError extends Error {
 @lspProvider("newrelic")
 export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProviderInfo> {
 	private _newRelicUserId: number | undefined = undefined;
-	private _memoizedGetRepoRemoteVariants: any;
+	private _memoizedBuildRepoRemoteVariants: any;
 
 	constructor(session: CodeStreamSession, config: ThirdPartyProviderConfig) {
 		super(session, config);
-		this._memoizedGetRepoRemoteVariants = memoize(
-			this.getRepoRemoteVariants,
+		this._memoizedBuildRepoRemoteVariants = memoize(
+			this.buildRepoRemoteVariants,
 			(remotes: string[]) => remotes
 		);
 	}
@@ -561,25 +563,36 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					}
 				}
 
-				const entitiesResponse = await this.getEntitiesByRepoRemote(remotes);
-
+				const repositoryEntitiesResponse = await this.findRepositoryEntitiesByRepoRemotes(remotes);
 				let remoteUrls: (string | undefined)[] = [];
-				if (entitiesResponse?.entities) {
+				let hasRepoAssociation;
+				if (repositoryEntitiesResponse?.entities) {
+					const entitiesReponse = await this.findRelatedEntityByRepositoryGuids(
+						repositoryEntitiesResponse?.entities?.map(_ => _.guid)
+					);
+					const applicationAssociation = entitiesReponse?.actor?.entities?.filter(
+						_ =>
+							_.relatedEntities?.results?.filter(r => r.source?.entity?.type === "APPLICATION")
+								.length
+					);
+					hasRepoAssociation = applicationAssociation?.length > 0;
+
 					// find all the unique remotes in all the entities found
 					remoteUrls = _uniq(
 						_flatten(
-							entitiesResponse.entities.map(_ => {
-								return _.tags.find(t => t.key === "url")?.values;
+							repositoryEntitiesResponse.entities.map(_ => {
+								return _.tags?.find(t => t.key === "url")?.values;
 							})
 						)
 					).filter(Boolean);
 					Logger.log("NR: found entities matching remotes", {
 						remotes: remotes,
-						entities: entitiesResponse?.entities?.map(_ => {
+						entities: repositoryEntitiesResponse?.entities?.map(_ => {
 							return { guid: _.guid, name: _.name };
 						})
 					});
 				}
+
 				let remote = "";
 				if (remoteUrls && remoteUrls[0]) {
 					if (remoteUrls.length > 1) {
@@ -596,28 +609,45 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					remote = remotes[0];
 				}
 
+				let uniqueEntities: Entity[] = [];
+				if (repositoryEntitiesResponse && repositoryEntitiesResponse.entities) {
+					for (const entity of repositoryEntitiesResponse.entities) {
+						const tags = entity.tags;
+						if (!tags) continue;
+
+						const accountIdTag = entity.tags!.find(_ => _.key === "accountId");
+						if (!accountIdTag) continue;
+
+						uniqueEntities.push({
+							account: {
+								id: parseInt(accountIdTag.values[0] || "0", 10),
+								name: entity.tags!.find(_ => _.key === "account")?.values[0] || "Account"
+							},
+							guid: entity.guid,
+							name: entity.name
+						});
+					}
+				}
 				response.repos.push({
 					repoId: repo.id!,
 					repoName: folderName,
 					repoRemote: remote,
-					hasRepoAssociation: remoteUrls?.length > 0,
-
+					hasRepoAssociation: hasRepoAssociation,
 					// @ts-ignore
-					entityAccounts: entitiesResponse?.entities
+					entityAccounts: uniqueEntities
 						.map(entity => {
-							const accountIdTag = entity.tags.find(_ => _.key === "accountId");
-							if (!accountIdTag) {
-								return undefined;
-							}
-							const accountIdValue = parseInt(accountIdTag.values[0] || "0", 10);
 							return {
-								accountId: accountIdValue,
-								accountName: entity.tags.find(_ => _.key === "account")?.values[0] || "Account",
+								accountId: entity.account?.id,
+								accountName: entity.account?.name || "Account",
 								entityGuid: entity.guid,
 								entityName: entity.name
 							} as EntityAccount;
 						})
 						.filter(Boolean)
+				});
+				Logger.log(`NR: getObservabilityRepos hasRepoAssociation=${hasRepoAssociation}`, {
+					repoId: repo.id,
+					entities: repositoryEntitiesResponse?.entities?.map(_ => _.guid)
 				});
 			}
 		} catch (ex) {
@@ -654,15 +684,15 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					return (_ as any).uri!.toString();
 				});
 
-				const entitiesReponse = await this.getEntitiesByRepoRemote(remotes);
-				if (entitiesReponse?.entities?.length) {
+				const repositoryEntitiesResponse = await this.findRepositoryEntitiesByRepoRemotes(remotes);
+				if (repositoryEntitiesResponse?.entities?.length) {
 					const entityFilter = request.filters?.find(_ => _.repoId === repo.id!);
-					for (const entity of entitiesReponse.entities.filter((_, index) =>
+					for (const entity of repositoryEntitiesResponse.entities.filter((_, index) =>
 						entityFilter && entityFilter.entityGuid
 							? _.guid === entityFilter.entityGuid
 							: index == 0
 					)) {
-						const accountIdTag = entity.tags.find(_ => _.key === "accountId");
+						const accountIdTag = entity.tags?.find(_ => _.key === "accountId");
 						if (!accountIdTag) {
 							Logger.warn("NR: count not find accountId for entity", {
 								entityGuid: entity.guid
@@ -671,17 +701,17 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 						}
 
 						const accountIdValue = parseInt(accountIdTag.values[0] || "0", 10);
-						const urlTag = entity.tags.find(_ => _.key === "url");
+						const urlTag = entity.tags?.find(_ => _.key === "url");
 						const urlValue = urlTag?.values[0];
 
-						const related = await this.findRelatedEntity(entity.guid);
+						const related = await this.findRelatedEntityByRepositoryGuid(entity.guid);
 						const applicationGuid = related.actor.entity.relatedEntities.results.find(
 							(r: any) => r.type === "BUILT_FROM"
 						)?.source.entity.guid;
 
 						if (!applicationGuid) continue;
 
-						const response = await this.getFingerprintedErrorTraces(
+						const response = await this.findFingerprintedErrorTraces(
 							accountIdValue,
 							applicationGuid
 						);
@@ -756,7 +786,6 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 	@log()
 	async getPixieToken(accountId: number) {
 		try {
-			await this.ensureConnected();
 			const response = await this.query(
 				`query fetchPixieAccessToken($accountId:Int!) {
   					actor {
@@ -789,7 +818,6 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 	@log()
 	async getAccounts(): Promise<GetNewRelicAccountsResponse> {
 		try {
-			await this.ensureConnected();
 			const response = await this.query<{
 				actor: {
 					accounts: { id: number; name: string }[];
@@ -818,8 +846,6 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		let accountId = 0;
 		let entityGuid: string = "";
 		try {
-			await this.ensureConnected();
-
 			if (!request.occurrenceId) {
 				throw new Error("MissingOccurrenceId");
 			}
@@ -980,8 +1006,6 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 	@lspHandler(GetNewRelicAssigneesRequestType)
 	@log()
 	async getAssignableUsers(request: { boardId: string }) {
-		await this.ensureConnected();
-
 		const { scm } = SessionContainer.instance();
 		const committers = await scm.getLatestCommittersAllRepos();
 		let users: any[] = [];
@@ -1073,8 +1097,6 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		state: "RESOLVED" | "UNRESOLVED" | "IGNORED";
 	}): Promise<Directives | undefined> {
 		try {
-			await this.ensureConnected();
-
 			const response = await this.mutate<{
 				errorTrackingUpdateErrorGroupState: {
 					errors?: { description: string }[];
@@ -1138,8 +1160,6 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		url: string;
 	}): Promise<Directives | undefined> {
 		try {
-			await this.ensureConnected();
-
 			const parsedId = this.parseId(request.parseableAccountId)!;
 			const accountId = parsedId.accountId;
 			const name = request.name;
@@ -1516,7 +1536,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		return undefined;
 	}
 
-	private async getRepoRemoteVariants(remotes: string[]): Promise<string[]> {
+	private async buildRepoRemoteVariants(remotes: string[]): Promise<string[]> {
 		const set = new Set<string>();
 
 		await Promise.all(
@@ -1549,21 +1569,17 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 	 * 	>)}
 	 * @memberof NewRelicProvider
 	 */
-	private async getEntitiesByRepoRemote(
+	private async findRepositoryEntitiesByRepoRemotes(
 		remotes: string[]
 	): Promise<
 		| {
-				entities?: {
-					guid: string;
-					name: String;
-					tags: { key: string; values: string[] }[];
-				}[];
+				entities?: Entity[];
 				remotes?: string[];
 		  }
 		| undefined
 	> {
 		try {
-			const remoteVariants: string[] = await this._memoizedGetRepoRemoteVariants(remotes);
+			const remoteVariants: string[] = await this._memoizedBuildRepoRemoteVariants(remotes);
 			if (!remoteVariants.length) return undefined;
 
 			const remoteFilters = remoteVariants.map((_: string) => `tags.url = '${_}'`).join(" OR ");
@@ -1599,7 +1615,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		}
 	}
 
-	private async getFingerprintedErrorTraces(accountId: number, applicationGuid: string) {
+	private async findFingerprintedErrorTraces(accountId: number, applicationGuid: string) {
 		return this.query(
 			`query fetchErrorsInboxData($accountId:Int!) {
 				actor {
@@ -1615,8 +1631,56 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		);
 	}
 
-	private async findRelatedEntity(
-		guid: string
+	private async findRelatedEntityByRepositoryGuids(
+		repositoryGuids: string[]
+	): Promise<{
+		actor: {
+			entities: {
+				relatedEntities: {
+					results: RelatedEntity[];
+				};
+			}[];
+		};
+	}> {
+		return this.query(
+			`query fetchRelatedEntities($guids:[EntityGuid]!){
+			actor {
+			  entities(guids: $guids) {
+				relatedEntities(filter: {direction: BOTH, relationshipTypes: {include: BUILT_FROM}}) {
+				  results {
+					source {
+					  entity {
+						name
+						guid
+						type
+					  }
+					}
+					target {
+					  entity {
+						name
+						guid
+						type
+						tags {
+							key
+							values
+						}
+					  }
+					}
+					type
+				  }
+				}
+			  }
+			}
+		  }
+		  `,
+			{
+				guids: repositoryGuids
+			}
+		);
+	}
+
+	private async findRelatedEntityByRepositoryGuid(
+		repositoryGuid: string
 	): Promise<{
 		actor: {
 			entity: {
@@ -1658,7 +1722,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		  }
 		  `,
 			{
-				guid: guid
+				guid: repositoryGuid
 			}
 		);
 	}
@@ -1761,6 +1825,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					account: {
 						errorGroups: {
 							results: {
+								["entity.guid"]: string;
 								["error.group.name"]: string;
 								["error.group.message"]: string;
 							}[];
@@ -1771,7 +1836,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				`query getMetric($accountId: Int!) {
 					actor {
 					  account(id: $accountId) {
-						errorGroups: nrql(query: "FROM Metric SELECT error.group.name,error.group.message WHERE error.group.guid = '${Strings.sanitizeGraphqlValue(
+						errorGroups: nrql(query: "FROM Metric SELECT entity.guid,error.group.name,error.group.message WHERE error.group.guid = '${Strings.sanitizeGraphqlValue(
 							errorGroupGuid
 						)}' SINCE 7 day ago LIMIT 1") {
 						  results
@@ -1805,6 +1870,8 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 								metricResult["error.group.name"]
 							)}' AND error.message LIKE '${Strings.sanitizeGraphqlValue(
 						metricResult["error.group.message"]
+					)}' AND entityGuid='${Strings.sanitizeGraphqlValue(
+						metricResult["entity.guid"]
 					)}' SINCE 1 week ago LIMIT 1") {
 							  results
 							}
@@ -1821,7 +1888,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					const errorTraceResult = response2.actor.account.errorEvents.results[0];
 					if (errorTraceResult) {
 						return {
-							entityGuid: errorTraceResult.entityGuid,
+							entityGuid: metricResult["entity.guid"],
 							traceId: errorTraceResult.id
 						};
 					}
@@ -1846,7 +1913,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 	> {
 		if (!entityGuid) return undefined;
 
-		const relatedEntityResponse = await this.findRelatedEntity(entityGuid);
+		const relatedEntityResponse = await this.findRelatedEntityByRepositoryGuid(entityGuid);
 		if (relatedEntityResponse) {
 			return this.findBuiltFrom(relatedEntityResponse.actor.entity.relatedEntities.results);
 		}
@@ -1909,8 +1976,8 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		if (!relatedEntities || !relatedEntities.length) return undefined;
 
 		const buildFrom = relatedEntities.find(_ => _.type === "BUILT_FROM");
-		if (buildFrom) {
-			const targetUrl = buildFrom.target.entity.tags.find((_: any) => _.key === "url");
+		if (buildFrom?.target?.entity?.tags) {
+			const targetUrl = buildFrom.target?.entity?.tags?.find((_: any) => _.key === "url");
 			if (targetUrl && targetUrl.values && targetUrl.values.length) {
 				return {
 					url: targetUrl.values[0],

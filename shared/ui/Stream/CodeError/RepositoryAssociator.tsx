@@ -1,12 +1,13 @@
 import React from "react";
-import { useEffect } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { closeAllPanels, setCurrentCodeError } from "@codestream/webview/store/context/actions";
+import { useSelector } from "react-redux";
 import { CodeStreamState } from "../../store";
 import { getCodeError } from "../../store/codeErrors/reducer";
-import { Dispatch } from "../../store/common";
 import Dismissable from "../Dismissable";
-import { GetReposScmRequestType, ReposScm } from "@codestream/protocols/agent";
+import {
+	DidChangeObservabilityDataNotificationType,
+	GetReposScmRequestType,
+	ReposScm
+} from "@codestream/protocols/agent";
 import { HostApi } from "../../";
 import { CSCodeError } from "@codestream/protocols/api";
 import { logWarning } from "../../logger";
@@ -32,6 +33,9 @@ interface EnhancedRepoScm {
 
 	/** unique string */
 	key: string;
+
+	/** label for the repo -- may include the remote */
+	label: string;
 }
 
 export function RepositoryAssociator(props: {
@@ -40,18 +44,15 @@ export function RepositoryAssociator(props: {
 	onSubmit: Function;
 	onCancelled: Function;
 }) {
-	const dispatch = useDispatch<Dispatch | any>();
 	const derivedState = useSelector((state: CodeStreamState) => {
 		const codeError = state.context.currentCodeErrorId
 			? (getCodeError(state.codeErrors, state.context.currentCodeErrorId) as CSCodeError)
 			: undefined;
 
-		const result = {
+		return {
 			codeError: codeError,
 			repos: state.repos
 		};
-		// 	// console.warn(JSON.stringify(result, null, 4));
-		return result;
 	});
 	const { error: repositoryError } = props;
 
@@ -60,6 +61,7 @@ export function RepositoryAssociator(props: {
 	>(undefined);
 	const [selected, setSelected] = React.useState<any>(undefined);
 	const [multiRemoteRepository, setMultiRemoteRepository] = React.useState(false);
+	const [isLoading, setIsLoading] = React.useState(false);
 
 	useDidMount(() => {
 		if (!repositoryError) return;
@@ -80,12 +82,15 @@ export function RepositoryAssociator(props: {
 							if (!e.types || !id) continue;
 							const remoteUrl = e.types?.find(_ => _.type === "fetch")?.url;
 							if (!remoteUrl) continue;
+
+							const name = derivedState.repos[id] ? derivedState.repos[id].name : "repo";
+							const label = `${name} (${remoteUrl})`;
 							results.push({
 								...repo,
 								remote: remoteUrl!,
 								key: btoa(remoteUrl!),
-								name:
-									(derivedState.repos[id] ? derivedState.repos[id].name : "") + ` (${remoteUrl})`
+								label: label,
+								name: name
 							});
 						}
 						setMultiRemoteRepository(true);
@@ -93,11 +98,14 @@ export function RepositoryAssociator(props: {
 						const id = repo.id || "";
 						if (!repo.remotes || !repo.remotes[0].types || !id) continue;
 						const url = repo.remotes[0].types.find(_ => _.type === "fetch")?.url!;
+						const name = derivedState.repos[id] ? derivedState.repos[id].name : "repo";
+
 						results.push({
 							...repo,
 							key: btoa(url),
 							remote: url,
-							name: derivedState.repos[id] ? derivedState.repos[id].name : ""
+							label: name,
+							name: name
 						});
 					}
 				}
@@ -134,9 +142,16 @@ export function RepositoryAssociator(props: {
 			buttons={[
 				{
 					text: "Associate",
-					onClick: e => {
+					loading: isLoading,
+					onClick: async e => {
+						setIsLoading(true);
 						e.preventDefault();
-						props.onSubmit(selected);
+
+						await props.onSubmit(selected);
+						HostApi.instance.emit(DidChangeObservabilityDataNotificationType.method, {
+							type: "RepositoryAssociation"
+						});
+						setIsLoading(false);
 					},
 					disabled: !selected
 				},
@@ -158,14 +173,14 @@ export function RepositoryAssociator(props: {
 				<DropdownButton
 					items={
 						openRepositories
-							?.sort((a, b) => a.name.localeCompare(b.name))
-							.map(_ => {
+							?.sort((a, b) => a.label.localeCompare(b.label))
+							.map(remote => {
 								return {
-									key: _.key,
-									label: _.name,
+									key: remote.key,
+									label: remote.label,
 									action: () => {
-										setSelected(_);
-										props.onSelected && props.onSelected(_);
+										setSelected(remote);
+										props.onSelected && props.onSelected(remote);
 									}
 								};
 							}) || []

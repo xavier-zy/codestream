@@ -381,7 +381,7 @@ export const DidChangeProcessBufferNotificationType = new NotificationType<
 >("codestream/didChangeProcessBuffer");
 
 export interface DidChangeObservabilityDataNotification {
-	type: "Assignment";
+	type: "Assignment" | "RepositoryAssociation";
 }
 
 export const DidChangeObservabilityDataNotificationType = new NotificationType<

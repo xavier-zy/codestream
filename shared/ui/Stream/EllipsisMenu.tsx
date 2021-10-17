@@ -307,6 +307,12 @@ export function EllipsisMenu(props: EllipsisMenuProps) {
 	menuItems.push(
 		{ label: "Integrations", action: () => dispatch(openPanel(WebviewPanels.Integrations)) },
 		{
+			label: "New Relic Setup",
+			key: "onboard-newrelic",
+			action: () => go(WebviewPanels.OnboardNewRelic)
+		},
+		{ label: "-" },
+		{
 			label: "Feedback",
 			action: () => openUrl("https://github.com/TeamCodeStream/codestream/issues")
 		},
@@ -340,11 +346,6 @@ export function EllipsisMenu(props: EllipsisMenuProps) {
 					action: () => dispatch(openPanel(WebviewPanels.Flow))
 				},
 				// { label: "Onboard", key: "onboard", action: () => go(WebviewPanels.Onboard) },
-				{
-					label: "New Relic Setup",
-					key: "onboard-newrelic",
-					action: () => go(WebviewPanels.OnboardNewRelic)
-				},
 				{
 					label: "What's New",
 					key: "whats-new",

@@ -8,7 +8,7 @@ import {
 	CreateShareableCodeErrorRequestType,
 	GetCodeErrorRequestType,
 	FetchCodeErrorsRequestType,
-	FindCodeErrorRequestType,
+	ClaimCodeErrorRequestType,
 	ResolveStackTraceRequestType,
 	ResolveStackTracePositionRequestType,
 	UpdateCodeErrorResponse,
@@ -260,8 +260,8 @@ export const jumpToStackLine = (
 	}
 };
 
-export const findCodeError = async request => {
-	return await HostApi.instance.send(FindCodeErrorRequestType, request);
+export const claimCodeError = async request => {
+	return await HostApi.instance.send(ClaimCodeErrorRequestType, request);
 };
 
 export const updateCodeError = request => async dispatch => {
@@ -410,7 +410,7 @@ export const openErrorGroup = (
 	occurrenceId?: string,
 	data: any = {}
 ) => async (dispatch, getState: () => CodeStreamState) => {
-	const response = await findCodeError({
+	const response = await claimCodeError({
 		objectId: errorGroupGuid,
 		objectType: "errorGroup"
 	});

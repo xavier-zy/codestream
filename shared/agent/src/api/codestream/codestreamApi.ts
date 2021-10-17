@@ -78,8 +78,8 @@ import {
 	FetchTeamsRequest,
 	FetchUnreadStreamsRequest,
 	FetchUsersRequest,
-	FindCodeErrorRequest,
-	FindCodeErrorResponse,
+	ClaimCodeErrorRequest,
+	ClaimCodeErrorResponse,
 	FollowCodeErrorRequest,
 	FollowCodeErrorResponse,
 	FollowCodemarkRequest,
@@ -738,7 +738,7 @@ export class CodeStreamApiProvider implements ApiProvider {
 					this._unreads.update(e.data as CSPost[], oldPosts);
 				}
 
-				await this.checkForUnknownCodeErrorFollowers(e.data as CSPost[]);
+				//await this.checkForUnknownCodeErrorFollowers(e.data as CSPost[]);
 
 				break;
 			case MessageType.Repositories:
@@ -755,11 +755,13 @@ export class CodeStreamApiProvider implements ApiProvider {
 				e.data = await SessionContainer.instance().codeErrors.resolve(e, { onlyIfNeeded: false });
 				if (e.data == null || e.data.length === 0) return;
 
+				/*
 				if (this._events !== undefined) {
 					for (const codeError of e.data as CSCodeError[]) {
 						this._events.subscribeToObject(codeError.id);
 					}
 				}
+				*/
 
 				break;
 			}
@@ -1314,11 +1316,13 @@ export class CodeStreamApiProvider implements ApiProvider {
 			this._token
 		);
 
+		/*
 		// when fetching replies to code errors, we may end up with authors that aren't part of the
 		// current team, we'll need to fetch and store those authors
 		if (post.codeErrorId) {
 			await this.fetchAndStoreUnknownCodeErrorFollowers(response.posts, post.codeErrorId);
 		}
+		*/
 
 		return response;
 	}
@@ -1360,15 +1364,18 @@ export class CodeStreamApiProvider implements ApiProvider {
 			response.posts.sort((a: CSPost, b: CSPost) => (a.seqNum as number) - (b.seqNum as number));
 		}
 
+		/*
 		(response.codeErrors || []).forEach(codeError => {
 			this._events?.subscribeToObject(codeError.id);
 		});
+		*/
 
-		await this.fetchAndStoreUnknownCodeErrorFollowers(response.posts);
+		//await this.fetchAndStoreUnknownCodeErrorFollowers(response.posts);
 
 		return response;
 	}
 
+	/*
 	@log()
 	async fetchAndStoreUnknownCodeErrorFollowers(posts: CSPost[], codeErrorId?: string) {
 		const unknownAuthorIds: string[] = [];
@@ -1433,6 +1440,7 @@ export class CodeStreamApiProvider implements ApiProvider {
 			await this.fetchAndStoreUnknownCodeErrorFollowers(codeErrorPosts[codeErrorId], codeErrorId);
 		}
 	}
+	*/
 
 	@log()
 	getPost(request: GetPostRequest) {
@@ -1580,19 +1588,24 @@ export class CodeStreamApiProvider implements ApiProvider {
 			`/code-errors?${qs.stringify(params)}`,
 			this._token
 		);
+
+		/*
 		(response.codeErrors || []).forEach(codeError => {
 			this._events?.subscribeToObject(codeError.id);
 		});
+		*/
 
 		return response;
 	}
 
 	@log()
-	async findCodeError(request: FindCodeErrorRequest): Promise<FindCodeErrorResponse> {
-		return this.get<FindCodeErrorResponse>(
-			`/code-errors/find/object?objectId=${encodeURIComponent(request.objectId)}&objectType=${
-				request.objectType
-			}`,
+	async claimCodeError(request: ClaimCodeErrorRequest): Promise<ClaimCodeErrorResponse> {
+		return this.post<ClaimCodeErrorRequest, ClaimCodeErrorResponse>(
+			`/code-errors/claim/${this.teamId}`,
+			{
+				objectId: request.objectId,
+				objectType: request.objectType
+			},
 			this._token
 		);
 	}

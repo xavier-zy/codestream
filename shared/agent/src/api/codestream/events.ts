@@ -136,6 +136,7 @@ export class BroadcasterEvents implements Disposable {
 		}
 	}
 
+	/*
 	@log()
 	subscribeToObject(objectId: string) {
 		if (!this._subscribedObjectIds.has(objectId)) {
@@ -143,6 +144,7 @@ export class BroadcasterEvents implements Disposable {
 			this._subscribedObjectIds.add(objectId);
 		}
 	}
+	*/
 
 	@log()
 	unsubscribeFromStream(streamId: string) {

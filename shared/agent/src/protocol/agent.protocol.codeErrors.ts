@@ -81,12 +81,12 @@ export const FetchCodeErrorsRequestType = new RequestType<
 	void
 >("codestream/codeErrors");
 
-export interface FindCodeErrorRequest {
+export interface ClaimCodeErrorRequest {
 	objectId: string;
 	objectType: string;
 }
 
-export interface FindCodeErrorResponse {
+export interface ClaimCodeErrorResponse {
 	notFound?: boolean;
 	unauthorized?: boolean;
 	codeError?: CSCodeError;
@@ -96,12 +96,12 @@ export interface FindCodeErrorResponse {
 	ownedBy?: string;
 }
 
-export const FindCodeErrorRequestType = new RequestType<
-	FindCodeErrorRequest,
-	FindCodeErrorResponse,
+export const ClaimCodeErrorRequestType = new RequestType<
+	ClaimCodeErrorRequest,
+	ClaimCodeErrorResponse,
 	void,
 	void
->("codestream/codeErrors/find");
+>("codestream/codeErrors/claim");
 
 export interface DeleteCodeErrorRequest {
 	id: string;

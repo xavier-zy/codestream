@@ -6,9 +6,9 @@ import {
 	FetchCodeErrorsRequest,
 	FetchCodeErrorsRequestType,
 	FetchCodeErrorsResponse,
-	FindCodeErrorRequest,
-	FindCodeErrorRequestType,
-	FindCodeErrorResponse,
+	ClaimCodeErrorRequest,
+	ClaimCodeErrorRequestType,
+	ClaimCodeErrorResponse,
 	GetCodeErrorRequest,
 	GetCodeErrorRequestType,
 	GetCodeErrorResponse,
@@ -63,10 +63,10 @@ export class CodeErrorsManager extends CachedEntityManagerBase<CSCodeError> {
 		return this.session.api.deleteCodeError(request);
 	}
 
-	@lspHandler(FindCodeErrorRequestType)
+	@lspHandler(ClaimCodeErrorRequestType)
 	@log()
-	findCodeError(request: FindCodeErrorRequest): Promise<FindCodeErrorResponse> {
-		return this.session.api.findCodeError(request);
+	claimCodeError(request: ClaimCodeErrorRequest): Promise<ClaimCodeErrorResponse> {
+		return this.session.api.claimCodeError(request);
 	}
 
 	protected async loadCache() {

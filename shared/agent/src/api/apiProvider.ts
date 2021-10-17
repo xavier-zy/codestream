@@ -75,8 +75,8 @@ import {
 	FetchUnreadStreamsResponse,
 	FetchUsersRequest,
 	FetchUsersResponse,
-	FindCodeErrorRequest,
-	FindCodeErrorResponse,
+	ClaimCodeErrorRequest,
+	ClaimCodeErrorResponse,
 	FollowCodeErrorRequest,
 	FollowCodeErrorResponse,
 	FollowCodemarkRequest,
@@ -452,7 +452,7 @@ export interface ApiProvider {
 	): Promise<FetchReviewCheckpointDiffsResponse>;
 
 	fetchCodeErrors(request: FetchCodeErrorsRequest): Promise<FetchCodeErrorsResponse>;
-	findCodeError(request: FindCodeErrorRequest): Promise<FindCodeErrorResponse>;
+	claimCodeError(request: ClaimCodeErrorRequest): Promise<ClaimCodeErrorResponse>;
 	getCodeError(request: GetCodeErrorRequest): Promise<GetCodeErrorResponse>;
 	updateCodeError(request: UpdateCodeErrorRequest): Promise<UpdateCodeErrorResponse>;
 	deleteCodeError(request: DeleteCodeErrorRequest): Promise<DeleteCodeErrorResponse>;

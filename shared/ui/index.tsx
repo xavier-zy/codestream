@@ -92,7 +92,7 @@ import { fetchReview } from "./store/reviews/actions";
 import {
 	addCodeErrors,
 	fetchCodeError,
-	findCodeError,
+	claimCodeError,
 	findErrorGroupByObjectId,
 	openErrorGroup,
 	PENDING_CODE_ERROR_ID_FORMAT as toPendingCodeErrorId

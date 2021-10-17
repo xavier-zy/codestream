@@ -552,6 +552,7 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 								onSubmited={async e => {
 									setOpenConnectionModal(false);
 								}}
+								originLocation={"Open in IDE Flow"}
 							/>
 						</div>
 					</Dialog>

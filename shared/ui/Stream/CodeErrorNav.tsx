@@ -605,6 +605,7 @@ export function CodeErrorNav(props: Props) {
 						onSubmited={async e => {
 							onConnected();
 						}}
+						originLocation={"Open in IDE Flow"}
 					/>
 				</div>
 			</Root>

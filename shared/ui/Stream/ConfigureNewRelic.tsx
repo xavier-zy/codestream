@@ -19,7 +19,12 @@ interface Props {
 	showSignupUrl: boolean;
 	disablePostConnectOnboarding?: boolean;
 	providerId: string;
-	originLocation?: string;
+	originLocation?:
+		| "Integrations Panel"
+		| "Open in IDE Flow"
+		| "Open in IDE Pixie"
+		| "Observability Section"
+		| "Pixie Logging";
 	headerChildren?: any;
 	providers?: any;
 	ide: {
@@ -102,6 +107,10 @@ class ConfigureNewRelic extends Component<Props> {
 			// 		}
 			// 	}
 			// }
+
+			HostApi.instance.track("NR Connected", {
+				"Connection Location": this.props.originLocation
+			});
 			if (this.props.onSubmited) {
 				this.props.onSubmited(e);
 			}

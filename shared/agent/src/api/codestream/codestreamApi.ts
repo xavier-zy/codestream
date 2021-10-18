@@ -738,7 +738,7 @@ export class CodeStreamApiProvider implements ApiProvider {
 					this._unreads.update(e.data as CSPost[], oldPosts);
 				}
 
-				//await this.checkForUnknownCodeErrorFollowers(e.data as CSPost[]);
+				await this.fetchAndStoreUnknownAuthors(e.data as CSPost[]);
 
 				break;
 			case MessageType.Repositories:
@@ -769,6 +769,7 @@ export class CodeStreamApiProvider implements ApiProvider {
 				e.data = await SessionContainer.instance().streams.resolve(e, { onlyIfNeeded: false });
 				if (e.data == null || e.data.length === 0) return;
 
+				/*
 				if (this._events !== undefined) {
 					for (const stream of e.data as (CSChannelStream | CSDirectStream | CSObjectStream)[]) {
 						if (
@@ -780,7 +781,7 @@ export class CodeStreamApiProvider implements ApiProvider {
 						}
 					}
 				}
-
+				*/
 				break;
 			case MessageType.Teams:
 				const { session, teams } = SessionContainer.instance();
@@ -1316,13 +1317,9 @@ export class CodeStreamApiProvider implements ApiProvider {
 			this._token
 		);
 
-		/*
 		// when fetching replies to code errors, we may end up with authors that aren't part of the
 		// current team, we'll need to fetch and store those authors
-		if (post.codeErrorId) {
-			await this.fetchAndStoreUnknownCodeErrorFollowers(response.posts, post.codeErrorId);
-		}
-		*/
+		await this.fetchAndStoreUnknownAuthors(response.posts);
 
 		return response;
 	}
@@ -1370,14 +1367,13 @@ export class CodeStreamApiProvider implements ApiProvider {
 		});
 		*/
 
-		//await this.fetchAndStoreUnknownCodeErrorFollowers(response.posts);
+		await this.fetchAndStoreUnknownAuthors(response.posts);
 
 		return response;
 	}
 
-	/*
 	@log()
-	async fetchAndStoreUnknownCodeErrorFollowers(posts: CSPost[], codeErrorId?: string) {
+	async fetchAndStoreUnknownAuthors(posts: CSPost[]) {
 		const unknownAuthorIds: string[] = [];
 		for (const post of posts) {
 			if (
@@ -1392,11 +1388,6 @@ export class CodeStreamApiProvider implements ApiProvider {
 			const request: FetchUsersRequest = {
 				userIds: unknownAuthorIds
 			};
-			if (codeErrorId) {
-				request.codeErrorId = codeErrorId;
-			} else {
-				request.allCodeErrors = true;
-			}
 			const usersResponse = await this.fetchUsers(request);
 			await SessionContainer.instance().users.resolve({
 				type: MessageType.Users,
@@ -1408,39 +1399,6 @@ export class CodeStreamApiProvider implements ApiProvider {
 			});
 		}
 	}
-
-	@log()
-	async checkForUnknownCodeErrorFollowers(posts: CSPost[]) {
-		const codeErrorPosts: { [key: string]: CSPost[] } = {};
-		const postsManager = SessionContainer.instance().posts;
-		for (const post of posts) {
-			let codeErrorPost: CSPost | undefined;
-			if (post.codeErrorId) {
-				codeErrorPost = post;
-			} else if (post.parentPostId) {
-				const parentPost = await postsManager.getById(post.parentPostId);
-				if (parentPost && parentPost.codeErrorId) {
-					codeErrorPost = parentPost;
-				} else if (parentPost && parentPost.parentPostId) {
-					const grandparentPost = await postsManager.getById(parentPost.parentPostId);
-					if (grandparentPost && grandparentPost.codeErrorId) {
-						codeErrorPost = grandparentPost;
-					}
-				}
-			}
-
-			if (codeErrorPost) {
-				codeErrorPosts[codeErrorPost.codeErrorId!] =
-					codeErrorPosts[codeErrorPost.codeErrorId!] || [];
-				codeErrorPosts[codeErrorPost.codeErrorId!].push(post);
-			}
-		}
-
-		for (const codeErrorId in codeErrorPosts) {
-			await this.fetchAndStoreUnknownCodeErrorFollowers(codeErrorPosts[codeErrorId], codeErrorId);
-		}
-	}
-	*/
 
 	@log()
 	getPost(request: GetPostRequest) {
@@ -2025,14 +1983,7 @@ export class CodeStreamApiProvider implements ApiProvider {
 
 	@log()
 	async fetchUsers(request: FetchUsersRequest) {
-		let path;
-		if (request.codeErrorId) {
-			path = `/users?codeErrorId=${request.codeErrorId}`;
-		} else if (request.allCodeErrors) {
-			path = "/users?allCodeErrors";
-		} else {
-			path = `/users?teamId=${this.teamId}`;
-		}
+		let path = `/users?teamId=${this.teamId}`;
 		if (request.userIds) {
 			path += `&ids=${request.userIds.join(",")}`;
 		}

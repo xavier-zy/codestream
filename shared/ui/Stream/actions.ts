@@ -807,14 +807,10 @@ export const fetchThread = (streamId: string, parentPostId: string) => async (
 			}
 		}
 		if (missingAuthorIds.length > 0) {
-			const users = await dispatch(
-				HostApi.instance.send(FetchUsersRequestType, {
-					userIds: missingAuthorIds
-				})
-			);
-			if (users) {
-				await dispatch(addUsers(users));
-			}
+			const response = await HostApi.instance.send(FetchUsersRequestType, {
+				userIds: missingAuthorIds
+			});
+			await dispatch(addUsers(response.users));
 		}
 		codemarks && (await dispatch(saveCodemarks(codemarks)));
 		await dispatch(postsActions.addPostsForStream(streamId, posts));

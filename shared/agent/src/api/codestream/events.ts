@@ -128,6 +128,7 @@ export class BroadcasterEvents implements Disposable {
 		this._disposable = undefined;
 	}
 
+	/*
 	@log()
 	subscribeToStream(streamId: string) {
 		if (!this._subscribedStreamIds.has(streamId)) {
@@ -135,6 +136,7 @@ export class BroadcasterEvents implements Disposable {
 			this._subscribedStreamIds.add(streamId);
 		}
 	}
+	*/
 
 	/*
 	@log()

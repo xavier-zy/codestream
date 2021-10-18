@@ -219,6 +219,7 @@ class ConfigureNewRelic extends Component<Props> {
 									<Link
 										onClick={e => {
 											e.preventDefault();
+											HostApi.instance.track("NR Get API Key");
 											this.onClickSignup("nr_getapikey");
 										}}
 									>
@@ -249,6 +250,7 @@ class ConfigureNewRelic extends Component<Props> {
 									className="row-button"
 									onClick={e => {
 										e.preventDefault();
+										HostApi.instance.track("Sign Up for NR Clicked");
 										this.onClickSignup("nr_signup");
 									}}
 								>

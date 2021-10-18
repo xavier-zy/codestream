@@ -895,6 +895,9 @@ export interface NewRelicErrorGroup {
 			name: string;
 			urls: string[];
 		};
+		relationship?: {
+			error?: { message?: string };
+		};
 	};
 
 	errorTrace?: {
@@ -1168,7 +1171,7 @@ export interface RelatedEntity {
 	target: {
 		entity: Entity;
 	};
-	type: string;
+	type: "BUILT_FROM";
 }
 
 export interface EntitySearchResponse {
@@ -1178,5 +1181,13 @@ export interface EntitySearchResponse {
 				entities: Entity[];
 			};
 		};
+	};
+}
+
+export interface BuiltFromResult {
+	name?: string;
+	url?: string;
+	error?: {
+		message?: string;
 	};
 }

@@ -352,6 +352,15 @@ export function CodeErrorNav(props: Props) {
 				setIsResolved(true);
 				setRepoWarning("There is no stack trace associated with this error.");
 			} else {
+				if (errorGroupResult?.errorGroup?.entity?.relationship?.error?.message != null) {
+					setError({
+						title: "Repository Relationship Error",
+						// @ts-ignore
+						description: errorGroupResult.errorGroup.entity.relationship.error.message!
+					});
+					return;
+				}
+
 				targetRemote = newRemote || remote;
 				if (errorGroupResult?.errorGroup?.entity?.repo?.urls != null) {
 					targetRemote = errorGroupResult?.errorGroup?.entity?.repo?.urls[0]!;

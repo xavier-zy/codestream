@@ -54,7 +54,8 @@ import {
 	ThirdPartyProviderConfig,
 	Entity,
 	StackTraceResponse,
-	ErrorGroupStateType
+	ErrorGroupStateType,
+	BuiltFromResult
 } from "../protocol/agent.protocol";
 import { CSNewRelicProviderInfo } from "../protocol/api.protocol";
 import { CodeStreamSession } from "../session";
@@ -932,16 +933,22 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 						};
 					}
 
-					const builtFromRepo = this.findBuiltFrom(
+					const builtFromResult = this.findBuiltFrom(
 						errorGroupResponse.actor.entity.relatedEntities.results
 					);
-					if (builtFromRepo) {
-						errorGroup.entity = {
-							repo: {
-								name: builtFromRepo.name,
-								urls: [builtFromRepo.url]
-							}
-						};
+					if (errorGroup.entity && builtFromResult) {
+						if (builtFromResult.error) {
+							errorGroup.entity.relationship = {
+								error: builtFromResult.error
+							};
+						} else {
+							errorGroup.entity = {
+								repo: {
+									name: builtFromResult.name!,
+									urls: [builtFromResult.url!]
+								}
+							};
+						}
 					}
 
 					if (errorGroupResponse.actor?.entity?.exception?.stackTrace) {
@@ -2020,7 +2027,13 @@ actor {
 
 		const relatedEntityResponse = await this.findRelatedEntityByRepositoryGuid(entityGuid);
 		if (relatedEntityResponse) {
-			return this.findBuiltFrom(relatedEntityResponse.actor.entity.relatedEntities.results);
+			const result = this.findBuiltFrom(relatedEntityResponse.actor.entity.relatedEntities.results);
+			if (result?.name && result.url) {
+				return {
+					name: result.name,
+					url: result.url
+				};
+			}
 		}
 		return undefined;
 	}
@@ -2070,23 +2083,49 @@ actor {
 		);
 	}
 
-	private findBuiltFrom(
-		relatedEntities: RelatedEntity[]
-	):
-		| {
-				url: string;
-				name: string;
-		  }
-		| undefined {
+	private findBuiltFrom(relatedEntities: RelatedEntity[]): BuiltFromResult | undefined {
 		if (!relatedEntities || !relatedEntities.length) return undefined;
 
-		const buildFrom = relatedEntities.find(_ => _.type === "BUILT_FROM");
-		if (buildFrom?.target?.entity?.tags) {
-			const targetUrl = buildFrom.target?.entity?.tags?.find((_: any) => _.key === "url");
-			if (targetUrl && targetUrl.values && targetUrl.values.length) {
+		const builtFrom = relatedEntities.find(_ => _.type === "BUILT_FROM");
+		if (!builtFrom) return undefined;
+
+		const targetEntity = builtFrom.target?.entity;
+		if (targetEntity) {
+			const targetEntityTags = targetEntity.tags;
+			if (targetEntityTags) {
+				const targetEntityTagsValues = targetEntityTags.find((_: any) => _.key === "url");
+				if (targetEntityTagsValues) {
+					// why would there ever be more than 1??
+					if (
+						targetEntityTagsValues &&
+						targetEntityTagsValues.values &&
+						targetEntityTagsValues.values.length
+					) {
+						return {
+							url: targetEntityTagsValues.values[0],
+							name: builtFrom.target.entity.name
+						};
+					} else {
+						Logger.warn("NR: findBuiltFrom missing tags with url[s]", {
+							relatedEntities: relatedEntities
+						});
+						return {
+							error: {
+								message:
+									"Could not find a repository relationship. Please check your setup and try again."
+							}
+						};
+					}
+				}
+			} else {
+				Logger.warn("NR: findBuiltFrom missing tags", {
+					relatedEntities: relatedEntities
+				});
 				return {
-					url: targetUrl.values[0],
-					name: buildFrom.target.entity.name
+					error: {
+						message:
+							"Could not find a repository relationship. Please check your setup and try again."
+					}
 				};
 			}
 		}

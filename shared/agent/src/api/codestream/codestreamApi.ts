@@ -1334,7 +1334,6 @@ export class CodeStreamApiProvider implements ApiProvider {
 		const params: { [k: string]: any } = {
 			teamId: this.teamId,
 			limit
-			//includeFollowed: true
 		};
 
 		/* The need to pass streamId is deprecated
@@ -1675,11 +1674,11 @@ export class CodeStreamApiProvider implements ApiProvider {
 		) {
 			return this.getStreams<
 				CSGetStreamsResponse<CSChannelStream | CSDirectStream | CSObjectStream>
-			>(`/streams?teamId=${this.teamId}` /*&includeFollowed`*/, this._token);
+			>(`/streams?teamId=${this.teamId}`, this._token);
 		}
 
 		return this.getStreams<CSGetStreamsResponse<CSChannelStream | CSDirectStream | CSObjectStream>>(
-			`/streams?teamId=${this.teamId}&type=${request.types[0]}` /*&includeFollowed`*/,
+			`/streams?teamId=${this.teamId}&type=${request.types[0]}`,
 			this._token
 		);
 	}
@@ -1687,7 +1686,7 @@ export class CodeStreamApiProvider implements ApiProvider {
 	@log()
 	fetchUnreadStreams(request: FetchUnreadStreamsRequest) {
 		return this.getStreams<CSGetStreamsResponse<CSChannelStream | CSDirectStream | CSObjectStream>>(
-			`/streams?teamId=${this.teamId}&unread` /*&includeFollowed`*/,
+			`/streams?teamId=${this.teamId}&unread`,
 			this._token
 		);
 	}

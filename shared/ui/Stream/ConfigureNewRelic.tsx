@@ -250,7 +250,7 @@ class ConfigureNewRelic extends Component<Props> {
 									className="row-button"
 									onClick={e => {
 										e.preventDefault();
-										HostApi.instance.track("Sign Up for NR Clicked");
+										HostApi.instance.track("NR Signup Initiated");
 										this.onClickSignup("nr_signup");
 									}}
 								>

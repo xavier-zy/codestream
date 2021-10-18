@@ -1401,6 +1401,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		return undefined;
 	}
 
+	@log()
 	private async fetchStackTrace(
 		entityGuid: string,
 		occurrenceId: string
@@ -1481,11 +1482,26 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		);
 	}
 
+	@log()
 	private async fetchErrorGroup(
 		errorGroupGuid: string,
 		entityGuid: string,
 		occurrenceId?: string
 	): Promise<ErrorGroupResponse> {
+		let stackTracePromise;
+		if (entityGuid && occurrenceId) {
+			try {
+				// kick this off
+				stackTracePromise = this.fetchStackTrace(entityGuid, occurrenceId);
+			} catch (ex) {
+				Logger.warn("NR: fetchErrorGroup (stack trace missing)", {
+					entityGuid: entityGuid,
+					occurrenceId: occurrenceId
+				});
+				stackTracePromise = undefined;
+			}
+		}
+
 		const response: ErrorGroupResponse = await this.query(
 			`query getErrorGroup($errorGroupGuid:ID!, $entityGuid:EntityGuid!) {
 			actor {
@@ -1543,8 +1559,9 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			}
 		);
 		if (occurrenceId && response?.actor?.entity) {
+			let stackTrace;
 			try {
-				const stackTrace = await this.fetchStackTrace(entityGuid, occurrenceId);
+				stackTrace = await stackTracePromise;
 				if (stackTrace) {
 					if (response.actor.entity) {
 						response.actor.entity.crash = stackTrace.actor.entity.crash;
@@ -1552,7 +1569,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					}
 				}
 			} catch (ex) {
-				Logger.warn("NR: fetchErrorGroup (stack trace missing)", {
+				Logger.warn("NR: fetchErrorGroup (stack trace missing upon waiting)", {
 					entityGuid: entityGuid,
 					occurrenceId: occurrenceId
 				});

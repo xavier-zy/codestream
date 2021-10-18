@@ -265,7 +265,10 @@ export const claimCodeError = async request => {
 };
 
 export const updateCodeError = request => async dispatch => {
-	return HostApi.instance.send(UpdateCodeErrorRequestType, request);
+	const response = await HostApi.instance.send(UpdateCodeErrorRequestType, request);
+	if (response?.codeError) {
+		dispatch(updateCodeErrors([response.codeError]));
+	}
 };
 
 export const fetchNewRelicErrorGroup = (

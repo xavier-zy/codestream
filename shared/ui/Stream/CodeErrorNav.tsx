@@ -3,9 +3,10 @@ import { useEffect } from "react";
 import styled from "styled-components";
 import { useDispatch, useSelector } from "react-redux";
 import { closeAllPanels, setCurrentCodeError } from "@codestream/webview/store/context/actions";
-import { useDidMount } from "@codestream/webview/utilities/hooks";
+import { useDidMount, usePrevious } from "@codestream/webview/utilities/hooks";
 import {
 	addCodeErrors,
+	updateCodeError,
 	api,
 	fetchCodeError,
 	fetchErrorGroup,
@@ -188,6 +189,8 @@ export function CodeErrorNav(props: Props) {
 	const remote = derivedState.currentCodeErrorData?.remote;
 	const commit = derivedState.currentCodeErrorData?.commit;
 
+	const previousCurrentCodeErrorId = usePrevious(derivedState.currentCodeErrorId);
+
 	const pendingRequiresConnection = derivedState.currentCodeErrorData?.pendingRequiresConnection;
 
 	const exit = async () => {
@@ -275,40 +278,15 @@ export function CodeErrorNav(props: Props) {
 	}, [codeError, derivedState.isConnectedToNewRelic, errorGroup]);
 
 	useEffect(() => {
-		if (!errorGroup) return;
-
-		if (!errorGroup.hasStackTrace) {
-			setIsResolved(true);
-			return;
+		if (
+			previousCurrentCodeErrorId &&
+			derivedState.currentCodeErrorId &&
+			previousCurrentCodeErrorId !== derivedState.currentCodeErrorId
+		) {
+			// if the panel is still open... re-trigger an update
+			onConnected();
 		}
-
-		if (!isResolved) {
-			if (!codeError?.objectInfo?.repoId) {
-				setRepoAssociationError({
-					title: "Missing Repository Info",
-					description: `In order to view this stack trace, please select a repository to associate with ${
-						errorGroup ? errorGroup.entityName + " " : ""
-					}on New Relic.`
-				});
-				return;
-			}
-			resolveStackTrace(
-				codeError?.objectInfo?.repoId!,
-				codeError?.stackTraces ? codeError?.stackTraces[0].sha || "" : "",
-				occurrenceId!,
-				errorGroup?.errorTrace!?.stackTrace.map(_ => _.formatted)
-			)
-				.then((stackInfo: ResolveStackTraceResponse) => {
-					setParsedStack(stackInfo);
-					setRepoError(stackInfo?.error);
-					setRepoWarning(stackInfo?.warning);
-				})
-				.catch(ex => console.warn(ex))
-				.then(() => {
-					setIsResolved(true);
-				});
-		}
-	}, [errorGroup, isResolved]);
+	}, [derivedState.currentCodeErrorId]);
 
 	const onConnected = async (newRemote?: string) => {
 		console.warn("onConnected starting...");
@@ -336,9 +314,6 @@ export function CodeErrorNav(props: Props) {
 					details: errorGroupResult?.error?.details
 				});
 				return;
-			}
-			if (errorGroupResult?.errorGroup != null) {
-				dispatch(setErrorGroup(errorGroupGuid, errorGroupResult.errorGroup!));
 			}
 
 			let repo;
@@ -411,15 +386,21 @@ export function CodeErrorNav(props: Props) {
 					errorGroupResult.errorGroup?.errorTrace!?.stackTrace.map(_ => _.formatted)
 				)) as ResolveStackTraceResponse;
 			}
+
+			if (errorGroupResult?.errorGroup != null) {
+				dispatch(setErrorGroup(errorGroupGuid, errorGroupResult.errorGroup!));
+			}
+
+			const actualStackInfo = stackInfo
+				? stackInfo.error
+					? [{ ...stackInfo, lines: [] }]
+					: [stackInfo.parsedStackInfo!]
+				: [];
+
 			if (
 				derivedState.currentCodeErrorId &&
 				derivedState.currentCodeErrorId?.indexOf(PENDING_CODE_ERROR_ID_PREFIX) === 0
 			) {
-				const actualStackInfo = stackInfo
-					? stackInfo.error
-						? [{ ...stackInfo, lines: [] }]
-						: [stackInfo.parsedStackInfo!]
-					: [];
 				await dispatch(
 					addCodeErrors([
 						{
@@ -451,6 +432,25 @@ export function CodeErrorNav(props: Props) {
 							}
 						}
 					])
+				);
+			} else if (derivedState.codeError && !derivedState.codeError.objectInfo) {
+				// codeError has an currentCodeErrorId, but isn't pending... it also doesn't have an objectInfo,
+				// so update it with one
+				await dispatch(
+					updateCodeError({
+						...derivedState.codeError,
+						accountId: errorGroupResult.accountId,
+						title: errorGroupResult.errorGroup?.title || "",
+						text: errorGroupResult.errorGroup?.message || undefined,
+						// storing the permanently parsed stack info
+						stackTraces: actualStackInfo,
+						objectInfo: {
+							repoId: repo?.id,
+							remote: targetRemote,
+							accountId: errorGroupResult.accountId.toString(),
+							entityName: errorGroupResult?.errorGroup?.entityName || ""
+						}
+					})
 				);
 			}
 			if (stackInfo) {

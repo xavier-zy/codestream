@@ -15,6 +15,7 @@ import {
 	CSLocationArray,
 	CSMarker,
 	CSMarkerLocations,
+	CSObjectStream,
 	CSReferenceLocation,
 	CSRepository,
 	CSReview,
@@ -102,7 +103,7 @@ export interface CreateShareableCodemarkRequest {
 export interface CreateShareableCodemarkResponse {
 	codemark: CodemarkPlus;
 	post: PostPlus;
-	stream: CSDirectStream | CSChannelStream;
+	stream: CSDirectStream | CSChannelStream | CSObjectStream;
 	markerLocations?: CSMarkerLocations[];
 }
 

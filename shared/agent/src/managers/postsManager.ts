@@ -81,6 +81,7 @@ import {
 	CSCreateCodemarkResponse,
 	CSDirectStream,
 	CSMarker,
+	CSObjectStream,
 	CSPost,
 	CSRepoChange,
 	CSReview,
@@ -1193,7 +1194,7 @@ export class PostsManager extends EntityManagerBase<CSPost> {
 			}
 		}
 
-		let stream: CSDirectStream | CSChannelStream;
+		let stream: CSDirectStream | CSChannelStream | CSObjectStream | undefined;
 
 		if (request.memberIds && request.memberIds.length > 0) {
 			const response = await SessionContainer.instance().streams.get({
@@ -1209,7 +1210,15 @@ export class PostsManager extends EntityManagerBase<CSPost> {
 				});
 				stream = response.stream;
 			}
-		} else {
+		} else if (request.attributes.parentPostId) {
+			const parentPost = await SessionContainer.instance().posts.getById(
+				request.attributes.parentPostId
+			);
+			if (parentPost) {
+				stream = await SessionContainer.instance().streams.getById(parentPost.streamId);
+			}
+		}
+		if (!stream) {
 			stream = await SessionContainer.instance().streams.getTeamStream();
 		}
 
@@ -1223,7 +1232,6 @@ export class PostsManager extends EntityManagerBase<CSPost> {
 			addedUsers: request.addedUsers,
 			files: request.files
 		});
-
 		const { markers } = response!;
 		codemark = response.codemark!;
 

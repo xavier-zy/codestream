@@ -689,11 +689,18 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				const repositoryEntitiesResponse = await this.findRepositoryEntitiesByRepoRemotes(remotes);
 				if (repositoryEntitiesResponse?.entities?.length) {
 					const entityFilter = request.filters?.find(_ => _.repoId === repo.id!);
-					for (const entity of repositoryEntitiesResponse.entities.filter((_, index) =>
+					let filteredEntities = repositoryEntitiesResponse.entities.filter((_, index) =>
 						entityFilter && entityFilter.entityGuid
 							? _.guid === entityFilter.entityGuid
 							: index == 0
-					)) {
+					);
+					if (entityFilter && entityFilter.entityGuid && !filteredEntities.length) {
+						filteredEntities = repositoryEntitiesResponse.entities.filter((r, i) => i === 0);
+						Logger.warn("NR: getObservabilityErrors bad entityGuid passed", {
+							entityGuid: entityFilter.entityGuid
+						});
+					}
+					for (const entity of filteredEntities) {
 						const accountIdTag = entity.tags?.find(_ => _.key === "accountId");
 						if (!accountIdTag) {
 							Logger.warn("NR: count not find accountId for entity", {

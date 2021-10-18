@@ -209,7 +209,15 @@ export class NRManager {
 		parsedStackInfo.sha = sha;
 		parsedStackInfo.occurrenceId = occurrenceId;
 
-		const resolvedStackInfo: CSStackTraceInfo = { ...parsedStackInfo, lines: [] };
+		const stackTraceText = stackTrace ? stackTrace.join("\n") : "";
+		parsedStackInfo.text = stackTraceText;
+
+		const resolvedStackInfo: CSStackTraceInfo = {
+			...parsedStackInfo,
+			text: stackTraceText,
+			lines: []
+		};
+
 		for (const line of parsedStackInfo.lines) {
 			const resolvedLine =
 				line.error || !matchingRepoPath

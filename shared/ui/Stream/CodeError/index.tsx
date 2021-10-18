@@ -667,15 +667,18 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 													) : (
 														<>
 															{/* no assignee */}
-															{(!props.errorGroup.assignee || !props.errorGroup.assignee.email) && (
+															{!props.errorGroup.assignee ||
+															(!props.errorGroup.assignee.email &&
+																!props.errorGroup.assignee.id) ? (
 																<Icon name="person" />
-															)}
-															{/* has assignee */}
-															{props.errorGroup.assignee && props.errorGroup.assignee.email && (
+															) : (
 																<Headshot
 																	size={20}
 																	display="inline-block"
-																	person={{ email: props.errorGroup.assignee.email! }}
+																	person={{
+																		fullName: props.errorGroup.assignee.name,
+																		email: props.errorGroup.assignee.email
+																	}}
 																/>
 															)}
 														</>

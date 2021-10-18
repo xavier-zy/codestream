@@ -52,7 +52,8 @@ import {
 	ReposScm,
 	ThirdPartyDisconnect,
 	ThirdPartyProviderConfig,
-	Entity
+	Entity,
+	StackTraceResponse
 } from "../protocol/agent.protocol";
 import { CSNewRelicProviderInfo } from "../protocol/api.protocol";
 import { CodeStreamSession } from "../session";
@@ -1379,11 +1380,10 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		return undefined;
 	}
 
-	private async fetchErrorGroup(
-		errorGroupGuid: string,
+	private async fetchStackTrace(
 		entityGuid: string,
-		occurrenceId?: string
-	): Promise<ErrorGroupResponse> {
+		occurrenceId: string
+	): Promise<StackTraceResponse> {
 		let fingerprintId = 0;
 		try {
 			// BrowserApplicationEntity uses a fingerprint instead of an occurrence and it's a number
@@ -1392,173 +1392,149 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				occurrenceId = "";
 			}
 		} catch {}
+		return this.query(
+			`query getStackTrace($entityGuid: EntityGuid!, $occurrenceId: String!, $fingerprintId: Int!) {
+			actor {
+			  entity(guid: $entityGuid) {
+				... on ApmApplicationEntity {
+				  guid
+				  name
+				  exception(occurrenceId: $occurrenceId) {
+					message
+					stackTrace {
+					  frames {
+						filepath
+						formatted
+						line
+						name
+					  }
+					}
+				  }
+				}
+				... on BrowserApplicationEntity {
+				  guid
+				  name
+				  exception(fingerprint: $fingerprintId) {
+					message
+					stackTrace {
+					  frames {
+						column
+						line
+						formatted
+						name
+					  }
+					}
+				  }
+				}
+				... on MobileApplicationEntity {
+				  guid
+				  name
+				  exception(occurrenceId: $occurrenceId) {
+					stackTrace {
+					  frames {
+						line
+						formatted
+						name
+					  }
+					}
+				  }
+				  crash(occurrenceId: $occurrenceId) {
+					stackTrace {
+					  frames {
+						line
+						formatted
+						name
+					  }
+					}
+				  }
+				}
+			  }
+			}
+		  }
+		  `,
+			{
+				entityGuid: entityGuid,
+				occurrenceId: occurrenceId,
+				fingerprintId: fingerprintId
+			}
+		);
+	}
 
-		if (occurrenceId) {
-			return this.query(
-				`query getErrorGroup($errorGroupGuid:ID!, $entityGuid:EntityGuid!, $occurrenceId:String!, $fingerprintId:Int!) {
-				actor {
-				  entity(guid: $entityGuid) {
-					... on ApmApplicationEntity {
-					  name
-					  exception(occurrenceId: $occurrenceId) {
-						message
-						stackTrace {
-						  frames {
-							filepath
-							formatted
-							line
-							name
-						  }
-						}
-					  }
-					}
-					... on BrowserApplicationEntity {
-					  guid
-					  name
-					  exception(fingerprint: $fingerprintId) {
-						message
-						stackTrace {
-						  frames {
-							column
-							line
-							formatted
-							name
-						  }
-						}
-					  }
-					}
-					... on MobileApplicationEntity {
-					  guid
-					  name
-					  exception(occurrenceId: $occurrenceId) {
-						stackTrace {
-						  frames {
-							line
-							formatted
-							name
-						  }
-						}
-					  }
-					  crash(occurrenceId: $occurrenceId) {
-						stackTrace {
-						  frames {
-							line
-							formatted
-							name
-						  }
-						}
-					  }
-					}
-					alertSeverity
-					name
-					relatedEntities(filter: {direction: BOTH, relationshipTypes: {include: BUILT_FROM}}) {
-					  results {
-						source {
-						  entity {
-							name
-							guid
-							type
-						  }
-						}
-						target {
-						  entity {
-							name
-							guid
-							type
-							tags {
-							  key
-							  values
-							}
-						  }
-						}
+	private async fetchErrorGroup(
+		errorGroupGuid: string,
+		entityGuid: string,
+		occurrenceId?: string
+	): Promise<ErrorGroupResponse> {
+		const response: ErrorGroupResponse = await this.query(
+			`query getErrorGroup($errorGroupGuid:ID!, $entityGuid:EntityGuid!) {
+			actor {
+			  entity(guid: $entityGuid) {					 
+				alertSeverity
+				name
+				relatedEntities(filter: {direction: BOTH, relationshipTypes: {include: BUILT_FROM}}) {
+				  results {
+					source {
+					  entity {
+						name
+						guid
 						type
 					  }
 					}
-				  }
-				  errorsInbox {
-					errorGroup(id: $errorGroupGuid) {
-					  url
-					  assignment {
-						email
-						userInfo {
-						  gravatar
-						  id
-						  name
-						}
-					  }
-					  id
-					  state
-					}
-				  }
-				}
-			  }
-			  
-		  `,
-				{
-					errorGroupGuid: errorGroupGuid,
-					entityGuid: entityGuid,
-					occurrenceId: occurrenceId,
-					fingerprintId: fingerprintId
-				}
-			);
-		} else {
-			return this.query(
-				`query getErrorGroup($errorGroupGuid:ID!, $entityGuid:EntityGuid!) {
-				actor {
-				  entity(guid: $entityGuid) {					 
-					alertSeverity
-					name
-					relatedEntities(filter: {direction: BOTH, relationshipTypes: {include: BUILT_FROM}}) {
-					  results {
-						source {
-						  entity {
-							name
-							guid
-							type
-						  }
-						}
-						target {
-						  entity {
-							name
-							guid
-							type
-							tags {
-							  key
-							  values
-							}
-						  }
-						}
+					target {
+					  entity {
+						name
+						guid
 						type
-					  }
-					}
-				  }
-				  errorsInbox {
-					errorGroup(id: $errorGroupGuid) {
-					  url
-					  assignment {
-						email
-						userInfo {
-						  gravatar
-						  id
-						  name
+						tags {
+						  key
+						  values
 						}
 					  }
-					  id
-					  state
 					}
+					type
 				  }
 				}
 			  }
-			  
-		  `,
-				{
-					errorGroupGuid: errorGroupGuid,
-					entityGuid: entityGuid,
-					occurrenceId: occurrenceId,
-					fingerprintId: fingerprintId
+			  errorsInbox {
+				errorGroup(id: $errorGroupGuid) {
+				  url
+				  assignment {
+					email
+					userInfo {
+					  gravatar
+					  id
+					  name
+					}
+				  }
+				  id
+				  state
 				}
-			);
+			  }
+			}
+		  }			  
+	  `,
+			{
+				errorGroupGuid: errorGroupGuid,
+				entityGuid: entityGuid
+			}
+		);
+		if (occurrenceId && response?.actor?.entity) {
+			try {
+				const stackTrace = await this.fetchStackTrace(entityGuid, occurrenceId);
+				if (stackTrace) {
+					if (response.actor.entity) {
+						response.actor.entity.crash = stackTrace.actor.entity.crash;
+						response.actor.entity.exception = stackTrace.actor.entity.exception;
+					}
+				}
+			} catch (ex) {
+				Logger.warn("NR: fetchErrorGroup (stack trace missing)", {
+					entityGuid: entityGuid,
+					occurrenceId: occurrenceId
+				});
+			}
 		}
+		return response;
 	}
 
 	private async buildErrorDetailSettings(

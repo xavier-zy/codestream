@@ -1114,6 +1114,16 @@ export interface ErrorGroupResponse {
 	};
 }
 
+export interface StackTraceResponse {
+	actor: {
+		entity: {
+			// we will have an exception or a crash
+			exception?: EntityException;
+			crash?: EntityCrash;
+		};
+	};
+}
+
 export interface Entity {
 	account?: {
 		name: string;

@@ -53,7 +53,8 @@ import {
 	ThirdPartyDisconnect,
 	ThirdPartyProviderConfig,
 	Entity,
-	StackTraceResponse
+	StackTraceResponse,
+	ErrorGroupStateType
 } from "../protocol/agent.protocol";
 import { CSNewRelicProviderInfo } from "../protocol/api.protocol";
 import { CodeStreamSession } from "../session";
@@ -881,9 +882,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					source: metricsResponse["error.group.source"],
 					timestamp: metricsResponse["timestamp"],
 					errorGroupUrl: `${this.productUrl}/redirect/errors-inbox/${errorGroupGuid}`,
-					entityUrl: `${this.productUrl}/redirect/entity/${metricsResponse["entity.guid"]}`,
-					state: "UNRESOLVED",
-					states: ["RESOLVED", "IGNORED", "UNRESOLVED"]
+					entityUrl: `${this.productUrl}/redirect/entity/${metricsResponse["entity.guid"]}`
 				};
 
 				errorGroup.attributes = {
@@ -903,6 +902,14 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				}
 
 				if (errorGroupResponse) {
+					let states;
+					if (errorGroupResponse.actor.errorsInbox.errorGroupStateTypes) {
+						states = errorGroupResponse.actor.errorsInbox.errorGroupStateTypes.map(
+							(_: ErrorGroupStateType) => _.type
+						);
+					}
+					errorGroup.states =
+						states && states.length ? states : ["UNRESOLVED", "RESOLVED", "IGNORED"];
 					errorGroup.errorGroupUrl = errorGroupResponse.actor.errorsInbox.errorGroup.url;
 					errorGroup.entityName = errorGroupResponse.actor.entity.name;
 					errorGroup.entityAlertingSeverity = errorGroupResponse.actor.entity.alertSeverity;
@@ -1496,6 +1503,9 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				}
 			  }
 			  errorsInbox {
+				errorGroupStateTypes {
+					type
+				}
 				errorGroup(id: $errorGroupGuid) {
 				  url
 				  assignment {

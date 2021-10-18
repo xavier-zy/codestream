@@ -1085,6 +1085,11 @@ interface EntityException extends CrashOrException {}
 interface StackTrace {
 	frames: { filepath?: string; line?: number; name?: string; formatted: string }[];
 }
+
+export interface ErrorGroupStateType {
+	type: string;
+}
+
 export interface ErrorGroupResponse {
 	actor: {
 		entity: {
@@ -1097,6 +1102,7 @@ export interface ErrorGroupResponse {
 			};
 		};
 		errorsInbox: {
+			errorGroupStateTypes?: ErrorGroupStateType[];
 			errorGroup: {
 				id: string;
 				state: string;

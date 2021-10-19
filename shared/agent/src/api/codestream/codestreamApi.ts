@@ -1557,7 +1557,7 @@ export class CodeStreamApiProvider implements ApiProvider {
 
 	@log()
 	async claimCodeError(request: ClaimCodeErrorRequest): Promise<ClaimCodeErrorResponse> {
-		return this.post<ClaimCodeErrorRequest, ClaimCodeErrorResponse>(
+		const response = await this.post<ClaimCodeErrorRequest, ClaimCodeErrorResponse>(
 			`/code-errors/claim/${this.teamId}`,
 			{
 				objectId: request.objectId,
@@ -1565,6 +1565,8 @@ export class CodeStreamApiProvider implements ApiProvider {
 			},
 			this._token
 		);
+		Logger.log(`Response to claim code error, objectId=${request.objectId}:`, response);
+		return response;
 	}
 
 	@log()

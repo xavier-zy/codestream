@@ -622,32 +622,7 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 					</div>
 
 					<div style={{ marginLeft: "auto", alignItems: "center", whiteSpace: "nowrap" }}>
-						{states && (
-							<DropdownButton
-								items={states}
-								selectedKey={props.errorGroup?.state || "UNKNOWN"}
-								isLoading={isStateChanging}
-								variant="secondary"
-								size="compact"
-								preventStopPropagation={!derivedState.isConnectedToNewRelic}
-								onButtonClicked={
-									derivedState.isConnectedToNewRelic
-										? undefined
-										: e => {
-												e.preventDefault();
-												e.stopPropagation();
-
-												setOpenConnectionModal(true);
-										  }
-								}
-								wrap
-							>
-								{STATES_TO_DISPLAY_STRINGS[props.errorGroup?.state || "UNKNOWN"]}
-							</DropdownButton>
-						)}
-
 						<>
-							<div style={{ display: "inline-block", width: "5px" }} />
 							<DropdownButton
 								items={items}
 								preventStopPropagation={!derivedState.isConnectedToNewRelic}
@@ -674,8 +649,9 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 																<Icon name="person" />
 															) : (
 																<Headshot
-																	size={20}
+																	size={16}
 																	display="inline-block"
+																	className="no-right-margin"
 																	person={{
 																		fullName: props.errorGroup.assignee.name,
 																		email: props.errorGroup.assignee.email
@@ -700,6 +676,34 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 								/>
 							</DropdownButton>
 						</>
+
+						{states && (
+							<>
+								<div style={{ display: "inline-block", width: "5px" }} />
+
+								<DropdownButton
+									items={states}
+									selectedKey={props.errorGroup?.state || "UNKNOWN"}
+									isLoading={isStateChanging}
+									variant="secondary"
+									size="compact"
+									preventStopPropagation={!derivedState.isConnectedToNewRelic}
+									onButtonClicked={
+										derivedState.isConnectedToNewRelic
+											? undefined
+											: e => {
+													e.preventDefault();
+													e.stopPropagation();
+
+													setOpenConnectionModal(true);
+											  }
+									}
+									wrap
+								>
+									{STATES_TO_DISPLAY_STRINGS[props.errorGroup?.state || "UNKNOWN"]}
+								</DropdownButton>
+							</>
+						)}
 
 						<>
 							{props.post && <AddReactionIcon post={props.post} className="in-review" />}

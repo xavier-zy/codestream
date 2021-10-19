@@ -16,7 +16,7 @@ val Project.workspaceFolders: Set<WorkspaceFolder>
         val moduleManager = getComponent(ModuleManager::class.java)
         for (module in moduleManager.modules) {
             val roots = (module.moduleContentScope as? ModuleWithDependenciesScope)?.roots ?: continue
-            val moduleFolders = roots.map {
+            val moduleFolders = roots.filter { it.uri != null }.map {
                 WorkspaceFolder(it.uri)
             }
             folders.addAll(moduleFolders)

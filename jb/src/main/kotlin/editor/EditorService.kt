@@ -507,7 +507,7 @@ class EditorService(val project: Project) {
         val future = CompletableDeferred<Boolean>()
 
         ApplicationManager.getApplication().invokeLater {
-            if (sha != null) {
+            if (sha != null && sha.length == 40) {
                 val vFile = getCSGitFile(uri, sha, project)
                 val editorManager = FileEditorManager.getInstance(project)
                 editorManager.openTextEditor(OpenFileDescriptor(project, vFile, range?.start?.line ?: 0, 0), false)

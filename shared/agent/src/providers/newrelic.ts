@@ -219,8 +219,9 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		);
 		const { userId, accounts } = await this.validateApiKey(client);
 		Logger.log(`Found ${accounts.length} New Relic accounts`);
+		const accountIds = accounts.map(_ => _.id);
 		const accountsToOrgs = await this.session.api.lookupNewRelicOrganizations({
-			accountIds: accounts.map(_ => _.id)
+			accountIds
 		});
 		Logger.log(`Found ${accountsToOrgs.length} associated New Relic organizations`);
 
@@ -243,7 +244,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				}
 			} else if (accounts.length) {
 				const existingAccountIds = company.nrAccountIds || [];
-				const newAccountIds = accountsToOrgs
+				const newAccountIds = accountIds
 					.filter(_ => existingAccountIds.indexOf(_.orgId) < 0)
 					.map(_ => _.orgId);
 				if (newAccountIds.length) {

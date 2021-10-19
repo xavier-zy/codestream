@@ -852,6 +852,7 @@ export interface GetNewRelicErrorGroupRequest {
 	errorGroupGuid: string;
 	/** allow the lookup of errors without stack traces */
 	occurrenceId?: string;
+	/** optional, though passing it allows for parallelization */
 	entityGuid?: string;
 	src?: string;
 }

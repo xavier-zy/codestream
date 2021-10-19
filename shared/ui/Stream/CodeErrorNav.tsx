@@ -183,6 +183,7 @@ export function CodeErrorNav(props: Props) {
 		undefined
 	);
 
+	// TODO rename these "pending" properties -- they might _always_ be pending creation
 	const pendingErrorGroupGuid = derivedState.currentCodeErrorData?.pendingErrorGroupGuid;
 	const pendingEntityId = derivedState.currentCodeErrorData?.pendingEntityId;
 	const occurrenceId = derivedState.currentCodeErrorData?.occurrenceId;
@@ -230,7 +231,8 @@ export function CodeErrorNav(props: Props) {
 		} else {
 			const onDidMount = () => {
 				if (codeError) {
-					setIsLoading(false);
+					onConnected();
+					markRead();
 				} else {
 					dispatch(fetchCodeError(derivedState.currentCodeErrorId!))
 						.then((_: any) => {
@@ -289,22 +291,49 @@ export function CodeErrorNav(props: Props) {
 	}, [derivedState.currentCodeErrorId]);
 
 	const onConnected = async (newRemote?: string) => {
-		console.warn("onConnected starting...");
-		if (!pendingErrorGroupGuid) {
+		console.log("onConnected starting...");
+
+		let isExistingCodeError;
+
+		let errorGroupGuidToUse;
+		let occurrenceIdToUse;
+		let commitToUse;
+		let entityIdToUse;
+
+		if (pendingErrorGroupGuid) {
+			errorGroupGuidToUse = pendingErrorGroupGuid;
+			occurrenceIdToUse = occurrenceId;
+			commitToUse = commit;
+			entityIdToUse = pendingEntityId;
+		} else if (codeError) {
+			isExistingCodeError = true;
+			errorGroupGuidToUse = codeError?.objectId;
+
+			const existingStackTrace =
+				codeError.stackTraces && codeError.stackTraces[0] ? codeError.stackTraces[0] : undefined;
+			if (existingStackTrace) {
+				occurrenceIdToUse = existingStackTrace.occurrenceId;
+				commitToUse = existingStackTrace.sha;
+			}
+			entityIdToUse = codeError?.objectInfo?.entityId;
+		}
+		if (!errorGroupGuidToUse) {
+			console.error("missing error group guid");
 			return;
 		}
 
-		console.warn("onConnected started");
+		console.log(`onConnected started isExistingCodeError=${isExistingCodeError}`);
+
 		setIsLoading(true);
 		setRepoAssociationError(undefined);
 		setError(undefined);
 
 		try {
-			const errorGroupGuid = pendingErrorGroupGuid;
 			const errorGroupResult = await HostApi.instance.send(GetNewRelicErrorGroupRequestType, {
-				errorGroupGuid: errorGroupGuid!,
-				occurrenceId: occurrenceId!,
-				entityGuid: pendingEntityId
+				errorGroupGuid: errorGroupGuidToUse,
+				occurrenceId: occurrenceIdToUse,
+				// optional, though passing it allows for parallelization
+				entityGuid: entityIdToUse
 			});
 
 			if (!errorGroupResult || errorGroupResult?.error?.message) {
@@ -365,7 +394,7 @@ export function CodeErrorNav(props: Props) {
 					repos: [
 						{
 							remotes: [normalizationResponse.normalizedUrl],
-							knownCommitHashes: commit ? [commit] : []
+							knownCommitHashes: commitToUse ? [commitToUse] : []
 						}
 					]
 				})) as MatchReposResponse;
@@ -381,14 +410,14 @@ export function CodeErrorNav(props: Props) {
 				repo = reposResponse.repos[0];
 				stackInfo = (await resolveStackTrace(
 					repo.id!,
-					commit!,
-					occurrenceId!,
+					commitToUse!,
+					occurrenceIdToUse,
 					errorGroupResult.errorGroup?.errorTrace!?.stackTrace.map(_ => _.formatted)
 				)) as ResolveStackTraceResponse;
 			}
 
 			if (errorGroupResult?.errorGroup != null) {
-				dispatch(setErrorGroup(errorGroupGuid, errorGroupResult.errorGroup!));
+				dispatch(setErrorGroup(errorGroupGuidToUse, errorGroupResult.errorGroup!));
 			}
 
 			const actualStackInfo = stackInfo
@@ -418,7 +447,7 @@ export function CodeErrorNav(props: Props) {
 							numReplies: 0,
 							lastActivityAt: 0,
 							creatorId: "",
-							objectId: errorGroupGuid,
+							objectId: errorGroupGuidToUse,
 							objectType: "errorGroup",
 							title: errorGroupResult.errorGroup?.title || "",
 							text: errorGroupResult.errorGroup?.message || undefined,
@@ -428,6 +457,7 @@ export function CodeErrorNav(props: Props) {
 								repoId: repo?.id,
 								remote: targetRemote,
 								accountId: errorGroupResult.accountId.toString(),
+								entityId: errorGroupResult?.errorGroup?.entityGuid || "",
 								entityName: errorGroupResult?.errorGroup?.entityName || ""
 							}
 						}
@@ -448,6 +478,7 @@ export function CodeErrorNav(props: Props) {
 							repoId: repo?.id,
 							remote: targetRemote,
 							accountId: errorGroupResult.accountId.toString(),
+							entityId: errorGroupResult?.errorGroup?.entityGuid || "",
 							entityName: errorGroupResult?.errorGroup?.entityName || ""
 						}
 					})

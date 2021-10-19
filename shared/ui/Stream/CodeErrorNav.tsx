@@ -385,7 +385,7 @@ export function CodeErrorNav(props: Props) {
 						title: "Missing Repository Info",
 						description: `In order to view this stack trace, please select a repository to associate with ${
 							errorGroup ? errorGroup.entityName + " " : ""
-						}on New Relic.`
+						}on New Relic. If the repo that was used to build this service doesn't appear in the dropdown, open it in your IDE.`
 					});
 					return;
 				}

@@ -161,7 +161,6 @@ export function CodeErrorNav(props: Props) {
 			errorGroup: errorGroup,
 			repos: state.repos
 		};
-		// console.warn(JSON.stringify(result, null, 4));
 		return result;
 	});
 
@@ -179,7 +178,7 @@ export function CodeErrorNav(props: Props) {
 	>(undefined);
 	const [repoWarning, setRepoWarning] = React.useState<WarningOrError | undefined>(undefined);
 	const [repoError, setRepoError] = React.useState<string | undefined>(undefined);
-	const { codeError, errorGroup } = derivedState;
+	const { errorGroup } = derivedState;
 	const [isResolved, setIsResolved] = React.useState(false);
 	const [parsedStack, setParsedStack] = React.useState<ResolveStackTraceResponse | undefined>(
 		undefined
@@ -208,7 +207,8 @@ export function CodeErrorNav(props: Props) {
 
 	const markRead = () => {
 		// @ts-ignore
-		if (codeError && unreadEnabled) dispatch(markItemRead(codeError.id, codeError.numReplies || 0));
+		if (derivedState.codeError && unreadEnabled)
+			dispatch(markItemRead(derivedState.codeError.id, derivedState.codeError.numReplies || 0));
 	};
 
 	useEffect(() => {
@@ -229,15 +229,15 @@ export function CodeErrorNav(props: Props) {
 		if (pendingRequiresConnection) {
 			setRequiresConnection(pendingRequiresConnection);
 		} else if (pendingErrorGroupGuid) {
-			onConnected();
+			onConnected(undefined);
 		} else {
 			const onDidMount = () => {
-				if (codeError) {
-					onConnected();
+				if (derivedState.codeError) {
+					onConnected(derivedState.codeError);
 					markRead();
 				} else {
 					dispatch(fetchCodeError(derivedState.currentCodeErrorId!))
-						.then((_: any) => {
+						.then(_ => {
 							if (!_ || !_.payload.length) {
 								setError({
 									title: "Cannot open Code Error",
@@ -245,6 +245,7 @@ export function CodeErrorNav(props: Props) {
 										"This code error was not found. Perhaps it was deleted by the author, or you don't have permission to view it."
 								});
 							} else {
+								onConnected(_.payload[0]);
 								markRead();
 							}
 						})
@@ -270,16 +271,21 @@ export function CodeErrorNav(props: Props) {
 	}, [derivedState.currentCodeErrorId]);
 
 	useEffect(() => {
-		if (!codeError || !codeError.objectId || !derivedState.isConnectedToNewRelic || errorGroup) {
+		if (
+			!derivedState.codeError ||
+			!derivedState.codeError.objectId ||
+			!derivedState.isConnectedToNewRelic ||
+			errorGroup
+		) {
 			return;
 		}
 
 		setIsLoading(true);
-		dispatch(fetchErrorGroup(codeError));
+		dispatch(fetchErrorGroup(derivedState.codeError));
 		setTimeout(() => {
 			setIsLoading(false);
 		}, 1);
-	}, [codeError, derivedState.isConnectedToNewRelic, errorGroup]);
+	}, [derivedState.codeError, derivedState.isConnectedToNewRelic, errorGroup]);
 
 	useEffect(() => {
 		if (
@@ -288,13 +294,16 @@ export function CodeErrorNav(props: Props) {
 			previousCurrentCodeErrorId !== derivedState.currentCodeErrorId
 		) {
 			// if the panel is still open... re-trigger an update
-			onConnected();
+			onConnected(undefined);
 		}
 	}, [derivedState.currentCodeErrorId]);
 
-	const onConnected = async (newRemote?: string) => {
+	const onConnected = async (codeErrorArg: CSCodeError | undefined, newRemote?: string) => {
 		console.log("onConnected starting...");
 
+		// don't always have the codeError from the state
+		// sometimes we have to load it here (happens when you load the IDE with an existing codeError open)
+		const codeError = codeErrorArg || derivedState.codeError;
 		let isExistingCodeError;
 
 		let errorGroupGuidToUse;
@@ -620,8 +629,8 @@ export function CodeErrorNav(props: Props) {
 							url: r.remote,
 							name: r.name,
 							entityId: pendingEntityId,
-							errorGroupGuid: codeError?.objectId || pendingErrorGroupGuid!,
-							parseableAccountId: codeError?.objectId || pendingErrorGroupGuid!
+							errorGroupGuid: derivedState.codeError?.objectId || pendingErrorGroupGuid!,
+							parseableAccountId: derivedState.codeError?.objectId || pendingErrorGroupGuid!
 						};
 						dispatch(api("assignRepository", payload)).then(_ => {
 							setIsLoading(true);
@@ -637,6 +646,7 @@ export function CodeErrorNav(props: Props) {
 								});
 
 								onConnected(
+									undefined,
 									_.directives.find(_ => _.type === "assignRepository").data.repo.urls[0]
 								);
 							} else {
@@ -700,7 +710,7 @@ export function CodeErrorNav(props: Props) {
 							dispatch(closeAllPanels());
 						}}
 						onSubmited={async e => {
-							onConnected();
+							onConnected(undefined);
 						}}
 						originLocation={"Open in IDE Flow"}
 					/>
@@ -717,7 +727,7 @@ export function CodeErrorNav(props: Props) {
 			</DelayedRender>
 		);
 	}
-	if (codeError == null) return null;
+	if (derivedState.codeError == null) return null;
 
 	return (
 		<Root>
@@ -753,7 +763,7 @@ export function CodeErrorNav(props: Props) {
 			<>
 				<NavHeader id="nav-header">
 					<BaseCodeErrorHeader
-						codeError={codeError!}
+						codeError={derivedState.codeError!}
 						errorGroup={errorGroup}
 						collapsed={false}
 						setIsEditing={setIsEditing}
@@ -776,7 +786,7 @@ export function CodeErrorNav(props: Props) {
 								<StyledCodeError className="pulse">
 									<CodeError
 										parsedStack={parsedStack}
-										codeError={codeError!}
+										codeError={derivedState.codeError!}
 										errorGroup={errorGroup}
 										stackFrameClickDisabled={!!repoError}
 									/>

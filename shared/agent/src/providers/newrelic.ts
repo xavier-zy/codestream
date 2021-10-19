@@ -244,9 +244,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				}
 			} else if (accounts.length) {
 				const existingAccountIds = company.nrAccountIds || [];
-				const newAccountIds = accountIds
-					.filter(_ => existingAccountIds.indexOf(_.orgId) < 0)
-					.map(_ => _.orgId);
+				const newAccountIds = accountIds.filter(_ => existingAccountIds.indexOf(_) < 0);
 				if (newAccountIds.length) {
 					Logger.log(
 						`Associating company ${company.id} with NR accounts ${newAccountIds.join(", ")}`

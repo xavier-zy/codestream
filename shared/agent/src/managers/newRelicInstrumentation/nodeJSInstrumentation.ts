@@ -9,6 +9,7 @@ import {
 import { CodeStreamSession } from "../../session";
 import { promises as fsPromises } from "fs";
 import { execAsync, existsAsync } from "./util";
+import { uniq as _uniq } from "lodash-es";
 
 interface CandidateFiles {
 	mainFile: string | null;
@@ -27,6 +28,7 @@ export class NodeJSInstrumentation {
 		};
 
 		const packageJson = path.join(dirPath, "package.json");
+		let relativeMainFile;
 		if (await existsAsync(packageJson)) {
 			const json = await fsPromises.readFile(packageJson, { encoding: "utf8" });
 			let data;
@@ -36,6 +38,7 @@ export class NodeJSInstrumentation {
 			if (data && data.main) {
 				const mainFile = path.join(dirPath, data.main);
 				if (await existsAsync(mainFile)) {
+					relativeMainFile = data.main;
 					files.mainFile = mainFile;
 				}
 			}
@@ -44,11 +47,11 @@ export class NodeJSInstrumentation {
 		await this._findNodeJSCandidateMainFiles(dirPath, dirPath, files, 0, 2);
 
 		const arrayOfFiles: string[] = [];
-		if (files.mainFile) {
-			arrayOfFiles.push(files.mainFile);
+		if (relativeMainFile) {
+			arrayOfFiles.push(relativeMainFile);
 		}
 
-		return { files: [...arrayOfFiles, ...files.indexFiles, ...files.jsFiles] };
+		return { files: _uniq([...arrayOfFiles, ...files.indexFiles, ...files.jsFiles]) };
 	}
 
 	private async _findNodeJSCandidateMainFiles(

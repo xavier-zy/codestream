@@ -84,7 +84,7 @@ export const PixieDynamicLoggingPanel = () => {
 
 	return (
 		<Dialog wide noPadding onClose={() => dispatch(closePanel())}>
-			<PanelHeader title="Dynamic Logging using Pixie"></PanelHeader>
+			<PanelHeader title="Dynamic Logging Using Pixie"></PanelHeader>
 			<ConditionalNewRelic
 				connected={
 					<>

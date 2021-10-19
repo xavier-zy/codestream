@@ -95,7 +95,7 @@ export const WebviewPanelNames = {
 	"blame-map": "Blame Map",
 	newrelic: "Observability",
 	observability: "Observability",
-	"pixie-dynamic-logging": "Dynamic Logging using Pixie"
+	"pixie-dynamic-logging": "Dynamic Logging Using Pixie"
 };
 
 export enum WebviewModals {

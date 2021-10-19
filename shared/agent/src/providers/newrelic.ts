@@ -99,6 +99,14 @@ const MetricsLookupBackoffs = [
 	{
 		table: "Metric",
 		since: "7 day"
+	},
+	{
+		table: "Metric",
+		since: "180 day"
+	},
+	{
+		table: "Metric",
+		since: "365 day"
 	}
 ];
 

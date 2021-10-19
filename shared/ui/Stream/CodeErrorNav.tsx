@@ -19,7 +19,7 @@ import { getCodeError, getErrorGroup } from "../store/codeErrors/reducer";
 import { Meta, BigTitle, Header } from "./Codemark/BaseCodemark";
 import { closePanel, markItemRead } from "./actions";
 import { Dispatch } from "../store/common";
-import { CodeError, BaseCodeErrorHeader, ExpandedAuthor, Description } from "./CodeError";
+import { CodeError, BaseCodeErrorHeader, ExpandedAuthor, Description, Message } from "./CodeError";
 import ScrollBox from "./ScrollBox";
 import KeystrokeDispatcher from "../utilities/keystroke-dispatcher";
 import { isFeatureEnabled } from "../store/apiVersioning/reducer";
@@ -37,13 +37,15 @@ import {
 	MatchReposResponse,
 	NewRelicErrorGroup,
 	NormalizeUrlRequestType,
-	NormalizeUrlResponse
+	NormalizeUrlResponse,
+	WarningOrError
 } from "@codestream/protocols/agent";
 import { HostApi } from "..";
 import { CSCodeError } from "@codestream/protocols/api";
 
 import { RepositoryAssociator } from "./CodeError/RepositoryAssociator";
 import { logWarning } from "../logger";
+import { Link } from "./Link";
 
 const NavHeader = styled.div`
 	// flex-grow: 0;
@@ -175,7 +177,7 @@ export function CodeErrorNav(props: Props) {
 	const [repoAssociationError, setRepoAssociationError] = React.useState<
 		{ title: string; description: string } | undefined
 	>(undefined);
-	const [repoWarning, setRepoWarning] = React.useState<string | undefined>(undefined);
+	const [repoWarning, setRepoWarning] = React.useState<WarningOrError | undefined>(undefined);
 	const [repoError, setRepoError] = React.useState<string | undefined>(undefined);
 	const { codeError, errorGroup } = derivedState;
 	const [isResolved, setIsResolved] = React.useState(false);
@@ -346,7 +348,7 @@ export function CodeErrorNav(props: Props) {
 			}
 
 			let repo;
-			let stackInfo;
+			let stackInfo: ResolveStackTraceResponse | undefined = undefined;
 			let targetRemote;
 			if (
 				errorGroupResult &&
@@ -354,7 +356,7 @@ export function CodeErrorNav(props: Props) {
 				!errorGroupResult.errorGroup.hasStackTrace
 			) {
 				setIsResolved(true);
-				setRepoWarning("There is no stack trace associated with this error.");
+				setRepoWarning({ message: "There is no stack trace associated with this error." });
 			} else {
 				if (errorGroupResult?.errorGroup?.entity?.relationship?.error?.message != null) {
 					setError({
@@ -507,6 +509,46 @@ export function CodeErrorNav(props: Props) {
 			setRequiresConnection(false);
 			setIsLoading(false);
 		}
+	};
+
+	const tryBuildWarningsOrErrors = () => {
+		if (derivedState.demoMode) return null;
+
+		const items: WarningOrError[] = [];
+		if (repoError) {
+			items.push({ message: repoError });
+		}
+		if (repoWarning) {
+			items.push(repoWarning);
+		}
+
+		if (!items.length) return null;
+
+		return (
+			<CodeErrorErrorBox>
+				<Icon name="alert" className="alert" />
+				<div className="message">
+					{items.map(_ => {
+						const split = _.message.split("\n");
+
+						return split.map((item, index) => {
+							return (
+								<div key={"warningOrError_" + index}>
+									{item}
+									{_.helpUrl && split.length - 1 === index && (
+										<>
+											{" "}
+											<Link href={_.helpUrl!}>Learn more</Link>
+										</>
+									)}
+									<br />
+								</div>
+							);
+						});
+					})}
+				</div>
+			</CodeErrorErrorBox>
+		);
 	};
 
 	useDidMount(() => {
@@ -729,26 +771,7 @@ export function CodeErrorNav(props: Props) {
 								}}
 							>
 								{/* TODO perhaps consolidate these? */}
-								{(repoError || repoWarning) && !derivedState.demoMode && (
-									<CodeErrorErrorBox>
-										<Icon name="alert" className="alert" />
-										<div className="message">
-											{(
-												(repoWarning || "") +
-												(repoError ? `${repoWarning ? "\n" : ""}${repoError}` : "")
-											)
-												.split("\n")
-												.map(function(item, key) {
-													return (
-														<div key={"warningOrError_" + key}>
-															{item}
-															<br />
-														</div>
-													);
-												})}
-										</div>
-									</CodeErrorErrorBox>
-								)}
+								{tryBuildWarningsOrErrors()}
 
 								<StyledCodeError className="pulse">
 									<CodeError

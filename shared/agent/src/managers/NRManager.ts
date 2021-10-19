@@ -2,7 +2,6 @@
 
 import { structuredPatch } from "diff";
 import path from "path";
-import { promises as fsPromises } from "fs";
 import { Container, SessionContainer } from "../container";
 import { calculateLocation, MAX_RANGE_VALUE } from "../markerLocation/calculator";
 import {
@@ -26,7 +25,8 @@ import {
 	ResolveStackTracePositionResponse,
 	ResolveStackTraceRequest,
 	ResolveStackTraceRequestType,
-	ResolveStackTraceResponse
+	ResolveStackTraceResponse,
+	WarningOrError
 } from "../protocol/agent.protocol";
 import { CSStackTraceInfo, CSStackTraceLine } from "../protocol/api.protocol.models";
 import { CodeStreamSession } from "../session";
@@ -48,12 +48,6 @@ import { Parser as goParser } from "./stackTraceParsers/goStackTraceParser";
 import { NodeJSInstrumentation } from "./newRelicInstrumentation/nodeJSInstrumentation";
 import { JavaInstrumentation } from "./newRelicInstrumentation/javaInstrumentation";
 import { DotNetCoreInstrumentation } from "./newRelicInstrumentation/dotNetCoreInstrumentation";
-
-interface CandidateFiles {
-	packageJson: string | null;
-	indexFiles: string[];
-	jsFiles: string[];
-}
 
 const ExtensionToLanguageMap: { [key: string]: string } = {
 	js: "javascript",
@@ -80,7 +74,9 @@ const StackTraceParsers: { [key: string]: Parser } = {
 };
 
 const MISSING_SHA_MESSAGE =
-	"Your version of the code doesn't match production. Fetch the following commit to better investigate the error.\n${sha}";
+	"Your version of the code may not match the environment that triggered the error. Fetch the following commit to better investigate the error.\n${sha}";
+const MISSING_SHA_HELP_URL =
+	"http://docs.newrelic.com/docs/codestream/start-here/codestream-new-relic/#errors";
 
 @lsp
 export class NRManager {
@@ -148,12 +144,12 @@ export class NRManager {
 		const { git, repos, repositoryMappings } = SessionContainer.instance();
 		const matchingRepo = await git.getRepositoryById(repoId);
 		let matchingRepoPath = matchingRepo?.path;
-		let warning: string | undefined = undefined;
+		let firstWarning: WarningOrError | undefined = undefined;
 
 		// NOTE: the warnings should not prevent a stack trace from being displayed
-		const setWarning = (text: string) => {
+		const setWarning = (warning: WarningOrError) => {
 			// only set the warning if we haven't already set it.
-			if (!warning) warning = text;
+			if (!firstWarning) firstWarning = warning;
 		};
 		if (!matchingRepoPath) {
 			const mappedRepo = await repositoryMappings.getByRepoId(repoId);
@@ -161,18 +157,19 @@ export class NRManager {
 				matchingRepoPath = mappedRepo;
 			} else {
 				const repo = await repos.getById(repoId);
-				setWarning(
-					`Repo (${
+				setWarning({
+					message: `Repo (${
 						repo ? repo.name : repoId
 					}) not found in your editor. Open it in order to navigate the stack trace.`
-				);
+				});
 			}
 		}
 
 		if (!sha) {
-			setWarning(
-				`No build SHA associated with this error. Your version of the code may not match production.`
-			);
+			setWarning({
+				message: `No build SHA associated with this error. Your version of the code may not match the environment that triggered the error.`,
+				helpUrl: MISSING_SHA_HELP_URL
+			});
 		} else if (matchingRepoPath) {
 			try {
 				const { git } = SessionContainer.instance();
@@ -185,7 +182,10 @@ export class NRManager {
 					if (!(await git.isValidReference(matchingRepoPath, sha))) {
 						// if still not there, we can't continue
 						Logger.log(`NRManager sha (${sha}) not found after fetch`);
-						setWarning(Strings.interpolate(MISSING_SHA_MESSAGE, { sha: sha }));
+						setWarning({
+							message: Strings.interpolate(MISSING_SHA_MESSAGE, { sha: sha }),
+							helpUrl: MISSING_SHA_HELP_URL
+						});
 					}
 				}
 			} catch (ex) {
@@ -194,7 +194,10 @@ export class NRManager {
 					matchingRepo: matchingRepo,
 					sha: sha
 				});
-				setWarning(Strings.interpolate(MISSING_SHA_MESSAGE, { sha: sha }));
+				setWarning({
+					message: Strings.interpolate(MISSING_SHA_MESSAGE, { sha: sha }),
+					helpUrl: MISSING_SHA_HELP_URL
+				});
 			}
 		}
 
@@ -203,7 +206,10 @@ export class NRManager {
 			return { error: parsedStackInfo.parseError };
 		} else if (sha && !parsedStackInfo.lines.find(line => !line.error)) {
 			// if there was an error on all lines (for some reason)
-			setWarning(Strings.interpolate(MISSING_SHA_MESSAGE, { sha: sha }));
+			setWarning({
+				message: Strings.interpolate(MISSING_SHA_MESSAGE, { sha: sha }),
+				helpUrl: MISSING_SHA_HELP_URL
+			});
 		}
 		parsedStackInfo.repoId = repoId;
 		parsedStackInfo.sha = sha;
@@ -228,7 +234,7 @@ export class NRManager {
 		}
 
 		return {
-			warning: warning,
+			warning: firstWarning,
 			resolvedStackInfo,
 			parsedStackInfo
 		};

@@ -26,10 +26,15 @@ export interface ResolveStackTraceRequest {
 	sha: string;
 }
 
+export interface WarningOrError {
+	message: string;
+	helpUrl?: string;
+}
+
 export interface ResolveStackTraceResponse {
 	parsedStackInfo?: CSStackTraceInfo; // this is parsed info relative to the given sha, to be stored
 	resolvedStackInfo?: CSStackTraceInfo; // this is relative to the user's current sha, ephemeral
-	warning?: string;
+	warning?: WarningOrError;
 	error?: string;
 }
 

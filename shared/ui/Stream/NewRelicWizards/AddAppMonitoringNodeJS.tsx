@@ -309,7 +309,7 @@ export const AddAppMonitoringNodeJS = (props: {
 													className="no-padding"
 													items={fileItems}
 												>
-													{files[0]}
+													{selectedFile || files[0]}
 												</InlineMenu>
 											</code>
 										</div>

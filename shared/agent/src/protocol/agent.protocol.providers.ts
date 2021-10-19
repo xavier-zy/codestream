@@ -882,8 +882,6 @@ export interface NewRelicErrorGroup {
 	guid: string;
 	title: string;
 	message: string;
-	source: string;
-	timestamp: number;
 
 	states?: string[];
 	// TODO these might not be hard-codeable
@@ -1110,6 +1108,9 @@ export interface ErrorGroupResponse {
 			errorGroup: {
 				id: string;
 				state: string;
+				message: string;
+				name: string;
+				entityGuid: string;
 				url: string;
 				assignment: {
 					email: string;
@@ -1191,4 +1192,12 @@ export interface BuiltFromResult {
 	error?: {
 		message?: string;
 	};
+}
+
+export interface ErrorGroup {
+	id: string;
+	message: string;
+	name: string;
+	state: string;
+	entityGuid: string;
 }

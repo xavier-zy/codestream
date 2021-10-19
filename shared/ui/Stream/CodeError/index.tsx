@@ -1092,7 +1092,7 @@ const BaseCodeError = (props: BaseCodeErrorProps) => {
 			{!props.collapsed && (
 				<div
 					style={{
-						minHeight: derivedState.errorGroupIsLoading || errorGroup ? "58px" : "initial"
+						minHeight: derivedState.errorGroupIsLoading || errorGroup ? "18px" : "initial"
 					}}
 				>
 					{errorGroup &&

@@ -233,14 +233,18 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				const newOrgIds = accountsToOrgs
 					.filter(_ => existingnOrgIds.indexOf(_.orgId) < 0)
 					.map(_ => _.orgId);
-				if (newOrgIds.length) {
-					Logger.log(`Associating company ${company.id} with NR orgs ${newOrgIds.join(", ")}`);
-					await this.session.api.addCompanyNewRelicInfo(company.id, undefined, newOrgIds);
+				const newOrgIdsSet = new Set(newOrgIds);
+				const uniqueNewOrgIds = Array.from(newOrgIdsSet.values());
+				if (uniqueNewOrgIds.length) {
+					Logger.log(
+						`Associating company ${company.id} with NR orgs ${uniqueNewOrgIds.join(", ")}`
+					);
+					await this.session.api.addCompanyNewRelicInfo(company.id, undefined, uniqueNewOrgIds);
 				}
 			} else if (accounts.length) {
-				const existingnAccountIds = company.nrAccountIds || [];
+				const existingAccountIds = company.nrAccountIds || [];
 				const newAccountIds = accountsToOrgs
-					.filter(_ => existingnAccountIds.indexOf(_.orgId) < 0)
+					.filter(_ => existingAccountIds.indexOf(_.orgId) < 0)
 					.map(_ => _.orgId);
 				if (newAccountIds.length) {
 					Logger.log(

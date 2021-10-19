@@ -317,6 +317,7 @@ export const OnboardNewRelic = React.memo(function OnboardNewRelic() {
 										Get Started
 									</Button>
 								</CenterRow>
+								<SkipLink onClick={() => skip(999)}>I'll do this later</SkipLink>
 							</div>
 						</Step>
 

@@ -32,8 +32,8 @@ export const AddAppMonitoringJava = (props: {
 		return { repo, repoPath: path };
 	});
 
-	const [licenseKey, setLicenseKey] = useState("****");
 	const [appName, setAppName] = useState("");
+	const [licenseKey, setLicenseKey] = useState("");
 	const [selectedFile, setSelectedFile] = useState("");
 	const [installingLibrary, setInstallingLibrary] = useState(false);
 	const [creatingConfig, setCreatingConfig] = useState(false);
@@ -66,32 +66,6 @@ export const AddAppMonitoringJava = (props: {
 		setLoading(false);
 	};
 
-	const onSetLicenseKey = useCallback(
-		key => {
-			setLicenseKey(key);
-			if (key) {
-				setUnexpectedError(false);
-				// setStep(2);
-			} else {
-				setStep(1);
-			}
-		},
-		[licenseKey]
-	);
-
-	const onSetAppName = useCallback(
-		name => {
-			setAppName(name);
-			if (name) {
-				setUnexpectedError(false);
-				// setStep(3);
-			} else {
-				setStep(2);
-			}
-		},
-		[appName]
-	);
-
 	const onInstallLibrary = async (event: React.SyntheticEvent) => {
 		event.preventDefault();
 		setInstallingLibrary(true);
@@ -104,7 +78,7 @@ export const AddAppMonitoringJava = (props: {
 			setUnexpectedError(true);
 		} else {
 			setUnexpectedError(false);
-			setStep(3);
+			setStep(4);
 		}
 		setInstallingLibrary(false);
 	};
@@ -124,7 +98,7 @@ export const AddAppMonitoringJava = (props: {
 		} else {
 			setUnexpectedError(false);
 			setAgentJar(response.agentJar!);
-			setStep(4);
+			setStep(5);
 		}
 		setCreatingConfig(false);
 	};
@@ -133,7 +107,7 @@ export const AddAppMonitoringJava = (props: {
 		<Step className={props.className}>
 			<div className="body">
 				<h3>
-					<Icon name="node" />
+					<Icon name="java" />
 					<br />
 					Add App Monitoring for Java
 				</h3>
@@ -193,7 +167,7 @@ export const AddAppMonitoringJava = (props: {
 											<TextInput
 												name="appName"
 												value={appName}
-												onChange={onSetAppName}
+												onChange={value => setAppName(value)}
 												nativeProps={{ id: "appName" }}
 												autoFocus
 											/>
@@ -208,6 +182,30 @@ export const AddAppMonitoringJava = (props: {
 									</InstallRow>
 									<InstallRow className={step > 1 ? "row-active" : ""}>
 										<StepNumber>2</StepNumber>
+										<div>
+											Paste your{" "}
+											<Link href="https://docs.newrelic.com/docs/apis/intro-apis/new-relic-api-keys/#ingest-license-key">
+												New Relic license key
+											</Link>
+											:
+											<TextInput
+												name="licenseKey"
+												value={licenseKey}
+												onChange={value => setLicenseKey(value)}
+												nativeProps={{ id: "licenseKey" }}
+												autoFocus
+											/>
+										</div>
+										<Button
+											isDone={step > 2}
+											onClick={() => setStep(3)}
+											disabled={licenseKey.length == 0}
+										>
+											Save
+										</Button>
+									</InstallRow>
+									<InstallRow className={step > 2 ? "row-active" : ""}>
+										<StepNumber>3</StepNumber>
 										<div>
 											<label>
 												Download and install the agent in your repo
@@ -240,37 +238,45 @@ export const AddAppMonitoringJava = (props: {
 										<Button
 											onClick={onInstallLibrary}
 											isLoading={installingLibrary}
-											isDone={step > 2}
-										>
-											Install
-										</Button>
-									</InstallRow>
-									<InstallRow className={step > 2 ? "row-active" : ""}>
-										<StepNumber>3</StepNumber>
-										<div>
-											<label>
-												Create a custom configuration file in
-												<br />
-												<code>{repoPath?.replace("codestream-server-demo", "server")}</code>
-											</label>
-										</div>
-										<Button
-											onClick={onCreateConfigFile}
-											isLoading={creatingConfig}
 											isDone={step > 3}
 										>
-											Create
+											Install
 										</Button>
 									</InstallRow>
 									<InstallRow className={step > 3 ? "row-active" : ""}>
 										<StepNumber>4</StepNumber>
 										<div>
 											<label>
+												Create a custom configuration file in
+												<br />
+												<code>
+													{(repoPath || "").split("/").map(part => (
+														<span>
+															{part ? "/" : ""}
+															{part}
+															<wbr />
+														</span>
+													))}
+												</code>
+											</label>
+										</div>
+										<Button
+											onClick={onCreateConfigFile}
+											isLoading={creatingConfig}
+											isDone={step > 4}
+										>
+											Create
+										</Button>
+									</InstallRow>
+									<InstallRow className={step > 4 ? "row-active" : ""}>
+										<StepNumber>5</StepNumber>
+										<div>
+											<label>
 												To start sending data to New Relic, recompile and restart your application
 												with <b>-javaagent:{agentJar}</b>
 											</label>
 										</div>
-										<Button onClick={() => props.skip()} isDone={step > 5}>
+										<Button onClick={() => props.skip()} isDone={step > 6}>
 											OK
 										</Button>
 									</InstallRow>

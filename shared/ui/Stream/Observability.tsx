@@ -8,7 +8,7 @@ import { Provider } from "./IntegrationsPanel";
 import { configureAndConnectProvider, disconnectProvider } from "../store/providers/actions";
 import Icon from "./Icon";
 import Tooltip from "./Tooltip";
-import { setUserPreference } from "./actions";
+import { openPanel, setUserPreference } from "./actions";
 import { Row } from "./CrossPostIssueControls/IssueDropdown";
 import { HostApi } from "../webview-api";
 import {
@@ -365,6 +365,12 @@ export const Observability = React.memo((props: Props) => {
 
 	const settingsMenuItems = [
 		{
+			label: "Instrument my App",
+			key: "instrument",
+			action: () => dispatch(openPanel(WebviewPanels.OnboardNewRelic))
+		},
+		{ label: "-" },
+		{
 			label: "Disconnect",
 			key: "disconnect",
 			action: () => dispatch(disconnectProvider("newrelic*com", "Sidebar"))
@@ -462,7 +468,7 @@ export const Observability = React.memo((props: Props) => {
 	const { hiddenPaneNodes } = derivedState;
 	return (
 		<Root>
-			<PaneHeader title="Observability" id={WebviewPanels.Observability}>
+			<PaneHeader title="Observability" id={WebviewPanels.Observability} count={"Preview"}>
 				{derivedState.newRelicIsConnected ? (
 					<>
 						<Icon

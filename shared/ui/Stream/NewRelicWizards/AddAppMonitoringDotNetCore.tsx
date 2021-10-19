@@ -55,6 +55,7 @@ export const AddAppMonitoringDotNetCore = (props: {
 			: derivedState.repoPath
 	);
 	const [appName, setAppName] = useState("");
+	const [licenseKey, setLicenseKey] = useState("");
 	const [selectedFile, setSelectedFile] = useState("");
 	const [installingLibrary, setInstallingLibrary] = useState(false);
 	const [creatingConfig, setCreatingConfig] = useState(false);
@@ -122,19 +123,6 @@ export const AddAppMonitoringDotNetCore = (props: {
 	// 	[licenseKey]
 	// );
 
-	const onSetAppName = useCallback(
-		name => {
-			setAppName(name);
-			if (name) {
-				setUnexpectedError(false);
-				setStep(2);
-			} else {
-				setStep(1);
-			}
-		},
-		[appName]
-	);
-
 	const onInstallLibrary = async (event: React.SyntheticEvent) => {
 		event.preventDefault();
 		setInstallingLibrary(true);
@@ -147,7 +135,7 @@ export const AddAppMonitoringDotNetCore = (props: {
 			setUnexpectedError(true);
 		} else {
 			setUnexpectedError(false);
-			setStep(3);
+			setStep(4);
 		}
 		setInstallingLibrary(false);
 	};
@@ -168,7 +156,7 @@ export const AddAppMonitoringDotNetCore = (props: {
 		} else {
 			setUnexpectedError(false);
 			setAgentJar(response.agentJar!);
-			setStep(4);
+			setStep(5);
 		}
 		setCreatingConfig(false);
 	};
@@ -177,7 +165,7 @@ export const AddAppMonitoringDotNetCore = (props: {
 		<Step className={props.className}>
 			<div className="body">
 				<h3>
-					<Icon name="node" />
+					<Icon name="dot-net" />
 					<br />
 					Add App Monitoring for .NET Core
 				</h3>
@@ -237,7 +225,7 @@ export const AddAppMonitoringDotNetCore = (props: {
 											<TextInput
 												name="appName"
 												value={appName}
-												onChange={onSetAppName}
+												onChange={value => setAppName(value)}
 												nativeProps={{ id: "appName" }}
 												autoFocus
 											/>
@@ -252,6 +240,30 @@ export const AddAppMonitoringDotNetCore = (props: {
 									</InstallRow>
 									<InstallRow className={step > 1 ? "row-active" : ""}>
 										<StepNumber>2</StepNumber>
+										<div>
+											Paste your{" "}
+											<Link href="https://docs.newrelic.com/docs/apis/intro-apis/new-relic-api-keys/#ingest-license-key">
+												New Relic license key
+											</Link>
+											:
+											<TextInput
+												name="licenseKey"
+												value={licenseKey}
+												onChange={value => setLicenseKey(value)}
+												nativeProps={{ id: "licenseKey" }}
+												autoFocus
+											/>
+										</div>
+										<Button
+											isDone={step > 2}
+											onClick={() => setStep(3)}
+											disabled={licenseKey.length == 0}
+										>
+											Save
+										</Button>
+									</InstallRow>
+									<InstallRow className={step > 2 ? "row-active" : ""}>
+										<StepNumber>3</StepNumber>
 										<div>
 											<label>
 												Click to install the New Relic Agent in your repo. This will run: <br />
@@ -284,34 +296,42 @@ export const AddAppMonitoringDotNetCore = (props: {
 										<Button
 											onClick={onInstallLibrary}
 											isLoading={installingLibrary}
-											isDone={step > 2}
-										>
-											Install
-										</Button>
-									</InstallRow>
-									<InstallRow className={step > 2 ? "row-active" : ""}>
-										<StepNumber>3</StepNumber>
-										<div>
-											<label>
-												Create a custom configuration file in
-												<br />
-												<code>{cwd}</code>
-											</label>
-										</div>
-										<Button
-											onClick={onCreateConfigFile}
-											isLoading={creatingConfig}
 											isDone={step > 3}
 										>
-											Create
+											Install
 										</Button>
 									</InstallRow>
 									<InstallRow className={step > 3 ? "row-active" : ""}>
 										<StepNumber>4</StepNumber>
 										<div>
+											<label>
+												Create a custom configuration file in
+												<br />
+												<code>
+													{(cwd || "").split("/").map(part => (
+														<span>
+															{part ? "/" : ""}
+															{part}
+															<wbr />
+														</span>
+													))}
+												</code>
+											</label>
+										</div>
+										<Button
+											onClick={onCreateConfigFile}
+											isLoading={creatingConfig}
+											isDone={step > 4}
+										>
+											Create
+										</Button>
+									</InstallRow>
+									<InstallRow className={step > 4 ? "row-active" : ""}>
+										<StepNumber>5</StepNumber>
+										<div>
 											<label>To start sending data to New Relic run the NrStart.cmd file</label>
 										</div>
-										<Button onClick={() => props.skip()} isDone={step > 5}>
+										<Button onClick={() => props.skip()} isDone={step > 6}>
 											OK
 										</Button>
 									</InstallRow>

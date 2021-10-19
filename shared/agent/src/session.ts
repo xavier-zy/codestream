@@ -1291,6 +1291,7 @@ export class CodeStreamSession {
 						key => `${key}|${company.testGroups![key]}`
 					);
 				}
+				props["NR Connected Org"] = !!company.isNRConnected;
 			}
 		}
 
@@ -1305,6 +1306,18 @@ export class CodeStreamSession {
 		props["First Session"] =
 			!!user.firstSessionStartedAt &&
 			user.firstSessionStartedAt <= Date.now() + FIRST_SESSION_TIMEOUT;
+
+		if (user.providerInfo) {
+			const data = team && user.providerInfo[team.id]?.newrelic?.data;
+			if (data) {
+				if (data.userId) {
+					props["NR User ID"] = data.userId;
+				}
+				if (data.orgIds && data.orgIds.length) {
+					props["NR Organization ID"] = data.orgIds[0];
+				}
+			}
+		}
 
 		const { telemetry } = Container.instance();
 		await telemetry.ready();

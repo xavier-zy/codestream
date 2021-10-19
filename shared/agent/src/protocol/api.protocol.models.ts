@@ -469,6 +469,7 @@ export interface CSCompany extends CSEntity {
 	domainJoining?: string[];
 	nrOrgIds?: number[];
 	nrAccountIds?: number[];
+	isNRConnected?: boolean;
 }
 
 export interface CSTeam extends CSEntity {

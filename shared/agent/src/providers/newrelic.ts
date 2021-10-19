@@ -223,19 +223,17 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		const accountsToOrgs = await this.session.api.lookupNewRelicOrganizations({
 			accountIds
 		});
-		Logger.log(`Found ${accountsToOrgs.length} associated New Relic organizations`);
+		const orgIdsSet = new Set(accountsToOrgs.map(_ => _.orgId));
+		const uniqueOrgIds = Array.from(orgIdsSet.values());
+		Logger.log(`Found ${uniqueOrgIds.length} associated New Relic organizations`);
 
 		const team = await SessionContainer.instance().teams.getByIdFromCache(this.session.teamId);
 		const company =
 			team && (await SessionContainer.instance().companies.getByIdFromCache(team.companyId));
 		if (company) {
+			const existingnOrgIds = company.nrOrgIds || [];
+			const uniqueNewOrgIds = uniqueOrgIds.filter(_ => existingnOrgIds.indexOf(_) < 0);
 			if (accountsToOrgs.length) {
-				const existingnOrgIds = company.nrOrgIds || [];
-				const newOrgIds = accountsToOrgs
-					.filter(_ => existingnOrgIds.indexOf(_.orgId) < 0)
-					.map(_ => _.orgId);
-				const newOrgIdsSet = new Set(newOrgIds);
-				const uniqueNewOrgIds = Array.from(newOrgIdsSet.values());
 				if (uniqueNewOrgIds.length) {
 					Logger.log(
 						`Associating company ${company.id} with NR orgs ${uniqueNewOrgIds.join(", ")}`
@@ -261,7 +259,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				userId,
 				accountId: request.accountId,
 				apiUrl: request.apiUrl,
-				orgIds: accountsToOrgs.map(_ => _.orgId)
+				orgIds: uniqueOrgIds
 			}
 		});
 	}

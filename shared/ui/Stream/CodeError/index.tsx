@@ -312,7 +312,8 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 					action: () => {
 						dispatch(
 							invite({
-								email: emailAddress
+								email: emailAddress,
+								inviteType: "error"
 							})
 						);
 						_setAssignee();

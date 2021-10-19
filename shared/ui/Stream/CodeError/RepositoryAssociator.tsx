@@ -4,6 +4,8 @@ import { CodeStreamState } from "../../store";
 import { getCodeError } from "../../store/codeErrors/reducer";
 import Dismissable from "../Dismissable";
 import {
+	ChangeDataType,
+	DidChangeDataNotificationType,
 	DidChangeObservabilityDataNotificationType,
 	GetReposScmRequestType,
 	ReposScm
@@ -63,9 +65,7 @@ export function RepositoryAssociator(props: {
 	const [multiRemoteRepository, setMultiRemoteRepository] = React.useState(false);
 	const [isLoading, setIsLoading] = React.useState(false);
 
-	useDidMount(() => {
-		if (!repositoryError) return;
-
+	const fetchRepos = () => {
 		HostApi.instance
 			.send(GetReposScmRequestType, {
 				inEditorOnly: true,
@@ -115,6 +115,21 @@ export function RepositoryAssociator(props: {
 			.catch(e => {
 				logWarning(`could not get repos: ${e.message}`);
 			});
+	};
+
+	useDidMount(() => {
+		if (!repositoryError) return;
+
+		const disposable = HostApi.instance.on(DidChangeDataNotificationType, (e: any) => {
+			if (e.type === ChangeDataType.Workspace) {
+				fetchRepos();
+			}
+		});
+		fetchRepos();
+
+		return () => {
+			disposable && disposable.dispose();
+		};
 	});
 
 	if (openRepositories?.length === 0) {

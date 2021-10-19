@@ -524,6 +524,17 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 							errorGroupUrl: _.url
 						} as ObservabilityErrorCore;
 					});
+
+				if (response.items && response.items.find(_ => !_.errorClass)) {
+					Logger.warn("NR: getObservabilityErrorAssignments has empties", {
+						items: response.items
+					});
+				}
+				Logger.warn("NR: getObservabilityErrorAssignments", {
+					itemsCount: response.items.length
+				});
+			} else {
+				Logger.log("NR: getObservabilityErrorAssignments (none)");
 			}
 		} catch (ex) {
 			Logger.warn("NR: getObservabilityErrorAssignments", {
@@ -1314,10 +1325,28 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				return this._newRelicUserId;
 			}
 
-			const response = await this.query(`{ actor {	user { id } } }`);
+			if (this._providerInfo && this._providerInfo.data && this._providerInfo.data.userId) {
+				try {
+					const id = this._providerInfo.data.userId;
+					this._newRelicUserId = parseInt(id.toString(), 10);
+					Logger.log("NR: getUserId (found data)", {
+						userId: id
+					});
+				} catch (ex) {
+					Logger.warn("NR: getUserId", {
+						error: ex
+					});
+				}
+			}
+			if (this._newRelicUserId) return this._newRelicUserId;
+
+			const response = await this.query(`{ actor { user { id } } }`);
 			const id = response.actor?.user?.id;
 			if (id) {
 				this._newRelicUserId = parseInt(id, 10);
+				Logger.log("NR: getUserId (found api)", {
+					userId: id
+				});
 				return this._newRelicUserId;
 			}
 		} catch (ex) {
@@ -1859,9 +1888,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					}
 				  }
 				}
-			  }
-			  
-  `,
+			  }`,
 				{
 					userId: userId,
 					emailAddress: emailAddress
@@ -1870,7 +1897,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		} catch (ex) {
 			Logger.warn("NR: getErrorsInboxAssignments", {
 				userId: userId,
-				emailAddress: emailAddress != null
+				usingEmailAddress: emailAddress != null
 			});
 			return undefined;
 		}

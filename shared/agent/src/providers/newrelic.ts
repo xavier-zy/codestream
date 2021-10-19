@@ -242,10 +242,38 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		);
 		const { userId, accounts } = await this.validateApiKey(client);
 		Logger.log(`Found ${accounts.length} New Relic accounts`);
-		const response = await this.session.api.lookupNewRelicOrganizations({
+		const accountsToOrgs = await this.session.api.lookupNewRelicOrganizations({
 			accountIds: accounts.map(_ => _.id)
 		});
-		Logger.log(`Found ${response.length} associated New Relic organizations`);
+		Logger.log(`Found ${accountsToOrgs.length} associated New Relic organizations`);
+
+		const team = await SessionContainer.instance().teams.getByIdFromCache(this.session.teamId);
+		const company =
+			team && (await SessionContainer.instance().companies.getByIdFromCache(team.companyId));
+		if (company) {
+			if (accountsToOrgs.length) {
+				const existingnOrgIds = company.nrOrgIds || [];
+				const newOrgIds = accountsToOrgs
+					.filter(_ => existingnOrgIds.indexOf(_.orgId) < 0)
+					.map(_ => _.orgId);
+				if (newOrgIds.length) {
+					Logger.log(`Associating company ${company.id} with NR orgs ${newOrgIds.join(", ")}`);
+					await this.session.api.addCompanyNewRelicInfo(company.id, undefined, newOrgIds);
+				}
+			} else if (accounts.length) {
+				const existingnAccountIds = company.nrAccountIds || [];
+				const newAccountIds = accountsToOrgs
+					.filter(_ => existingnAccountIds.indexOf(_.orgId) < 0)
+					.map(_ => _.orgId);
+				if (newAccountIds.length) {
+					Logger.log(
+						`Associating company ${company.id} with NR accounts ${newAccountIds.join(", ")}`
+					);
+					await this.session.api.addCompanyNewRelicInfo(company.id, newAccountIds, undefined);
+				}
+			}
+		}
+
 		await this.session.api.setThirdPartyProviderToken({
 			providerId: this.providerConfig.id,
 			token: request.apiKey,
@@ -253,7 +281,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				userId,
 				accountId: request.accountId,
 				apiUrl: request.apiUrl,
-				orgIds: response.map(_ => _.orgId)
+				orgIds: accountsToOrgs.map(_ => _.orgId)
 			}
 		});
 	}

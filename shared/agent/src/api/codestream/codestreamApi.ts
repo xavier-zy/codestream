@@ -1922,6 +1922,37 @@ export class CodeStreamApiProvider implements ApiProvider {
 		return companies[0];
 	}
 
+	async addCompanyNewRelicInfo(companyId: string, accountIds?: number[], orgIds?: number[]) {
+		if (!accountIds && !orgIds) {
+			return false;
+		}
+
+		const body: {
+			accountIds?: number[];
+			orgIds?: number[];
+		} = {};
+		if (accountIds) {
+			body.accountIds = accountIds;
+		}
+		if (orgIds) {
+			body.orgIds = accountIds;
+		}
+
+		const response = await this.post<
+			{ accountIds?: number[]; orgIds?: number[] },
+			{ company: any }
+		>(
+			`/companies/add-nr-info/${companyId}`,
+			{
+				accountIds,
+				orgIds
+			},
+			this._token
+		);
+
+		return true;
+	}
+
 	@log()
 	@lspHandler(CreateCompanyRequestType)
 	createCompany(request: CreateCompanyRequest) {

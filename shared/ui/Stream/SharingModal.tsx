@@ -110,7 +110,13 @@ export function SharingModal(props: SharingModalProps) {
 	} = props.codemark ||
 		props.review ||
 		props.codeError || { creatorId: "", text: "", title: "", createdAt: 0 };
-	const shareTargetType = props.codemark ? "Codemark" : props.review ? "Review" : "";
+	const shareTargetType = props.codemark
+		? "Codemark"
+		: props.review
+		? "Review"
+		: props.codeError
+		? "Error"
+		: "";
 
 	const { author, mentionedUserIds } = useSelector((state: CodeStreamState) => ({
 		author: state.users[shareTarget.creatorId],
@@ -178,10 +184,16 @@ export function SharingModal(props: SharingModalProps) {
 					sharedTo
 				});
 			}
-			HostApi.instance.track(`Shared ${shareTargetType}`, {
+
+			const trackingData = {
 				Destination: getProviderName(valuesRef.current!.providerId),
 				[`${shareTargetType} Status`]: "Existing"
-			});
+			};
+			if (props.codeError?.objectId && props.codeError?.objectType === "errorGroup") {
+				trackingData["Error Group ID"] = props.codeError.objectId;
+			}
+			HostApi.instance.track(`Shared ${shareTargetType}`, trackingData);
+
 			setState({ name: "success" });
 		} catch (error) {
 			setState({ name: "failure", message: error.message });

@@ -27,6 +27,7 @@ import { PanelHeader } from "../../src/components/PanelHeader";
 import { CodeStreamState } from "../../store";
 import { closePanel, setUserPreference } from "../actions";
 import { DropdownButton } from "../DropdownButton";
+import { useDidMount } from "@codestream/webview/utilities/hooks";
 
 const Root = styled.div`
 	color: var(--text-color);
@@ -58,6 +59,13 @@ export const PixieDynamicLoggingPanel = () => {
 	const [cluster, setCluster] = React.useState<PixieCluster | undefined>();
 	const [namespace, setNamespace] = React.useState<string | undefined>();
 	const [pod, setPod] = React.useState<PixiePod | undefined>();
+
+	useDidMount(() => {
+		HostApi.instance.send(TelemetryRequestType, {
+			eventName: "Pixie Logging Selected",
+			properties: {}
+		});
+	});
 
 	const setAndSaveAccount = account => {
 		setAccount(account);

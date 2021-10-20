@@ -597,7 +597,7 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 										}
 										disconnected={
 											<>
-												{!props.errorGroup && props.codeError && props.codeError.objectInfo && (
+												{!props.errorGroup && props.codeError && (
 													<>
 														<Link
 															href="#"
@@ -607,7 +607,7 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 															}}
 														>
 															<span className="subtle">
-																{props.codeError.objectInfo.entityName}
+																{props.codeError?.objectInfo?.entityName || "Service"}
 															</span>
 														</Link>{" "}
 														<Icon name="link-external" className="open-external"></Icon>

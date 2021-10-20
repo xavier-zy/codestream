@@ -359,7 +359,7 @@ export function CodeErrorNav(props: Props) {
 				}
 			}
 
-			let repo;
+			let repoId: string | undefined = undefined;
 			let stackInfo: ResolveStackTraceResponse | undefined = undefined;
 			let targetRemote;
 			if (
@@ -386,53 +386,65 @@ export function CodeErrorNav(props: Props) {
 					targetRemote = codeError?.objectInfo?.remote;
 				}
 				if (!targetRemote) {
-					setRepoAssociationError({
-						title: "Missing Repository Info",
-						description: `In order to view this stack trace, please select a repository to associate with ${
-							errorGroup ? errorGroup.entityName + " " : ""
-						}on New Relic. If the repo that was used to build this service doesn't appear in the dropdown, open it in your IDE.`
-					});
-					return;
+					if (derivedState.isConnectedToNewRelic) {
+						setRepoAssociationError({
+							title: "Missing Repository Info",
+							description: `In order to view this stack trace, please select a repository to associate with ${
+								errorGroup ? errorGroup.entityName + " " : ""
+							}on New Relic. If the repo that was used to build this service doesn't appear in the dropdown, open it in your IDE.`
+						});
+						return;
+					}
 				}
 
-				const normalizationResponse = (await HostApi.instance.send(NormalizeUrlRequestType, {
-					url: targetRemote
-				})) as NormalizeUrlResponse;
-				if (!normalizationResponse || !normalizationResponse.normalizedUrl) {
-					setError({
-						title: "Error",
-						description: `Could not find a matching repo for the remote ${targetRemote}`
-					});
-					return;
+				if (targetRemote) {
+					// we have a remote, try to find a repo.
+					const normalizationResponse = (await HostApi.instance.send(NormalizeUrlRequestType, {
+						url: targetRemote
+					})) as NormalizeUrlResponse;
+					if (!normalizationResponse || !normalizationResponse.normalizedUrl) {
+						setError({
+							title: "Error",
+							description: `Could not find a matching repo for the remote ${targetRemote}`
+						});
+						return;
+					}
+
+					const reposResponse = (await HostApi.instance.send(MatchReposRequestType, {
+						repos: [
+							{
+								remotes: [normalizationResponse.normalizedUrl],
+								knownCommitHashes: commitToUse ? [commitToUse] : []
+							}
+						]
+					})) as MatchReposResponse;
+
+					if (reposResponse?.repos?.length === 0) {
+						setError({
+							title: "Repo Not Found",
+							description: `Please open the following repository: ${targetRemote}`
+						});
+						return;
+					}
+					repoId = reposResponse.repos[0].id!;
 				}
-
-				const reposResponse = (await HostApi.instance.send(MatchReposRequestType, {
-					repos: [
-						{
-							remotes: [normalizationResponse.normalizedUrl],
-							knownCommitHashes: commitToUse ? [commitToUse] : []
-						}
-					]
-				})) as MatchReposResponse;
-
-				if (reposResponse?.repos?.length === 0) {
-					setError({
-						title: "Repo Not Found",
-						description: `Please open the following repository: ${targetRemote}`
-					});
-					return;
+				if (!repoId) {
+					// no targetRemote, try to get a repo from existing stackTrace
+					repoId =
+						codeError?.stackTraces && codeError?.stackTraces.length > 0
+							? codeError.stackTraces[0].repoId
+							: "";
 				}
-
 				// YUCK
 				const stack =
 					errorGroupResult?.errorGroup?.errorTrace?.stackTrace?.map(_ => _.formatted) ||
 					(codeError?.stackTraces && codeError.stackTraces.length > 0
 						? codeError.stackTraces[0].text?.split("\n")
 						: []);
-				repo = reposResponse.repos[0];
+
 				if (stack) {
 					stackInfo = (await resolveStackTrace(
-						repo.id!,
+						repoId!,
 						commitToUse!,
 						occurrenceIdToUse!,
 						stack!
@@ -479,7 +491,7 @@ export function CodeErrorNav(props: Props) {
 								// storing the permanently parsed stack info
 								stackTraces: actualStackInfo,
 								objectInfo: {
-									repoId: repo?.id,
+									repoId: repoId!,
 									remote: targetRemote,
 									accountId: errorGroupResult.accountId.toString(),
 									entityId: errorGroupResult?.errorGroup?.entityGuid || "",
@@ -500,7 +512,7 @@ export function CodeErrorNav(props: Props) {
 							// storing the permanently parsed stack info
 							stackTraces: actualStackInfo,
 							objectInfo: {
-								repoId: repo?.id,
+								repoId: repoId,
 								remote: targetRemote,
 								accountId: errorGroupResult.accountId.toString(),
 								entityId: errorGroupResult?.errorGroup?.entityGuid || "",

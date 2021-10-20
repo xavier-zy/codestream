@@ -1,5 +1,6 @@
 package com.codestream.actions
 
+import com.codestream.codeStream
 import com.codestream.protocols.agent.PixieDynamicLoggingFunctionParameter
 import com.codestream.protocols.webview.PixieNotifications
 import com.codestream.webViewService
@@ -31,12 +32,16 @@ class PixieDynamicLoggingAction : DumbAwareAction() {
         val receiver = (declaration as? GoMethodDeclaration)?.receiver?.type?.text
         val pkg = declaration.containingFile.`package`?.name
 
-        e.project?.webViewService?.postNotification(PixieNotifications.DynamicLogging(
-            name!!,
-            parameters!!,
-            receiver,
-            pkg!!
-        ))
+        e.project?.codeStream?.show {
+            e.project?.webViewService?.postNotification(
+                PixieNotifications.DynamicLogging(
+                    name!!,
+                    parameters!!,
+                    receiver,
+                    pkg!!
+                )
+            )
+        }
         // catalogue: 00000008-0000-1a41-0000-0000072e8792
         // simple gotracing: 00000004-0000-3d9e-0000-000001e9f7b4
     }

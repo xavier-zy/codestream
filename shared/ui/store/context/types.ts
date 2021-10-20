@@ -108,7 +108,7 @@ export interface ContextState extends WebviewContext {
 	};
 	errorsInboxOptions?: { stack?: string; customAttributes?: string; url?: string };
 
-	wantNewRelicOptions?: { repoId?: string; path?: string };
+	wantNewRelicOptions?: { repoId?: string; path?: string; projectType?: any };
 }
 
 export type ChatProviderAccess = "strict" | "permissive";

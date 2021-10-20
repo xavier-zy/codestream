@@ -1,5 +1,9 @@
-import { GetNewRelicSignupJwtTokenRequestType } from "@codestream/protocols/agent";
-import { OpenUrlRequestType } from "@codestream/protocols/webview";
+import {
+	GetNewRelicSignupJwtTokenRequestType,
+	GetReposScmRequestType,
+	RepoProjectType
+} from "@codestream/protocols/agent";
+import { OpenUrlRequestType, WebviewPanels } from "@codestream/protocols/webview";
 import React, { Component } from "react";
 import { connect } from "react-redux";
 import { closeAllPanels, setWantNewRelicOptions } from "../store/context/actions";
@@ -34,6 +38,8 @@ interface Props {
 	configureProvider: Function;
 	onClose?: Function;
 	onSubmited?: Function;
+	setWantNewRelicOptions: Function;
+	openPanel: Function;
 }
 
 class ConfigureNewRelic extends Component<Props> {
@@ -88,25 +94,6 @@ class ConfigureNewRelic extends Component<Props> {
 				true
 			);
 			this.setState({ error: undefined });
-			// if (!this.props.disablePostConnectOnboarding) {
-			// 	const reposResponse = await HostApi.instance.send(GetReposScmRequestType, {
-			// 		inEditorOnly: true,
-			// 		guessProjectTypes: true
-			// 	});
-			// 	if (!reposResponse.error) {
-			// 		const knownRepo = (reposResponse.repositories || []).find(repo => {
-			// 			return repo.id && repo.projectType !== RepoProjectType.Unknown;
-			// 		});
-			// 		if (knownRepo) {
-			// 			this.props.setWantNewRelicOptions(
-			// 				knownRepo.projectType,
-			// 				knownRepo.id,
-			// 				knownRepo.path,
-			// 				knownRepo.projects
-			// 			);
-			// 		}
-			// 	}
-			// }
 
 			HostApi.instance.track("NR Connected", {
 				"Connection Location": this.props.originLocation
@@ -114,9 +101,26 @@ class ConfigureNewRelic extends Component<Props> {
 			if (this.props.onSubmited) {
 				this.props.onSubmited(e);
 			}
-			// if (!this.props.disablePostConnectOnboarding) {
-			// 	this.props.openPanel(WebviewPanels.OnboardNewRelic);
-			// }
+			if (!this.props.disablePostConnectOnboarding) {
+				const reposResponse = await HostApi.instance.send(GetReposScmRequestType, {
+					inEditorOnly: true,
+					guessProjectTypes: true
+				});
+				if (!reposResponse.error) {
+					const knownRepo = (reposResponse.repositories || []).find(repo => {
+						return repo.id && repo.projectType !== RepoProjectType.Unknown;
+					});
+					if (knownRepo) {
+						this.props.setWantNewRelicOptions(
+							knownRepo.projectType,
+							knownRepo.id,
+							knownRepo.path,
+							knownRepo.projects
+						);
+						this.props.openPanel(WebviewPanels.OnboardNewRelic);
+					}
+				}
+			}
 		} catch (ex) {
 			this.setState({ error: ex.message });
 		}

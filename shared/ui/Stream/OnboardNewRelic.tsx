@@ -152,6 +152,7 @@ export const OnboardNewRelic = React.memo(function OnboardNewRelic() {
 		);
 
 		return {
+			wantNewRelicOptions: state.context.wantNewRelicOptions,
 			currentStep: state.context.onboardStep,
 			providers: state.providers,
 			connectedProviders,
@@ -196,23 +197,25 @@ export const OnboardNewRelic = React.memo(function OnboardNewRelic() {
 	useDidMount(() => {
 		setTimeout(() => positionDots(), 250);
 		(async () => {
-			const reposResponse = await HostApi.instance.send(GetReposScmRequestType, {
-				inEditorOnly: true,
-				guessProjectTypes: true
-			});
-			if (!reposResponse.error) {
-				const knownRepo = (reposResponse.repositories || []).find(repo => {
-					return repo.id && repo.projectType !== RepoProjectType.Unknown;
+			if (!derivedState.wantNewRelicOptions) {
+				const reposResponse = await HostApi.instance.send(GetReposScmRequestType, {
+					inEditorOnly: true,
+					guessProjectTypes: true
 				});
-				if (knownRepo) {
-					dispatch(
-						setWantNewRelicOptions(
-							knownRepo.projectType!,
-							knownRepo.id,
-							knownRepo.path,
-							knownRepo.projects
-						)
-					);
+				if (!reposResponse.error) {
+					const knownRepo = (reposResponse.repositories || []).find(repo => {
+						return repo.id && repo.projectType !== RepoProjectType.Unknown;
+					});
+					if (knownRepo) {
+						dispatch(
+							setWantNewRelicOptions(
+								knownRepo.projectType!,
+								knownRepo.id,
+								knownRepo.path,
+								knownRepo.projects
+							)
+						);
+					}
 				}
 			}
 		})();

@@ -262,13 +262,13 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 			});
 		}
 	};
-	const setAssignee = async (
-		emailAddress: string,
-		assigneeType: "Registered User" | "Invited User" | "Suggestion"
-	) => {
+
+	type AssigneeType = "Teammate" | "Invitee";
+
+	const setAssignee = async (emailAddress: string, assigneeType: AssigneeType) => {
 		if (!props.errorGroup) return;
 
-		const _setAssignee = async (type: string) => {
+		const _setAssignee = async (type: AssigneeType) => {
 			HostApi.instance.track("Error Assigned", {
 				"Error Group ID": props.errorGroup?.guid,
 				"NR Account ID": props.errorGroup?.accountId,
@@ -326,14 +326,19 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 								inviteType: "error"
 							})
 						);
-						_setAssignee("Invited User");
+						// "upgrade" them to an invitee
+						_setAssignee("Invitee");
 					}
 				}
 			]
 		});
 	};
 
-	const removeAssignee = async (e: React.SyntheticEvent<Element, Event>, emailAddress, userId) => {
+	const removeAssignee = async (
+		e: React.SyntheticEvent<Element, Event>,
+		emailAddress: string | undefined,
+		userId: number | undefined
+	) => {
 		if (!props.errorGroup) return;
 
 		// dont allow this to bubble to the parent item which would call setAssignee
@@ -468,7 +473,7 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 							label: label,
 							searchLabel: _.displayName || _.email,
 							subtext: label === _.email ? undefined : _.email,
-							action: () => setAssignee(_.email, "Suggestion")
+							action: () => setAssignee(_.email, "Teammate")
 						};
 					})
 				);
@@ -503,7 +508,7 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 							label: _.fullName || _.email,
 							searchLabel: _.fullName || _.username,
 							subtext: label === _.email ? undefined : _.email,
-							action: () => setAssignee(_.email, "Registered User")
+							action: () => setAssignee(_.email, "Teammate")
 						};
 					})
 				);

@@ -162,12 +162,15 @@ export const configureProvider = (
 	try {
 		const api = HostApi.instance;
 		await api.send(ConfigureThirdPartyProviderRequestType, { providerId, data });
-		api.send(TelemetryRequestType, {
-			eventName: "Issue Service Configured",
-			properties: {
-				Service: provider.name
-			}
-		});
+
+		if (providerId !== "newrelic*com") {
+			api.send(TelemetryRequestType, {
+				eventName: "Issue Service Configured",
+				properties: {
+					Service: provider.name
+				}
+			});
+		}
 
 		// for some providers (YouTrack and enterprise providers with PATs), configuring is as good as connecting,
 		// since we allow the user to set their own access token

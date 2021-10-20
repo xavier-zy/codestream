@@ -262,10 +262,20 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 			});
 		}
 	};
-	const setAssignee = async (emailAddress: string) => {
+	const setAssignee = async (
+		emailAddress: string,
+		assigneeType: "Registered User" | "Invited User" | "Suggestion"
+	) => {
 		if (!props.errorGroup) return;
 
-		const _setAssignee = async () => {
+		const _setAssignee = async (type: string) => {
+			HostApi.instance.track("Error Assigned", {
+				"Error Group ID": props.errorGroup?.guid,
+				"NR Account ID": props.errorGroup?.accountId,
+				Assignment: props.errorGroup?.assignee ? "Change" : "New",
+				"Assignee Type": type
+			});
+
 			setIsAssigneeChanging(true);
 			await dispatch(upgradePendingCodeError(props.codeError.id, "Assignee Change"));
 			await dispatch(
@@ -285,7 +295,7 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 			derivedState.emailAddress.toLowerCase() === emailAddress.toLowerCase() ||
 			derivedState.teamMembers.find(_ => _.email.toLowerCase() === emailAddress.toLowerCase())
 		) {
-			_setAssignee();
+			_setAssignee(assigneeType);
 			return;
 		}
 
@@ -302,7 +312,7 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 					label: "Cancel",
 					className: "control-button btn-secondary",
 					action: () => {
-						_setAssignee();
+						_setAssignee(assigneeType);
 					}
 				},
 				{
@@ -316,7 +326,7 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 								inviteType: "error"
 							})
 						);
-						_setAssignee();
+						_setAssignee("Invited User");
 					}
 				}
 			]
@@ -458,7 +468,7 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 							label: label,
 							searchLabel: _.displayName || _.email,
 							subtext: label === _.email ? undefined : _.email,
-							action: () => setAssignee(_.email)
+							action: () => setAssignee(_.email, "Suggestion")
 						};
 					})
 				);
@@ -493,7 +503,7 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 							label: _.fullName || _.email,
 							searchLabel: _.fullName || _.username,
 							subtext: label === _.email ? undefined : _.email,
-							action: () => setAssignee(_.email)
+							action: () => setAssignee(_.email, "Registered User")
 						};
 					})
 				);

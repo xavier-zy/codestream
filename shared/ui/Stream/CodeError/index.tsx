@@ -310,10 +310,7 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 			buttons: [
 				{
 					label: "Cancel",
-					className: "control-button btn-secondary",
-					action: () => {
-						_setAssignee(assigneeType);
-					}
+					className: "control-button btn-secondary"
 				},
 				{
 					label: "Invite",

@@ -17,6 +17,8 @@ import org.cef.handler.CefLoadHandlerAdapter
 import org.cef.handler.CefRequestHandlerAdapter
 import org.cef.network.CefRequest
 
+private const val BASE_ZOOM_LEVEL = 1.0
+
 class JBCefWebView(val jbCefBrowser: JBCefBrowser, val router: WebViewRouter) : WebView {
 
     private val logger = Logger.getInstance(JBCefWebView::class.java)
@@ -121,4 +123,22 @@ class JBCefWebView(val jbCefBrowser: JBCefBrowser, val router: WebViewRouter) : 
     override fun openDevTools() {
         jbCefBrowser.openDevtools()
     }
+
+    private var zoomLevel = BASE_ZOOM_LEVEL
+
+    override fun zoomIn() {
+        zoomLevel += 0.1
+        jbCefBrowser.zoomLevel = zoomLevel
+    }
+
+    override fun zoomOut() {
+        zoomLevel -= 0.1
+        jbCefBrowser.zoomLevel = zoomLevel
+    }
+
+    override fun resetZoom() {
+        zoomLevel = BASE_ZOOM_LEVEL
+        jbCefBrowser.zoomLevel = zoomLevel
+    }
+
 }

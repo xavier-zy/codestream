@@ -1145,6 +1145,7 @@ const BaseCodeError = (props: BaseCodeErrorProps) => {
 									props.collapsed ||
 									props.parsedStack?.resolvedStackInfo?.lines[i]?.error ? (
 									<Tooltip
+										key={"tooltipline-" + i}
 										title={props.parsedStack?.resolvedStackInfo?.lines[i]?.error}
 										placement="bottom"
 										delay={1}

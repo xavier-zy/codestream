@@ -1142,7 +1142,7 @@ export interface Entity {
 	};
 	guid: string;
 	name: string;
-	type?: string;
+	type?: "APPLICATION" | "REPOSITORY";
 	tags?: {
 		key: string;
 		values: string[];

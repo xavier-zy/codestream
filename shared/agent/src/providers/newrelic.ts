@@ -591,19 +591,23 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					}
 				}
 
+				// find REPOSITORY entities tied to a remote
 				const repositoryEntitiesResponse = await this.findRepositoryEntitiesByRepoRemotes(remotes);
 				let remoteUrls: (string | undefined)[] = [];
 				let hasRepoAssociation;
+				let applicationAssociations;
 				if (repositoryEntitiesResponse?.entities) {
+					// find applications that are tied to repo entities
 					const entitiesReponse = await this.findRelatedEntityByRepositoryGuids(
 						repositoryEntitiesResponse?.entities?.map(_ => _.guid)
 					);
-					const applicationAssociation = entitiesReponse?.actor?.entities?.filter(
+					// find the application entities
+					applicationAssociations = entitiesReponse?.actor?.entities?.filter(
 						_ =>
 							_.relatedEntities?.results?.filter(r => r.source?.entity?.type === "APPLICATION")
 								.length
 					);
-					hasRepoAssociation = applicationAssociation?.length > 0;
+					hasRepoAssociation = applicationAssociations?.length > 0;
 
 					// find all the unique remotes in all the entities found
 					remoteUrls = _uniq(
@@ -613,7 +617,8 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 							})
 						)
 					).filter(Boolean);
-					Logger.log("NR: found entities matching remotes", {
+
+					Logger.log("NR: found repositories matching remotes", {
 						remotes: remotes,
 						entities: repositoryEntitiesResponse?.entities?.map(_ => {
 							return { guid: _.guid, name: _.name };
@@ -638,22 +643,37 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				}
 
 				let uniqueEntities: Entity[] = [];
-				if (repositoryEntitiesResponse && repositoryEntitiesResponse.entities) {
-					for (const entity of repositoryEntitiesResponse.entities) {
-						const tags = entity.tags;
-						if (!tags) continue;
+				let uniqueAccounts = new Set<string>();
+				if (applicationAssociations && applicationAssociations.length) {
+					for (const entity of applicationAssociations) {
+						if (!entity.relatedEntities?.results) continue;
 
-						const accountIdTag = entity.tags!.find(_ => _.key === "accountId");
-						if (!accountIdTag) continue;
+						for (const relatedResult of entity.relatedEntities.results) {
+							if (
+								relatedResult?.source?.entity?.type === "APPLICATION" &&
+								relatedResult?.target?.entity?.type === "REPOSITORY"
+							) {
+								const tags = relatedResult.target.entity.tags;
+								if (!tags) continue;
 
-						uniqueEntities.push({
-							account: {
-								id: parseInt(accountIdTag.values[0] || "0", 10),
-								name: entity.tags!.find(_ => _.key === "account")?.values[0] || "Account"
-							},
-							guid: entity.guid,
-							name: entity.name
-						});
+								const accountIdTag = tags.find(_ => _.key === "accountId");
+								if (!accountIdTag || !accountIdTag.values) continue;
+
+								const accountIdString = accountIdTag.values[0];
+
+								if (uniqueAccounts.has(accountIdString)) continue;
+
+								uniqueEntities.push({
+									account: {
+										id: parseInt(accountIdString || "0", 10),
+										name: tags.find(_ => _.key === "account")?.values[0] || "Account"
+									},
+									guid: relatedResult.source.entity.guid,
+									name: relatedResult.source.entity.name
+								});
+								uniqueAccounts.add(accountIdString);
+							}
+						}
 					}
 				}
 				response.repos.push({

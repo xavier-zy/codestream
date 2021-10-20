@@ -189,8 +189,12 @@ export function SharingModal(props: SharingModalProps) {
 				Destination: getProviderName(valuesRef.current!.providerId),
 				[`${shareTargetType} Status`]: "Existing"
 			};
-			if (props.codeError?.objectId && props.codeError?.objectType === "errorGroup") {
-				trackingData["Error Group ID"] = props.codeError.objectId;
+			if (
+				props.codeError &&
+				props.codeError.objectId &&
+				props.codeError.objectType === "errorGroup"
+			) {
+				trackingData["Error Group ID"] = props.codeError.objectId!;
 			}
 			HostApi.instance.track(`Shared ${shareTargetType}`, trackingData);
 

@@ -1,5 +1,11 @@
 # Change Log
 
+## [12.0.0] - 2021-10-21
+
+### Added
+
+- Adds an [integration with New Relic One](https://codestream.com/blog/codestream-12-0-new-relic-one-integration-brings-observability-to-all-developers-in-their-ides) that allows you to discover, investigate and collaborate on errors from your IDE, as well as dynamic logging in production using Pixie and the ability to instrument your projects right from your IDE 
+
 ## [11.1.1] - 2021-10-7
 
 ### Fixed

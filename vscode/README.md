@@ -1,4 +1,7 @@
 
+**CodeStream is now part of New Relic. [Learn more.](https://newrelic.com/blog/nerdlog/announcing-new-relic-codestream)**
+
+
 # New Relic CodeStream
 
 New Relic CodeStream is a developer collaboration platform that integrates essential dev tools into VS Code. Eliminate context-switching and simplify code discussion and code review by putting collaboration tools in your IDE.
@@ -43,7 +46,7 @@ Your teammates can participate in the discussion right from their IDE, or from S
 
 Resolve production errors faster and improve software performance by bringing production telemetry from New Relic One into your IDE. Operations and dev teams can identify application owners quickly and work together to resolve critical errors. 
 
-![Observability](https://raw.githubusercontent.com/TeamCodeStream/codestream-guide/develop/docs/src/assets/images/animated/Observability-VSC.gif)
+![Observability](https://raw.githubusercontent.com/TeamCodeStream/codestream/develop/images/animated/Observability-VSC.gif)
 
 In a single click, you can jump from Errors Inbox in New Relic One to their IDE and step through the stack trace for code-level debugging of high-impact errors. Additionally, discover, view, filter, and update the status of open issues all from the comfort of your favorite IDE.
 

@@ -562,7 +562,7 @@ function trackPostCreation(
 									// reply to a codemark in a code error
 									const postProperties = {
 										"Parent ID": parentPost.codemarkId,
-										"Parent Type": "CodeError.Codemark"
+										"Parent Type": "Error.Codemark"
 									};
 									telemetry.track({ eventName: "Reply Created", properties: postProperties });
 								} else if (grandParentPost && grandParentPost.reviewId) {
@@ -576,7 +576,7 @@ function trackPostCreation(
 									// reply to a reply in a code error
 									const postProperties = {
 										"Parent ID": grandParentPost.codeErrorId,
-										"Parent Type": "CodeError.Reply"
+										"Parent Type": "Error.Reply"
 									};
 									telemetry.track({ eventName: "Reply Created", properties: postProperties });
 								}
@@ -591,7 +591,7 @@ function trackPostCreation(
 								// reply to a code error
 								const postProperties = {
 									"Parent ID": parentPost.codeErrorId,
-									"Parent Type": "CodeError"
+									"Parent Type": "Error"
 								};
 								telemetry.track({ eventName: "Reply Created", properties: postProperties });
 							} else if (parentPost.codemarkId) {

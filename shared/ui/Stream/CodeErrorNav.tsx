@@ -38,7 +38,8 @@ import {
 	NewRelicErrorGroup,
 	NormalizeUrlRequestType,
 	NormalizeUrlResponse,
-	WarningOrError
+	WarningOrError,
+	GetNewRelicErrorGroupResponse
 } from "@codestream/protocols/agent";
 import { HostApi } from "..";
 import { CSCodeError } from "@codestream/protocols/api";
@@ -306,10 +307,10 @@ export function CodeErrorNav(props: Props) {
 		const codeError = codeErrorArg || derivedState.codeError;
 		let isExistingCodeError;
 
-		let errorGroupGuidToUse;
-		let occurrenceIdToUse;
-		let commitToUse;
-		let entityIdToUse;
+		let errorGroupGuidToUse: string | undefined;
+		let occurrenceIdToUse: string | undefined;
+		let commitToUse: string | undefined;
+		let entityIdToUse: string | undefined;
 
 		if (pendingErrorGroupGuid) {
 			errorGroupGuidToUse = pendingErrorGroupGuid;
@@ -340,20 +341,22 @@ export function CodeErrorNav(props: Props) {
 		setError(undefined);
 
 		try {
-			const errorGroupResult = await HostApi.instance.send(GetNewRelicErrorGroupRequestType, {
-				errorGroupGuid: errorGroupGuidToUse,
-				occurrenceId: occurrenceIdToUse,
-				// optional, though passing it allows for parallelization
-				entityGuid: entityIdToUse
-			});
-
-			if (!errorGroupResult || errorGroupResult?.error?.message) {
-				setError({
-					title: "Unexpected Error",
-					description: errorGroupResult?.error?.message || "unknown error",
-					details: errorGroupResult?.error?.details
+			let errorGroupResult: GetNewRelicErrorGroupResponse | undefined = undefined;
+			if (derivedState.isConnectedToNewRelic) {
+				errorGroupResult = await HostApi.instance.send(GetNewRelicErrorGroupRequestType, {
+					errorGroupGuid: errorGroupGuidToUse,
+					occurrenceId: occurrenceIdToUse,
+					entityGuid: entityIdToUse
 				});
-				return;
+
+				if (!errorGroupResult || errorGroupResult?.error?.message) {
+					setError({
+						title: "Unexpected Error",
+						description: errorGroupResult?.error?.message || "unknown error",
+						details: errorGroupResult?.error?.details
+					});
+					return;
+				}
 			}
 
 			let repo;
@@ -379,6 +382,8 @@ export function CodeErrorNav(props: Props) {
 				targetRemote = newRemote || remote;
 				if (errorGroupResult?.errorGroup?.entity?.repo?.urls != null) {
 					targetRemote = errorGroupResult?.errorGroup?.entity?.repo?.urls[0]!;
+				} else if (codeError?.objectInfo?.remote) {
+					targetRemote = codeError?.objectInfo?.remote;
 				}
 				if (!targetRemote) {
 					setRepoAssociationError({
@@ -418,16 +423,24 @@ export function CodeErrorNav(props: Props) {
 					return;
 				}
 
+				// YUCK
+				const stack =
+					errorGroupResult?.errorGroup?.errorTrace?.stackTrace?.map(_ => _.formatted) ||
+					(codeError?.stackTraces && codeError.stackTraces.length > 0
+						? codeError.stackTraces[0].text?.split("\n")
+						: []);
 				repo = reposResponse.repos[0];
-				stackInfo = (await resolveStackTrace(
-					repo.id!,
-					commitToUse!,
-					occurrenceIdToUse,
-					errorGroupResult.errorGroup?.errorTrace!?.stackTrace.map(_ => _.formatted)
-				)) as ResolveStackTraceResponse;
+				if (stack) {
+					stackInfo = (await resolveStackTrace(
+						repo.id!,
+						commitToUse!,
+						occurrenceIdToUse!,
+						stack!
+					)) as ResolveStackTraceResponse;
+				}
 			}
 
-			if (errorGroupResult?.errorGroup != null) {
+			if (errorGroupResult && errorGroupResult.errorGroup != null) {
 				dispatch(setErrorGroup(errorGroupGuidToUse, errorGroupResult.errorGroup!));
 			}
 
@@ -437,29 +450,51 @@ export function CodeErrorNav(props: Props) {
 					: [stackInfo.parsedStackInfo!]
 				: [];
 
-			if (
-				derivedState.currentCodeErrorId &&
-				derivedState.currentCodeErrorId?.indexOf(PENDING_CODE_ERROR_ID_PREFIX) === 0
-			) {
-				await dispatch(
-					addCodeErrors([
-						{
+			if (errorGroupResult) {
+				if (
+					derivedState.currentCodeErrorId &&
+					derivedState.currentCodeErrorId?.indexOf(PENDING_CODE_ERROR_ID_PREFIX) === 0
+				) {
+					await dispatch(
+						addCodeErrors([
+							{
+								accountId: errorGroupResult.accountId,
+								id: derivedState.currentCodeErrorId!,
+								createdAt: new Date().getTime(),
+								modifiedAt: new Date().getTime(),
+								// these don't matter
+								assignees: [],
+								teamId: "",
+								streamId: "",
+								postId: "",
+								fileStreamIds: [],
+								status: "open",
+								numReplies: 0,
+								lastActivityAt: 0,
+								creatorId: "",
+								objectId: errorGroupGuidToUse,
+								objectType: "errorGroup",
+								title: errorGroupResult.errorGroup?.title || "",
+								text: errorGroupResult.errorGroup?.message || undefined,
+								// storing the permanently parsed stack info
+								stackTraces: actualStackInfo,
+								objectInfo: {
+									repoId: repo?.id,
+									remote: targetRemote,
+									accountId: errorGroupResult.accountId.toString(),
+									entityId: errorGroupResult?.errorGroup?.entityGuid || "",
+									entityName: errorGroupResult?.errorGroup?.entityName || ""
+								}
+							}
+						])
+					);
+				} else if (derivedState.codeError && !derivedState.codeError.objectInfo) {
+					// codeError has an currentCodeErrorId, but isn't pending... it also doesn't have an objectInfo,
+					// so update it with one
+					await dispatch(
+						updateCodeError({
+							...derivedState.codeError,
 							accountId: errorGroupResult.accountId,
-							id: derivedState.currentCodeErrorId!,
-							createdAt: new Date().getTime(),
-							modifiedAt: new Date().getTime(),
-							// these don't matter
-							assignees: [],
-							teamId: "",
-							streamId: "",
-							postId: "",
-							fileStreamIds: [],
-							status: "open",
-							numReplies: 0,
-							lastActivityAt: 0,
-							creatorId: "",
-							objectId: errorGroupGuidToUse,
-							objectType: "errorGroup",
 							title: errorGroupResult.errorGroup?.title || "",
 							text: errorGroupResult.errorGroup?.message || undefined,
 							// storing the permanently parsed stack info
@@ -471,29 +506,9 @@ export function CodeErrorNav(props: Props) {
 								entityId: errorGroupResult?.errorGroup?.entityGuid || "",
 								entityName: errorGroupResult?.errorGroup?.entityName || ""
 							}
-						}
-					])
-				);
-			} else if (derivedState.codeError && !derivedState.codeError.objectInfo) {
-				// codeError has an currentCodeErrorId, but isn't pending... it also doesn't have an objectInfo,
-				// so update it with one
-				await dispatch(
-					updateCodeError({
-						...derivedState.codeError,
-						accountId: errorGroupResult.accountId,
-						title: errorGroupResult.errorGroup?.title || "",
-						text: errorGroupResult.errorGroup?.message || undefined,
-						// storing the permanently parsed stack info
-						stackTraces: actualStackInfo,
-						objectInfo: {
-							repoId: repo?.id,
-							remote: targetRemote,
-							accountId: errorGroupResult.accountId.toString(),
-							entityId: errorGroupResult?.errorGroup?.entityGuid || "",
-							entityName: errorGroupResult?.errorGroup?.entityName || ""
-						}
-					})
-				);
+						})
+					);
+				}
 			}
 			if (stackInfo) {
 				setParsedStack(stackInfo);
@@ -504,8 +519,8 @@ export function CodeErrorNav(props: Props) {
 			setIsResolved(true);
 
 			HostApi.instance.track("Error Opened", {
-				"Error Group ID": errorGroupResult?.errorGroup?.guid,
-				"NR Account ID": errorGroupResult.accountId,
+				"Error Group ID": errorGroupResult?.errorGroup?.guid || codeError?.objectInfo?.entityId,
+				"NR Account ID": errorGroupResult?.accountId || codeError?.objectInfo?.accountId || "0",
 				"Entry Point": "Open in IDE Flow"
 			});
 		} catch (ex) {

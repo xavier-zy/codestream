@@ -519,6 +519,13 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 		buildAssignees();
 	});
 
+	const title = (props.codeError?.title || "").split(/(\.)/).map(part => (
+		<>
+			{part}
+			<wbr />
+		</>
+	));
+
 	return (
 		<>
 			{openConnectionModal && (
@@ -563,8 +570,22 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 				</Modal>
 			)}
 			{!collapsed && (
-				<div style={{ display: "flex", justifyContent: "space-between", marginBottom: "10px" }}>
-					<div style={{ paddingTop: "4px" }}>
+				<div
+					style={{
+						display: "flex",
+						flexWrap: "wrap",
+						justifyContent: "space-between"
+					}}
+				>
+					<div
+						style={{
+							paddingTop: "2px",
+							whiteSpace: "nowrap",
+							overflow: "hidden",
+							textOverflow: "ellipsis",
+							marginBottom: "10px"
+						}}
+					>
 						<div
 							style={{
 								display: "inline-block",
@@ -751,12 +772,12 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 													`&utm_source=codestream&utm_medium=ide-${derivedState.ideName}&utm_campaign=error_group_link`
 												}
 											>
-												{props.codeError.title}
+												{title}
 											</Link>{" "}
 											<Icon name="link-external" className="open-external"></Icon>
 										</span>
 									) : (
-										<span>{props.codeError.title}</span>
+										<span>{title}</span>
 									)}
 								</Tooltip>
 							}
@@ -771,7 +792,7 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 													setOpenConnectionModal(true);
 												}}
 											>
-												{props.codeError.title}
+												{title}
 											</Link>{" "}
 											<Icon name="link-external" className="open-external"></Icon>
 										</span>

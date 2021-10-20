@@ -273,12 +273,11 @@ export const AddAppMonitoringNodeJS = (props: {
 												Create a custom configuration file in
 												<br />
 												<code>
-													{(repoPath || "").split("/").map(part => (
-														<span>
-															{part ? "/" : ""}
+													{(repoPath || "").split(/(\/)/).map(part => (
+														<>
 															{part}
 															<wbr />
-														</span>
+														</>
 													))}
 												</code>
 											</label>

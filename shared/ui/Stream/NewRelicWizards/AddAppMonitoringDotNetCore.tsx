@@ -308,12 +308,11 @@ export const AddAppMonitoringDotNetCore = (props: {
 												Create a custom configuration file in
 												<br />
 												<code>
-													{(cwd || "").split("/").map(part => (
-														<span>
-															{part ? "/" : ""}
+													{(cwd || "").split(/(\/)/).map(part => (
+														<>
 															{part}
 															<wbr />
-														</span>
+														</>
 													))}
 												</code>
 											</label>

@@ -219,6 +219,8 @@ export const OnboardNewRelic = React.memo(function OnboardNewRelic() {
 				}
 			}
 		})();
+
+		HostApi.instance.track("Wizard Presented", {});
 	});
 
 	// check when you connect to a host provider
@@ -253,6 +255,16 @@ export const OnboardNewRelic = React.memo(function OnboardNewRelic() {
 	const skip = (plus: number = 1) => setStep(currentStep + plus);
 
 	const setStep = (step: number) => {
+		if (step === NUM_STEPS) {
+			HostApi.instance.track("Wizard Ended", {
+				"Language Selected": projectType
+			});
+		}
+		if (step === 1) {
+			HostApi.instance.track("Wizard Started", {
+				"Language Detected": derivedState.wantNewRelicOptions?.projectType
+			});
+		}
 		if (step >= NUM_STEPS) {
 			dispatch(setOnboardStep(0));
 			dispatch(closePanel());

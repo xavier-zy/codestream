@@ -197,7 +197,7 @@ export const OnboardNewRelic = React.memo(function OnboardNewRelic() {
 	useDidMount(() => {
 		setTimeout(() => positionDots(), 250);
 		(async () => {
-			if (!derivedState.wantNewRelicOptions) {
+			if (Object.keys(derivedState.wantNewRelicOptions || {}).length === 0) {
 				const reposResponse = await HostApi.instance.send(GetReposScmRequestType, {
 					inEditorOnly: true,
 					guessProjectTypes: true
@@ -255,16 +255,18 @@ export const OnboardNewRelic = React.memo(function OnboardNewRelic() {
 	const skip = (plus: number = 1) => setStep(currentStep + plus);
 
 	const setStep = (step: number) => {
-		if (step === NUM_STEPS) {
+		if (step === NUM_STEPS - 1) {
 			HostApi.instance.track("Wizard Ended", {
 				"Language Selected": projectType
 			});
 		}
+
 		if (step === 1) {
 			HostApi.instance.track("Wizard Started", {
 				"Language Detected": derivedState.wantNewRelicOptions?.projectType
 			});
 		}
+
 		if (step >= NUM_STEPS) {
 			dispatch(setOnboardStep(0));
 			dispatch(closePanel());

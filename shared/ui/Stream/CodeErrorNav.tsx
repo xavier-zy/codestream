@@ -299,7 +299,11 @@ export function CodeErrorNav(props: Props) {
 		}
 	}, [derivedState.currentCodeErrorId]);
 
-	const onConnected = async (codeErrorArg: CSCodeError | undefined, newRemote?: string) => {
+	const onConnected = async (
+		codeErrorArg: CSCodeError | undefined,
+		newRemote?: string,
+		isConnected?: boolean
+	) => {
 		console.log("onConnected starting...");
 
 		// don't always have the codeError from the state
@@ -342,7 +346,7 @@ export function CodeErrorNav(props: Props) {
 
 		try {
 			let errorGroupResult: GetNewRelicErrorGroupResponse | undefined = undefined;
-			if (derivedState.isConnectedToNewRelic) {
+			if (isConnected || derivedState.isConnectedToNewRelic) {
 				errorGroupResult = await HostApi.instance.send(GetNewRelicErrorGroupRequestType, {
 					errorGroupGuid: errorGroupGuidToUse,
 					occurrenceId: occurrenceIdToUse,
@@ -737,7 +741,7 @@ export function CodeErrorNav(props: Props) {
 							dispatch(closeAllPanels());
 						}}
 						onSubmited={async e => {
-							onConnected(undefined);
+							onConnected(undefined, undefined, true);
 						}}
 						originLocation={"Open in IDE Flow"}
 					/>

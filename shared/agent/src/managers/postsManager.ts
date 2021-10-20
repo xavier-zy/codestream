@@ -527,6 +527,9 @@ function trackPostCreation(
 							codemarkProperties["Code Review"] = true;
 							codemarkProperties["Change Request"] = request.codemark.isChangeRequest;
 						}
+						if (request.codemark.codeErrorId) {
+							codemarkProperties["Code Error"] = true;
+						}
 						if (textDocuments && textDocuments.length) {
 							for (const textDocument of textDocuments) {
 								const firstError = await getGitError(textDocument);

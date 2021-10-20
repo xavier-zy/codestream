@@ -136,6 +136,8 @@ export interface CodeErrorData {
 	pendingEntityId?: string;
 	occurrenceId?: string;
 	lineIndex?: number;
+
+	openType?: "Open in IDE Flow" | "Observability Section" | "Activity Feed";
 }
 
 export interface WebviewContext {

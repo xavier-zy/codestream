@@ -569,7 +569,8 @@ function listenForEvents(store) {
 								pendingErrorGroupGuid: definedQuery.query.errorGroupGuid,
 								pendingRequiresConnection: !isConnected(state, {
 									id: "newrelic*com"
-								})
+								}),
+								openType: "Open in IDE Flow"
 							})
 						);
 						break;

@@ -535,11 +535,20 @@ export function CodeErrorNav(props: Props) {
 
 			setIsResolved(true);
 
-			HostApi.instance.track("Error Opened", {
+			let trackingData = {
 				"Error Group ID": errorGroupResult?.errorGroup?.guid || codeError?.objectInfo?.entityId,
 				"NR Account ID": errorGroupResult?.accountId || codeError?.objectInfo?.accountId || "0",
-				"Entry Point": "Open in IDE Flow"
-			});
+				"Entry Point": derivedState.currentCodeErrorData?.openType || "Open in IDE Flow",
+				"Stack Trace": !!(stackInfo && !stackInfo.error)
+			};
+			if (trackingData["Stack Trace"]) {
+				trackingData["Build SHA"] = !commitToUse
+					? "Missing"
+					: stackInfo?.warning
+					? "Warning"
+					: "Populated";
+			}
+			HostApi.instance.track("Error Opened", trackingData);
 		} catch (ex) {
 			console.warn(ex);
 			setError({

@@ -657,7 +657,11 @@ export const ActivityPanel = () => {
 											(target.closest(".emoji-mart") || target.closest(".reactions"))
 										)
 											return;
-										dispatch(setCurrentCodeError(record.id));
+										dispatch(
+											setCurrentCodeError(record.id, {
+												openType: "Activity Feed"
+											})
+										);
 									}}
 									renderFooter={Footer => (
 										<Footer

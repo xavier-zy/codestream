@@ -436,7 +436,8 @@ export const Observability = React.memo((props: Props) => {
 																			sessionStart: derivedState.sessionStart,
 																			pendingEntityId: response.entityId,
 																			occurrenceId: response.occurrenceId,
-																			pendingErrorGroupGuid: _.errorGroupGuid
+																			pendingErrorGroupGuid: _.errorGroupGuid,
+																			openType: "Observability Section"
 																		})
 																	);
 																} else {
@@ -616,7 +617,8 @@ export const Observability = React.memo((props: Props) => {
 																												sessionStart: derivedState.sessionStart,
 																												pendingEntityId: err.entityId,
 																												occurrenceId: err.occurrenceId,
-																												pendingErrorGroupGuid: err.errorGroupGuid
+																												pendingErrorGroupGuid: err.errorGroupGuid,
+																												src: "Observability Section"
 																											}
 																										)
 																									);

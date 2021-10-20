@@ -331,6 +331,7 @@ px.display(df[['upid', 'pod']])`;
 						: done
 						? "Done"
 						: "Capturing";
+					postProcess(data, metaData);
 					session.agent.sendNotification(PixieDynamicLoggingResultNotification, {
 						id,
 						metaData,
@@ -438,4 +439,35 @@ function formatId(id: { high: Long; low: Long }): string {
 		16
 	)}-${str.substring(16, 20)}-${str.substring(20, 32)}`;
 	return formatted;
+}
+
+function postProcess(data: any[], metaData: string[]) {
+	for (const rowObject of data) {
+		for (let i = 0; i < metaData.length; i++) {
+			const columnName = metaData[i];
+			const value = rowObject[columnName];
+			if (typeof value === "string") {
+				try {
+					const parsed = JSON.parse(value);
+					if (parsed.hasOwnProperty("array") && parsed.hasOwnProperty("len")) {
+						// handle Go arrays
+						const len = parsed["len"];
+						if (typeof len === "number") {
+							rowObject[columnName] = `array[${len}]`;
+							continue;
+						}
+					}
+				} catch (ignore) {}
+			}
+			if (i === metaData.length - 1 && metaData[i] === "latency") {
+				try {
+					rowObject[columnName] = numberWithCommas(value) + " ns";
+				} catch (ignore) {}
+			}
+		}
+	}
+}
+
+function numberWithCommas(x: number) {
+	return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }

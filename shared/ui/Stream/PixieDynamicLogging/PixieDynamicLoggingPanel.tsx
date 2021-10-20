@@ -7,7 +7,10 @@ import {
 	TelemetryRequestType
 } from "@codestream/protocols/agent";
 import { Button } from "@codestream/webview/src/components/Button";
-import { pixieDynamicLoggingCancel } from "@codestream/webview/store/dynamicLogging/actions";
+import {
+	clearDynamicLogging,
+	pixieDynamicLoggingCancel
+} from "@codestream/webview/store/dynamicLogging/actions";
 import { isConnected } from "@codestream/webview/store/providers/reducer";
 import { ConditionalNewRelic } from "@codestream/webview/Stream/CodeError/ConditionalComponent";
 import { ConfigureNewRelic } from "@codestream/webview/Stream/ConfigureNewRelic";
@@ -240,6 +243,10 @@ const PixieDynamicLogging = props => {
 		setTimeout(() => setIsCancelling(false), 2000);
 	};
 
+	const resetLogging = () => {
+		dispatch(clearDynamicLogging());
+	};
+
 	return (
 		<Root ref={rootRef}>
 			<div
@@ -273,7 +280,7 @@ const PixieDynamicLogging = props => {
 									<Button
 										variant="destructive"
 										size="compact"
-										onClick={stopLogging}
+										onClick={resetLogging}
 										isLoading={isCancelling}
 									>
 										Reset
@@ -323,7 +330,13 @@ const PixieDynamicLogging = props => {
 											<>
 												<tr style={{ borderBottom: "1px solid #888" }}>
 													{Object.keys(_).map(k => {
-														return <td style={{ width: "25%", padding: "3px 1px" }}>{_[k]}</td>;
+														return (
+															<td
+																style={{ width: "25%", padding: "3px 1px", whiteSpace: "nowrap" }}
+															>
+																{_[k]}
+															</td>
+														);
 													})}
 												</tr>
 											</>

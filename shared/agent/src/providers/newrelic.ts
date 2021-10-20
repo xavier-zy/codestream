@@ -902,8 +902,8 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		let entityGuid: string = "";
 		try {
 			const errorGroupGuid = request.errorGroupGuid;
-			const parsedId = this.parseId(errorGroupGuid)!;
-			accountId = parsedId.accountId;
+			const parsedId = NewRelicProvider.parseId(errorGroupGuid)!;
+			accountId = parsedId?.accountId;
 
 			let errorGroupFullResponse;
 
@@ -1226,8 +1226,8 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		url: string;
 	}): Promise<Directives | undefined> {
 		try {
-			const parsedId = this.parseId(request.parseableAccountId)!;
-			const accountId = parsedId.accountId;
+			const parsedId = NewRelicProvider.parseId(request.parseableAccountId)!;
+			const accountId = parsedId?.accountId;
 			const name = request.name;
 
 			const response = await this.mutate<{
@@ -1967,7 +1967,7 @@ actor {
 				return undefined;
 			}
 
-			const accountId = this.parseId(errorGroupGuid)?.accountId!;
+			const accountId = NewRelicProvider.parseId(errorGroupGuid)?.accountId!;
 
 			const entityGuid = await this.getEntityGuidFromErrorGroupId(errorGroupGuid);
 			if (!entityGuid) {
@@ -2160,7 +2160,7 @@ actor {
 		return undefined;
 	}
 
-	private parseId(idLike: string): NewRelicId | undefined {
+	public static parseId(idLike: string): NewRelicId | undefined {
 		try {
 			const parsed = Buffer.from(idLike, "base64").toString("utf-8");
 			if (!parsed) return undefined;

@@ -48,6 +48,7 @@ import { Parser as goParser } from "./stackTraceParsers/goStackTraceParser";
 import { NodeJSInstrumentation } from "./newRelicInstrumentation/nodeJSInstrumentation";
 import { JavaInstrumentation } from "./newRelicInstrumentation/javaInstrumentation";
 import { DotNetCoreInstrumentation } from "./newRelicInstrumentation/dotNetCoreInstrumentation";
+import { NewRelicProvider } from "../providers/newrelic";
 
 const ExtensionToLanguageMap: { [key: string]: string } = {
 	js: "javascript",
@@ -93,7 +94,10 @@ export class NRManager {
 	// returns info gleaned from parsing a stack trace
 	@lspHandler(ParseStackTraceRequestType)
 	@log()
-	async parseStackTrace({ stackTrace }: ParseStackTraceRequest): Promise<ParseStackTraceResponse> {
+	async parseStackTrace({
+		errorGroupGuid,
+		stackTrace
+	}: ParseStackTraceRequest): Promise<ParseStackTraceResponse> {
 		const lines: string[] = typeof stackTrace === "string" ? stackTrace.split("\n") : stackTrace;
 		const whole = lines.join("\n");
 
@@ -107,6 +111,19 @@ export class NRManager {
 		if (lang) {
 			return StackTraceParsers[lang](whole);
 		} else {
+			try {
+				const telemetry = Container.instance().telemetry;
+				const parsed = NewRelicProvider.parseId(errorGroupGuid || "");
+
+				telemetry.track({
+					eventName: "Error Parsing Trace",
+					properties: {
+						"Error Group ID": errorGroupGuid!,
+						"NR Account ID": parsed?.accountId || 0,
+						Language: lang || "Not Detected"
+					}
+				});
+			} catch (ex) {}
 			Logger.error(new Error("GuessStackLanguageFailed"), "language guess failed", {
 				languageGuess: lang
 			});
@@ -136,6 +153,7 @@ export class NRManager {
 	@lspHandler(ResolveStackTraceRequestType)
 	@log()
 	async resolveStackTrace({
+		errorGroupGuid,
 		stackTrace,
 		repoId,
 		sha,
@@ -201,7 +219,10 @@ export class NRManager {
 			}
 		}
 
-		const parsedStackInfo = await this.parseStackTrace({ stackTrace });
+		const parsedStackInfo = await this.parseStackTrace({
+			errorGroupGuid,
+			stackTrace
+		});
 		if (parsedStackInfo.parseError) {
 			return { error: parsedStackInfo.parseError };
 		} else if (sha && !parsedStackInfo.lines.find(line => !line.error)) {

@@ -5,11 +5,13 @@ import { CSStackTraceInfo } from "./api.protocol.models";
 import { RepoProjectType } from "./agent.protocol.scm";
 
 export interface ParseStackTraceRequest {
+	errorGroupGuid: string;
 	stackTrace: string | string[];
 }
 
 export interface ParseStackTraceResponse extends CSStackTraceInfo {
 	parseError?: string;
+	language?: string;
 }
 
 export const ParseStackTraceRequestType = new RequestType<
@@ -20,6 +22,9 @@ export const ParseStackTraceRequestType = new RequestType<
 >("codestream/nr/parseStackTrace");
 
 export interface ResolveStackTraceRequest {
+	// tracking
+	errorGroupGuid: string;
+
 	occurrenceId: string;
 	stackTrace: string[];
 	repoId: string;

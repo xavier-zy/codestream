@@ -448,6 +448,7 @@ export function CodeErrorNav(props: Props) {
 
 				if (stack) {
 					stackInfo = (await resolveStackTrace(
+						errorGroupGuidToUse!,
 						repoId!,
 						commitToUse!,
 						occurrenceIdToUse!,

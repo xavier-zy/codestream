@@ -418,10 +418,8 @@ export const openErrorGroup = (
 		objectType: "errorGroup"
 	});
 	if (response.unauthorized) {
-		HostApi.instance.track("Error Report Roadblocked", {
+		HostApi.instance.track("Error Roadblocked", {
 			"Error Group ID": errorGroupGuid,
-			// FIXME: i don't have a fucking clue how we're going to get this, especially at this point in the flow
-			"NR Organization ID": "",
 			"NR Account ID": response.accountId
 		});
 		const orgDesc = response.ownedBy

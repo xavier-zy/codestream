@@ -1261,7 +1261,8 @@ export class CodeStreamSession {
 			Endpoint: this.versionInfo.ide.name,
 			"Endpoint Detail": this.versionInfo.ide.detail,
 			"IDE Version": this.versionInfo.ide.version,
-			Deployment: this.isOnPrem ? "OnPrem" : "Cloud"
+			Deployment: this.isOnPrem ? "OnPrem" : "Cloud",
+			Country: user.countryCode
 		};
 
 		if (team != null) {

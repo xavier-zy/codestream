@@ -1336,11 +1336,9 @@ export class CodeStreamApiProvider implements ApiProvider {
 			limit
 		};
 
-		/* The need to pass streamId is deprecated
 		if (request.streamId) {
 			params.streamId = request.streamId;
 		}
-		*/
 		if (request.before) {
 			params.before = request.before;
 		}

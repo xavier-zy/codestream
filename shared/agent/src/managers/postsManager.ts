@@ -365,6 +365,7 @@ export class PostIndex extends BaseIndex<CSPost> {
 		if (!this.enabled) return;
 
 		const { streamId } = request;
+		if (!streamId) return;
 		let postCollection = this.postsByStream.get(streamId);
 		if (!postCollection) {
 			postCollection = new PostCollection(request, response);
@@ -416,7 +417,9 @@ class PostsCache extends EntityCache<CSPost> {
 
 			this.set(response.posts);
 
-			this.postIndex.setPosts(request, response);
+			if (request.streamId) {
+				this.postIndex.setPosts(request, response);
+			}
 			posts = response.posts;
 			more = response.more;
 		}

@@ -1,5 +1,12 @@
 # Change Log
 
+## [12.0.1] - 2021-10-21
+
+### Fixed
+
+- Fixes an issue that prevented you from signing up with a webmail address
+- Fixes an issue that allowed you to share a pending error to Slack/MS Teams
+
 ## [12.0.0] - 2021-10-21
 
 ### Added

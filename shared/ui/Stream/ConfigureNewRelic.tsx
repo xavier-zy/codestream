@@ -34,6 +34,7 @@ interface Props {
 	ide: {
 		name: string;
 	};
+	isProductionCloud?: boolean;
 	closeAllPanels: Function;
 	configureProvider: Function;
 	onClose?: Function;
@@ -204,6 +205,21 @@ class ConfigureNewRelic extends Component<Props> {
 										{this.renderApiKeyHelp()}
 									</div>
 								</div>
+								{this.props.isInternalUser && !this.props.isProductionCloud && (
+									<div className="control-group" style={{ margin: "15px 0px" }}>
+										<div className="control-group" style={{ margin: "15px 0px" }}>
+											<input
+												className="input-text control"
+												type="text"
+												name="apiUrl"
+												tabIndex={1}
+												value={this.state.apiUrl}
+												onChange={e => this.setState({ apiUrl: e.target.value })}
+											/>
+										</div>
+									</div>
+								)}
+
 								<div className="control-group" style={{ margin: "15px 0px" }}>
 									<Button
 										id="save-button"
@@ -230,20 +246,6 @@ class ConfigureNewRelic extends Component<Props> {
 										Create one now
 									</Link>
 								</div>
-								{this.props.isInternalUser && (
-									<>
-										<div className="control-group" style={{ margin: "15px 0px" }}>
-											<input
-												className="input-text control"
-												type="text"
-												name="apiUrl"
-												tabIndex={1}
-												value={this.state.apiUrl}
-												onChange={e => this.setState({ apiUrl: e.target.value })}
-											/>
-										</div>
-									</>
-								)}{" "}
 							</div>
 						</div>
 						<div className="control-group" style={{ marginTop: "30px" }}>
@@ -275,6 +277,7 @@ const mapStateToProps = state => {
 	const { providers, ide } = state;
 	const connected = isConnected(state, { id: "newrelic*com" });
 	return {
+		isProductionCloud: state.configs.isProductionCloud,
 		providers,
 		ide,
 		isNewRelicConnected: connected,

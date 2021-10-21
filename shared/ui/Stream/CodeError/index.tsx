@@ -28,6 +28,7 @@ import {
 	fetchCodeError,
 	fetchErrorGroup,
 	jumpToStackLine,
+	PENDING_CODE_ERROR_ID_PREFIX,
 	upgradePendingCodeError
 } from "@codestream/webview/store/codeErrors/actions";
 import { DelayedRender } from "@codestream/webview/Container/DelayedRender";
@@ -864,14 +865,17 @@ export const BaseCodeErrorMenu = (props: BaseCodeErrorMenuProps) => {
 				}
 			});
 		}
-
-		items = items.concat([
-			{
+		if (props.codeError?.id?.indexOf(PENDING_CODE_ERROR_ID_PREFIX) === -1) {
+			// don't add the ability to share for pending codeErrors
+			items.push({
 				label: "Share",
 				icon: <Icon name="share" />,
 				key: "share",
 				action: () => setShareModalOpen(true)
-			},
+			});
+		}
+
+		items = items.concat([
 			{
 				label: "Copy Link",
 				icon: <Icon name="copy" />,

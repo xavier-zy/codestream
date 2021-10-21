@@ -1,6 +1,6 @@
 <idea-plugin>
     <id>com.codestream.jetbrains-codestream</id>
-    <name>New Relic CodeStream: GitHub, GitLab, Bitbucket PRs and Code Review</name>
+    <name>New Relic CodeStream: GitHub, GitLab, PRs and Code Review</name>
     <vendor email="support@codestream.com" url="http://www.codestream.com">CodeStream</vendor>
 
     <description>DO NOT EDIT: Generated from docs/description.html</description>
@@ -161,5 +161,5 @@
 
     <depends>com.intellij.modules.platform</depends>
     <depends>Git4Idea</depends>
-    <idea-version since-build="202.6397" />
+    <idea-version since-build="203.6682" />
 </idea-plugin>

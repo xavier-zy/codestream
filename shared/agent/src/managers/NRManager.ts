@@ -77,7 +77,7 @@ const StackTraceParsers: { [key: string]: Parser } = {
 const MISSING_SHA_MESSAGE =
 	"Your version of the code may not match the environment that triggered the error. Fetch the following commit to better investigate the error.\n${sha}";
 const MISSING_SHA_HELP_URL =
-	"http://docs.newrelic.com/docs/codestream/start-here/codestream-new-relic/#errors";
+	"http://docs.newrelic.com/docs/codestream/start-here/codestream-new-relic/#apm";
 
 @lsp
 export class NRManager {

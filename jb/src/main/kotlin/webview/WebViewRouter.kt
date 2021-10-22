@@ -58,7 +58,12 @@ class WebViewRouter(val project: Project) {
 
     @JsAccessible
     fun handle(rawMessage: String, origin: String?) = GlobalScope.launch {
-        val message = parse(rawMessage)
+        val message = try {
+            parse(rawMessage)
+        } catch (e: Exception) {
+            logger.error(e);
+            return@launch
+        }
 
         try {
             logger.debug("Handling ${message.method} ${message.id}")

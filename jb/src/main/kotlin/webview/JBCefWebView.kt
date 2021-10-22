@@ -63,7 +63,11 @@ class JBCefWebView(val jbCefBrowser: JBCefBrowser, val router: WebViewRouter) : 
                         window.acquireHostApi = function() {
                             return {
                                 postMessage: function(message, origin) {
-                                    ${routerQuery.inject("JSON.stringify(message)")}
+                                    let json = JSON.stringify(message);
+                                    json = json.replace(/[\u007F-\uFFFF]/g, function(chr) {
+                                        return "\\u" + ("0000" + chr.charCodeAt(0).toString(16)).substr(-4)
+                                    });
+                                    ${routerQuery.inject("json")}
                                 }
                             }
                         }

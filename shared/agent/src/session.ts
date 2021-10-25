@@ -1330,6 +1330,22 @@ export class CodeStreamSession {
 	}
 
 	@log()
+	async updateSuperProps(props: { [key: string]: any }) {
+		const { telemetry } = Container.instance();
+		await telemetry.ready();
+		telemetry.identify(this._codestreamUserId!, props);
+		telemetry.setSuperProps(props);
+	}
+
+	async updateNewRelicSuperProps(userId: number, orgId: number) {
+		return this.updateSuperProps({
+			"NR User ID": userId,
+			"NR Organization ID": orgId,
+			"NR Connected Org": true
+		});
+	}
+
+	@log()
 	async updateProviders() {
 		const currentTeam = await SessionContainer.instance().teams.getByIdFromCache(this.teamId);
 		if (currentTeam) {

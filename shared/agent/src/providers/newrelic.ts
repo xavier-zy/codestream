@@ -262,6 +262,9 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				orgIds: uniqueOrgIds
 			}
 		});
+
+		// update telemetry super-properties
+		this.session.updateNewRelicSuperProps(userId, uniqueOrgIds[0]);
 	}
 
 	private async validateApiKey(

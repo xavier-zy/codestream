@@ -37,6 +37,7 @@ import {
 import { keyBy as _keyBy } from "lodash-es";
 import { openErrorGroup } from "../store/codeErrors/actions";
 import { EntityAssociator } from "./EntityAssociator";
+import { Link } from "./Link";
 
 interface Props {
 	paneState: PaneState;

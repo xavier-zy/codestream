@@ -99,7 +99,6 @@ export class SlackSharingApiProvider {
 
 	constructor(
 		private _codestream: CodeStreamApiProvider,
-		private _codestreamTeam: CSTeam | undefined,
 		providerInfo: CSSlackProviderInfo,
 		private readonly _codestreamTeamId: string,
 		private readonly _proxyAgent: HttpsAgent | HttpsProxyAgent | undefined
@@ -983,15 +982,7 @@ export class SlackSharingApiProvider {
 
 		const [responses, { user: me }] = await Promise.all([
 			this.slackApiCallPaginated("users.list", { limit: 1000 }),
-			this.getMeCore(),
-			(this._codestreamTeam !== undefined
-				? Promise.resolve({ team: this._codestreamTeam })
-				: this._codestream.getTeam({ teamId: this._codestreamTeamId })
-			).then(({ team }) =>
-				this._codestream.fetchUsers({
-					userIds: team.memberIds
-				})
-			)
+			this.getMeCore()
 		]);
 
 		const members = [];
@@ -1014,8 +1005,6 @@ export class SlackSharingApiProvider {
 			// Find ourselves and replace it with our model
 			m.id === this._slackUserId ? me : fromSlackUser(m, this._codestreamTeamId)
 		);
-		// Don't filter out deactivated users anymore to allow codemark by deleted users to show up properly
-		// .filter(u => !u.deactivated);
 
 		return { users: users };
 	}

@@ -55,7 +55,6 @@ export class SlackProvider extends ThirdPartyPostProviderBase<CSSlackProviderInf
 		const session = SessionContainer.instance().session;
 		const slackApi = new SlackSharingApiProvider(
 			session.api as CodeStreamApiProvider,
-			(session.api as CodeStreamApiProvider).team,
 			{
 				accessToken: providerInfo.accessToken!,
 				teamId: session.api.teamId,

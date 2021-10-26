@@ -184,7 +184,8 @@ export const authenticate = (params: PasswordLoginParams | TokenLoginRequest) =>
 						// since we're sure the error is NotInCompany, params below must be email/password because token
 						// login is for resuming previous sessions and this error means you haven't ever fully signed into the extension
 						email: (params as PasswordLoginParams).email,
-						token: response.extra.token
+						token: response.extra.token,
+						userId: response.extra.userId
 					})
 				);
 			case LoginResult.NotOnTeam:
@@ -319,6 +320,7 @@ export const validateSignup = (provider: string, authInfo?: SSOAuthInfo) => asyn
 					goToCompanyCreation({
 						email: response.extra && response.extra.email,
 						token: response.extra && response.extra.token,
+						userId: response.extra && response.extra.userId,
 						provider
 					})
 				);

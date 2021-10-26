@@ -48,8 +48,6 @@ class ConfigureNewRelic extends Component<Props> {
 		loading: false,
 		apiKey: "",
 		apiKeyTouched: false,
-		// this is the default url we show in the textbox
-		apiUrl: "https://api.newrelic.com",
 		formTouched: false,
 		showSignupUrl: true,
 		disablePostConnectOnboarding: false,
@@ -74,12 +72,10 @@ class ConfigureNewRelic extends Component<Props> {
 		e.preventDefault();
 		if (this.isFormInvalid()) return;
 		const { providerId } = this.props;
-		const { apiKey, apiUrl } = this.state;
-		let url: string | undefined = apiUrl.toLowerCase();
-		if (url === this.initialState.apiUrl || url === `${this.initialState.apiUrl}/`) {
-			// if it's the default, dont save it.
-			url = undefined;
-		}
+		const { apiKey } = this.state;
+		const apiUrl: string | undefined = this.props.isProductionCloud
+			? "https://api.newrelic.com"
+			: "https://staging-api.newrelic.com";
 
 		// configuring is as good as connecting, since we are letting the user
 		// set the access token ... sending the fourth argument as true here lets the
@@ -89,7 +85,7 @@ class ConfigureNewRelic extends Component<Props> {
 		try {
 			await this.props.configureProvider(
 				providerId,
-				{ apiKey, apiUrl: url },
+				{ apiKey, apiUrl },
 				true,
 				this.props.originLocation,
 				true
@@ -205,21 +201,6 @@ class ConfigureNewRelic extends Component<Props> {
 										{this.renderApiKeyHelp()}
 									</div>
 								</div>
-								{this.props.isInternalUser && !this.props.isProductionCloud && (
-									<div className="control-group" style={{ margin: "15px 0px" }}>
-										<div className="control-group" style={{ margin: "15px 0px" }}>
-											<input
-												className="input-text control"
-												type="text"
-												name="apiUrl"
-												tabIndex={1}
-												value={this.state.apiUrl}
-												onChange={e => this.setState({ apiUrl: e.target.value })}
-											/>
-										</div>
-									</div>
-								)}
-
 								<div className="control-group" style={{ margin: "15px 0px" }}>
 									<Button
 										id="save-button"
@@ -280,13 +261,11 @@ const mapStateToProps = state => {
 		isProductionCloud: state.configs.isProductionCloud,
 		providers,
 		ide,
-		isNewRelicConnected: connected,
-		isInternalUser: isCurrentUserInternal(state)
+		isNewRelicConnected: connected
 	};
 };
 
 const component = connect(mapStateToProps, {
-	isCurrentUserInternal,
 	isConnected,
 	closeAllPanels,
 	configureProvider,

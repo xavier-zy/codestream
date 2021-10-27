@@ -148,6 +148,19 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		// delete the graphql client so it will be reconstructed if a new token is applied
 		delete this._client;
 		delete this._newRelicUserId;
+
+		try {
+			// remove these when a user disconnects -- don't want them lingering around
+			const { users } = SessionContainer.instance();
+			await users.updatePreferences({
+				preferences: {
+					observabilityRepoEntities: []
+				}
+			});
+		} catch (ex) {
+			ContextLogger.warn("failed to remove observabilityRepoEntities", ex);
+		}
+
 		super.onDisconnected(request);
 	}
 

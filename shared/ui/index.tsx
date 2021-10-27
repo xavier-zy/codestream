@@ -536,6 +536,7 @@ function listenForEvents(store) {
 							remote?: string;
 							tag?: string;
 							ide?: string;
+							timestamp?: number;
 						}>;
 
 						definedQuery.query.occurrenceId =

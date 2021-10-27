@@ -137,6 +137,8 @@ export interface CodeErrorData {
 	occurrenceId?: string;
 	lineIndex?: number;
 
+	timestamp?: number;
+
 	openType?: "Open in IDE Flow" | "Observability Section" | "Activity Feed";
 }
 

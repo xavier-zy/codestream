@@ -350,7 +350,8 @@ export function CodeErrorNav(props: Props) {
 				errorGroupResult = await HostApi.instance.send(GetNewRelicErrorGroupRequestType, {
 					errorGroupGuid: errorGroupGuidToUse,
 					occurrenceId: occurrenceIdToUse,
-					entityGuid: entityIdToUse
+					entityGuid: entityIdToUse,
+					timestamp: derivedState.currentCodeErrorData?.timestamp
 				});
 
 				if (!errorGroupResult || errorGroupResult?.error?.message) {

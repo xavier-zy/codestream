@@ -614,6 +614,7 @@ export const Observability = React.memo((props: Props) => {
 																											err.errorGroupGuid,
 																											err.occurrenceId,
 																											{
+																												timestamp: err.lastOccurrence,
 																												remote: or.repoRemote,
 																												sessionStart: derivedState.sessionStart,
 																												pendingEntityId: err.entityId,

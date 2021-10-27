@@ -80,13 +80,6 @@ interface NewRelicId {
 	unknownGuid: string;
 }
 
-interface NewRelicEntity {
-	guid: string;
-	name: string;
-	tags: { key: string; values: string[] }[];
-	type: string;
-}
-
 class AccessTokenError extends Error {
 	constructor(public text: string, public innerError: any, public isAccessTokenError: boolean) {
 		super(text);
@@ -916,17 +909,22 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				errorGroupFullResponse = await this.fetchErrorGroup(
 					errorGroupGuid,
 					entityGuid,
-					request.occurrenceId
+					request.occurrenceId,
+					request.timestamp
 				);
 			} else {
 				// no entity, look it up
-				const errorGroupPartialResponse = await this.fetchErrorGroupDataById(errorGroupGuid);
+				const errorGroupPartialResponse = await this.fetchErrorGroupById(
+					errorGroupGuid,
+					request.timestamp
+				);
 				if (errorGroupPartialResponse?.entityGuid) {
 					entityGuid = errorGroupPartialResponse?.entityGuid;
 					errorGroupFullResponse = await this.fetchErrorGroup(
 						errorGroupGuid,
 						entityGuid,
-						request.occurrenceId
+						request.occurrenceId,
+						request.timestamp
 					);
 				}
 			}
@@ -938,8 +936,8 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				}
 			);
 
-			if (errorGroupFullResponse) {
-				const errorGroupResponse = errorGroupFullResponse.actor.errorsInbox.errorGroup;
+			if (errorGroupFullResponse?.actor?.errorsInbox?.errorGroups?.results?.length) {
+				const errorGroupResponse = errorGroupFullResponse.actor.errorsInbox.errorGroups.results[0];
 				entityGuid = errorGroupResponse.entityGuid;
 				errorGroup = {
 					entity: {},
@@ -969,13 +967,12 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				}
 				errorGroup.states =
 					states && states.length ? states : ["UNRESOLVED", "RESOLVED", "IGNORED"];
-				errorGroup.errorGroupUrl = errorGroupFullResponse.actor.errorsInbox.errorGroup.url;
+				errorGroup.errorGroupUrl = errorGroupResponse.url;
 				errorGroup.entityName = errorGroupFullResponse.actor.entity.name;
 				errorGroup.entityAlertingSeverity = errorGroupFullResponse.actor.entity.alertSeverity;
-				errorGroup.state =
-					errorGroupFullResponse.actor.errorsInbox.errorGroup.state || "UNRESOLVED";
+				errorGroup.state = errorGroupResponse.state || "UNRESOLVED";
 
-				const assignee = errorGroupFullResponse.actor.errorsInbox.errorGroup.assignment;
+				const assignee = errorGroupResponse.assignment;
 				if (assignee) {
 					errorGroup.assignee = {
 						email: assignee.email,
@@ -1223,10 +1220,14 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 	async assignRepository(request: {
 		/** this is a field that can be parsed to get an accountId */
 		parseableAccountId: string;
-		errorGroupGuid?: string;
-		entityId?: string;
-		name?: string;
+		/** url from the remote */
 		url: string;
+		/** entity (application) that is attached to this repo */
+		entityId: string;
+		/** name of the repo */
+		name: string;
+		/** we don't always have an errorGroupId */
+		errorGroupGuid?: string;
 	}): Promise<Directives | undefined> {
 		try {
 			const parsedId = NewRelicProvider.parseId(request.parseableAccountId)!;
@@ -1282,7 +1283,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 
 			const repoEntityId = response.referenceEntityCreateOrUpdateRepository.created[0];
 			const entityId =
-				request.entityId || (await this.getEntityGuidFromErrorGroupGuid(request.errorGroupGuid!));
+				request.entityId || (await this.fetchErrorGroupById(request.errorGroupGuid!))?.entityGuid;
 			if (entityId) {
 				const entityRelationshipUserDefinedCreateOrReplaceResponse = await this.mutate<{
 					errors?: { message: string }[];
@@ -1388,51 +1389,47 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		return undefined;
 	}
 
-	private async getEntityGuidFromErrorGroupGuid(
-		errorGroupGuid: string
-	): Promise<string | undefined> {
+	private async fetchErrorGroupById(
+		errorGroupGuid: string,
+		timestamp?: number
+	): Promise<ErrorGroup | undefined> {
 		try {
-			const results = await this.fetchErrorGroupDataById(errorGroupGuid);
-			return results ? results.entityGuid : undefined;
-		} catch (ex) {
-			Logger.error(ex, "NR: getEntityIdFromErrorGroupGuid", {
-				errorGroupGuid: errorGroupGuid
-			});
-			return undefined;
-		}
-	}
-
-	private async fetchErrorGroupDataById(errorGroupGuid: string): Promise<ErrorGroup | undefined> {
-		try {
-			let response = await this.query<{
+			const timestampRange = this.generateTimestampRange(timestamp);
+			const response = await this.query<{
 				actor: {
 					errorsInbox: {
-						errorGroup: ErrorGroup;
+						errorGroups: {
+							results: ErrorGroup[];
+						};
 					};
 				};
 			}>(
-				`query errorGroupById($errorGroupId: ID) {
+				`query errorGroupById($ids: [ID!]) {
 					actor {
 					  errorsInbox {
-						errorGroup(id: $errorGroupId) {
-						  id
-						  message
-						  name
-						  state
-						  entityGuid
+						errorGroups(filter: {ids: $ids}${
+							timestampRange
+								? `, timeWindow: {startTime: ${timestampRange.startTime}, endTime: ${timestampRange.endTime}}`
+								: ""
+						}) {
+						  results {
+							id
+							message
+							name
+							state
+							entityGuid
+						  }
 						}
 					  }
 					}
 				  }
+				  
 				`,
 				{
-					errorGroupId: errorGroupGuid
+					ids: [errorGroupGuid]
 				}
 			);
-			const results = response.actor.errorsInbox.errorGroup;
-			if (results) {
-				return results;
-			}
+			return response?.actor?.errorsInbox?.errorGroups?.results[0] || undefined;
 		} catch (ex) {
 			Logger.warn("NR: fetchErrorGroupDataById failure", {
 				errorGroupGuid
@@ -1532,29 +1529,15 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 	}
 
 	@log()
-	private async fetchErrorGroup(
+	private async _fetchErrorGroup(
 		errorGroupGuid: string,
 		entityGuid: string,
-		occurrenceId?: string
+		timestamp?: number
 	): Promise<ErrorGroupResponse> {
-		let stackTracePromise;
-		if (entityGuid && occurrenceId) {
-			try {
-				// kick this off
-				stackTracePromise = this.fetchStackTrace(entityGuid, occurrenceId);
-			} catch (ex) {
-				Logger.warn("NR: fetchErrorGroup (stack trace missing)", {
-					entityGuid: entityGuid,
-					occurrenceId: occurrenceId
-				});
-				stackTracePromise = undefined;
-			}
-		}
-
-		const response: ErrorGroupResponse = await this.query(
-			`query getErrorGroup($errorGroupGuid:ID!, $entityGuid:EntityGuid!) {
+		const timestampRange = this.generateTimestampRange(timestamp);
+		const q = `query getErrorGroup($errorGroupGuids: [ID!], $entityGuid: EntityGuid!) {
 			actor {
-			  entity(guid: $entityGuid) {					 
+			  entity(guid: $entityGuid) {
 				alertSeverity
 				name
 				relatedEntities(filter: {direction: BOTH, relationshipTypes: {include: BUILT_FROM}}) {
@@ -1583,51 +1566,91 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			  }
 			  errorsInbox {
 				errorGroupStateTypes {
-					type
+				  type
 				}
-				errorGroup(id: $errorGroupGuid) {
-				  url
-				  id
-				  message
-				  name
-				  state
-				  entityGuid
-				  assignment {
-					email
-					userInfo {
-					  gravatar
-					  id
-					  name
+				errorGroups(filter: {ids: $errorGroupGuids} ${
+					timestampRange
+						? `, timeWindow: {startTime: ${timestampRange.startTime}, endTime: ${timestampRange.endTime}}`
+						: ""
+				}) {
+				  results {
+					url
+					id
+					message
+					name
+					state
+					entityGuid
+					assignment {
+					  email
+					  userInfo {
+						gravatar
+						id
+						name
+					  }
 					}
+					state
 				  }
-				  state
 				}
 			  }
 			}
-		  }			  
-	  `,
-			{
-				errorGroupGuid: errorGroupGuid,
-				entityGuid: entityGuid
-			}
-		);
-		if (occurrenceId && response?.actor?.entity) {
-			let stackTrace;
+		  }`;
+
+		return this.query(q, {
+			errorGroupGuids: [errorGroupGuid],
+			entityGuid: entityGuid
+		});
+	}
+
+	@log()
+	private async fetchErrorGroup(
+		errorGroupGuid: string,
+		entityGuid: string,
+		occurrenceId?: string,
+		timestamp?: number
+	): Promise<ErrorGroupResponse> {
+		let stackTracePromise;
+		if (entityGuid && occurrenceId) {
 			try {
-				stackTrace = await stackTracePromise;
-				if (stackTrace) {
-					if (response.actor.entity) {
-						response.actor.entity.crash = stackTrace.actor.entity.crash;
-						response.actor.entity.exception = stackTrace.actor.entity.exception;
-					}
-				}
+				// kick this off
+				stackTracePromise = this.fetchStackTrace(entityGuid, occurrenceId);
 			} catch (ex) {
-				Logger.warn("NR: fetchErrorGroup (stack trace missing upon waiting)", {
+				Logger.warn("NR: fetchErrorGroup (stack trace missing)", {
 					entityGuid: entityGuid,
 					occurrenceId: occurrenceId
 				});
+				stackTracePromise = undefined;
 			}
 		}
+
+		let response: ErrorGroupResponse = await this._fetchErrorGroup(
+			errorGroupGuid,
+			entityGuid,
+			timestamp
+		);
+		if (response?.actor?.errorsInbox?.errorGroups?.results?.length === 0) {
+			Logger.warn("NR: fetchErrorGroup (retrying without timestamp)", {
+				entityGuid: entityGuid,
+				occurrenceId: occurrenceId
+			});
+			response = await this._fetchErrorGroup(errorGroupGuid, entityGuid);
+		}
+
+		let stackTrace;
+		try {
+			stackTrace = await stackTracePromise;
+			if (stackTrace && occurrenceId && response?.actor?.entity) {
+				if (response.actor.entity) {
+					response.actor.entity.crash = stackTrace.actor.entity.crash;
+					response.actor.entity.exception = stackTrace.actor.entity.exception;
+				}
+			}
+		} catch (ex) {
+			Logger.warn("NR: fetchErrorGroup (stack trace missing upon waiting)", {
+				entityGuid: entityGuid,
+				occurrenceId: occurrenceId
+			});
+		}
+
 		return response;
 	}
 
@@ -1919,28 +1942,6 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		}
 	}
 
-	private async getEntityGuidFromErrorGroupId(errorGroupGuid: string): Promise<string> {
-		const response = await this.query(
-			`query getErrorGroup($id:ID) {
-actor {
-  errorsInbox {
-	errorGroup(id:$id) {
-	  entityGuid
-	}
-  }
-}
-}`,
-			{
-				id: errorGroupGuid
-			}
-		);
-		let entityGuid;
-		if (response?.actor?.errorsInbox?.errorGroup) {
-			entityGuid = response.actor.errorsInbox.errorGroup.entityGuid;
-		}
-		return entityGuid;
-	}
-
 	/**
 	 * from an errorGroupGuid, returns a traceId and an entityId
 	 *
@@ -1972,68 +1973,64 @@ actor {
 
 			const accountId = NewRelicProvider.parseId(errorGroupGuid)?.accountId!;
 
-			const entityGuid = await this.getEntityGuidFromErrorGroupId(errorGroupGuid);
-			if (!entityGuid) {
-				Logger.warn("NR: getMetric missing entityGuid", {
-					accountId: accountId,
-					errorGroupGuid: errorGroupGuid
-				});
+			const errorGroupResponse = await this.fetchErrorGroupById(errorGroupGuid);
+
+			if (!errorGroupResponse) {
+				Logger.warn("NR: fetchErrorGroupDataById missing errorGroupGuid");
 				return undefined;
 			}
 
-			const response1 = await this.fetchErrorGroupDataById(errorGroupGuid);
-			if (response1) {
-				const response2 = await this.query<{
-					actor: {
-						account: {
-							nrql: {
-								results: {
-									entityGuid: string;
-									id: string;
-								}[];
-							};
+			const entityGuid = errorGroupResponse.entityGuid;
+			const errorTraceResponse = await this.query<{
+				actor: {
+					account: {
+						nrql: {
+							results: {
+								entityGuid: string;
+								id: string;
+							}[];
 						};
 					};
-				}>(
-					`query getErrorTrace($accountId: Int!) {
+				};
+			}>(
+				`query getErrorTrace($accountId: Int!) {
 						actor {
 						  account(id: $accountId) {
 							nrql(query: "FROM ErrorTrace SELECT * WHERE error.class LIKE '${Strings.sanitizeGraphqlValue(
-								response1.name
+								errorGroupResponse.name
 							)}' AND error.message LIKE '${Strings.sanitizeGraphqlValue(
-						response1.message
-					)}' AND entityGuid='${Strings.sanitizeGraphqlValue(
-						response1.entityGuid
-					)}' SINCE 1 week ago LIMIT 1") {
+					errorGroupResponse.message
+				)}' AND entityGuid='${Strings.sanitizeGraphqlValue(
+					errorGroupResponse.entityGuid
+				)}' SINCE 1 week ago LIMIT 1") {
 							  results
 							}
 						  }
 						}
 					  }					  
 			`,
-					{
-						accountId: accountId
-					}
-				);
+				{
+					accountId: accountId
+				}
+			);
 
-				if (response2) {
-					const errorTraceResult = response2.actor.account.nrql.results[0];
-					if (!errorTraceResult) {
-						Logger.warn("NR: getMetric missing errorTraceResult", {
-							accountId: accountId,
-							errorGroupGuid: errorGroupGuid,
-							metricResult: response1
-						});
-						return {
-							entityGuid: entityGuid
-						};
-					}
-					if (errorTraceResult) {
-						return {
-							entityGuid: entityGuid || response1.entityGuid,
-							traceId: errorTraceResult.id
-						};
-					}
+			if (errorTraceResponse) {
+				const errorTraceResult = errorTraceResponse.actor.account.nrql.results[0];
+				if (!errorTraceResult) {
+					Logger.warn("NR: getMetric missing errorTraceResult", {
+						accountId: accountId,
+						errorGroupGuid: errorGroupGuid,
+						metricResult: errorGroupResponse
+					});
+					return {
+						entityGuid: entityGuid
+					};
+				}
+				if (errorTraceResult) {
+					return {
+						entityGuid: entityGuid || errorGroupResponse.entityGuid,
+						traceId: errorTraceResult.id
+					};
 				}
 			}
 		} catch (ex) {
@@ -2199,5 +2196,37 @@ actor {
 			});
 		}
 		return "repo";
+	}
+	/**
+	 * Generates a timestamp range from a given timestamp in ms
+	 *
+	 * @private
+	 * @param {number} [timestampInMilliseconds]
+	 * @param {number} [plusOrMinusInMinutes=5]
+	 * @return {*}  {({ startTime: number; endTime: number } | undefined)}
+	 * @memberof NewRelicProvider
+	 */
+	private generateTimestampRange(
+		timestampInMilliseconds?: number,
+		plusOrMinusInMinutes: number = 5
+	): { startTime: number; endTime: number } | undefined {
+		try {
+			if (!timestampInMilliseconds || isNaN(timestampInMilliseconds)) return undefined;
+
+			timestampInMilliseconds = parseInt(timestampInMilliseconds.toString(), 10);
+
+			if (timestampInMilliseconds < 0) return undefined;
+
+			return {
+				startTime: timestampInMilliseconds - plusOrMinusInMinutes * 60 * 1000,
+				endTime: timestampInMilliseconds + plusOrMinusInMinutes * 60 * 1000
+			};
+		} catch (ex) {
+			Logger.warn("NR: generateTimestampRange failed", {
+				timestampInMilliseconds: timestampInMilliseconds,
+				plusOrMinusInMinutes: plusOrMinusInMinutes
+			});
+		}
+		return undefined;
 	}
 }

@@ -855,6 +855,7 @@ export interface GetNewRelicErrorGroupRequest {
 	/** optional, though passing it allows for parallelization */
 	entityGuid?: string;
 	src?: string;
+	timestamp?: number;
 }
 
 export interface NewRelicUser {
@@ -1105,21 +1106,8 @@ export interface ErrorGroupResponse {
 		};
 		errorsInbox: {
 			errorGroupStateTypes?: ErrorGroupStateType[];
-			errorGroup: {
-				id: string;
-				state: string;
-				message: string;
-				name: string;
-				entityGuid: string;
-				url: string;
-				assignment: {
-					email: string;
-					userInfo: {
-						gravatar: string;
-						id: number;
-						name: string;
-					};
-				};
+			errorGroups: {
+				results: ErrorGroup[];
 			};
 		};
 	};
@@ -1196,8 +1184,17 @@ export interface BuiltFromResult {
 
 export interface ErrorGroup {
 	id: string;
+	state?: string;
 	message: string;
 	name: string;
-	state: string;
 	entityGuid: string;
+	url: string;
+	assignment?: {
+		email: string;
+		userInfo: {
+			gravatar: string;
+			id: number;
+			name: string;
+		};
+	};
 }

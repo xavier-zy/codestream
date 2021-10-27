@@ -873,10 +873,8 @@ export const BaseCodeErrorMenu = (props: BaseCodeErrorMenuProps) => {
 				key: "share",
 				action: () => setShareModalOpen(true)
 			});
-		}
 
-		items = items.concat([
-			{
+			items.push({
 				label: "Copy Link",
 				icon: <Icon name="copy" />,
 				key: "copy-permalink",
@@ -886,27 +884,28 @@ export const BaseCodeErrorMenu = (props: BaseCodeErrorMenuProps) => {
 						document.execCommand("copy");
 					}
 				}
-			}
-			// commented out until we have back-end support as per
-			// https://trello.com/c/MhAWDZNF/6886-remove-delete-and-follow-unfollow
-			// {
-			// 	label: derivedState.userIsFollowing ? "Unfollow" : "Follow",
-			// 	key: "toggle-follow",
-			// 	icon: <Icon name="eye" />,
-			// 	action: () => {
-			// 		const value = !derivedState.userIsFollowing;
-			// 		const changeType = value ? "Followed" : "Unfollowed";
-			// 		HostApi.instance.send(FollowCodeErrorRequestType, {
-			// 			id: codeError.id,
-			// 			value
-			// 		});
-			// 		HostApi.instance.track("Notification Change", {
-			// 			Change: `Code Error ${changeType}`,
-			// 			"Source of Change": "Code Error menu"
-			// 		});
-			// 	}
-			// }
-		]);
+			});
+		}
+
+		// commented out until we have back-end support as per
+		// https://trello.com/c/MhAWDZNF/6886-remove-delete-and-follow-unfollow
+		// {
+		// 	label: derivedState.userIsFollowing ? "Unfollow" : "Follow",
+		// 	key: "toggle-follow",
+		// 	icon: <Icon name="eye" />,
+		// 	action: () => {
+		// 		const value = !derivedState.userIsFollowing;
+		// 		const changeType = value ? "Followed" : "Unfollowed";
+		// 		HostApi.instance.send(FollowCodeErrorRequestType, {
+		// 			id: codeError.id,
+		// 			value
+		// 		});
+		// 		HostApi.instance.track("Notification Change", {
+		// 			Change: `Code Error ${changeType}`,
+		// 			"Source of Change": "Code Error menu"
+		// 		});
+		// 	}
+		// }
 
 		// commented out until we have back-end support as per
 		// https://trello.com/c/MhAWDZNF/6886-remove-delete-and-follow-unfollow

@@ -1020,11 +1020,11 @@ export const IssueList = React.memo((props: React.PropsWithChildren<IssueListPro
 										Missing required qualifier.
 										{addingCustomFilterForProvider.id === "github*com" ||
 										addingCustomFilterForProvider.id === "github/enterprise" ? (
-											<Link href="https://docs.codestream.com/userguide/faq/custom-queries/">
+											<Link href="https://docs.newrelic.com/docs/codestream/codestream-ui-overview/pull-requests-section/#github">
 												Learn more.
 											</Link>
 										) : (
-											<Link href="https://docs.codestream.com/userguide/faq/custom-queries-gl/">
+											<Link href="https://docs.newrelic.com/docs/codestream/codestream-ui-overview/pull-requests-section/#gitlab">
 												Learn more.
 											</Link>
 										)}
@@ -1037,11 +1037,11 @@ export const IssueList = React.memo((props: React.PropsWithChildren<IssueListPro
 											Invalid query.{" "}
 											{addingCustomFilterForProvider.id === "github*com" ||
 											addingCustomFilterForProvider.id === "github/enterprise" ? (
-												<Link href="https://docs.codestream.com/userguide/faq/custom-queries/">
+												<Link href="https://docs.newrelic.com/docs/codestream/codestream-ui-overview/pull-requests-section/#github">
 													Learn more.
 												</Link>
 											) : (
-												<Link href="https://docs.codestream.com/userguide/faq/custom-queries-gl/">
+												<Link href="https://docs.newrelic.com/docs/codestream/codestream-ui-overview/pull-requests-section/#gitlab">
 													Learn more.
 												</Link>
 											)}

@@ -258,7 +258,7 @@ export class SimpleCodemarksForFile extends Component<Props, State> {
 				<NoContent>
 					<p>
 						Open a source file to start discussing code with your teammates{" "}
-						<a href="https://docs.codestream.com/userguide/workflow/discuss-code/">Learn more.</a>
+						<a href="https://docs.newrelic.com/docs/codestream/how-use-codestream/discuss-code/">Learn more.</a>
 					</p>
 				</NoContent>
 			);
@@ -310,7 +310,7 @@ export class SimpleCodemarksForFile extends Component<Props, State> {
 			return (
 				<NoContent>
 					Discuss code by selecting a range and clicking an icon.{" "}
-					<Link href="https://docs.codestream.com/userguide/workflow/discuss-code/">
+					<Link href="https://docs.newrelic.com/docs/codestream/how-use-codestream/discuss-code/">
 						Learn more.
 					</Link>
 				</NoContent>

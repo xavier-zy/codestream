@@ -143,7 +143,7 @@ export const OpenReviews = React.memo(function OpenReviews(props: Props) {
 					{bootstrapped && totalReviews === 0 && (
 						<NoContent>
 							Lightweight, pre-PR code review. Get quick feedback on any code, even pre-commit.{" "}
-							<Link href="https://docs.codestream.com/userguide/workflow/feedback-requests">
+							<Link href="https://docs.newrelic.com/docs/codestream/how-use-codestream/request-feedback/">
 								Learn more.
 							</Link>
 						</NoContent>

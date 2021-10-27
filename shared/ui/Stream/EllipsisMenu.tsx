@@ -186,7 +186,7 @@ export function EllipsisMenu(props: EllipsisMenuProps) {
 				// 			label: "What is Live View?",
 				// 			action: () => {
 				// 				HostApi.instance.send(OpenUrlRequestType, {
-				// 					url: "https://docs.codestream.com/userguide/features/myteam-section/"
+				// 					url: "https://docs.newrelic.com/docs/codestream/how-use-codestream/my-organization/"
 				// 				});
 				// 			}
 				// 		}

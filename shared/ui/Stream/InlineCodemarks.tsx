@@ -552,7 +552,7 @@ export class SimpleInlineCodemarks extends Component<Props, State> {
 						<h3>No file open.</h3>
 						<p>
 							Open a source file to start discussing code with your teammates!{" "}
-							<a href="https://docs.codestream.com/userguide/workflow/discuss-code/">Learn more.</a>
+							<a href="https://docs.newrelic.com/docs/codestream/how-use-codestream/discuss-code/">Learn more.</a>
 						</p>
 					</div>
 				</div>
@@ -629,7 +629,7 @@ export class SimpleInlineCodemarks extends Component<Props, State> {
 						<h3>No codemarks in this file.</h3>
 						<p>
 							Discuss code by selecting a range and clicking an icon{" "}
-							<a href="https://docs.codestream.com/userguide/workflow/discuss-code/">show me how</a>
+							<a href="https://docs.newrelic.com/docs/codestream/how-use-codestream/discuss-code/">show me how</a>
 						</p>
 					</div>
 				</div>

@@ -106,7 +106,7 @@ const Root = connect(mapStateToProps)(props => {
 				</p>
 				<p>
 					If you are behind a network proxy,{" "}
-					<a href="https://docs.codestream.com/userguide/faq/proxy-support">
+					<a href="https://docs.newrelic.com/docs/codestream/troubleshooting/proxy-support/">
 						turn on CodeStream's proxy support
 					</a>
 					.

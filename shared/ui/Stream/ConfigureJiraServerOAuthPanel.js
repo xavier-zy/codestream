@@ -140,7 +140,7 @@ export class ConfigureJiraServerOAuthPanel extends Component {
 							<label>
 								Contact your {providerName} admin to get the consumer key and private key required
 								below, and send them a link to{" "}
-								<a href="https://docs.codestream.com/userguide/faq/jira-server-integration">
+								<a href="https://docs.newrelic.com/docs/codestream/troubleshooting/jira-server-integration/">
 									these instructions
 								</a>
 								.

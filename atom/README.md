@@ -52,6 +52,6 @@ Your team’s codemarks, which include the message text and the code snippet, ar
 
 # Help & Feedback
 
-Check out the [user guide](https://docs.codestream.com/userguide/) for more information on getting started with CodeStream. Please follow [@teamcodestream](http://twitter.com/teamcodestream) for product updates and to share feedback and questions. You can also email us at support@codestream.com.
+Check out the [user guide](https://docs.newrelic.com/docs/codestream/) for more information on getting started with CodeStream. Please follow [@teamcodestream](http://twitter.com/teamcodestream) for product updates and to share feedback and questions. You can also email us at support@codestream.com.
 
 [![CodeStream Logo](https://alt-images.codestream.com/codestream_logo_atommarketplace.png)](https://codestream.com?utm_source=atommarket&utm_medium=banner&utm_campaign=codestream)

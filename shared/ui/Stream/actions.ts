@@ -201,7 +201,7 @@ export const createPostAndCodemark = (
 							React.createElement(
 								"a",
 								{
-									href: "https://docs.codestream.com/userguide/faq/git-issues/"
+									href: "https://docs.newrelic.com/docs/codestream/troubleshooting/git-issues/"
 								},
 								"Learn more"
 							)

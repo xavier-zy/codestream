@@ -167,7 +167,7 @@ export const Notifications = props => {
 						<p>&nbsp;</p>
 
 						<p>
-							<Link href="https://docs.codestream.com/userguide/features/notifications/">
+							<Link href="https://docs.newrelic.com/docs/codestream/codestream-integrations/notifications/">
 								Learn more about CodeStream Notifications
 							</Link>
 						</p>

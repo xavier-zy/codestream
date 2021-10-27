@@ -104,7 +104,7 @@ export class ConfigureEnterprisePanel extends Component {
 						{versionMinimum && (
 							<p style={{ textAlign: "center" }} className="explainer">
 								Requires {providerName} v12.10 or later.{" "}
-								<a href="https://docs.codestream.com/userguide/faq/glsm-version/">
+								<a href="https://docs.newrelic.com/docs/codestream/troubleshooting/glsm-version/">
 									Check your version
 								</a>
 								.

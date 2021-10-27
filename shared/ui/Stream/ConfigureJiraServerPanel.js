@@ -110,7 +110,7 @@ export class ConfigureJiraServerPanel extends Component {
 					<fieldset className="form-body" disabled={inactive}>
 						<p style={{ textAlign: "center" }} className="explainer">
 							<a onClick={this.handleOldJiraServerClick}>Click here</a> if your organization uses a
-							version of Jira Server older than v8.14.0, which does not support API tokens. <a href="https://docs.codestream.com/userguide/faq/jira-server-version/">Check your version.</a>
+							version of Jira Server older than v8.14.0, which does not support API tokens. <a href="https://docs.newrelic.com/docs/codestream/troubleshooting/jira-server-version/">Check your version.</a>
 						</p>
 						<br />
 						{this.renderError()}

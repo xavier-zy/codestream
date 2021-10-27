@@ -1157,7 +1157,7 @@ const ProviderButtons = (props: { providerIds: string[]; setShowNextMessagingSte
 								if (connected) return;
 								if (provider.id == "login*microsoftonline*com") {
 									HostApi.instance.send(OpenUrlRequestType, {
-										url: "https://docs.codestream.com/userguide/features/msteams-integration"
+										url: "https://docs.newrelic.com/docs/codestream/codestream-integrations/msteams-integration/"
 									});
 									HostApi.instance.send(TelemetryRequestType, {
 										eventName: "Messaging Service Connected",

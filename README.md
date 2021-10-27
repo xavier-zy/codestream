@@ -25,7 +25,7 @@ Interesting in CodeStream development? Check the development guides for [VS Code
 
 # Help & Feedback
 
-* Read our [help guide](https://docs.codestream.com/userguide/) for information on getting started with CodeStream. 
+* Read our [help guide](https://docs.newrelic.com/docs/codestream/) for information on getting started with CodeStream. 
 * Report a bug or send a suggestion in [GitHub issues](https://github.com/TeamCodeStream/CodeStream/issues).
 * Contact us directly at support@codestream.com.
 * Follow [@teamcodestream](http://twitter.com/teamcodestream) for product updates and to share feedback and questions.

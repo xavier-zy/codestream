@@ -178,7 +178,7 @@ export function GlobalNav() {
 									This is home base for getting work done.
 									<Link
 										className="learn-more"
-										href="https://docs.codestream.com/userguide/features/tasks"
+										href="https://docs.newrelic.com/docs/codestream/codestream-ui-overview/issues-section/"
 									>
 										learn more
 									</Link>
@@ -206,7 +206,7 @@ export function GlobalNav() {
 									We call these <i>Codemarks</i>
 									<Link
 										className="learn-more"
-										href="https://docs.codestream.com/userguide/workflow/discuss-code/"
+										href="https://docs.newrelic.com/docs/codestream/how-use-codestream/discuss-code/"
 									>
 										learn more
 									</Link>
@@ -237,7 +237,7 @@ export function GlobalNav() {
 									feedback requests and replies.
 									<Link
 										className="learn-more"
-										href="http://docs.codestream.com/userguide/features/activity-feed/"
+										href="https://docs.newrelic.com/docs/codestream/codestream-ui-overview/activity-feed/"
 									>
 										learn more
 									</Link>
@@ -288,7 +288,7 @@ export function GlobalNav() {
 									requests, and codestream content.
 									<Link
 										className="learn-more"
-										href="http://docs.codestream.com/userguide/features/filter-and-search/"
+										href="https://docs.newrelic.com/docs/codestream/codestream-ui-overview/filter-search/"
 									>
 										learn more
 									</Link>
@@ -327,7 +327,7 @@ export function GlobalNav() {
 									from your teammates.
 									<Link
 										className="learn-more"
-										href="http://docs.codestream.com/userguide/features/myteam-section/"
+										href="https://docs.newrelic.com/docs/codestream/how-use-codestream/my-organization/"
 									>
 										learn more
 									</Link>

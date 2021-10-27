@@ -299,7 +299,7 @@ Typically I develop/debug against prod (so I open a folder or something other th
 
 #### Debug logs
 
-https://docs.codestream.com/userguide/faq/client-logs/
+https://docs.newrelic.com/docs/codestream/troubleshooting/client-logs/
 
 ### Learning the codebase
 

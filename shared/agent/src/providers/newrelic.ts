@@ -13,7 +13,6 @@ import { URI } from "vscode-uri";
 import { InternalError, ReportSuppressedMessages } from "../agentError";
 import { SessionContainer } from "../container";
 import { GitRemoteParser } from "../git/parsers/remoteParser";
-import { Logger } from "../logger";
 import {
 	EntityAccount,
 	EntitySearchResponse,
@@ -63,6 +62,7 @@ import { CodeStreamSession } from "../session";
 import { log, lspHandler, lspProvider } from "../system";
 import { Strings } from "../system/string";
 import { ThirdPartyIssueProviderBase } from "./provider";
+import { Logger } from "../logger";
 
 export interface Directive {
 	type: "assignRepository" | "removeAssignee" | "setAssignee" | "setState";
@@ -159,6 +159,15 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			"Content-Type": "application/json",
 			"NewRelic-Requesting-Services": "CodeStream"
 		});
+		ContextLogger.setData({
+			nrUrl: this.graphQlBaseUrl,
+			versionInfo: {
+				version: this.session.versionInfo?.extension?.version,
+				build: this.session.versionInfo?.extension?.build
+			},
+			ide: this.session.versionInfo?.ide,
+			isProductionCloud: this.session.isProductionCloud
+		});
 		return client;
 	}
 
@@ -211,14 +220,14 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			request.apiKey
 		);
 		const { userId, accounts } = await this.validateApiKey(client);
-		Logger.log(`Found ${accounts.length} New Relic accounts`);
+		ContextLogger.log(`Found ${accounts.length} New Relic accounts`);
 		const accountIds = accounts.map(_ => _.id);
 		const accountsToOrgs = await this.session.api.lookupNewRelicOrganizations({
 			accountIds
 		});
 		const orgIdsSet = new Set(accountsToOrgs.map(_ => _.orgId));
 		const uniqueOrgIds = Array.from(orgIdsSet.values());
-		Logger.log(`Found ${uniqueOrgIds.length} associated New Relic organizations`);
+		ContextLogger.log(`Found ${uniqueOrgIds.length} associated New Relic organizations`);
 
 		const team = await SessionContainer.instance().teams.getByIdFromCache(this.session.teamId);
 		const company =
@@ -228,7 +237,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			const uniqueNewOrgIds = uniqueOrgIds.filter(_ => existingnOrgIds.indexOf(_) < 0);
 			if (accountsToOrgs.length) {
 				if (uniqueNewOrgIds.length) {
-					Logger.log(
+					ContextLogger.log(
 						`Associating company ${company.id} with NR orgs ${uniqueNewOrgIds.join(", ")}`
 					);
 					await this.session.api.addCompanyNewRelicInfo(company.id, undefined, uniqueNewOrgIds);
@@ -237,7 +246,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				const existingAccountIds = company.nrAccountIds || [];
 				const newAccountIds = accountIds.filter(_ => existingAccountIds.indexOf(_) < 0);
 				if (newAccountIds.length) {
-					Logger.log(
+					ContextLogger.log(
 						`Associating company ${company.id} with NR accounts ${newAccountIds.join(", ")}`
 					);
 					await this.session.api.addCompanyNewRelicInfo(company.id, newAccountIds, undefined);
@@ -326,7 +335,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		try {
 			response = await (await this.client()).request<T>(query, variables);
 		} catch (ex) {
-			Logger.warn(`NR: query caught:`, ex);
+			ContextLogger.error(ex, `query caught:`);
 			const exType = this._isSuppressedException(ex);
 			if (exType !== undefined) {
 				// this throws the error but won't log to sentry (for ordinary network errors that seem temporary)
@@ -380,7 +389,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 	): Promise<GetObservabilityEntitiesResponse> {
 		try {
 			if (this._applicationEntitiesCache != null) {
-				Logger.debug("NR: query entities (from cache)");
+				ContextLogger.debug("query entities (from cache)");
 				return this._applicationEntitiesCache;
 			}
 
@@ -450,7 +459,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			// if (!nextCursor) {
 			// 	break;
 			// } else {
-			// 	Logger.log("NR: query entities ", {
+			// 	ContextLogger.log("query entities ", {
 			// 		i: i
 			// 	});
 			// }
@@ -465,7 +474,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				entities: results
 			};
 		} catch (ex) {
-			Logger.error(ex, "NR: getEntities");
+			ContextLogger.error(ex, "getEntities");
 		}
 		return {
 			entities: []
@@ -492,7 +501,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				remote: mappedEntity?.url
 			} as GetObservabilityErrorGroupMetadataResponse;
 		} catch (ex) {
-			Logger.error(ex, "NR: getErrorGroupMetadata", {
+			ContextLogger.error(ex, "getErrorGroupMetadata", {
 				request: request
 			});
 		}
@@ -528,18 +537,18 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					});
 
 				if (response.items && response.items.find(_ => !_.errorClass)) {
-					Logger.warn("NR: getObservabilityErrorAssignments has empties", {
+					ContextLogger.warn("getObservabilityErrorAssignments has empties", {
 						items: response.items
 					});
 				}
-				Logger.warn("NR: getObservabilityErrorAssignments", {
+				ContextLogger.warn("getObservabilityErrorAssignments", {
 					itemsCount: response.items.length
 				});
 			} else {
-				Logger.log("NR: getObservabilityErrorAssignments (none)");
+				ContextLogger.log("getObservabilityErrorAssignments (none)");
 			}
 		} catch (ex) {
-			Logger.warn("NR: getObservabilityErrorAssignments", {
+			ContextLogger.warn("getObservabilityErrorAssignments", {
 				error: ex
 			});
 		}
@@ -567,8 +576,8 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 
 			for (const repo of filteredRepos) {
 				if (!repo.id || !repo.remotes || !repo.remotes.length) {
-					Logger.warn(
-						"NR: getObservabilityRepos skipping repo with missing id and/or repo.remotes",
+					ContextLogger.warn(
+						"getObservabilityRepos skipping repo with missing id and/or repo.remotes",
 						{
 							repo: repo
 						}
@@ -614,7 +623,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 						)
 					).filter(Boolean);
 
-					Logger.log("NR: found repositories matching remotes", {
+					ContextLogger.log("found repositories matching remotes", {
 						remotes: remotes,
 						entities: repositoryEntitiesResponse?.entities?.map(_ => {
 							return { guid: _.guid, name: _.name };
@@ -626,12 +635,12 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				if (remoteUrls && remoteUrls[0]) {
 					if (remoteUrls.length > 1) {
 						// if for some reason we have > 1 (user has bad remotes, or remotes that point to other places WITH entity mappings)
-						Logger.warn("");
-						Logger.warn("NR: getEntitiesByRepoRemote FOUND MORE THAN 1 UNIQUE REMOTE", {
+						ContextLogger.warn("");
+						ContextLogger.warn("getEntitiesByRepoRemote FOUND MORE THAN 1 UNIQUE REMOTE", {
 							remotes: remotes,
 							entityRemotes: remoteUrls
 						});
-						Logger.warn("");
+						ContextLogger.warn("");
 					}
 					remote = remoteUrls[0];
 				} else {
@@ -689,13 +698,13 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 						})
 						.filter(Boolean)
 				});
-				Logger.log(`NR: getObservabilityRepos hasRepoAssociation=${hasRepoAssociation}`, {
+				ContextLogger.log(`getObservabilityRepos hasRepoAssociation=${hasRepoAssociation}`, {
 					repoId: repo.id,
 					entities: repositoryEntitiesResponse?.entities?.map(_ => _.guid)
 				});
 			}
 		} catch (ex) {
-			Logger.error(ex, "NR: getObservabilityRepos");
+			ContextLogger.error(ex, "getObservabilityRepos");
 		}
 
 		return response;
@@ -738,14 +747,14 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					);
 					if (entityFilter && entityFilter.entityGuid && !filteredEntities.length) {
 						filteredEntities = repositoryEntitiesResponse.entities.filter((r, i) => i === 0);
-						Logger.warn("NR: getObservabilityErrors bad entityGuid passed", {
+						ContextLogger.warn("getObservabilityErrors bad entityGuid passed", {
 							entityGuid: entityFilter.entityGuid
 						});
 					}
 					for (const entity of filteredEntities) {
 						const accountIdTag = entity.tags?.find(_ => _.key === "accountId");
 						if (!accountIdTag) {
-							Logger.warn("NR: count not find accountId for entity", {
+							ContextLogger.warn("count not find accountId for entity", {
 								entityGuid: entity.guid
 							});
 							continue;
@@ -813,7 +822,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 										}
 									}
 								} catch (ex) {
-									Logger.warn("NR: internal error getErrorGroupGuid", {
+									ContextLogger.warn("internal error getErrorGroupGuid", {
 										ex: ex
 									});
 								}
@@ -829,7 +838,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				});
 			}
 		} catch (ex) {
-			Logger.error(ex, "getObservabilityErrors");
+			ContextLogger.error(ex, "getObservabilityErrors");
 		}
 		return response as any;
 	}
@@ -860,7 +869,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 
 			return token;
 		} catch (e) {
-			Logger.error(e);
+			ContextLogger.error(e);
 			throw new ResponseError(ERROR_PIXIE_NOT_CONFIGURED, e.message || e.toString());
 		}
 	}
@@ -883,7 +892,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			}`);
 			return response.actor;
 		} catch (e) {
-			Logger.error(e, "NR: getAccounts");
+			ContextLogger.error(e, "getAccounts");
 			throw e;
 		}
 	}
@@ -929,8 +938,8 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				}
 			}
 
-			Logger.log(
-				`NR: getNewRelicErrorGroupData hasRequest.entityGuid=${request.entityGuid != null}`,
+			ContextLogger.log(
+				`getNewRelicErrorGroupData hasRequest.entityGuid=${request.entityGuid != null}`,
 				{
 					request: request
 				}
@@ -1010,7 +1019,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					errorGroup.hasStackTrace = true;
 				}
 
-				Logger.log("NR: ErrorGroup found", {
+				ContextLogger.log("ErrorGroup found", {
 					errorGroupGuid: errorGroup.guid,
 					occurrenceId: request.occurrenceId,
 					entityGuid: entityGuid,
@@ -1018,8 +1027,8 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					hasStackTrace: errorGroup?.hasStackTrace === true
 				});
 			} else {
-				Logger.warn(
-					`NR: No errorGroup results errorGroupGuid (${errorGroupGuid}) in account (${accountId})`,
+				ContextLogger.warn(
+					`No errorGroup results errorGroupGuid (${errorGroupGuid}) in account (${accountId})`,
 					{
 						request: request,
 						entityGuid: entityGuid,
@@ -1044,7 +1053,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				errorGroup
 			};
 		} catch (ex) {
-			Logger.error(ex);
+			ContextLogger.error(ex);
 
 			let result: any = {};
 			if (ex.response?.errors) {
@@ -1127,7 +1136,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				]
 			};
 		} catch (ex) {
-			Logger.error(ex);
+			ContextLogger.error(ex);
 			return undefined;
 		}
 	}
@@ -1152,7 +1161,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				]
 			};
 		} catch (ex) {
-			Logger.error(ex);
+			ContextLogger.error(ex);
 			return undefined;
 		}
 	}
@@ -1185,7 +1194,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				}
 			);
 
-			Logger.log("NR: errorsInboxUpdateErrorGroupState", {
+			ContextLogger.log("errorsInboxUpdateErrorGroupState", {
 				request: request,
 				response: response
 			});
@@ -1194,7 +1203,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				const stateFailure = response.errorTrackingUpdateErrorGroupState.errors
 					.map(_ => _.description)
 					.join("\n");
-				Logger.warn("NR: errorsInboxUpdateErrorGroupState failure", {
+				ContextLogger.warn("errorsInboxUpdateErrorGroupState failure", {
 					error: stateFailure
 				});
 				throw new Error(stateFailure);
@@ -1211,7 +1220,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				]
 			};
 		} catch (ex) {
-			Logger.error(ex as Error);
+			ContextLogger.error(ex as Error);
 			throw ex;
 		}
 	}
@@ -1261,7 +1270,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					url: request.url
 				}
 			);
-			Logger.log("NR: referenceEntityCreateOrUpdateRepository", {
+			ContextLogger.log("referenceEntityCreateOrUpdateRepository", {
 				accountId: accountId,
 				name: name,
 				url: request.url,
@@ -1272,7 +1281,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				const failures = response.referenceEntityCreateOrUpdateRepository.failures
 					.map(_ => `${_.message} (${_.type})`)
 					.join("\n");
-				Logger.warn("NR: referenceEntityCreateOrUpdateRepository failures", {
+				ContextLogger.warn("referenceEntityCreateOrUpdateRepository failures", {
 					accountId: accountId,
 					name: name,
 					url: request.url,
@@ -1302,7 +1311,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 						targetEntityGuid: repoEntityId
 					}
 				);
-				Logger.log("NR: entityRelationshipUserDefinedCreateOrReplace", {
+				ContextLogger.log("entityRelationshipUserDefinedCreateOrReplace", {
 					sourceEntityGuid: entityId,
 					targetEntityGuid: repoEntityId,
 					response: entityRelationshipUserDefinedCreateOrReplaceResponse
@@ -1312,7 +1321,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					const createOrReplaceError = entityRelationshipUserDefinedCreateOrReplaceResponse.errors
 						.map(_ => _.message)
 						.join("\n");
-					Logger.warn("NR: entityRelationshipUserDefinedCreateOrReplace failure", {
+					ContextLogger.warn("entityRelationshipUserDefinedCreateOrReplace failure", {
 						error: createOrReplaceError
 					});
 					throw new Error(createOrReplaceError);
@@ -1339,11 +1348,13 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					]
 				};
 			} else {
-				Logger.warn("NR: entityId needed for entityRelationshipUserDefinedCreateOrReplace is null");
+				ContextLogger.warn(
+					"entityId needed for entityRelationshipUserDefinedCreateOrReplace is null"
+				);
 				throw new Error("Could not locate entityId");
 			}
 		} catch (ex) {
-			Logger.error(ex, "NR: assignRepository", {
+			ContextLogger.error(ex, "assignRepository", {
 				request: request
 			});
 			throw ex;
@@ -1361,11 +1372,11 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				try {
 					const id = this._providerInfo.data.userId;
 					this._newRelicUserId = parseInt(id.toString(), 10);
-					Logger.log("NR: getUserId (found data)", {
+					ContextLogger.log("getUserId (found data)", {
 						userId: id
 					});
 				} catch (ex) {
-					Logger.warn("NR: getUserId", {
+					ContextLogger.warn("getUserId", {
 						error: ex
 					});
 				}
@@ -1376,13 +1387,13 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			const id = response.actor?.user?.id;
 			if (id) {
 				this._newRelicUserId = parseInt(id, 10);
-				Logger.log("NR: getUserId (found api)", {
+				ContextLogger.log("getUserId (found api)", {
 					userId: id
 				});
 				return this._newRelicUserId;
 			}
 		} catch (ex) {
-			Logger.warn("NR: getUserId " + ex.message, {
+			ContextLogger.warn("getUserId " + ex.message, {
 				error: ex
 			});
 		}
@@ -1431,7 +1442,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			);
 			return response?.actor?.errorsInbox?.errorGroups?.results[0] || undefined;
 		} catch (ex) {
-			Logger.warn("NR: fetchErrorGroupDataById failure", {
+			ContextLogger.warn("fetchErrorGroupDataById failure", {
 				errorGroupGuid
 			});
 			let accessTokenError = ex as {
@@ -1614,7 +1625,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				// kick this off
 				stackTracePromise = this.fetchStackTrace(entityGuid, occurrenceId);
 			} catch (ex) {
-				Logger.warn("NR: fetchErrorGroup (stack trace missing)", {
+				ContextLogger.warn("fetchErrorGroup (stack trace missing)", {
 					entityGuid: entityGuid,
 					occurrenceId: occurrenceId
 				});
@@ -1628,7 +1639,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			timestamp
 		);
 		if (response?.actor?.errorsInbox?.errorGroups?.results?.length === 0) {
-			Logger.warn("NR: fetchErrorGroup (retrying without timestamp)", {
+			ContextLogger.warn("fetchErrorGroup (retrying without timestamp)", {
 				entityGuid: entityGuid,
 				occurrenceId: occurrenceId
 			});
@@ -1645,7 +1656,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				}
 			}
 		} catch (ex) {
-			Logger.warn("NR: fetchErrorGroup (stack trace missing upon waiting)", {
+			ContextLogger.warn("fetchErrorGroup (stack trace missing upon waiting)", {
 				entityGuid: entityGuid,
 				occurrenceId: occurrenceId
 			});
@@ -1756,7 +1767,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				remotes: remoteVariants
 			};
 		} catch (ex) {
-			Logger.warn("NR: getEntitiesByRepoRemote", {
+			ContextLogger.warn("getEntitiesByRepoRemote", {
 				error: ex
 			});
 			return undefined;
@@ -1934,7 +1945,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				}
 			);
 		} catch (ex) {
-			Logger.warn("NR: getErrorsInboxAssignments", {
+			ContextLogger.warn("getErrorsInboxAssignments", {
 				userId: userId,
 				usingEmailAddress: emailAddress != null
 			});
@@ -1967,7 +1978,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 	> {
 		try {
 			if (!errorGroupGuid) {
-				Logger.warn("NR: getMetric missing errorGroupGuid");
+				ContextLogger.warn("getMetric missing errorGroupGuid");
 				return undefined;
 			}
 
@@ -1976,7 +1987,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			const errorGroupResponse = await this.fetchErrorGroupById(errorGroupGuid);
 
 			if (!errorGroupResponse) {
-				Logger.warn("NR: fetchErrorGroupDataById missing errorGroupGuid");
+				ContextLogger.warn("fetchErrorGroupDataById missing errorGroupGuid");
 				return undefined;
 			}
 
@@ -2017,7 +2028,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			if (errorTraceResponse) {
 				const errorTraceResult = errorTraceResponse.actor.account.nrql.results[0];
 				if (!errorTraceResult) {
-					Logger.warn("NR: getMetric missing errorTraceResult", {
+					ContextLogger.warn("getMetric missing errorTraceResult", {
 						accountId: accountId,
 						errorGroupGuid: errorGroupGuid,
 						metricResult: errorGroupResponse
@@ -2034,7 +2045,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				}
 			}
 		} catch (ex) {
-			Logger.error(ex, "NR: getMetric", {
+			ContextLogger.error(ex, "getMetric", {
 				errorGroupGuid: errorGroupGuid
 			});
 		}
@@ -2133,7 +2144,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 							name: builtFrom.target.entity.name
 						};
 					} else {
-						Logger.warn("NR: findBuiltFrom missing tags with url[s]", {
+						ContextLogger.warn("findBuiltFrom missing tags with url[s]", {
 							relatedEntities: relatedEntities
 						});
 						return {
@@ -2145,7 +2156,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					}
 				}
 			} else {
-				Logger.warn("NR: findBuiltFrom missing tags", {
+				ContextLogger.warn("findBuiltFrom missing tags", {
 					relatedEntities: relatedEntities
 				});
 				return {
@@ -2175,7 +2186,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				unknownGuid
 			};
 		} catch (e) {
-			Logger.warn("NR: " + e.message, {
+			ContextLogger.warn("" + e.message, {
 				idLike
 			});
 		}
@@ -2190,7 +2201,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					.pop())!;
 			return folderName;
 		} catch (ex) {
-			Logger.warn("NR: getRepoName", {
+			ContextLogger.warn("getRepoName", {
 				folder: folder,
 				error: ex
 			});
@@ -2222,11 +2233,42 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				endTime: timestampInMilliseconds + plusOrMinusInMinutes * 60 * 1000
 			};
 		} catch (ex) {
-			Logger.warn("NR: generateTimestampRange failed", {
+			ContextLogger.warn("generateTimestampRange failed", {
 				timestampInMilliseconds: timestampInMilliseconds,
 				plusOrMinusInMinutes: plusOrMinusInMinutes
 			});
 		}
 		return undefined;
+	}
+}
+
+class ContextLogger {
+	private static data: any = {};
+	/**
+	 * pass additional, context data when logging
+	 *
+	 * @static
+	 * @param {*} data
+	 * @memberof ContextLogger
+	 */
+	static setData(data: any) {
+		ContextLogger.data = { ...ContextLogger.data, ...data };
+	}
+
+	static error(ex: Error, message?: string, params?: any): void {
+		Logger.error(ex, `NR: ${message}`, { ...(params || {}), zetails: ContextLogger.data });
+	}
+
+	static warn(message: string, params?: any): void {
+		if (!message) Logger.warn("");
+		else Logger.warn(`NR: ${message}`, { ...(params || {}), zetails: ContextLogger.data });
+	}
+
+	static log(message: string, params?: any): void {
+		Logger.log(`NR: ${message}`, { ...(params || {}), zetails: ContextLogger.data });
+	}
+
+	static debug(message: string, params?: any): void {
+		Logger.debug(`NR: ${message}`, { ...(params || {}), zetails: ContextLogger.data });
 	}
 }

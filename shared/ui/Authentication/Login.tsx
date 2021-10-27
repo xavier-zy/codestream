@@ -118,7 +118,7 @@ class Login extends React.Component<Props, State> {
 						id="error.unexpected"
 						defaultMessage="Something went wrong! Please try again, or "
 					/>
-					<a href="https://help.codestream.com">
+					<a href="https://docs.newrelic.com/docs/codestream/">
 						<FormattedMessage id="contactSupport" defaultMessage="contact support" />
 					</a>
 					.
@@ -131,7 +131,7 @@ class Login extends React.Component<Props, State> {
 						id="something-is-screwed"
 						defaultMessage={this.state.error.toString()}
 					/>{" "}
-					<a href="https://help.codestream.com">
+					<a href="https://docs.newrelic.com/docs/codestream/">
 						<FormattedMessage id="contactSupport" defaultMessage="contact support" />
 					</a>
 					.

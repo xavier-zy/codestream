@@ -2054,7 +2054,7 @@ class CodemarkForm extends React.Component<Props, State> {
 						<br />
 						<br />
 						<FormattedMessage id="contactSupport" defaultMessage="contact support">
-							{text => <Link href="https://help.codestream.com">{text}</Link>}
+							{text => <Link href="https://docs.newrelic.com/docs/codestream/">{text}</Link>}
 						</FormattedMessage>
 						<div className="button-group one-button">
 							<Button className="control-button" onClick={this.cancelCompose}>

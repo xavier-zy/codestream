@@ -903,7 +903,7 @@ export const StartWork = (props: Props) => {
 					{
 						label: "Contact Support",
 						action: () => {
-							HostApi.instance.send(OpenUrlRequestType, { url: "https://help.codestream.com/" });
+							HostApi.instance.send(OpenUrlRequestType, { url: "https://docs.newrelic.com/docs/codestream/" });
 						}
 					}
 				]

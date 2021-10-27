@@ -323,7 +323,7 @@ export function EllipsisMenu(props: EllipsisMenuProps) {
 				{
 					label: "Documentation",
 					key: "documentation",
-					action: () => openUrl("https://help.codestream.com")
+					action: () => openUrl("https://docs.newrelic.com/docs/codestream")
 				},
 				{
 					label: "Video Library",

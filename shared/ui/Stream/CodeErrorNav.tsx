@@ -192,7 +192,7 @@ export function CodeErrorNav(props: Props) {
 	const remote = derivedState.currentCodeErrorData?.remote;
 	const commit = derivedState.currentCodeErrorData?.commit;
 
-	const previousCurrentCodeErrorId = usePrevious(derivedState.currentCodeErrorId);
+	const previousIsConnectedToNewRelic = usePrevious(derivedState.isConnectedToNewRelic);
 
 	const pendingRequiresConnection = derivedState.currentCodeErrorData?.pendingRequiresConnection;
 
@@ -282,22 +282,10 @@ export function CodeErrorNav(props: Props) {
 		}
 
 		setIsLoading(true);
-		dispatch(fetchErrorGroup(derivedState.codeError));
-		setTimeout(() => {
+		dispatch(fetchErrorGroup(derivedState.codeError)).then(_ => {
 			setIsLoading(false);
-		}, 1);
+		});
 	}, [derivedState.codeError, derivedState.isConnectedToNewRelic, errorGroup]);
-
-	useEffect(() => {
-		if (
-			previousCurrentCodeErrorId &&
-			derivedState.currentCodeErrorId &&
-			previousCurrentCodeErrorId !== derivedState.currentCodeErrorId
-		) {
-			// if the panel is still open... re-trigger an update
-			onConnected(undefined);
-		}
-	}, [derivedState.currentCodeErrorId]);
 
 	const onConnected = async (
 		codeErrorArg: CSCodeError | undefined,
@@ -339,8 +327,12 @@ export function CodeErrorNav(props: Props) {
 		}
 
 		console.log(`onConnected started isExistingCodeError=${isExistingCodeError}`);
-
-		setIsLoading(true);
+		if (
+			previousIsConnectedToNewRelic === false &&
+			(derivedState.isConnectedToNewRelic || isConnected)
+		) {
+			setIsLoading(true);
+		}
 		setRepoAssociationError(undefined);
 		setError(undefined);
 
@@ -560,6 +552,7 @@ export function CodeErrorNav(props: Props) {
 			setRequiresConnection(false);
 			setIsLoading(false);
 		}
+		return true;
 	};
 
 	const tryBuildWarningsOrErrors = () => {
@@ -751,8 +744,8 @@ export function CodeErrorNav(props: Props) {
 						onClose={e => {
 							dispatch(closeAllPanels());
 						}}
-						onSubmited={async e => {
-							onConnected(undefined, undefined, true);
+						onSubmited={e => {
+							return onConnected(undefined, undefined, true);
 						}}
 						originLocation={"Open in IDE Flow"}
 					/>

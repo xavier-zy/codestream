@@ -71,6 +71,7 @@ class ConfigureNewRelic extends Component<Props> {
 	onSubmit = async e => {
 		e.preventDefault();
 		if (this.isFormInvalid()) return;
+		let isOnSubmittedPromise = false;
 		const { providerId } = this.props;
 		const { apiKey } = this.state;
 		const apiUrl: string | undefined = this.props.isProductionCloud
@@ -96,7 +97,13 @@ class ConfigureNewRelic extends Component<Props> {
 				"Connection Location": this.props.originLocation
 			});
 			if (this.props.onSubmited) {
-				this.props.onSubmited(e);
+				const result = this.props.onSubmited(e);
+				if (typeof result?.then === "function") {
+					isOnSubmittedPromise = true;
+					result.then(_ => {
+						this.setState({ loading: false });
+					});
+				}
 			}
 			if (!this.props.disablePostConnectOnboarding) {
 				const reposResponse = await HostApi.instance.send(GetReposScmRequestType, {
@@ -119,9 +126,11 @@ class ConfigureNewRelic extends Component<Props> {
 				}
 			}
 		} catch (ex) {
-			this.setState({ error: ex.message });
+			this.setState({ error: ex.message, loading: false });
 		}
-		this.setState({ loading: false });
+		if (!isOnSubmittedPromise) {
+			this.setState({ loading: false });
+		}
 	};
 
 	renderError = () => {

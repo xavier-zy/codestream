@@ -929,6 +929,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				entityGuid = request.entityGuid;
 				// if we have the entityId use this
 				errorGroupFullResponse = await this.fetchErrorGroup(
+					accountId,
 					errorGroupGuid,
 					entityGuid,
 					request.occurrenceId,
@@ -943,6 +944,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				if (errorGroupPartialResponse?.entityGuid) {
 					entityGuid = errorGroupPartialResponse?.entityGuid;
 					errorGroupFullResponse = await this.fetchErrorGroup(
+						accountId,
 						errorGroupGuid,
 						entityGuid,
 						request.occurrenceId,
@@ -973,6 +975,16 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					entityUrl: `${this.productUrl}/redirect/entity/${errorGroupResponse.entityGuid}`
 				};
 
+				if (errorGroupFullResponse.actor?.entity?.exception?.stackTrace) {
+					errorGroup.errorTrace = {
+						path: errorGroupFullResponse.actor.entity.name,
+						stackTrace: errorGroupFullResponse.actor.entity.crash
+							? errorGroupFullResponse.actor.entity.crash.stackTrace.frames
+							: errorGroupFullResponse.actor.entity.exception.stackTrace.frames
+					};
+					errorGroup.hasStackTrace = true;
+				}
+
 				errorGroup.attributes = {
 					// TODO fix me
 					// Timestamp: { type: "timestamp", value: errorGroup.timestamp }
@@ -980,6 +992,16 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					// "URL host": { type: "string", value: "value" },
 					// "URL path": { type: "string", value: "value" }
 				};
+				if (!errorGroup.hasStackTrace) {
+					errorGroup.attributes["Account"] = {
+						type: "string",
+						value: errorGroupFullResponse.actor.account.name
+					};
+					errorGroup.attributes["Entity"] = {
+						type: "string",
+						value: errorGroupFullResponse.actor.entity.name
+					};
+				}
 
 				let states;
 				if (errorGroupFullResponse.actor.errorsInbox.errorGroupStateTypes) {
@@ -1020,16 +1042,6 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 							}
 						};
 					}
-				}
-
-				if (errorGroupFullResponse.actor?.entity?.exception?.stackTrace) {
-					errorGroup.errorTrace = {
-						path: errorGroupFullResponse.actor.entity.name,
-						stackTrace: errorGroupFullResponse.actor.entity.crash
-							? errorGroupFullResponse.actor.entity.crash.stackTrace.frames
-							: errorGroupFullResponse.actor.entity.exception.stackTrace.frames
-					};
-					errorGroup.hasStackTrace = true;
 				}
 
 				ContextLogger.log("ErrorGroup found", {
@@ -1554,13 +1566,17 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 
 	@log()
 	private async _fetchErrorGroup(
+		accountId: number,
 		errorGroupGuid: string,
 		entityGuid: string,
 		timestamp?: number
 	): Promise<ErrorGroupResponse> {
 		const timestampRange = this.generateTimestampRange(timestamp);
-		const q = `query getErrorGroup($errorGroupGuids: [ID!], $entityGuid: EntityGuid!) {
+		const q = `query getErrorGroup($accountId: Int!, $errorGroupGuids: [ID!], $entityGuid: EntityGuid!) {
 			actor {
+			  account(id: $accountId) {
+			    name
+			  }
 			  entity(guid: $entityGuid) {
 				alertSeverity
 				name
@@ -1620,6 +1636,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		  }`;
 
 		return this.query(q, {
+			accountId: accountId,
 			errorGroupGuids: [errorGroupGuid],
 			entityGuid: entityGuid
 		});
@@ -1627,6 +1644,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 
 	@log()
 	private async fetchErrorGroup(
+		accountId: number,
 		errorGroupGuid: string,
 		entityGuid: string,
 		occurrenceId?: string,
@@ -1647,6 +1665,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		}
 
 		let response: ErrorGroupResponse = await this._fetchErrorGroup(
+			accountId,
 			errorGroupGuid,
 			entityGuid,
 			timestamp
@@ -1656,7 +1675,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				entityGuid: entityGuid,
 				occurrenceId: occurrenceId
 			});
-			response = await this._fetchErrorGroup(errorGroupGuid, entityGuid);
+			response = await this._fetchErrorGroup(accountId, errorGroupGuid, entityGuid);
 		}
 
 		let stackTrace;

@@ -921,7 +921,7 @@ export interface NewRelicErrorGroup {
 
 	attributes?: {
 		[key: string]: {
-			type: "timestamp" | "string";
+			type: "timestamp" | "string" | "number";
 			value: string | number | boolean;
 		};
 	};
@@ -1095,6 +1095,9 @@ export interface ErrorGroupStateType {
 
 export interface ErrorGroupResponse {
 	actor: {
+		account: {
+			name: string;
+		};
 		entity: {
 			alertSeverity: "CRITICAL" | "NOT_ALERTING" | "NOT_CONFIGURED" | "WARNING" | undefined;
 			name: string;

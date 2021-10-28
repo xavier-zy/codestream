@@ -175,6 +175,7 @@ namespace = '${request.namespace}'
 df = px.DataFrame(table='process_stats', start_time='-30s')
 df = df[df.ctx['namespace'] == namespace]
 df.pod = df.ctx['pod_name']
+df = df.groupby(['upid', 'pod']).agg()
 px.display(df[['upid', 'pod']])`;
 
 		const call = vizier.executeScript({

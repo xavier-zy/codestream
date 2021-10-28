@@ -359,11 +359,9 @@ export function CodeErrorNav(props: Props) {
 			let repoId: string | undefined = undefined;
 			let stackInfo: ResolveStackTraceResponse | undefined = undefined;
 			let targetRemote;
-			if (
-				errorGroupResult &&
-				errorGroupResult.errorGroup &&
-				!errorGroupResult.errorGroup.hasStackTrace
-			) {
+			const hasStackTrace =
+				errorGroupResult?.errorGroup?.hasStackTrace || !!codeError?.stackTraces?.length;
+			if (!hasStackTrace) {
 				setIsResolved(true);
 				setRepoWarning({ message: "There is no stack trace associated with this error." });
 			} else {

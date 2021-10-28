@@ -1,5 +1,21 @@
 # Change Log
 
+## [12.0.2] - 2021-10-28
+
+### Changed
+
+- Modification to the script to grab unique pods for the Pixie dynamic logging
+- Add entity and account info to error groups without stack traces
+- Suppress "Copy Link" in ellipses menu if error group is still pending
+- Adds a "Learn More" link to the disconnected state of the Observability section
+- Use timestamp from payload to better query New Relic Metrics
+
+### Fixed
+
+- Fixes an issue with an error group reloading after adding a comment
+- Fixes an issue with not being able to select a Slack channel for sharing
+- Fixes an issue with the "Try using a different email address" link not working when you sign up via a code host
+
 ## [12.0.1] - 2021-10-21
 
 ### Fixed

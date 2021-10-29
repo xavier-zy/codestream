@@ -1032,6 +1032,7 @@ const BaseCodeError = (props: BaseCodeErrorProps) => {
 
 	const { stackTraces } = codeError as CSCodeError;
 	const stackTrace = stackTraces && stackTraces[0] && stackTraces[0].lines;
+	const stackTraceText = stackTraces && stackTraces[0] && stackTraces[0].text;
 
 	useEffect(() => {
 		if (!props.collapsed) {
@@ -1101,6 +1102,91 @@ const BaseCodeError = (props: BaseCodeErrorProps) => {
 		}
 	};
 
+	const renderStackTrace = () => {
+		if (stackTrace?.length) {
+			return (
+				<MetaSection>
+					<Meta>
+						<MetaLabel>Stack Trace</MetaLabel>
+						<ClickLines id="stack-trace" className="code" tabIndex={0} onKeyDown={handleKeyDown}>
+							{(stackTrace || []).map((line, i) => {
+								if (!line || !line.fileFullPath) return null;
+
+								const className = i === currentSelectedLine ? "monospace li-active" : "monospace";
+								const mline = line.fileFullPath.replace(/\s\s\s\s+/g, "     ");
+								return props.stackFrameClickDisabled ||
+									props.collapsed ||
+									props.parsedStack?.resolvedStackInfo?.lines[i]?.error ? (
+									<Tooltip
+										key={"tooltipline-" + i}
+										title={props.parsedStack?.resolvedStackInfo?.lines[i]?.error}
+										placement="bottom"
+										delay={1}
+									>
+										<DisabledClickLine key={"disabled-line" + i} className="monospace">
+											<span>
+												<span style={{ opacity: ".6" }}>{line.method}</span>({mline}:
+												<strong>{line.line}</strong>
+												{line.column ? `:${line.column}` : null})
+											</span>
+										</DisabledClickLine>
+									</Tooltip>
+								) : (
+									<ClickLine
+										key={"click-line" + i}
+										className={className}
+										onClick={e => onClickStackLine(e, i)}
+									>
+										<span>
+											<span style={{ opacity: ".6" }}>{line.method}</span>({mline}:
+											<strong>{line.line}</strong>
+											{line.column ? `:${line.column}` : null})
+										</span>
+									</ClickLine>
+								);
+							})}
+						</ClickLines>
+					</Meta>
+
+					{props.post && (
+						<div style={{ marginBottom: "10px" }}>
+							<Reactions className="reactions no-pad-left" post={props.post} />
+						</div>
+					)}
+					{!props.collapsed && props.post && <Attachments post={props.post as CSPost} />}
+				</MetaSection>
+			);
+		}
+
+		if (stackTraceText) {
+			return (
+				<MetaSection>
+					<Meta>
+						<MetaLabel>Stack Trace</MetaLabel>
+						<ClickLines id="stack-trace" className="code" tabIndex={0}>
+							{stackTraceText.split("\n").map((line: string, i) => {
+								if (!line) return null;
+								const mline = line.replace(/\s\s\s\s+/g, "     ");
+								return (
+									<DisabledClickLine key={"disabled-line" + i} className="monospace">
+										<span style={{ opacity: ".75" }}>{mline}</span>
+									</DisabledClickLine>
+								);
+							})}
+						</ClickLines>
+					</Meta>
+
+					{props.post && (
+						<div style={{ marginBottom: "10px" }}>
+							<Reactions className="reactions no-pad-left" post={props.post} />
+						</div>
+					)}
+					{!props.collapsed && props.post && <Attachments post={props.post as CSPost} />}
+				</MetaSection>
+			);
+		}
+		return null;
+	};
 	return (
 		<MinimumWidthCard {...getCardProps(props)} noCard={!props.collapsed}>
 			{props.collapsed && (
@@ -1167,57 +1253,7 @@ const BaseCodeError = (props: BaseCodeErrorProps) => {
 				</div>
 			)}
 
-			<MetaSection>
-				{stackTrace && (
-					<Meta>
-						<MetaLabel>Stack Trace</MetaLabel>
-						<ClickLines id="stack-trace" className="code" tabIndex={0} onKeyDown={handleKeyDown}>
-							{(stackTrace || []).map((line, i) => {
-								if (!line || !line.fileFullPath) return null;
-
-								const className = i === currentSelectedLine ? "monospace li-active" : "monospace";
-								const mline = line.fileFullPath.replace(/\s\s\s\s+/g, "     ");
-								return props.stackFrameClickDisabled ||
-									props.collapsed ||
-									props.parsedStack?.resolvedStackInfo?.lines[i]?.error ? (
-									<Tooltip
-										key={"tooltipline-" + i}
-										title={props.parsedStack?.resolvedStackInfo?.lines[i]?.error}
-										placement="bottom"
-										delay={1}
-									>
-										<DisabledClickLine key={"disabled-line" + i} className="monospace">
-											<span>
-												<span style={{ opacity: ".6" }}>{line.method}</span>({mline}:
-												<strong>{line.line}</strong>
-												{line.column ? `:${line.column}` : null})
-											</span>
-										</DisabledClickLine>
-									</Tooltip>
-								) : (
-									<ClickLine
-										key={"click-line" + i}
-										className={className}
-										onClick={e => onClickStackLine(e, i)}
-									>
-										<span>
-											<span style={{ opacity: ".6" }}>{line.method}</span>({mline}:
-											<strong>{line.line}</strong>
-											{line.column ? `:${line.column}` : null})
-										</span>
-									</ClickLine>
-								);
-							})}
-						</ClickLines>
-					</Meta>
-				)}
-				{props.post && (
-					<div style={{ marginBottom: "10px" }}>
-						<Reactions className="reactions no-pad-left" post={props.post} />
-					</div>
-				)}
-				{!props.collapsed && props.post && <Attachments post={props.post as CSPost} />}
-			</MetaSection>
+			{renderStackTrace()}
 			{props.collapsed && renderMetaSectionCollapsed(props)}
 			{!props.collapsed &&
 				props &&

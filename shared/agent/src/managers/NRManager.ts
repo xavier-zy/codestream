@@ -127,24 +127,25 @@ export class NRManager {
 			Logger.error(new Error("GuessStackLanguageFailed"), "language guess failed", {
 				languageGuess: lang
 			});
-		}
 
-		// otherwise we'll go through each in turn and try to parse anyway?
-		for (lang in StackTraceParsers) {
-			let info;
-			try {
-				info = StackTraceParsers[lang](whole);
-			} catch (error) {
-				continue;
+			let info: ParseStackTraceResponse | undefined = undefined;
+
+			for (lang in StackTraceParsers) {
+				try {
+					info = StackTraceParsers[lang](whole);
+				} catch (error) {}
+				if (info && info.lines?.length) {
+					break;
+				}
 			}
-			return info;
-		}
 
-		const errorMessage = "unable to parse stack trace, no meaningful data could be extracted";
-		Logger.error(new Error("ParseStackTraceFailed"), errorMessage, {
-			languageGuess: lang
-		});
-		throw new Error(errorMessage);
+			// take the last one
+			const response = info || ({} as ParseStackTraceResponse);
+			response.warning = {
+				message: "Unable to parse language from stack trace"
+			};
+			return response;
+		}
 	}
 
 	// parses the passed stack, tries to determine if any of the user's open repos match it, and if so,
@@ -232,6 +233,10 @@ export class NRManager {
 				helpUrl: MISSING_SHA_HELP_URL
 			});
 		}
+		if (parsedStackInfo.warning) {
+			// if there was a warning parsing, use that first
+			firstWarning = parsedStackInfo.warning;
+		}
 		parsedStackInfo.repoId = repoId;
 		parsedStackInfo.sha = sha;
 		parsedStackInfo.occurrenceId = occurrenceId;
@@ -245,13 +250,15 @@ export class NRManager {
 			lines: []
 		};
 
-		for (const line of parsedStackInfo.lines) {
-			const resolvedLine =
-				line.error || !matchingRepoPath
-					? { ...line }
-					: await this.resolveStackTraceLine(line, sha, matchingRepoPath);
-			resolvedStackInfo.lines.push(resolvedLine);
-			line.fileRelativePath = resolvedLine.fileRelativePath;
+		if (parsedStackInfo.lines) {
+			for (const line of parsedStackInfo.lines) {
+				const resolvedLine =
+					line.error || !matchingRepoPath
+						? { ...line }
+						: await this.resolveStackTraceLine(line, sha, matchingRepoPath);
+				resolvedStackInfo.lines.push(resolvedLine);
+				line.fileRelativePath = resolvedLine.fileRelativePath;
+			}
 		}
 
 		return {

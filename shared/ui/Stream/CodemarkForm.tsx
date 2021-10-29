@@ -2023,7 +2023,7 @@ class CodemarkForm extends React.Component<Props, State> {
 
 	render() {
 		const { codeBlocks, scmError } = this.state;
-		const { editingCodemark, currentReviewId } = this.props;
+		const { editingCodemark, currentReviewId, currentCodeErrorId } = this.props;
 
 		const commentType = this.getCommentType();
 
@@ -2031,12 +2031,15 @@ class CodemarkForm extends React.Component<Props, State> {
 
 		// if you are conducting a review, and somehow are able to try to
 		// create an issue or a permalink, stop the user from doing that
-		if (commentType !== "comment" && currentReviewId) {
+		if (commentType !== "comment" && (currentReviewId || currentCodeErrorId)) {
+			const activity = currentReviewId ? "doing a review" : "investigating an error";
+			const additionalInfo = currentReviewId
+				? 'Mark your comment as a "change request" instead.'
+				: "";
 			return (
-				<Modal translucent onClose={this.cancelCompose} verticallyCenter>
+				<Modal onClose={this.cancelCompose} verticallyCenter>
 					<div style={{ width: "20em", fontSize: "larger", margin: "0 auto" }}>
-						Sorry, you can't add an issue while doing a review. Mark your a comment as a "change
-						request" instead.
+						Sorry, you can't add an issue or create a permalink while {activity}.{additionalInfo}
 						<div className="button-group one-button">
 							<Button className="control-button" onClick={this.cancelCompose}>
 								OK
@@ -2048,7 +2051,7 @@ class CodemarkForm extends React.Component<Props, State> {
 		}
 		if (scmError) {
 			return (
-				<Modal translucent onClose={this.cancelCompose} verticallyCenter>
+				<Modal onClose={this.cancelCompose} verticallyCenter>
 					<div style={{ width: "20em", fontSize: "larger", margin: "0 auto" }}>
 						Sorry, we encountered a git error: {scmError}
 						<br />

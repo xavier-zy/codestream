@@ -11,6 +11,7 @@ import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
@@ -68,9 +69,19 @@ class AddComment : NewCodemark(CodemarkType.COMMENT) {
 class CreateIssue : NewCodemark(CodemarkType.ISSUE) {
     override fun getText() = "Create issue"
     override fun getIcon(flags: Int) = IconLoader.getIcon("/images/marker-issue.svg")
+
+    override fun update(e: AnActionEvent) {
+        val virtualFile = CommonDataKeys.VIRTUAL_FILE.getData(e.dataContext)
+        e.presentation.isVisible = virtualFile?.isInLocalFileSystem == true
+    }
 }
 
 class GetPermalink : NewCodemark(CodemarkType.LINK) {
     override fun getText() = "Get permalink"
     override fun getIcon(flags: Int) = IconLoader.getIcon("/images/marker-permalink.svg")
+
+    override fun update(e: AnActionEvent) {
+        val virtualFile = CommonDataKeys.VIRTUAL_FILE.getData(e.dataContext)
+        e.presentation.isVisible = virtualFile?.isInLocalFileSystem == true
+    }
 }

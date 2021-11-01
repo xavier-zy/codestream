@@ -324,6 +324,11 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 								inviteType: "error"
 							})
 						);
+						HostApi.instance.track("Teammate Invited", {
+							"Invitee Email Address": emailAddress,
+							"Invitation Method": "Error Assignment"
+						});
+
 						// "upgrade" them to an invitee
 						_setAssignee("Invitee");
 					}

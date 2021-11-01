@@ -1409,7 +1409,6 @@ export type CodeErrorProps = PropsWithId | PropsWithCodeError;
 
 const CodeErrorForCodeError = (props: PropsWithCodeError) => {
 	const { codeError, ...baseProps } = props;
-	let disposableDidChangeDataNotification: { dispose(): void };
 	const derivedState = useSelector((state: CodeStreamState) => {
 		const post =
 			codeError && codeError.postId
@@ -1442,15 +1441,12 @@ const CodeErrorForCodeError = (props: PropsWithCodeError) => {
 			HostApi.instance.track("Page Viewed", { "Page Name": "Code Error Details" });
 		}
 
-		requestAnimationFrame(() => {
-			const $stackTrace = document.getElementById("stack-trace");
-			if ($stackTrace) $stackTrace.focus();
-		});
-
-		return () => {
-			// cleanup this disposable on unmount. it may or may not have been set.
-			disposableDidChangeDataNotification && disposableDidChangeDataNotification.dispose();
-		};
+		if (!props.collapsed) {
+			requestAnimationFrame(() => {
+				const $stackTrace = document.getElementById("stack-trace");
+				if ($stackTrace) $stackTrace.focus();
+			});
+		}
 	});
 
 	const renderFooter =

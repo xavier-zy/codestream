@@ -132,6 +132,7 @@ export class TelemetryService {
 		const cc = Logger.getCorrelationContext();
 
 		if (this._hasOptedOut || this._segmentInstance == null) {
+			Logger.debug("Cannot track, user has opted out or no segment instance");
 			return;
 		}
 
@@ -149,6 +150,11 @@ export class TelemetryService {
 			payload["distinct_id"] = this._distinctId;
 		}
 
+		Logger.debug(
+			`Tracking userId=${this._distinctId} anonymousId=${this._anonymousId}:`,
+			event,
+			payload
+		);
 		try {
 			this._segmentInstance.track({
 				userId: this._distinctId,

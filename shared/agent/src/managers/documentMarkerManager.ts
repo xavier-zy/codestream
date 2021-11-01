@@ -328,7 +328,7 @@ export class DocumentMarkerManager {
 						summary = summary.replace(emojiRegex, (s: string, code: string) => emojiMap[code] || s);
 					}
 
-					let gotoLine = comment.position.newLine;
+					const gotoLine = comment.position.newLine;
 
 					const location: CSLocationArray = [gotoLine, 0, gotoLine, 0, undefined];
 					documentMarkers.push({

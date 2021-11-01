@@ -1,8 +1,8 @@
 "use strict";
 
-import { promisify } from "util";
 import { exec } from "child_process";
 import { constants as fsConstants, promises as fsPromises, PathLike } from "fs";
+import { promisify } from "util";
 
 export const execAsync = promisify(exec);
 

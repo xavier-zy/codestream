@@ -1,10 +1,10 @@
 "use strict";
 import { GraphQLClient } from "graphql-request";
 import {
-	memoize,
-	groupBy as _groupBy,
-	sortBy as _sortBy,
 	flatten as _flatten,
+	groupBy as _groupBy,
+	memoize,
+	sortBy as _sortBy,
 	uniq as _uniq,
 	uniqBy as _uniqBy
 } from "lodash-es";
@@ -14,14 +14,18 @@ import { InternalError, ReportSuppressedMessages } from "../agentError";
 import { SessionContainer } from "../container";
 import { GitRemoteParser } from "../git/parsers/remoteParser";
 import {
+	BuiltFromResult,
+	Entity,
 	EntityAccount,
 	EntitySearchResponse,
 	ERROR_NR_CONNECTION_INVALID_API_KEY,
 	ERROR_NR_CONNECTION_MISSING_API_KEY,
 	ERROR_NR_CONNECTION_MISSING_URL,
 	ERROR_PIXIE_NOT_CONFIGURED,
+	ErrorGroup,
 	ErrorGroupResponse,
 	ErrorGroupsResponse,
+	ErrorGroupStateType,
 	GetNewRelicAccountsRequestType,
 	GetNewRelicAccountsResponse,
 	GetNewRelicAssigneesRequestType,
@@ -49,13 +53,9 @@ import {
 	ObservabilityErrorCore,
 	RelatedEntity,
 	ReposScm,
-	ThirdPartyDisconnect,
-	ThirdPartyProviderConfig,
-	Entity,
 	StackTraceResponse,
-	ErrorGroupStateType,
-	BuiltFromResult,
-	ErrorGroup
+	ThirdPartyDisconnect,
+	ThirdPartyProviderConfig
 } from "../protocol/agent.protocol";
 import { CSNewRelicProviderInfo } from "../protocol/api.protocol";
 import { CodeStreamSession } from "../session";
@@ -368,7 +368,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 	}
 
 	private getAccessTokenError(ex: any): { message: string } | undefined {
-		let requestError = ex as {
+		const requestError = ex as {
 			response: {
 				errors: {
 					extensions: {
@@ -407,9 +407,9 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			}
 
 			let results: { guid: string; name: string }[] = [];
-			let nextCursor: any = undefined;
+			const nextCursor: any = undefined;
 			// let i = 0;
-			//	while (true) {
+			// while (true) {
 
 			if (request.appName != null) {
 				// try to find the entity based on the app / remote name
@@ -418,9 +418,9 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				actor {
 				  entitySearch(query: "type='APPLICATION' and name LIKE '${Strings.sanitizeGraphqlValue(
 						request.appName
-					)}'", sortBy:MOST_RELEVANT) { 
-					results {			 
-					  entities {					
+					)}'", sortBy:MOST_RELEVANT) {
+					results {
+					  entities {
 						guid
 						name
 					  }
@@ -443,10 +443,10 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			const response = await this.query<any>(
 				`query search($cursor:String) {
 			actor {
-			  entitySearch(query: "type='APPLICATION'", sortBy:MOST_RELEVANT) { 
+			  entitySearch(query: "type='APPLICATION'", sortBy:MOST_RELEVANT) {
 				results(cursor:$cursor) {
 				 nextCursor
-				  entities {					
+				  entities {
 					guid
 					name
 				  }
@@ -476,7 +476,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			// 		i: i
 			// 	});
 			// }
-			//	}
+			// }
 			results.sort((a, b) => a.name.localeCompare(b.name));
 
 			results = [...new Map(results.map(item => [item["guid"], item])).values()];
@@ -660,8 +660,8 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					remote = remotes[0];
 				}
 
-				let uniqueEntities: Entity[] = [];
-				let uniqueAccounts = new Set<string>();
+				const uniqueEntities: Entity[] = [];
+				const uniqueAccounts = new Set<string>();
 				if (applicationAssociations && applicationAssociations.length) {
 					for (const entity of applicationAssociations) {
 						if (!entity.relatedEntities?.results) continue;
@@ -756,7 +756,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					let filteredEntities = repositoryEntitiesResponse.entities.filter((_, index) =>
 						entityFilter && entityFilter.entityGuid
 							? _.guid === entityFilter.entityGuid
-							: index == 0
+							: index === 0
 					);
 					if (entityFilter && entityFilter.entityGuid && !filteredEntities.length) {
 						filteredEntities = repositoryEntitiesResponse.entities.filter((r, i) => i === 0);
@@ -917,7 +917,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 	): Promise<GetNewRelicErrorGroupResponse | undefined> {
 		let errorGroup: NewRelicErrorGroup | undefined = undefined;
 		let accountId = 0;
-		let entityGuid: string = "";
+		let entityGuid = "";
 		try {
 			const errorGroupGuid = request.errorGroupGuid;
 			const parsedId = NewRelicProvider.parseId(errorGroupGuid)!;
@@ -1458,9 +1458,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 						}
 					  }
 					}
-				  }
-				  
-				`,
+				  }`,
 				{
 					ids: [errorGroupGuid]
 				}
@@ -1470,7 +1468,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			ContextLogger.warn("fetchErrorGroupDataById failure", {
 				errorGroupGuid
 			});
-			let accessTokenError = ex as {
+			const accessTokenError = ex as {
 				message: string;
 				innerError?: { message: string };
 				isAccessTokenError: boolean;
@@ -1924,19 +1922,18 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		entityGuid: string
 	) {
 		return this.query(
-			`query getErrorGroupGuid($name: String!, $message:String!, $entityGuid:EntityGuid!){
+			`query getErrorGroupGuid($name: String!, $message:String!, $entityGuid:EntityGuid!) {
 			actor {
 			  errorsInbox {
-				errorGroup(errorEvent: {name: $name, 
-				  message: $message, 
+				errorGroup(errorEvent: {name: $name,
+				  message: $message,
 				  entityGuid: $entityGuid}) {
 				  id
-				  url											 
+				  url	 
 				}
 			  }
 			}
-		  }									  
-	  `,
+		  }`,
 			{
 				name: name,
 				message: message,
@@ -1950,7 +1947,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		userId?: number
 	): Promise<ErrorGroupsResponse | undefined> {
 		try {
-			if (userId == null || userId == 0) {
+			if (userId == null || userId === 0) {
 				// TODO fix me. remove this once we have a userId on a connection
 				userId = await this.getUserId();
 			}
@@ -2050,8 +2047,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 							}
 						  }
 						}
-					  }					  
-			`,
+					  }`,
 				{
 					accountId: accountId
 				}
@@ -2209,7 +2205,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			if (!parsed) return undefined;
 
 			const split = parsed.split(/\|/);
-			//"140272|ERT|ERR_GROUP|12076a73-fc88-3205-92d3-b785d12e08b6"
+			// "140272|ERT|ERR_GROUP|12076a73-fc88-3205-92d3-b785d12e08b6"
 			const [accountId, unknownAbbreviation, entityType, unknownGuid] = split;
 			return {
 				accountId: accountId != null ? parseInt(accountId, 10) : 0,
@@ -2227,7 +2223,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 
 	private getRepoName(folder: { name?: string; uri: string }) {
 		try {
-			let folderName = (folder.name ||
+			const folderName = (folder.name ||
 				URI.parse(folder.uri)
 					.fsPath.split(/[\\/]+/)
 					.pop())!;

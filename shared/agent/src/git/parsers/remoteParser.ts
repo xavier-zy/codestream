@@ -28,8 +28,8 @@ SOFTWARE.
 /**
  * Modifications Copyright CodeStream Inc. under the Apache 2.0 License (Apache-2.0)
  */
-import { GitRemote, GitRemoteType } from "../models/remote";
 import * as childProcess from "child_process";
+import { GitRemote, GitRemoteType } from "../models/remote";
 import { Logger } from "../../logger";
 
 const emptyStr = "";
@@ -124,7 +124,7 @@ export class GitRemoteParser {
 			value: string;
 		}[]
 	> {
-		let results: any[] = [];
+		const results: any[] = [];
 		if (!httpOrSshEndpoint) return results;
 
 		httpOrSshEndpoint = httpOrSshEndpoint.replace("ssh://", "");

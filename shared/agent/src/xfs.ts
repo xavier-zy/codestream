@@ -1,9 +1,9 @@
 "use strict";
 
 import * as fs from "fs";
-import writeAtomic from "write-file-atomic";
 import path from "path";
 import { DirectoryTree } from "protocol/agent.protocol.scm";
+import writeAtomic from "write-file-atomic";
 
 export namespace xfs {
 	export async function readText(srcPath: string) {

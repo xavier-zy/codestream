@@ -1,10 +1,10 @@
 "use strict";
 
 import { URI } from "vscode-uri";
+import { GitLabProvider } from "./gitlab";
 import { GitRemoteLike } from "../git/gitService";
 import { ProviderConfigurationData } from "../protocol/agent.protocol.providers";
 import { log, lspProvider } from "../system";
-import { GitLabProvider } from "./gitlab";
 import { toRepoName } from "../git/utils";
 
 @lspProvider("gitlab_enterprise")

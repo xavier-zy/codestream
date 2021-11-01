@@ -1,6 +1,7 @@
 "use strict";
 import { Range, RequestType, TextDocumentIdentifier } from "vscode-languageserver-protocol";
 import { BlameAuthor, CodeDelimiterStyles } from "./agent.protocol";
+import { CodeErrorPlus, CreateCodeErrorRequest } from "./agent.protocol.codeErrors";
 import {
 	CodemarkPlus,
 	CreateCodemarkRequest,
@@ -8,7 +9,6 @@ import {
 } from "./agent.protocol.codemarks";
 import { ThirdPartyProviderUser } from "./agent.protocol.providers";
 import { CreateReviewRequest, ReviewPlus } from "./agent.protocol.reviews";
-import { CreateCodeErrorRequest, CodeErrorPlus } from "./agent.protocol.codeErrors";
 import {
 	CodemarkType,
 	CSCodemark,

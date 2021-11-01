@@ -868,7 +868,7 @@ export interface NewRelicUser {
 export interface NewRelicErrorGroup {
 	accountId: number;
 	entityGuid: string;
-	entityType?: string; //ApmApplicationEntity |
+	entityType?: string; // ApmApplicationEntity |
 	entityName?: string;
 
 	occurrenceId?: string;

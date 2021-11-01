@@ -4,6 +4,7 @@
 import { Agent as HttpsAgent } from "https";
 import HttpsProxyAgent from "https-proxy-agent";
 import Pubnub from "pubnub";
+import { inspect } from "util";
 import { Disposable } from "vscode-languageserver";
 // import { PubnubHistory, PubnubHistoryInput, PubnubHistoryOutput } from "./pubnubHistory";
 import {
@@ -17,7 +18,6 @@ import {
 	StatusCallback
 } from "./broadcaster";
 import { PubnubHistory } from "./pubnubHistory";
-import { inspect } from "util";
 
 interface PubnubMessage {
 	timetoken: string;
@@ -78,7 +78,7 @@ export class PubnubConnection implements BroadcasterConnection {
 			subscribeKey: options.subscribeKey,
 			restore: true,
 			logVerbosity: false,
-			//heartbeatInterval: 30,
+			// heartbeatInterval: 30,
 			autoNetworkDetection: true,
 			proxy: options.httpsAgent instanceof HttpsProxyAgent && options.httpsAgent.proxy
 		} as Pubnub.PubnubConfig);
@@ -196,8 +196,8 @@ export class PubnubConnection implements BroadcasterConnection {
 			// an access denied message, in direct response to a subscription attempt
 			const channels = status.errorData.payload.channels;
 			this._debug(`Access denied for channels: ${channels}`);
-			const criticalChannels: string[] = [],
-				nonCriticalChannels: string[] = [];
+			const criticalChannels: string[] = [];
+			const nonCriticalChannels: string[] = [];
 			// HACK: whether a channel is critical should be passed as an option and processed through the
 			// chain, but the changes to the code are too complicated ... this all needs a refactor anyway
 			status.errorData?.payload?.channels.forEach((channel: string) => {

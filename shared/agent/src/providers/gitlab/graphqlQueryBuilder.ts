@@ -1,5 +1,4 @@
 "use strict";
-import semver from "semver";
 import { gate } from "../../system/decorators/gate";
 import {
 	DocumentNode,
@@ -10,6 +9,7 @@ import {
 	SelectionNode,
 	SelectionSetNode
 } from "graphql";
+import semver from "semver";
 import { Logger } from "../../logger";
 import { ProviderVersion } from "../../providers/provider";
 
@@ -69,11 +69,11 @@ export class GraphqlQueryBuilder {
 
 	getOrCreateSupportMatrix(providerVersion: ProviderVersion): any {
 		const version = providerVersion.version;
-		if (!version || version === "0.0.0")
+		if (!version || version === "0.0.0") {
 			return {
 				version: providerVersion
 			};
-
+		}
 		const versionedQuery = this.supportMatrix[version];
 		if (versionedQuery) {
 			Logger.debug(

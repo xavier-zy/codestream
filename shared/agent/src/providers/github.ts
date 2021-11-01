@@ -647,9 +647,9 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 					  cost
 					  remaining
 					  resetAt
-					}					 
-					repository(name:$name, owner:$owner) {					   
-					  pullRequest(number:$pullRequestNumber) {						 
+					}
+					repository(name:$name, owner:$owner) {
+					  pullRequest(number:$pullRequestNumber) {
 						files(first: 100) {
 							totalCount
 							nodes {
@@ -657,7 +657,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 							  deletions
 							  additions
 							}
-						}				 
+						}
 						commits(last: 1) {
 							totalCount
 							${this._transform(`[
@@ -694,12 +694,11 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 											}
 										}
 									}
-								  }						
+								  }
 								}:>=3.0.0]`)}
-						}						 
+						}
 					}
 				}
-			 
 				  }`,
 					{
 						owner: repoOwner,
@@ -2223,8 +2222,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 					}
 				  }
 				}
-			  }						
-			  `,
+			  }`,
 			ownerData
 		);
 	}
@@ -2269,8 +2267,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 					}
 				  }
 				}
-			  }			  
-			  `,
+			  }`,
 			ownerData
 		);
 	}
@@ -2522,9 +2519,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 					}
 				  }
 				}
-			  }
-			  
-		  `,
+			  }`,
 				{
 					pullRequestReviewId: existingReview.pullRequestReviewId,
 					body: request.text,
@@ -2557,9 +2552,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 					}
 				  }
 				}
-			  }
-			  
-		  `,
+			  }`,
 				{
 					pullRequestId: request.pullRequestId,
 					body: request.text,

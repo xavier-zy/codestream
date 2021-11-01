@@ -1,14 +1,14 @@
 "use strict";
 import { MessageType } from "../api/apiProvider";
 import {
+	ClaimCodeErrorRequest,
+	ClaimCodeErrorRequestType,
+	ClaimCodeErrorResponse,
 	DeleteCodeErrorRequest,
 	DeleteCodeErrorRequestType,
 	FetchCodeErrorsRequest,
 	FetchCodeErrorsRequestType,
 	FetchCodeErrorsResponse,
-	ClaimCodeErrorRequest,
-	ClaimCodeErrorRequestType,
-	ClaimCodeErrorResponse,
 	GetCodeErrorRequest,
 	GetCodeErrorRequestType,
 	GetCodeErrorResponse,

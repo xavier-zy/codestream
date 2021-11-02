@@ -535,6 +535,7 @@ export const Observability = React.memo((props: Props) => {
 																		key="codemark-display-options"
 																		className="subtle no-padding"
 																		noFocusOnSelect
+																		preventMenuStopPropagation={true}
 																		items={or.entityAccounts.map((ea, index) => {
 																			let checked = false;
 																			// if we dont have a setting for this, we choose the first one

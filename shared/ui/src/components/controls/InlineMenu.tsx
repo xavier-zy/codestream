@@ -38,6 +38,7 @@ export interface InlineMenuProps {
 	/** if true, prevents e.stopPropagation() from being called onclick */
 	preventStopPropagation?: boolean;
 	onChevronClick?: Function;
+	preventMenuStopPropagation?: boolean;
 }
 
 export const TextButton = styled.span`
@@ -88,6 +89,9 @@ export function InlineMenu(props: InlineMenuProps) {
 	};
 
 	const maybeToggleMenu = action => {
+		if (action?.stopPropagation && props.preventMenuStopPropagation) {
+			action.stopPropagation();
+		}
 		if (action !== "noop") {
 			toggleMenu(action);
 		}
@@ -103,6 +107,7 @@ export function InlineMenu(props: InlineMenuProps) {
 			{isOpen && buttonRef.current && (
 				<Menu
 					align={props.align || "center"}
+					preventMenuStopPropagation={props.preventMenuStopPropagation}
 					action={maybeToggleMenu}
 					title={props.title}
 					titleIcon={props.titleIcon}

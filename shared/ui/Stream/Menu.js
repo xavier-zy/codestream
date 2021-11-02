@@ -509,7 +509,7 @@ export default class Menu extends Component {
 						{this.props.title}
 						<span className="icons">
 							{this.props.titleIcon}
-							{!this.props.noCloseIcon && <Icon onClick={e => this.props.action()} name="x" />}
+							{!this.props.noCloseIcon && <Icon onClick={e => this.props.action(e)} name="x" />}
 						</span>
 					</h3>
 				)}

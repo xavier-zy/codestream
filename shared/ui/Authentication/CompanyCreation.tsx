@@ -48,6 +48,9 @@ export function CompanyCreation(props: {
 
 	const onClickTryAnother = useCallback(async (event: React.FormEvent) => {
 		event.preventDefault();
+		HostApi.instance.track("Try Another Email", {
+			"Discarded Email": props.email
+		});
 		dispatch(changeRegistrationEmail(props.userId!));
 	}, []);
 

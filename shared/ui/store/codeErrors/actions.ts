@@ -355,7 +355,10 @@ export const fetchErrorGroup = (
 		return dispatch(
 			fetchNewRelicErrorGroup({
 				errorGroupGuid: objectId!,
-				occurrenceId: occurrenceId || codeError.stackTraces[0].occurrenceId!,
+				// might not have a codeError.stackTraces from discussions
+				occurrenceId:
+					occurrenceId ||
+					(codeError.stackTraces ? codeError.stackTraces[0].occurrenceId! : undefined),
 				entityGuid: entityGuid
 			})
 		).then((result: GetNewRelicErrorGroupResponse) => {

@@ -1418,6 +1418,12 @@ export const Row = styled.div`
 		color: var(--text-color-subtle);
 		opacity: 0.75;
 	}
+	span.subtle-tight {
+		display: inline-block;
+		padding-left: 12px;
+		color: var(--text-color-subtle);
+		opacity: 0.75;
+	}
 	${Headshot} {
 		top: 1px;
 	}

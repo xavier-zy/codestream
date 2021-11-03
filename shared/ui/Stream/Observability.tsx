@@ -99,6 +99,7 @@ const Root = styled.div`
 
 const ErrorRow = (props: {
 	title: string;
+	subtle?: string;
 	tooltip?: string;
 	timestamp?: number;
 	isLoading?: boolean;
@@ -121,7 +122,10 @@ const ErrorRow = (props: {
 			<div>{props.isLoading ? <Icon className="spin" name="sync" /> : <Icon name="alert" />}</div>
 			<div>
 				<Tooltip title={props.tooltip} delay={1} placement="bottom">
-					<span>{props.title}</span>
+					<>
+						<span>{props.title}</span>
+						{props.subtle && <span className="subtle-tight"> {props.subtle}</span>}
+					</>
 				</Tooltip>
 			</div>
 			<div className="icons">
@@ -607,6 +611,7 @@ export const Observability = React.memo((props: Props) => {
 																							<ErrorRow
 																								title={`${err.errorClass} (${err.count})`}
 																								tooltip={err.message}
+																								subtle={err.message}
 																								timestamp={err.lastOccurrence}
 																								url={err.errorGroupUrl}
 																								onClick={e => {

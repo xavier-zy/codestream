@@ -661,7 +661,6 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				}
 
 				const uniqueEntities: Entity[] = [];
-				const uniqueAccounts = new Set<string>();
 				if (applicationAssociations && applicationAssociations.length) {
 					for (const entity of applicationAssociations) {
 						if (!entity.relatedEntities?.results) continue;
@@ -679,8 +678,6 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 
 								const accountIdString = accountIdTag.values[0];
 
-								if (uniqueAccounts.has(accountIdString)) continue;
-
 								uniqueEntities.push({
 									account: {
 										id: parseInt(accountIdString || "0", 10),
@@ -689,7 +686,6 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 									guid: relatedResult.source.entity.guid,
 									name: relatedResult.source.entity.name
 								});
-								uniqueAccounts.add(accountIdString);
 							}
 						}
 					}
@@ -710,6 +706,9 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 							} as EntityAccount;
 						})
 						.filter(Boolean)
+						.sort((a, b) =>
+							`${a.accountName}-${a.entityName}`.localeCompare(`${b.accountName}-${b.entityName}`)
+						)
 				});
 				ContextLogger.log(`getObservabilityRepos hasRepoAssociation=${hasRepoAssociation}`, {
 					repoId: repo.id,
@@ -751,23 +750,13 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				});
 
 				const repositoryEntitiesResponse = await this.findRepositoryEntitiesByRepoRemotes(remotes);
+				let gotoEnd = false;
 				if (repositoryEntitiesResponse?.entities?.length) {
 					const entityFilter = request.filters?.find(_ => _.repoId === repo.id!);
-					let filteredEntities = repositoryEntitiesResponse.entities.filter((_, index) =>
-						entityFilter && entityFilter.entityGuid
-							? _.guid === entityFilter.entityGuid
-							: index === 0
-					);
-					if (entityFilter && entityFilter.entityGuid && !filteredEntities.length) {
-						filteredEntities = repositoryEntitiesResponse.entities.filter((r, i) => i === 0);
-						ContextLogger.warn("getObservabilityErrors bad entityGuid passed", {
-							entityGuid: entityFilter.entityGuid
-						});
-					}
-					for (const entity of filteredEntities) {
+					for (const entity of repositoryEntitiesResponse.entities) {
 						const accountIdTag = entity.tags?.find(_ => _.key === "accountId");
 						if (!accountIdTag) {
-							ContextLogger.warn("count not find accountId for entity", {
+							ContextLogger.warn("count not find accountId for repo entity", {
 								entityGuid: entity.guid
 							});
 							continue;
@@ -777,72 +766,87 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 						const urlTag = entity.tags?.find(_ => _.key === "url");
 						const urlValue = urlTag?.values[0];
 
-						const related = await this.findRelatedEntityByRepositoryGuid(entity.guid);
-						const applicationGuid = related.actor.entity.relatedEntities.results.find(
-							(r: any) => r.type === "BUILT_FROM"
-						)?.source.entity.guid;
+						const relatedEntities = await this.findRelatedEntityByRepositoryGuid(entity.guid);
 
-						if (!applicationGuid) continue;
-
-						const response = await this.findFingerprintedErrorTraces(
-							accountIdValue,
-							applicationGuid
+						let builtFromApplications = relatedEntities.actor.entity.relatedEntities.results.filter(
+							r => r.type === "BUILT_FROM"
 						);
-						if (response.actor.account.nrql.results) {
-							const groupedByFingerprint = _groupBy(
-								response.actor.account.nrql.results,
-								"fingerprint"
+						if (entityFilter && entityFilter.entityGuid) {
+							builtFromApplications = builtFromApplications.filter(
+								_ => _.source?.entity.guid === entityFilter.entityGuid
 							);
-							const errorTraces = [];
-							for (const k of Object.keys(groupedByFingerprint)) {
-								const groupedObject = _sortBy(groupedByFingerprint[k], r => -r.timestamp);
-								const lastObject = groupedObject[0];
-								errorTraces.push({
-									fingerPrintId: k,
-									length: groupedObject.length,
-									appName: lastObject.appName,
-									lastOccurrence: lastObject.timestamp,
-									occurrenceId: lastObject.id,
-									errorClass: lastObject["error.class"],
-									message: lastObject.message,
-									entityGuid: lastObject.entityGuid
-								});
-							}
+						}
+						for (const application of builtFromApplications) {
+							if (!application.source.entity.guid) continue;
 
-							for (const errorTrace of errorTraces) {
-								try {
-									const response = await this.getErrorGroupFromNameMessageEntity(
-										errorTrace.errorClass,
-										errorTrace.message,
-										errorTrace.entityGuid
-									);
-
-									if (response && response.actor.errorsInbox.errorGroup) {
-										observabilityErrors.push({
-											entityId: errorTrace.entityGuid,
-											appName: errorTrace.appName,
-											errorClass: errorTrace.errorClass,
-											message: errorTrace.message,
-											remote: urlValue!,
-											errorGroupGuid: response.actor.errorsInbox.errorGroup.id,
-											occurrenceId: errorTrace.occurrenceId,
-											count: errorTrace.length,
-											lastOccurrence: errorTrace.lastOccurrence,
-											errorGroupUrl: response.actor.errorsInbox.errorGroup.url
-										});
-										if (observabilityErrors.length > 4) {
-											break;
-										}
-									}
-								} catch (ex) {
-									ContextLogger.warn("internal error getErrorGroupGuid", {
-										ex: ex
+							const response = await this.findFingerprintedErrorTraces(
+								accountIdValue,
+								application.source.entity.guid
+							);
+							if (response.actor.account.nrql.results) {
+								const groupedByFingerprint = _groupBy(
+									response.actor.account.nrql.results,
+									"fingerprint"
+								);
+								const errorTraces = [];
+								for (const k of Object.keys(groupedByFingerprint)) {
+									const groupedObject = _sortBy(groupedByFingerprint[k], r => -r.timestamp);
+									const lastObject = groupedObject[0];
+									errorTraces.push({
+										fingerPrintId: k,
+										length: groupedObject.length,
+										appName: lastObject.appName,
+										lastOccurrence: lastObject.timestamp,
+										occurrenceId: lastObject.id,
+										errorClass: lastObject["error.class"],
+										message: lastObject.message,
+										entityGuid: lastObject.entityGuid
 									});
+								}
+
+								for (const errorTrace of errorTraces) {
+									try {
+										const response = await this.getErrorGroupFromNameMessageEntity(
+											errorTrace.errorClass,
+											errorTrace.message,
+											errorTrace.entityGuid
+										);
+
+										if (response && response.actor.errorsInbox.errorGroup) {
+											observabilityErrors.push({
+												entityId: errorTrace.entityGuid,
+												appName: errorTrace.appName,
+												errorClass: errorTrace.errorClass,
+												message: errorTrace.message,
+												remote: urlValue!,
+												errorGroupGuid: response.actor.errorsInbox.errorGroup.id,
+												occurrenceId: errorTrace.occurrenceId,
+												count: errorTrace.length,
+												lastOccurrence: errorTrace.lastOccurrence,
+												errorGroupUrl: response.actor.errorsInbox.errorGroup.url
+											});
+											if (observabilityErrors.length > 4) {
+												gotoEnd = true;
+												break;
+											}
+										}
+									} catch (ex) {
+										ContextLogger.warn("internal error getErrorGroupGuid", {
+											ex: ex
+										});
+									}
+								}
+
+								if (gotoEnd) {
+									break;
 								}
 							}
 						}
+
+						if (gotoEnd) {
+							break;
+						}
 					}
-				} else {
 				}
 				response.repos.push({
 					repoId: repo.id!,
@@ -1804,6 +1808,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		}
 	}
 
+	@log({ timed: true })
 	private async findFingerprintedErrorTraces(accountId: number, applicationGuid: string) {
 		return this.query(
 			`query fetchErrorsInboxData($accountId:Int!) {
@@ -1868,6 +1873,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		);
 	}
 
+	@log({ timed: true })
 	private async findRelatedEntityByRepositoryGuid(
 		repositoryGuid: string
 	): Promise<{
@@ -1916,6 +1922,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		);
 	}
 
+	@log({ timed: true })
 	private async getErrorGroupFromNameMessageEntity(
 		name: string,
 		message: string,
@@ -1942,6 +1949,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		);
 	}
 
+	@log({ timed: true })
 	private async getErrorsInboxAssignments(
 		emailAddress: string,
 		userId?: number

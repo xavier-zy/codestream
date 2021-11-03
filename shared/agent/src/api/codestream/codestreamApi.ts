@@ -15,13 +15,11 @@ import { Team, User } from "../../api/extensions";
 import { Container, SessionContainer } from "../../container";
 import { Logger } from "../../logger";
 import { isDirective, resolve, safeDecode, safeEncode } from "../../managers/operations";
-import {
-	AddBlameMapRequest,
-	AddBlameMapRequestType,
-	SaveProviderConfigRequestType
-} from "../../protocol/agent.protocol";
+
 import {
 	AccessToken,
+	AddBlameMapRequest,
+	AddBlameMapRequestType,
 	AddEnterpriseProviderHostRequest,
 	AddEnterpriseProviderHostResponse,
 	AddMarkersResponse,
@@ -135,6 +133,7 @@ import {
 	RemoveEnterpriseProviderHostRequest,
 	RenameStreamRequest,
 	ReportingMessageType,
+	SaveProviderConfigRequestType,
 	SendPasswordResetEmailRequest,
 	SendPasswordResetEmailRequestType,
 	SetCodemarkPinnedRequest,
@@ -170,7 +169,8 @@ import {
 	UpdateUserRequest,
 	UploadFileRequest,
 	UploadFileRequestType,
-	VerifyConnectivityResponse
+	VerifyConnectivityResponse,
+	ThirdPartyProviderUnsetTokenRequest
 } from "../../protocol/agent.protocol";
 import {
 	CSAddMarkersRequest,

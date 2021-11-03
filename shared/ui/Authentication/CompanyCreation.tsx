@@ -111,6 +111,11 @@ export function CompanyCreation(props: {
 
 			setIsLoading(false);
 		}
+
+		HostApi.instance.track("Organization Options Presented", {
+			"Domain Orgs":
+				props.eligibleJoinCompanies && props.eligibleJoinCompanies.length ? true : false
+		});
 	});
 
 	const onClickBeginCreateOrganization = () => {

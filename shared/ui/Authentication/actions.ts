@@ -299,6 +299,8 @@ export const validateSignup = (provider: string, authInfo?: SSOAuthInfo) => asyn
 		code: getState().session.otc!
 	});
 
+	const providerName = provider ? ProviderNames[provider.toLowerCase()] || provider : "CodeStream";
+
 	if (isLoginFailResponse(response)) {
 		if (getState().session.inMaintenanceMode && response.error !== LoginResult.MaintenanceMode) {
 			dispatch(setMaintenanceMode(false));
@@ -316,7 +318,10 @@ export const validateSignup = (provider: string, authInfo?: SSOAuthInfo) => asyn
 			case LoginResult.AlreadySignedIn:
 				return dispatch(bootstrap());
 			case LoginResult.NotInCompany:
-				HostApi.instance.track("Account Created", { email: response.extra.email });
+				HostApi.instance.track("Account Created", {
+					email: response.extra.email,
+					"Auth Provider": providerName
+				});
 				return dispatch(
 					goToCompanyCreation({
 						email: response.extra && response.extra.email,
@@ -327,7 +332,10 @@ export const validateSignup = (provider: string, authInfo?: SSOAuthInfo) => asyn
 					})
 				);
 			case LoginResult.NotOnTeam:
-				HostApi.instance.track("Account Created", { email: response.extra.email });
+				HostApi.instance.track("Account Created", {
+					email: response.extra.email,
+					"Auth Provider": providerName
+				});
 				return dispatch(
 					goToTeamCreation({
 						email: response.extra && response.extra.email,
@@ -346,12 +354,10 @@ export const validateSignup = (provider: string, authInfo?: SSOAuthInfo) => asyn
 
 	if (authInfo && authInfo.fromSignup) {
 		HostApi.instance.track("Account Created", {
-			email: response.loginResponse.user.email
+			email: response.loginResponse.user.email,
+			"Auth Provider": providerName
 		});
 
-		const providerName = provider
-			? ProviderNames[provider.toLowerCase()] || provider
-			: "CodeStream";
 		HostApi.instance.track("Signup Completed", {
 			"Signup Type": authInfo.type === SignupType.CreateTeam ? "Organic" : "Viral",
 			"Auth Provider": providerName

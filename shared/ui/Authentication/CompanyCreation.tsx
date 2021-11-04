@@ -10,7 +10,7 @@ import { useDidMount } from "../utilities/hooks";
 import styled from "styled-components";
 import { TextInput } from "./TextInput";
 import { HostApi } from "..";
-import { completeSignup } from "./actions";
+import { completeSignup, ProviderNames } from "./actions";
 import { Checkbox } from "../src/components/Checkbox";
 import {
 	CreateCompanyRequestType,
@@ -46,10 +46,16 @@ export function CompanyCreation(props: {
 }) {
 	const dispatch = useDispatch();
 
+	const authProviderName = props.provider
+		? ProviderNames[props.provider.toLowerCase()] || props.provider
+		: "CodeStream";
+
 	const onClickTryAnother = useCallback(async (event: React.FormEvent) => {
 		event.preventDefault();
+
 		HostApi.instance.track("Try Another Email", {
-			"Discarded Email": props.email
+			"Discarded Email": props.email,
+			"Auth Provider": authProviderName
 		});
 		dispatch(changeRegistrationEmail(props.userId!));
 	}, []);
@@ -114,13 +120,15 @@ export function CompanyCreation(props: {
 
 		HostApi.instance.track("Organization Options Presented", {
 			"Domain Orgs":
-				props.eligibleJoinCompanies && props.eligibleJoinCompanies.length ? true : false
+				props.eligibleJoinCompanies && props.eligibleJoinCompanies.length ? true : false,
+			"Auth Provider": authProviderName
 		});
 	});
 
 	const onClickBeginCreateOrganization = () => {
 		HostApi.instance.track("New Organization Initiated", {
-			"Available Organizations": organizations?.length > 0
+			"Available Organizations": organizations?.length > 0,
+			"Auth Provider": authProviderName
 		});
 		setStep(1);
 	};
@@ -151,7 +159,8 @@ export function CompanyCreation(props: {
 						? "Not Available"
 						: organizationSettings?.allowDomainJoining
 						? "On"
-						: "Off"
+						: "Off",
+					"Auth Provider": authProviderName
 					// "Code Host Joining": ""
 				});
 
@@ -177,7 +186,8 @@ export function CompanyCreation(props: {
 			})) as JoinCompanyResponse;
 
 			HostApi.instance.track("Joined Organization", {
-				Availability: organization._type
+				Availability: organization._type,
+				"Auth Provider": authProviderName
 			});
 			dispatch(
 				completeSignup(props.email!, props.token!, result.team.id, {

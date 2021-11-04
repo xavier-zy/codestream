@@ -46,7 +46,7 @@ export function CompanyCreation(props: {
 }) {
 	const dispatch = useDispatch();
 
-	const authProviderName = props.provider
+	const providerName = props.provider
 		? ProviderNames[props.provider.toLowerCase()] || props.provider
 		: "CodeStream";
 
@@ -55,7 +55,7 @@ export function CompanyCreation(props: {
 
 		HostApi.instance.track("Try Another Email", {
 			"Discarded Email": props.email,
-			"Auth Provider": authProviderName
+			"Auth Provider": providerName
 		});
 		dispatch(changeRegistrationEmail(props.userId!));
 	}, []);
@@ -121,14 +121,14 @@ export function CompanyCreation(props: {
 		HostApi.instance.track("Organization Options Presented", {
 			"Domain Orgs":
 				props.eligibleJoinCompanies && props.eligibleJoinCompanies.length ? true : false,
-			"Auth Provider": authProviderName
+			"Auth Provider": providerName
 		});
 	});
 
 	const onClickBeginCreateOrganization = () => {
 		HostApi.instance.track("New Organization Initiated", {
 			"Available Organizations": organizations?.length > 0,
-			"Auth Provider": authProviderName
+			"Auth Provider": providerName
 		});
 		setStep(1);
 	};
@@ -160,7 +160,7 @@ export function CompanyCreation(props: {
 						: organizationSettings?.allowDomainJoining
 						? "On"
 						: "Off",
-					"Auth Provider": authProviderName
+					"Auth Provider": providerName
 					// "Code Host Joining": ""
 				});
 
@@ -187,7 +187,7 @@ export function CompanyCreation(props: {
 
 			HostApi.instance.track("Joined Organization", {
 				Availability: organization._type,
-				"Auth Provider": authProviderName
+				"Auth Provider": providerName
 			});
 			dispatch(
 				completeSignup(props.email!, props.token!, result.team.id, {
@@ -272,19 +272,19 @@ export function CompanyCreation(props: {
 													);
 												})}
 												{!organizations.length && (
-														<div>
-															We didn't find any organizations for you to join based on email domain.
-															<br />
-															{props.isWebmail ?
-																<Link onClick={onClickTryAnother}>
-																	Try using your work email address
-																</Link>
-																:
-																<Link onClick={onClickTryAnother}>
-																	Try using a different email address
-																</Link>
-															}
-														</div>
+													<div>
+														We didn't find any organizations for you to join based on email domain.
+														<br />
+														{props.isWebmail ? (
+															<Link onClick={onClickTryAnother}>
+																Try using your work email address
+															</Link>
+														) : (
+															<Link onClick={onClickTryAnother}>
+																Try using a different email address
+															</Link>
+														)}
+													</div>
 												)}
 											</>
 										)}

@@ -64,8 +64,10 @@ export interface SSOAuthInfo {
 	};
 }
 
-const ProviderNames = {
-	github: "GitHub"
+export const ProviderNames = {
+	github: "GitHub",
+	gitlab: "GitLab",
+	bitbucket: "Bitbucket"
 };
 
 export const startSSOSignin = (

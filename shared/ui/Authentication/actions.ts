@@ -185,7 +185,8 @@ export const authenticate = (params: PasswordLoginParams | TokenLoginRequest) =>
 						// login is for resuming previous sessions and this error means you haven't ever fully signed into the extension
 						email: (params as PasswordLoginParams).email,
 						token: response.extra.token,
-						userId: response.extra.userId
+						userId: response.extra.userId,
+						eligibleJoinCompanies: response.extra.eligibleJoinCompanies
 					})
 				);
 			case LoginResult.NotOnTeam:
@@ -321,6 +322,7 @@ export const validateSignup = (provider: string, authInfo?: SSOAuthInfo) => asyn
 						email: response.extra && response.extra.email,
 						token: response.extra && response.extra.token,
 						userId: response.extra && response.extra.userId,
+						eligibleJoinCompanies: response.extra && response.extra.eligibleJoinCompanies,
 						provider
 					})
 				);

@@ -468,7 +468,12 @@ export class CodeStreamApiProvider implements ApiProvider {
 			this._token = response.accessToken;
 			throw {
 				error: LoginResult.NotInCompany,
-				extra: { token: response.accessToken, email: response.user.email, userId: response.user.id }
+				extra: {
+					token: response.accessToken,
+					email: response.user.email,
+					userId: response.user.id,
+					eligibleJoinCompanies: response.eligibleJoinCompanies
+				}
 			} as LoginFailResponse;
 		}
 

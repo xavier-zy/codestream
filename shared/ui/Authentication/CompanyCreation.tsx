@@ -262,15 +262,19 @@ export function CompanyCreation(props: {
 													);
 												})}
 												{!organizations.length && (
-													<>
 														<div>
-															We didn't find any organizations for you to join
+															We didn't find any organizations for you to join based on email domain.
 															<br />
-															<Link onClick={onClickTryAnother}>
-																Try using a different email address
-															</Link>
+															{props.isWebmail ?
+																<Link onClick={onClickTryAnother}>
+																	Try using your work email address
+																</Link>
+																:
+																<Link onClick={onClickTryAnother}>
+																	Try using a different email address
+																</Link>
+															}
 														</div>
-													</>
 												)}
 											</>
 										)}

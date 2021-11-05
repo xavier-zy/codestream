@@ -246,16 +246,15 @@ export const jumpToStackLine = (
 		range.end.character = 2147483647;
 	}
 
-	const normalizedPath = path!.replace(/\\/g, "/");
 	const revealResponse = await HostApi.instance.send(EditorRevealRangeRequestType, {
-		uri: `file://${normalizedPath}`,
+		uri: `file://${path}`,
 		preserveFocus: true,
 		range,
 		sha
 	});
 	if (revealResponse?.success) {
 		highlightRange({
-			uri: `file://${normalizedPath}`,
+			uri: `file://${path}`,
 			range,
 			highlight: true,
 			sha

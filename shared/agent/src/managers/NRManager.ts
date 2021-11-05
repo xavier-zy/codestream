@@ -50,6 +50,7 @@ import { Parser as pythonParser } from "./stackTraceParsers/pythonStackTracePars
 import { Parser as rubyParser } from "./stackTraceParsers/rubyStackTraceParser";
 
 import { NewRelicProvider } from "../providers/newrelic";
+import { URI } from "vscode-uri";
 
 const ExtensionToLanguageMap: { [key: string]: string } = {
 	js: "javascript",
@@ -293,9 +294,13 @@ export class NRManager {
 		}
 
 		const fullPath = path.join(repoPath, filePath);
+		const normalizedPath = Strings.normalizePath(URI.parse(fullPath).toString(true), {
+			addLeadingSlash: true
+		}).replace(":", "%3A");
+
 		if (!sha) {
 			return {
-				path: fullPath,
+				path: normalizedPath,
 				line: line,
 				column: column
 			};
@@ -303,7 +308,7 @@ export class NRManager {
 		const position = await this.getCurrentStackTracePosition(sha, fullPath, line, column);
 		return {
 			...position,
-			path: fullPath
+			path: normalizedPath
 		};
 	}
 
@@ -408,7 +413,9 @@ export class NRManager {
 	static getBestMatchingPath(pathSuffix: string, allFilePaths: string[]) {
 		if (!pathSuffix) return undefined;
 
+		// normalize the file paths
 		const pathSuffixParts = pathSuffix
+			.replace(/\\/g, "/")
 			.split("/")
 			.slice()
 			.reverse();
@@ -417,7 +424,9 @@ export class NRManager {
 		let bestMatchingDepth = 0;
 
 		for (const filePath of allFilePaths) {
+			// normalize the file paths
 			const filePathParts = filePath
+				.replace(/\\/g, "/")
 				.split("/")
 				.slice()
 				.reverse();

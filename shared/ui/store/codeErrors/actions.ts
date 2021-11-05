@@ -247,14 +247,14 @@ export const jumpToStackLine = (
 	}
 
 	const revealResponse = await HostApi.instance.send(EditorRevealRangeRequestType, {
-		uri: `file://${path}`,
+		uri: path!,
 		preserveFocus: true,
 		range,
 		sha
 	});
 	if (revealResponse?.success) {
 		highlightRange({
-			uri: `file://${path}`,
+			uri: path!,
 			range,
 			highlight: true,
 			sha

@@ -86,11 +86,13 @@ export class NRManager {
 	_nodeJS: NodeJSInstrumentation;
 	_java: JavaInstrumentation;
 	_dotNetCore: DotNetCoreInstrumentation;
+	_isWindows: boolean;
 
 	constructor(readonly session: CodeStreamSession) {
 		this._nodeJS = new NodeJSInstrumentation(session);
 		this._java = new JavaInstrumentation(session);
 		this._dotNetCore = new DotNetCoreInstrumentation(session);
+		this._isWindows = process.platform === "win32";
 	}
 
 	// returns info gleaned from parsing a stack trace
@@ -294,9 +296,12 @@ export class NRManager {
 		}
 
 		const fullPath = path.join(repoPath, filePath);
-		const normalizedPath = Strings.normalizePath(URI.parse(fullPath).toString(true), {
-			addLeadingSlash: true
-		}).replace(":", "%3A");
+		let normalizedPath = Strings.normalizePath(URI.parse(fullPath).toString(true), {
+			addLeadingSlash: this._isWindows
+		});
+		if (this._isWindows) {
+			normalizedPath = normalizedPath.replace(":", "%3A");
+		}
 
 		if (!sha) {
 			return {

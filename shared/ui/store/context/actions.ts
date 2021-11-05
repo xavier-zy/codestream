@@ -298,8 +298,8 @@ export const handlePendingProtocolHandlerUrl = (url: string | undefined) => (
 	HostApi.instance.emit(HostDidReceiveRequestNotificationType.method, { url: url });
 };
 
-export const setPendingProtocolHandlerUrl = (params: { url?: string } = {}) =>
-	action(ContextActionsType.SetPendingProtocolHandlerUrl, { url: params.url });
+export const setPendingProtocolHandlerUrl = (params: { url?: string; query?: any } = {}) =>
+	action(ContextActionsType.SetPendingProtocolHandlerUrl, { url: params.url, query: params.query });
 
 export const clearPendingProtocolHandlerUrl = (params = {}) =>
-	action(ContextActionsType.SetPendingProtocolHandlerUrl, { url: undefined });
+	action(ContextActionsType.SetPendingProtocolHandlerUrl, { url: undefined, query: undefined });

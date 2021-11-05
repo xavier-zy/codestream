@@ -210,6 +210,7 @@ interface BasicLoginOptions {
 	codemarkId?: string;
 	reviewId?: string;
 	codeErrorId?: string;
+	errorGroupGuid?: string;
 }
 
 export interface CredentialsLoginOptions extends BasicLoginOptions {

@@ -291,6 +291,7 @@ import {
 	TriggerMsTeamsProactiveMessageRequest,
 	TriggerMsTeamsProactiveMessageResponse
 } from "../../protocol/api.protocol";
+import { NewRelicProvider } from "../../providers/newrelic";
 import { VersionInfo } from "../../session";
 import { Functions, getProvider, log, lsp, lspHandler, Objects, Strings } from "../../system";
 import {
@@ -415,10 +416,15 @@ export class CodeStreamApiProvider implements ApiProvider {
 				break;
 
 			case "otc":
+				const nrAccountId =
+					options.errorGroupGuid !== undefined
+						? NewRelicProvider.parseId(options.errorGroupGuid)?.accountId
+						: undefined;
 				response = await this.put<CSCompleteSignupRequest, CSLoginResponse>(
 					"/no-auth/check-signup",
 					{
-						token: options.code
+						token: options.code,
+						nrAccountId
 					}
 				);
 
@@ -472,7 +478,8 @@ export class CodeStreamApiProvider implements ApiProvider {
 					token: response.accessToken,
 					email: response.user.email,
 					userId: response.user.id,
-					eligibleJoinCompanies: response.eligibleJoinCompanies
+					eligibleJoinCompanies: response.eligibleJoinCompanies,
+					accountIsConnected: response.accountIsConnected
 				}
 			} as LoginFailResponse;
 		}
@@ -614,6 +621,9 @@ export class CodeStreamApiProvider implements ApiProvider {
 	}
 
 	async confirmRegistration(request: CSConfirmRegistrationRequest): Promise<CSLoginResponse> {
+		if (request.errorGroupGuid !== undefined && request.nrAccountId === undefined) {
+			request.nrAccountId = NewRelicProvider.parseId(request.errorGroupGuid)?.accountId;
+		}
 		const response = await this.post<CSConfirmRegistrationRequest, CSLoginResponse>(
 			"/no-auth/confirm",
 			request

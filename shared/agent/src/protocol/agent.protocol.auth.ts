@@ -61,6 +61,7 @@ export interface OtcLoginRequest {
 	code: string;
 	teamId?: string;
 	team?: string;
+	errorGroupGuid?: string;
 }
 
 export const OtcLoginRequestType = new RequestType<OtcLoginRequest, LoginResponse, void, void>(
@@ -92,6 +93,7 @@ export interface ConfirmRegistrationResponse {
 	status: LoginResult;
 	token?: string;
 	eligibleJoinCompanies?: CSEligibleJoinCompany[];
+	accountIsConnected?: boolean;
 	isWebmail?: boolean;
 	companies?: CSCompany[];
 }

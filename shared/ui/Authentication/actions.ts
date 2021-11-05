@@ -188,7 +188,8 @@ export const authenticate = (params: PasswordLoginParams | TokenLoginRequest) =>
 						email: (params as PasswordLoginParams).email,
 						token: response.extra.token,
 						userId: response.extra.userId,
-						eligibleJoinCompanies: response.extra.eligibleJoinCompanies
+						eligibleJoinCompanies: response.extra.eligibleJoinCompanies,
+						accountIsConnected: response.extra.accountIsConnected
 					})
 				);
 			case LoginResult.NotOnTeam:
@@ -297,14 +298,16 @@ export const validateSignup = (provider: string, authInfo?: SSOAuthInfo) => asyn
 	dispatch,
 	getState: () => CodeStreamState
 ) => {
+	const { context, session } = getState();
 	const response = await HostApi.instance.send(OtcLoginRequestType, {
-		code: getState().session.otc!
+		code: session.otc!,
+		errorGroupGuid: context.pendingProtocolHandlerQuery?.errorGroupGuid
 	});
 
 	const providerName = provider ? ProviderNames[provider.toLowerCase()] || provider : "CodeStream";
 
 	if (isLoginFailResponse(response)) {
-		if (getState().session.inMaintenanceMode && response.error !== LoginResult.MaintenanceMode) {
+		if (session.inMaintenanceMode && response.error !== LoginResult.MaintenanceMode) {
 			dispatch(setMaintenanceMode(false));
 		}
 
@@ -330,6 +333,7 @@ export const validateSignup = (provider: string, authInfo?: SSOAuthInfo) => asyn
 						token: response.extra && response.extra.token,
 						userId: response.extra && response.extra.userId,
 						eligibleJoinCompanies: response.extra && response.extra.eligibleJoinCompanies,
+						accountIsConnected: response.extra && response.extra.accountIsConnected,
 						provider
 					})
 				);

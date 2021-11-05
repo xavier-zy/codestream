@@ -43,6 +43,7 @@ export function CompanyCreation(props: {
 	onComplete?: Function;
 	companies?: CSCompany[];
 	eligibleJoinCompanies?: CSEligibleJoinCompany[];
+	accountIsConnected?: boolean;
 }) {
 	const dispatch = useDispatch();
 
@@ -271,7 +272,13 @@ export function CompanyCreation(props: {
 														</div>
 													);
 												})}
-												{!organizations.length && (
+												{!organizations.length && props.accountIsConnected && (
+													<div>
+														Some people from your account on New Relic are already in an
+														organization on CodeStream. Ask them to invite you.
+													</div>
+												)}
+												{!organizations.length && !props.accountIsConnected && (
 													<div>
 														We didn't find any organizations for you to join based on email domain.
 														<br />

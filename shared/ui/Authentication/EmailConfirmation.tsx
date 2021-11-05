@@ -1,5 +1,6 @@
+import { CodeStreamState } from "@codestream/webview/store";
 import React, { useState, useCallback, useRef, useEffect } from "react";
-import { connect } from "react-redux";
+import { connect, useSelector } from "react-redux";
 import { FormattedMessage } from "react-intl";
 import { Link } from "../Stream/Link";
 import {
@@ -40,6 +41,12 @@ const array = new Array(defaultArrayLength);
 const initialValues: string[] = [...array].fill("");
 
 export const EmailConfirmation = (connect() as any)((props: Props) => {
+	const derivedState = useSelector((state: CodeStreamState) => {
+		const { context } = state;
+		const errorGroupGuid = context.pendingProtocolHandlerQuery?.errorGroupGuid;
+		return { errorGroupGuid };
+	});
+
 	const inputs = useRef(array);
 	const [emailSent, setEmailSent] = useState(false);
 	const [digits, setValues] = useState(initialValues);
@@ -86,6 +93,7 @@ export const EmailConfirmation = (connect() as any)((props: Props) => {
 
 		const result = await HostApi.instance.send(ConfirmRegistrationRequestType, {
 			email: props.email,
+			errorGroupGuid: derivedState.errorGroupGuid,
 			confirmationCode: code
 		});
 

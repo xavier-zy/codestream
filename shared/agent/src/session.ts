@@ -1098,6 +1098,7 @@ export class CodeStreamSession {
 				token: response.accessToken,
 				companies: response.companies,
 				eligibleJoinCompanies: response.eligibleJoinCompanies,
+				accountIsConnected: response.accountIsConnected,
 				isWebmail: response.isWebmail
 			};
 			if (response.companies.length === 0) {

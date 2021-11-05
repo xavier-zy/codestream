@@ -185,6 +185,7 @@ export interface WebviewContext {
 	startWorkCard?: any;
 	onboardStep: number;
 	pendingProtocolHandlerUrl?: string;
+	pendingProtocolHandlerQuery?: any;
 }
 
 export interface SessionState {

@@ -545,7 +545,9 @@ function listenForEvents(store) {
 						// if the user isn't logged in we'll queue this url
 						// up for post-login processing
 						if (!store.getState().session.userId) {
-							store.dispatch(setPendingProtocolHandlerUrl({ url: e.url }));
+							store.dispatch(
+								setPendingProtocolHandlerUrl({ url: e.url, query: definedQuery.query })
+							);
 							break;
 						}
 

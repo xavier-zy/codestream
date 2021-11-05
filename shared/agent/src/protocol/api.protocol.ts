@@ -73,6 +73,7 @@ export enum LoginResult {
 
 export interface CSCompleteSignupRequest {
 	token: string;
+	nrAccountId?: number;
 }
 
 export interface CSLoginRequest {
@@ -109,6 +110,7 @@ export interface CSLoginResponse {
 	features?: CSApiFeatures;
 	environmentInfo: CodeStreamEnvironmentInfo;
 	eligibleJoinCompanies?: CSEligibleJoinCompany[];
+	accountIsConnected?: boolean;
 	isWebmail?: boolean;
 }
 
@@ -128,6 +130,8 @@ export interface CSRegisterResponse {
 export interface CSConfirmRegistrationRequest {
 	email: string;
 	confirmationCode: string;
+	errorGroupGuid?: string;
+	nrAccountId?: number;
 }
 
 export interface CSGetInviteInfoRequest {

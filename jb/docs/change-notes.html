@@ -1,6 +1,22 @@
 <h4 id="12_0_3">12.0.3</h4>
 <h5>Changed</h5>
 <ul>
+    <li>Prevent issue codemarks and permalinks when commenting on an error from New Relic</li>
+    <li>Display stack traces in errors even when they can't be parsed</li>
+</ul>
+<h5>Fixed</h5>
+<ul>
+    <li>Addresses <a href="https://github.com/TeamCodeStream/CodeStream/issues/752">#752</a> - TestUrlHandlerAction is  incompatible with 2021.3+
+    <li>Addresses <a href="https://github.com/TeamCodeStream/CodeStream/issues/709">#709</a> - Multi-line PR comments only showing last 4 lines
+    <li>Fixes an issue with domain-based joining not working when signing up via GitHub, GitLab or Bitbucket</li>
+    <li>Fixes an issue where the activity feed is automatically scrolled to the first error</li>
+    <li>Fixes an issue where closing the inline Entities menu in the Observability section collapses the node</li>
+    <li>Fixes an issue where deleting a comment in an error via the editor gutter doesn't take effect without a reload</li>
+    <li>Fixes a windows-specific file path issue when parsing a stack trace</li>
+</ul>
+<h4 id="12_0_3">12.0.3</h4>
+<h5>Changed</h5>
+<ul>
     <li>Modification to the script to grab unique pods for the Pixie dynamic logging</li>
     <li>Add entity and account info to error groups without stack traces</li>
     <li>Suppress "Copy Link" in ellipses menu if error group is still pending</li>

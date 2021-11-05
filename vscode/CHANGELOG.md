@@ -1,5 +1,21 @@
 # Change Log
 
+## [12.0.3] - 2021-11-5
+
+### Changed
+
+- Prevent issue codemarks and permalinks when commenting on an error from New Relic
+- Display stack traces in errors even when they can't be parsed
+
+### Fixed
+
+- Addresses [#709](https://github.com/TeamCodeStream/CodeStream/issues/709) &mdash; Multi-line PR comments only showing last 4 lines
+- Fixes an issue with domain-based joining not working when signing up via GitHub, GitLab or Bitbucket
+- Fixes an issue where the activity feed is automatically scrolled to the first error
+- Fixes an issue where closing the inline Entities menu in the Observability section collapses the node
+- Fixes an issue where deleting a comment in an error via the editor gutter doesn't take effect without a reload
+- Fixes a windows-specific file path issue when parsing a stack trace
+
 ## [12.0.2] - 2021-10-28
 
 ### Changed

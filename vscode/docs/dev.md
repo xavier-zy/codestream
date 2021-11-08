@@ -173,7 +173,7 @@ npm run pack
 
 #### Using VSCode
 
-1. Open the `vscode-codestream` repository folder
+1. Open the `codestream.code-workspace` workspace file
 2. Choose the `Launch CodeStream` launch configuration from the launch dropdown in the Debug dropdown and press `F5`.
 
 #### To set breakpoints

@@ -66,7 +66,6 @@ export enum WebviewPanels {
 	OnboardNewRelic = "onboard-newrelic",
 	Commits = "commits",
 	ErrorsInbox = "errorsinbox",
-	Instrumentation = "instrumentation",
 	CodeError = "code-error",
 	Observability = "observability",
 	PixieDynamicLogging = "pixie-dynamic-logging"

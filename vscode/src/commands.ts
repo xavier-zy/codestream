@@ -395,11 +395,6 @@ export class Commands implements Disposable {
 		return env.clipboard.writeText(response.linkUrl);
 	}
 
-	@command("instrumentationOpen", { showErrorMessage: "Unable to open" })
-	async instrumentationOpen(args: { name: string } = { name: "" }) {
-		await Container.webview.instrumentationOpen(window.activeTextEditor, args.name, "VSC");
-	}
-
 	// @command("gotoCodemark0", {
 	// 	args: ([args]) => [{ ...(args || {}), index: 0 }],
 	// 	showErrorMessage: "Unable to jump to codemark #0"

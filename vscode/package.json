@@ -287,14 +287,6 @@
 					"light": "assets/images/light/pull-request.svg",
 					"dark": "assets/images/dark/pull-request.svg"
 				}
-			},
-			{
-				"command": "codestream.instrumentationOpen",
-				"title": "View Instrumentation",
-				"icon": {
-					"light": "assets/images/light/pull-request.svg",
-					"dark": "assets/images/dark/pull-request.svg"
-				}
 			}
 		],
 		"keybindings": [

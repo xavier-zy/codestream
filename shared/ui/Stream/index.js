@@ -64,7 +64,6 @@ import {
 	NewCodemarkNotificationType,
 	NewReviewNotificationType,
 	NewPullRequestNotificationType,
-	InstrumentationOpenType,
 	EditorSelectRangeRequestType,
 	PixieDynamicLoggingType,
 	StartWorkNotificationType,
@@ -98,8 +97,7 @@ import {
 import { last as _last, findLastIndex } from "lodash-es";
 import { Keybindings } from "./Keybindings";
 import { FlowPanel, VideoLink } from "./Flow";
-import { InstrumentationPanel } from "./InstrumentationPanel";
-import { PixieDynamicLoggingPanel } from "./PixieDynamicLogging/PixieDynamicLoggingPanel";
+ import { PixieDynamicLoggingPanel } from "./PixieDynamicLogging/PixieDynamicLoggingPanel";
 import { PRInfoModal } from "./SpatialView/PRInfoModal";
 import { GlobalNav } from "./GlobalNav";
 import { CheckEmailVsGit } from "./CheckEmailVsGit";
@@ -148,9 +146,6 @@ export class SimpleStream extends PureComponent {
 		);
 		this.disposables.push(
 			HostApi.instance.on(NewPullRequestNotificationType, this.handleNewPullRequestRequest, this)
-		);
-		this.disposables.push(
-			HostApi.instance.on(InstrumentationOpenType, this.handleInstrumentationOpenType, this)
 		);
 		this.disposables.push(
 			HostApi.instance.on(PixieDynamicLoggingType, this.handlePixieDynamicLoggingType, this)
@@ -207,18 +202,6 @@ export class SimpleStream extends PureComponent {
 		this.props.openPanel(WebviewPanels.NewPullRequest);
 	}
 
-	handleInstrumentationOpenType(e) {
-		if (e.source) {
-			// this can come externally (from an IDE)
-			this.props.setNewPostEntry(e.source);
-		}
-
-		this.props.setCurrentReview("");
-		this.props.setCurrentPullRequest("");
-
-		this.props.setCurrentInstrumentationOptions({ name: e.name });
-		this.props.openPanel(WebviewPanels.Instrumentation);
-	}
 
 	handlePixieDynamicLoggingType(e) {
 		this.props.clearDynamicLogging();
@@ -486,8 +469,7 @@ export class SimpleStream extends PureComponent {
 									</DelayedRender>
 								</>
 							)}
-							{activePanel === WebviewPanels.Instrumentation && <InstrumentationPanel />}
-							{activePanel === WebviewPanels.Flow && <FlowPanel />}
+ 							{activePanel === WebviewPanels.Flow && <FlowPanel />}
 							{activePanel === WebviewPanels.NewReview && <ReviewForm />}
 							{activePanel === WebviewPanels.PixieDynamicLogging && <PixieDynamicLoggingPanel />}
 							{activePanel === WebviewPanels.Integrations && <IntegrationsPanel />}

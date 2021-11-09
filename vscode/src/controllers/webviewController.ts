@@ -80,8 +80,7 @@ import {
 	WebviewPanels,
 	SidebarLocation,
 	HostDidChangeLayoutNotificationType,
-	NewPullRequestBranch,
-	InstrumentationOpenType
+	NewPullRequestBranch
 } from "@codestream/protocols/webview";
 import { gate } from "system/decorators/gate";
 import {
@@ -377,32 +376,6 @@ export class WebviewController implements Disposable {
 			range: editor ? Editor.toSerializableRange(editor.selection) : undefined,
 			source: source,
 			branch: branch
-		});
-	}
-
-	@log()
-	async instrumentationOpen(
-		editor: TextEditor | undefined = this._lastEditor,
-		name?: string,
-		source?: string
-	): Promise<void> {
-		if (this.visible) {
-			await this._webview!.show();
-		} else {
-			await this.show();
-		}
-
-		if (!this._webview) {
-			// it's possible that the webview is closing...
-			return;
-		}
-
-		// TODO: Change this to be a request vs a notification
-		this._webview!.notify(InstrumentationOpenType, {
-			uri: editor ? editor.document.uri.toString() : undefined,
-			range: editor ? Editor.toSerializableRange(editor.selection) : undefined,
-			name: name,
-			source: source
 		});
 	}
 

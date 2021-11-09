@@ -1458,6 +1458,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 							name
 							state
 							entityGuid
+							eventsQuery
 						  }
 						}
 					  }
@@ -2029,6 +2030,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			}
 
 			const entityGuid = errorGroupResponse.entityGuid;
+			const eventsQuery =  `${errorGroupResponse.eventsQuery} LIMIT 1`;
 			const errorTraceResponse = await this.query<{
 				actor: {
 					account: {
@@ -2041,16 +2043,10 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					};
 				};
 			}>(
-				`query getErrorTrace($accountId: Int!) {
+				`query getTransactionError($accountId: Int!) {
 						actor {
 						  account(id: $accountId) {
-							nrql(query: "FROM ErrorTrace SELECT * WHERE error.class LIKE '${Strings.sanitizeGraphqlValue(
-								errorGroupResponse.name
-							)}' AND error.message LIKE '${Strings.sanitizeGraphqlValue(
-					errorGroupResponse.message
-				)}' AND entityGuid='${Strings.sanitizeGraphqlValue(
-					errorGroupResponse.entityGuid
-				)}' SINCE 1 week ago LIMIT 1") {
+							nrql(query: "${eventsQuery}") {
 							  results
 							}
 						  }

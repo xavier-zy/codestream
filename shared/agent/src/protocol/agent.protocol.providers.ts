@@ -1192,6 +1192,7 @@ export interface ErrorGroup {
 	name: string;
 	entityGuid: string;
 	url: string;
+	eventsQuery?: string;
 	assignment?: {
 		email: string;
 		userInfo: {

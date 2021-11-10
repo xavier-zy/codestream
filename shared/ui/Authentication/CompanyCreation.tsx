@@ -77,6 +77,7 @@ export function CompanyCreation(props: {
 			: ""
 	});
 	const [teamNameValidity, setTeamNameValidity] = useState(true);
+	const [requiresHelpText, setRequiresHelpText] = useState(false);
 
 	const onValidityChanged = useCallback((field: string, validity: boolean) => {
 		switch (field) {
@@ -89,13 +90,16 @@ export function CompanyCreation(props: {
 		}
 	}, []);
 
-	// const derivedState = useSelector((state: CodeStreamState) => {
-	// 	return {
-	// 		userId: state.session.userId
-	// 	};
-	// });
+	const onClickBeginCreateOrganization = () => {
+		HostApi.instance.track("New Organization Initiated", {
+			"Available Organizations": organizations?.length > 0,
+			"Auth Provider": providerName
+		});
+		setStep(1);
+	};
 
 	useDidMount(() => {
+		let companiesToJoin: EnhancedCSCompany[] | undefined = undefined;
 		if (props.eligibleJoinCompanies || props.companies) {
 			setIsLoading(true);
 			let obj = {};
@@ -109,30 +113,26 @@ export function CompanyCreation(props: {
 					obj[_.id] = { ..._, _type: "Invite Detected" };
 				});
 			}
-
-			setOrganizations(
-				Object.keys(obj).map(_ => {
-					return obj[_];
-				}) as EnhancedCSCompany[]
-			);
+			companiesToJoin = Object.keys(obj).map(_ => {
+				return obj[_];
+			}) as EnhancedCSCompany[];
+			setOrganizations(companiesToJoin);
 
 			setIsLoading(false);
 		}
 
-		HostApi.instance.track("Organization Options Presented", {
-			"Domain Orgs":
-				props.eligibleJoinCompanies && props.eligibleJoinCompanies.length ? true : false,
-			"Auth Provider": providerName
-		});
+		if (!companiesToJoin || !companiesToJoin.length) {
+			// anyone who doesn't have an org to join, we go straight to the create new org step.
+			setRequiresHelpText(true);
+			onClickBeginCreateOrganization();
+		} else {
+			HostApi.instance.track("Organization Options Presented", {
+				"Domain Orgs":
+					props.eligibleJoinCompanies && props.eligibleJoinCompanies.length ? true : false,
+				"Auth Provider": providerName
+			});
+		}
 	});
-
-	const onClickBeginCreateOrganization = () => {
-		HostApi.instance.track("New Organization Initiated", {
-			"Available Organizations": organizations?.length > 0,
-			"Auth Provider": providerName
-		});
-		setStep(1);
-	};
 
 	const domain = React.useMemo(() => {
 		return props.email?.split("@")[1].toLowerCase();
@@ -314,6 +314,14 @@ export function CompanyCreation(props: {
 											defaultMessage="Name your organization"
 										/>
 									</h3>
+									{requiresHelpText && (
+										<p>
+											<FormattedMessage
+												id="signUp.createOrganizationHelp"
+												defaultMessage="An organization on CodeStream is a place where all of the developers in your company can discuss and review code"
+											/>
+										</p>
+									)}
 									<br />
 									<TextInput
 										name="company"

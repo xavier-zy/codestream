@@ -124,7 +124,10 @@ export function CompanyCreation(props: {
 		if (!companiesToJoin || !companiesToJoin.length) {
 			// anyone who doesn't have an org to join, we go straight to the create new org step.
 			setRequiresHelpText(true);
-			onClickBeginCreateOrganization();
+			HostApi.instance.track("Organization Options Skipped", {
+				"Auth Provider": providerName
+			});
+			setStep(1);
 		} else {
 			HostApi.instance.track("Organization Options Presented", {
 				"Domain Orgs":

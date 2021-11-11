@@ -411,41 +411,40 @@ async function showStartupUpgradeMessage(version: string, previousVersion: strin
 
 	const [major, minor] = version.split(".");
 
-	if (previousVersion !== undefined) {
-		const [prevMajor, prevMinor] = previousVersion.split(".");
-		if (
-			(major === prevMajor && minor === prevMinor) ||
-			// Don't notify on downgrades
-			major < prevMajor ||
-			(major === prevMajor && minor < prevMinor)
-		) {
-			return;
-		}
+	const [prevMajor, prevMinor] = previousVersion.split(".");
+	if (
+		(major === prevMajor && minor === prevMinor) ||
+		// Don't notify on downgrades
+		major < prevMajor ||
+		(major === prevMajor && minor < prevMinor)
+	) {
+		return;
 	}
 
 	const compareTo = Versions.from(major, minor);
 	if (skipVersions.some(v => Versions.compare(compareTo, v) === 0)) return;
 
-	const actions: MessageItem[] = [{ title: "What's New" } /* , { title: "Release Notes" } */];
+	if (major > prevMajor) {
+		const actions: MessageItem[] = [{ title: "What's New" } /* , { title: "Release Notes" } */];
 
-	const result = await window.showInformationMessage(
-		`CodeStream has been updated to v${version} — check out what's new!`,
-		...actions
-	);
+		const result = await window.showInformationMessage(
+			`CodeStream has been updated to v${version} — check out what's new!`,
+			...actions
+		);
 
-	if (result != null) {
-		if (result === actions[0]) {
-			await env.openExternal(
-				Uri.parse(
-					`https://www.codestream.com/blog/codestream-v${major}-${minor}?utm_source=ext_vsc&utm_medium=popup&utm_campaign=v${major}-${minor}`
-				)
-			);
+		if (result != null) {
+			if (result === actions[0]) {
+				await env.openExternal(
+					Uri.parse(
+						`https://www.codestream.com/blog/codestream-v${major}-${minor}?utm_source=ext_vsc&utm_medium=popup&utm_campaign=v${major}-${minor}`
+					)
+				);
+			}
+			// else if (result === actions[1]) {
+			// 	await env.openExternal(
+			// 		Uri.parse("https://marketplace.visualstudio.com/items/CodeStream.codestream/changelog")
+			// 	);
+			// }
 		}
-		// else if (result === actions[1]) {
-		// 	await env.openExternal(
-		// 		Uri.parse("https://marketplace.visualstudio.com/items/CodeStream.codestream/changelog")
-		// 	);
-		// }
 	}
 }
-

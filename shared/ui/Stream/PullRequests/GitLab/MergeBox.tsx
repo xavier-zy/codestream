@@ -109,7 +109,7 @@ export const MergeBox = props => {
 	};
 
 	const toggleWorkInProgress = async () => {
-		const onOff = !props.pr.workInProgress;
+		const onOff = !props.pr.isDraft;
 		props.setIsLoadingMessage(onOff ? "Marking as draft..." : "Marking as ready...");
 		await dispatch(
 			api("setWorkInProgressOnPullRequest", {
@@ -178,7 +178,7 @@ export const MergeBox = props => {
 		);
 	}
 
-	if (props.pr.workInProgress) {
+	if (props.pr.isDraft) {
 		return (
 			<OutlineBox>
 				<FlexRow style={{ flexWrap: "nowrap" }}>

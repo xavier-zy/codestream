@@ -1321,6 +1321,9 @@ export class GitLabProvider extends ThirdPartyIssueProviderBase<CSGitLabProvider
 				response.project.mergeRequest.mergedAt = mergeRequest.body.merged_at;
 			}
 
+			// remap here because "draft" used to be workInProgress
+			response.project.mergeRequest.isDraft = response.project.mergeRequest.draft;
+
 			// assignees from graphql don't exist on <= 12.10.x
 			// get it from REsT api
 			response.project.mergeRequest.assignees = {
@@ -2214,7 +2217,7 @@ export class GitLabProvider extends ThirdPartyIssueProviderBase<CSGitLabProvider
 						data: {
 							updatedAt: Dates.toUtcIsoNow(),
 							title: body.title,
-							workInProgress: body.work_in_progress,
+							isDraft: body.draft,
 							description: this.enhanceMarkdownBlock(request.description, projectFullPath),
 							targetBranch: body.target_branch,
 							assignees: {
@@ -2802,11 +2805,11 @@ export class GitLabProvider extends ThirdPartyIssueProviderBase<CSGitLabProvider
 
 		try {
 			const response = await this.mutate<any>(
-				`mutation MergeRequestSetWip($projectPath: ID!, $iid: String!, $wip: Boolean!) {
-					mergeRequestSetWip(input: {projectPath: $projectPath, iid: $iid, wip: $wip}) {
+				`mutation MergeRequestSetWip($projectPath: ID!, $iid: String!, $draft: Boolean!) {
+					mergeRequestSetDraft(input: {projectPath: $projectPath, iid: $iid, draft: $draft}) {
 					  mergeRequest {
+						draft
 						title
-						workInProgress
 					  }
 					}
 				  }
@@ -2814,7 +2817,7 @@ export class GitLabProvider extends ThirdPartyIssueProviderBase<CSGitLabProvider
 				{
 					projectPath: projectFullPath,
 					iid: iid,
-					wip: request.onOff
+					draft: request.onOff
 				}
 			);
 
@@ -2824,8 +2827,8 @@ export class GitLabProvider extends ThirdPartyIssueProviderBase<CSGitLabProvider
 						type: "updatePullRequest",
 						data: {
 							updatedAt: Dates.toUtcIsoNow(),
-							workInProgress: response.mergeRequestSetWip.mergeRequest.workInProgress,
-							title: response.mergeRequestSetWip.mergeRequest.title
+							isDraft: response.mergeRequestSetDraft.mergeRequest.draft,
+							title: response.mergeRequestSetDraft.mergeRequest.title
 						}
 					}
 				]

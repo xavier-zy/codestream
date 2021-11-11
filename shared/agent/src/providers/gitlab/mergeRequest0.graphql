@@ -24,7 +24,7 @@ query GetPullRequest($fullPath: ID!, $iid: String!, $after: String) {
 			webUrl
 			state
 			mergedAt
-			workInProgress
+			draft
 			reference
 			projectId
 			mergeWhenPipelineSucceeds

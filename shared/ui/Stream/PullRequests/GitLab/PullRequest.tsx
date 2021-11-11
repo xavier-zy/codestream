@@ -595,7 +595,7 @@ export const PullRequest = () => {
 	})();
 
 	const toggleWorkInProgress = async () => {
-		const onOff = !pr.workInProgress;
+		const onOff = !pr.isDraft;
 		setIsLoadingMessage(onOff ? "Marking as draft..." : "Marking as ready...");
 		await dispatch(
 			api("setWorkInProgressOnPullRequest", {
@@ -762,7 +762,7 @@ export const PullRequest = () => {
 											items={[
 												{ label: "Edit", key: "edit", action: edit },
 												{
-													label: pr.workInProgress ? "Mark as ready" : "Mark as draft",
+													label: pr.isDraft ? "Mark as ready" : "Mark as draft",
 													key: "draft",
 													action: () => toggleWorkInProgress()
 												},

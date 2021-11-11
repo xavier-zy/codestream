@@ -148,8 +148,28 @@ export class GraphqlQueryBuilder {
 				}
 			}
 		],
-		// for the GetPullRequest query, if the current version is << 13.8.0 run this...
 		GetPullRequest: [
+			{
+				selector: (currentVersion: string) => semver.lt(currentVersion, "14.5.0"),
+				query: {
+					head: {
+						value: {
+							key: "GetPullRequest"
+						},
+						next: {
+							value: {
+								key: "project"
+							},
+							next: {
+								value: {
+									key: "mergeRequest",
+									removals: ["draft"]
+								}
+							}
+						}
+					}
+				}
+			},
 			{
 				// this was supposed to be in 13.7, but a user with 13.7.9 ran into not having it
 				// https://about.gitlab.com/releases/2020/12/22/gitlab-13-7-released/

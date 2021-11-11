@@ -262,7 +262,10 @@ export interface GitLabMergeRequest {
 	id: string;
 	idComputed: string;
 	iid: string;
-	isDraft: boolean;
+	// from gitlab
+	draft?: boolean;
+	// for CodeStream
+	isDraft?: boolean;
 	labels: {
 		nodes: GitLabLabel[];
 	};
@@ -410,7 +413,6 @@ export interface GitLabMergeRequest {
 	};
 	viewerDidAuthor: boolean;
 	webUrl: string;
-	workInProgress: boolean;
 	baseWebUrl: string;
 
 	/**

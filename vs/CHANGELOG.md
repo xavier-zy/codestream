@@ -1,5 +1,19 @@
 # Change Log
 
+## [12.1.0] - 2021-11-12
+
+### Added
+
+- Adds checks during onboarding for New Relic users to see if colleagues already have an organization on CodeStream
+
+### Changed
+
+- Bypass onboarding step for create/join organization if there are no organizations to join
+
+### Fixed
+
+- Addresses [#764](https://github.com/TeamCodeStream/CodeStream/issues/764) &mdash; GitLab open merge request error field 'workInProgress'
+
 ## [12.0.3] - 2021-11-5
 
 ### Changed

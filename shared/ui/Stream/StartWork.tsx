@@ -27,7 +27,6 @@ import {
 	FetchRemoteBranchRequestType,
 	FetchBranchCommitsStatusRequestType
 } from "@codestream/protocols/agent";
-import IssueDropdown, { Row } from "./CrossPostIssueControls/IssueDropdown";
 import { ConfigureBranchNames } from "./ConfigureBranchNames";
 import { MarkdownText } from "./MarkdownText";
 import {

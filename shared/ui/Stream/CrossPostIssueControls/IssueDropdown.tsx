@@ -20,7 +20,7 @@ import { CSMe } from "@codestream/protocols/api";
 import { PrePRProviderInfoModalProps, PrePRProviderInfoModal } from "../PrePRProviderInfoModal";
 import { CodeStreamState } from "@codestream/webview/store";
 import { updateForProvider } from "@codestream/webview/store/activeIntegrations/actions";
-import { setUserPreference } from "../actions";
+import { setUserPreference, setUserStatus } from "../actions";
 import { HostApi } from "../..";
 import { keyFilter } from "@codestream/webview/utils";
 import { EMPTY_STATUS } from "../StartWork";
@@ -67,7 +67,6 @@ interface Props extends ConnectedProps {
 	setIssueProvider(providerId?: string): void;
 	openPanel(...args: Parameters<typeof openPanel>): void;
 	isEditing?: boolean;
-	selectedCardId?: string;
 	paneState?: PaneState;
 }
 
@@ -193,7 +192,6 @@ class IssueDropdown extends React.Component<Props, State> {
 				<IssueList
 					providers={activeProviders}
 					knownIssueProviderOptions={knownIssueProviderOptions}
-					selectedCardId={this.props.selectedCardId}
 					loadingMessage={this.state.isLoading ? this.renderLoading() : null}
 					paneState={this.props.paneState}
 				></IssueList>
@@ -399,7 +397,6 @@ export function Issue(props) {
 interface IssueListProps {
 	providers: ThirdPartyProviderConfig[];
 	knownIssueProviderOptions: any;
-	selectedCardId?: string;
 	loadingMessage?: React.ReactNode;
 	paneState?: PaneState;
 }
@@ -416,21 +413,33 @@ export const IssueList = React.memo((props: React.PropsWithChildren<IssueListPro
 		const startWorkPreferences = preferences.startWork || EMPTY_HASH;
 		const providerIds = props.providers.map(provider => provider.id).join(":");
 		const skipConnect = preferences.skipConnectIssueProviders;
-
 		const csIssues = codemarkSelectors.getMyOpenIssues(state.codemarks, state.session.userId!);
-		let status =
-			currentUser.status && "label" in currentUser.status ? currentUser.status : EMPTY_STATUS;
+		const teamId = state.context.currentTeamId;
+		const status =
+			currentUser.status && currentUser.status[teamId] && "label" in currentUser.status[teamId]
+				? currentUser.status[teamId]
+				: EMPTY_STATUS;
+		const selectedCardId = status.ticketId || '';
+		const invisible =
+			(currentUser.status && currentUser.status[teamId] && currentUser.status[teamId].invisible) ||
+			false;
 
 		return {
-			status,
-			currentUser,
-			startWorkPreferences,
-			providerIds,
 			csIssues,
+			currentUser,
+			invisible,
+			providerIds,
+			startWorkCard: state.context.startWorkCard,
+			startWorkPreferences,
+			selectedCardId,
 			skipConnect,
-			startWorkCard: state.context.startWorkCard
+			teamId
 		};
 	});
+
+	const clearAndSave = () => {
+		dispatch(setUserStatus("", "", "", "", derivedState.invisible, derivedState.teamId));
+	};
 
 	const [isLoading, setIsLoading] = React.useState(false);
 	const [isLoadingCard, setIsLoadingCard] = React.useState("");
@@ -837,7 +846,7 @@ export const IssueList = React.memo((props: React.PropsWithChildren<IssueListPro
 		items.sort((a, b) => b.modifiedAt - a.modifiedAt);
 
 		return { cards: items, canFilter, cardLabel, selectedLabel };
-	}, [loadedCards, derivedState.startWorkPreferences, derivedState.csIssues, props.selectedCardId]);
+	}, [loadedCards, derivedState.startWorkPreferences, derivedState.csIssues, derivedState.selectedCardId]);
 
 	const menuItems = React.useMemo(() => {
 		// if (props.provider.canFilterByAssignees) {
@@ -1088,7 +1097,7 @@ export const IssueList = React.memo((props: React.PropsWithChildren<IssueListPro
 										<Row
 											key={card.key}
 											onClick={() => selectCard(card)}
-											className={card.id === props.selectedCardId ? "selected" : ""}
+											className={card.id === derivedState.selectedCardId ? "selected" : ""}
 										>
 											<div>
 												{card.parentId && (
@@ -1116,6 +1125,7 @@ export const IssueList = React.memo((props: React.PropsWithChildren<IssueListPro
 			</Modal>
 		);
 	};
+
 	return (
 		<>
 			{startWorkCard && (
@@ -1258,13 +1268,13 @@ export const IssueList = React.memo((props: React.PropsWithChildren<IssueListPro
 									"Opened Via": "Selected Ticket"
 								});
 							}}
-							className={card.id === props.selectedCardId ? "selected" : ""}
+							className={card.id === derivedState.selectedCardId ? "selected" : ""}
 						>
 							<div>
 								{card.parentId && (
 									<span style={{ display: "inline-block", width: "20px" }}>&nbsp;</span>
 								)}
-								{card.id === props.selectedCardId && (
+								{card.id === derivedState.selectedCardId && (
 									<Icon name="arrow-right" className="selected-icon" />
 								)}
 								{card.id === isLoadingCard ? (
@@ -1281,16 +1291,19 @@ export const IssueList = React.memo((props: React.PropsWithChildren<IssueListPro
 							</div>
 							<div className="icons">
 								{card.listName && <span className="status">{card.listName}</span>}
-								{card.id === props.selectedCardId && (
+								{card.id === derivedState.selectedCardId && (
 									<Icon
+										title={`Clear work item`}
+										delay={1}
+										placement="bottomRight"
 										name="x-circle"
 										className="clickable"
 										onClick={e => {
 											e.stopPropagation();
 											e.preventDefault();
-											selectCard();
+											clearAndSave()
 										}}
-									/>
+								/>
 								)}
 								{card.url && (
 									<Icon

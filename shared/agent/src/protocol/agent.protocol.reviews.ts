@@ -88,8 +88,7 @@ export interface FetchReviewsRequest {
 	byLastAcivityAt?: boolean;
 }
 
-// TODO: when the server starts returning the markers, this response should have ReviewPlus objects
-export type FetchReviewsResponse = Pick<CSGetReviewsResponse, "reviews">;
+export type FetchReviewsResponse = CSGetReviewsResponse;
 
 export const FetchReviewsRequestType = new RequestType<
 	FetchReviewsRequest,

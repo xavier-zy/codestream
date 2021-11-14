@@ -1383,6 +1383,18 @@ export class ReviewsManager extends CachedEntityManagerBase<CSReview> {
 		const response = await this.session.api.fetchReviews({});
 		response.reviews.forEach(this.polyfillCheckpoints);
 		this.cache.reset(response.reviews);
+		if (response.posts) {
+			await SessionContainer.instance().posts.resolve({
+				type: MessageType.Posts,
+				data: response.posts
+			});
+		}
+		if (response.markers) {
+			await SessionContainer.instance().posts.resolve({
+				type: MessageType.Markers,
+				data: response.markers
+			});
+		}
 	}
 
 	async getById(id: Id): Promise<CSReview> {

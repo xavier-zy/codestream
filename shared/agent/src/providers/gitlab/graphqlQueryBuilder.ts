@@ -67,6 +67,8 @@ export class GraphqlQueryBuilder {
 		"0.0.0": {}
 	};
 
+	public static lowestSupportedVersion = "13.6.4";
+
 	getOrCreateSupportMatrix(providerVersion: ProviderVersion): any {
 		const version = providerVersion.version;
 		if (!version || version === "0.0.0") {
@@ -92,7 +94,9 @@ export class GraphqlQueryBuilder {
 			// approvalsRequired: isGte1380,
 			approvals: isGte1364,
 			approvedBy: isGte1364,
-			currentUserTodos: isGte1364
+			currentUserTodos: isGte1364,
+			// whether we supports draft mode (or old workInProgress)
+			draft: semver.gte(version, "14.5.0")
 		};
 		this.supportMatrix[version] = supports;
 

@@ -94,6 +94,12 @@ export class GitLabProvider extends ThirdPartyIssueProviderBase<CSGitLabProvider
 	implements ThirdPartyProviderSupportsIssues {
 	/** version used when a query to get the version fails */
 	private static defaultUnknownVersion = "0.0.0";
+	protected LOWEST_SUPPORTED_VERSION = {
+		version: "13.6.4",
+		asArray: [13, 6, 4],
+		isDefault: false,
+		isLowestSupportedVersion: true
+	};
 
 	private _projectsByRemotePath = new Map<string, GitLabProject>();
 	private _assignableUsersCache = new Map<string, any>();
@@ -1039,10 +1045,14 @@ export class GitLabProvider extends ThirdPartyIssueProviderBase<CSGitLabProvider
 				}
 			});
 		} catch (ex) {
-			Logger.warn(`${this.providerConfig.id} getVersion`, {
-				error: ex
-			});
-			version = this.DEFAULT_VERSION;
+			Logger.warn(
+				`${this.providerConfig.id} getVersion failed, defaulting to lowest supporting version`,
+				{
+					error: ex,
+					lowestSupportedVersion: this.LOWEST_SUPPORTED_VERSION
+				}
+			);
+			version = this.LOWEST_SUPPORTED_VERSION;
 		}
 
 		this._providerVersions.set(this.providerConfig.id, version);

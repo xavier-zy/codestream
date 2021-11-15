@@ -431,5 +431,6 @@ export interface GitLabMergeRequest {
 		approvedBy?: boolean;
 		approvals?: boolean;
 		currentUserTodos?: boolean;
+		draft?: boolean;
 	};
 }

@@ -1094,6 +1094,11 @@ export interface ProviderVersion {
 	 * true if the version is 0.0.0
 	 */
 	isDefault?: boolean;
+
+	/**
+	 * true if we're not able to get a version from the api
+	 */
+	isLowestSupportedVersion?: boolean;
 }
 
 export interface PullRequestComment {

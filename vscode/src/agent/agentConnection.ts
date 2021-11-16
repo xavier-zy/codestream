@@ -103,7 +103,9 @@ import {
 	DidSetEnvironmentNotificationType,
 	DidChangeProcessBufferNotification,
 	DidChangeProcessBufferNotificationType,
-	AgentFileSearchRequestType
+	AgentFileSearchRequestType,
+	DidResolveStackTraceLineNotificationType,
+	DidResolveStackTraceLineNotification
 } from "@codestream/protocols/agent";
 import {
 	ChannelServiceType,
@@ -240,6 +242,11 @@ export class CodeStreamAgentConnection implements Disposable {
 	private _onDidSetEnvironment = new EventEmitter<CodeStreamEnvironmentInfo>();
 	get onDidSetEnvironment(): Event<CodeStreamEnvironmentInfo> {
 		return this._onDidSetEnvironment.event;
+	}
+
+	private _onDidResolveStackTraceLine = new EventEmitter<DidResolveStackTraceLineNotification>();
+	get onDidResolveStackTraceLine(): Event<DidResolveStackTraceLineNotification> {
+		return this._onDidResolveStackTraceLine.event;
 	}
 
 	private _client: LanguageClient | undefined;
@@ -1142,6 +1149,9 @@ export class CodeStreamAgentConnection implements Disposable {
 		);
 		this._client.onNotification(DidSetEnvironmentNotificationType, e =>
 			this._onDidSetEnvironment.fire(e)
+		);
+		this._client.onNotification(DidResolveStackTraceLineNotificationType, e =>
+			this._onDidResolveStackTraceLine.fire(e)
 		);
 		this._client.onRequest(AgentOpenUrlRequestType, e => this._onOpenUrl.fire(e));
 		this._client.onRequest(AgentFileSearchRequestType, async e => {

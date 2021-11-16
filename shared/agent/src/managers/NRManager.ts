@@ -12,6 +12,7 @@ import {
 	CreateNewRelicConfigFileRequest,
 	CreateNewRelicConfigFileRequestType,
 	CreateNewRelicConfigFileResponse,
+	DidResolveStackTraceLineNotificationType,
 	FindCandidateMainFilesRequest,
 	FindCandidateMainFilesRequestType,
 	FindCandidateMainFilesResponse,
@@ -162,9 +163,10 @@ export class NRManager {
 		stackTrace,
 		repoId,
 		sha,
-		occurrenceId
+		occurrenceId,
+		codeErrorId
 	}: ResolveStackTraceRequest): Promise<ResolveStackTraceResponse> {
-		const { git, repos, repositoryMappings } = SessionContainer.instance();
+		const { git, repos, repositoryMappings, session } = SessionContainer.instance();
 		const matchingRepo = await git.getRepositoryById(repoId);
 		let matchingRepoPath = matchingRepo?.path;
 		let firstWarning: WarningOrError | undefined = undefined;
@@ -255,13 +257,22 @@ export class NRManager {
 		};
 
 		if (parsedStackInfo.lines) {
-			for (const line of parsedStackInfo.lines) {
-				const resolvedLine =
-					line.error || !matchingRepoPath
-						? { ...line }
-						: await this.resolveStackTraceLine(line, sha, matchingRepoPath);
+			for (let i = 0; i < parsedStackInfo.lines.length; i++) {
+				const line = parsedStackInfo.lines[i];
+				const resolvedLine = { ...line };
 				resolvedStackInfo.lines.push(resolvedLine);
 				line.fileRelativePath = resolvedLine.fileRelativePath;
+
+				if (!line.error && matchingRepoPath) {
+					this.resolveStackTraceLine(line, sha, matchingRepoPath).then(resolvedLine => {
+						session.agent.sendNotification(DidResolveStackTraceLineNotificationType, {
+							occurrenceId,
+							resolvedLine,
+							index: i,
+							codeErrorId
+						});
+					});
+				}
 			}
 		}
 

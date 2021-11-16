@@ -15,7 +15,8 @@ import {
 	GetNewRelicErrorGroupRequestType,
 	GetNewRelicErrorGroupRequest,
 	ExecuteThirdPartyTypedType,
-	GetNewRelicErrorGroupResponse
+	GetNewRelicErrorGroupResponse,
+	DidResolveStackTraceLineNotification
 } from "@codestream/protocols/agent";
 import { logError } from "@codestream/webview/logger";
 import { addStreams } from "../streams/actions";
@@ -50,8 +51,48 @@ export const removeCodeError = (id: string) => action(CodeErrorsActionsTypes.Del
 export const saveCodeErrors = (codeErrors: CSCodeError[]) =>
 	action(CodeErrorsActionsTypes.SaveCodeErrors, codeErrors);
 
-export const updateCodeErrors = (codeErrors: CSCodeError[]) =>
+export const _updateCodeErrors = (codeErrors: CSCodeError[]) =>
 	action(CodeErrorsActionsTypes.UpdateCodeErrors, codeErrors);
+
+export const updateCodeErrors = (codeErrors: CSCodeError[]) => async (
+	dispatch,
+	getState: () => CodeStreamState
+) => {
+	const state = getState();
+	codeErrors = codeErrors.map(_ => ({
+		..._,
+		stackTraces: state.codeErrors.codeErrors[_.id].stackTraces
+	}));
+	dispatch(_updateCodeErrors(codeErrors));
+};
+export const resolveStackTraceLine = (notification: DidResolveStackTraceLineNotification) => async (
+	dispatch,
+	getState: () => CodeStreamState
+) => {
+	const { codeErrorId, occurrenceId, index, resolvedLine } = notification;
+
+	if (resolvedLine.error) return;
+	const state = getState();
+	const codeError = state.codeErrors?.codeErrors[codeErrorId];
+	const stackTraceIndex = codeError.stackTraces.findIndex(_ => _.occurrenceId === occurrenceId);
+	const stackTrace = codeError.stackTraces[stackTraceIndex];
+	const updatedLines = [...stackTrace.lines];
+	updatedLines[index] = {
+		...updatedLines[index],
+		...resolvedLine
+	};
+	const updatedStackTrace = {
+		...stackTrace,
+		lines: updatedLines
+	};
+	const updatedStackTraces = [...codeError.stackTraces];
+	updatedStackTraces[stackTraceIndex] = updatedStackTrace;
+	const updatedCodeError = {
+		...codeError,
+		stackTraces: updatedStackTraces
+	};
+	dispatch(_updateCodeErrors([updatedCodeError]));
+};
 
 export interface NewCodeErrorAttributes {
 	accountId?: number;
@@ -126,48 +167,6 @@ export type EditableAttributes = Partial<
 	Pick<CSCodeError, "title" | "assignees"> & AdvancedEditableCodeErrorAttributes
 >;
 
-export const editCodeError = (
-	id: string,
-	attributes: EditableAttributes,
-	replyText?: string
-) => async (dispatch, getState: () => CodeStreamState) => {
-	let response: UpdateCodeErrorResponse | undefined;
-	try {
-		response = await HostApi.instance.send(UpdateCodeErrorRequestType, {
-			id,
-			...attributes
-		});
-		dispatch(updateCodeErrors([response.codeError]));
-
-		if (
-			attributes.$push != null &&
-			attributes.$push.assignees != null &&
-			attributes.$push.assignees.length
-		) {
-			// if we have additional ids we're adding via $push, map them here
-			const filteredUsers = mapFilter(getTeamMembers(getState()), teamMember => {
-				const user = attributes.$push!.assignees!.find(_ => _ === teamMember.id);
-				return user ? teamMember : undefined;
-			}).filter(Boolean);
-
-			if (filteredUsers.length) {
-				dispatch(
-					createPost(
-						response.codeError.streamId,
-						response.codeError.postId,
-						`/me added ${phraseList(filteredUsers.map(u => `@${u.username}`))} to this code error`,
-						null,
-						filteredUsers.map(u => u.id)
-					)
-				);
-			}
-		}
-	} catch (error) {
-		logError(`failed to update code error: ${error}`, { id });
-	}
-	return response;
-};
-
 export const fetchCodeError = (codeErrorId: string) => async dispatch => {
 	const response = await HostApi.instance.send(GetCodeErrorRequestType, { codeErrorId });
 
@@ -193,14 +192,16 @@ export const resolveStackTrace = (
 	repoId: string,
 	sha: string,
 	occurrenceId: string,
-	stackTrace: string[]
+	stackTrace: string[],
+	codeErrorId: string
 ) => {
 	return HostApi.instance.send(ResolveStackTraceRequestType, {
 		errorGroupGuid,
 		stackTrace,
 		repoId,
 		sha,
-		occurrenceId
+		occurrenceId,
+		codeErrorId
 	});
 };
 

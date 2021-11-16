@@ -46,7 +46,8 @@ import {
 	DidChangeProcessBufferNotificationType,
 	NormalizeUrlRequestType,
 	GetNewRelicErrorGroupRequestType,
-	PixieDynamicLoggingResultNotification
+	PixieDynamicLoggingResultNotification,
+	DidResolveStackTraceLineNotificationType
 } from "@codestream/protocols/agent";
 import { CSApiCapabilities, CodemarkType, CSCodeError, CSMe } from "@codestream/protocols/api";
 import translations from "./translations/en";
@@ -95,7 +96,8 @@ import {
 	claimCodeError,
 	findErrorGroupByObjectId,
 	openErrorGroup,
-	PENDING_CODE_ERROR_ID_FORMAT as toPendingCodeErrorId
+	PENDING_CODE_ERROR_ID_FORMAT as toPendingCodeErrorId,
+	resolveStackTraceLine
 } from "./store/codeErrors/actions";
 import { openPullRequestByUrl } from "./store/providerPullRequests/actions";
 import { updateCapabilities } from "./store/capabilities/actions";
@@ -733,6 +735,10 @@ function listenForEvents(store) {
 			type: `ADD_DYNAMICLOGGING`,
 			payload: { status: e.status, metaData: e.metaData, results: results }
 		});
+	});
+
+	api.on(DidResolveStackTraceLineNotificationType, async e => {
+		store.dispatch(resolveStackTraceLine(e));
 	});
 }
 

@@ -18,6 +18,7 @@ import {
 	DidChangeVersionCompatibilityNotification,
 	DidChangeVersionCompatibilityNotificationType,
 	DidEncounterMaintenanceModeNotificationType,
+	DidResolveStackTraceLineNotificationType,
 	ReportingMessageType,
 	VersionCompatibility
 } from "@codestream/protocols/agent";
@@ -151,6 +152,9 @@ export class WebviewController implements Disposable {
 			workspace.onDidChangeWorkspaceFolders(this.onWorkspaceFoldersChanged, this),
 			Container.agent.onDidEncounterMaintenanceMode(e => {
 				if (this._webview) this._webview.notify(DidEncounterMaintenanceModeNotificationType, e);
+			}),
+			Container.agent.onDidResolveStackTraceLine(e => {
+				if (this._webview) this._webview.notify(DidResolveStackTraceLineNotificationType, e);
 			})
 		);
 
@@ -713,7 +717,12 @@ export class WebviewController implements Disposable {
 
 	private isSupportedEditor(textEditor: TextEditor): boolean {
 		const uri = textEditor.document.uri;
-		if (uri.scheme !== "file" && uri.scheme !== "codestream-diff" && uri.scheme !== "codestream-git") return false;
+		if (
+			uri.scheme !== "file" &&
+			uri.scheme !== "codestream-diff" &&
+			uri.scheme !== "codestream-git"
+		)
+			{return false;}
 
 		const csRangeDiffInfo = Strings.parseCSReviewDiffUrl(uri.toString());
 		if (

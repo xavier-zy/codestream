@@ -198,6 +198,11 @@ class CodeStreamLanguageClient(private val project: Project) : LanguageClient {
         }
     }
 
+    @JsonNotification("codestream/nr/didResolveStackTraceLine")
+    fun didResolveStackTraceLine(json: JsonElement) {
+        project.webViewService?.postNotification("codestream/nr/didResolveStackTraceLine", json, true)
+    }
+
     override fun workspaceFolders(): CompletableFuture<MutableList<WorkspaceFolder>> {
         val folders = project.workspaceFolders.toMutableList()
         logger.info("Workspace folders: ${folders.joinToString()}")

@@ -443,7 +443,8 @@ export function CodeErrorNav(props: Props) {
 						repoId!,
 						commitToUse!,
 						occurrenceIdToUse!,
-						stack!
+						stack!,
+						derivedState.currentCodeErrorId!
 					)) as ResolveStackTraceResponse;
 				}
 			}

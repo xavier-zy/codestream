@@ -1,7 +1,7 @@
 "use strict";
 
-import { RequestType } from "vscode-languageserver-protocol";
-import { CSStackTraceInfo } from "./api.protocol.models";
+import { NotificationType, RequestType } from "vscode-languageserver-protocol";
+import { CSStackTraceInfo, CSStackTraceLine } from "./api.protocol.models";
 import { RepoProjectType } from "./agent.protocol.scm";
 
 export interface ParseStackTraceRequest {
@@ -25,11 +25,11 @@ export const ParseStackTraceRequestType = new RequestType<
 export interface ResolveStackTraceRequest {
 	// tracking
 	errorGroupGuid: string;
-
 	occurrenceId: string;
 	stackTrace: string[];
 	repoId: string;
 	sha: string;
+	codeErrorId: string;
 }
 
 export interface WarningOrError {
@@ -50,6 +50,18 @@ export const ResolveStackTraceRequestType = new RequestType<
 	void,
 	void
 >("codestream/nr/resolveStackTrace");
+
+export interface DidResolveStackTraceLineNotification {
+	occurrenceId: string;
+	resolvedLine: CSStackTraceLine;
+	index: number;
+	codeErrorId: string;
+}
+
+export const DidResolveStackTraceLineNotificationType = new NotificationType<
+	DidResolveStackTraceLineNotification,
+	void
+>("codestream/nr/didResolveStackTraceLine");
 
 export interface ResolveStackTracePositionRequest {
 	sha: string;

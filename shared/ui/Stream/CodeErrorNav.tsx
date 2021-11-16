@@ -380,16 +380,14 @@ export function CodeErrorNav(props: Props) {
 				}
 
 				targetRemote = newRemote || remote;
-				if (multipleRepos && !targetRemote) {
-					if (derivedState.isConnectedToNewRelic) {
-						setMultiRepoDetectedError({
-							title: "Select a Repository",
-							description: `The ${
-								errorGroup ? errorGroup.entityName + " " : "selected "
-							}stack trace is associated with multiple repositories. Please select the one required for investigating this error.`
-						});
-						return;
-					}
+				if (multipleRepos && !targetRemote && derivedState.isConnectedToNewRelic) {
+					setMultiRepoDetectedError({
+						title: "Select a Repository",
+						description: `The ${
+							errorGroup ? errorGroup.entityName + " " : "selected "
+						}stack trace is associated with multiple repositories. Please select the one required for investigating this error.`
+					});
+					return;
 				}
 
 				if (errorGroupResult?.errorGroup?.entity?.repo?.urls != null) {

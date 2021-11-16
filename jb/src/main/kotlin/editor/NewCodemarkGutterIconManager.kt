@@ -66,8 +66,8 @@ class NewCodemarkGutterIconManager(val editor: Editor) : EditorMouseMotionListen
     }
 
     private fun disableCurrentRenderer() {
-        lastHighlightedLine?.let {
-            lineHighlighters[it]?.updateRenderer(null)
+            lastHighlightedLine?.let {
+                lineHighlighters[it]?.updateRenderer(null)
             lastHighlightedLine = null
         }
     }
@@ -91,8 +91,11 @@ class NewCodemarkGutterIconManager(val editor: Editor) : EditorMouseMotionListen
     }
 
     private fun RangeHighlighter.updateRenderer(renderer: GutterIconRenderer?) {
-        this.gutterIconRenderer = renderer
-        // (editor.markupModel as? MarkupModelEx)?.fireAttributesChanged(this as RangeHighlighterEx, false, false)
+        try {
+            this.gutterIconRenderer = renderer
+        } catch (ex: Exception) {
+            // ignore
+        }
     }
 }
 

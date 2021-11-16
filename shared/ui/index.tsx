@@ -539,6 +539,7 @@ function listenForEvents(store) {
 							tag?: string;
 							ide?: string;
 							timestamp?: number;
+							multipleRepos?: number;
 						}>;
 
 						definedQuery.query.occurrenceId =

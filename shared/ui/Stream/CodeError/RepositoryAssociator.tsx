@@ -42,6 +42,8 @@ interface EnhancedRepoScm {
 
 export function RepositoryAssociator(props: {
 	error: { title: string; description: string };
+	disableEmitDidChangeObservabilityDataNotification?: boolean;
+	buttonText?: string;
 	onSelected?: Function;
 	onSubmit: Function;
 	onCancelled: Function;
@@ -156,16 +158,18 @@ export function RepositoryAssociator(props: {
 			title={repositoryError.title}
 			buttons={[
 				{
-					text: "Associate",
+					text: props.buttonText || "Associate",
 					loading: isLoading,
 					onClick: async e => {
 						setIsLoading(true);
 						e.preventDefault();
 
 						await props.onSubmit(selected);
-						HostApi.instance.emit(DidChangeObservabilityDataNotificationType.method, {
-							type: "RepositoryAssociation"
-						});
+						if (!props.disableEmitDidChangeObservabilityDataNotification) {
+							HostApi.instance.emit(DidChangeObservabilityDataNotificationType.method, {
+								type: "RepositoryAssociation"
+							});
+						}
 						setIsLoading(false);
 					},
 					disabled: !selected

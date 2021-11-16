@@ -128,17 +128,15 @@ export interface CodeErrorData {
 	remote?: string;
 	commit?: string;
 	/** caches when the last user session started  */
-
 	sessionStart?: number;
 	pendingRequiresConnection?: boolean;
 	pendingErrorGroupGuid?: string;
 	pendingEntityId?: string;
 	occurrenceId?: string;
 	lineIndex?: number;
-
 	timestamp?: number;
-
 	openType?: "Open in IDE Flow" | "Observability Section" | "Activity Feed";
+	multipleRepos?: boolean;
 }
 
 export interface WebviewContext {

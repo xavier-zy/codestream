@@ -177,6 +177,9 @@ export function CodeErrorNav(props: Props) {
 	const [repoAssociationError, setRepoAssociationError] = React.useState<
 		{ title: string; description: string } | undefined
 	>(undefined);
+	const [multiRepoDetectedError, setMultiRepoDetectedError] = React.useState<
+		{ title: string; description: string } | undefined
+	>(undefined);
 	const [repoWarning, setRepoWarning] = React.useState<WarningOrError | undefined>(undefined);
 	const [repoError, setRepoError] = React.useState<string | undefined>(undefined);
 	const { errorGroup } = derivedState;
@@ -191,6 +194,7 @@ export function CodeErrorNav(props: Props) {
 	const occurrenceId = derivedState.currentCodeErrorData?.occurrenceId;
 	const remote = derivedState.currentCodeErrorData?.remote;
 	const commit = derivedState.currentCodeErrorData?.commit;
+	const multipleRepos = derivedState.currentCodeErrorData?.multipleRepos;
 
 	const previousIsConnectedToNewRelic = usePrevious(derivedState.isConnectedToNewRelic);
 
@@ -334,6 +338,7 @@ export function CodeErrorNav(props: Props) {
 			setIsLoading(true);
 		}
 		setRepoAssociationError(undefined);
+		setMultiRepoDetectedError(undefined);
 		setError(undefined);
 
 		try {
@@ -375,6 +380,18 @@ export function CodeErrorNav(props: Props) {
 				}
 
 				targetRemote = newRemote || remote;
+				if (multipleRepos && !targetRemote) {
+					if (derivedState.isConnectedToNewRelic) {
+						setMultiRepoDetectedError({
+							title: "Select a Repository",
+							description: `The ${
+								errorGroup ? errorGroup.entityName + " " : "selected "
+							}stack trace is associated with multiple repositories. Please select the one required for investigating this error.`
+						});
+						return;
+					}
+				}
+
 				if (errorGroupResult?.errorGroup?.entity?.repo?.urls != null) {
 					targetRemote = errorGroupResult?.errorGroup?.entity?.repo?.urls[0]!;
 				} else if (codeError?.objectInfo?.remote) {
@@ -647,6 +664,29 @@ export function CodeErrorNav(props: Props) {
 					</div>
 				)}
 			</Dismissable>
+		);
+	}
+	if (multiRepoDetectedError) {
+		return (
+			<RepositoryAssociator
+				error={multiRepoDetectedError}
+				buttonText={"Select"}
+				onCancelled={e => {
+					exit();
+				}}
+				onSubmit={r => {
+					return new Promise((resolve, reject) => {
+						const payload = {
+							url: r.remote,
+							errorGroupGuid: derivedState.codeError?.objectId || pendingErrorGroupGuid!
+						};
+						HostApi.instance.track("NR Multi Repo Selected", {
+							"Error Group ID": payload.errorGroupGuid
+						});
+						onConnected(undefined, r.remote);
+					});
+				}}
+			/>
 		);
 	}
 	if (repoAssociationError) {

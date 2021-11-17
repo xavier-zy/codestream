@@ -3409,6 +3409,16 @@ export class GitLabProvider extends ThirdPartyIssueProviderBase<CSGitLabProvider
 				iid: iid
 			}
 		);
+
+		if (!pullRequestInfo || !pullRequestInfo.project || !pullRequestInfo.project.mergeRequest) {
+			const message = "Merge request not found. Please check your url or access token.";
+			Logger.warn(message, {
+				fullPath: fullPath,
+				iid: iid,
+				id: id
+			});
+			throw new Error(message);
+		}
 		try {
 			return JSON.stringify({
 				full: `${fullPath}!${iid}`,

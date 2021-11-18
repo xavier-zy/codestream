@@ -167,7 +167,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 	}
 
 	async onConnected(providerInfo?: CSGitHubProviderInfo) {
-		super.onConnected(providerInfo);
+		await super.onConnected(providerInfo);
 		this._knownRepos = new Map<string, GitHubRepo>();
 	}
 
@@ -2052,7 +2052,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 				}
 			}
 		}
-		
+
 		if (v && semver.lt(v.version, "2.21.0")) {
 			query = `mutation AddPullRequestReviewThread($text:String!, $pullRequestReviewId:ID!, $filePath:String, $startLine:Int, $endLine:Int, $side:String) {
 				addPullRequestReviewThread(input: {body:$text, pullRequestReviewId:$pullRequestReviewId, path:$filePath, startLine:$startLine, line:$endLine, side:$side}) {

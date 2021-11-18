@@ -41,7 +41,7 @@ export class TrelloProvider extends ThirdPartyIssueProviderBase<CSTrelloProvider
 	}
 
 	async onConnected(providerInfo?: CSTrelloProviderInfo) {
-		super.onConnected(providerInfo);
+		await super.onConnected(providerInfo);
 		this._trelloUserId = await this.getMemberId();
 	}
 

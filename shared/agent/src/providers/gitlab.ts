@@ -172,7 +172,7 @@ export class GitLabProvider extends ThirdPartyIssueProviderBase<CSGitLabProvider
 	}
 
 	async onConnected(providerInfo?: CSGitLabProviderInfo) {
-		super.onConnected(providerInfo);
+		await super.onConnected(providerInfo);
 		this._projectsByRemotePath = new Map<string, GitLabProject>();
 	}
 

@@ -3,8 +3,8 @@
   <Metadata>
     <Identity Id="codestream-vs" Version="12.1.1.0" Language="en-US" Publisher="CodeStream" />
     <!-- DisplayName maxLength=50 -->
-    <DisplayName>New Relic CodeStream - GitHub, GitLab PRs &amp; Review</DisplayName>
-    <Description xml:space="preserve">GitHub pull requests, GitLab merge requests, and code reviews in your IDE. Eliminate context-switching between tools. Integrates with New Relic One, Bitbucket, Slack, MS Teams, Jira, Trello and more.</Description>
+    <DisplayName>CodeStream - GitHub, GitLab PRs &amp; Review</DisplayName>
+    <Description xml:space="preserve">GitHub pull requests, GitLab merge requests, and code reviews in your IDE. Eliminate context-switching. Integrates with New Relic One observability, Bitbucket, Slack, MS Teams, Jira, Trello and more.</Description>
     <MoreInfo>https://codestream.com/</MoreInfo>
     <ReleaseNotes>CHANGELOG.txt</ReleaseNotes>
     <Icon>Resources\Assets\codestream.png</Icon>

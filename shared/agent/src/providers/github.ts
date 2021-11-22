@@ -2053,6 +2053,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 			}
 		}
 
+		let response;
 		if (v && semver.lt(v.version, "2.21.0")) {
 			query = `mutation AddPullRequestReviewThread($text:String!, $pullRequestReviewId:ID!, $filePath:String, $startLine:Int, $endLine:Int, $side:String) {
 				addPullRequestReviewThread(input: {body:$text, pullRequestReviewId:$pullRequestReviewId, path:$filePath, startLine:$startLine, line:$endLine, side:$side}) {
@@ -2061,19 +2062,50 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 			  }
 			  `;
 		} else {
-			query = `mutation AddPullRequestReviewThread($text:String!, $pullRequestId:ID!, $filePath:String, $startLine:Int, $endLine:Int, $side:String) {
+			if (!request.side) request.side = "right";
+			request.side = request.side.toUpperCase();
+
+			if (request.startLine != null && request.startLine === request.endLine) {
+				query = `mutation AddPullRequestReviewThread($text:String!, $pullRequestId:ID!, $filePath:String!, $endLine:Int!, $side:DiffSide) {
+					addPullRequestReviewThread(input: {body:$text, pullRequestId:$pullRequestId, path:$filePath, line:$endLine, side:$side}) {
+					  clientMutationId
+					  thread {
+						  id
+					  }
+					}
+				  }`;
+			} else {
+				query = `mutation AddPullRequestReviewThread($text:String!, $pullRequestId:ID!, $filePath:String!, $startLine:Int, $endLine:Int!, $side:DiffSide) {
 				addPullRequestReviewThread(input: {body:$text, pullRequestId:$pullRequestId, path:$filePath, startLine:$startLine, line:$endLine, side:$side}) {
 				  clientMutationId
+				  thread {
+					  id
+				  }
 				}
 			  }`;
+			}
 		}
 
-		Logger.log(`commenting:addPullRequestReviewThread`, {
-			query: query,
-			request: request
-		});
+		response = await this.mutate<{
+			addPullRequestReviewThread: {
+				thread: {
+					id: string;
+				};
+			};
+		}>(query, request);
 
-		void (await this.mutate<any>(query, request));
+		if (!response?.addPullRequestReviewThread?.thread?.id) {
+			Logger.warn("addPullRequestReviewThread:response", {
+				response,
+				version: v
+			});
+			throw new Error("Unable to add comment");
+		} else {
+			Logger.log("addPullRequestReviewThread:response", {
+				response,
+				version: v
+			});
+		}
 
 		const ownerData = await this.getRepoOwnerFromPullRequestId(request.pullRequestId);
 		const graphResults = await this.fetchUpdatedReviewCommentData(ownerData);

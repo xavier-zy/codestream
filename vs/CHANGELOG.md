@@ -1,5 +1,20 @@
 # Change Log
 
+## [12.2.0] - 2021-11-22
+
+### Changed
+
+- Codemarks created in an error group now reference and link to the error group
+- When you select an issue to start work in the Issues section it is now identified via an arrow to the left of the entry
+- Error stack trace resolution is now asynchronous and doesn’t block initial error loading
+
+### Fixed
+
+- Addresses [#774](https://github.com/TeamCodeStream/CodeStream/issues/774) &mdash; Pending review comments in GH PR aren't being saved
+- Addresses [#765](https://github.com/TeamCodeStream/CodeStream/issues/765) &mdash; Field 'draft' doesn't exist on type 'MergeRequest'
+- Addresses [#707](https://github.com/TeamCodeStream/CodeStream/issues/707) &mdash; GLSM "TypeError: Cannot read property 'mergeRequest' of null"
+- Addresses [#597](https://github.com/TeamCodeStream/CodeStream/issues/597) &mdash; GitLab self hosted error. Field 'userDiscussionsCount' and 'reviewers' doesn't exist on type 'MergeRequest'
+
 ## [12.1.0] - 2021-11-12
 
 ### Added

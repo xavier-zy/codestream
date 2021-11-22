@@ -12,7 +12,7 @@ import { Agent as HttpsAgent } from "https";
 import HttpsProxyAgent from "https-proxy-agent";
 import { uniq } from "lodash-es";
 import { Container, SessionContainer } from "../../container";
-import { Logger, TraceLevel } from "../../logger";
+import { LogCorrelationContext, Logger, TraceLevel } from "../../logger";
 import {
 	Capabilities,
 	CreatePostResponse,
@@ -426,11 +426,7 @@ export class SlackSharingApiProvider {
 				};
 				if (!ok) throw new Error(error);
 
-				Logger.log(
-					cc,
-					`Fetched page; cursor=${response.response_metadata &&
-						response.response_metadata.next_cursor}`
-				);
+				this.logPaginatedResponse(cc, response);
 
 				conversations.push(...data);
 			}
@@ -584,11 +580,7 @@ export class SlackSharingApiProvider {
 				};
 				if (!ok) throw new Error(error);
 
-				Logger.log(
-					cc,
-					`Fetched page; cursor=${response.response_metadata &&
-						response.response_metadata.next_cursor}`
-				);
+				this.logPaginatedResponse(cc, response);
 
 				channels.push(...data);
 			}
@@ -695,11 +687,7 @@ export class SlackSharingApiProvider {
 				};
 				if (!ok) throw new Error(error);
 
-				Logger.log(
-					cc,
-					`Fetched page; cursor=${response.response_metadata &&
-						response.response_metadata.next_cursor}`
-				);
+				this.logPaginatedResponse(cc, response);
 
 				groups.push(...data);
 			}
@@ -828,11 +816,7 @@ export class SlackSharingApiProvider {
 				};
 				if (!ok) throw new Error(error);
 
-				Logger.log(
-					cc,
-					`Fetched page; cursor=${response.response_metadata &&
-						response.response_metadata.next_cursor}`
-				);
+				this.logPaginatedResponse(cc, response);
 
 				ims.push(...data);
 			}
@@ -929,13 +913,6 @@ export class SlackSharingApiProvider {
 		}
 	}
 
-	private async getSlackPreferences() {
-		// Use real-time events as a proxy for limited-slack mode (which can't use undocumented apis)
-		// if (!this.capabilities.providerSupportsRealtimeEvents) {
-		return { muted_channels: "" };
-		// }
-	}
-
 	private async getMeCore(meResponse?: CSGetMeResponse) {
 		if (meResponse === undefined) {
 			meResponse = await SessionContainer.instance().users.getMe();
@@ -992,11 +969,7 @@ export class SlackSharingApiProvider {
 			};
 			if (!ok) throw new Error(error);
 
-			Logger.log(
-				cc,
-				`Fetched page; cursor=${response.response_metadata &&
-					response.response_metadata.next_cursor}`
-			);
+			this.logPaginatedResponse(cc, response);
 
 			members.push(...data);
 		}
@@ -1069,6 +1042,7 @@ export class SlackSharingApiProvider {
 			if (
 				ex.data &&
 				ex.data.response_metadata &&
+				typeof ex.data.response_metadata === "object" &&
 				ex.data.response_metadata.messages &&
 				ex.data.response_metadata.messages.length
 			) {
@@ -1105,6 +1079,27 @@ export class SlackSharingApiProvider {
 	}
 
 	async dispose() {}
+
+	private logPaginatedResponse(cc: LogCorrelationContext | undefined, response: WebAPICallResult) {
+		try {
+			const typeofResponse_metadata =
+				response && response.response_metadata ? typeof response.response_metadata : "";
+
+			Logger.log(cc, `Fetched page;`, {
+				hasResponse: response != null,
+				typeofResponse_metadata: typeofResponse_metadata,
+				cursor:
+					response && response.response_metadata && typeofResponse_metadata === "object"
+						? response.response_metadata.next_cursor
+						: ""
+			});
+		} catch (ex) {
+			Logger.warn("Failed to log paginated response", {
+				context: cc,
+				error: ex
+			});
+		}
+	}
 }
 
 const logFilterKeys = new Set(["text", "attachments"]);

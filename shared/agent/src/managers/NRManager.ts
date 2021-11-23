@@ -496,7 +496,8 @@ export class NRManager {
 				fileFullPath: bestMatchingFilePath,
 				fileRelativePath: path.relative(matchingRepoPath, bestMatchingFilePath),
 				line: line.line || 0,
-				column: line.column || 0
+				column: line.column || 0,
+				resolved: true
 			};
 		}
 
@@ -514,7 +515,8 @@ export class NRManager {
 			fileFullPath: bestMatchingFilePath,
 			fileRelativePath: path.relative(matchingRepoPath, bestMatchingFilePath),
 			line: position.line,
-			column: position.column
+			column: position.column,
+			resolved: true
 		};
 	}
 

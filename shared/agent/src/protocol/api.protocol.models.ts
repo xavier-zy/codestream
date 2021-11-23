@@ -301,6 +301,7 @@ export interface CSStackTraceLine {
 	column?: number;
 	error?: string;
 	warning?: string;
+	resolved?: boolean;
 }
 
 export interface CSStackTraceInfo {

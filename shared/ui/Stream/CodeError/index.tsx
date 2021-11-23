@@ -1163,7 +1163,7 @@ const BaseCodeError = (props: BaseCodeErrorProps) => {
 
 									const className = i === currentSelectedLine ? "monospace li-active" : "monospace";
 									const mline = line.fileFullPath.replace(/\s\s\s\s+/g, "     ");
-									return props.stackFrameClickDisabled || props.collapsed || line.error ? (
+									return props.stackFrameClickDisabled || props.collapsed || !line.resolved ? (
 										<Tooltip
 											key={"tooltipline-" + i}
 											title={line.error}

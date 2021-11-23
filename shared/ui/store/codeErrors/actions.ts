@@ -239,11 +239,8 @@ export const jumpToStackLine = (
 	}
 
 	const { path } = currentPosition;
-	const { line, column } = sha ? stackLine : currentPosition;
-	const range = Range.create(
-		Position.create(line! - 1, column != null ? column - 1 : 0),
-		Position.create(line! - 1, column != null ? column - 1 : 2147483647)
-	);
+	const { line } = sha ? stackLine : currentPosition;
+	const range = Range.create(Position.create(line! - 1, 0), Position.create(line! - 1, 2147483647));
 
 	if (range.start.line === range.end.line && range.start.character === range.end.character) {
 		// if we are only a single point -- expand to end of line

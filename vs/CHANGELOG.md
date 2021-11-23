@@ -1,5 +1,15 @@
 # Change Log
 
+## [12.3.0] - 2021-11-23
+
+### Added
+
+- Adds an intro tour the first time someone opens an error group
+
+### Fixed
+
+- Fixes an issue with the parsing of stack traces in error groups
+
 ## [12.2.0] - 2021-11-22
 
 ### Changed

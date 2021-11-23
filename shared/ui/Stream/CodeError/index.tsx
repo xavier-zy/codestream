@@ -1119,15 +1119,8 @@ const BaseCodeError = (props: BaseCodeErrorProps) => {
 
 								const className = i === currentSelectedLine ? "monospace li-active" : "monospace";
 								const mline = line.fileFullPath.replace(/\s\s\s\s+/g, "     ");
-								return props.stackFrameClickDisabled ||
-									props.collapsed ||
-									props.parsedStack?.resolvedStackInfo?.lines[i]?.error ? (
-									<Tooltip
-										key={"tooltipline-" + i}
-										title={props.parsedStack?.resolvedStackInfo?.lines[i]?.error}
-										placement="bottom"
-										delay={1}
-									>
+								return props.stackFrameClickDisabled || props.collapsed || line.error ? (
+									<Tooltip key={"tooltipline-" + i} title={line.error} placement="bottom" delay={1}>
 										<DisabledClickLine key={"disabled-line" + i} className="monospace">
 											<span>
 												<span style={{ opacity: ".6" }}>{line.method}</span>({mline}:

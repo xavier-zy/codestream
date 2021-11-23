@@ -71,7 +71,6 @@ export const resolveStackTraceLine = (notification: DidResolveStackTraceLineNoti
 ) => {
 	const { codeErrorId, occurrenceId, index, resolvedLine } = notification;
 
-	if (resolvedLine.error) return;
 	const state = getState();
 	const codeError = state.codeErrors?.codeErrors[codeErrorId];
 	const stackTraceIndex = codeError.stackTraces.findIndex(_ => _.occurrenceId === occurrenceId);

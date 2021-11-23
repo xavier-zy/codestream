@@ -365,7 +365,8 @@ export const validateSignup = (provider: string, authInfo?: SSOAuthInfo) => asyn
 		});
 
 		HostApi.instance.track("Signup Completed", {
-			"Signup Type": authInfo.type === SignupType.CreateTeam ? "Organic" : "Viral",
+			// i don't think there's any way of reaching here unless user is already on a company/team by invite
+			"Signup Type": "Viral", // authInfo.type === SignupType.CreateTeam ? "Organic" : "Viral",
 			"Auth Provider": providerName
 		});
 

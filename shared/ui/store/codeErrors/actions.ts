@@ -73,7 +73,11 @@ export const resolveStackTraceLine = (notification: DidResolveStackTraceLineNoti
 
 	const state = getState();
 	const codeError = state.codeErrors?.codeErrors[codeErrorId];
-	const stackTraceIndex = codeError.stackTraces.findIndex(_ => _.occurrenceId === occurrenceId);
+	let stackTraceIndex = codeError.stackTraces.findIndex(_ => _.occurrenceId === occurrenceId);
+
+	// FIXME occurrenceId mapping is not reliable, so assume it's the only one that exists
+	if (stackTraceIndex < 0 && codeError.stackTraces.length === 1) stackTraceIndex = 0;
+
 	const stackTrace = codeError.stackTraces[stackTraceIndex];
 	const updatedLines = [...stackTrace.lines];
 	updatedLines[index] = {

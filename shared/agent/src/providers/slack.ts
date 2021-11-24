@@ -69,7 +69,7 @@ export class SlackProvider extends ThirdPartyPostProviderBase<CSSlackProviderInf
 	}
 
 	protected async onConnected(providerInfo: CSSlackProviderInfo) {
-		await super.onConnected(providerInfo);
+		super.onConnected(providerInfo);
 		this._multiProviderInfo = providerInfo;
 	}
 

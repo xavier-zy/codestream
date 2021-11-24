@@ -38,7 +38,7 @@ export class MSTeamsProvider extends ThirdPartyPostProviderBase<CSMSTeamsProvide
 		});
 	}
 	protected async onConnected(providerInfo: CSMSTeamsProviderInfo) {
-		await super.onConnected(providerInfo);
+		super.onConnected(providerInfo);
 		this._multiProviderInfo = providerInfo;
 	}
 

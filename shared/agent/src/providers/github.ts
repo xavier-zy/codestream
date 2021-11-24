@@ -167,7 +167,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 	}
 
 	async onConnected(providerInfo?: CSGitHubProviderInfo) {
-		await super.onConnected(providerInfo);
+		super.onConnected(providerInfo);
 		this._knownRepos = new Map<string, GitHubRepo>();
 	}
 

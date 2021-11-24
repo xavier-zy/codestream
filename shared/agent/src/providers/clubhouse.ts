@@ -49,7 +49,7 @@ export class ClubhouseProvider extends ThirdPartyIssueProviderBase<CSClubhousePr
 	}
 
 	async onConnected(providerInfo?: CSClubhouseProviderInfo) {
-		await super.onConnected(providerInfo);
+		super.onConnected(providerInfo);
 		this._clubhouseUserInfo = await this.getMemberInfo();
 	}
 

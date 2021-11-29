@@ -341,6 +341,8 @@ export const CreatePullRequestPanel = props => {
 				setCurrentStep(3);
 				fetchFilesChanged(args.repoId, newPrBranch, newReviewBranch);
 
+				console.log("test");
+
 				if (newReviewBranch === newPrBranch) {
 					setPreconditionError({ type: "BRANCHES_MUST_NOT_MATCH", message: "", url: "", id: "" });
 					setFormState({ type: "", message: "", url: "", id: "" });

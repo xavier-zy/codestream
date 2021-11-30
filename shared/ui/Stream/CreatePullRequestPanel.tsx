@@ -468,7 +468,7 @@ export const CreatePullRequestPanel = props => {
 		setPreconditionError({ message: "", type: "", url: "", id: "" });
 		setPreconditionWarning({ message: "", type: "", url: "", id: "" });
 		const headRefName = acrossForks
-			? `${headForkedRepo.owner.login}:${reviewBranch}`
+			? `${headForkedRepo.nameWithOwner}:${reviewBranch}`
 			: reviewBranch;
 		const providerRepositoryId = acrossForks ? baseForkedRepo.id : undefined;
 		try {
@@ -1368,6 +1368,12 @@ export const CreatePullRequestPanel = props => {
 		setIsLoadingDiffs(false);
 	};
 
+	useEffect(() => {
+		if (prBranch && reviewBranch) {
+			checkPullRequestBranchPreconditions(prBranch, reviewBranch);
+		}
+	}, [acrossForks, baseForkedRepo, headForkedRepo]);
+
 	// useEffect(() => {
 	// 	if (prBranch && reviewBranch) fetchFilesChanged();
 	// 	else setFilesChanged([]);
@@ -1425,7 +1431,9 @@ export const CreatePullRequestPanel = props => {
 												defaultMessage="Something went wrong! Please try again, or "
 											/>
 											<FormattedMessage id="contactSupport" defaultMessage="contact support">
-												{text => <Link href="https://docs.newrelic.com/docs/codestream/">{text}</Link>}
+												{text => (
+													<Link href="https://docs.newrelic.com/docs/codestream/">{text}</Link>
+												)}
 											</FormattedMessage>
 											.
 										</div>

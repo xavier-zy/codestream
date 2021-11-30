@@ -64,6 +64,7 @@ export function DropdownButton(props: React.PropsWithChildren<DropdownButtonProp
 	};
 
 	let align = props.align || (props.splitDropdown ? "dropdownLeft" : "dropdownRight");
+	console.log("eric align", align);
 	let items = [...props.items];
 	let selectedItem;
 	let selectedAction;

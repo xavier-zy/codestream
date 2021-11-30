@@ -660,7 +660,6 @@ export const CreatePullRequestPanel = props => {
 				providerId: prProviderId,
 				params: { remote: prRemoteUrl }
 			})) as any;
-			console.log("forked repo response", response);
 			if (response) {
 				const forks = response.forks || [];
 				setForkedRepos(forks);
@@ -744,7 +743,7 @@ export const CreatePullRequestPanel = props => {
 		}
 		return (
 			<span>
-				<DropdownButton align={"dropdownCenter"} variant="secondary" items={items}>
+				<DropdownButton variant="secondary" items={items}>
 					<span className="subtle">base:</span> <strong>{prBranch || reviewBranch}</strong>
 				</DropdownButton>
 			</span>
@@ -771,7 +770,7 @@ export const CreatePullRequestPanel = props => {
 		}
 		return (
 			<span>
-				<DropdownButton align={"dropdownCenter"} variant="secondary" items={items}>
+				<DropdownButton variant="secondary" items={items}>
 					<span className="subtle">base:</span> <strong>{prBranch}</strong>
 				</DropdownButton>
 			</span>
@@ -798,7 +797,7 @@ export const CreatePullRequestPanel = props => {
 			items.unshift({ type: "search", placeholder: "Search...", action: "search" });
 		}
 		return (
-			<DropdownButton align={"dropdownCenter"} variant="secondary" items={items}>
+			<DropdownButton variant="secondary" items={items}>
 				<span className="subtle">compare:</span> <strong>{reviewBranch}</strong>
 			</DropdownButton>
 		);
@@ -922,7 +921,7 @@ export const CreatePullRequestPanel = props => {
 		if (!baseForkedRepo) return null;
 		return (
 			<span>
-				<DropdownButton items={items}>
+				<DropdownButton variant="secondary" items={items}>
 					<span className="subtle">base repo:</span> <strong>{baseForkedRepo.nameWithOwner}</strong>
 				</DropdownButton>
 			</span>
@@ -1369,11 +1368,6 @@ export const CreatePullRequestPanel = props => {
 		setIsLoadingDiffs(false);
 	};
 
-	const handleAcrossForksClick = (event: React.SyntheticEvent) => {
-		//eric-j
-		setAcrossForks(!acrossForks);
-	};
-
 	useEffect(() => {
 		if (prBranch && reviewBranch) {
 			checkPullRequestBranchPreconditions(prBranch, reviewBranch);
@@ -1396,8 +1390,6 @@ export const CreatePullRequestPanel = props => {
 	const showTooMany = !acrossForks && tooManyDiffs && !showDiffsAnyway;
 
 	// console.warn("CURRENT STEP IS: ", currentStep, "PCE: ", preconditionError, "loading: ", loading);
-
-	console.log("acrossForks", acrossForks);
 	return (
 		<Root className="full-height-codemark-form">
 			<PanelHeader title={`Open a ${prLabel.PullRequest}`}>

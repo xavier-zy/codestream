@@ -525,7 +525,7 @@ export class NRManager {
 		let mostRepresented = "";
 		stackTrace.forEach(line => {
 			const extRe = new RegExp(
-				`[\/|\\t].+\.(${Object.keys(ExtensionToLanguageMap).join("|")})[^a-zA-Z0-9]`
+				`[\\/\\\\|\\t].+\.(${Object.keys(ExtensionToLanguageMap).join("|")})[^a-zA-Z0-9]`
 			);
 			const match = line.match(extRe);
 			if (match && match[1]) {

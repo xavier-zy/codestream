@@ -27,6 +27,19 @@ export function reduceCodeErrors(
 				codeErrors: { ...state.codeErrors, ...toMapBy("id", action.payload) }
 			};
 		case CodeErrorsActionsTypes.AddCodeErrors:
+			const newCodeErrors = toMapBy("id", action.payload);
+			for (const id in newCodeErrors) {
+				const existingCodeError = state.codeErrors[id];
+				if (existingCodeError) {
+					// preserve resolved stack traces
+					newCodeErrors[id].stackTraces = existingCodeError.stackTraces;
+				}
+			}
+			return {
+				bootstrapped: state.bootstrapped,
+				errorGroups: state.errorGroups,
+				codeErrors: { ...state.codeErrors, ...newCodeErrors }
+			};
 		case CodeErrorsActionsTypes.UpdateCodeErrors:
 		case CodeErrorsActionsTypes.SaveCodeErrors: {
 			return {

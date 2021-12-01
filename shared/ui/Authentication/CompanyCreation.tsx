@@ -125,7 +125,8 @@ export function CompanyCreation(props: {
 			// anyone who doesn't have an org to join, we go straight to the create new org step.
 			setRequiresHelpText(true);
 			HostApi.instance.track("Organization Options Skipped", {
-				"Auth Provider": providerName
+				"Auth Provider": providerName,
+				"Webmail": props.isWebmail || false
 			});
 			setStep(1);
 		} else {
@@ -222,7 +223,7 @@ export function CompanyCreation(props: {
 									<p>
 										<FormattedMessage
 											id="signUp.createOrganizationHelp"
-											defaultMessage="An organization on CodeStream is a place where all of the developers in your company can discuss and review code"
+											defaultMessage="An organization on CodeStream is a place where all of the developers in your company can discuss and review code."
 										/>
 									</p>
 
@@ -321,7 +322,7 @@ export function CompanyCreation(props: {
 										<p>
 											<FormattedMessage
 												id="signUp.createOrganizationHelp"
-												defaultMessage="An organization on CodeStream is a place where all of the developers in your company can discuss and review code"
+												defaultMessage="An organization on CodeStream is a place where all of the developers in your company can discuss and review code."
 											/>
 										</p>
 									)}

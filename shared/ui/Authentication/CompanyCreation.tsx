@@ -314,7 +314,7 @@ export function CompanyCreation(props: {
 									<h3>
 										<FormattedMessage
 											id="signUp.nameOrganization"
-											defaultMessage="Name your organization"
+											defaultMessage="Name your CodeStream organization"
 										/>
 									</h3>
 									{requiresHelpText && (

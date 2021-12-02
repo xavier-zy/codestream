@@ -28,7 +28,7 @@ export interface ResolveStackTraceRequest {
 	occurrenceId: string;
 	stackTrace: string[];
 	repoId: string;
-	sha: string;
+	ref: string;
 	codeErrorId: string;
 }
 
@@ -64,7 +64,7 @@ export const DidResolveStackTraceLineNotificationType = new NotificationType<
 >("codestream/nr/didResolveStackTraceLine");
 
 export interface ResolveStackTracePositionRequest {
-	sha: string;
+	ref: string;
 	repoId: string;
 	filePath: string;
 	line: number;

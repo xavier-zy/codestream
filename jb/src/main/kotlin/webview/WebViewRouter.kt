@@ -194,7 +194,7 @@ class WebViewRouter(val project: Project) {
 
     private suspend fun editorRangeReveal(message: WebViewMessage): EditorRangeRevealResponse {
         val request = gson.fromJson<EditorRangeRevealRequest>(message.params!!)
-        val success = project.editorService?.reveal(sanitizeURI(request.uri)!!, request.sha, request.range, request.atTop)
+        val success = project.editorService?.reveal(sanitizeURI(request.uri)!!, request.ref, request.range, request.atTop)
             ?: false
         return EditorRangeRevealResponse(success)
     }

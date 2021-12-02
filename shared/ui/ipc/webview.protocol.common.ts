@@ -127,6 +127,7 @@ export interface CodeErrorData {
 	// REMOVE ABOVE
 	remote?: string;
 	commit?: string;
+	tag?: string;
 	/** caches when the last user session started  */
 	sessionStart?: number;
 	pendingRequiresConnection?: boolean;

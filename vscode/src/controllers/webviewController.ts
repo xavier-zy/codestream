@@ -721,8 +721,9 @@ export class WebviewController implements Disposable {
 			uri.scheme !== "file" &&
 			uri.scheme !== "codestream-diff" &&
 			uri.scheme !== "codestream-git"
-		)
-			{return false;}
+		) {
+			return false;
+		}
 
 		const csRangeDiffInfo = Strings.parseCSReviewDiffUrl(uri.toString());
 		if (
@@ -864,8 +865,8 @@ export class WebviewController implements Disposable {
 			case EditorHighlightRangeRequestType.method: {
 				webview.onIpcRequest(EditorHighlightRangeRequestType, e, async (_type, params) => {
 					let uri = Uri.parse(params.uri);
-					if (params.sha) {
-						uri = toCSGitUri(uri, params.sha);
+					if (params.ref) {
+						uri = toCSGitUri(uri, params.ref);
 					}
 					const success = await Editor.highlightRange(
 						uri,
@@ -881,8 +882,8 @@ export class WebviewController implements Disposable {
 			case EditorRevealRangeRequestType.method: {
 				webview.onIpcRequest(EditorRevealRangeRequestType, e, async (_type, params) => {
 					let uri = Uri.parse(params.uri);
-					if (params.sha) {
-						uri = toCSGitUri(uri, params.sha);
+					if (params.ref) {
+						uri = toCSGitUri(uri, params.ref);
 					}
 					const success = await Editor.revealRange(
 						uri,

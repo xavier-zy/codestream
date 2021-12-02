@@ -1,3 +1,4 @@
+import { isSha } from "@codestream/webview/utilities/strings";
 import React, { PropsWithChildren, useEffect } from "react";
 import { CardProps, getCardProps, CardFooter } from "@codestream/webview/src/components/Card";
 import {
@@ -1236,6 +1237,9 @@ const BaseCodeError = (props: BaseCodeErrorProps) => {
 		return null;
 	};
 
+	const repoRef = isSha(props.repoInfo?.ref)
+		? props.repoInfo?.ref?.substr(0, 7)
+		: props.repoInfo?.ref;
 	return (
 		<MinimumWidthCard {...getCardProps(props)} noCard={!props.collapsed}>
 			{props.collapsed && (
@@ -1304,10 +1308,10 @@ const BaseCodeError = (props: BaseCodeErrorProps) => {
 							<DataValue>{props.repoInfo.repoName}</DataValue>
 						</DataRow>
 					)}
-					{props.repoInfo?.branch && (
+					{repoRef && (
 						<DataRow>
 							<DataLabel>Build:</DataLabel>
-							<DataValue>{props.repoInfo.branch.substr(0, 7)}</DataValue>
+							<DataValue>{repoRef}</DataValue>
 						</DataRow>
 					)}
 				</div>
@@ -1547,7 +1551,7 @@ const CodeErrorForCodeError = (props: PropsWithCodeError) => {
 			const repo = derivedState.repos[stackInfo.repoId];
 			if (!repo) return undefined;
 
-			return { repoName: repo.name, branch: stackInfo.sha! };
+			return { repoName: repo.name, ref: stackInfo.sha! };
 		} else {
 			return undefined;
 		}

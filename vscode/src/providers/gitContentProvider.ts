@@ -1,10 +1,5 @@
 import { Strings } from "system";
-import {
-	Disposable,
-	TextDocumentContentProvider,
-	Uri,
-	workspace
-} from "vscode";
+import { Disposable, TextDocumentContentProvider, Uri, workspace } from "vscode";
 
 import { Container } from "../container";
 
@@ -28,12 +23,15 @@ export class GitContentProvider implements TextDocumentContentProvider, Disposab
 	}
 }
 
-export function toCSGitUri(uri: Uri, sha: string): Uri {
+export function toCSGitUri(uri: Uri, ref: string): Uri {
 	return uri.with({
 		scheme: "codestream-git",
 		query: JSON.stringify({
-			sha: sha,
-			shortSha: sha.substr(0, 7)
+			sha: ref,
+			shortSha: isSha(ref) ? ref.substr(0, 7) : ref
 		})
 	});
 }
+
+const shaRegExp = /^[a-f0-9]{40}$/i;
+const isSha = (ref: string | undefined) => ref && shaRegExp.test(ref);

@@ -77,9 +77,9 @@ const StackTraceParsers: { [key: string]: Parser } = {
 	go: goParser
 };
 
-const MISSING_SHA_MESSAGE =
-	"Your version of the code may not match the environment that triggered the error. Fetch the following commit to better investigate the error.\n${sha}";
-const MISSING_SHA_HELP_URL =
+const MISSING_REF_MESSAGE =
+	"Your version of the code may not match the environment that triggered the error. Fetch the following reference to better investigate the error.\n${ref}";
+const MISSING_REF_HELP_URL =
 	"http://docs.newrelic.com/docs/codestream/start-here/codestream-new-relic/#apm";
 
 @lsp
@@ -162,7 +162,7 @@ export class NRManager {
 		errorGroupGuid,
 		stackTrace,
 		repoId,
-		sha,
+		ref,
 		occurrenceId,
 		codeErrorId
 	}: ResolveStackTraceRequest): Promise<ResolveStackTraceResponse> {
@@ -190,38 +190,38 @@ export class NRManager {
 			}
 		}
 
-		if (!sha) {
+		if (!ref) {
 			setWarning({
-				message: `No build SHA associated with this error. Your version of the code may not match the environment that triggered the error.`,
-				helpUrl: MISSING_SHA_HELP_URL
+				message: `No git reference associated with this error. Your version of the code may not match the environment that triggered the error.`,
+				helpUrl: MISSING_REF_HELP_URL
 			});
 		} else if (matchingRepoPath) {
 			try {
 				const { git } = SessionContainer.instance();
 				// ensure this sha is actually valid for this repo
-				if (!(await git.isValidReference(matchingRepoPath, sha))) {
+				if (!(await git.isValidReference(matchingRepoPath, ref))) {
 					// if not found, attempt to fetch all
-					Logger.log(`NRManager sha (${sha}) not found. fetching...`);
+					Logger.log(`NRManager ref (${ref}) not found. fetching...`);
 					await git.fetchAllRemotes(matchingRepoPath);
 
-					if (!(await git.isValidReference(matchingRepoPath, sha))) {
+					if (!(await git.isValidReference(matchingRepoPath, ref))) {
 						// if still not there, we can't continue
-						Logger.log(`NRManager sha (${sha}) not found after fetch`);
+						Logger.log(`NRManager ref (${ref}) not found after fetch`);
 						setWarning({
-							message: Strings.interpolate(MISSING_SHA_MESSAGE, { sha: sha }),
-							helpUrl: MISSING_SHA_HELP_URL
+							message: Strings.interpolate(MISSING_REF_MESSAGE, { ref: ref }),
+							helpUrl: MISSING_REF_HELP_URL
 						});
 					}
 				}
 			} catch (ex) {
-				Logger.warn("NRManager issue locating sha", {
+				Logger.warn("NRManager issue locating ref", {
 					repoId: repoId,
 					matchingRepo: matchingRepo,
-					sha: sha
+					ref: ref
 				});
 				setWarning({
-					message: Strings.interpolate(MISSING_SHA_MESSAGE, { sha: sha }),
-					helpUrl: MISSING_SHA_HELP_URL
+					message: Strings.interpolate(MISSING_REF_MESSAGE, { ref: ref }),
+					helpUrl: MISSING_REF_HELP_URL
 				});
 			}
 		}
@@ -232,11 +232,11 @@ export class NRManager {
 		});
 		if (parsedStackInfo.parseError) {
 			return { error: parsedStackInfo.parseError };
-		} else if (sha && !parsedStackInfo.lines.find(line => !line.error)) {
+		} else if (ref && !parsedStackInfo.lines.find(line => !line.error)) {
 			// if there was an error on all lines (for some reason)
 			setWarning({
-				message: Strings.interpolate(MISSING_SHA_MESSAGE, { sha: sha }),
-				helpUrl: MISSING_SHA_HELP_URL
+				message: Strings.interpolate(MISSING_REF_MESSAGE, { sha: ref }),
+				helpUrl: MISSING_REF_HELP_URL
 			});
 		}
 		if (parsedStackInfo.warning) {
@@ -244,7 +244,7 @@ export class NRManager {
 			firstWarning = parsedStackInfo.warning;
 		}
 		parsedStackInfo.repoId = repoId;
-		parsedStackInfo.sha = sha;
+		parsedStackInfo.sha = ref;
 		parsedStackInfo.occurrenceId = occurrenceId;
 
 		const stackTraceText = stackTrace ? stackTrace.join("\n") : "";
@@ -264,7 +264,7 @@ export class NRManager {
 				line.fileRelativePath = resolvedLine.fileRelativePath;
 
 				if (!line.error && matchingRepoPath) {
-					this.resolveStackTraceLine(line, sha, matchingRepoPath).then(resolvedLine => {
+					this.resolveStackTraceLine(line, ref, matchingRepoPath).then(resolvedLine => {
 						session.agent.sendNotification(DidResolveStackTraceLineNotificationType, {
 							occurrenceId,
 							resolvedLine,
@@ -286,7 +286,7 @@ export class NRManager {
 	@lspHandler(ResolveStackTracePositionRequestType)
 	@log()
 	async resolveStackTracePosition({
-		sha,
+		ref,
 		repoId,
 		filePath,
 		line,
@@ -314,14 +314,14 @@ export class NRManager {
 			normalizedPath = normalizedPath.replace(":", "%3A");
 		}
 
-		if (!sha) {
+		if (!ref) {
 			return {
 				path: normalizedPath,
 				line: line,
 				column: column
 			};
 		}
-		const position = await this.getCurrentStackTracePosition(sha, fullPath, line, column);
+		const position = await this.getCurrentStackTracePosition(ref, fullPath, line, column);
 		return {
 			...position,
 			path: normalizedPath
@@ -471,7 +471,7 @@ export class NRManager {
 
 	private async resolveStackTraceLine(
 		line: CSStackTraceLine,
-		sha: string,
+		ref: string,
 		matchingRepoPath: string
 	): Promise<CSStackTraceLine> {
 		const fileFullPath = line.fileFullPath || "";
@@ -490,7 +490,7 @@ export class NRManager {
 			return { error: `Unable to find matching file for path ${fileFullPath}` };
 		}
 
-		if (!sha) {
+		if (!ref) {
 			return {
 				warning: "Missing sha",
 				fileFullPath: bestMatchingFilePath,
@@ -502,7 +502,7 @@ export class NRManager {
 		}
 
 		const position = await this.getCurrentStackTracePosition(
-			sha,
+			ref,
 			bestMatchingFilePath,
 			line.line!,
 			line.column!
@@ -541,7 +541,7 @@ export class NRManager {
 	}
 
 	private async getCurrentStackTracePosition(
-		sha: string,
+		ref: string,
 		filePath: string,
 		line: number,
 		column: number
@@ -549,9 +549,9 @@ export class NRManager {
 		const { git } = SessionContainer.instance();
 		const { documents } = Container.instance();
 
-		const diffToHead = await git.getDiffBetweenCommits(sha, "HEAD", filePath, true);
+		const diffToHead = await git.getDiffBetweenCommits(ref, "HEAD", filePath, true);
 
-		if (!diffToHead) return { error: `Unable to calculate diff from ${sha} to HEAD` };
+		if (!diffToHead) return { error: `Unable to calculate diff from ${ref} to HEAD` };
 
 		const currentCommitLocation = await calculateLocation(
 			{

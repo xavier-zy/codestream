@@ -80,7 +80,7 @@ class EditorRangeHighlightRequest(
 
 class EditorRangeRevealRequest(
     val uri: String,
-    val sha: String?,
+    val ref: String?,
     val range: Range,
     val preserveFocus: Boolean?,
     val atTop: Boolean?

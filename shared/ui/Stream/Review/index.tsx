@@ -112,7 +112,8 @@ import { PRProgress, PRProgressFill, PRProgressLine } from "../PullRequestFilesC
 
 export interface RepoMetadata {
 	repoName: string;
-	branch: string;
+	ref?: string;
+	branch?: string;
 }
 
 interface SimpleError {

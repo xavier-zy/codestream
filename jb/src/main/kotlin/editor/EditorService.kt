@@ -503,12 +503,12 @@ class EditorService(val project: Project) {
         }
     }
 
-    suspend fun reveal(uri: String, sha: String?, range: Range?, atTop: Boolean? = null): Boolean {
+    suspend fun reveal(uri: String, ref: String?, range: Range?, atTop: Boolean? = null): Boolean {
         val future = CompletableDeferred<Boolean>()
 
         ApplicationManager.getApplication().invokeLater {
-            if (sha != null && sha.length == 40) {
-                val vFile = getCSGitFile(uri, sha, project)
+            if (!ref.isNullOrEmpty()) {
+                val vFile = getCSGitFile(uri, ref, project)
                 val editorManager = FileEditorManager.getInstance(project)
                 editorManager.openTextEditor(OpenFileDescriptor(project, vFile, range?.start?.line ?: 0, 0), false)
                 future.complete(true)

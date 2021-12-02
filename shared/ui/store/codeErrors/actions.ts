@@ -193,7 +193,7 @@ export const fetchCodeError = (codeErrorId: string) => async dispatch => {
 export const resolveStackTrace = (
 	errorGroupGuid: string,
 	repoId: string,
-	sha: string,
+	ref: string,
 	occurrenceId: string,
 	stackTrace: string[],
 	codeErrorId: string
@@ -202,7 +202,7 @@ export const resolveStackTrace = (
 		errorGroupGuid,
 		stackTrace,
 		repoId,
-		sha,
+		ref,
 		occurrenceId,
 		codeErrorId
 	});
@@ -211,7 +211,7 @@ export const resolveStackTrace = (
 export const jumpToStackLine = (
 	lineIndex: number,
 	stackLine: CSStackTraceLine,
-	sha: string,
+	ref: string,
 	repoId: string
 ) => async (dispatch, getState: () => CodeStreamState) => {
 	const state = getState();
@@ -227,7 +227,7 @@ export const jumpToStackLine = (
 		return;
 	}
 	const currentPosition = await HostApi.instance.send(ResolveStackTracePositionRequestType, {
-		sha,
+		ref,
 		repoId,
 		filePath: stackLine.fileRelativePath!,
 		line: stackLine.line!,
@@ -239,7 +239,7 @@ export const jumpToStackLine = (
 	}
 
 	const { path } = currentPosition;
-	const { line } = sha ? stackLine : currentPosition;
+	const { line } = ref ? stackLine : currentPosition;
 	const range = Range.create(Position.create(line! - 1, 0), Position.create(line! - 1, 2147483647));
 
 	if (range.start.line === range.end.line && range.start.character === range.end.character) {
@@ -251,14 +251,14 @@ export const jumpToStackLine = (
 		uri: path!,
 		preserveFocus: true,
 		range,
-		sha
+		ref
 	});
 	if (revealResponse?.success) {
 		highlightRange({
 			uri: path!,
 			range,
 			highlight: true,
-			sha
+			ref
 		});
 	}
 };

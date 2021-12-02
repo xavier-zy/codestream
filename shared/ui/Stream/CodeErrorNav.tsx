@@ -1,3 +1,4 @@
+import { isSha } from "@codestream/webview/utilities/strings";
 import React from "react";
 import { useEffect } from "react";
 import styled from "styled-components";
@@ -219,7 +220,7 @@ export function CodeErrorNav(props: Props) {
 	const pendingEntityId = derivedState.currentCodeErrorData?.pendingEntityId;
 	const occurrenceId = derivedState.currentCodeErrorData?.occurrenceId;
 	const remote = derivedState.currentCodeErrorData?.remote;
-	const commit = derivedState.currentCodeErrorData?.commit;
+	const ref = derivedState.currentCodeErrorData?.commit || derivedState.currentCodeErrorData?.tag;
 	const multipleRepos = derivedState.currentCodeErrorData?.multipleRepos;
 	const sidebarLocation = derivedState.sidebarLocation;
 
@@ -332,13 +333,13 @@ export function CodeErrorNav(props: Props) {
 
 		let errorGroupGuidToUse: string | undefined;
 		let occurrenceIdToUse: string | undefined;
-		let commitToUse: string | undefined;
+		let refToUse: string | undefined;
 		let entityIdToUse: string | undefined;
 
 		if (pendingErrorGroupGuid) {
 			errorGroupGuidToUse = pendingErrorGroupGuid;
 			occurrenceIdToUse = occurrenceId;
-			commitToUse = commit;
+			refToUse = ref;
 			entityIdToUse = pendingEntityId;
 		} else if (codeError) {
 			isExistingCodeError = true;
@@ -348,7 +349,7 @@ export function CodeErrorNav(props: Props) {
 				codeError.stackTraces && codeError.stackTraces[0] ? codeError.stackTraces[0] : undefined;
 			if (existingStackTrace) {
 				occurrenceIdToUse = existingStackTrace.occurrenceId;
-				commitToUse = existingStackTrace.sha;
+				refToUse = existingStackTrace.sha;
 			}
 			entityIdToUse = codeError?.objectInfo?.entityId;
 		}
@@ -451,7 +452,7 @@ export function CodeErrorNav(props: Props) {
 						repos: [
 							{
 								remotes: [normalizationResponse.normalizedUrl],
-								knownCommitHashes: commitToUse ? [commitToUse] : []
+								knownCommitHashes: refToUse && isSha(refToUse) ? [refToUse] : []
 							}
 						]
 					})) as MatchReposResponse;
@@ -483,7 +484,7 @@ export function CodeErrorNav(props: Props) {
 					stackInfo = (await resolveStackTrace(
 						errorGroupGuidToUse!,
 						repoId!,
-						commitToUse!,
+						refToUse!,
 						occurrenceIdToUse!,
 						stack!,
 						derivedState.currentCodeErrorId!
@@ -576,7 +577,7 @@ export function CodeErrorNav(props: Props) {
 				"Stack Trace": !!(stackInfo && !stackInfo.error)
 			};
 			if (trackingData["Stack Trace"]) {
-				trackingData["Build SHA"] = !commitToUse
+				trackingData["Build ref"] = !refToUse
 					? "Missing"
 					: stackInfo?.warning
 					? "Warning"

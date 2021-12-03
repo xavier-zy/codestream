@@ -47,7 +47,8 @@ import {
 	NormalizeUrlRequestType,
 	GetNewRelicErrorGroupRequestType,
 	PixieDynamicLoggingResultNotification,
-	DidResolveStackTraceLineNotificationType
+	DidResolveStackTraceLineNotificationType,
+	TelemetrySetAnonymousIdRequestType
 } from "@codestream/protocols/agent";
 import { CSApiCapabilities, CodemarkType, CSCodeError, CSMe } from "@codestream/protocols/api";
 import translations from "./translations/en";
@@ -551,6 +552,11 @@ function listenForEvents(store) {
 							store.dispatch(
 								setPendingProtocolHandlerUrl({ url: e.url, query: definedQuery.query })
 							);
+							if (route.query["anonymousId"]) {
+								await HostApi.instance.send(TelemetrySetAnonymousIdRequestType, {
+									anonymousId: route.query["anonymousId"]
+								});
+							}
 							break;
 						}
 

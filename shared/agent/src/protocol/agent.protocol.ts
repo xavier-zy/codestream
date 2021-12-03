@@ -242,6 +242,17 @@ export interface TelemetryRequest {
 	properties?: { [key: string]: string | number | boolean };
 }
 
+export interface TelemetrySetAnonymousIdRequest {
+	anonymousId: string;
+}
+
+export const TelemetrySetAnonymousIdRequestType = new RequestType<
+	TelemetrySetAnonymousIdRequest,
+	void,
+	void,
+	void
+>("codestream/telemetry/setAnonymousId");
+
 export const TelemetryRequestType = new RequestType<TelemetryRequest, void, void, void>(
 	"codestream/telemetry"
 );

@@ -114,6 +114,22 @@ export class TelemetryService {
 		}
 	}
 
+	setAnonymousId(id: string) {
+		if (this._hasOptedOut || this._segmentInstance == null) {
+			return;
+		}
+		try {
+			Logger.debug(`Telemetry setAnonymousId ${id}`);
+			this._anonymousId = id;
+			this._segmentInstance.identify({
+				anonymousId: id
+			});
+			this._segmentInstance.flush();
+		} catch (ex) {
+			Logger.error(ex);
+		}
+	}
+
 	setConsent(hasConsented: boolean) {
 		this._hasOptedOut = !hasConsented;
 	}

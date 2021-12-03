@@ -265,6 +265,12 @@ export class NRManager {
 
 				if (!line.error && matchingRepoPath) {
 					this.resolveStackTraceLine(line, ref, matchingRepoPath).then(resolvedLine => {
+						if (resolvedLine.error) {
+							Logger.log(`Stack trace line failed to resolve: ${resolvedLine.error}`);
+						} else {
+							const loggableLine = `${resolvedLine.fileRelativePath}:${resolvedLine.line}:${resolvedLine.column}`;
+							Logger.log(`Stack trace line resolved: ${loggableLine}`);
+						}
 						session.agent.sendNotification(DidResolveStackTraceLineNotificationType, {
 							occurrenceId,
 							resolvedLine,

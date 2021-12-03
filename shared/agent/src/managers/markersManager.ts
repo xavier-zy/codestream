@@ -50,7 +50,12 @@ export class MarkersManager extends EntityManagerBase<CSMarker> {
 		const response = await this.session.api.fetchMarkers({ streamId: streamId });
 		if (response.codemarks) {
 			for (const codemark of response.codemarks) {
-				SessionContainer.instance().codemarks.cacheSet(codemark);
+				await SessionContainer.instance().codemarks.cacheSet(codemark);
+			}
+		}
+		if (response.posts) {
+			for (const post of response.posts) {
+				await SessionContainer.instance().posts.cacheSet(post);
 			}
 		}
 		return response.markers;

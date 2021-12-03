@@ -362,6 +362,7 @@ export interface CSGetMarkersResponse {
 	codemarks: CSCodemark[];
 	reviews: CSReview[];
 	codeErrors: CSCodeError[];
+	posts: CSPost[];
 }
 
 export interface CSGetPostResponse {

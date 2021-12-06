@@ -469,6 +469,7 @@ export class CodeStreamSession {
 	}
 
 	private logNodeEnvVariables() {
+		Logger.log(`Node.js version: ${process.version}`);
 		Logger.log("NODE_* environment variables:");
 		for (const prop in process.env) {
 			if (prop.startsWith("NODE_")) {

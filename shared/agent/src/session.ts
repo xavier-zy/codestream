@@ -913,6 +913,9 @@ export class CodeStreamSession {
 
 			// api.login() will throw a failed response object if it needs to send some extra data back
 			if (isLoginFailResponse(ex)) {
+				if (ex.extra.isRegistered) {
+					this.setSuperPropsAndCallTelemetry(ex.extra.user);
+				}
 				return ex;
 			}
 
@@ -1012,8 +1015,9 @@ export class CodeStreamSession {
 			}
 		}
 
-		// Initialize tracking
-		this.initializeTelemetry(response.user, currentTeam, response.companies);
+		// initialze tracking call with full user data (ie team/company info)
+		// this is the second time identify() is called in signup flow, first in signin flow
+		this.setSuperPropsAndCallTelemetry(response.user, currentTeam, response.companies);
 
 		const loginResponse = {
 			loginResponse: { ...response },
@@ -1091,6 +1095,9 @@ export class CodeStreamSession {
 	async confirmRegistration(request: ConfirmRegistrationRequest) {
 		try {
 			const response = await (this._api as CodeStreamApiProvider).confirmRegistration(request);
+
+			this.setSuperPropsAndCallTelemetry(response.user);
+
 			const result: ConfirmRegistrationResponse = {
 				user: {
 					id: response.user.id
@@ -1249,7 +1256,7 @@ export class CodeStreamSession {
 		}
 	}
 
-	private async initializeTelemetry(user: CSMe, team: CSTeam, companies: CSCompany[]) {
+	private async setSuperPropsAndCallTelemetry(user: CSMe, team?: CSTeam, companies?: CSCompany[]) {
 		// Set super props
 		this._telemetryData.hasCreatedPost = user.totalPosts > 0;
 
@@ -1267,7 +1274,7 @@ export class CodeStreamSession {
 			Country: user.countryCode
 		};
 
-		if (team != null) {
+		if (team != null && companies != null) {
 			const company = companies.find(c => c.id === team.companyId);
 			props["Company ID"] = team.companyId;
 			props["Team Created Date"] = new Date(team.createdAt!).toISOString();

@@ -479,7 +479,10 @@ export class CodeStreamApiProvider implements ApiProvider {
 					email: response.user.email,
 					userId: response.user.id,
 					eligibleJoinCompanies: response.eligibleJoinCompanies,
-					accountIsConnected: response.accountIsConnected
+					accountIsConnected: response.accountIsConnected,
+					// isRegistered and user object passed for early segment identify call
+					isRegistered: response.user.isRegistered,
+					user: response.user
 				}
 			} as LoginFailResponse;
 		}

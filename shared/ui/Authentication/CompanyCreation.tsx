@@ -126,7 +126,7 @@ export function CompanyCreation(props: {
 			setRequiresHelpText(true);
 			HostApi.instance.track("Organization Options Skipped", {
 				"Auth Provider": providerName,
-				"Webmail": props.isWebmail || false
+				Webmail: props.isWebmail || false
 			});
 			setStep(1);
 		} else {
@@ -196,8 +196,9 @@ export function CompanyCreation(props: {
 			});
 			dispatch(
 				completeSignup(props.email!, props.token!, result.team.id, {
-					createdTeam: true,
-					provider: props.provider
+					createdTeam: false,
+					provider: props.provider,
+					byDomain: true
 				})
 			);
 		} catch (ex) {

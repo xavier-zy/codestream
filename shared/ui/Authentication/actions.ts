@@ -268,7 +268,7 @@ export const completeSignup = (
 	email: string,
 	token: string,
 	teamId: string,
-	extra: { createdTeam: boolean; provider?: string }
+	extra: { createdTeam: boolean; provider?: string; byDomain?: boolean }
 ) => async (dispatch, getState: () => CodeStreamState) => {
 	const response = await HostApi.instance.send(TokenLoginRequestType, {
 		token: {
@@ -288,7 +288,7 @@ export const completeSignup = (
 		? ProviderNames[extra.provider.toLowerCase()] || extra.provider
 		: "CodeStream";
 	HostApi.instance.track("Signup Completed", {
-		"Signup Type": extra.createdTeam ? "Organic" : "Viral",
+		"Signup Type": extra.byDomain ? "Domain" : extra.createdTeam ? "Organic" : "Viral",
 		"Auth Provider": providerName
 	});
 	dispatch(onLogin(response, true));

@@ -861,15 +861,8 @@ export class DocumentMarkerManager {
 		}
 
 		const repo = await git.getRepositoryById(repoId);
-		let repoPath;
-		if (repo === undefined) {
-			const mappedRepoPath = await repositoryMappings.getByRepoId(repoId);
-			if (!mappedRepoPath) return undefined;
-
-			repoPath = mappedRepoPath;
-		} else {
-			repoPath = repo.path;
-		}
+		const repoPath = repo?.path;
+		if (!repoPath) return undefined;
 
 		const filePath = path.join(repoPath, file);
 		const documentUri = URI.file(filePath).toString();

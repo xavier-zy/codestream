@@ -1483,7 +1483,9 @@ export class CodeStreamSession {
 		const paths = Strings.asPartialPaths(path).reverse();
 		let files: string[] = [];
 		try {
+			Logger.log(`onFileSearch: Searching for ${path}`);
 			for (const path of paths) {
+				Logger.log(`onFileSearch: Requesting IDE file search for ${path} in ${basePath}`);
 				const fileSearchResponse = (
 					await this.agent.sendRequest(AgentFileSearchRequestType, { basePath, path })
 				).files;
@@ -1493,8 +1495,10 @@ export class CodeStreamSession {
 				}
 				files = files.concat(fileSearchResponse);
 			}
+			Logger.log(`onFileSearch: IDE found ${files.length} possible matches for ${path}`);
 			if (!files.length) {
 				for (const path of paths) {
+					Logger.log(`onFileSearch: Searching filesystem for ${path} in ${basePath}`);
 					const globSearchResults = await glob(basePath + "/**/" + path);
 					if (!globSearchResults.length) {
 						// once there are no more results, just stop
@@ -1502,6 +1506,7 @@ export class CodeStreamSession {
 					}
 					files = files.concat(globSearchResults);
 				}
+				Logger.log(`onFileSearch: filesystem found ${files.length} possible matches for ${path}`);
 			}
 			// put the most specific files found first (aka greatest number of separators)
 			files = uniq(files).reverse();

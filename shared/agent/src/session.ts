@@ -1479,6 +1479,9 @@ export class CodeStreamSession {
 	async onFileSearch(basePath: string, path: string) {
 		if (!path) return { files: [] };
 
+		// Normalize path of errors originated from Windows
+		path = path.replace(/\\/g, "/");
+
 		// reverse to start with the shortest path (aka least specific)
 		const paths = Strings.asPartialPaths(path).reverse();
 		let files: string[] = [];

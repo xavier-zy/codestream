@@ -279,7 +279,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		});
 
 		// update telemetry super-properties
-		this.session.updateNewRelicSuperProps(userId, uniqueOrgIds[0]);
+		this.session.addNewRelicSuperProps(userId, uniqueOrgIds[0]);
 	}
 
 	private async validateApiKey(
@@ -2030,7 +2030,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			}
 
 			const entityGuid = errorGroupResponse.entityGuid;
-			const eventsQuery =  `${errorGroupResponse.eventsQuery} LIMIT 1`;
+			const eventsQuery = `${errorGroupResponse.eventsQuery} LIMIT 1`;
 			const errorTraceResponse = await this.query<{
 				actor: {
 					account: {

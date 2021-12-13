@@ -1339,15 +1339,15 @@ export class CodeStreamSession {
 	}
 
 	@log()
-	async updateSuperProps(props: { [key: string]: any }) {
+	async addSuperProps(props: { [key: string]: any }) {
 		const { telemetry } = Container.instance();
 		await telemetry.ready();
 		telemetry.identify(this._codestreamUserId!, props);
-		telemetry.setSuperProps(props);
+		telemetry.addSuperProps(props);
 	}
 
-	async updateNewRelicSuperProps(userId: number, orgId: number) {
-		return this.updateSuperProps({
+	async addNewRelicSuperProps(userId: number, orgId: number) {
+		return this.addSuperProps({
 			"NR User ID": userId,
 			"NR Organization ID": orgId,
 			"NR Connected Org": true

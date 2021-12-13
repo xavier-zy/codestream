@@ -1,5 +1,19 @@
 # Change Log
 
+## [12.4.0] - 2021-12-13
+
+### Changed
+
+- CodeStream now remembers the last organization you had selected when you sign in
+
+### Fixed
+
+- Fixes a race condition that could make error stack traces not clickable
+- Fixes an issue parsing stack traces with Windows paths
+- Fixes an issue that caused an exception `Assert: must be called on EDT` when opening an error
+- Addresses [#778](https://github.com/TeamCodeStream/CodeStream/issues/778) &mdash; VSCODE PR fails if forked-repo branch has same name as the (base) repo branch
+- Fixes an issue with the first codemark in a feedback request in a new session taking a long time to submit
+
 ## [12.3.1] - 2021-11-23
 
 ### Fixed

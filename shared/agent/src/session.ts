@@ -1261,6 +1261,7 @@ export class CodeStreamSession {
 		this._telemetryData.hasCreatedPost = user.totalPosts > 0;
 
 		const props: { [key: string]: any } = {
+			"User ID": user.id,
 			$email: user.email,
 			name: user.fullName,
 			"Team ID": this._teamId,

@@ -1261,7 +1261,6 @@ export class CodeStreamSession {
 		this._telemetryData.hasCreatedPost = user.totalPosts > 0;
 
 		const props: { [key: string]: any } = {
-			"User ID": user.id,
 			$email: user.email,
 			name: user.fullName,
 			"Team ID": this._teamId,
@@ -1330,9 +1329,11 @@ export class CodeStreamSession {
 			}
 		}
 
+		let userId = this._codestreamUserId || user.id;
+
 		const { telemetry } = Container.instance();
 		await telemetry.ready();
-		telemetry.identify(this._codestreamUserId!, props);
+		telemetry.identify(userId, props);
 		telemetry.setSuperProps(props);
 		if (user.firstSessionStartedAt !== undefined) {
 			telemetry.setFirstSessionProps(user.firstSessionStartedAt, FIRST_SESSION_TIMEOUT);

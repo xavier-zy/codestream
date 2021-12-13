@@ -618,18 +618,31 @@ export function CodeErrorNav(props: Props) {
 						const split = _.message.split("\n");
 
 						return split.map((item, index) => {
-							return (
-								<div key={"warningOrError_" + index}>
-									{item}
-									{_.helpUrl && split.length - 1 === index && (
-										<>
-											{" "}
-											<Link href={_.helpUrl!}>Learn more</Link>
-										</>
-									)}
-									<br />
-								</div>
-							);
+							const templateRe = /(.*)\[(.+)\](.*)/g;
+							const match = templateRe.exec(item);
+							if (match != null) {
+								const [, pre, linkText, post] = match;
+								return (
+									<div key={"warningOrError_" + index}>
+										{pre}
+										<Link href={_.helpUrl!}>{linkText}</Link>
+										{post}
+									</div>
+								);
+							} else {
+								return (
+									<div key={"warningOrError_" + index}>
+										{item}
+										{_.helpUrl && split.length - 1 === index && (
+											<>
+												{" "}
+												<Link href={_.helpUrl!}>Learn more</Link>
+											</>
+										)}
+										<br />
+									</div>
+								);
+							}
 						});
 					})}
 				</div>

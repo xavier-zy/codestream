@@ -80,6 +80,8 @@ const StackTraceParsers: { [key: string]: Parser } = {
 const MISSING_REF_MESSAGE =
 	"Your version of the code may not match the environment that triggered the error. Fetch the following reference to better investigate the error.\n${ref}";
 const MISSING_REF_HELP_URL =
+	"https://docs.newrelic.com/docs/codestream/how-use-codestream/performance-monitoring/#shared-dreambox";
+const CONFIGURE_ERROR_REF_HELP_URL =
 	"http://docs.newrelic.com/docs/codestream/start-here/codestream-new-relic/#apm";
 
 @lsp
@@ -187,8 +189,8 @@ export class NRManager {
 
 		if (!ref) {
 			setWarning({
-				message: `No git reference associated with this error. Your version of the code may not match the environment that triggered the error.`,
-				helpUrl: MISSING_REF_HELP_URL
+				message: `[Associate a build sha or release tag with your errors] so that CodeStream can help make sure you’re looking at the right version of the code.`,
+				helpUrl: CONFIGURE_ERROR_REF_HELP_URL
 			});
 		} else if (matchingRepoPath) {
 			try {

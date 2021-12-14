@@ -1362,7 +1362,8 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 							type: "assignRepository",
 							data: {
 								id: request.errorGroupGuid,
-								entityGuid:
+								entityGuid: entityId,
+								repositoryEntityGuid:
 									response.referenceEntityCreateOrUpdateRepository &&
 									response.referenceEntityCreateOrUpdateRepository.created
 										? response.referenceEntityCreateOrUpdateRepository.created[0]

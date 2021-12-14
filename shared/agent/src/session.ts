@@ -1444,6 +1444,10 @@ export class CodeStreamSession {
 		);
 	}
 
+	announceHistoryFetches() {
+		return this._activeServerAlerts.includes("announceHistoryFetches");
+	}
+
 	listenForEchoes() {
 		this._echoTimer = setTimeout(this.echoTimeout.bind(this), 10000);
 	}

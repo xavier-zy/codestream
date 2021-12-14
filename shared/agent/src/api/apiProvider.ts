@@ -201,6 +201,7 @@ import {
 	TriggerMsTeamsProactiveMessageRequest,
 	TriggerMsTeamsProactiveMessageResponse
 } from "../protocol/api.protocol";
+import { HistoryFetchInfo } from "broadcaster/broadcaster";
 
 export type ApiProviderLoginResponse = CSLoginResponse & { token: AccessToken };
 
@@ -532,6 +533,8 @@ export interface ApiProvider {
 
 	verifyConnectivity(): Promise<VerifyConnectivityResponse>;
 	setServerUrl(url: string): void;
+
+	announceHistoryFetch(info: HistoryFetchInfo): void;
 
 	get<R extends object>(url: string, token?: string): Promise<R>;
 	post<RQ extends object, R extends object>(url: string, body: any, token?: string): Promise<R>;

@@ -306,6 +306,7 @@ import {
 } from "../apiProvider";
 import { CodeStreamPreferences } from "../preferences";
 import { BroadcasterEvents } from "./events";
+import { HistoryFetchInfo } from "../../broadcaster/broadcaster";
 import { CodeStreamUnreads } from "./unreads";
 
 @lsp
@@ -2476,6 +2477,13 @@ export class CodeStreamApiProvider implements ApiProvider {
 			request,
 			this._token
 		);
+	}
+
+	announceHistoryFetch(info: HistoryFetchInfo): void {
+		const session = SessionContainer.instance().session;
+		if (session.announceHistoryFetches()) {
+			this.get<{}>("/history-fetch?" + qs.stringify(info));
+		}
 	}
 
 	async delete<R extends object>(url: string, token?: string): Promise<R> {

@@ -11,6 +11,7 @@ import {
 	api,
 	fetchCodeError,
 	fetchErrorGroup,
+	openErrorGroup,
 	PENDING_CODE_ERROR_ID_PREFIX,
 	resolveStackTrace,
 	setErrorGroup
@@ -223,6 +224,7 @@ export function CodeErrorNav(props: Props) {
 	const ref = derivedState.currentCodeErrorData?.commit || derivedState.currentCodeErrorData?.tag;
 	const multipleRepos = derivedState.currentCodeErrorData?.multipleRepos;
 	const sidebarLocation = derivedState.sidebarLocation;
+	const claimWhenConnected = derivedState.currentCodeErrorData?.claimWhenConnected;
 
 	const previousIsConnectedToNewRelic = usePrevious(derivedState.isConnectedToNewRelic);
 
@@ -336,7 +338,12 @@ export function CodeErrorNav(props: Props) {
 		let refToUse: string | undefined;
 		let entityIdToUse: string | undefined;
 
-		if (pendingErrorGroupGuid) {
+		if (claimWhenConnected) {
+			// we get here if the code error is not yet claimed by the current team,
+			// in which case we need to circle back and "reopen" it again
+			dispatch(closeAllPanels());
+			return dispatch(openErrorGroup(pendingErrorGroupGuid!, occurrenceId));
+		} else if (pendingErrorGroupGuid) {
 			errorGroupGuidToUse = pendingErrorGroupGuid;
 			occurrenceIdToUse = occurrenceId;
 			refToUse = ref;

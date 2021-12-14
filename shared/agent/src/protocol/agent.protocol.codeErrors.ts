@@ -89,6 +89,8 @@ export interface ClaimCodeErrorRequest {
 export interface ClaimCodeErrorResponse {
 	notFound?: boolean;
 	unauthorized?: boolean;
+	needNRToken?: boolean;
+	unauthorizedAccount?: boolean;
 	codeError?: CSCodeError;
 	post?: CSPost;
 	stream?: CSObjectStream;

@@ -1,6 +1,6 @@
 # Change Log
 
-## [12.4.0] - 2021-12-13
+## [12.4.0] - 2021-12-14
 
 ### Changed
 
@@ -13,6 +13,7 @@
 - Fixes an issue that caused an exception `Assert: must be called on EDT` when opening an error
 - Addresses [#778](https://github.com/TeamCodeStream/CodeStream/issues/778) &mdash; VSCODE PR fails if forked-repo branch has same name as the (base) repo branch
 - Fixes an issue with the first codemark in a feedback request in a new session taking a long time to submit
+- Fixes an issue that resulted in an error associating a repo with a NR1 entity
 
 ## [12.3.1] - 2021-11-23
 

@@ -8,6 +8,7 @@ import { useDispatch } from "react-redux";
 import Icon from "../Stream/Icon";
 import { useDidMount } from "../utilities/hooks";
 import styled from "styled-components";
+import { Loading } from "../Container/Loading";
 import { HostApi } from "..";
 import { completeSignup, ProviderNames } from "./actions";
 import {
@@ -30,6 +31,11 @@ const JoinHeader = styled.h3`
 const CreateOrgWrapper = styled.div`
 	margin: 10px 0 5px 0;
 `;
+
+const InlineLoadingWrapper = styled.div`
+	margin: 20px 0 0 0;
+`;
+
 const isTeamNameValid = (name: string) => name.length > 0;
 
 interface EnhancedCSCompany {
@@ -69,7 +75,9 @@ export function CompanyCreation(props: {
 
 	const [organizations, setOrganizations] = React.useState<EnhancedCSCompany[]>([]);
 	const [isLoading, setIsLoading] = React.useState(false);
-	const [isLoadingJoinTeam, setIsLoadingJoinTeam] = React.useState(false);
+	const [isCreatingOrg, setIsCreatingOrg] = React.useState(false);
+	const [initialLoad, setInitialLoad] = React.useState(true);
+	const [isLoadingJoinTeam, setIsLoadingJoinTeam] = React.useState<string | undefined>(undefined);
 	const initialCompanyName =
 		props.email && !props.isWebmail && !_isUndefined(props.isWebmail)
 			? props.email.split("@")[1].split(".")[0]
@@ -112,6 +120,7 @@ export function CompanyCreation(props: {
 			setOrganizations(companiesToJoin);
 
 			setIsLoading(false);
+			setInitialLoad(false);
 		}
 
 		if (!companiesToJoin || !companiesToJoin.length) {
@@ -140,7 +149,7 @@ export function CompanyCreation(props: {
 			organizationSettings.companyName !== "" &&
 			teamNameValidity
 		) {
-			setIsLoading(true);
+			setIsCreatingOrg(true);
 			try {
 				const { team } = await HostApi.instance.send(CreateCompanyRequestType, {
 					name: organizationSettings.companyName!
@@ -164,7 +173,7 @@ export function CompanyCreation(props: {
 	};
 
 	const onClickJoinOrganization = async (organization: EnhancedCSCompany) => {
-		setIsLoadingJoinTeam(true);
+		setIsLoadingJoinTeam(organization.id);
 
 		try {
 			const result = (await HostApi.instance.send(JoinCompanyRequestType, {
@@ -188,79 +197,101 @@ export function CompanyCreation(props: {
 		}
 	};
 
+	const orgCallIsLoading = () => {
+		return isLoading || isCreatingOrg;
+	};
+
 	return (
 		<div id="organization-page" className="onboarding-page">
 			<div className="standard-form">
 				<fieldset className="form-body">
 					<div id="controls">
 						<div className="border-bottom-box">
-							<JoinHeader>
-								<FormattedMessage
-									id="signUp.joinOrganization"
-									defaultMessage="Join your teammates on CodeStream"
-								/>
-							</JoinHeader>
-							<div>
-								<FormattedMessage
-									id="signUp.joinOrganizationHelp"
-									defaultMessage="These organizations are available based on your email domain."
-								/>
-							</div>
-							{isLoading && (
+							{initialLoad && (
 								<div>
-									<Icon name="sync" loading={true} /> Loading organizations...
+									<Icon name="sync" loading={true} /> Looking for possible organizations to join...
 								</div>
 							)}
-							<div>
-								{!isLoading && (
-									<>
-										{organizations.map(_ => {
-											return (
-												<div className="key-value-actions pt-3">
-													<div className="key-value-key">
-														{_.name} <br />
-														{_.memberCount} member{_.memberCount == 1 ? "" : "s"}
-													</div>
-													<div className="key-value-value">
-														<Button
-															onClick={e => onClickJoinOrganization(_)}
-															className="control-button"
-															loading={isLoadingJoinTeam}
-														>
-															<div className="copy">
-																<b>Join</b>
+							{!initialLoad && (
+								<>
+									<JoinHeader>
+										<FormattedMessage
+											id="signUp.joinOrganization"
+											defaultMessage="Join your teammates on CodeStream"
+										/>
+									</JoinHeader>
+									<div>
+										<FormattedMessage
+											id="signUp.joinOrganizationHelp"
+											defaultMessage="These organizations are available based on your email domain."
+										/>
+									</div>
+									{isLoading && (
+										<InlineLoadingWrapper>
+											<Icon name="sync" loading={true} /> Loading organizations...
+										</InlineLoadingWrapper>
+									)}
+									{isCreatingOrg && (
+										<InlineLoadingWrapper>
+											<Icon name="sync" loading={true} /> Creating organization...
+										</InlineLoadingWrapper>
+									)}
+									<div>
+										{!orgCallIsLoading() && (
+											<>
+												{organizations.map(_ => {
+													return (
+														<div className="key-value-actions pt-3">
+															<div className="key-value-key">
+																{_.name} <br />
+																{_.memberCount} member{_.memberCount == 1 ? "" : "s"}
 															</div>
-														</Button>
+															<div className="key-value-value">
+																<Button
+																	onClick={e => onClickJoinOrganization(_)}
+																	className="control-button"
+																	loading={isLoadingJoinTeam === _.id}
+																>
+																	<div className="copy">
+																		<b>Join</b>
+																	</div>
+																</Button>
+															</div>
+														</div>
+													);
+												})}
+												{!organizations.length && props.accountIsConnected && (
+													<div>
+														Some people from your account on New Relic are already in an
+														organization on CodeStream. Ask them to invite you.
 													</div>
-												</div>
-											);
-										})}
-										{!organizations.length && props.accountIsConnected && (
-											<div>
-												Some people from your account on New Relic are already in an organization on
-												CodeStream. Ask them to invite you.
-											</div>
-										)}
-										{!organizations.length && !props.accountIsConnected && (
-											<div>
-												We didn't find any organizations for you to join based on email domain.
-												<br />
-												{props.isWebmail ? (
-													<Link onClick={onClickTryAnother}>Try using your work email address</Link>
-												) : (
-													<Link onClick={onClickTryAnother}>
-														Try using a different email address
-													</Link>
 												)}
-											</div>
+												{!organizations.length && !props.accountIsConnected && (
+													<div>
+														We didn't find any organizations for you to join based on email domain.
+														<br />
+														{props.isWebmail ? (
+															<Link onClick={onClickTryAnother}>
+																Try using your work email address
+															</Link>
+														) : (
+															<Link onClick={onClickTryAnother}>
+																Try using a different email address
+															</Link>
+														)}
+													</div>
+												)}
+											</>
 										)}
-									</>
-								)}
-							</div>
-							<CreateOrgWrapper>
-								Or, you{" "}
-								<Link onClick={onClickCreateOrganization}>can create your own organization.</Link>
-							</CreateOrgWrapper>
+									</div>
+								</>
+							)}
+							{!initialLoad && (
+								<CreateOrgWrapper>
+									Or, you{" "}
+									<Link onClick={onClickCreateOrganization}>can create your own organization.</Link>
+								</CreateOrgWrapper>
+							)}
 						</div>
 					</div>
 				</fieldset>

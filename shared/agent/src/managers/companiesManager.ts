@@ -22,6 +22,7 @@ export class CompaniesManager extends CachedEntityManagerBase<CSCompany> {
 		return { companies };
 	}
 
+
 	protected async loadCache() {
 		const response = await this.session.api.fetchCompanies({ mine: true });
 		const { companies, ...rest } = response;

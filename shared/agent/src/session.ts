@@ -323,7 +323,7 @@ export class CodeStreamSession {
 			this._httpAgent = new HttpAgent();
 		}
 
-		Logger.log(`API Server URL: ${_options.serverUrl}`);
+		Logger.log(`API Server URL: >${_options.serverUrl}<`);
 		Logger.log(`Reject unauthorized: ${this.rejectUnauthorized}`);
 		this._api = new CodeStreamApiProvider(
 			_options.serverUrl?.trim(),

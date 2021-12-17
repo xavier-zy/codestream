@@ -433,10 +433,8 @@ export function CodeErrorNav(props: Props) {
 				if (!targetRemote) {
 					if (derivedState.isConnectedToNewRelic) {
 						setRepoAssociationError({
-							title: "Missing Repository Info",
-							description: `In order to view this stack trace, please select a repository to associate with ${
-								errorGroup ? errorGroup.entityName + " " : ""
-							}on New Relic. If the repo that was used to build this service doesn't appear in the dropdown, open it in your IDE.`
+							title: "Which Repository?",
+							description: `Select the repository that this error is associated with so that we can take you to the code. If the repository doesn't appear in the list, open it in your IDE.`
 						});
 						return;
 					}

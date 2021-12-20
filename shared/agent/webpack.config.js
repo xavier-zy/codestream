@@ -102,8 +102,7 @@ module.exports = function(env, argv) {
 			// "utf-8-validate": "utf-8-validate"
 
 			// https://github.com/yan-foto/electron-reload/issues/71
-			fsevents: "require('fsevents')",
-			vm2: "require('vm2')"
+			fsevents: "require('fsevents')"
 		},
 		module: {
 			rules: [

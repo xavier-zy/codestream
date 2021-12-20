@@ -365,10 +365,23 @@ export class ScmManager {
 
 		try {
 			if (!documentUri) {
-				if (!repoId) throw new Error(`A uri or repoId is required`);
+				if (!repoId) {
+					const missingRepoAndDocument = `A uri or repoId is required`;
+					Logger.error(new Error(missingRepoAndDocument), cc, missingRepoAndDocument, {
+						branch
+					});
+					return { error: missingRepoAndDocument };
+				}
 
 				const repo = await git.getRepositoryById(repoId);
-				if (repo == null) throw new Error(`No repository could be found for repoId=${repoId}`);
+				if (repo == null) {
+					const missingRepo = `No repository could be found for repoId=${repoId}`;
+					Logger.error(new Error(missingRepo), cc, missingRepo, {
+						repoId,
+						branch
+					});
+					return { error: missingRepo };
+				}
 
 				repoPath = repo.path;
 			} else {
@@ -376,12 +389,20 @@ export class ScmManager {
 				repoPath = (await git.getRepoRoot(uri.fsPath)) || "";
 			}
 
-			if (repoPath !== undefined) {
+			if (repoPath) {
 				await git.switchBranch(repoPath, branch);
 				this.session.agent.sendNotification(DidChangeBranchNotificationType, {
 					repoPath,
 					branch
 				});
+			} else {
+				const errorMessage = "missing repoPath";
+				Logger.error(new Error(errorMessage), cc, errorMessage, {
+					documentUri,
+					branch,
+					repoId
+				});
+				return { error: errorMessage };
 			}
 		} catch (ex) {
 			gitError = ex.toString();

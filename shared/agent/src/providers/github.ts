@@ -762,6 +762,11 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 				}
 			} as any;
 		}
+
+		Logger.log("getPullRequest returning", {
+			id: request.pullRequestId,
+			repository: response.repository.pullRequest.repository
+		});
 		return response;
 	}
 

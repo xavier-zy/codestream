@@ -9,6 +9,7 @@
 
 ### Fixed
 
+- Fixes an issue preventing you from recreating the "recent" query in the Pull Requests section
 - Fixes an issue with a `resolveStackTrace failed` error when opening error in IDE
 
 ## [12.4.0] - 2021-12-14

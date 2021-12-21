@@ -1,5 +1,16 @@
 # Change Log
 
+## [12.5.0] - 2021-12-21
+
+### Changed
+
+- Simplified signup flow
+- Generalize caching of related objects returned with each fetch
+
+### Fixed
+
+- Fixes an issue with a `resolveStackTrace failed` error when opening error in IDE
+
 ## [12.4.0] - 2021-12-14
 
 ### Changed

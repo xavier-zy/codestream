@@ -91,6 +91,7 @@ export interface ClaimCodeErrorResponse {
 	unauthorized?: boolean;
 	needNRToken?: boolean;
 	unauthorizedAccount?: boolean;
+	unauthorizedErrorGroup?: boolean;
 	codeError?: CSCodeError;
 	post?: CSPost;
 	stream?: CSObjectStream;

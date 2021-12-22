@@ -423,11 +423,14 @@ export const openErrorGroup = (
 		objectId: errorGroupGuid,
 		objectType: "errorGroup"
 	});
+	console.warn("COLIN: CLAIM RESPONSE:", response);
 
 	if (response.unauthorized) {
 		let message;
 		if (response.unauthorizedAccount) {
-			message = "You do not have access to this New Relic account";
+			message = "You do not have access to this New Relic account.";
+		} else if (response.unauthorizedErrorGroup) {
+			message = "You do not have access to this error group.";
 		} else {
 			const orgDesc = response.ownedBy
 				? `the ${response.ownedBy} organization`

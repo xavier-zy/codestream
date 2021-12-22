@@ -691,7 +691,7 @@ export class DocumentMarkerManager {
 							const line = await findBestMatchingLine(
 								contents,
 								marker.code,
-								marker.locationWhenCreated[0]
+								marker.locationWhenCreated ? marker.locationWhenCreated[0] : 0
 							);
 							if (line > 0) {
 								locations[marker.id] = {

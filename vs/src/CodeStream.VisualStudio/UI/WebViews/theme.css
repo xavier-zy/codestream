@@ -29,7 +29,7 @@
 
 	--line-numbers-foreground-color: --cs--line-numbers-foreground-color--;
 
-	--button-foreground-color: --cs--text-color--;
+	--button-foreground-color: --cs--button-foreground-color--;
 	--button-background-color: --cs--button-background-color--;
 	--button-background-color-hover: --cs--button-background-color-hover--;
 

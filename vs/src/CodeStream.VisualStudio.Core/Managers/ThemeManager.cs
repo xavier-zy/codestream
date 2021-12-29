@@ -103,6 +103,7 @@ namespace CodeStream.VisualStudio.Core.Managers {
 
 					new ThemeColorMetadata { Key = "text-focus-border-color", Color = GetThemedColor(shell, EnvironmentColors.StartPageTextControlLinkSelectedColorKey), DarkModifier = c => c.Darken(0.1f).Opacity(60), LightModifier = c => c.Opacity(60) },
 
+					new ThemeColorMetadata { Key = "button-foreground-color", Color = backgroundIsDark ? textColor : GetThemedColor(shell, EnvironmentColors.ToolWindowButtonDownColorKey), LightModifier = c => c.Darken(0.1f) },
 					new ThemeColorMetadata { Key = "button-background-color", Color = GetThemedColor(shell, backgroundIsDark ? EnvironmentColors.ToolWindowButtonDownColorKey : EnvironmentColors.ToolWindowBorderColorKey), LightModifier = c => c.Darken(0.3f) },
 					new ThemeColorMetadata { Key = "button-background-color-hover", Color = GetThemedColor(shell, backgroundIsDark ? EnvironmentColors.ToolWindowButtonDownColorKey : EnvironmentColors.ToolWindowBorderColorKey), DarkModifier = c => c.Lighten(0.1f), LightModifier = c => c.Darken(0.2f) },
 

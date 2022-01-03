@@ -4,6 +4,7 @@ import { Link } from "../Stream/Link";
 import { FormattedMessage } from "react-intl";
 import { goToLogin } from "../store/context/actions";
 import { updateConfigs } from "../store/configs/actions";
+import { logError } from "../logger";
 import { useDispatch } from "react-redux";
 import Icon from "../Stream/Icon";
 import { useDidMount } from "../utilities/hooks";
@@ -167,7 +168,10 @@ export function CompanyCreation(props: {
 					})
 				);
 			} catch (error) {
-				// TODO: communicate error
+				const errorMessage = typeof error === "string" ? error : error.message;
+				logError(`Unexpected error during company creation: ${errorMessage}`, {
+					companyName: organizationSettings.companyName
+				});
 				dispatch(goToLogin());
 			}
 		}
@@ -192,8 +196,12 @@ export function CompanyCreation(props: {
 					byDomain: true
 				})
 			);
-		} catch (ex) {
-			console.error(ex);
+		} catch (error) {
+			const errorMessage = typeof error === "string" ? error : error.message;
+			logError(`Unexpected error during company join: ${errorMessage}`, {
+				companyId: organization.id
+			});
+			setIsLoadingJoinTeam(undefined);
 			dispatch(goToLogin());
 		}
 	};

@@ -1,5 +1,17 @@
 # Change Log
 
+## [12.6.0] - 2022-1-4
+
+### Changed
+
+- Improved UI for unassigned errors
+
+### Fixed
+
+- Addresses [#734](https://github.com/TeamCodeStream/CodeStream/issues/734) &mdash; Merge Request view is not showing if there is merge conflict
+- Fixes an issue with creating a PR across forks when there are a large number of forks for the repo
+- Fixes an issue with creating a codemark in an uncommitted file
+
 ## [12.5.0] - 2021-12-21
 
 ### Changed

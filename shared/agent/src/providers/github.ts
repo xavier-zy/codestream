@@ -1007,12 +1007,6 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 						refs(first: 100, refPrefix: "refs/heads/") {
 						   nodes {
 							 name
-							 target {
-							   ... on Commit {
-								 oid
-								 committedDate
-							   }
-							 }
 						   }
 						}
 					    forks(first: 50, orderBy: {field: CREATED_AT, direction: DESC}) {
@@ -1034,12 +1028,6 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 								refs(first: 100, refPrefix: "refs/heads/") {
 									nodes {
 									  name
-									  target {
-										... on Commit {
-										  oid
-										  committedDate
-										}
-									  }
 									}
 								}
 							}

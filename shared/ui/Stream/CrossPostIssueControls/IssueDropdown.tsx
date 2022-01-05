@@ -419,7 +419,7 @@ export const IssueList = React.memo((props: React.PropsWithChildren<IssueListPro
 			currentUser.status && currentUser.status[teamId] && "label" in currentUser.status[teamId]
 				? currentUser.status[teamId]
 				: EMPTY_STATUS;
-		const selectedCardId = status.ticketId || '';
+		const selectedCardId = status.ticketId || "";
 		const invisible =
 			(currentUser.status && currentUser.status[teamId] && currentUser.status[teamId].invisible) ||
 			false;
@@ -552,13 +552,44 @@ export const IssueList = React.memo((props: React.PropsWithChildren<IssueListPro
 			setLoadedBoards(loadedBoards + 1);
 		};
 
+		const fetchCards = async () => {
+			setIsLoading(true);
+
+			await Promise.all(
+				props.providers.map(async provider => {
+					const filterCustom = getFilterCustom(provider.id);
+					try {
+						const response = await HostApi.instance.send(FetchThirdPartyCardsRequestType, {
+							customFilter: filterCustom.selected,
+							providerId: provider.id
+						});
+						updateDataState(provider.id, {
+							cards: response.cards
+						});
+					} catch (error) {
+						console.warn("Error Loading Cards: ", error);
+					} finally {
+					}
+				})
+			);
+
+			setIsLoading(false);
+			setLoadedCards(loadedCards + 1);
+		};
+
+		// kick both these off in parallel, in an attempt to fix https://newrelic.atlassian.net/browse/CDSTRM-1329
+		// note the commented out hook below, which is explicitly dependent on loading projects first
+		// I am making this change under the assumption that the dependency isn't necessary
 		fetchBoards();
+		fetchCards();
 
 		return () => {
 			isValid = false;
 		};
 	}, [derivedState.providerIds, reload]);
 
+	// see note above fetchBoards() and fetchCards(), above
+	/*
 	React.useEffect(() => {
 		void (async () => {
 			if (!loadedBoards) return;
@@ -587,6 +618,7 @@ export const IssueList = React.memo((props: React.PropsWithChildren<IssueListPro
 			setLoadedCards(loadedCards + 1);
 		})();
 	}, [loadedBoards]);
+	*/
 
 	const selectCard = React.useCallback(
 		async (card?) => {
@@ -846,7 +878,12 @@ export const IssueList = React.memo((props: React.PropsWithChildren<IssueListPro
 		items.sort((a, b) => b.modifiedAt - a.modifiedAt);
 
 		return { cards: items, canFilter, cardLabel, selectedLabel };
-	}, [loadedCards, derivedState.startWorkPreferences, derivedState.csIssues, derivedState.selectedCardId]);
+	}, [
+		loadedCards,
+		derivedState.startWorkPreferences,
+		derivedState.csIssues,
+		derivedState.selectedCardId
+	]);
 
 	const menuItems = React.useMemo(() => {
 		// if (props.provider.canFilterByAssignees) {
@@ -1301,9 +1338,9 @@ export const IssueList = React.memo((props: React.PropsWithChildren<IssueListPro
 										onClick={e => {
 											e.stopPropagation();
 											e.preventDefault();
-											clearAndSave()
+											clearAndSave();
 										}}
-								/>
+									/>
 								)}
 								{card.url && (
 									<Icon

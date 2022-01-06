@@ -462,7 +462,6 @@ export class CodeStreamSession {
 					users.get(),
 					users.getPreferences()
 				]);
-				console.log("eric bootstrap 461");
 
 				const [
 					companiesResponse,
@@ -473,7 +472,6 @@ export class CodeStreamSession {
 					usersResponse,
 					preferencesResponse
 				] = await promise;
-				console.log("eric bootstrap 472");
 
 				return {
 					companies: companiesResponse.companies,
@@ -502,7 +500,6 @@ export class CodeStreamSession {
 	}
 
 	setServerUrl(options: SetServerUrlRequest) {
-		console.log("eric setServerURl 503");
 		this._options.serverUrl = options.serverUrl;
 		this._options.disableStrictSSL = options.disableStrictSSL;
 		this._api?.setServerUrl(this._options.serverUrl);
@@ -977,7 +974,7 @@ export class CodeStreamSession {
 			? omit(currentTeam.providerHosts, Object.keys(PROVIDERS_TO_REGISTER_BEFORE_SIGNIN))
 			: {};
 
-		// eric note exclude nr provider here, call it earlier near initialze()
+		//@TODO: exclude nr provider here, call it earlier near initialze()
 		registerProviders(this._providers, this);
 
 		const cc = Logger.getCorrelationContext();
@@ -1128,24 +1125,9 @@ export class CodeStreamSession {
 			console.warn("request Nr call api", request);
 			const response = await (this._api as CodeStreamApiProvider).registerNr(request);
 			console.warn("register Nr call api", response);
-			// return { status: LoginResult.Success };
 			return response;
 		} catch (error) {
 			console.warn("register Nr error", error);
-			// if (error instanceof ServerError) {
-			// 	if (error.statusCode !== undefined && error.statusCode >= 400 && error.statusCode < 500) {
-			// 		return { status: loginApiErrorMappings[error.info.code] || LoginResult.Unknown };
-			// 	}
-			// }
-			// Container.instance().errorReporter.reportMessage({
-			// 	type: ReportingMessageType.Error,
-			// 	message: "Unexpected error during registration",
-			// 	source: "agent",
-			// 	extra: {
-			// 		...error
-			// 	}
-			// });
-			// throw AgentError.wrap(error, `Registration failed:\n${error.message}`);
 			return error;
 		}
 	}

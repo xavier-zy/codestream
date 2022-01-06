@@ -642,9 +642,6 @@ export class CodeStreamApiProvider implements ApiProvider {
 			"/no-auth/nr-register",
 			request
 		);
-		// if ((response as CSLoginResponse).accessToken) {
-		// 	this._token = (response as CSLoginResponse).accessToken;
-		// }
 		console.warn("registerNr response", response);
 		return response;
 	}

@@ -1,10 +1,4 @@
-import {
-	GetNewRelicSignupJwtTokenRequestType,
-	GetReposScmRequestType,
-	RepoProjectType,
-	ConfigureThirdPartyProviderRequestType
-} from "@codestream/protocols/agent";
-import { setWantNewRelicOptions } from "../store/context/actions";
+import { RegisterNrUserRequestType } from "@codestream/protocols/agent";
 import React, { Component } from "react";
 import { HostApi } from "../webview-api";
 import Button from "./Button";
@@ -52,28 +46,21 @@ export const SignupNewRelic = () => {
 		}
 	});
 
-	const buildApiUrl = () => {
-		return derivedState.isProductionCloud
-			? "https://api.newrelic.com"
-			: "https://staging-api.newrelic.com";
-	};
+	// const buildApiUrl = () => {
+	// 	return derivedState.isProductionCloud
+	// 		? "https://api.newrelic.com"
+	// 		: "https://staging-api.newrelic.com";
+	// };
 
 	const onSubmit = async (event: React.SyntheticEvent) => {
 		event.preventDefault();
 		setLoading(true);
-		const apiUrl = buildApiUrl();
-		let data = { apiKey, apiUrl };
+		const apiRegion = derivedState.isProductionCloud ? "" : "staging";
+		let data = { apiKey, apiRegion };
 		let providerId = "newrelic*com";
 
 		try {
-			// await dispatch(
-			// 	configureProvider("newrelic*com", { apiKey, apiUrl }, true, "Onboard", true, true)
-			// );
-			await HostApi.instance.send(ConfigureThirdPartyProviderRequestType, {
-				providerId,
-				data
-			});
-
+			const response = await HostApi.instance.send(RegisterNrUserRequestType, data);
 			setLoading(false);
 			HostApi.instance.track("NR Connected", {
 				"Connection Location": "Onboard"
@@ -83,7 +70,7 @@ export const SignupNewRelic = () => {
 			logError(`Error configuring NR: ${error}`);
 		}
 
-		//@todo
+		//@todo RegisterNrUserRequestType
 		// try {
 		// 	const { status, token } = await HostApi.instance.send(RegisterUserRequestType, { apiKey });
 

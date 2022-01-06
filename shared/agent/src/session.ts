@@ -73,6 +73,8 @@ import {
 	PasswordLoginRequestType,
 	RegisterUserRequest,
 	RegisterUserRequestType,
+	RegisterNrUserRequest,
+	RegisterNrUserRequestType,
 	ReportingMessageType,
 	SetServerUrlRequest,
 	SetServerUrlRequestType,
@@ -278,7 +280,6 @@ export class CodeStreamSession {
 
 		Container.initialize(agent, this);
 
-		console.warn("eric Register 281", this);
 		registerProviders(PROVIDERS_TO_REGISTER_BEFORE_SIGNIN, this);
 
 		this.logNodeEnvVariables();
@@ -419,7 +420,6 @@ export class CodeStreamSession {
 
 		registerDecoratedHandlers(this.agent);
 
-		console.warn("eric register 422");
 		this.agent.registerHandler(UIStateRequestType, e => {
 			if (e && e.context && e.context.panelStack && e.context.panelStack[0]) {
 				this.uiState = e.context.panelStack[0];
@@ -430,13 +430,15 @@ export class CodeStreamSession {
 
 		this.agent.registerHandler(VerifyConnectivityRequestType, () => this.verifyConnectivity());
 		this.agent.registerHandler(GetAccessTokenRequestType, e => {
-			console.warn("eric register 433");
 			return { accessToken: this._codestreamAccessToken! };
 		});
 		this.agent.registerHandler(PasswordLoginRequestType, e => this.passwordLogin(e));
 		this.agent.registerHandler(TokenLoginRequestType, e => this.tokenLogin(e));
 		this.agent.registerHandler(OtcLoginRequestType, e => this.otcLogin(e));
 		this.agent.registerHandler(RegisterUserRequestType, e => this.register(e));
+
+		this.agent.registerHandler(RegisterNrUserRequestType, e => this.registerNr(e));
+
 		this.agent.registerHandler(ConfirmRegistrationRequestType, e => this.confirmRegistration(e));
 		this.agent.registerHandler(GetInviteInfoRequestType, e => this.getInviteInfo(e));
 		this.agent.registerHandler(ApiRequestType, (e, cancellationToken: CancellationToken) =>
@@ -663,7 +665,6 @@ export class CodeStreamSession {
 
 	@log()
 	private async onApiVersionCompatibilityChanged(e: ApiVersionCompatibilityChangedEvent) {
-		console.warn("eric onApiVersionCompatibilityChanged 667");
 		this.agent.sendNotification(DidChangeApiVersionCompatibilityNotificationType, e);
 
 		if (
@@ -976,10 +977,7 @@ export class CodeStreamSession {
 			? omit(currentTeam.providerHosts, Object.keys(PROVIDERS_TO_REGISTER_BEFORE_SIGNIN))
 			: {};
 
-		//eric note exclude nr provider here, call it earlier near initialze()
-		// I think I can go ahead and just hard code in the NR provider object
-		// its not associated with a team or anything so it always will be the same for all users.
-		console.warn("eric second regsister 973", response, this._providers[`bitbucket*org`]);
+		// eric note exclude nr provider here, call it earlier near initialze()
 		registerProviders(this._providers, this);
 
 		const cc = Logger.getCorrelationContext();
@@ -1122,13 +1120,40 @@ export class CodeStreamSession {
 		}
 	}
 
+	@log({
+		singleLine: true
+	})
+	async registerNr(request: RegisterNrUserRequest) {
+		try {
+			console.warn("request Nr call api", request);
+			const response = await (this._api as CodeStreamApiProvider).registerNr(request);
+			console.warn("register Nr call api", response);
+			// return { status: LoginResult.Success };
+			return response;
+		} catch (error) {
+			console.warn("register Nr error", error);
+			// if (error instanceof ServerError) {
+			// 	if (error.statusCode !== undefined && error.statusCode >= 400 && error.statusCode < 500) {
+			// 		return { status: loginApiErrorMappings[error.info.code] || LoginResult.Unknown };
+			// 	}
+			// }
+			// Container.instance().errorReporter.reportMessage({
+			// 	type: ReportingMessageType.Error,
+			// 	message: "Unexpected error during registration",
+			// 	source: "agent",
+			// 	extra: {
+			// 		...error
+			// 	}
+			// });
+			// throw AgentError.wrap(error, `Registration failed:\n${error.message}`);
+			return error;
+		}
+	}
+
 	@log({ singleLine: true })
 	async confirmRegistration(request: ConfirmRegistrationRequest) {
-		console.warn("eric confirmRegistration 1126");
 		try {
-			console.warn("eric confirmRegistration 1128");
 			const response = await (this._api as CodeStreamApiProvider).confirmRegistration(request);
-			console.warn("eric confirmRegistration 1130");
 
 			this.setSuperPropsAndCallTelemetry(response.user);
 
@@ -1404,7 +1429,6 @@ export class CodeStreamSession {
 	}
 
 	registerApiCapabilities(apiCapabilities: CSApiCapabilities, team?: CSTeam): void {
-		console.warn("eric registerApiCapabilities");
 		const teamSettings = (team && team.settings) || {};
 		const teamFeatures = teamSettings.features || {};
 		this._apiCapabilities = {};

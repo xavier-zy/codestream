@@ -152,6 +152,7 @@ export class CodeStreamAgent implements Disposable {
 
 			this._onReady.fire(undefined);
 
+			console.warn("eric onInitialze 155", TextDocumentSyncKind.Full);
 			return {
 				capabilities: {
 					textDocumentSync: TextDocumentSyncKind.Full

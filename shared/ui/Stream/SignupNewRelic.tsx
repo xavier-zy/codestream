@@ -1,7 +1,8 @@
 import {
 	GetNewRelicSignupJwtTokenRequestType,
 	GetReposScmRequestType,
-	RepoProjectType
+	RepoProjectType,
+	ConfigureThirdPartyProviderRequestType
 } from "@codestream/protocols/agent";
 import { setWantNewRelicOptions } from "../store/context/actions";
 import React, { Component } from "react";
@@ -18,7 +19,6 @@ import { configureProvider } from "../store/providers/actions";
 import { ThunkDispatch } from "redux-thunk";
 import { logError } from "../logger";
 import { Action } from "redux";
-
 import { CodeStreamState } from "@codestream/webview/store";
 
 const FooterWrapper = styled.div`
@@ -39,6 +39,7 @@ export const SignupNewRelic = () => {
 	//Redux declarations
 	const dispatch = useDispatch<ThunkDispatch<any, any, Action>>();
 	const derivedState = useSelector((state: CodeStreamState) => {
+		console.log(state);
 		return {
 			webviewFocused: state.context.hasFocus,
 			isProductionCloud: state.configs.isProductionCloud
@@ -60,11 +61,19 @@ export const SignupNewRelic = () => {
 	const onSubmit = async (event: React.SyntheticEvent) => {
 		event.preventDefault();
 		setLoading(true);
-
 		const apiUrl = buildApiUrl();
+		let data = { apiKey, apiUrl };
+		let providerId = "newrelic*com";
 
 		try {
-			await dispatch(configureProvider("newrelic*com", { apiKey, apiUrl }, true, "Onboard", true));
+			// await dispatch(
+			// 	configureProvider("newrelic*com", { apiKey, apiUrl }, true, "Onboard", true, true)
+			// );
+			await HostApi.instance.send(ConfigureThirdPartyProviderRequestType, {
+				providerId,
+				data
+			});
+
 			setLoading(false);
 			HostApi.instance.track("NR Connected", {
 				"Connection Location": "Onboard"
@@ -73,6 +82,66 @@ export const SignupNewRelic = () => {
 			setLoading(false);
 			logError(`Error configuring NR: ${error}`);
 		}
+
+		//@todo
+		// try {
+		// 	const { status, token } = await HostApi.instance.send(RegisterUserRequestType, { apiKey });
+
+		// 	const sendTelemetry = () => {
+		// 		HostApi.instance.track("Account Created", {
+		// 			email: email,
+		// 			"Git Email Match?": email === scmEmail
+		// 		});
+		// 	};
+
+		// 	switch (status) {
+		// 		case LoginResult.Success: {
+		// 			sendTelemetry();
+		// 			dispatch(
+		// 				goToEmailConfirmation({
+		// 					email: attributes.email,
+		// 					teamId: props.teamId,
+		// 					registrationParams: attributes
+		// 				})
+		// 			);
+		// 			break;
+		// 		}
+		// 		case LoginResult.NotInCompany: {
+		// 			sendTelemetry();
+		// 			dispatch(goToCompanyCreation({ token, email: attributes.email }));
+		// 			break;
+		// 		}
+		// 		case LoginResult.NotOnTeam: {
+		// 			sendTelemetry();
+		// 			dispatch(goToTeamCreation({ token, email: attributes.email }));
+		// 			break;
+		// 		}
+		// 		case LoginResult.AlreadyConfirmed: {
+		// 			// because user was invited
+		// 			sendTelemetry();
+		// 			dispatch(
+		// 				completeSignup(attributes.email, token!, props.teamId!, {
+		// 					createdTeam: false
+		// 				})
+		// 			);
+		// 			break;
+		// 		}
+		// 		case LoginResult.InviteConflict: {
+		// 			setInviteConflict(true);
+		// 			setIsSubmitting(false);
+		// 			break;
+		// 		}
+		// 		default:
+		// 			throw status;
+		// 	}
+		// } catch (error) {
+		// 	logError(`Unexpected error during registration request: ${error}`, {
+		// 		email,
+		// 		inviteCode: props.inviteCode
+		// 	});
+		// 	setUnexpectedError(true);
+		// 	setIsSubmitting(false);
+		// }
 	};
 
 	return (

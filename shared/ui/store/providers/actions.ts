@@ -154,16 +154,17 @@ export const configureProvider = (
 	data: { [key: string]: any },
 	setConnectedWhenConfigured = false,
 	connectionLocation?: ViewLocation,
-	throwOnError = false
+	throwOnError = false,
+	continueWithoutProviders = false
 ) => async (dispatch, getState) => {
 	const { providers } = getState();
 	const provider = providers[providerId];
-	if (!provider) return;
+	if (!continueWithoutProviders && !provider) return;
 	try {
 		const api = HostApi.instance;
 		await api.send(ConfigureThirdPartyProviderRequestType, { providerId, data });
 
-		if (providerId !== "newrelic*com") {
+		if (provider && providerId !== "newrelic*com") {
 			api.send(TelemetryRequestType, {
 				eventName: "Issue Service Configured",
 				properties: {
@@ -174,12 +175,16 @@ export const configureProvider = (
 
 		// for some providers (YouTrack and enterprise providers with PATs), configuring is as good as connecting,
 		// since we allow the user to set their own access token
-		if (setConnectedWhenConfigured && provider.hasIssues) {
+		if (setConnectedWhenConfigured && provider && provider.hasIssues) {
 			dispatch(sendIssueProviderConnected(providerId, connectionLocation));
 			dispatch(setIssueProvider(providerId));
 		}
 	} catch (error) {
-		logError(`Failed to connect ${provider.name}: ${error}`);
+		if (!provider) {
+			logError(`Failed to connect ${providerId}: ${error}`);
+		} else {
+			logError(`Failed to connect ${provider.name}: ${error}`);
+		}
 		if (throwOnError) {
 			throw error;
 		}

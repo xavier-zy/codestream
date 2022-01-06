@@ -4,7 +4,7 @@ import glob from "glob-promise";
 import { Agent as HttpAgent } from "http";
 import { Agent as HttpsAgent } from "https";
 import HttpsProxyAgent from "https-proxy-agent";
-import { isEqual, uniq } from "lodash-es";
+import { isEqual, uniq, omit } from "lodash-es";
 import * as path from "path";
 import * as url from "url";
 import {
@@ -108,6 +108,16 @@ import { testGroups } from "./testGroups";
 const envRegex = /https?:\/\/((?:(\w+)-)?api|localhost|(\w+))\.codestream\.(?:us|com)(?::\d+$)?/i;
 
 const FIRST_SESSION_TIMEOUT = 12 * 60 * 60 * 1000; // first session "times out" after 12 hours
+
+const PROVIDERS_TO_REGISTER_BEFORE_SIGNIN = {
+	[`newrelic*com`]: {
+		host: "newrelic.com",
+		id: "newrelic*com",
+		isEnterprise: false,
+		name: "newrelic",
+		needsConfigure: true
+	}
+};
 
 export const loginApiErrorMappings: { [k: string]: LoginResult } = {
 	"USRC-1001": LoginResult.InvalidCredentials,
@@ -267,6 +277,10 @@ export class CodeStreamSession {
 		);
 
 		Container.initialize(agent, this);
+
+		console.warn("eric Register 281", this);
+		registerProviders(PROVIDERS_TO_REGISTER_BEFORE_SIGNIN, this);
+
 		this.logNodeEnvVariables();
 
 		const redactProxyPasswdRegex = /(http:\/\/.*:)(.*)(@.*)/gi;
@@ -405,6 +419,7 @@ export class CodeStreamSession {
 
 		registerDecoratedHandlers(this.agent);
 
+		console.warn("eric register 422");
 		this.agent.registerHandler(UIStateRequestType, e => {
 			if (e && e.context && e.context.panelStack && e.context.panelStack[0]) {
 				this.uiState = e.context.panelStack[0];
@@ -415,6 +430,7 @@ export class CodeStreamSession {
 
 		this.agent.registerHandler(VerifyConnectivityRequestType, () => this.verifyConnectivity());
 		this.agent.registerHandler(GetAccessTokenRequestType, e => {
+			console.warn("eric register 433");
 			return { accessToken: this._codestreamAccessToken! };
 		});
 		this.agent.registerHandler(PasswordLoginRequestType, e => this.passwordLogin(e));
@@ -444,6 +460,7 @@ export class CodeStreamSession {
 					users.get(),
 					users.getPreferences()
 				]);
+				console.log("eric bootstrap 461");
 
 				const [
 					companiesResponse,
@@ -454,6 +471,8 @@ export class CodeStreamSession {
 					usersResponse,
 					preferencesResponse
 				] = await promise;
+				console.log("eric bootstrap 472");
+
 				return {
 					companies: companiesResponse.companies,
 					preferences: preferencesResponse.preferences,
@@ -481,6 +500,7 @@ export class CodeStreamSession {
 	}
 
 	setServerUrl(options: SetServerUrlRequest) {
+		console.log("eric setServerURl 503");
 		this._options.serverUrl = options.serverUrl;
 		this._options.disableStrictSSL = options.disableStrictSSL;
 		this._api?.setServerUrl(this._options.serverUrl);
@@ -643,6 +663,7 @@ export class CodeStreamSession {
 
 	@log()
 	private async onApiVersionCompatibilityChanged(e: ApiVersionCompatibilityChangedEvent) {
+		console.warn("eric onApiVersionCompatibilityChanged 667");
 		this.agent.sendNotification(DidChangeApiVersionCompatibilityNotificationType, e);
 
 		if (
@@ -950,7 +971,15 @@ export class CodeStreamSession {
 			}
 		}
 
-		this._providers = currentTeam.providerHosts || {};
+		// this._providers = currentTeam.providerHosts || {};
+		this._providers = currentTeam.providerHosts
+			? omit(currentTeam.providerHosts, Object.keys(PROVIDERS_TO_REGISTER_BEFORE_SIGNIN))
+			: {};
+
+		//eric note exclude nr provider here, call it earlier near initialze()
+		// I think I can go ahead and just hard code in the NR provider object
+		// its not associated with a team or anything so it always will be the same for all users.
+		console.warn("eric second regsister 973", response, this._providers[`bitbucket*org`]);
 		registerProviders(this._providers, this);
 
 		const cc = Logger.getCorrelationContext();
@@ -1095,8 +1124,11 @@ export class CodeStreamSession {
 
 	@log({ singleLine: true })
 	async confirmRegistration(request: ConfirmRegistrationRequest) {
+		console.warn("eric confirmRegistration 1126");
 		try {
+			console.warn("eric confirmRegistration 1128");
 			const response = await (this._api as CodeStreamApiProvider).confirmRegistration(request);
+			console.warn("eric confirmRegistration 1130");
 
 			this.setSuperPropsAndCallTelemetry(response.user);
 
@@ -1372,6 +1404,7 @@ export class CodeStreamSession {
 	}
 
 	registerApiCapabilities(apiCapabilities: CSApiCapabilities, team?: CSTeam): void {
+		console.warn("eric registerApiCapabilities");
 		const teamSettings = (team && team.settings) || {};
 		const teamFeatures = teamSettings.features || {};
 		this._apiCapabilities = {};

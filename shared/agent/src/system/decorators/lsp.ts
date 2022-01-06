@@ -1,4 +1,5 @@
 "use strict";
+import { GetReviewContentsLocalRequestType } from "protocol/agent.protocol.reviews";
 import { RequestHandler0, RequestType } from "vscode-languageserver-protocol";
 import { CodeStreamAgent } from "../../agent";
 import { ThirdPartyProviders } from "../../protocol/agent.protocol.providers";
@@ -83,10 +84,13 @@ export function registerProviders(
 ): void {
 	providerRegistry.clear();
 	for (const providerId in providers) {
+		console.warn("eric lsp 86", providers, providerId);
 		const provider = providers[providerId];
 		const type = providerTypeRegistry.get(provider.name);
+		console.warn("eric type", type);
 		if (type) {
 			const providerConfig = new (lsp(type) as any)(session, provider);
+			console.warn("eric providerConfig", providerConfig);
 			providerRegistry.set(providerId, providerConfig);
 		}
 	}

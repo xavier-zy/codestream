@@ -519,7 +519,50 @@ export const Observability = React.memo((props: Props) => {
 		}
 	}, [loadingErrors, loadingAssigments]);
 
+	const inlineMenuEntityItems = or => {
+		let items = or.entityAccounts.map((ea, index) => {
+			let checked = false;
+			// if we dont have a setting for this, we choose the first one
+			if (Object.keys(derivedState.observabilityRepoEntities || {}).length === 0 && index === 0) {
+				checked = true;
+			} else {
+				const setting = derivedState.observabilityRepoEntities.find(
+					_ => _.repoId === or.repoId && _.entityGuid === ea.entityGuid
+				);
+				checked = !!setting;
+			}
+			return {
+				label: ea.entityName,
+				subtle:
+					ea.accountName && ea.accountName.length > 25
+						? ea.accountName.substr(0, 25) + "..."
+						: ea.accountName,
+				key: ea.entityGuid,
+				action: () => {
+					fetchObservabilityErrors(ea.entityGuid, or.repoId);
+					const newPreferences = derivedState.observabilityRepoEntities.filter(
+						_ => _.repoId !== or.repoId
+					);
+					newPreferences.push({
+						repoId: or.repoId,
+						entityGuid: ea.entityGuid
+					});
+					dispatch(setUserPreference(["observabilityRepoEntities"], newPreferences));
+				},
+				checked: checked
+			};
+		});
+
+		if (items.length >= 5) {
+			items.unshift({ label: "-" });
+			items.unshift({ type: "search", placeholder: "Search...", action: "search" });
+		}
+
+		return items;
+	};
+
 	const { hiddenPaneNodes } = derivedState;
+
 	return (
 		<Root>
 			<PaneHeader title="Observability" id={WebviewPanels.Observability} count={"Preview"}>
@@ -590,50 +633,7 @@ export const Observability = React.memo((props: Props) => {
 																			className="subtle no-padding"
 																			noFocusOnSelect
 																			preventMenuStopPropagation={true}
-																			items={or.entityAccounts.map((ea, index) => {
-																				let checked = false;
-																				// if we dont have a setting for this, we choose the first one
-																				if (
-																					Object.keys(derivedState.observabilityRepoEntities || {})
-																						.length === 0 &&
-																					index === 0
-																				) {
-																					checked = true;
-																				} else {
-																					const setting = derivedState.observabilityRepoEntities.find(
-																						_ =>
-																							_.repoId === or.repoId &&
-																							_.entityGuid === ea.entityGuid
-																					);
-																					checked = !!setting;
-																				}
-																				return {
-																					label: ea.entityName,
-																					subtle:
-																						ea.accountName && ea.accountName.length > 25
-																							? ea.accountName.substr(0, 25) + "..."
-																							: ea.accountName,
-																					key: ea.entityGuid,
-																					//icon: <Icon name="file" />,
-																					action: () => {
-																						fetchObservabilityErrors(ea.entityGuid, or.repoId);
-																						const newPreferences = derivedState.observabilityRepoEntities.filter(
-																							_ => _.repoId !== or.repoId
-																						);
-																						newPreferences.push({
-																							repoId: or.repoId,
-																							entityGuid: ea.entityGuid
-																						});
-																						dispatch(
-																							setUserPreference(
-																								["observabilityRepoEntities"],
-																								newPreferences
-																							)
-																						);
-																					},
-																					checked: checked
-																				};
-																			})}
+																			items={inlineMenuEntityItems(or)}
 																			title="Entities"
 																		>
 																			{buildSelectedLabel(or.repoId, or.entityAccounts)}

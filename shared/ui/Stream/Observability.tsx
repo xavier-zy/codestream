@@ -624,7 +624,7 @@ export const Observability = React.memo((props: Props) => {
 															title={"Recent errors in " + or.repoName}
 															id={"newrelic-errors-in-repo-" + or.repoId}
 															subtitle={
-																!or.entityAccounts || or.entityAccounts.length < 0 ? (
+																!or.entityAccounts || or.entityAccounts.length < 2 ? (
 																	undefined
 																) : (
 																	<>

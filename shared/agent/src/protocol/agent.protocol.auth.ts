@@ -92,6 +92,9 @@ export interface RegisterNrUserRequest {
 export interface RegisterNrUserResponse {
 	token?: string;
 	email?: string;
+	info?: {
+		message: string;
+	};
 }
 
 export const RegisterNrUserRequestType = new RequestType<

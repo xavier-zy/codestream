@@ -1,4 +1,8 @@
-import { RegisterNrUserRequestType } from "@codestream/protocols/agent";
+import {
+	RegisterNrUserRequestType,
+	GetNewRelicSignupJwtTokenRequestType
+} from "@codestream/protocols/agent";
+import { OpenUrlRequestType } from "@codestream/protocols/webview";
 import React, { Component } from "react";
 import { HostApi } from "../webview-api";
 import Button from "./Button";
@@ -35,6 +39,7 @@ export const SignupNewRelic = () => {
 	const derivedState = useSelector((state: CodeStreamState) => {
 		console.log(state);
 		return {
+			ide: state.ide,
 			webviewFocused: state.context.hasFocus,
 			isProductionCloud: state.configs.isProductionCloud
 		};
@@ -46,11 +51,11 @@ export const SignupNewRelic = () => {
 		}
 	});
 
-	// const buildApiUrl = () => {
-	// 	return derivedState.isProductionCloud
-	// 		? "https://api.newrelic.com"
-	// 		: "https://staging-api.newrelic.com";
-	// };
+	const buildApiUrl = () => {
+		return derivedState.isProductionCloud
+			? "https://api.newrelic.com"
+			: "https://staging-api.newrelic.com";
+	};
 
 	const onSubmit = async (event: React.SyntheticEvent) => {
 		event.preventDefault();
@@ -58,10 +63,15 @@ export const SignupNewRelic = () => {
 		const apiRegion = derivedState.isProductionCloud ? "" : "staging";
 		let data = { apiKey, apiRegion };
 		let providerId = "newrelic*com";
+		let apiUrl = buildApiUrl();
 
 		try {
 			const response = await HostApi.instance.send(RegisterNrUserRequestType, data);
 			setLoading(false);
+			if (response?.info?.message === "This user is already registered and confirmed") {
+				setShowErrorMessage(true);
+				setExistingEmail("bob@builder.com");
+			}
 			HostApi.instance.track("NR Connected", {
 				"Connection Location": "Onboard"
 			});
@@ -70,17 +80,7 @@ export const SignupNewRelic = () => {
 			logError(`Error configuring NR: ${error}`);
 		}
 
-		//@todo RegisterNrUserRequestType
 		// try {
-		// 	const { status, token } = await HostApi.instance.send(RegisterUserRequestType, { apiKey });
-
-		// 	const sendTelemetry = () => {
-		// 		HostApi.instance.track("Account Created", {
-		// 			email: email,
-		// 			"Git Email Match?": email === scmEmail
-		// 		});
-		// 	};
-
 		// 	switch (status) {
 		// 		case LoginResult.Success: {
 		// 			sendTelemetry();
@@ -125,10 +125,25 @@ export const SignupNewRelic = () => {
 		// 	logError(`Unexpected error during registration request: ${error}`, {
 		// 		email,
 		// 		inviteCode: props.inviteCode
+		//
 		// 	});
 		// 	setUnexpectedError(true);
 		// 	setIsSubmitting(false);
 		// }
+	};
+
+	const handleGetApiKeyClick = async () => {
+		const { token, baseLandingUrl } = await HostApi.instance.send(
+			GetNewRelicSignupJwtTokenRequestType,
+			{}
+		);
+		const url =
+			`${baseLandingUrl}/codestream/signup` +
+			`?token=${token}` +
+			`&utm_source=codestream` +
+			`&utm_medium=${derivedState.ide.name}` +
+			`&utm_campaign=nr_getapikey`;
+		void HostApi.instance.send(OpenUrlRequestType, { url });
 	};
 
 	return (
@@ -154,7 +169,18 @@ export const SignupNewRelic = () => {
 									</div>
 								</ErrorMessageWrapper>
 							)}
-							<label>Enter your New Relic user API key. Get your API key.</label>
+							<label>
+								Enter your New Relic user API key.
+								<Link
+									onClick={e => {
+										e.preventDefault();
+										handleGetApiKeyClick();
+									}}
+								>
+									{" "}
+									Get your API key.
+								</Link>
+							</label>
 							<div
 								style={{
 									width: "100%",

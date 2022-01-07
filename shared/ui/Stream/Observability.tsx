@@ -553,7 +553,7 @@ export const Observability = React.memo((props: Props) => {
 			};
 		});
 
-		if (items.length >= 1) {
+		if (items.length >= 5) {
 			items.unshift({ label: "-" });
 			items.unshift({ type: "search", placeholder: "Search...", action: "search" });
 		}

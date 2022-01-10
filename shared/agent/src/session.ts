@@ -968,10 +968,13 @@ export class CodeStreamSession {
 			}
 		}
 
-		this._providers = currentTeam.providerHosts
-			? omit(currentTeam.providerHosts, Object.keys(PROVIDERS_TO_REGISTER_BEFORE_SIGNIN))
-			: {};
-		registerProviders(this._providers, this);
+		this._providers = currentTeam.providerHosts || {};
+		registerProviders(
+			currentTeam.providerHosts
+				? omit(currentTeam.providerHosts, Object.keys(PROVIDERS_TO_REGISTER_BEFORE_SIGNIN))
+				: {},
+			this
+		);
 
 		const cc = Logger.getCorrelationContext();
 

@@ -127,6 +127,22 @@ export interface CSRegisterResponse {
 	user?: CSUser; // No user means they are already registered. for security, that message is emailed to them rather than displayed in the client
 }
 
+export interface CSNRRegisterRequest {
+	apiRegion: string;
+	apiKey: string;
+}
+
+export interface CSNRRegisterResponse {
+	email?: string;
+	token?: string;
+	accessToken?: string;
+	teamId?: string;
+	companies?: CSCompany[];
+	eligibleJoinCompanies?: CSEligibleJoinCompany[];
+	isWebmail?: boolean;
+	accountIsConnected?: boolean;
+}
+
 export interface CSConfirmRegistrationRequest {
 	email: string;
 	confirmationCode: string;

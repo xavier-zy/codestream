@@ -4,7 +4,7 @@ import glob from "glob-promise";
 import { Agent as HttpAgent } from "http";
 import { Agent as HttpsAgent } from "https";
 import HttpsProxyAgent from "https-proxy-agent";
-import { isEqual, uniq } from "lodash-es";
+import { isEqual, uniq, omit } from "lodash-es";
 import * as path from "path";
 import * as url from "url";
 import {
@@ -73,6 +73,8 @@ import {
 	PasswordLoginRequestType,
 	RegisterUserRequest,
 	RegisterUserRequestType,
+	RegisterNrUserRequest,
+	RegisterNrUserRequestType,
 	ReportingMessageType,
 	SetServerUrlRequest,
 	SetServerUrlRequestType,
@@ -96,6 +98,7 @@ import {
 	CSMePreferences,
 	CSPost,
 	CSRegisterResponse,
+	CSNRRegisterResponse,
 	CSRepository,
 	CSStream,
 	CSTeam,
@@ -108,6 +111,16 @@ import { testGroups } from "./testGroups";
 const envRegex = /https?:\/\/((?:(\w+)-)?api|localhost|(\w+))\.codestream\.(?:us|com)(?::\d+$)?/i;
 
 const FIRST_SESSION_TIMEOUT = 12 * 60 * 60 * 1000; // first session "times out" after 12 hours
+
+const PROVIDERS_TO_REGISTER_BEFORE_SIGNIN = {
+	[`newrelic*com`]: {
+		host: "newrelic.com",
+		id: "newrelic*com",
+		isEnterprise: false,
+		name: "newrelic",
+		needsConfigure: true
+	}
+};
 
 export const loginApiErrorMappings: { [k: string]: LoginResult } = {
 	"USRC-1001": LoginResult.InvalidCredentials,
@@ -267,6 +280,9 @@ export class CodeStreamSession {
 		);
 
 		Container.initialize(agent, this);
+
+		registerProviders(PROVIDERS_TO_REGISTER_BEFORE_SIGNIN, this);
+
 		this.logNodeEnvVariables();
 
 		const redactProxyPasswdRegex = /(http:\/\/.*:)(.*)(@.*)/gi;
@@ -421,6 +437,7 @@ export class CodeStreamSession {
 		this.agent.registerHandler(TokenLoginRequestType, e => this.tokenLogin(e));
 		this.agent.registerHandler(OtcLoginRequestType, e => this.otcLogin(e));
 		this.agent.registerHandler(RegisterUserRequestType, e => this.register(e));
+		this.agent.registerHandler(RegisterNrUserRequestType, e => this.registerNr(e));
 		this.agent.registerHandler(ConfirmRegistrationRequestType, e => this.confirmRegistration(e));
 		this.agent.registerHandler(GetInviteInfoRequestType, e => this.getInviteInfo(e));
 		this.agent.registerHandler(ApiRequestType, (e, cancellationToken: CancellationToken) =>
@@ -454,6 +471,7 @@ export class CodeStreamSession {
 					usersResponse,
 					preferencesResponse
 				] = await promise;
+
 				return {
 					companies: companiesResponse.companies,
 					preferences: preferencesResponse.preferences,
@@ -950,7 +968,9 @@ export class CodeStreamSession {
 			}
 		}
 
-		this._providers = currentTeam.providerHosts || {};
+		this._providers = currentTeam.providerHosts
+			? omit(currentTeam.providerHosts, Object.keys(PROVIDERS_TO_REGISTER_BEFORE_SIGNIN))
+			: {};
 		registerProviders(this._providers, this);
 
 		const cc = Logger.getCorrelationContext();
@@ -1090,6 +1110,75 @@ export class CodeStreamSession {
 				}
 			});
 			throw AgentError.wrap(error, `Registration failed:\n${error.message}`);
+		}
+	}
+
+	@log({
+		singleLine: true
+	})
+	async registerNr(request: RegisterNrUserRequest) {
+		function isCSNRLoginResponse(r: CSNRRegisterResponse | CSLoginResponse): r is CSLoginResponse {
+			return (r as any).accessToken !== undefined;
+		}
+
+		try {
+			const response = await (this._api as CodeStreamApiProvider).registerNr(request);
+			// @TODO: this logic could be cleaner and easier to read
+			if (isCSNRLoginResponse(response)) {
+				if (response.companies.length === 0) {
+					return {
+						status: LoginResult.NotOnTeam,
+						token: response.accessToken,
+						email: response.user?.email,
+						eligibleJoinCompanies: response.eligibleJoinCompanies,
+						isWebmail: response.isWebmail,
+						accountIsConnected: response.accountIsConnected
+					};
+				}
+				this._teamId = response.teams.find(_ => _.isEveryoneTeam)!.id;
+				return {
+					status: LoginResult.AlreadyConfirmed,
+					token: response.accessToken,
+					email: response.user?.email,
+					teamId: this._teamId,
+					companies: response.companies,
+					eligibleJoinCompanies: response.eligibleJoinCompanies,
+					isWebmail: response.isWebmail,
+					accountIsConnected: response.accountIsConnected
+				};
+			} else {
+				// @TODO: This specific logical path could use some QA
+				return {
+					status: LoginResult.Success,
+					token: response.token,
+					email: response.email,
+					teamId: this._teamId,
+					companies: response.companies,
+					eligibleJoinCompanies: response.eligibleJoinCompanies,
+					isWebmail: response.isWebmail,
+					accountIsConnected: response.accountIsConnected
+				};
+			}
+		} catch (error) {
+			if (error instanceof ServerError) {
+				if (error.statusCode !== undefined && error.statusCode >= 400 && error.statusCode < 500) {
+					return {
+						status: loginApiErrorMappings[error.info.code] || LoginResult.Unknown,
+						email: error.info.info,
+						notInviteRelated: true
+					};
+				}
+			}
+
+			Container.instance().errorReporter.reportMessage({
+				type: ReportingMessageType.Error,
+				message: "Unexpected error during registration",
+				source: "agent",
+				extra: {
+					...error
+				}
+			});
+			return error;
 		}
 	}
 

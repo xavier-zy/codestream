@@ -84,6 +84,34 @@ export const RegisterUserRequestType = new RequestType<
 	void
 >("codestream/registration");
 
+export interface RegisterNrUserRequest {
+	apiRegion: string;
+	apiKey: string;
+}
+
+export interface RegisterNrUserResponse {
+	token?: string;
+	email?: string;
+	status?: string;
+	notInviteRelated?: boolean;
+	teamId: string;
+	eligibleJoinCompanies: CSEligibleJoinCompany[];
+	isWebmail?: boolean;
+	companies?: CSCompany[];
+	accountIsConnected: boolean;
+	info?: {
+		message?: string;
+		email?: string;
+	};
+}
+
+export const RegisterNrUserRequestType = new RequestType<
+	RegisterNrUserRequest,
+	RegisterNrUserResponse,
+	void,
+	void
+>("codestream/nr-registration");
+
 export interface ConfirmRegistrationRequest extends CSConfirmRegistrationRequest {}
 
 export interface ConfirmRegistrationResponse {

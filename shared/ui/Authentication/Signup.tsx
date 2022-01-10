@@ -11,7 +11,8 @@ import {
 	goToTeamCreation,
 	goToOktaConfig,
 	goToCompanyCreation,
-	goToLogin
+	goToLogin,
+	goToNewRelicSignup
 } from "../store/context/actions";
 import { TextInput } from "./TextInput";
 import { LoginResult } from "@codestream/protocols/api";
@@ -300,6 +301,17 @@ export const Signup = (props: Props) => {
 		return info;
 	};
 
+	const onClickNewRelicSignup = useCallback(
+		(event: React.SyntheticEvent) => {
+			event.preventDefault();
+			HostApi.instance.track("Provider Auth Selected", {
+				Provider: "New Relic"
+			});
+			dispatch(goToNewRelicSignup({}));
+		},
+		[props.type]
+	);
+
 	const onClickGithubSignup = useCallback(
 		(event: React.SyntheticEvent) => {
 			event.preventDefault();
@@ -370,6 +382,13 @@ export const Signup = (props: Props) => {
 						<div id="controls">
 							<div className="border-bottom-box">
 								<h3>Create a CodeStream account, for free</h3>
+								{!limitAuthentication && (
+									<Button className="row-button no-top-margin" onClick={onClickNewRelicSignup}>
+										<Icon name="newrelic" />
+										<div className="copy">Sign Up with New Relic</div>
+										<Icon name="chevron-right" />
+									</Button>
+								)}
 								{(!limitAuthentication || authenticationProviders["github*com"]) && (
 									<Button className="row-button no-top-margin" onClick={onClickGithubSignup}>
 										<Icon name="mark-github" />

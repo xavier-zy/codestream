@@ -70,7 +70,7 @@ export const SignupNewRelic = () => {
 				accountIsConnected
 			} = await HostApi.instance.send(RegisterNrUserRequestType, data);
 			HostApi.instance.track("NR Connected", {
-				"Connection Location": "Onboard"
+				"Connection Location": "Onboarding"
 			});
 			setLoading(false);
 

@@ -973,7 +973,8 @@ export class CodeStreamSession {
 			currentTeam.providerHosts
 				? omit(currentTeam.providerHosts, Object.keys(PROVIDERS_TO_REGISTER_BEFORE_SIGNIN))
 				: {},
-			this
+			this,
+			false
 		);
 
 		const cc = Logger.getCorrelationContext();

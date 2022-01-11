@@ -78,11 +78,19 @@ export const SignupNewRelic = () => {
 			});
 			setLoading(false);
 
+			const sendTelemetry = () => {
+				HostApi.instance.track("Account Created", {
+					email: email,
+					"Auth Provider": "New Relic"
+				});
+			};
+
 			switch (status) {
 				// CompanyCreation should handle routing on success
 				case LoginResult.Success:
 				case LoginResult.NotInCompany:
 				case LoginResult.NotOnTeam: {
+					sendTelemetry();
 					if (email && token) {
 						dispatch(
 							goToCompanyCreation({
@@ -104,6 +112,7 @@ export const SignupNewRelic = () => {
 					}
 					// invited @TODO: this could be handled cleaner
 					if (email && token && teamId) {
+						sendTelemetry();
 						completeSignup(email, token!, teamId!, {
 							createdTeam: false
 						});

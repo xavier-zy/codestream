@@ -95,6 +95,7 @@ export interface CodeStreamEnvironmentInfo {
 	environment: CodeStreamEnvironment | string;
 	isOnPrem: boolean;
 	isProductionCloud: boolean;
+	newRelicLandingServiceUrl?: string;
 }
 
 export enum TraceLevel {
@@ -172,6 +173,7 @@ export interface VerifyConnectivityResponse {
 	environment?: string;
 	isOnPrem?: boolean;
 	isProductionCloud?: boolean;
+	newRelicLandingServiceUrl?: string;
 }
 
 export const VerifyConnectivityRequestType = new RequestType<

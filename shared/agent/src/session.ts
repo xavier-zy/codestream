@@ -407,7 +407,8 @@ export class CodeStreamSession {
 				this._environmentInfo = {
 					environment: response.environment,
 					isOnPrem: response.isOnPrem || false,
-					isProductionCloud: response.isProductionCloud || false
+					isProductionCloud: response.isProductionCloud || false,
+					newRelicLandingServiceUrl: response.newRelicLandingServiceUrl
 				};
 				Logger.log("Got environment from connectivity response:", this._environmentInfo);
 			}
@@ -728,6 +729,10 @@ export class CodeStreamSession {
 
 	get isProductionCloud() {
 		return this.environmentInfo.isProductionCloud;
+	}
+
+	get newRelicLandingServiceUrl() {
+		return this.environmentInfo.newRelicLandingServiceUrl;
 	}
 
 	get disableStrictSSL(): boolean {

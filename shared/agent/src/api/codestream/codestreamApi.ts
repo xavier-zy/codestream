@@ -2483,9 +2483,8 @@ export class CodeStreamApiProvider implements ApiProvider {
 	): Promise<GetNewRelicSignupJwtTokenResponse> {
 		const response = await this.get<GetNewRelicSignupJwtTokenResponse>(`/signup-jwt`, this._token);
 		const baseLandingUrl =
-			this.baseUrl === "https://nr-preview.codestream.us"
-				? "https://landing.staging-service.newrelic.com"
-				: "https://landing.service.newrelic.com";
+			SessionContainer.instance().session.newRelicLandingServiceUrl ||
+			"https://landing.service.newrelic.com";
 		return {
 			...response,
 			baseLandingUrl
@@ -2882,6 +2881,7 @@ export class CodeStreamApiProvider implements ApiProvider {
 				response.environment = json.environment;
 				response.isOnPrem = json.isOnPrem;
 				response.isProductionCloud = json.isProductionCloud;
+				response.newRelicLandingServiceUrl = json.newRelicLandingServiceUrl;
 			}
 		} catch (err) {
 			Logger.log(`Error connecting to the API server: ${err.message}`);

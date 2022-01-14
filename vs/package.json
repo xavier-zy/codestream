@@ -57,7 +57,7 @@
 		"fork-ts-checker-webpack-plugin": "5.2.1",
 		"html-loader": "0.5.5",
 		"html-webpack-plugin": "5.5.0",
-		"less": "3.9.0",
+		"less": "4.1.2",
 		"less-loader": "10.2.0",
 		"mini-css-extract-plugin": "2.4.5",
 		"prettier": "1.19.1",

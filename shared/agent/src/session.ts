@@ -4,7 +4,7 @@ import glob from "glob-promise";
 import { Agent as HttpAgent } from "http";
 import { Agent as HttpsAgent } from "https";
 import HttpsProxyAgent from "https-proxy-agent";
-import { isEqual, uniq, omit } from "lodash-es";
+import { isEqual, omit, uniq } from "lodash-es";
 import * as path from "path";
 import * as url from "url";
 import {
@@ -44,6 +44,8 @@ import {
 	ChangeDataType,
 	CodeStreamEnvironment,
 	CodeStreamEnvironmentInfo,
+	ConfirmLoginCodeRequest,
+	ConfirmLoginCodeRequestType,
 	ConfirmRegistrationRequest,
 	ConfirmRegistrationRequestType,
 	ConfirmRegistrationResponse,
@@ -56,11 +58,15 @@ import {
 	DidChangeServerUrlNotificationType,
 	DidChangeVersionCompatibilityNotificationType,
 	DidEncounterMaintenanceModeNotificationType,
+	DidFailLoginCodeGenerationNotificationType,
 	DidFailLoginNotificationType,
 	DidLoginNotificationType,
 	DidLogoutNotificationType,
 	DidSetEnvironmentNotificationType,
+	DidStartLoginCodeGenerationNotificationType,
 	DidStartLoginNotificationType,
+	GenerateLoginCodeRequest,
+	GenerateLoginCodeRequestType,
 	GetAccessTokenRequestType,
 	GetInviteInfoRequest,
 	GetInviteInfoRequestType,
@@ -71,10 +77,10 @@ import {
 	OtcLoginRequestType,
 	PasswordLoginRequest,
 	PasswordLoginRequestType,
-	RegisterUserRequest,
-	RegisterUserRequestType,
 	RegisterNrUserRequest,
 	RegisterNrUserRequestType,
+	RegisterUserRequest,
+	RegisterUserRequestType,
 	ReportingMessageType,
 	SetServerUrlRequest,
 	SetServerUrlRequestType,
@@ -85,13 +91,7 @@ import {
 	UserDidCommitNotificationType,
 	VerifyConnectivityRequestType,
 	VerifyConnectivityResponse,
-	VersionCompatibility,
-	GenerateLoginCodeRequest,
-	DidStartLoginCodeGenerationNotificationType,
-	DidFailLoginCodeGenerationNotificationType,
-	GenerateLoginCodeRequestType,
-	ConfirmLoginCodeRequest,
-	ConfirmLoginCodeRequestType
+	VersionCompatibility
 } from "./protocol/agent.protocol";
 import {
 	CSApiCapabilities,
@@ -102,9 +102,9 @@ import {
 	CSMarkerLocations,
 	CSMe,
 	CSMePreferences,
+	CSNRRegisterResponse,
 	CSPost,
 	CSRegisterResponse,
-	CSNRRegisterResponse,
 	CSRepository,
 	CSStream,
 	CSTeam,

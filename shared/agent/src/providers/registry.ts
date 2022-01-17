@@ -1,7 +1,7 @@
 "use strict";
 import { differenceWith } from "lodash-es";
-import semver from "semver";
 import { CSMe } from "protocol/api.protocol";
+import semver from "semver";
 import { URI } from "vscode-uri";
 import { SessionContainer } from "../container";
 import { Logger } from "../logger";
@@ -30,6 +30,8 @@ import {
 	ExecuteThirdPartyRequestUntypedType,
 	FetchAssignableUsersRequest,
 	FetchAssignableUsersRequestType,
+	FetchProviderDefaultPullRequest,
+	FetchProviderDefaultPullRequestsType,
 	FetchThirdPartyBoardsRequest,
 	FetchThirdPartyBoardsRequestType,
 	FetchThirdPartyBoardsResponse,
@@ -42,8 +44,6 @@ import {
 	FetchThirdPartyChannelsRequest,
 	FetchThirdPartyChannelsRequestType,
 	FetchThirdPartyChannelsResponse,
-	FetchProviderDefaultPullRequest,
-	FetchProviderDefaultPullRequestsType,
 	FetchThirdPartyPullRequestCommitsRequest,
 	FetchThirdPartyPullRequestCommitsType,
 	FetchThirdPartyPullRequestRequest,

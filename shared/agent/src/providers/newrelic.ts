@@ -13,6 +13,7 @@ import { URI } from "vscode-uri";
 import { InternalError, ReportSuppressedMessages } from "../agentError";
 import { SessionContainer } from "../container";
 import { GitRemoteParser } from "../git/parsers/remoteParser";
+import { Logger } from "../logger";
 import {
 	BuiltFromResult,
 	Entity,
@@ -62,7 +63,6 @@ import { CodeStreamSession } from "../session";
 import { log, lspHandler, lspProvider } from "../system";
 import { Strings } from "../system/string";
 import { ThirdPartyIssueProviderBase } from "./provider";
-import { Logger } from "../logger";
 
 export interface Directive {
 	type: "assignRepository" | "removeAssignee" | "setAssignee" | "setState";

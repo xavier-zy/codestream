@@ -1,10 +1,12 @@
 "use strict";
 import { CodeStreamAgent } from "agent";
-import { RepositoryLocator } from "./git/repositoryLocator";
 import { DocumentManager } from "./documentManager";
 import { ErrorReporter } from "./errorReporter";
 import { GitService } from "./git/gitService";
+import { GitServiceLite } from "./git/gitServiceLite";
+import { RepositoryLocator } from "./git/repositoryLocator";
 import { Logger } from "./logger";
+import { CodeErrorsManager } from "./managers/codeErrorsManager";
 import { CodemarksManager } from "./managers/codemarksManager";
 import { CompaniesManager } from "./managers/companiesManager";
 import { DocumentMarkerManager } from "./managers/documentMarkerManager";
@@ -13,13 +15,12 @@ import { IgnoreFilesManager } from "./managers/ignoreFilesManager";
 import { MarkerLocationManager } from "./managers/markerLocationManager";
 import { MarkersManager } from "./managers/markersManager";
 import { NRManager } from "./managers/NRManager";
-import { RepoIdentificationManager } from "./managers/repoIdentificationManager";
 import { PixieManager } from "./managers/pixieManager";
 import { PostsManager } from "./managers/postsManager";
+import { RepoIdentificationManager } from "./managers/repoIdentificationManager";
 import { RepositoryMappingManager } from "./managers/repositoryMappingManager";
 import { ReposManager } from "./managers/reposManager";
 import { ReviewsManager } from "./managers/reviewsManager";
-import { CodeErrorsManager } from "./managers/codeErrorsManager";
 import { ScmManager } from "./managers/scmManager";
 import { ServerManager } from "./managers/serverManager";
 import { StreamsManager } from "./managers/streamsManager";
@@ -31,7 +32,6 @@ import { UrlManager } from "./managers/urlManager";
 import { UsersManager } from "./managers/usersManager";
 import { ThirdPartyProviderRegistry } from "./providers/registry";
 import { CodeStreamSession } from "./session";
-import { GitServiceLite } from "./git/gitServiceLite";
 
 let providerRegistry: ThirdPartyProviderRegistry | undefined = undefined;
 

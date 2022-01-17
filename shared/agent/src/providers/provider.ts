@@ -1,7 +1,9 @@
 "use strict";
+import { GraphQLClient } from "graphql-request";
 import { Agent as HttpsAgent } from "https";
 import HttpsProxyAgent from "https-proxy-agent";
 import fetch, { RequestInit, Response } from "node-fetch";
+import * as url from "url";
 import { URI } from "vscode-uri";
 import { InternalError, ReportSuppressedMessages } from "../agentError";
 import { MessageType } from "../api/apiProvider";
@@ -47,8 +49,6 @@ import {
 import { CodemarkType, CSMe, CSProviderInfos, CSReferenceLocation } from "../protocol/api.protocol";
 import { CodeStreamSession } from "../session";
 import { Functions, Strings } from "../system";
-import * as url from "url";
-import { GraphQLClient } from "graphql-request";
 
 export const providerDisplayNamesByNameKey = new Map<string, string>([
 	["asana", "Asana"],

@@ -150,7 +150,7 @@ export class LinearProvider extends ThirdPartyIssueProviderBase<CSLinearProvider
 			return a.name.localeCompare(b.name);
 		});
 		let boards: ThirdPartyProviderBoard[] = [];
-		for (let team of teams) {
+		for (const team of teams) {
 			boards.push({ id: `${team.id}_`, name: `${team.name}/No Project` });
 			const response = await this.query<{ data: { issues: { nodes: LinearProject[] } } }>(
 				`query GetBoards($teamId: String!) {

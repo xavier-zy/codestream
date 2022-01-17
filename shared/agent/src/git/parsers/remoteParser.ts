@@ -29,8 +29,8 @@ SOFTWARE.
  * Modifications Copyright CodeStream Inc. under the Apache 2.0 License (Apache-2.0)
  */
 import * as childProcess from "child_process";
-import { GitRemote, GitRemoteType } from "../models/remote";
 import { Logger } from "../../logger";
+import { GitRemote, GitRemoteType } from "../models/remote";
 
 const emptyStr = "";
 

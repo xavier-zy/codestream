@@ -13,7 +13,7 @@ export function Parser(stack: string): CSStackTraceInfo {
 		// so we build it once
 		regex = Strings.regexBuilder`
 			^
-			(\s+)? // optional spaces 
+			(\s+)? // optional spaces
 			(.+?\.rb) // path
 			:
 			(\s*)? // optional spaces

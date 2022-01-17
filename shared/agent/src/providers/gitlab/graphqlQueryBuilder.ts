@@ -1,5 +1,4 @@
 "use strict";
-import { gate } from "../../system/decorators/gate";
 import {
 	DocumentNode,
 	FieldNode,
@@ -12,6 +11,7 @@ import {
 import semver from "semver";
 import { Logger } from "../../logger";
 import { ProviderVersion } from "../../providers/provider";
+import { gate } from "../../system/decorators/gate";
 
 interface Leaf {
 	value: {

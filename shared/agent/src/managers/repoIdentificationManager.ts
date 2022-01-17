@@ -1,11 +1,10 @@
 "use strict";
 
-import { promises as fsPromises, readFileSync as fsReadFileSync, readdirSync, statSync } from "fs";
+import { promises as fsPromises, readdirSync, readFileSync as fsReadFileSync, statSync } from "fs";
 import path from "path";
+import { IdentifyRepoResult, RepoProjectType, ReposScm } from "../protocol/agent.protocol";
 import { CodeStreamSession } from "../session";
 import { lsp } from "../system/decorators/lsp";
-import { ReposScm, RepoProjectType, IdentifyRepoResult } from "../protocol/agent.protocol";
-import { Logger } from "../logger";
 
 @lsp
 export class RepoIdentificationManager {
@@ -33,7 +32,7 @@ export class RepoIdentificationManager {
 	}
 
 	private async repoIsNodeJS(repo: ReposScm, files: string[]): Promise<boolean> {
-		for (let file of files) {
+		for (const file of files) {
 			const filePath = path.join(repo.path, file);
 			const isDir = (await fsPromises.stat(filePath)).isDirectory();
 			if ((isDir && file === "node_modules") || (!isDir && file === "package.json")) return true;
@@ -124,7 +123,7 @@ export class RepoIdentificationManager {
 		maxDepth: number,
 		depth: number
 	): Promise<boolean> {
-		for (let file of files) {
+		for (const file of files) {
 			const filePath = path.join(basePath, file);
 			const isDir = (await fsPromises.stat(filePath)).isDirectory();
 			if (isDir) {

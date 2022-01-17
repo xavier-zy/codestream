@@ -1938,7 +1938,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				  message: $message,
 				  entityGuid: $entityGuid}) {
 				  id
-				  url	 
+				  url
 				}
 			  }
 			}

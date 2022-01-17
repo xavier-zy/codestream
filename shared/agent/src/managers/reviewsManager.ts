@@ -521,7 +521,7 @@ export class ReviewsManager extends CachedEntityManagerBase<CSReview> {
 		const repoRoots: { [repoId: string]: string } = {};
 		for (const repoId in diffsByRepo) {
 			const repo = await git.getRepositoryById(repoId);
-			let repoPath = repo?.path;
+			const repoPath = repo?.path;
 			if (repoPath == null) {
 				Logger.log(`Cannot perform review ${request.reviewId}: REPO_NOT_FOUND`);
 				return {

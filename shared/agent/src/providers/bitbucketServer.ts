@@ -1,33 +1,22 @@
 "use strict";
 import { GitRemoteLike, GitRepository } from "git/gitService";
-import { toRepoName } from "../git/utils";
 import * as paths from "path";
 import * as qs from "querystring";
 import { URI } from "vscode-uri";
 import { SessionContainer } from "../container";
+import { toRepoName } from "../git/utils";
 import { Logger } from "../logger";
-import { Markerish, MarkerLocationManager } from "../managers/markerLocationManager";
-import { MAX_RANGE_VALUE } from "../markerLocation/calculator";
 import { DocumentMarker, ProviderConfigurationData } from "../protocol/agent.protocol";
-import {
-	CodemarkType,
-	CSBitbucketProviderInfo,
-	CSLocationArray,
-	CSReferenceLocation
-} from "../protocol/api.protocol";
+import { CSBitbucketProviderInfo } from "../protocol/api.protocol";
 import { Arrays, log, lspProvider, Strings } from "../system";
 import {
-	ApiResponse,
-	getOpenedRepos,
 	getRemotePaths,
 	ProviderCreatePullRequestRequest,
 	ProviderCreatePullRequestResponse,
 	ProviderPullRequestInfo,
 	PullRequestComment,
 	REFRESH_TIMEOUT,
-	ThirdPartyIssueProviderBase,
-	ThirdPartyProviderSupportsIssues,
-	ThirdPartyProviderSupportsPullRequests
+	ThirdPartyIssueProviderBase
 } from "./provider";
 
 interface BitbucketRepo {

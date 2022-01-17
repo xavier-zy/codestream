@@ -616,6 +616,7 @@ export class Broadcaster {
 		if (troubleChannels === false) {
 			// means all channels are in doubt
 			troubleChannels = [...channels];
+			// @ts-ignore
 		} else if (troubleChannels == true) {
 			// means confirmation is assumed
 			troubleChannels = [] as string[];
@@ -625,7 +626,7 @@ export class Broadcaster {
 			// the channels in question
 			this._debug("Failed to confirm all subscriptions, resubscribing...");
 			this._connectionLostAt = Date.now();
-			//this.emitTrouble(troubleChannels);
+			// this.emitTrouble(troubleChannels);
 			this.resubscribe(troubleChannels);
 		} else {
 			if (this._testMode) {

@@ -9,7 +9,6 @@ import {
 import {
 	CSChannelStream,
 	CSCodemark,
-	CSCodeError,
 	CSCreateCodemarkRequest,
 	CSDirectStream,
 	CSLocationArray,
@@ -18,10 +17,9 @@ import {
 	CSObjectStream,
 	CSReferenceLocation,
 	CSRepository,
-	CSReview,
 	CSStream
 } from "./api.protocol";
-import { Attachment, ShareTarget } from "./api.protocol.models";
+import { Attachment } from "./api.protocol.models";
 
 export interface CodemarkPlus extends CSCodemark {
 	markers?: CSMarker[];

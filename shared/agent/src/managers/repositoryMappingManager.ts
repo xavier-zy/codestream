@@ -4,6 +4,7 @@ import * as path from "path";
 import { CodeStreamSession } from "session";
 import { URI } from "vscode-uri";
 import { SessionContainer } from "../container";
+import { GitRemoteParser } from "../git/parsers/remoteParser";
 import { Logger } from "../logger";
 import {
 	MapReposRequest,
@@ -15,7 +16,6 @@ import {
 	RepoMap
 } from "../protocol/agent.protocol.repos";
 import { log, lsp, lspHandler } from "../system";
-import { GitRemoteParser } from "../git/parsers/remoteParser";
 
 interface RepoMapValue {
 	paths: string[];

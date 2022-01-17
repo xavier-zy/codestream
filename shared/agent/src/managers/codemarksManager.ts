@@ -1,6 +1,5 @@
 "use strict";
-import { createPatch, ParsedDiff, parsePatch } from "diff";
-import { xfs } from "xfs";
+import { createPatch } from "diff";
 import { MessageType } from "../api/apiProvider";
 import { MarkerLocation } from "../api/extensions";
 import { Container, SessionContainer } from "../container";
@@ -19,12 +18,12 @@ import {
 	FetchCodemarksRequest,
 	FetchCodemarksRequestType,
 	FetchCodemarksResponse,
-	FollowCodemarkRequest,
-	FollowCodemarkRequestType,
-	FollowCodemarkResponse,
 	FollowCodeErrorRequest,
 	FollowCodeErrorRequestType,
 	FollowCodeErrorResponse,
+	FollowCodemarkRequest,
+	FollowCodemarkRequestType,
+	FollowCodemarkResponse,
 	FollowReviewRequest,
 	FollowReviewRequestType,
 	FollowReviewResponse,

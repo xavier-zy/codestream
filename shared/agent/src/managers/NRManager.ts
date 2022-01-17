@@ -2,6 +2,7 @@
 
 import { structuredPatch } from "diff";
 import path from "path";
+import { URI } from "vscode-uri";
 import { Container, SessionContainer } from "../container";
 import { Logger } from "../logger";
 import { calculateLocation, MAX_RANGE_VALUE } from "../markerLocation/calculator";
@@ -32,16 +33,15 @@ import {
 } from "../protocol/agent.protocol";
 import { RepoProjectType } from "../protocol/agent.protocol.scm";
 import { CSStackTraceInfo, CSStackTraceLine } from "../protocol/api.protocol.models";
+import { NewRelicProvider } from "../providers/newrelic";
 import { CodeStreamSession } from "../session";
 import { log } from "../system/decorators/log";
 import { lsp, lspHandler } from "../system/decorators/lsp";
 import { Strings } from "../system/string";
 import { xfs } from "../xfs";
-
 import { DotNetCoreInstrumentation } from "./newRelicInstrumentation/dotNetCoreInstrumentation";
 import { JavaInstrumentation } from "./newRelicInstrumentation/javaInstrumentation";
 import { NodeJSInstrumentation } from "./newRelicInstrumentation/nodeJSInstrumentation";
-
 import { Parser as csharpParser } from "./stackTraceParsers/csharpStackTraceParser";
 import { Parser as goParser } from "./stackTraceParsers/goStackTraceParser";
 import { Parser as javascriptParser } from "./stackTraceParsers/javascriptStackTraceParser";
@@ -49,9 +49,6 @@ import { Parser as javaParser } from "./stackTraceParsers/javaStackTraceParser";
 import { Parser as phpParser } from "./stackTraceParsers/phpStackTraceParser";
 import { Parser as pythonParser } from "./stackTraceParsers/pythonStackTraceParser";
 import { Parser as rubyParser } from "./stackTraceParsers/rubyStackTraceParser";
-
-import { NewRelicProvider } from "../providers/newrelic";
-import { URI } from "vscode-uri";
 
 const ExtensionToLanguageMap: { [key: string]: string } = {
 	js: "javascript",
@@ -168,9 +165,9 @@ export class NRManager {
 		occurrenceId,
 		codeErrorId
 	}: ResolveStackTraceRequest): Promise<ResolveStackTraceResponse> {
-		const { git, repos, repositoryMappings, session } = SessionContainer.instance();
+		const { git, repos, session } = SessionContainer.instance();
 		const matchingRepo = await git.getRepositoryById(repoId);
-		let matchingRepoPath = matchingRepo?.path;
+		const matchingRepoPath = matchingRepo?.path;
 		let firstWarning: WarningOrError | undefined = undefined;
 
 		// NOTE: the warnings should not prevent a stack trace from being displayed

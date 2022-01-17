@@ -12,6 +12,7 @@ import { URLSearchParams } from "url";
 import { Emitter, Event } from "vscode-languageserver";
 import { ServerError } from "../../agentError";
 import { Team, User } from "../../api/extensions";
+import { HistoryFetchInfo } from "../../broadcaster/broadcaster";
 import { Container, SessionContainer } from "../../container";
 import { Logger } from "../../logger";
 import { isDirective, resolve, safeDecode, safeEncode } from "../../managers/operations";
@@ -27,6 +28,8 @@ import {
 	ArchiveStreamRequest,
 	Capabilities,
 	ChangeDataType,
+	ClaimCodeErrorRequest,
+	ClaimCodeErrorResponse,
 	CloseStreamRequest,
 	CreateChannelStreamRequest,
 	CreateCodemarkPermalinkRequest,
@@ -46,6 +49,9 @@ import {
 	DeleteBlameMapRequestType,
 	DeleteCodeErrorRequest,
 	DeleteCodemarkRequest,
+	DeleteCompanyRequest,
+	DeleteCompanyRequestType,
+	DeleteCompanyResponse,
 	DeleteMarkerRequest,
 	DeleteMarkerResponse,
 	DeleteMeUserRequest,
@@ -78,14 +84,13 @@ import {
 	FetchTeamsRequest,
 	FetchUnreadStreamsRequest,
 	FetchUsersRequest,
-	ClaimCodeErrorRequest,
-	ClaimCodeErrorResponse,
 	FollowCodeErrorRequest,
 	FollowCodeErrorResponse,
 	FollowCodemarkRequest,
 	FollowCodemarkResponse,
 	FollowReviewRequest,
 	FollowReviewResponse,
+	GenerateLoginCodeRequest,
 	GetCodeErrorRequest,
 	GetCodeErrorResponse,
 	GetCodemarkRequest,
@@ -167,11 +172,7 @@ import {
 	UpdateUserRequest,
 	UploadFileRequest,
 	UploadFileRequestType,
-	VerifyConnectivityResponse,
-	DeleteCompanyRequest,
-	DeleteCompanyResponse,
-	DeleteCompanyRequestType,
-	GenerateLoginCodeRequest
+	VerifyConnectivityResponse
 } from "../../protocol/agent.protocol";
 import {
 	CSAddMarkersRequest,
@@ -183,7 +184,7 @@ import {
 	CSApiCapabilities,
 	CSApiFeatures,
 	CSChannelStream,
-	CSCodeError,
+	CSCodeLoginRequest,
 	CSCompany,
 	CSCompleteSignupRequest,
 	CSConfirmRegistrationRequest,
@@ -254,6 +255,8 @@ import {
 	CSMeStatus,
 	CSMsTeamsConversationRequest,
 	CSMsTeamsConversationResponse,
+	CSNRRegisterRequest,
+	CSNRRegisterResponse,
 	CSObjectStream,
 	CSPinReplyToCodemarkRequest,
 	CSPinReplyToCodemarkResponse,
@@ -263,8 +266,6 @@ import {
 	CSRefreshableProviderInfos,
 	CSRegisterRequest,
 	CSRegisterResponse,
-	CSNRRegisterRequest,
-	CSNRRegisterResponse,
 	CSRemoveProviderHostResponse,
 	CSSetCodemarkPinnedRequest,
 	CSSetCodemarkPinnedResponse,
@@ -295,8 +296,7 @@ import {
 	ProviderType,
 	StreamType,
 	TriggerMsTeamsProactiveMessageRequest,
-	TriggerMsTeamsProactiveMessageResponse,
-	CSCodeLoginRequest
+	TriggerMsTeamsProactiveMessageResponse
 } from "../../protocol/api.protocol";
 import { NewRelicProvider } from "../../providers/newrelic";
 import { VersionInfo } from "../../session";
@@ -313,7 +313,6 @@ import {
 } from "../apiProvider";
 import { CodeStreamPreferences } from "../preferences";
 import { BroadcasterEvents } from "./events";
-import { HistoryFetchInfo } from "../../broadcaster/broadcaster";
 import { CodeStreamUnreads } from "./unreads";
 
 @lsp
@@ -2466,9 +2465,9 @@ export class CodeStreamApiProvider implements ApiProvider {
 		if (request.buffer) {
 			const base64String = request.buffer;
 			// string off dataUri / content info from base64 string
-			var bareString = "";
-			var commaIndex = base64String.indexOf(",");
-			if (commaIndex == -1) {
+			let bareString = "";
+			const commaIndex = base64String.indexOf(",");
+			if (commaIndex === -1) {
 				bareString = base64String;
 			} else {
 				bareString = base64String.substring(commaIndex + 1);

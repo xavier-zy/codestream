@@ -13,9 +13,11 @@ export class JavaInstrumentation {
 	constructor(readonly session: CodeStreamSession) {}
 
 	async installNewRelic(cwd: string): Promise<InstallNewRelicResponse> {
-		let zipFile, installDir, newRelicDir;
-		let success = false,
-			made = false;
+		let zipFile;
+		let installDir;
+		let newRelicDir;
+		let success = false;
+		let made = false;
 		try {
 			zipFile = await this._downloadNewRelic(cwd);
 			const _ = await this._makeInstallDir(cwd);

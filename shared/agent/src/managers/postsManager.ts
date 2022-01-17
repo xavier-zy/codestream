@@ -8,7 +8,6 @@ import sizeof from "object-sizeof";
 import * as path from "path";
 import { TextDocumentIdentifier } from "vscode-languageserver";
 import { URI } from "vscode-uri";
-import { MessageType } from "../api/apiProvider";
 import { Marker, MarkerLocation } from "../api/extensions";
 import { Container, SessionContainer } from "../container";
 import { EMPTY_TREE_SHA } from "../git/gitService";
@@ -19,8 +18,8 @@ import {
 	CodeDelimiterStyles,
 	CodemarkPlus,
 	CodeStreamDiffUriData,
-	CreateCodemarkRequest,
 	CreateCodeErrorRequest,
+	CreateCodemarkRequest,
 	CreatePassthroughCodemarkResponse,
 	CreatePostRequest,
 	CreatePostRequestType,
@@ -28,12 +27,12 @@ import {
 	CreatePostWithMarkerRequest,
 	CreatePostWithMarkerRequestType,
 	CreateReviewRequest,
-	CreateShareableCodemarkRequest,
-	CreateShareableCodemarkRequestType,
-	CreateShareableCodemarkResponse,
 	CreateShareableCodeErrorRequest,
 	CreateShareableCodeErrorRequestType,
 	CreateShareableCodeErrorResponse,
+	CreateShareableCodemarkRequest,
+	CreateShareableCodemarkRequestType,
+	CreateShareableCodemarkResponse,
 	CreateShareableReviewRequest,
 	CreateShareableReviewRequestType,
 	CreateShareableReviewResponse,
@@ -103,6 +102,7 @@ import { getValues, KeyValue } from "./cache/baseCache";
 import { EntityCache, EntityCacheCfg } from "./cache/entityCache";
 import { EntityManagerBase, Id } from "./entityManager";
 import { MarkersBuilder } from "./markersBuilder";
+
 import getProviderDisplayName = Marker.getProviderDisplayName;
 
 export type FetchPostsFn = (request: FetchPostsRequest) => Promise<FetchPostsResponse>;
@@ -1117,8 +1117,8 @@ export class PostsManager extends EntityManagerBase<CSPost> {
 				if (lineWithMetadata) {
 					if (
 						parsedUri.context.pullRequest.providerId &&
-						(parsedUri.context.pullRequest.providerId == "github*com" ||
-							parsedUri.context.pullRequest.providerId == "github/enterprise")
+						(parsedUri.context.pullRequest.providerId === "github*com" ||
+							parsedUri.context.pullRequest.providerId === "github/enterprise")
 					) {
 						result = await providerRegistry.executeMethod({
 							method: "createPullRequestReviewThread",
@@ -1439,7 +1439,7 @@ export class PostsManager extends EntityManagerBase<CSPost> {
 		};
 
 		let codeError: CSCodeError | undefined;
-		let stream = await SessionContainer.instance().streams.getTeamStream();
+		const stream = await SessionContainer.instance().streams.getTeamStream();
 
 		const response = await this.session.api.createPost({
 			codeError: codeErrorRequest,

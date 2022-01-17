@@ -1,12 +1,12 @@
-import { Logger } from "../logger";
-import { CodeStreamSession } from "../session";
 import * as qs from "querystring";
+import { Logger } from "../logger";
 import {
 	CodeStreamApiDeleteRequestType,
 	CodeStreamApiGetRequestType,
 	CodeStreamApiPostRequestType,
 	CodeStreamApiPutRequestType
 } from "../protocol/agent.protocol";
+import { CodeStreamSession } from "../session";
 import { lsp, lspHandler } from "../system";
 
 @lsp

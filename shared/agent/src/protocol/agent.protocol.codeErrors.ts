@@ -3,13 +3,13 @@ import { RequestType } from "vscode-languageserver-protocol";
 import { CreateMarkerRequest, NewRelicErrorGroup, PostPlus } from "./agent.protocol";
 import {
 	CSChannelStream,
+	CSCodeError,
 	CSCreateCodeErrorRequest,
 	CSDirectStream,
 	CSGetCodeErrorsResponse,
 	CSMarker,
 	CSMarkerLocations,
 	CSRepository,
-	CSCodeError,
 	CSStream,
 	CSUpdateCodeErrorRequest,
 	CSUpdateCodeErrorResponse

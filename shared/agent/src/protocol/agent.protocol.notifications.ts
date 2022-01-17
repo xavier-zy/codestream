@@ -1,6 +1,6 @@
 "use strict";
 import { NotificationType, TextDocumentIdentifier } from "vscode-languageserver-protocol";
-import { Document, CodeStreamEnvironmentInfo, GetMyPullRequestsResponse } from "./agent.protocol";
+import { CodeStreamEnvironmentInfo, Document, GetMyPullRequestsResponse } from "./agent.protocol";
 import { LoginSuccessResponse, TokenLoginRequest } from "./agent.protocol.auth";
 import { CodemarkPlus } from "./agent.protocol.codemarks";
 import { ThirdPartyProviders } from "./agent.protocol.providers";

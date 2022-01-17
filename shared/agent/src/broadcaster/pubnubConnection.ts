@@ -13,10 +13,10 @@ import {
 	BroadcasterHistoryInput,
 	BroadcasterHistoryOutput,
 	BroadcasterStatusType,
+	HistoryFetchCallback,
 	MessageCallback,
 	MessageEvent,
-	StatusCallback,
-	HistoryFetchCallback
+	StatusCallback
 } from "./broadcaster";
 import { PubnubHistory } from "./pubnubHistory";
 

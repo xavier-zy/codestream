@@ -1,5 +1,6 @@
 "use strict";
 
+import * as childProcess from "child_process";
 import * as fs from "fs";
 import path from "path";
 import {
@@ -8,8 +9,6 @@ import {
 	InstallNewRelicResponse
 } from "../../protocol/agent.protocol";
 import { CodeStreamSession } from "../../session";
-import * as childProcess from "child_process";
-import { SpawnOptions } from "child_process";
 
 export class DotNetCoreInstrumentation {
 	constructor(readonly session: CodeStreamSession) {}
@@ -21,12 +20,12 @@ export class DotNetCoreInstrumentation {
 		// AS is runs, AND will return the full combined output
 		// as well as exit code when it's done (using the callback).
 
-		let me = this;
+		const me = this;
 		return new Promise(resolve => {
 			function run_script(
 				command: string,
 				args: string[],
-				options: SpawnOptions,
+				options: childProcess.SpawnOptions,
 				callback: (scriptOutput: string, error: string, code: string) => void
 			) {
 				const child = childProcess.spawn(command, args, options);
@@ -136,7 +135,7 @@ dotnet run -c Debug
 		try {
 			// exclude this file from git since it includes a licensekey
 			const gitExclude = path.join(repoPath, ".git", "info", "exclude");
-			let config = fs.readFileSync(gitExclude, "utf8");
+			const config = fs.readFileSync(gitExclude, "utf8");
 			if (config && config.indexOf("NrStart.cmd") === -1) {
 				fs.appendFileSync(gitExclude, "NrStart.cmd");
 			}

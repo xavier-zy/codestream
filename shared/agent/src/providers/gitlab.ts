@@ -297,17 +297,24 @@ export class GitLabProvider extends ThirdPartyIssueProviderBase<CSGitLabProvider
 	}
 
 	replaceMe(filter: any, currentUser: GitLabCurrentUser) {
-		if (filter?.assignee_username && filter["assignee_username"] === "@me")
+		if (filter?.assignee_username && filter["assignee_username"] === "@me") {
 			filter["assignee_username"] = currentUser.login;
-		if (filter?.assignee_id && filter["assignee_id"] === "@me")
+		}
+		if (filter?.assignee_id && filter["assignee_id"] === "@me") {
 			filter["assignee_id"] = currentUser.id;
-		if (filter?.author_username && filter["author_username"] === "@me")
+		}
+		if (filter?.author_username && filter["author_username"] === "@me") {
 			filter["author_username"] = currentUser.login;
-		if (filter?.author_id && filter["author_id"] === "@me") filter["author_id"] = currentUser.id;
-		if (filter?.reviewer_username && filter["reviewer_username"] === "@me")
+		}
+		if (filter?.author_id && filter["author_id"] === "@me") {
+			filter["author_id"] = currentUser.id;
+		}
+		if (filter?.reviewer_username && filter["reviewer_username"] === "@me") {
 			filter["reviewer_username"] = currentUser.login;
-		if (filter?.reviewer_id && filter["reviewer_id"] === "@me")
+		}
+		if (filter?.reviewer_id && filter["reviewer_id"] === "@me") {
 			filter["reviewer_id"] = currentUser.id;
+		}
 	}
 
 	@log()
@@ -315,7 +322,7 @@ export class GitLabProvider extends ThirdPartyIssueProviderBase<CSGitLabProvider
 		await this.ensureConnected();
 		const currentUser = await this.getCurrentUser();
 
-		let filter = request.customFilter
+		const filter = request.customFilter
 			? JSON.parse(JSON.stringify(qs.parse(request.customFilter)))
 			: undefined;
 
@@ -3175,7 +3182,9 @@ export class GitLabProvider extends ThirdPartyIssueProviderBase<CSGitLabProvider
 			endLine: number;
 		};
 	}): Promise<Directives> {
-		let projectFullPath, id, iid;
+		let projectFullPath;
+		let id;
+		let iid;
 		try {
 			({ projectFullPath, id, iid } = this.parseId(request.pullRequestId));
 

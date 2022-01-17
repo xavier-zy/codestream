@@ -3,17 +3,19 @@ import { GitRemoteLike, GitRepository } from "git/gitService";
 import { GraphQLClient } from "graphql-request";
 import { Response } from "node-fetch";
 import * as paths from "path";
+import { performance } from "perf_hooks";
 import * as qs from "querystring";
+import semver from "semver";
 import { CodeStreamSession } from "session";
 import { URI } from "vscode-uri";
 import { InternalError, ReportSuppressedMessages } from "../agentError";
 import { SessionContainer } from "../container";
+import { toRepoName } from "../git/utils";
 import { Logger } from "../logger";
 import {
 	CreateThirdPartyCardRequest,
 	DidChangePullRequestCommentsNotificationType,
 	DocumentMarker,
-	ProviderConfigurationData,
 	FetchReposResponse,
 	FetchThirdPartyBoardsRequest,
 	FetchThirdPartyBoardsResponse,
@@ -36,14 +38,14 @@ import {
 	MergeMethod,
 	MoveThirdPartyCardRequest,
 	MoveThirdPartyCardResponse,
+	ProviderConfigurationData,
 	ThirdPartyDisconnect,
 	ThirdPartyProviderCard,
 	ThirdPartyProviderConfig
 } from "../protocol/agent.protocol";
-
-import semver from "semver";
 import { CSGitHubProviderInfo, CSRepository } from "../protocol/api.protocol";
 import { Arrays, Dates, Functions, log, lspProvider, Strings } from "../system";
+import { Directive, Directives } from "./directives";
 import {
 	ApiResponse,
 	getOpenedRepos,
@@ -59,9 +61,6 @@ import {
 	ThirdPartyProviderSupportsIssues,
 	ThirdPartyProviderSupportsPullRequests
 } from "./provider";
-import { toRepoName } from "../git/utils";
-import { performance } from "perf_hooks";
-import { Directive, Directives } from "./directives";
 
 interface GitHubRepo {
 	id: string;
@@ -2724,7 +2723,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 				  remaining
 				  resetAt
 				}
-				viewer { 
+				viewer {
 					login
 				}
 				repository(name: $name, owner: $owner) {
@@ -4592,7 +4591,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 				>(url);
 				changedFiles.push(
 					...apiResponse.body.map(_ => {
-						let previousFilename = _.previous_filename;
+						const previousFilename = _.previous_filename;
 						delete _.previous_filename;
 						return {
 							..._,
@@ -5265,7 +5264,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 							}
 						  }
 						}
-					  }				
+					}
 					headRefName
 					headRepositoryOwner {
 						login
@@ -5713,7 +5712,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 			} else if (directive.type === "addReviewCommentNodes") {
 				for (const newNode of directive.data) {
 					if (!newNode.id) continue;
-					let node = pr.timelineItems.nodes.find((_: any) => _.id === newNode.id);
+					const node = pr.timelineItems.nodes.find((_: any) => _.id === newNode.id);
 					if (node) {
 						for (const c of newNode.comments.nodes) {
 							if (node.comments.nodes.find((_: any) => _.id === c.id) == null) {

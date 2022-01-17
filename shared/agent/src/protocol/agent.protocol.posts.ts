@@ -11,8 +11,8 @@ import { ThirdPartyProviderUser } from "./agent.protocol.providers";
 import { CreateReviewRequest, ReviewPlus } from "./agent.protocol.reviews";
 import {
 	CodemarkType,
-	CSCodemark,
 	CSCodeError,
+	CSCodemark,
 	CSMarker,
 	CSMarkerLocations,
 	CSPost,

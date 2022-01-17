@@ -1,3 +1,4 @@
+import { HistoryFetchInfo } from "broadcaster/broadcaster";
 import { RequestInit, Response } from "node-fetch";
 import { Disposable, Event } from "vscode-languageserver";
 import {
@@ -204,7 +205,6 @@ import {
 	TriggerMsTeamsProactiveMessageRequest,
 	TriggerMsTeamsProactiveMessageResponse
 } from "../protocol/api.protocol";
-import { HistoryFetchInfo } from "broadcaster/broadcaster";
 
 export type ApiProviderLoginResponse = CSLoginResponse & { token: AccessToken };
 

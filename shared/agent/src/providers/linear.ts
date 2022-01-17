@@ -145,7 +145,7 @@ export class LinearProvider extends ThirdPartyIssueProviderBase<CSLinearProvider
 	async getBoards(request: FetchThirdPartyBoardsRequest): Promise<FetchThirdPartyBoardsResponse> {
 		await this.ensureConnected();
 
-		let teams = await this.getTeams();
+		const teams = await this.getTeams();
 		teams.sort((a, b) => {
 			return a.name.localeCompare(b.name);
 		});

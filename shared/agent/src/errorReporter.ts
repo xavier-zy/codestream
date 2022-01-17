@@ -1,9 +1,9 @@
-import * as Sentry from "@sentry/node";
-import { Severity } from "@sentry/node";
 import * as os from "os";
+import * as Sentry from "@sentry/node";
 import { ReportSuppressedMessages } from "./agentError";
 import { Team } from "./api/extensions";
 import { SessionContainer } from "./container";
+import { Logger } from "./logger";
 import {
 	ReportBreadcrumbRequest,
 	ReportBreadcrumbRequestType,
@@ -14,7 +14,6 @@ import {
 } from "./protocol/agent.protocol";
 import { CodeStreamSession, SessionStatus } from "./session";
 import { lsp, lspHandler } from "./system";
-import { Logger } from "./logger";
 
 @lsp
 export class ErrorReporter {
@@ -107,7 +106,7 @@ export class ErrorReporter {
 
 		this._errorCache.add(key);
 		Sentry.captureEvent({
-			level: Severity.fromString(request.type),
+			level: Sentry.Severity.fromString(request.type),
 			timestamp: Date.now(),
 			message: request.message,
 			extra: request.extra,
@@ -122,7 +121,7 @@ export class ErrorReporter {
 		Sentry.addBreadcrumb({
 			message: request.message,
 			data: request.data,
-			level: request.level ? Severity.fromString(request.level) : undefined,
+			level: request.level ? Sentry.Severity.fromString(request.level) : undefined,
 			category: request.category
 		});
 	}

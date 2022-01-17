@@ -1,8 +1,8 @@
 "use strict";
 
 import { NotificationType, RequestType } from "vscode-languageserver-protocol";
-import { CSStackTraceInfo, CSStackTraceLine } from "./api.protocol.models";
 import { RepoProjectType } from "./agent.protocol.scm";
+import { CSStackTraceInfo, CSStackTraceLine } from "./api.protocol.models";
 
 export interface ParseStackTraceRequest {
 	errorGroupGuid: string;

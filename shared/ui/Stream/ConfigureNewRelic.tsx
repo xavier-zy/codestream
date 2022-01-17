@@ -198,7 +198,7 @@ class ConfigureNewRelic extends Component<Props> {
 										<input
 											id="configure-provider-initial-input"
 											className="input-text control"
-											type="text"
+											type="password"
 											name="apiKey"
 											tabIndex={1}
 											autoFocus

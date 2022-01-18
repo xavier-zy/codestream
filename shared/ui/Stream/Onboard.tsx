@@ -1124,6 +1124,8 @@ export const InviteTeammates = (props: { className: string; skip: Function; unwr
 			// allow some emails through that shouldn't be through, but
 			// won't block any that shouldn't be
 			if (email.match(/(?<!"") (?!"")(?=((?:[^"]*"){2})*[^"]*$)/)) return;
+			// If no period in domain, invalid email
+			if (!email.match(/.*@.*\..*/)) return;
 			if (teamMembers?.find(user => user.email === email)) return;
 			if (dontSuggestInvitees[email.replace(/\./g, "*")]) return;
 			suggested.push({ email, fullName: committers[email] || email });

@@ -17,7 +17,7 @@ export default {
 	"signUp.submitButton": "Create Account",
 	"signUp.legal.start": "By signing up, you agree to the",
 	"signUp.legal.terms": "Terms",
-	"signUp.legal.privacyPolicy": "Privacy Policy",
+	"signUp.legal.privacyPolicy": "Privacy Notice",
 	"signUp.legal.telemetryConsent":
 		"Help CodeStream improve by allowing the use of 3rd-party analytics tools.",
 	"signUp.legal.learnMore": "Learn more.",

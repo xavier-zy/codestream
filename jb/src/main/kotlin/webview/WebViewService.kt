@@ -49,10 +49,8 @@ class WebViewService(val project: Project) : Disposable {
     init {
         logger.info("Initializing WebViewService for project ${project.basePath}")
         ApplicationManager.getApplication().invokeLater {
-            GlobalScope.launch {
-                webView = createWebView(router)
-                webViewCreation.complete(Unit)
-            }
+            webView = createWebView(router)
+            webViewCreation.complete(Unit)
         }
 
         extractAssets()
@@ -165,7 +163,7 @@ class WebViewService(val project: Project) : Disposable {
         webView.dispose()
     }
 
-    private suspend fun createWebView(router: WebViewRouter): WebView {
+    private fun createWebView(router: WebViewRouter): WebView {
         val appSettings = ServiceManager.getService(ApplicationSettingsService::class.java)
         return try {
             if (!ENV_DISABLE_JCEF && appSettings.jcef && JBCefApp.isSupported() && platform != Platform.LINUX) {

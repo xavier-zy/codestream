@@ -89,7 +89,7 @@ class JxBrowserEngineService : Disposable {
 
     }
 
-    suspend fun newBrowser(): Browser {
+    fun newBrowser(): Browser {
         // browser.audio().mute()
         // browser.set(ConfirmCallback::class.java, ConfirmCallback { _, tell -> tell.cancel() })
         // browser.set(CertificateErrorCallback::class.java, CertificateErrorCallback { _, action -> action.deny() })
@@ -102,7 +102,7 @@ class JxBrowserEngineService : Disposable {
         // browser.set(PromptCallback::class.java, PromptCallback { _, action -> action.cancel() })
         // browser.set(SelectColorCallback::class.java, SelectColorCallback { _, action -> action.cancel() })
         // browser.set(SelectClientCertificateCallback::class.java, SelectClientCertificateCallback { _, action -> action.cancel() })
-        return engineFuture.await().newBrowser()
+        return engineFuture.join().newBrowser()
     }
 
     override fun dispose() {

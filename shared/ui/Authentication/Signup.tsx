@@ -521,7 +521,7 @@ export const Signup = (props: Props) => {
 								</FormattedMessage>{" "}
 								<FormattedMessage id="and" />{" "}
 								<FormattedMessage id="signUp.legal.privacyPolicy">
-									{text => <Link href="https://codestream.com/privacy">{text}</Link>}
+									{text => <Link href="https://newrelic.com/termsandconditions/privacy">{text}</Link>}
 								</FormattedMessage>
 							</small>
 

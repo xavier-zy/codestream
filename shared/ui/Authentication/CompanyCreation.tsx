@@ -5,7 +5,7 @@ import { FormattedMessage } from "react-intl";
 import { goToLogin } from "../store/context/actions";
 import { updateConfigs } from "../store/configs/actions";
 import { logError } from "../logger";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import Icon from "../Stream/Icon";
 import { useDidMount } from "../utilities/hooks";
 import styled from "styled-components";
@@ -20,6 +20,9 @@ import {
 import { changeRegistrationEmail } from "../store/session/actions";
 import { CSCompany, CSEligibleJoinCompany } from "@codestream/protocols/api";
 import { isUndefined as _isUndefined } from "lodash-es";
+import { ReloadAllWindows } from "./ReloadAllWindows";
+import { ModalRoot } from "../Stream/Modal";
+import { CodeStreamState } from "@codestream/webview/store";
 
 export const CheckboxRow = styled.div`
 	padding: 5px 0 5px 0;
@@ -37,7 +40,17 @@ const InlineLoadingWrapper = styled.div`
 	margin: 20px 0 0 0;
 `;
 
+const NrUserButtonCopy = styled.b`
+	font-size: 14px !important;
+`;
+
+const NrUserButtonWrapper = styled.div`
+	margin: 10px 0 20px 0;
+`;
+
 const isTeamNameValid = (name: string) => name.length > 0;
+
+const PRODUCTION_SERVER_URL = "https://api.codestream.com";
 
 interface EnhancedCSCompany {
 	id: string;
@@ -59,7 +72,11 @@ export function CompanyCreation(props: {
 	accountIsConnected?: boolean;
 }) {
 	const dispatch = useDispatch();
-
+	const derivedState = useSelector((state: CodeStreamState) => {
+		return {
+			serverUrl: state.configs.serverUrl
+		};
+	});
 	const providerName = props.provider
 		? ProviderNames[props.provider.toLowerCase()] || props.provider
 		: "CodeStream";
@@ -78,6 +95,7 @@ export function CompanyCreation(props: {
 	const [isLoading, setIsLoading] = React.useState(false);
 	const [isCreatingOrg, setIsCreatingOrg] = React.useState(false);
 	const [initialLoad, setInitialLoad] = React.useState(true);
+	const [showReloadAllWindows, setShowReloadAllWindows] = React.useState(false);
 	const [isLoadingJoinTeam, setIsLoadingJoinTeam] = React.useState<string | undefined>(undefined);
 	const initialCompanyName =
 		props.email && !props.isWebmail && !_isUndefined(props.isWebmail)
@@ -210,8 +228,34 @@ export function CompanyCreation(props: {
 		return isLoading || isCreatingOrg;
 	};
 
+	const isNewRelicStaffOnProductionEnvironment = () => {
+		return (
+			props.email &&
+			/@newrelic\.com$/.test(props.email) &&
+			derivedState.serverUrl === PRODUCTION_SERVER_URL
+		);
+	};
+
+	const handleClickSwitchStagingEnvironment = (event: React.SyntheticEvent) => {
+		event.preventDefault();
+		setShowReloadAllWindows(true);
+	};
+
+	const handleCloseReloadAllWindows = (event: React.SyntheticEvent) => {
+		event.preventDefault();
+		setShowReloadAllWindows(false);
+	};
+
 	return (
 		<div id="organization-page" className="onboarding-page">
+			<ModalRoot />
+			{showReloadAllWindows && (
+				<ReloadAllWindows
+					email={props.email}
+					userId={props.userId}
+					handleClose={handleCloseReloadAllWindows}
+				/>
+			)}
 			<div className="standard-form">
 				<fieldset className="form-body">
 					<div id="controls">
@@ -228,18 +272,45 @@ export function CompanyCreation(props: {
 							)}
 							{!isCreatingOrg && !initialLoad && (
 								<>
-									<JoinHeader>
-										<FormattedMessage
-											id="signUp.joinOrganization"
-											defaultMessage="Join your teammates on CodeStream"
-										/>
-									</JoinHeader>
-									<div>
-										<FormattedMessage
-											id="signUp.joinOrganizationHelp"
-											defaultMessage="These organizations are available based on your email domain."
-										/>
-									</div>
+									{!isNewRelicStaffOnProductionEnvironment() && (
+										<>
+											<JoinHeader>
+												<FormattedMessage
+													id="signUp.joinOrganization"
+													defaultMessage="Join your teammates on CodeStream"
+												/>
+											</JoinHeader>
+											<div>
+												<FormattedMessage
+													id="signUp.joinOrganizationHelp"
+													defaultMessage="These organizations are available based on your email domain."
+												/>
+											</div>
+										</>
+									)}
+
+									{isNewRelicStaffOnProductionEnvironment() && (
+										<>
+											<JoinHeader>Relics, are you using the correct environment?</JoinHeader>
+											<div>
+												You are signing up in CodeStream's production environment, which is great
+												for demos and testing. Join one of the organizations below, or create your
+												own. But if you're a developer you should be using the "New Relic Product
+												Org" in CodeStream's staging environment
+											</div>
+											<NrUserButtonWrapper>
+												<Button
+													onClick={e => handleClickSwitchStagingEnvironment(e)}
+													className="control-button"
+												>
+													<div className="copy">
+														<NrUserButtonCopy>Switch to the Staging Environment</NrUserButtonCopy>
+													</div>
+												</Button>
+											</NrUserButtonWrapper>
+										</>
+									)}
+
 									{isLoading && (
 										<InlineLoadingWrapper>
 											<Icon name="sync" loading={true} /> Loading organizations...

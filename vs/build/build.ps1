@@ -92,7 +92,7 @@ function Build-AgentAndWebview {
 		throw "Agent packaging failed"
 	}
 
-	if ((Test-Path -Path "../shared/agent/dist/agent-pkg-win-x86.exe") -eq $False) {
+	if ((Test-Path -Path "../shared/agent/dist/agent.exe") -eq $False) {
 		throw "Creating packaged artifacts failed, ensure the agent has been built"
 	}
 

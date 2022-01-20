@@ -39,7 +39,7 @@
 			"activitybar": [
 				{
 					"id": "codestream-activitybar",
-					"title": "CodeStream",
+					"title": "New Relic CodeStream",
 					"icon": "assets/images/codestream.svg"
 				}
 			]

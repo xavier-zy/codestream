@@ -438,7 +438,10 @@ export class CodeStreamApiProvider implements ApiProvider {
 				break;
 
 			case "token":
-				if (options.token.url !== this.baseUrl) throw new Error("Invalid token");
+				if (options.token.url !== this.baseUrl)
+					throw new Error(
+						`Invalid token, options.token.url="${options.token.url}" this.baseUrl="${this.baseUrl}"`
+					);
 
 				response = await this.put<{}, CSLoginResponse>("/login", {}, options.token.value);
 

@@ -49,7 +49,7 @@
 				{
 					"id": "activitybar.codestream",
 					"type": "webview",
-					"name": "CodeStream",
+					"name": "",
 					"icon": "assets/images/codestream.svg",
 					"contextualTitle": "CodeStream"
 				}

@@ -390,7 +390,7 @@ export class CodeStreamApiProvider implements ApiProvider {
 	}
 
 	setServerUrl(serverUrl: string) {
-		this.baseUrl = serverUrl;
+		this.baseUrl = serverUrl.trim();
 	}
 
 	useMiddleware(middleware: CodeStreamApiMiddleware) {
@@ -438,7 +438,7 @@ export class CodeStreamApiProvider implements ApiProvider {
 				break;
 
 			case "token":
-				if (options.token.url !== this.baseUrl)
+				if (options.token.url.trim() !== this.baseUrl)
 					throw new Error(
 						`Invalid token, options.token.url="${options.token.url}" this.baseUrl="${this.baseUrl}"`
 					);

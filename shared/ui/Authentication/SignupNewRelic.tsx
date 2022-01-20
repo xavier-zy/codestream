@@ -110,6 +110,7 @@ export const SignupNewRelic = () => {
 					// already has an account
 					if (notInviteRelated && email) {
 						setShowEmailErrorMessage(true);
+						setShowGenericErrorMessage(false);
 						setExistingEmail(email);
 					}
 					// invited @TODO: this could be handled cleaner
@@ -130,6 +131,7 @@ export const SignupNewRelic = () => {
 			}
 		} catch (error) {
 			setShowGenericErrorMessage(true);
+			setShowEmailErrorMessage(false);
 			logError(`Unexpected error during nr registration request: ${error}`);
 		}
 	};
@@ -144,15 +146,17 @@ export const SignupNewRelic = () => {
 							{showEmailErrorMessage && (
 								<ErrorMessageWrapper>
 									<div className="error-message">
-										An account already exists for {existingEmail}.{" "}
-										<Link
-											onClick={e => {
-												e.preventDefault();
-												dispatch(goToLogin());
-											}}
-										>
-											Sign In
-										</Link>
+										An account already exists for {existingEmail}.
+										<div>
+											<Link
+												onClick={e => {
+													e.preventDefault();
+													dispatch(goToLogin());
+												}}
+											>
+												Sign In
+											</Link>
+										</div>
 									</div>
 								</ErrorMessageWrapper>
 							)}
@@ -187,7 +191,7 @@ export const SignupNewRelic = () => {
 									<input
 										id="configure-provider-initial-input"
 										className="input-text control"
-										type="text"
+										type="password"
 										name="apiKey"
 										tabIndex={1}
 										autoFocus

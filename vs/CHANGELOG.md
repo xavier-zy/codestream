@@ -1,5 +1,25 @@
 # Change Log
 
+## [12.7.0] - 2022-1-20
+
+### Added
+
+- Adds the ability to sign into CodeStream using a code sent to you via email
+- Adds the ability to sign up for CodeStream using your New Relic One user api key
+- Adds a search box to the entity selection dropdown in the Observability section
+- Adds the ability for organization admins to delete their own organizations
+
+### Changed
+
+- Notifications about unreviewed commmits when you pull are now off by default for new users
+
+### Fixed
+
+- Addresses [#767](https://github.com/TeamCodeStream/CodeStream/issues/767) &mdash; Slack channel-selector dropdown not working
+- Fixes an issue where CodeStream doesn't think you have the repo open when viewing a merge request
+- Fixes an issue where issues from a Jira instance with many projects would 
+- Fixes an issue where channels for a workspace with a very large number of channels take a long time to load
+
 ## [12.6.0] - 2022-1-4
 
 ### Changed

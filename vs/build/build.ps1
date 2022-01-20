@@ -96,6 +96,11 @@ function Build-AgentAndWebview {
 		throw "Creating packaged artifacts failed, ensure the agent has been built"
 	}
 
+	Copy-Item -Path ..\shared\agent\dist\agent.exe -Destination src\CodeStream.VisualStudio\dist\agent.exe -Force
+	if ($LastExitCode -ne 0) {
+		throw "Copying packaged artifacts failed"
+	}
+
 	Write-Log "Packaging agent completed"
 
 	Write-Log "Build-AgentAndWebview completed in {$(Get-ElapsedTime($timer))}"

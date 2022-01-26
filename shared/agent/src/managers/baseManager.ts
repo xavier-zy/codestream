@@ -144,7 +144,7 @@ export abstract class ManagerBase<T> {
 	) {
 		if (!entities) return;
 		try {
-			entities = entities.filter(e => !isDirective(e));
+			entities = entities.filter(e => e && !isDirective(e));
 			manager.cache.set(entities);
 		} catch (ex) {
 			Logger.warn("Error caching response entities: " + ex.message);

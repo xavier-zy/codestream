@@ -516,13 +516,16 @@ function listenForEvents(store) {
 						const definedQuery = route as RouteWithQuery<{
 							apiKey: string;
 						}>;
-						if (definedQuery.query.apiKey) {
-							store.dispatch(
-								configureProvider("newrelic*com", { apiKey: definedQuery.query.apiKey }, true)
-							);
+						if (!store.getState().session.userId) {
+							store.dispatch(goToNewRelicSignup({}));
 						} else {
-							console.error("missing apiKey, opening panel");
-							store.dispatch(openPanel("configure-provider-newrelic-newrelic*com"));
+							if (definedQuery.query.apiKey) {
+								store.dispatch(
+									configureProvider("newrelic*com", { apiKey: definedQuery.query.apiKey }, true)
+								);
+							} else {
+								store.dispatch(openPanel("configure-provider-newrelic-newrelic*com"));
+							}
 						}
 						break;
 					}

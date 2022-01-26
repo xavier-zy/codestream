@@ -1688,6 +1688,7 @@ class CodemarkForm extends React.Component<Props, State> {
 	renderEditingMarker = (marker, index, force) => {
 		const { liveLocation, text, isPreviewing } = this.state;
 		const { editingCodemark } = this.props;
+		const commentType = this.getCommentType();
 
 		if (!marker) return null;
 		// if (liveLocation == index && !codeBlock.range)
@@ -1769,20 +1770,24 @@ class CodemarkForm extends React.Component<Props, State> {
 							className="clickable"
 							onClick={e => this.jumpToLocation(index, e)}
 						/>
-						<Icon
-							title="Select new range"
-							placement="bottomRight"
-							name="select"
-							className="clickable"
-							onClick={e => this.editLocation(index, e)}
-						/>
-						<Icon
-							title="Remove Range"
-							placement="bottomRight"
-							name="x"
-							className="clickable"
-							onClick={e => this.deleteLocation(index, e)}
-						/>
+						{commentType !== "link" && (
+							<>
+								<Icon
+									title="Select new range"
+									placement="bottomRight"
+									name="select"
+									className="clickable"
+									onClick={e => this.editLocation(index, e)}
+								/>
+								<Icon
+									title="Remove Range"
+									placement="bottomRight"
+									name="x"
+									className="clickable"
+									onClick={e => this.deleteLocation(index, e)}
+								/>
+							</>
+						)}
 					</div>
 				)}
 				<div style={{ clear: "both" }}></div>
@@ -1793,6 +1798,7 @@ class CodemarkForm extends React.Component<Props, State> {
 	renderCodeBlock = (index, force) => {
 		const { codeBlocks, liveLocation, text, isPreviewing } = this.state;
 		const { editingCodemark } = this.props;
+		const commentType = this.getCommentType();
 
 		const codeBlock = codeBlocks[index];
 		if (!codeBlock) return null;
@@ -1891,20 +1897,24 @@ class CodemarkForm extends React.Component<Props, State> {
 							className="clickable"
 							onClick={e => this.jumpToLocation(index, e)}
 						/>
-						<Icon
-							title="Select new range"
-							placement="bottomRight"
-							name="select"
-							className="clickable"
-							onClick={e => this.editLocation(index, e)}
-						/>
-						<Icon
-							title="Remove Range"
-							placement="bottomRight"
-							name="x"
-							className="clickable"
-							onClick={e => this.deleteLocation(index, e)}
-						/>
+						{commentType !== "link" && (
+							<>
+								<Icon
+									title="Select new range"
+									placement="bottomRight"
+									name="select"
+									className="clickable"
+									onClick={e => this.editLocation(index, e)}
+								/>
+								<Icon
+									title="Remove Range"
+									placement="bottomRight"
+									name="x"
+									className="clickable"
+									onClick={e => this.deleteLocation(index, e)}
+								/>
+							</>
+						)}
 					</div>
 				)}
 				<div style={{ clear: "both" }}></div>
@@ -2253,7 +2263,7 @@ class CodemarkForm extends React.Component<Props, State> {
 			locationItems.push({ label: "Add Range", action: () => this.addLocation() });
 		// { label: "Change Location", action: () => this.editLocation(0) }
 
-		if (!this.props.multiLocation)
+		if (!this.props.multiLocation && commentType !== "link")
 			locationItems.push({ label: "Select New Range", action: () => this.editLocation(0) });
 		if (this.state.codeBlocks.length == 1)
 			locationItems.push({ label: "Remove Location", action: () => this.deleteLocation(0) });

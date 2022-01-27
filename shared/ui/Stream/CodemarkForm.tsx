@@ -1752,17 +1752,19 @@ class CodemarkForm extends React.Component<Props, State> {
 				)}
 				{liveLocation != index && !isPreviewing && (
 					<div className="code-buttons">
-						<Icon
-							title={
-								blockInjected
-									? `This code block [#${index + 1}] is in the markdown above`
-									: `Insert code block #${index + 1} in markdown`
-							}
-							placement="bottomRight"
-							name="pin"
-							className={blockInjected ? "clickable selected" : "clickable"}
-							onMouseDown={e => this.pinLocation(index, e)}
-						/>
+						{commentType !== "link" && (
+							<Icon
+								title={
+									blockInjected
+										? `This code block [#${index + 1}] is in the markdown above`
+										: `Insert code block #${index + 1} in markdown`
+								}
+								placement="bottomRight"
+								name="pin"
+								className={blockInjected ? "clickable selected" : "clickable"}
+								onMouseDown={e => this.pinLocation(index, e)}
+							/>
+						)}
 						<Icon
 							title={"Jump to this range in " + file}
 							placement="bottomRight"
@@ -1879,17 +1881,19 @@ class CodemarkForm extends React.Component<Props, State> {
 				)}
 				{liveLocation != index && !isPreviewing && (
 					<div className="code-buttons">
-						<Icon
-							title={
-								blockInjected
-									? `This code block [#${index + 1}] is in the markdown above`
-									: `Insert code block #${index + 1} in markdown`
-							}
-							placement="bottomRight"
-							name="pin"
-							className={blockInjected ? "clickable selected" : "clickable"}
-							onMouseDown={e => this.pinLocation(index, e)}
-						/>
+						{commentType !== "link" && (
+							<Icon
+								title={
+									blockInjected
+										? `This code block [#${index + 1}] is in the markdown above`
+										: `Insert code block #${index + 1} in markdown`
+								}
+								placement="bottomRight"
+								name="pin"
+								className={blockInjected ? "clickable selected" : "clickable"}
+								onMouseDown={e => this.pinLocation(index, e)}
+							/>
+						)}
 						<Icon
 							title={"Jump to this range in " + file}
 							placement="bottomRight"

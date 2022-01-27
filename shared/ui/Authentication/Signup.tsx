@@ -431,7 +431,7 @@ export const Signup = (props: Props) => {
 									</Button>
 								)}
 								<OnPremWrapper id={`on-prem-wrapper`}>
-									Codestream supports on-prem versions as well. {` `}
+									Codestream supports on-prem code hosts as well. {` `}
 									<Tooltip
 										key="on-prem"
 										title={`CodeStream supports both cloud and on-prem versions of GitHub, 

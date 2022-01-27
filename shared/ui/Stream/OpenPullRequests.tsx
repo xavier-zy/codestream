@@ -222,7 +222,8 @@ export const OpenPullRequests = React.memo((props: Props) => {
 			isCurrentUserAdmin,
 			pullRequestQueries: state.preferences.pullRequestQueries,
 			myPullRequests,
-			isPRSupportedCodeHostConnected: prConnectedProvidersLength > 0,
+			// isPRSupportedCodeHostConnected: prConnectedProvidersLength > 0,
+			isPRSupportedCodeHostConnected: true,
 			PRSupportedProviders: prSupportedProviders,
 			PRConnectedProviders: prConnectedProviders,
 			PRConnectedProvidersCount: prConnectedProvidersLength,
@@ -244,12 +245,6 @@ export const OpenPullRequests = React.memo((props: Props) => {
 		const id = repo.id || "";
 		return { ...repo, name: derivedState.repos[id] ? derivedState.repos[id].name : "" };
 	});
-
-	// FIXME hardcoded github
-	const hasPRSupportedRepos =
-		openReposWithName.filter(r => r.providerGuess === "github" || r.providerGuess === "gitlab")
-			.length > 0;
-	// console.log(hasPRSupportedRepos, openReposWithName);
 
 	const { PRConnectedProviders, pullRequestProviderHidden, prLabel } = derivedState;
 	const [queries, setQueries] = React.useState({});
@@ -678,7 +673,7 @@ export const OpenPullRequests = React.memo((props: Props) => {
 		}
 	}
 
-	if (!derivedState.isPRSupportedCodeHostConnected && !hasPRSupportedRepos) return null;
+	// if (!derivedState.isPRSupportedCodeHostConnected && !hasPRSupportedRepos) return null;
 	if (!queries || Object.keys(queries).length === 0) return null;
 
 	const renderQueryGroup = providerId => {
@@ -984,7 +979,7 @@ export const OpenPullRequests = React.memo((props: Props) => {
 					prConnectedProviders={PRConnectedProviders}
 				/>
 			)}
-			{(derivedState.isPRSupportedCodeHostConnected || hasPRSupportedRepos) && (
+			{derivedState.isPRSupportedCodeHostConnected && (
 				<>
 					<PaneHeader
 						title={prLabel.PullRequests}
@@ -1034,7 +1029,7 @@ export const OpenPullRequests = React.memo((props: Props) => {
 					</PaneHeader>
 					{props.paneState !== PaneState.Collapsed && (
 						<PaneBody>
-							{hasPRSupportedRepos && !derivedState.isPRSupportedCodeHostConnected && (
+							{!derivedState.isPRSupportedCodeHostConnected && (
 								<>
 									<NoContent>Connect to GitHub or GitLab to see your PRs</NoContent>
 									<IntegrationButtons noBorder>

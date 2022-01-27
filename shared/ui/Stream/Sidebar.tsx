@@ -173,13 +173,14 @@ export const Sidebar = React.memo(function Sidebar() {
 		};
 	}, []); // Empty array ensures that effect is only run on mount
 
-	const showPullRequests = useMemo(() => {
-		if (derivedState.hasPRProvider) return true;
-		// FIXME hardcoded github
-		return (
-			openRepos.filter(r => r.providerGuess === "github" || r.providerGuess === "gitlab").length > 0
-		);
-	}, [derivedState.hasPRProvider, openRepos]);
+	// Currently always showing, regardless of provider (leaving commented out because we might revert in future)
+	// const showPullRequests = useMemo(() => {
+	// 	if (derivedState.hasPRProvider) return true;
+	// 	// FIXME hardcoded github
+	// 	return (
+	// 		openRepos.filter(r => r.providerGuess === "github" || r.providerGuess === "gitlab").length > 0
+	// 	);
+	// }, [derivedState.hasPRProvider, openRepos]);
 
 	const panes: {
 		id: WebviewPanels;
@@ -188,7 +189,7 @@ export const Sidebar = React.memo(function Sidebar() {
 		maximized: boolean;
 		size: number;
 	}[] = derivedState.sidebarPaneOrder
-		.filter(id => showPullRequests || id !== WebviewPanels.OpenPullRequests)
+		// .filter(id => showPullRequests || id !== WebviewPanels.OpenPullRequests)
 		.filter(id => AVAILABLE_PANES.includes(id))
 		.map(id => {
 			const settings = sidebarPanes[id] || {};

@@ -222,7 +222,9 @@ export const OpenPullRequests = React.memo((props: Props) => {
 			isCurrentUserAdmin,
 			pullRequestQueries: state.preferences.pullRequestQueries,
 			myPullRequests,
+			// Currently always showing, regardless of provider, might be reverted in future
 			isPRSupportedCodeHostConnected: prConnectedProvidersLength > 0,
+			// isPRSupportedCodeHostConnected: true,
 			PRSupportedProviders: prSupportedProviders,
 			PRConnectedProviders: prConnectedProviders,
 			PRConnectedProvidersCount: prConnectedProvidersLength,
@@ -245,11 +247,10 @@ export const OpenPullRequests = React.memo((props: Props) => {
 		return { ...repo, name: derivedState.repos[id] ? derivedState.repos[id].name : "" };
 	});
 
-	// FIXME hardcoded github
-	const hasPRSupportedRepos =
-		openReposWithName.filter(r => r.providerGuess === "github" || r.providerGuess === "gitlab")
-			.length > 0;
-	// console.log(hasPRSupportedRepos, openReposWithName);
+	// Currently always showing, regardless of provider
+	// const hasPRSupportedRepos =
+	// 	openReposWithName.filter(r => r.providerGuess === "github" || r.providerGuess === "gitlab")
+	// 		.length > 0;
 
 	const { PRConnectedProviders, pullRequestProviderHidden, prLabel } = derivedState;
 	const [queries, setQueries] = React.useState({});
@@ -678,7 +679,7 @@ export const OpenPullRequests = React.memo((props: Props) => {
 		}
 	}
 
-	if (!derivedState.isPRSupportedCodeHostConnected && !hasPRSupportedRepos) return null;
+	// if (!derivedState.isPRSupportedCodeHostConnected && !hasPRSupportedRepos) return null;
 	if (!queries || Object.keys(queries).length === 0) return null;
 
 	const renderQueryGroup = providerId => {
@@ -984,106 +985,98 @@ export const OpenPullRequests = React.memo((props: Props) => {
 					prConnectedProviders={PRConnectedProviders}
 				/>
 			)}
-			{(derivedState.isPRSupportedCodeHostConnected || hasPRSupportedRepos) && (
-				<>
-					<PaneHeader
-						title={prLabel.PullRequests}
-						id={WebviewPanels.OpenPullRequests}
-						isLoading={isLoadingPRs}
-						count={totalPRs}
-					>
-						{derivedState.isPRSupportedCodeHostConnected && (
-							<Icon
-								onClick={() => fetchPRs(queries, { force: true }, "refresh")}
-								name="refresh"
-								className={`spinnable ${isLoadingPRs ? "spin" : ""}`}
-								title="Refresh"
-								placement="bottom"
-								delay={1}
-							/>
-						)}
+			<>
+				<PaneHeader
+					title={prLabel.PullRequests}
+					id={WebviewPanels.OpenPullRequests}
+					isLoading={isLoadingPRs}
+					count={totalPRs}
+				>
+					{derivedState.isPRSupportedCodeHostConnected && (
 						<Icon
-							onClick={() => {
-								dispatch(setCreatePullRequest());
-								dispatch(setNewPostEntry("Status"));
-								dispatch(openPanel(WebviewPanels.NewPullRequest));
-							}}
-							name="plus"
-							title={`New ${prLabel.PullRequest}`}
+							onClick={() => fetchPRs(queries, { force: true }, "refresh")}
+							name="refresh"
+							className={`spinnable ${isLoadingPRs ? "spin" : ""}`}
+							title="Refresh"
 							placement="bottom"
 							delay={1}
 						/>
-						{derivedState.isPRSupportedCodeHostConnected && (
-							<Icon
-								onClick={addQuery}
-								name="filter"
-								title="Add Query"
-								placement="bottom"
-								delay={1}
-							/>
-						)}
-						<InlineMenu
-							key="settings-menu"
-							className="subtle no-padding"
-							noFocusOnSelect
-							noChevronDown
-							items={settingsMenuItems}
-						>
-							<Icon name="gear" title="Settings" placement="bottom" delay={1} />
-						</InlineMenu>
-					</PaneHeader>
-					{props.paneState !== PaneState.Collapsed && (
-						<PaneBody>
-							{hasPRSupportedRepos && !derivedState.isPRSupportedCodeHostConnected && (
-								<>
-									<NoContent>Connect to GitHub or GitLab to see your PRs</NoContent>
-									<IntegrationButtons noBorder>
-										{derivedState.PRSupportedProviders.map(provider => {
-											if (!provider) return null;
-											const providerDisplay = PROVIDER_MAPPINGS[provider.name];
-											if (providerDisplay) {
-												return (
-													<Provider
-														key={provider.id}
-														onClick={() =>
-															dispatch(configureAndConnectProvider(provider.id, "PRs Section"))
-														}
-													>
-														<Icon name={providerDisplay.icon} />
-														{providerDisplay.displayName}
-													</Provider>
-												);
-											} else return null;
-										})}
-									</IntegrationButtons>
-								</>
-							)}
-							{PRConnectedProviders.length > 1
-								? PRConnectedProviders.map((provider, index) => {
-										const providerId = provider.id;
-										const display = PROVIDER_MAPPINGS[provider.name];
-										const displayName = provider.isEnterprise
-											? `${display.displayName} - ${renderDisplayHost(provider.host)}`
-											: display.displayName;
-										const collapsed = pullRequestProviderHidden[providerId];
-										return (
-											<PaneNode key={index}>
-												<PaneNodeName
-													onClick={e => toggleProviderHidden(e, providerId)}
-													title={displayName}
-													collapsed={collapsed}
-													count={0}
-													isLoading={isLoadingPRs || index === isLoadingPRGroup}
-												></PaneNodeName>
-												{!collapsed && renderQueryGroup(provider.id)}
-											</PaneNode>
-										);
-								  })
-								: PRConnectedProviders.map(provider => renderQueryGroup(provider.id))}
-						</PaneBody>
 					)}
-				</>
-			)}
+					<Icon
+						onClick={() => {
+							dispatch(setCreatePullRequest());
+							dispatch(setNewPostEntry("Status"));
+							dispatch(openPanel(WebviewPanels.NewPullRequest));
+						}}
+						name="plus"
+						title={`New ${prLabel.PullRequest}`}
+						placement="bottom"
+						delay={1}
+					/>
+					{derivedState.isPRSupportedCodeHostConnected && (
+						<Icon onClick={addQuery} name="filter" title="Add Query" placement="bottom" delay={1} />
+					)}
+					<InlineMenu
+						key="settings-menu"
+						className="subtle no-padding"
+						noFocusOnSelect
+						noChevronDown
+						items={settingsMenuItems}
+					>
+						<Icon name="gear" title="Settings" placement="bottom" delay={1} />
+					</InlineMenu>
+				</PaneHeader>
+				{props.paneState !== PaneState.Collapsed && (
+					<PaneBody>
+						{!derivedState.isPRSupportedCodeHostConnected && (
+							<>
+								<NoContent>Connect to GitHub or GitLab to see your PRs</NoContent>
+								<IntegrationButtons noBorder>
+									{derivedState.PRSupportedProviders.map(provider => {
+										if (!provider) return null;
+										const providerDisplay = PROVIDER_MAPPINGS[provider.name];
+										if (providerDisplay) {
+											return (
+												<Provider
+													key={provider.id}
+													onClick={() =>
+														dispatch(configureAndConnectProvider(provider.id, "PRs Section"))
+													}
+												>
+													<Icon name={providerDisplay.icon} />
+													{providerDisplay.displayName}
+												</Provider>
+											);
+										} else return null;
+									})}
+								</IntegrationButtons>
+							</>
+						)}
+						{PRConnectedProviders.length > 1
+							? PRConnectedProviders.map((provider, index) => {
+									const providerId = provider.id;
+									const display = PROVIDER_MAPPINGS[provider.name];
+									const displayName = provider.isEnterprise
+										? `${display.displayName} - ${renderDisplayHost(provider.host)}`
+										: display.displayName;
+									const collapsed = pullRequestProviderHidden[providerId];
+									return (
+										<PaneNode key={index}>
+											<PaneNodeName
+												onClick={e => toggleProviderHidden(e, providerId)}
+												title={displayName}
+												collapsed={collapsed}
+												count={0}
+												isLoading={isLoadingPRs || index === isLoadingPRGroup}
+											></PaneNodeName>
+											{!collapsed && renderQueryGroup(provider.id)}
+										</PaneNode>
+									);
+							  })
+							: PRConnectedProviders.map(provider => renderQueryGroup(provider.id))}
+					</PaneBody>
+				)}
+			</>
 		</Root>
 	);
 });

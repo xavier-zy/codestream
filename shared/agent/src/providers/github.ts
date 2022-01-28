@@ -3077,8 +3077,15 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 					limit = 5;
 				}
 
-				const finalQuery = repoQuery + query;
-				Logger.log(`getMyPullRequests providerId="${providerId}" query="${finalQuery}"`);
+				// if a user has put a "repo:X/Y" in their query, don't add the repoQuery as specified by the request.isOpen option
+				const finalQuery = query.indexOf("repo:") > -1 ? query : repoQuery + query;
+				if (query !== finalQuery) {
+					Logger.log(
+						`getMyPullRequests providerId="${providerId}" finalQuery="${finalQuery}" query=${query}`
+					);
+				} else {
+					Logger.log(`getMyPullRequests providerId="${providerId}" finalQuery="${finalQuery}"`);
+				}
 				return this.query<any>(this.buildSearchQuery(finalQuery, limit));
 			})
 		).catch(ex => {

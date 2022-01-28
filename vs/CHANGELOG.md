@@ -1,5 +1,19 @@
 # Change Log
 
+## [12.8.0] - 2022-1-28
+
+### Changed
+
+- Don't prompt for repo associations in the Observability section if there are no entities on New Relic
+- Jira issues in `Done` status are excluded from the Issues section
+- The Pull Requests section of the CodeStream pane is always display, regardless of what repos you have open in your IDE
+
+### Fixed
+
+- Addresses [#836](https://github.com/TeamCodeStream/CodeStream/issues/836) &mdash; CodeStream Plugin Crashes PHPStorm
+- Addresses [#713](https://github.com/TeamCodeStream/CodeStream/issues/713) &mdash; Saved query executing differently in different projects/windows
+- Fixes an issue with incorrect options being displayed when creating a permalink (i.e., add/remove range, pin)
+
 ## [12.7.0] - 2022-1-24
 
 ### Added

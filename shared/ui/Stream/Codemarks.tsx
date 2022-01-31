@@ -12,9 +12,11 @@ import {
 	MarkerNotLocated,
 	CodemarkPlus,
 	DidChangeDataNotificationType,
-	ChangeDataType
+	ChangeDataType,
+	GetReposScmRequestType
 } from "@codestream/protocols/agent";
 import { fetchDocumentMarkers } from "../store/documentMarkers/actions";
+
 import {
 	ScmError,
 	getFileScmError,
@@ -90,7 +92,6 @@ interface ConnectedProps {
 	codemarkDomain: CodemarkDomainType;
 	codemarkSortType: CodemarkSortType;
 	teamName: string;
-	repoName: string;
 	repos: ReposState;
 	codemarks: CodemarkPlus[];
 	count: string | number;
@@ -121,6 +122,7 @@ interface State {
 	isLoading: boolean;
 	problem: ScmError | undefined;
 	pendingPRConnection: boolean | undefined;
+	repoName: string | undefined;
 }
 
 export class SimpleCodemarksForFile extends Component<Props, State> {
@@ -140,7 +142,8 @@ export class SimpleCodemarksForFile extends Component<Props, State> {
 			showConfiguationModal: false,
 			isLoading: props.documentMarkers ? props.documentMarkers.length === 0 : true,
 			problem: props.scmInfo && getFileScmError(props.scmInfo),
-			pendingPRConnection: false
+			pendingPRConnection: false,
+			repoName: ""
 		};
 
 		this.docMarkersByStartLine = {};
@@ -224,12 +227,29 @@ export class SimpleCodemarksForFile extends Component<Props, State> {
 		if (
 			!scmInfo ||
 			(scmInfo.uri !== textEditorUri && codemarkDomain !== CodemarkDomainType.Team) ||
-			checkBranchUpdate
+			checkBranchUpdate ||
+			!this.state.repoName
 		) {
 			this.setState({ isLoading: true });
-			scmInfo = await HostApi.instance.send(GetFileScmInfoRequestType, {
-				uri: textEditorUri
+
+			if (textEditorUri) {
+				scmInfo = await HostApi.instance.send(GetFileScmInfoRequestType, {
+					uri: textEditorUri
+				});
+			}
+
+			const reposResponse = await HostApi.instance.send(GetReposScmRequestType, {
+				inEditorOnly: true
 			});
+
+			const currentRepo = reposResponse.repositories?.find(
+				repo => repo.id === scmInfo?.scm?.repoId
+			);
+
+			if (currentRepo) {
+				this.setState({ repoName: currentRepo.folder?.name });
+			}
+
 			setEditorContext({ scmInfo });
 		}
 
@@ -258,7 +278,9 @@ export class SimpleCodemarksForFile extends Component<Props, State> {
 				<NoContent>
 					<p>
 						Open a source file to start discussing code with your teammates{" "}
-						<a href="https://docs.newrelic.com/docs/codestream/how-use-codestream/discuss-code/">Learn more.</a>
+						<a href="https://docs.newrelic.com/docs/codestream/how-use-codestream/discuss-code/">
+							Learn more.
+						</a>
 					</p>
 				</NoContent>
 			);
@@ -554,7 +576,7 @@ export class SimpleCodemarksForFile extends Component<Props, State> {
 				: codemarkDomain === CodemarkDomainType.Branch
 				? this.props.currentBranch || "[branch]"
 				: codemarkDomain === CodemarkDomainType.Repo
-				? this.props.repoName || "[repository]"
+				? this.state.repoName || "[repository]"
 				: this.props.teamName;
 
 		const domainItems = [
@@ -584,7 +606,7 @@ export class SimpleCodemarksForFile extends Component<Props, State> {
 			},
 			{
 				label: "Current Repository",
-				subtle: this.props.repoName || "",
+				subtle: this.state.repoName || "",
 				key: "repo",
 				icon: <Icon name="repo" />,
 				action: () => this.switchDomain(CodemarkDomainType.Repo),
@@ -779,15 +801,9 @@ const mapStateToProps = (state: CodeStreamState, props): ConnectedProps => {
 		"gitlab_enterprise"
 	].some(name => isConnected(state, { name }));
 
-	let repoName = "";
 	const scmInfo = editorContext.scmInfo;
 	if (scmInfo && scmInfo.scm) {
 		MOST_RECENT_SCM_INFO = scmInfo;
-	}
-
-	if (MOST_RECENT_SCM_INFO && MOST_RECENT_SCM_INFO.scm) {
-		const { repoId } = MOST_RECENT_SCM_INFO.scm;
-		if (repoId && repos[repoId]) repoName = repos[repoId].name;
 	}
 
 	const codemarkDomain: CodemarkDomainType = preferences.codemarkDomain || CodemarkDomainType.Repo;
@@ -860,7 +876,6 @@ const mapStateToProps = (state: CodeStreamState, props): ConnectedProps => {
 	return {
 		repos,
 		teamName,
-		repoName,
 		hasPRProvider,
 		currentStreamId: context.currentStreamId,
 		showHidden: preferences.codemarksShowArchived || false,

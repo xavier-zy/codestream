@@ -1194,6 +1194,7 @@ export const InviteTeammates = (props: { className: string; skip: Function; unwr
 		}
 
 		setSendingInvites(false);
+
 		props.skip();
 	};
 
@@ -1232,7 +1233,10 @@ export const InviteTeammates = (props: { className: string; skip: Function; unwr
 				<div>
 					{suggestedInvitees.length > 0 && (
 						<>
-							<p className="explainer left">Discuss code and investigate errors with your teammates. Here are some suggestions based on your git history.</p>
+							<p className="explainer left">
+								Discuss code and investigate errors with your teammates. Here are some suggestions
+								based on your git history.
+							</p>
 							{suggestedInvitees.map(user => {
 								return (
 									<Checkbox

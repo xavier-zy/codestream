@@ -9,8 +9,6 @@ import com.codestream.protocols.webview.WebViewNotification
 import com.codestream.sessionService
 import com.codestream.settings.ApplicationSettingsService
 import com.codestream.settingsService
-import com.codestream.system.Platform
-import com.codestream.system.platform
 import com.github.salomonbrys.kotson.jsonObject
 import com.google.gson.JsonElement
 import com.intellij.openapi.Disposable
@@ -48,7 +46,7 @@ class WebViewService(val project: Project) : Disposable {
 
     init {
         logger.info("Initializing WebViewService for project ${project.basePath}")
-        ApplicationManager.getApplication().invokeLater {
+        GlobalScope.launch {
             webView = createWebView(router)
             webViewCreation.complete(Unit)
         }
@@ -80,14 +78,12 @@ class WebViewService(val project: Project) : Disposable {
             project.settingsService?.clearWebViewContext()
         }
         applyStylesheet()
-        ApplicationManager.getApplication().invokeLater {
-            GlobalScope.launch {
-                try {
-                    webViewCreation.await()
-                    webView.loadUrl(htmlFile.url)
-                } catch (e: Exception) {
-                    logger.error(e)
-                }
+        GlobalScope.launch {
+            try {
+                webViewCreation.await()
+                webView.loadUrl(htmlFile.url)
+            } catch (e: Exception) {
+                logger.error(e)
             }
         }
     }
@@ -160,29 +156,36 @@ class WebViewService(val project: Project) : Disposable {
     }
 
     override fun dispose() {
-        webView.dispose()
+        try {
+            webView.dispose()
+        } catch (ignore: Exception) {}
     }
 
-    private fun createWebView(router: WebViewRouter): WebView {
+    private suspend fun createWebView(router: WebViewRouter): WebView {
         val appSettings = ServiceManager.getService(ApplicationSettingsService::class.java)
         return try {
-            if (!ENV_DISABLE_JCEF && appSettings.jcef && JBCefApp.isSupported() && platform != Platform.LINUX) {
+            if (!ENV_DISABLE_JCEF && appSettings.jcef && JBCefApp.isSupported()) {
                 logger.info("JCEF enabled")
-                val jbCefBrowser = JBCefBrowser()
-                JBCefWebView(jbCefBrowser, router).also {
+                val jbCefBrowserFuture = CompletableFuture<JBCefBrowser>()
+                ApplicationManager.getApplication().invokeLater {
+                    val jbCefBrowser = JBCefBrowser()
+                    jbCefBrowserFuture.complete(jbCefBrowser)
+                }
+                JBCefWebView(jbCefBrowserFuture.await(), router).also {
                     webviewTelemetry("JCEF")
                 }
             } else {
                 logger.info("JCEF disabled - falling back to JxBrowser")
                 val engine = ServiceManager.getService(JxBrowserEngineService::class.java)
-                JxBrowserWebView(engine.newBrowser(), router).also {
+                val browser = engine.newBrowser()
+
+                JxBrowserWebView(browser, router).also {
                     if (JBCefApp.isSupported()) {
                         webviewTelemetry("JxBrowser - user selection")
                     } else {
                         webviewTelemetry("JxBrowser - JCEF not supported")
                     }
                 }
-
             }
         } catch (ex: Exception) {
             logger.warn("Error initializing JCEF - falling back to JxBrowser", ex)

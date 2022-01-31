@@ -2,7 +2,9 @@ package com.codestream.webview
 
 import com.codestream.DEBUG
 import com.codestream.extensions.escapeUnicode
+import com.codestream.system.Platform
 import com.codestream.system.SPACE_ENCODED
+import com.codestream.system.platform
 import com.google.gson.JsonElement
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.diagnostic.Logger
@@ -35,7 +37,11 @@ class JBCefWebView(val jbCefBrowser: JBCefBrowser, val router: WebViewRouter) : 
 
     init {
         logger.info("Initializing JBCef WebView")
-        jbCefBrowser.cefBrowser.createImmediately()
+        if (platform != Platform.LINUX) {
+            // we needed this to work around some blank webview glitches in the past,
+            // but now it causes the very same glitch on Linux
+            jbCefBrowser.cefBrowser.createImmediately()
+        }
         jbCefBrowser.jbCefClient.addContextMenuHandler(object : CefContextMenuHandlerAdapter(){
             override fun onBeforeContextMenu(
                 browser: CefBrowser?,

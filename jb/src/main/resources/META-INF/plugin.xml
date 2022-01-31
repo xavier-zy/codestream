@@ -161,5 +161,5 @@
 
     <depends>com.intellij.modules.platform</depends>
     <depends>Git4Idea</depends>
-    <idea-version since-build="203.6682" />
+    <idea-version since-build="211.7142" />
 </idea-plugin>

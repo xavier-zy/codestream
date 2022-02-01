@@ -42,7 +42,8 @@ export const SignupNewRelic = () => {
 		return {
 			ide: state.ide,
 			webviewFocused: state.context.hasFocus,
-			isProductionCloud: state.configs.isProductionCloud
+			isProductionCloud: state.configs.isProductionCloud,
+			pendingProtocolHandlerQuerySource: state.context.pendingProtocolHandlerQuery?.src
 		};
 	});
 
@@ -82,7 +83,8 @@ export const SignupNewRelic = () => {
 			const sendTelemetry = () => {
 				HostApi.instance.track("Account Created", {
 					email: email,
-					"Auth Provider": "New Relic"
+					"Auth Provider": "New Relic",
+					Source: derivedState.pendingProtocolHandlerQuerySource
 				});
 			};
 

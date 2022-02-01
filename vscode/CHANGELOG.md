@@ -1,6 +1,6 @@
 # Change Log
 
-## [12.8.0] - 2022-1-31
+## [12.8.0] - 2022-2-1
 
 ### Changed
 
@@ -13,6 +13,7 @@
 - Addresses [#836](https://github.com/TeamCodeStream/CodeStream/issues/836) &mdash; CodeStream Plugin Crashes PHPStorm
 - Addresses [#713](https://github.com/TeamCodeStream/CodeStream/issues/713) &mdash; Saved query executing differently in different projects/windows
 - Fixes an issue with incorrect options being displayed when creating a permalink (i.e., add/remove range, pin)
+- Fixes an issue where the filter in the Codemarks section defaults to "[repository]" for a new user
 
 ## [12.7.0] - 2022-1-24
 

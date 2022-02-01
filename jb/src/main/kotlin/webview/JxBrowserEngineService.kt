@@ -19,6 +19,7 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.launch
+import org.apache.commons.io.FileUtils
 import java.io.File
 import java.net.URLClassLoader
 import java.nio.file.Files
@@ -181,16 +182,35 @@ class JxBrowserEngineService : Disposable {
                 jarUrls.toTypedArray()
             )
 
+            // EngineImpl loads native libtoolkit.so. Each individual native library
+            // can only be loaded in one classloader. On Linux, the URL classloader
+            // is not garbage collected until much later, so the call to newInstance()
+            // will fail because libtoolkit.so will still belong to the other classloader.
+            // The workaround consists in making each classloader load the native library
+            // from a different path, therefore the temp dir.
+            val chromiumDirTemp = File("${chromiumDir.path}.tmp")
+            FileUtils.deleteQuietly(chromiumDirTemp)
+            try {
+                FileUtils.moveDirectory(chromiumDir, chromiumDirTemp)
+            } catch (ex: Exception) {
+                logger.debug(ex)
+            }
+
             val jniLibrary =
                 Class.forName("com.teamdev.jxbrowser.internal.JniLibrary", true, childClassLoader)//.path(chromiumDir);
             val pathMethod = jniLibrary.getDeclaredMethod("path", Path::class.java)
-            pathMethod.invoke(null, chromiumDir.toPath())
+            pathMethod.invoke(null, chromiumDirTemp.toPath())
 
             val engineImpl = Class.forName("com.teamdev.jxbrowser.engine.internal.EngineImpl", true, childClassLoader)
             val extractorMethod = engineImpl.getDeclaredMethod("extractChromiumBinariesIfNecessary", Path::class.java)
             extractorMethod.isAccessible = true
-            extractorMethod.invoke(null, chromiumDir.toPath())
+            extractorMethod.invoke(null, chromiumDirTemp.toPath())
 
+            try {
+                FileUtils.moveDirectory(chromiumDirTemp, chromiumDir)
+            } catch (ex: Exception) {
+                logger.debug(ex)
+            }
             logger.info("JxBrowser Chromium available at ${chromiumDir.canonicalPath}")
             return chromiumDir
         } catch (ex: Exception) {

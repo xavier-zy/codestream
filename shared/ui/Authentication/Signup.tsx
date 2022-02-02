@@ -90,7 +90,8 @@ export const Signup = (props: Props) => {
 			isInVSCode: state.ide.name === "VSC",
 			supportsVSCodeGithubSignin: state.capabilities.vsCodeGithubSignin,
 			acceptedTOS: state.session.acceptedTOS,
-			webviewFocused: state.context.hasFocus
+			webviewFocused: state.context.hasFocus,
+			pendingProtocolHandlerQuerySource: state.context.pendingProtocolHandlerQuery?.src
 		};
 	});
 	const [email, setEmail] = useState(props.email || "");
@@ -197,7 +198,8 @@ export const Signup = (props: Props) => {
 			const sendTelemetry = () => {
 				HostApi.instance.track("Account Created", {
 					email: email,
-					"Git Email Match?": email === scmEmail
+					"Git Email Match?": email === scmEmail,
+					Source: derivedState.pendingProtocolHandlerQuerySource
 				});
 			};
 

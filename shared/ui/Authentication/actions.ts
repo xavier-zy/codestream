@@ -363,7 +363,8 @@ export const validateSignup = (provider: string, authInfo?: SSOAuthInfo) => asyn
 			case LoginResult.NotInCompany:
 				HostApi.instance.track("Account Created", {
 					email: response.extra.email,
-					"Auth Provider": providerName
+					"Auth Provider": providerName,
+					Source: context.pendingProtocolHandlerQuery?.src
 				});
 				return dispatch(
 					goToCompanyCreation({
@@ -379,7 +380,8 @@ export const validateSignup = (provider: string, authInfo?: SSOAuthInfo) => asyn
 			case LoginResult.NotOnTeam:
 				HostApi.instance.track("Account Created", {
 					email: response.extra.email,
-					"Auth Provider": providerName
+					"Auth Provider": providerName,
+					Source: context.pendingProtocolHandlerQuery?.src
 				});
 				return dispatch(
 					goToTeamCreation({
@@ -400,7 +402,8 @@ export const validateSignup = (provider: string, authInfo?: SSOAuthInfo) => asyn
 	if (authInfo && authInfo.fromSignup) {
 		HostApi.instance.track("Account Created", {
 			email: response.loginResponse.user.email,
-			"Auth Provider": providerName
+			"Auth Provider": providerName,
+			Source: context.pendingProtocolHandlerQuery?.src
 		});
 
 		HostApi.instance.track("Signup Completed", {

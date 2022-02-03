@@ -8,6 +8,8 @@ export interface PubnubHistoryInput {
 	pubnub: Pubnub;
 	channels: string[];
 	since: number;
+	reason?: string;
+	cla?: number;
 	debug?(msg: string, info?: any): void; // for debug messages
 	historyFetchCallback?: HistoryFetchCallback;
 }
@@ -50,7 +52,7 @@ export class PubnubHistory {
 		do {
 			channels = options.channels.slice(startSlice, sliceSize);
 			if (channels.length > 0) {
-				if (await this.fetchByChannelSlice(channels, options.since)) {
+				if (await this.fetchByChannelSlice(channels, options)) {
 					this.processMessages();
 					startSlice += sliceSize;
 				} else {
@@ -67,10 +69,14 @@ export class PubnubHistory {
 	}
 
 	// fetch historical messages for a slice of 500 channels
-	private async fetchByChannelSlice(channels: string[], since: number): Promise<boolean> {
+	private async fetchByChannelSlice(
+		channels: string[],
+		options: PubnubHistoryInput
+	): Promise<boolean> {
+		const { since } = options;
 		const timetoken = this.timestampToTimetokenStringified(since);
 		try {
-			await this.retrieveBatchHistory(channels, timetoken);
+			await this.retrieveBatchHistory(channels, timetoken, options);
 		} catch (error) {
 			// if we reached a "RESET" condition, break out and inform the client, we'll proceed no further
 			if (error === "RESET") {
@@ -101,10 +107,21 @@ export class PubnubHistory {
 	}
 
 	// retrieve historical messages in batch
-	private async retrieveBatchHistory(channels: string[], timetoken: string) {
+	private async retrieveBatchHistory(
+		channels: string[],
+		timetoken: string,
+		options: PubnubHistoryInput
+	) {
+		const { reason, cla } = options;
 		this._debug(`Calling Pubnub.fetchMessages from ${timetoken} for ${channels.join(",")}`);
 		if (this._historyFetchCallback) {
-			this._historyFetchCallback({ channels: channels.join(","), before: "", after: timetoken });
+			this._historyFetchCallback({
+				channels: channels.join(","),
+				before: "",
+				after: timetoken,
+				reason,
+				cla
+			});
 		}
 		const response: any = await (this._pubnub! as any).fetchMessages({
 			channels,
@@ -142,7 +159,8 @@ export class PubnubHistory {
 				await this.retrieveChannelHistory(
 					channel,
 					earliestTimetokenPerChannel[channel] - 1,
-					timetoken
+					timetoken,
+					options
 				);
 			})
 		);
@@ -155,14 +173,22 @@ export class PubnubHistory {
 		channel: string,
 		before: number,
 		after: string,
+		options: PubnubHistoryInput,
 		depth: number = 0
 	) {
+		const { reason, cla } = options;
 		if (depth === 10) {
 			throw new Error("RESET");
 		}
 		this._debug(`Calling Pubnub.history from ${after} to ${before} for ${channel}`);
 		if (this._historyFetchCallback) {
-			this._historyFetchCallback({ channels: channel, before: before.toString(), after });
+			this._historyFetchCallback({
+				channels: channel,
+				before: before.toString(),
+				after,
+				reason,
+				cla
+			});
 		}
 		const response: any = await (this._pubnub! as any).history({
 			channel,
@@ -186,6 +212,7 @@ export class PubnubHistory {
 				channel,
 				parseInt(response.startTimeToken!, 10),
 				after,
+				options,
 				depth + 1
 			);
 		}

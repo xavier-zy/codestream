@@ -22,6 +22,8 @@ export interface BroadcasterConnection {
 export interface BroadcasterHistoryInput {
 	channels: string[];
 	since: number;
+	reason?: string;
+	cla?: number;
 	debug?(msg: string, info?: any): void; // for debug messages
 }
 
@@ -42,6 +44,8 @@ export interface HistoryFetchInfo {
 	channels: string;
 	before: string;
 	after: string;
+	reason?: string;
+	cla?: number;
 }
 export type HistoryFetchCallback = (info: HistoryFetchInfo) => void;
 
@@ -385,7 +389,7 @@ export class Broadcaster {
 		}
 	}
 
-	onFetchHistory(info: HistoryFetchInfo) {
+	onFetchHistory(info: HistoryFetchInfo): void {
 		this._api.announceHistoryFetch(info);
 	}
 
@@ -503,14 +507,21 @@ export class Broadcaster {
 		// catch up since the last message received, or, if we are caught in a loop
 		// of trying to catch up already, continue to catch up from that point
 		let since = 0;
+		let missed = 0;
+		const now = Date.now();
+		let reason;
 		if (this._lastMessageReceivedAt > 0) {
 			since = this._lastMessageReceivedAt - THRESHOLD_BUFFER;
+			missed = now - since;
+			reason = `missed_${missed}`;
 			this._debug(`Last message was recevied at ${this._lastMessageReceivedAt}`);
 		} else {
 			// on a fresh session, since initialization may take some time (especially if there are connection issues),
 			// we want to make sure we get messages received in that time, in fact we'll be generous and pick up
 			// any messages issued since ten seconds before initialization
 			since = this._initializationStartedAt - 10000;
+			missed = now - since;
+			reason = `init_${missed}`;
 			this._debug(
 				`No messages have been received yet, looks like fresh session, retrieve history since ${since}`
 			);
@@ -523,7 +534,7 @@ export class Broadcaster {
 			*/
 		}
 
-		if (Date.now() - since > THRESHOLD_FOR_CATCHUP) {
+		if (missed > THRESHOLD_FOR_CATCHUP) {
 			// if it's been too long, we don't want to process a whole ton of messages,
 			// and in any case we only retain messages for one month ... so better to
 			// force the client to initiate a fresh session
@@ -538,7 +549,9 @@ export class Broadcaster {
 			historyOutput = await this._broadcasterConnection!.fetchHistory({
 				channels,
 				since,
-				debug: this._debug
+				debug: this._debug,
+				reason,
+				cla: this._connectionLostAt
 			});
 		} catch (error) {
 			// this is bad ... if we can't catch up on history, we'll start

@@ -342,7 +342,7 @@ export abstract class ThirdPartyProviderBase<
 		// if CodeStream is connected through a proxy, then we should be too,
 		// but to make sure nothing breaks, only if the user has a preference for it
 		if (this.session.proxyAgent) {
-			const { user } = await SessionContainer.instance().users.getMe();
+			const user = await SessionContainer.instance().users.getMe();
 			if (user.preferences?.useCodestreamProxyForIntegrations) {
 				Logger.log(
 					`${this.providerConfig.name} provider (id:"${this.providerConfig.id}") will use CodeStream's proxy agent`
@@ -424,7 +424,7 @@ export abstract class ThirdPartyProviderBase<
 	}
 
 	private async ensureConnectedCore(request?: { providerTeamId?: string }) {
-		const { user } = await SessionContainer.instance().users.getMe();
+		const user = await SessionContainer.instance().users.getMe();
 		this._providerInfo = this.getProviderInfo(user);
 		if (this._providerInfo === undefined) {
 			throw new Error(`You must authenticate with ${this.displayName} first.`);

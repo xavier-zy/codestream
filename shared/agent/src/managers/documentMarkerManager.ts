@@ -261,7 +261,7 @@ export class DocumentMarkerManager {
 
 	private async getFilters() {
 		const { users } = SessionContainer.instance();
-		const preferences = (await users.getMe()).user.preferences;
+		const preferences = (await users.getMe()).preferences;
 		if (!preferences) return {};
 
 		return {
@@ -775,7 +775,7 @@ export class DocumentMarkerManager {
 		streamId: string | undefined;
 	}): Promise<DocumentMarker[]> {
 		const { providerRegistry, users } = SessionContainer.instance();
-		const { user } = await users.getMe();
+		const user = await users.getMe();
 		const providers = providerRegistry.getConnectedProviders(
 			user,
 			(p): p is ThirdPartyIssueProvider & ThirdPartyProviderSupportsPullRequests => {

@@ -989,12 +989,8 @@ export class SlackSharingApiProvider {
 		}
 	}
 
-	private async getMeCore(meResponse?: CSGetMeResponse) {
-		if (meResponse === undefined) {
-			meResponse = await SessionContainer.instance().users.getMe();
-		}
-
-		let me = meResponse.user;
+	private async getMeCore() {
+		let me = await SessionContainer.instance().users.getMe();
 		me.codestreamId = me.id;
 		me.id = this.userId;
 

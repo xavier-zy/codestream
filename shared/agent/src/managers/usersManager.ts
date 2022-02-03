@@ -8,8 +8,6 @@ import {
 	FetchUsersRequest,
 	FetchUsersRequestType,
 	FetchUsersResponse,
-	GetMeRequestType,
-	GetMeResponse,
 	GetPreferencesRequestType,
 	GetPreferencesResponse,
 	GetUnreadsRequest,
@@ -27,7 +25,6 @@ import {
 	SetModifiedReposRequestType,
 	UpdateInvisibleRequest,
 	UpdateInvisibleRequestType,
-	UpdateInvisibleResponse,
 	UpdatePreferencesRequest,
 	UpdatePreferencesRequestType,
 	UpdatePreferencesResponse,
@@ -98,11 +95,6 @@ export class UsersManager extends CachedEntityManagerBase<CSUser> {
 	}
 
 	protected async fetchById(userId: Id): Promise<CSUser> {
-		if (this.session.userId !== userId) {
-			const response = await this.session.api.getMe();
-			return response.user;
-		}
-
 		const response = await this.session.api.getUser({ userId: userId });
 		return response.user;
 	}
@@ -152,16 +144,12 @@ export class UsersManager extends CachedEntityManagerBase<CSUser> {
 		return this.session.api.updatePresence(request);
 	}
 
-	@lspHandler(GetMeRequestType)
-	async getMe(): Promise<GetMeResponse> {
-		if (this.session.userId !== undefined) {
-			const cachedMe = await this.getById(this.session.userId);
-			if (cachedMe !== undefined) {
-				return { user: cachedMe as CSMe };
-			}
+	async getMe(): Promise<CSMe> {
+		const cachedMe = await this.cache.getById(this.session.userId);
+		if (!cachedMe) {
+			throw new Error(`User's own object (${this.session.userId}) not found in cache`);
 		}
-
-		return await this.session.api.getMe();
+		return cachedMe as CSMe;
 	}
 
 	@lspHandler(GetUnreadsRequestType)

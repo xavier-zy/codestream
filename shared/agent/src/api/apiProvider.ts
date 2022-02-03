@@ -95,7 +95,6 @@ import {
 	GetCompanyResponse,
 	GetMarkerRequest,
 	GetMarkerResponse,
-	GetMeResponse,
 	GetNewRelicSignupJwtTokenRequest,
 	GetNewRelicSignupJwtTokenResponse,
 	GetPostRequest,
@@ -367,7 +366,6 @@ export interface ApiProvider {
 	readonly baseUrl: string;
 	readonly teamId: string;
 	readonly userId: string;
-	readonly meUser: CSMe | undefined;
 	readonly capabilities: Capabilities;
 	readonly features: CSApiFeatures | undefined;
 
@@ -383,7 +381,6 @@ export interface ApiProvider {
 
 	grantBroadcasterChannelAccess(token: string, channel: string): Promise<{}>;
 
-	getMe(): Promise<GetMeResponse>;
 	getUnreads(request: GetUnreadsRequest): Promise<GetUnreadsResponse>;
 	updatePreferences(request: UpdatePreferencesRequest): Promise<UpdatePreferencesResponse>;
 	updateInvisible(request: UpdateInvisibleRequest): Promise<UpdateInvisibleResponse>;

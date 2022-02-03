@@ -1027,6 +1027,8 @@ export class CodeStreamSession {
 		this._codestreamAccessToken = token.value;
 		this._teamId = (this._options as any).teamId = token.teamId;
 		this._codestreamUserId = response.user.id;
+		this._userId = response.user.id;
+		this._email = response.user.email;
 
 		const currentTeam = response.teams.find(t => t.id === this._teamId)!;
 		this.registerApiCapabilities(response.capabilities || {}, currentTeam);
@@ -1054,6 +1056,7 @@ export class CodeStreamSession {
 
 		SessionContainer.initialize(this);
 		try {
+			await SessionContainer.instance().users.cacheSet(response.user);
 			// after initializing, wait for the initial search of git repositories to complete,
 			// otherwise newly matched repos might be returned to the webview before the bootstrap
 			// request can be processed, resulting in bad repo data known by the webview
@@ -1065,10 +1068,6 @@ export class CodeStreamSession {
 
 		// re-register to acknowledge lsp handlers from newly instantiated classes
 		registerDecoratedHandlers(this.agent);
-
-		// Make sure to update this after the slack/msteams switch as the userId will change
-		this._userId = response.user.id;
-		this._email = response.user.email;
 
 		this.setStatus(SessionStatus.SignedIn);
 
@@ -1583,12 +1582,12 @@ export class CodeStreamSession {
 		const me = await users.getMe();
 		// disable FROP for new users by default
 		let createReviewOnDetectUnreviewedCommits;
-		if (me.user.createdAt > 1641405000000) {
+		if (me.createdAt > 1641405000000) {
 			createReviewOnDetectUnreviewedCommits =
-				me.user.preferences?.reviewCreateOnDetectUnreviewedCommits === true ? true : false;
+				me.preferences?.reviewCreateOnDetectUnreviewedCommits === true ? true : false;
 		} else {
 			createReviewOnDetectUnreviewedCommits =
-				me.user.preferences?.reviewCreateOnDetectUnreviewedCommits === false ? false : true;
+				me.preferences?.reviewCreateOnDetectUnreviewedCommits === false ? false : true;
 		}
 		if (createReviewOnDetectUnreviewedCommits) {
 			reviews.checkUnreviewedCommits(repo).then(unreviewedCommitCount => {

@@ -532,7 +532,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			const { users } = SessionContainer.instance();
 			const me = await users.getMe();
 
-			const result = await this.getErrorsInboxAssignments(me.user.email);
+			const result = await this.getErrorsInboxAssignments(me.email);
 			if (result) {
 				response.items = result.actor.errorsInbox.errorGroups.results
 					.filter(_ => {
@@ -1717,16 +1717,14 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		} catch {}
 		if (
 			meUser &&
-			meUser.user &&
-			(meUser.user.email.indexOf("@newrelic.com") > -1 ||
-				meUser.user.email.indexOf("@codestream.com") > -1)
+			(meUser.email.indexOf("@newrelic.com") > -1 || meUser.email.indexOf("@codestream.com") > -1)
 		) {
 			return {
 				settings: {
 					accountId: accountId,
 					errorGroupGuid: errorGroupGuid,
 					entityGuid: entityGuid,
-					codeStreamUserId: meUser?.user?.id,
+					codeStreamUserId: meUser?.id,
 					codeStreamTeamId: session?.teamId,
 					apiUrl: this.apiUrl
 				}

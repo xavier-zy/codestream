@@ -338,7 +338,6 @@ export class CodeStreamApiProvider implements ApiProvider {
 	private _team: CSTeam | undefined;
 	private _token: string | undefined;
 	private _unreads: CodeStreamUnreads | undefined;
-	private _user: CSMe | undefined;
 	private _userId: string | undefined;
 	private _preferences: CodeStreamPreferences | undefined;
 	private _features: CSApiFeatures | undefined;
@@ -383,10 +382,6 @@ export class CodeStreamApiProvider implements ApiProvider {
 
 	get features() {
 		return this._features;
-	}
-
-	get meUser() {
-		return this._user;
 	}
 
 	setServerUrl(serverUrl: string) {
@@ -618,7 +613,6 @@ export class CodeStreamApiProvider implements ApiProvider {
 
 		this._teamId = team.id;
 		this._team = team;
-		this._user = response.user;
 		this._userId = response.user.id;
 		this._features = response.features;
 
@@ -683,13 +677,15 @@ export class CodeStreamApiProvider implements ApiProvider {
 	async subscribe(types?: MessageType[]) {
 		this._subscribedMessageTypes = types !== undefined ? new Set(types) : undefined;
 
+		const { session, users } = SessionContainer.instance();
+		const me = await users.getMe();
 		if (types === undefined || types.includes(MessageType.Unreads)) {
 			this._unreads = new CodeStreamUnreads(this);
 			this._unreads.onDidChange(this.onUnreadsChanged, this);
-			this._unreads.compute(this._user!.lastReads, this._user!.lastReadItems);
+			this._unreads.compute(me.lastReads, me.lastReadItems);
 		}
 		if (types === undefined || types.includes(MessageType.Preferences)) {
-			this._preferences = new CodeStreamPreferences(this._user!.preferences);
+			this._preferences = new CodeStreamPreferences(me.preferences);
 			this._preferences.onDidChange(preferences => {
 				this._onDidReceiveMessage.fire({ type: MessageType.Preferences, data: preferences });
 			});
@@ -700,7 +696,6 @@ export class CodeStreamApiProvider implements ApiProvider {
 			this._httpsAgent instanceof HttpsAgent || this._httpsAgent instanceof HttpsProxyAgent
 				? this._httpsAgent
 				: undefined;
-		const session = SessionContainer.instance().session;
 		this._events = new BroadcasterEvents({
 			accessToken: this._token!,
 			pubnubSubscribeKey: this._pubnubSubscribeKey,
@@ -866,12 +861,13 @@ export class CodeStreamApiProvider implements ApiProvider {
 				}
 				break;
 			case MessageType.Users:
+				const usersManager = SessionContainer.instance().users;
 				const users: CSUser[] = e.data;
 				const meIndex = users.findIndex(u => u.id === this.userId);
 
 				// If we aren't updating the current user, just continue
 				if (meIndex === -1) {
-					e.data = await SessionContainer.instance().users.resolve(e, { onlyIfNeeded: false });
+					e.data = await usersManager.resolve(e, { onlyIfNeeded: false });
 					if (e.data != null && e.data.length !== 0) {
 						// we might be getting info from other users that we need to trigger
 						this._onDidReceiveMessage.fire(e as RTMessage);
@@ -879,52 +875,53 @@ export class CodeStreamApiProvider implements ApiProvider {
 					return;
 				}
 
-				const me = users[meIndex] as CSMe;
 				if (users.length > 1) {
 					// Remove the current user, as we will handle that seperately
 					users.splice(meIndex, 1);
 
-					e.data = await SessionContainer.instance().users.resolve(e, { onlyIfNeeded: false });
+					e.data = await usersManager.resolve(e, { onlyIfNeeded: false });
 					if (e.data != null && e.data.length !== 0) {
 						this._onDidReceiveMessage.fire(e as RTMessage);
 					}
 
+					const me = users[meIndex] as CSMe;
 					e.data = [me];
 				}
 
+				let me = await usersManager.getMe();
 				const lastReads = {
-					...(this._unreads ? (await this._unreads.get()).lastReads : this._user!.lastReads)
+					...(this._unreads ? (await this._unreads.get()).lastReads : me.lastReads)
 				};
 				const lastReadItems = {
-					...(this._unreads ? (await this._unreads.get()).lastReadItems : this._user!.lastReadItems)
+					...(this._unreads ? (await this._unreads.get()).lastReadItems : me.lastReadItems)
 				};
 
 				const userPreferencesBefore = JSON.stringify(me.preferences);
 
-				e.data = await SessionContainer.instance().users.resolve(e, {
+				e.data = await usersManager.resolve(e, {
 					onlyIfNeeded: true
 				});
 				if (e.data == null || e.data.length === 0) return;
 
-				this._user = (await SessionContainer.instance().users.getMe()).user;
-				e.data = [this._user];
+				me = await usersManager.getMe();
+				e.data = [me];
 
 				try {
 					if (
 						this._unreads !== undefined &&
-						(!Objects.shallowEquals(lastReads, this._user.lastReads || {}) ||
-							!Objects.shallowEquals(lastReadItems, this._user.lastReadItems || {}))
+						(!Objects.shallowEquals(lastReads, me.lastReads || {}) ||
+							!Objects.shallowEquals(lastReadItems, me.lastReadItems || {}))
 					) {
-						this._unreads.compute(me.lastReads, this._user.lastReadItems);
+						this._unreads.compute(me.lastReads, me.lastReadItems);
 					}
 					if (!this._preferences) {
-						this._preferences = new CodeStreamPreferences(this._user.preferences);
+						this._preferences = new CodeStreamPreferences(me.preferences);
 					}
 					if (
-						this._user.preferences &&
-						JSON.stringify(this._user.preferences) !== userPreferencesBefore
+						me.preferences &&
+						JSON.stringify(me.preferences) !== userPreferencesBefore
 					) {
-						this._preferences.update(this._user.preferences);
+						this._preferences.update(me.preferences);
 					}
 				} catch {
 					debugger;
@@ -945,7 +942,7 @@ export class CodeStreamApiProvider implements ApiProvider {
 	}
 
 	@log()
-	getMe() {
+	private getMe() {
 		return this.get<CSGetMeResponse>("/users/me", this._token);
 	}
 
@@ -1000,10 +997,10 @@ export class CodeStreamApiProvider implements ApiProvider {
 	@log()
 	async updateStatus(request: UpdateStatusRequest) {
 		let currentStatus = {};
-		const meResponse = await this.getMe();
-		if (meResponse.user.status) {
+		const me = await SessionContainer.instance().users.getMe();
+		if (me.status) {
 			currentStatus = {
-				...meResponse.user.status
+				...me.status
 			};
 		}
 		const update = await this.put<{ status: { [teamId: string]: CSMeStatus } }, any>(
@@ -2084,14 +2081,10 @@ export class CodeStreamApiProvider implements ApiProvider {
 
 		const response = await this.get<CSGetUsersResponse>(path, this._token);
 
-		if (this._user === undefined) {
-			const meResponse = await this.getMe();
-			this._user = meResponse.user;
-		}
-
 		// Find ourselves and replace it with our model
 		const index = response.users.findIndex(u => u.id === this._userId);
-		if (index !== -1) response.users.splice(index, 1, this._user);
+		const me = await SessionContainer.instance().users.getMe();
+		if (index !== -1 && me) response.users.splice(index, 1, me);
 
 		return response;
 	}

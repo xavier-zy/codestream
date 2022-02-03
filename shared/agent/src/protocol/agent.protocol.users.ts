@@ -193,16 +193,6 @@ export const SetModifiedReposRequestType = new RequestType<
 	void
 >("codestream/user/setModifiedRepos");
 
-export interface GetMeRequest {}
-
-export interface GetMeResponse {
-	user: CSMe;
-}
-
-export const GetMeRequestType = new RequestType<GetMeRequest, GetMeResponse, void, void>(
-	"codestream/users/me"
-);
-
 export interface GetUnreadsRequest {}
 
 export interface GetUnreadsResponse {

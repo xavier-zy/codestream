@@ -161,8 +161,7 @@ export class ThirdPartyProviderRegistry {
 	}
 
 	private async pullRequestsStateHandler() {
-		// TODO FIXME -- should read from something in the usersManager
-		const user = await SessionContainer.instance().session.api.meUser;
+		const user = await SessionContainer.instance().users.getMe();
 		if (!user) return;
 
 		const providers = this.getConnectedProviders(user, (p): p is ThirdPartyIssueProvider &
@@ -801,7 +800,7 @@ export class ThirdPartyProviderRegistry {
 			]
 		};
 		try {
-			const user = await SessionContainer.instance().session.api.meUser;
+			const user = await SessionContainer.instance().users.getMe();
 			const providers = await this.getConnectedPullRequestProviders(user!);
 			const gitlabEnterprise = providers?.find(_ => _.getConfig().id === "gitlab/enterprise");
 			if (gitlabEnterprise) {

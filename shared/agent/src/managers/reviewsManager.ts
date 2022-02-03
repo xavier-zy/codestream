@@ -609,8 +609,8 @@ export class ReviewsManager extends CachedEntityManagerBase<CSReview> {
 				};
 			}
 
-			const { providerRegistry } = SessionContainer.instance();
-			const user = await SessionContainer.instance().session.api.meUser;
+			const { providerRegistry, users } = SessionContainer.instance();
+			const user = await users.getMe();
 			if (!user) {
 				Logger.warn("Could not find CSMe user");
 				return {
@@ -740,7 +740,7 @@ export class ReviewsManager extends CachedEntityManagerBase<CSReview> {
 			let remoteUrl;
 			let providerId;
 
-			const user = (await SessionContainer.instance().users.getMe()).user;
+			const user = await SessionContainer.instance().users.getMe();
 			if (!user) {
 				Logger.warn("Could not find CSMe user");
 				return {
@@ -793,7 +793,7 @@ export class ReviewsManager extends CachedEntityManagerBase<CSReview> {
 			}
 
 			if (!success) {
-				const user = await SessionContainer.instance().session.api.meUser;
+				const user = await SessionContainer.instance().users.getMe();
 				if (user) {
 					const connectedProviders = await providerRegistry.getConnectedPullRequestProviders(user);
 					if (connectedProviders && connectedProviders.length) {

@@ -118,8 +118,8 @@ const ONE_MONTH = 30 * 24 * 60 * 60 * 1000;
 const TEN_MINUTES = 10 * 60 * 1000;
 const THRESHOLD_FOR_CATCHUP = ONE_MONTH - TEN_MINUTES;
 const THRESHOLD_BUFFER = 12000;
-const MAX_HISTORY_FETCHES_PER_MINUTE = 1;
-const MAX_HISTORY_FETCHES_PER_HOUR = 2;
+const MAX_HISTORY_FETCHES_PER_MINUTE = 10;
+const MAX_HISTORY_FETCHES_PER_HOUR = 100;
 
 export class Broadcaster {
 	private _broadcasterConnection: BroadcasterConnection | undefined;

@@ -118,6 +118,8 @@ const ONE_MONTH = 30 * 24 * 60 * 60 * 1000;
 const TEN_MINUTES = 10 * 60 * 1000;
 const THRESHOLD_FOR_CATCHUP = ONE_MONTH - TEN_MINUTES;
 const THRESHOLD_BUFFER = 12000;
+const MAX_HISTORY_FETCHES_PER_MINUTE = 1;
+const MAX_HISTORY_FETCHES_PER_HOUR = 2;
 
 export class Broadcaster {
 	private _broadcasterConnection: BroadcasterConnection | undefined;
@@ -145,6 +147,7 @@ export class Broadcaster {
 	private _initializationStartedAt: number = 0;
 	private _partialMessages: { [fullMessageId: string]: PartialMessage[] } = {};
 	private _connectionLostAt: number | undefined;
+	private _historyFetches: number[] = [];
 
 	// call to receive status updates
 	get onDidStatusChange(): Event<BroadcasterStatus> {
@@ -491,6 +494,7 @@ export class Broadcaster {
 
 	// catch up on missed history for all subscribed channels
 	private async catchUp() {
+		const now = Date.now();
 		const channels = this.getSubscribedChannels();
 		if (channels.length === 0) {
 			this._debug("No channels to catch up with");
@@ -504,11 +508,40 @@ export class Broadcaster {
 			return;
 		}
 
+		// rate limit our history fetches, since we pay for them
+		const historyFetchesInLastMinute = this._historyFetches.filter(timestamp => {
+			return timestamp >= now - 60 * 1000;
+		});
+		if (historyFetchesInLastMinute.length > MAX_HISTORY_FETCHES_PER_MINUTE) {
+			this._debug("Limit on history fetches per minute was reached, forcing reset");
+			this._api.announceHistoryFetch({
+				channels: "",
+				before: "",
+				after: "",
+				reason: "minute_limit"
+			});
+			return this.reset();
+		}
+		const historyFetchesInLastHour = this._historyFetches.filter(timestamp => {
+			return timestamp >= now - 60 * 60 * 1000;
+		});
+		if (historyFetchesInLastHour.length > MAX_HISTORY_FETCHES_PER_HOUR) {
+			this._debug("Limit on history fetches per hour was reached, forcing reset");
+			this._api.announceHistoryFetch({
+				channels: "",
+				before: "",
+				after: "",
+				reason: "hour_limit"
+			});
+			return this.reset();
+		}
+		this._historyFetches = historyFetchesInLastHour;
+		this._historyFetches.push(now);
+
 		// catch up since the last message received, or, if we are caught in a loop
 		// of trying to catch up already, continue to catch up from that point
 		let since = 0;
 		let missed = 0;
-		const now = Date.now();
 		let reason;
 		if (this._lastMessageReceivedAt > 0) {
 			since = this._lastMessageReceivedAt - THRESHOLD_BUFFER;

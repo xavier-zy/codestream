@@ -57,7 +57,6 @@ import {
 	GetFileStreamRequestType,
 	GetFileStreamResponse,
 	GetMarkerRequestType,
-	GetMeRequestType,
 	GetPostRequestType,
 	GetPreferencesRequestType,
 	GetRepoRequestType,
@@ -889,10 +888,6 @@ export class CodeStreamAgentConnection implements Disposable {
 				email: email,
 				fullName: fullName
 			});
-		}
-
-		me() {
-			return this._connection.sendRequest(GetMeRequestType, {});
 		}
 
 		updatePresence(status: CSPresenceStatus) {

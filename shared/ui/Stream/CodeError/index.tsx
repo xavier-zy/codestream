@@ -1506,12 +1506,7 @@ const CodeErrorForCodeError = (props: PropsWithCodeError) => {
 	const [isEditing, setIsEditing] = React.useState(false);
 	const [shareModalOpen, setShareModalOpen] = React.useReducer(open => !open, false);
 
-	const webviewFocused = useSelector((state: CodeStreamState) => state.context.hasFocus);
 	useDidMount(() => {
-		if (!props.collapsed && webviewFocused) {
-			HostApi.instance.track("Page Viewed", { "Page Name": "Code Error Details" });
-		}
-
 		if (!props.collapsed) {
 			requestAnimationFrame(() => {
 				const $stackTrace = document.getElementById("stack-trace");

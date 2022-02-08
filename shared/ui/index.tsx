@@ -506,9 +506,13 @@ function listenForEvents(store) {
 				switch (route.action) {
 					case "connect": {
 						const definedQuery = route as RouteWithQuery<{
-							apiKey: string;
+							apiKey?: string;
+							src?: string;
 						}>;
 						if (!store.getState().session.userId) {
+							store.dispatch(
+								setPendingProtocolHandlerUrl({ url: e.url, query: definedQuery.query })
+							);
 							store.dispatch(goToNewRelicSignup({}));
 						} else {
 							if (definedQuery.query.apiKey) {

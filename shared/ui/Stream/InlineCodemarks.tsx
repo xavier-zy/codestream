@@ -83,7 +83,6 @@ import {
 import styled from "styled-components";
 import { PanelHeader } from "../src/components/PanelHeader";
 import * as fs from "../utilities/fs";
-import { FileInfo } from "./FileInfo";
 import { isFeatureEnabled } from "../store/apiVersioning/reducer";
 import { Keybindings } from "./Keybindings";
 import { setNewPostEntry } from "../store/context/actions";
@@ -1114,11 +1113,8 @@ export class SimpleInlineCodemarks extends Component<Props, State> {
 
 	renderHeader() {
 		const { fileNameToFilterFor = "", scmInfo } = this.props;
-		const repoId = scmInfo && scmInfo.scm ? scmInfo.scm.repoId : "";
-		const file = scmInfo && scmInfo.scm ? scmInfo.scm.file : fileNameToFilterFor;
 		return (
 			<PanelHeader title={fs.pathBasename(fileNameToFilterFor)} position="fixed">
-				<FileInfo repoId={repoId || ""} file={file || ""} />
 			</PanelHeader>
 		);
 	}

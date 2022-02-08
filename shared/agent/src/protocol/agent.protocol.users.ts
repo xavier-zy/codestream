@@ -181,18 +181,6 @@ export const UpdateInvisibleRequestType = new RequestType<
 	void
 >("codestream/user/updateInvisible");
 
-export interface SetModifiedReposRequest {
-	modifiedRepos: RepoScmStatus[];
-	teamId: string;
-}
-
-export const SetModifiedReposRequestType = new RequestType<
-	SetModifiedReposRequest,
-	void,
-	void,
-	void
->("codestream/user/setModifiedRepos");
-
 export interface GetUnreadsRequest {}
 
 export interface GetUnreadsResponse {
@@ -213,13 +201,3 @@ export interface GetPreferencesResponse {
 export const GetPreferencesRequestType = new RequestType<void, GetPreferencesResponse, void, void>(
 	"codestream/users/me/preferences"
 );
-
-export interface CompactModifiedRepo {
-	repoId: string;
-	repoPath: string;
-	branch: string;
-	localCommits: string[];
-	modifiedFiles: string[];
-	startCommit: string;
-	stompingAuthors: string[];
-}

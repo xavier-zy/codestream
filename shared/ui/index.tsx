@@ -89,7 +89,6 @@ import {
 import { URI } from "vscode-uri";
 import { moveCursorToLine } from "./Stream/api-functions";
 import { setMaintenanceMode } from "./store/session/actions";
-import { updateModifiedReposDebounced } from "./store/users/actions";
 import { logWarning } from "./logger";
 import { fetchReview } from "./store/reviews/actions";
 import {
@@ -207,19 +206,12 @@ function listenForEvents(store) {
 		switch (type) {
 			case ChangeDataType.Commits:
 				store.dispatch(resetDocuments());
-				if (data && (data as any).type === "change") {
-					// need to be careful as updateModifiedRepos triggers git actions
-					updateModifiedReposDebounced(store.dispatch);
-				}
 				break;
 			case ChangeDataType.Documents:
 				if ((data as any).reason === "removed") {
 					store.dispatch(removeDocument((data as any).document));
 				} else {
 					store.dispatch(updateDocument((data as any).document));
-				}
-				if ((data as any).reason === "saved") {
-					updateModifiedReposDebounced(store.dispatch);
 				}
 				break;
 			case ChangeDataType.Preferences:

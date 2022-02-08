@@ -61,7 +61,6 @@ export enum WebviewPanels {
 	Sidebar = "sidebar",
 	OpenReviews = "open-reviews",
 	OpenPullRequests = "open-pull-requests",
-	WorkInProgress = "work-in-progress",
 	Onboard = "onboard",
 	OnboardNewRelic = "onboard-newrelic",
 	Commits = "commits",
@@ -85,7 +84,6 @@ export const WebviewPanelNames = {
 	status: "Status",
 	"landing-redirect": "Landing Redirect",
 	"gtting-started": "Getting Started", // this is a typo but now baked into user data, so let's just leave it
-	"work-in-progress": "Work in Progress",
 	"open-pull-requests": "Pull Requests",
 	"open-reviews": "Feedback Requests",
 	"codemarks-for-file": "Codemarks",

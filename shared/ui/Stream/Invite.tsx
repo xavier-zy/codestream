@@ -1,45 +1,35 @@
+import {
+	GetLatestCommittersRequestType,
+	KickUserRequestType,
+	RepoScmStatus,
+	UpdateTeamAdminRequestType,
+	UpdateTeamSettingsRequestType
+} from "@codestream/protocols/agent";
+import { CSTeam, CSUser } from "@codestream/protocols/api";
+import copy from "copy-to-clipboard";
+import { sortBy as _sortBy } from "lodash-es";
 import React from "react";
 import { FormattedMessage } from "react-intl";
 import { connect } from "react-redux";
-import Icon from "./Icon";
-import Button from "./Button";
-import Headshot from "./Headshot";
-import { invite, setUserStatus } from "./actions";
-import { mapFilter, keyFilter } from "../utils";
-import { difference as _difference, sortBy as _sortBy } from "lodash-es";
-import { HostApi } from "../webview-api";
-import { WebviewPanels, WebviewModals, OpenUrlRequestType } from "@codestream/protocols/webview";
-import {
-	RepoScmStatus,
-	KickUserRequestType,
-	UpdateTeamSettingsRequestType,
-	UpdateTeamAdminRequestType,
-	GetLatestCommittersRequestType
-} from "@codestream/protocols/agent";
-import { CSTeam, CSUser } from "@codestream/protocols/api";
-import { ChangesetFile } from "./Review/ChangesetFile";
-import Tooltip, { TipTitle } from "./Tooltip";
-import { CSText } from "../src/components/CSText";
-import cx from "classnames";
-import Timestamp from "./Timestamp";
-import { DropdownButton } from "./DropdownButton";
-import { confirmPopup } from "./Confirm";
 import styled from "styled-components";
-import { getCodeCollisions, getActiveMemberIds } from "../store/users/reducer";
-import { openPanel, openModal, closeModal } from "../store/context/actions";
-import { isFeatureEnabled } from "../store/apiVersioning/reducer";
-import { ProfileLink } from "../src/components/ProfileLink";
-import copy from "copy-to-clipboard";
-import { UserStatus } from "../src/components/UserStatus";
-import { SelectPeople } from "../src/components/SelectPeople";
-import { HeadshotName } from "../src/components/HeadshotName";
-import { InlineMenu } from "../src/components/controls/InlineMenu";
-import { PaneHeader, Pane, PaneBody, PaneNode, PaneNodeName } from "../src/components/Pane";
-import { Modal } from "./Modal";
+import { CSText } from "../src/components/CSText";
 import { Dialog } from "../src/components/Dialog";
 import { PaneState } from "../src/components/Pane";
+import { UserStatus } from "../src/components/UserStatus";
+import { isFeatureEnabled } from "../store/apiVersioning/reducer";
+import { closeModal, openModal, openPanel } from "../store/context/actions";
 import { switchToTeam } from "../store/session/actions";
-import { Link } from "./Link";
+import { getActiveMemberIds } from "../store/users/reducer";
+import { mapFilter } from "../utils";
+import { HostApi } from "../webview-api";
+import { invite, setUserStatus } from "./actions";
+import Button from "./Button";
+import { confirmPopup } from "./Confirm";
+import { DropdownButton } from "./DropdownButton";
+import Icon from "./Icon";
+import { ChangesetFile } from "./Review/ChangesetFile";
+import Timestamp from "./Timestamp";
+import Tooltip from "./Tooltip";
 
 export const EMAIL_REGEX = new RegExp(
 	"^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$"
@@ -145,8 +135,6 @@ interface ConnectedProps {
 	currentUserInvisible: false;
 	currentUserEmail: string;
 	currentUserId: string;
-	xraySetting: string;
-	xrayEnabled: boolean;
 	reviewApproval: "user" | "anyone" | "all";
 	setUserStatus: Function;
 	openPanel: Function;
@@ -155,7 +143,6 @@ interface ConnectedProps {
 	switchToTeam: Function;
 	isCurrentUserAdmin: boolean;
 	adminIds: string[];
-	collisions: any;
 	dontSuggestInvitees: any;
 	multipleReviewersApprove: boolean;
 	emailSupported: boolean;
@@ -531,91 +518,6 @@ class Invite extends React.Component<Props, State> {
 		return null;
 	}
 
-	renderModifiedRepos(user) {
-		const {
-			repos,
-			teamId,
-			company,
-			serverUrl,
-			currentUserEmail,
-			collisions,
-			xrayEnabled
-		} = this.props;
-		const { modifiedRepos, modifiedReposModifiedAt } = user;
-
-		if (!xrayEnabled) return null;
-		if (!modifiedRepos || !modifiedRepos[teamId] || !modifiedRepos[teamId].length) return null;
-
-		return modifiedRepos[teamId].map(repo => {
-			const { repoId = "", authors, modifiedFiles } = repo;
-			if (modifiedFiles.length === 0) return null;
-			const repoName = repos[repoId] ? repos[repoId].name : "";
-			const added = modifiedFiles.reduce((total, f) => total + f.linesAdded, 0);
-			const removed = modifiedFiles.reduce((total, f) => total + f.linesRemoved, 0);
-			const stomp =
-				user.email === currentUserEmail
-					? null
-					: (authors || []).find(a => a.email === currentUserEmail && a.stomped > 0);
-			const title = (
-				<div style={{ maxWidth: "60vw" }}>
-					<>
-						<div className="related-label">Local Changes</div>
-						{modifiedFiles.map(f => {
-							const className = collisions.userRepoFiles[user.id + ":" + repo.repoId + ":" + f.file]
-								? "file-has-conflict"
-								: "";
-							return <ChangesetFile className={className} noHover={true} key={f.file} {...f} />;
-						})}
-						{stomp && (
-							<div style={{ paddingTop: "5px" }}>
-								<span className="stomped" style={{ paddingLeft: 0 }}>
-									@{stomp.stomped}
-								</span>{" "}
-								= includes {stomp.stomped} change
-								{stomp.stomped > 1 ? "s" : ""} to code you wrote
-							</div>
-						)}
-						{collisions.userRepos[user.id + ":" + repo.repoId] && (
-							<div style={{ paddingTop: "5px" }}>
-								<Icon name="alert" className="conflict" /> = possible merge conflict
-							</div>
-						)}
-						{modifiedReposModifiedAt && modifiedReposModifiedAt[teamId] && (
-							<div style={{ paddingTop: "5px", color: "var(--text-color-subtle)" }}>
-								Updated
-								<Timestamp relative time={modifiedReposModifiedAt[teamId]} />
-							</div>
-						)}
-					</>
-				</div>
-			);
-			return (
-				<li key={repoId} className="status row-with-icon-actions">
-					<Tooltip title={title} placement="bottomRight" delay={1}>
-						<div style={{ overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}>
-							<Icon name="repo" />
-							{repoName} &nbsp; <Icon name="git-branch" />
-							{repo.branch}
-							{added > 0 && <span className="added">+{added}</span>}
-							{removed > 0 && <span className="deleted">-{removed}</span>}
-							{stomp && <span className="stomped">@{stomp.stomped}</span>}
-							{collisions.userRepos[user.id + ":" + repo.repoId] && (
-								<Icon name="alert" className="conflict" />
-							)}
-						</div>
-					</Tooltip>
-				</li>
-			);
-		});
-	}
-
-	changeXray = async value => {
-		await HostApi.instance.send(UpdateTeamSettingsRequestType, {
-			teamId: this.props.teamId,
-			settings: { xray: value }
-		});
-	};
-
 	removeSuggestion = async user => {
 		await HostApi.instance.send(UpdateTeamSettingsRequestType, {
 			teamId: this.props.teamId,
@@ -662,8 +564,7 @@ class Invite extends React.Component<Props, State> {
 	};
 
 	render() {
-		const { currentUserId, teamId, userTeams, blameMap, collisions, xraySetting } = this.props;
-		const { invitingEmails, loadingStatus, addingBlameMap } = this.state;
+		const { invitingEmails } = this.state;
 
 		const suggested = this.state.suggested
 			.filter(u => !invitingEmails[u.email])
@@ -819,10 +720,6 @@ const mapStateToProps = state => {
 		return user;
 	});
 
-	const xraySetting = team.settings ? team.settings.xray : "";
-	const xrayEnabled = xraySetting !== "off";
-	const collisions = getCodeCollisions(state);
-
 	const reviewApproval = team.settings ? team.settings.reviewApproval : "user";
 	const blameMap = team.settings ? team.settings.blameMap : EMPTY_HASH;
 
@@ -834,14 +731,12 @@ const mapStateToProps = state => {
 	return {
 		teamId: team.id,
 		teamName: team.name,
-		xraySetting,
 		reviewApproval,
 		blameMap: blameMap || EMPTY_HASH,
 		adminIds,
 		isCurrentUserAdmin,
 		dontSuggestInvitees,
 		repos,
-		collisions,
 		company: company,
 		currentUser: currentUser,
 		currentUserId: currentUser.id,
@@ -849,7 +744,6 @@ const mapStateToProps = state => {
 		currentUserEmail: currentUser.email,
 		members: [currentUser, ..._sortBy(teammates, m => (m.fullName || "").toLowerCase())],
 		invited: _sortBy(invited, "email"),
-		xrayEnabled,
 		multipleReviewersApprove,
 		emailSupported,
 		autoJoinSupported,

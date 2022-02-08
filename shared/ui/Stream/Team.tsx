@@ -25,7 +25,7 @@ import Timestamp from "./Timestamp";
 import { DropdownButton } from "./DropdownButton";
 import { confirmPopup } from "./Confirm";
 import styled from "styled-components";
-import { getCodeCollisions, getActiveMemberIds } from "../store/users/reducer";
+import { getActiveMemberIds } from "../store/users/reducer";
 import { openPanel, openModal, closeModal } from "../store/context/actions";
 import { isFeatureEnabled } from "../store/apiVersioning/reducer";
 import { ProfileLink } from "../src/components/ProfileLink";
@@ -822,7 +822,6 @@ const mapStateToProps = state => {
 
 	const xraySetting = team.settings ? team.settings.xray : "";
 	const xrayEnabled = xraySetting !== "off";
-	const collisions = getCodeCollisions(state);
 
 	const reviewApproval = team.settings ? team.settings.reviewApproval : "user";
 	const blameMap = team.settings ? team.settings.blameMap : EMPTY_HASH;
@@ -842,7 +841,6 @@ const mapStateToProps = state => {
 		isCurrentUserAdmin,
 		dontSuggestInvitees,
 		repos,
-		collisions,
 		company: company,
 		currentUser: currentUser,
 		currentUserId: currentUser.id,

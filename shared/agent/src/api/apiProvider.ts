@@ -148,7 +148,6 @@ import {
 	SetCodemarkPinnedResponse,
 	SetCodemarkStatusRequest,
 	SetCodemarkStatusResponse,
-	SetModifiedReposRequest,
 	SetStreamPurposeRequest,
 	SetStreamPurposeResponse,
 	ThirdPartyProviderSetTokenRequest,
@@ -385,7 +384,6 @@ export interface ApiProvider {
 	updatePreferences(request: UpdatePreferencesRequest): Promise<UpdatePreferencesResponse>;
 	updateInvisible(request: UpdateInvisibleRequest): Promise<UpdateInvisibleResponse>;
 	updateStatus(request: UpdateStatusRequest): Promise<UpdateStatusResponse>;
-	setModifiedRepos(request: SetModifiedReposRequest): Promise<void>;
 	getPreferences(): Promise<GetPreferencesResponse>;
 	updatePresence(request: UpdatePresenceRequest): Promise<UpdatePresenceResponse>;
 	getTelemetryKey(): Promise<string>;

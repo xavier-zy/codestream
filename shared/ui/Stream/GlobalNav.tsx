@@ -1,12 +1,11 @@
 import React from "react";
-import { connect, useDispatch, useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { CodeStreamState } from "../store";
 import { WebviewPanels } from "../ipc/webview.protocol.common";
 import Icon from "./Icon";
 import Tooltip, { TipTitle, placeArrowTopRight } from "./Tooltip";
 import { Link } from "./Link";
 import cx from "classnames";
-import { getCodeCollisions } from "../store/users/reducer";
 import { openPanel, setUserPreference } from "./actions";
 import { PlusMenu } from "./PlusMenu";
 import { TeamMenu } from "./TeamMenu";
@@ -23,7 +22,6 @@ import {
 	ReviewCloseDiffRequestType
 } from "@codestream/protocols/webview";
 import { HeadshotName } from "../src/components/HeadshotName";
-import { difference as _difference } from "lodash-es";
 
 const sum = (total, num) => total + Math.round(num);
 
@@ -39,7 +37,6 @@ export function GlobalNav() {
 			activePanel: state.context.panelStack[0],
 			totalUnread: Object.values(umis.unreads).reduce(sum, 0),
 			totalMentions: Object.values(umis.mentions).reduce(sum, 0),
-			collisions: getCodeCollisions(state),
 			composeCodemarkActive: state.context.composeCodemarkActive,
 			currentReviewId: state.context.currentReviewId,
 			currentCodeErrorId: state.context.currentCodeErrorId,
@@ -58,17 +55,11 @@ export function GlobalNav() {
 		activePanel,
 		totalUnread,
 		totalMentions,
-		collisions,
 		currentCodemarkId,
 		currentReviewId,
 		currentCodeErrorId,
 		currentPullRequestId
 	} = derivedState;
-
-	// this would be nice, but unfortunately scm is only loaded on spatial view so we can't
-	// rely on it here
-	// const { repoId, file } = this.props.currentScm || {};
-	const hasFileConflict = false; // this.props.collisions.repoFiles[repoId + ":" + file];
 
 	const umisClass = cx("umis", {
 		mentions: totalMentions > 0,
@@ -159,68 +150,6 @@ export function GlobalNav() {
 							<PlusMenu closeMenu={() => setPlusMenuOpen(undefined)} menuTarget={plusMenuOpen} />
 						)}
 					</label>
-					{/*
-					<label
-						className={cx({
-							selected: selected(WebviewPanels.Status) || selected(WebviewPanels.LandingRedirect)
-						})}
-						onClick={e => go(WebviewPanels.Status)}
-						id="global-nav-status-label"
-					>
-						<Tooltip
-							delay={1}
-							trigger={["hover"]}
-							title={
-								<TipTitle>
-									<h1>Your Tasks</h1>
-									Assigned issues and code reviews.
-									<br />
-									This is home base for getting work done.
-									<Link
-										className="learn-more"
-										href="https://docs.newrelic.com/docs/codestream/codestream-ui-overview/issues-section/"
-									>
-										learn more
-									</Link>
-								</TipTitle>
-							}
-							placement="bottom"
-						>
-							<span>
-								<Icon name="inbox" />
-							</span>
-						</Tooltip>
-					</label>
-					
-					<label
-						className={cx({ selected: selected(WebviewPanels.Sidebar) })}
-						onClick={e => go(WebviewPanels.Sidebar)}
-						id="global-nav-file-label"
-					>
-						<Tooltip
-							delay={1}
-							trigger={["hover"]}
-							title={
-								<TipTitle>
-									<h1>Comments In Current File</h1>
-									We call these <i>Codemarks</i>
-									<Link
-										className="learn-more"
-										href="https://docs.newrelic.com/docs/codestream/how-use-codestream/discuss-code/"
-									>
-										learn more
-									</Link>
-								</TipTitle>
-							}
-							placement="bottom"
-						>
-							<span>
-								<Icon name="file" />
-								{hasFileConflict && <Icon name="alert" className="nav-conflict" />}
-							</span>
-						</Tooltip>
-					</label>
-						*/}
 					<label
 						className={cx({ selected: selected(WebviewPanels.Activity) })}
 						onClick={e => go(WebviewPanels.Activity)}
@@ -298,71 +227,6 @@ export function GlobalNav() {
 							onPopupAlign={placeArrowTopRight}
 						/>
 					</label>
-					{/*
-					<label
-						className={cx({ selected: selected(WebviewPanels.Flow) })}
-						onClick={e => go(WebviewPanels.Flow)}
-						id="global-nav-file-label"
-					>
-						<Tooltip delay={1} trigger={["hover"]} title="Help &amp; Info" placement="bottomRight">
-							<span>
-								<Icon name="question" />
-							</span>
-						</Tooltip>
-					</label>
-					*/}
-					{/*<label
-						className={cx({ selected: selected(WebviewPanels.Team) })}
-						onClick={e => go(WebviewPanels.Team)}
-						id="global-nav-team-label"
-					>
-						<Tooltip
-							delay={1}
-							trigger={["hover"]}
-							title={
-								<TipTitle>
-									<h1>Your Team</h1>
-									View status and local changes
-									<br />
-									from your teammates.
-									<Link
-										className="learn-more"
-										href="https://docs.newrelic.com/docs/codestream/how-use-codestream/my-organization/"
-									>
-										learn more
-									</Link>
-								</TipTitle>
-							}
-							placement="bottomRight"
-							onPopupAlign={placeArrowTopRight}
-						>
-							<span>
-								<Icon name="team" />
-								{collisions.nav && <Icon name="alert" className="nav-conflict" />}
-							</span>
-						</Tooltip>
-						</label>*/}
-					{/*<label
-						onClick={toggleEllipsisMenu}
-						className={cx({ active: ellipsisMenuOpen })}
-						id="global-nav-more-label"
-					>
-						<span>
-							<Icon
-								name="kebab-horizontal"
-								delay={1}
-								trigger={["hover"]}
-								title="More Actions..."
-								placement="bottomRight"
-							/>
-						</span>
-						{ellipsisMenuOpen && (
-							<EllipsisMenu
-								closeMenu={() => setEllipsisMenuOpen(undefined)}
-								menuTarget={ellipsisMenuOpen}
-							/>
-						)}
-						</label>*/}
 				</nav>
 			);
 		}
@@ -370,7 +234,6 @@ export function GlobalNav() {
 		activePanel,
 		totalUnread,
 		totalMentions,
-		collisions.nav,
 		derivedState.composeCodemarkActive,
 		currentReviewId,
 		currentCodeErrorId,

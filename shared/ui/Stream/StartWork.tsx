@@ -438,9 +438,6 @@ export const StartWork = (props: Props) => {
 			teamName: team.name,
 			currentUserId: state.session.userId!,
 			currentUserName: state.users[state.session.userId!].username,
-			modifiedReposByTeam: currentUser.modifiedRepos
-				? currentUser.modifiedRepos[teamId]
-				: undefined,
 			webviewFocused: state.context.hasFocus,
 			textEditorUri: state.editorContext.textEditorUri,
 			branchMaxLength: settings.branchMaxLength || 40,

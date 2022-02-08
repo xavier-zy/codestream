@@ -1,5 +1,6 @@
 import React from "react";
 import { useDispatch, useSelector } from "react-redux";
+import styled from "styled-components";
 import Icon from "./Icon";
 import { closeModal, openModal } from "./actions";
 import { CodeStreamState } from "../store";
@@ -8,7 +9,6 @@ import { confirmPopup } from "./Confirm";
 import { isFeatureEnabled } from "../store/apiVersioning/reducer";
 import { getActiveMemberIds } from "../store/users/reducer";
 import { Dialog } from "../src/components/Dialog";
-import { EMAIL_REGEX, MapRow } from "./TeamPanel";
 import { SelectPeople } from "../src/components/SelectPeople";
 import { HostApi } from "../webview-api";
 import {
@@ -22,8 +22,24 @@ import { InlineMenu } from "../src/components/controls/InlineMenu";
 import { useDidMount } from "../utilities/hooks";
 import { difference as _difference, sortBy as _sortBy } from "lodash-es";
 
+const EMAIL_REGEX = new RegExp(
+	"^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$"
+);
 const EMPTY_HASH = {};
 const EMPTY_HASH_2 = {};
+
+export const MapRow = styled.div`
+	display: flex;
+	margin: 0;
+	> div {
+		width: calc(50% - 10px);
+		flex-grow: 1;
+		padding: 5px 0px;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+	border-top: 1px solid var(--base-border-color);
+`;
 
 export function BlameMap() {
 	const dispatch = useDispatch();

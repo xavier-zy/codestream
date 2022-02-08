@@ -141,7 +141,6 @@ import {
 	SendPasswordResetEmailRequestType,
 	SetCodemarkPinnedRequest,
 	SetCodemarkStatusRequest,
-	SetModifiedReposRequest,
 	SetPasswordRequest,
 	SetPasswordRequestType,
 	SetStreamPurposeRequest,
@@ -341,7 +340,6 @@ export class CodeStreamApiProvider implements ApiProvider {
 	private _userId: string | undefined;
 	private _preferences: CodeStreamPreferences | undefined;
 	private _features: CSApiFeatures | undefined;
-	private _debouncedSetModifiedReposUpdate: (request: SetModifiedReposRequest) => {};
 	private _messageProcessingPromise: Promise<void> | undefined;
 
 	readonly capabilities: Capabilities = {
@@ -358,15 +356,7 @@ export class CodeStreamApiProvider implements ApiProvider {
 		private readonly _version: VersionInfo,
 		private readonly _httpsAgent: HttpsAgent | HttpsProxyAgent | HttpAgent | undefined,
 		private readonly _strictSSL: boolean
-	) {
-		this._debouncedSetModifiedReposUpdate = debounce(
-			request => {
-				return this.setModifiedReposDebounced(request);
-			},
-			15000,
-			{ leading: true }
-		);
-	}
+	) {}
 
 	get teamId(): string {
 		return this._teamId!;
@@ -1032,23 +1022,6 @@ export class CodeStreamApiProvider implements ApiProvider {
 			data: [update.user]
 		})) as CSMe[];
 		return { user };
-	}
-
-	@log()
-	async setModifiedReposDebounced(request: SetModifiedReposRequest) {
-		const compactModifiedRepos = SessionContainer.instance().users.compactifyModifiedRepos(
-			request.modifiedRepos
-		);
-		this.put<{ [key: string]: any }, any>(
-			"/users/me",
-			{ compactModifiedRepos: { [request.teamId]: compactModifiedRepos } },
-			this._token
-		);
-	}
-
-	@log()
-	async setModifiedRepos(request: SetModifiedReposRequest) {
-		this._debouncedSetModifiedReposUpdate(request);
 	}
 
 	@log()

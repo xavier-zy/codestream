@@ -8,10 +8,8 @@ import { HostDidChangeWorkspaceFoldersNotificationType } from "../ipc/host.proto
 import { useDidMount } from "../utilities/hooks";
 import { HostApi } from "..";
 import { OpenPullRequests } from "./OpenPullRequests";
-import { TeamPanel } from "./TeamPanel";
 import { WebviewPanels } from "../ipc/webview.protocol.common";
 import IssueDropdown from "./CrossPostIssueControls/IssueDropdown";
-import { WorkInProgress } from "./WorkInProgress";
 import Codemarks from "./Codemarks";
 import { CreateCodemarkIcons } from "./CreateCodemarkIcons";
 import { Pane, PaneState } from "../src/components/Pane";
@@ -65,7 +63,6 @@ _defaultPaneSettings[WebviewPanels.OpenPullRequests] = {};
 _defaultPaneSettings[WebviewPanels.OpenReviews] = {};
 _defaultPaneSettings[WebviewPanels.CodemarksForFile] = {};
 // default this one to not show
-_defaultPaneSettings[WebviewPanels.WorkInProgress] = { removed: true };
 _defaultPaneSettings[WebviewPanels.Tasks] = {};
 _defaultPaneSettings[WebviewPanels.Observability] = {};
 // _defaultPaneSettings[WebviewPanels.Team] = {};
@@ -76,7 +73,6 @@ export const AVAILABLE_PANES = [
 	WebviewPanels.OpenReviews,
 	WebviewPanels.CodemarksForFile,
 	WebviewPanels.Observability,
-	WebviewPanels.WorkInProgress,
 	WebviewPanels.Tasks
 ];
 
@@ -362,8 +358,6 @@ export const Sidebar = React.memo(function Sidebar() {
 				return <OpenPullRequests openRepos={openRepos} paneState={paneState} />;
 			case WebviewPanels.OpenReviews:
 				return <OpenReviews openRepos={openRepos} paneState={paneState} />;
-			case WebviewPanels.WorkInProgress:
-				return <WorkInProgress openRepos={openRepos} paneState={paneState} />;
 			case WebviewPanels.Tasks:
 				return <IssueDropdown paneState={paneState} />;
 			case WebviewPanels.CodemarksForFile:

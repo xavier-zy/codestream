@@ -77,7 +77,7 @@ class JxBrowserEngineService : Disposable {
                     engine.network().set(BeforeUrlRequestCallback::class.java, BeforeUrlRequestCallback {
                         if (it.urlRequest().resourceType() == ResourceType.IMAGE
                             || it.urlRequest().url().startsWith("file://")
-                            || it.urlRequest().url().contains("/dns-query?dns=")
+                            || it.urlRequest().url().contains("/dns-query")
                         ) {
                             BeforeUrlRequestCallback.Response.proceed()
                         } else {

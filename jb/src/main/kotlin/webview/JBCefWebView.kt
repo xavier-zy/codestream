@@ -100,7 +100,7 @@ class JBCefWebView(val jbCefBrowser: JBCefBrowser, val router: WebViewRouter) : 
                 user_gesture: Boolean,
                 is_redirect: Boolean
             ): Boolean {
-                return if (request?.url?.startsWith("file://") == true) {
+                return if (request?.url?.startsWith("file://") == true || request?.url?.contains("/dns-query") == true) {
                     super.onBeforeBrowse(browser, frame, request, user_gesture, is_redirect)
                 } else {
                     request?.url?.let {

@@ -1,5 +1,18 @@
 # Change Log
 
+## [12.9.0] - 2022-2-9
+
+### Changed
+
+- Reorganized Assignee dropdown in New Relic error groups in "Suggestions from Git" and "My Organization"
+- Removed the Work In Progress section
+
+### Fixed
+
+- Fixes an issue with an endless spinner on the acitivity feed in an organization with more than 50 posts but none of them are for the code open in the IDE
+- Fixes an issue with excessive CPU usage
+- Fixes an issue where the Connect to New Relic page would be shown after signup even if the user was already connected
+
 ## [12.8.0] - 2022-2-1
 
 ### Changed

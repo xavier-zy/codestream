@@ -57,6 +57,9 @@ class ConfigureNewRelic extends Component<Props> {
 	state = this.initialState;
 
 	componentDidMount() {
+		if (this.props.isNewRelicConnected) {
+			this.props.closeAllPanels();
+		}
 		const el = document.getElementById("configure-provider-initial-input");
 		el && el.focus();
 	}
@@ -168,6 +171,9 @@ class ConfigureNewRelic extends Component<Props> {
 	};
 
 	render() {
+		if (this.props.isNewRelicConnected) {
+			return null;
+		}
 		const { providerId, headerChildren, showSignupUrl } = this.props;
 		const { name } = this.props.providers[providerId] || {};
 		const providerName = PROVIDER_MAPPINGS[name] ? PROVIDER_MAPPINGS[name].displayName : "";

@@ -89,6 +89,7 @@ import {
 	FileStatus,
 	isCSCodeError,
 	isCSReview,
+    ModifiedFile,
 	ProviderType,
 	StreamType
 } from "../protocol/api.protocol";
@@ -1492,7 +1493,7 @@ export class PostsManager extends EntityManagerBase<CSPost> {
 		const modifiedFilesInCheckpoint = scm.modifiedFiles.filter(
 			f => !excludedFiles.includes(f.file)
 		);
-		let modifiedFiles;
+        let modifiedFiles: ModifiedFile[];
 		let startCommit = repoChange.startCommit;
 		let leftBaseShaForFirstChangesetInThisRepo: string | undefined = undefined;
 		let rightBaseShaForFirstChangesetInThisRepo: string | undefined = undefined;
@@ -1719,7 +1720,7 @@ export class PostsManager extends EntityManagerBase<CSPost> {
 		rightDiffs.push(...newFileDiffs);
 		rightReverseDiffs.push(...newFileReverseDiffs);
 
-		const rightToLatestCommitDiffs = (
+        let rightToLatestCommitDiffs = (
 			await git.getDiffs(
 				scm.repoPath,
 				{ includeSaved, includeStaged, reverse: true },
@@ -1728,13 +1729,21 @@ export class PostsManager extends EntityManagerBase<CSPost> {
 		).filter(removeExcluded);
 		rightToLatestCommitDiffs.push(...newFileReverseDiffs);
 
-		const latestCommitToRightDiffs =
+        let latestCommitToRightDiffs =
 			includeSaved || includeStaged
 				? (
 						await git.getDiffs(scm.repoPath, { includeSaved, includeStaged }, latestCommitSha)
 				  ).filter(removeExcluded)
 				: [];
 		latestCommitToRightDiffs.push(...newFileDiffs);
+
+        const modifiedFilesContains = (fileName?: string) => (fileName != null) && modifiedFiles.find(_ => _.file === fileName || _.oldFile === fileName);
+        const excludeUnnecesaryDiffs = (diff: ParsedDiff) => modifiedFilesContains(diff.newFileName) || modifiedFilesContains(diff.oldFileName);
+        leftDiffs = leftDiffs.filter(excludeUnnecesaryDiffs);
+        rightDiffs = rightDiffs.filter(excludeUnnecesaryDiffs);
+        rightReverseDiffs = rightReverseDiffs.filter(excludeUnnecesaryDiffs);
+        rightToLatestCommitDiffs = rightToLatestCommitDiffs.filter(excludeUnnecesaryDiffs);
+        latestCommitToRightDiffs = latestCommitToRightDiffs.filter(excludeUnnecesaryDiffs);
 
 		return {
 			repoId: scm.repoId,

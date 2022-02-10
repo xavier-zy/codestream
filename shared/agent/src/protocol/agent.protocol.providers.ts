@@ -638,6 +638,7 @@ export interface FetchThirdPartyPullRequestRepository {
 	repoName: string;
 	pullRequest: FetchThirdPartyPullRequestPullRequest;
 	providerId: string;
+	viewerDefaultMergeMethod: "MERGE" | "REBASE" | "SQUASH";
 	viewerPermission: "ADMIN" | "MAINTAIN" | "READ" | "TRIAGE" | "WRITE";
 	branchProtectionRules: BranchProtectionRules;
 }

@@ -5392,6 +5392,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 				  rebaseMergeAllowed
 				  squashMergeAllowed
 				  mergeCommitAllowed
+				  viewerDefaultMergeMethod
 				  viewerPermission
 				  branchProtectionRules(first:100) {
 				  	nodes {

@@ -254,6 +254,7 @@ export const PullRequestConversationTab = (props: {
 		};
 	});
 	const { pr } = derivedState;
+	const defaultMergeMethod = ghRepo.viewerDefaultMergeMethod || derivedState.defaultMergeMethod;
 
 	const [availableLabels, setAvailableLabels] = useState(EMPTY_ARRAY);
 	const [availableReviewers, setAvailableReviewers] = useState(EMPTY_ARRAY);
@@ -264,7 +265,7 @@ export const PullRequestConversationTab = (props: {
 	const [isLocking, setIsLocking] = useState(false);
 	const [isLockingReason, setIsLockingReason] = useState("");
 	const [isLoadingLocking, setIsLoadingLocking] = useState(false);
-	const [mergeMethod, setMergeMethod] = useState(derivedState.defaultMergeMethod);
+	const [mergeMethod, setMergeMethod] = useState(defaultMergeMethod);
 	const [clInstructionsIsOpen, toggleClInstructions] = useReducer((open: boolean) => !open, false);
 	const [cloneURLType, setCloneURLType] = useState("https");
 	const [cloneURL, setCloneURL] = useState(pr && pr.repository ? `${pr.repository.url}.git` : "");
@@ -331,12 +332,7 @@ export const PullRequestConversationTab = (props: {
 			}
 			setIsLoadingMessage("");
 		},
-		[
-			pr.providerId,
-			derivedState.currentPullRequestId!,
-			derivedState.defaultMergeMethod,
-			mergeMethod
-		]
+		[pr.providerId, derivedState.currentPullRequestId!, defaultMergeMethod, mergeMethod]
 	);
 
 	const lockPullRequest = async () => {
@@ -1060,7 +1056,7 @@ export const PullRequestConversationTab = (props: {
 												ghRepo={ghRepo}
 												action={mergePullRequest}
 												onSelect={setMergeMethod}
-												defaultMergeMethod={derivedState.defaultMergeMethod}
+												defaultMergeMethod={defaultMergeMethod}
 												mergeText="As an administrator, you may still merge this pull request."
 											/>
 										)}
@@ -1143,7 +1139,7 @@ export const PullRequestConversationTab = (props: {
 									ghRepo={ghRepo}
 									action={mergePullRequest}
 									onSelect={setMergeMethod}
-									defaultMergeMethod={derivedState.defaultMergeMethod}
+									defaultMergeMethod={defaultMergeMethod}
 								/>
 							)}
 						</PRCommentCard>

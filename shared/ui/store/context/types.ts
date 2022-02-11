@@ -111,6 +111,8 @@ export interface ContextState extends WebviewContext {
 
 	wantNewRelicOptions?: { repoId?: string; path?: string; projectType?: any };
 	currentMethodLevelTelemetry?: CurrentMethodLevelTelemetry;
+
+	selectedRegion?: string;
 }
 
 export type ChatProviderAccess = "strict" | "permissive";

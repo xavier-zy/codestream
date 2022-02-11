@@ -1,4 +1,4 @@
-import { GetFileScmInfoResponse } from "@codestream/protocols/agent";
+import { EnvironmentHost, GetFileScmInfoResponse } from "@codestream/protocols/agent";
 import { Position, Range } from "vscode-languageserver-types";
 import { NewPullRequestBranch } from "./webview.protocol";
 
@@ -231,6 +231,7 @@ export interface WebviewConfigs {
 	isProductionCloud: boolean;
 	isWebmail?: boolean;
 	showGoldenSignalsInEditor?: boolean;
+	environmentHosts?: { [key: string]: EnvironmentHost };
 }
 
 export interface IpcHost {

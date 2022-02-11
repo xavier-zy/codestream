@@ -17,12 +17,13 @@ import Draggable from "react-draggable";
 import { findLastIndex } from "../utils";
 import { setUserPreference } from "./actions";
 import cx from "classnames";
-import { getConnectedSupportedPullRequestHosts } from "../store/providers/reducer";
+import {
+	getConnectedSupportedPullRequestHosts,
+	isConnectedSelectorFriendly
+} from "../store/providers/reducer";
 import { getPreferences } from "../store/users/reducer";
 import { getRepos } from "../store/repos/reducer";
 import { Observability } from "./Observability";
-import { getUserProviderInfo } from "../store/providers/actions";
-import { CSMe } from "@codestream/protocols/api";
 
 const PADDING_TOP = 25;
 
@@ -97,10 +98,15 @@ export const Sidebar = React.memo(function Sidebar() {
 	const derivedState = useSelector((state: CodeStreamState) => {
 		const preferences = getPreferences(state);
 		const repos = getRepos(state);
-		const currentUserId = state.session.userId!;
-		const currentUser = state.users[currentUserId] as CSMe;
-		const newRelicProviderInfo = getUserProviderInfo(currentUser, "newrelic", "");
-		const defaultPaneOrder = newRelicProviderInfo ? AVAILABLE_PANES_NR : AVAILABLE_PANES;
+
+		const isNewRelicSignUp = isConnectedSelectorFriendly(
+			state.users,
+			"", // we specifically want to know if there's top-level data
+			state.session,
+			state.providers,
+			{ id: "newrelic*com" }
+		);
+		const defaultPaneOrder = isNewRelicSignUp ? AVAILABLE_PANES_NR : AVAILABLE_PANES;
 
 		// get the preferences, or use the default
 		let sidebarPaneOrder = preferences.sidebarPaneOrder || defaultPaneOrder;
@@ -117,7 +123,7 @@ export const Sidebar = React.memo(function Sidebar() {
 			repos,
 			sidebarPanes: preferences.sidebarPanes || EMPTY_HASH,
 			sidebarPaneOrder,
-			currentUserId,
+			currentUserId: state.session.userId!,
 			hasPRProvider: getConnectedSupportedPullRequestHosts(state).length > 0
 		};
 	}, shallowEqual);

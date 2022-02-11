@@ -9,10 +9,11 @@ git clone https://github.com/TeamCodeStream/codestream.git
 Prerequisites
 
 - Windows 10
-- [Visual Studio 2017](https://visualstudio.microsoft.com/downloads/)
-- [Git](https://git-scm.com/)
-- [NodeJS](https://nodejs.org/en/), `>= 8.9.1, < 9.0.0`
-- [npm](https://npmjs.com/), `>= 6.2.0`
+- [Visual Studio 2019](https://visualstudio.microsoft.com/downloads/)
+- [Git](https://git-scm.com/), 2.32.0
+- [NodeJS](https://nodejs.org/en/), 16.13.2
+- [npm](https://npmjs.com/), 8.1.2
+
 - License for [https://www.teamdev.com/dotnetbrowser](DotNetBrowser) (it must put into the git-ignored folder `\licenses\{Configuration}` where `{Configuration}` is Debug (dev license) or Release (runtime license)). It will be picked up by msbuild and put into the correct location. These licenses should _not_ be commited to source control
 
 ### Build (local)

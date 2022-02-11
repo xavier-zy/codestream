@@ -10,9 +10,9 @@ git clone https://github.com/TeamCodeStream/codestream.git
 
 Versions
 
-- [Git](https://git-scm.com/), 2.17.1
-- [NodeJS](https://nodejs.org/en/), 10.15.3 (Nov 2019)
-- [npm](https://npmjs.com/), 6.11.3 (Dec 2019)
+- [Git](https://git-scm.com/), 2.32.0
+- [NodeJS](https://nodejs.org/en/), 16.13.2
+- [npm](https://npmjs.com/), 8.1.2
 
 ### Before you begin...
 

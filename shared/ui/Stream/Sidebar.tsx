@@ -17,7 +17,10 @@ import Draggable from "react-draggable";
 import { findLastIndex } from "../utils";
 import { setUserPreference } from "./actions";
 import cx from "classnames";
-import { getConnectedSupportedPullRequestHosts } from "../store/providers/reducer";
+import {
+	getConnectedSupportedPullRequestHosts,
+	isConnectedSelectorFriendly
+} from "../store/providers/reducer";
 import { getPreferences } from "../store/users/reducer";
 import { getRepos } from "../store/repos/reducer";
 import { Observability } from "./Observability";
@@ -68,11 +71,20 @@ _defaultPaneSettings[WebviewPanels.Observability] = {};
 // _defaultPaneSettings[WebviewPanels.Team] = {};
 export const DEFAULT_PANE_SETTINGS = _defaultPaneSettings;
 
+// We default the panes to a different order when users sign up via NR,
+// but these lists should contain the same entries
 export const AVAILABLE_PANES = [
 	WebviewPanels.OpenPullRequests,
 	WebviewPanels.OpenReviews,
 	WebviewPanels.CodemarksForFile,
 	WebviewPanels.Observability,
+	WebviewPanels.Tasks
+];
+export const AVAILABLE_PANES_NR = [
+	WebviewPanels.Observability,
+	WebviewPanels.OpenPullRequests,
+	WebviewPanels.OpenReviews,
+	WebviewPanels.CodemarksForFile,
 	WebviewPanels.Tasks
 ];
 
@@ -87,8 +99,17 @@ export const Sidebar = React.memo(function Sidebar() {
 		const preferences = getPreferences(state);
 		const repos = getRepos(state);
 
+		const isNewRelicSignUp = isConnectedSelectorFriendly(
+			state.users,
+			"", // we specifically want to know if there's top-level data
+			state.session,
+			state.providers,
+			{ id: "newrelic*com" }
+		);
+		const defaultPaneOrder = isNewRelicSignUp ? AVAILABLE_PANES_NR : AVAILABLE_PANES;
+
 		// get the preferences, or use the default
-		let sidebarPaneOrder = preferences.sidebarPaneOrder || AVAILABLE_PANES;
+		let sidebarPaneOrder = preferences.sidebarPaneOrder || defaultPaneOrder;
 		// in case someone has customized their pane order, but then we
 		// added a new pane, check to see that all available panes are
 		// represented

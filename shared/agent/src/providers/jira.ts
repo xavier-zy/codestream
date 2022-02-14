@@ -340,7 +340,7 @@ export class JiraProvider extends ThirdPartyIssueProviderBase<CSJiraProviderInfo
 			let nextPage: string | undefined = `/rest/api/2/search?${qs.stringify({
 				jql:
 					request.customFilter ||
-					"assignee=currentuser() AND ((status!~closed AND status!=Done AND status!=Resolved) OR resolution=Unresolved)",
+					"assignee=currentuser() AND ((status!=Closed AND status!=Done AND status!=Resolved) OR resolution=Unresolved)",
 				expand: "transitions,names",
 				fields: "summary,description,updated,subtasks,status,issuetype,priority,assignee"
 			})}`;

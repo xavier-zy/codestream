@@ -1184,7 +1184,7 @@ export const InviteTeammates = (props: { className: string; skip: Function; unwr
 			index++;
 		}
 
-		if (allowDomainBasedJoining) {
+		if (allowDomainBasedJoining && displayDomainJoinCheckbox()) {
 			updateCompanyRequestType();
 		}
 

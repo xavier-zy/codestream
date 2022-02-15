@@ -79,7 +79,7 @@ export class PubnubHistory {
 			await this.retrieveBatchHistory(channels, timetoken, options);
 		} catch (error) {
 			// if we reached a "RESET" condition, break out and inform the client, we'll proceed no further
-			if (error === "RESET") {
+			if (error instanceof Error && error.message === "RESET") {
 				return false;
 			} else {
 				throw error;

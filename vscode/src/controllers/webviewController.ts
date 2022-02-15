@@ -66,6 +66,7 @@ import {
 	ShowPreviousChangedFileRequestType,
 	ShowReviewNotificationType,
 	StartWorkNotificationType,
+	TeamlessContext,
 	UpdateConfigurationRequestType,
 	UpdateServerUrlRequestType,
 	WebviewContext,
@@ -132,6 +133,7 @@ export interface WebviewState {
 			context?: WebviewContext;
 		};
 	};
+	teamless?: TeamlessContext;
 }
 
 export class WebviewController implements Disposable {
@@ -196,7 +198,6 @@ export class WebviewController implements Disposable {
 			teams: {}
 		});
 		let teamState;
-
 		switch (status) {
 			case SessionStatus.SignedOut:
 				if (e.reason === SessionSignedOutReason.SignInFailure) {
@@ -215,8 +216,15 @@ export class WebviewController implements Disposable {
 					}
 					break;
 				}
-				teamState = state.teams["#NOTEAM#"];
-				this._context = teamState && teamState.context;
+
+				if (state.teamless) {
+					this._context = {
+						currentTeamId: "_",
+						hasFocus: true,
+						onboardStep: 0,
+						__teamless__: state.teamless
+					};
+				}
 
 				break;
 
@@ -225,6 +233,9 @@ export class WebviewController implements Disposable {
 
 				teamState = state.teams[this.session.team.id];
 				this._context = teamState && teamState.context;
+				if (this._context && state.teamless) {
+					this._context.__teamless__ = state.teamless;
+				}
 
 				// only show if the state is explicitly set to false
 				// (ignore if it's undefined)
@@ -867,7 +878,10 @@ export class WebviewController implements Disposable {
 			}
 			case LogoutRequestType.method: {
 				webview.onIpcRequest(LogoutRequestType, e, async (_type, _params) => {
-					await Container.commands.signOut(SessionSignedOutReason.UserSignedOutFromWebview);
+					await Container.commands.signOut(
+						SessionSignedOutReason.UserSignedOutFromWebview,
+						_params.newServerUrl
+					);
 					return emptyObj;
 				});
 
@@ -1283,11 +1297,6 @@ export class WebviewController implements Disposable {
 		}
 
 		try {
-			// if (!this.session.signedIn) return;
-
-			const teamId =
-				(this.session.signedIn && this.session.team && this.session.team.id) || "#NOTEAM#";
-
 			const prevState = Container.context.workspaceState.get<WebviewState>(
 				WorkspaceState.webviewState,
 				{
@@ -1296,14 +1305,28 @@ export class WebviewController implements Disposable {
 				}
 			);
 
+			if (!this.session.signedIn) {
+				if (this._context && this._context.__teamless__) {
+					const newState: WebviewState = {
+						hidden: prevState.hidden,
+						teams: prevState.teams,
+						teamless: this._context.__teamless__
+					};
+					Container.context.workspaceState.update(WorkspaceState.webviewState, newState);
+				}
+				return;
+			}
+
+			const teamId = this.session.signedIn && this.session.team && this.session.team.id;
+
 			const teams = prevState.teams || {};
 			teams[teamId] = {
 				context: this._context
 			};
 
 			Container.context.workspaceState.update(WorkspaceState.webviewState, {
-				hidden: hidden,
-				teams: teams
+				hidden,
+				teams
 			});
 
 			if (

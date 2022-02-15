@@ -397,9 +397,9 @@ export class CodeStreamAgentConnection implements Disposable {
 		return options;
 	}
 
-	async logout() {
+	async logout(newServerUrl?: string) {
 		await this.stop();
-		await Container.agent.start();
+		await Container.agent.start(newServerUrl);
 	}
 
 	get codemarks() {
@@ -1070,9 +1070,12 @@ export class CodeStreamAgentConnection implements Disposable {
 	}
 
 	private _starting: Promise<AgentInitializeResult> | undefined;
-	public async start(): Promise<AgentInitializeResult> {
+	public async start(newServerUrl?: string): Promise<AgentInitializeResult> {
 		if (this._client !== undefined || this._starting !== undefined) {
 			throw new Error("Agent has already been started");
+		}
+		if (newServerUrl && this._clientOptions.initializationOptions) {
+			this._clientOptions.initializationOptions.serverUrl = newServerUrl;
 		}
 
 		this._starting = this.startCore();
@@ -1213,6 +1216,12 @@ export class CodeStreamAgentConnection implements Disposable {
 
 		this._starting = undefined;
 		this._client = undefined;
+	}
+
+	public setServerUrl(url: string) {
+		if (this._clientOptions.initializationOptions) {
+			this._clientOptions.initializationOptions.serverUrl = url;
+		}
 	}
 }
 

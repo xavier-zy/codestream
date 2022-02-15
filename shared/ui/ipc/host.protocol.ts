@@ -65,6 +65,7 @@ export enum LogoutReason {
 
 export interface LogoutRequest {
 	reason?: LogoutReason;
+	newServerUrl?: string;
 }
 
 export interface LogoutResponse {}

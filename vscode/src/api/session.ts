@@ -320,8 +320,11 @@ export class CodeStreamSession implements Disposable {
 	get serverUrl(): string {
 		return this._serverUrl;
 	}
-	setServerUrl(url: string) {
+	setServerUrl(url: string, environment?: string) {
 		this._serverUrl = url;
+		if (environment && this._environmentInfo) {
+			this._environmentInfo.environment = environment;
+		}
 	}
 
 	get signedIn() {
@@ -551,7 +554,10 @@ export class CodeStreamSession implements Disposable {
 	}
 
 	@log()
-	async logout(reason: SessionSignedOutReason = SessionSignedOutReason.UserSignedOutFromWebview) {
+	async logout(
+		reason: SessionSignedOutReason = SessionSignedOutReason.UserSignedOutFromWebview,
+		newServerUrl?: string
+	) {
 		this._id = undefined;
 		this._loginPromise = undefined;
 
@@ -571,7 +577,7 @@ export class CodeStreamSession implements Disposable {
 			this._status = SessionStatus.SignedOut;
 
 			if (Container.agent !== undefined) {
-				void (await Container.agent.logout());
+				void (await Container.agent.logout(newServerUrl));
 			}
 
 			if (this._disposableAuthenticated !== undefined) {

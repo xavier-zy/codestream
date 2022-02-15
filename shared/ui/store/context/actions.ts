@@ -12,11 +12,15 @@ import {
 } from "@codestream/protocols/webview";
 import { CodemarkType } from "@codestream/protocols/api";
 import { HostApi } from "@codestream/webview/webview-api";
+import { TeamlessContext } from "@codestream/protocols/webview";
 
 export const reset = () => action("RESET");
 
 export const setContext = (payload: Partial<ContextState>) =>
 	action(ContextActionsType.SetContext, payload);
+
+export const setTeamlessContext = (payload: Partial<TeamlessContext>) =>
+	action(ContextActionsType.SetTeamlessContext, payload);
 
 export const _openPanel = (panel: string) => action(ContextActionsType.OpenPanel, panel);
 export const openPanel = (panel: string) => (dispatch, getState) => {

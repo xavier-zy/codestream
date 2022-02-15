@@ -140,6 +140,10 @@ export interface CodeErrorData {
 	claimWhenConnected?: boolean;
 }
 
+export interface TeamlessContext {
+	selectedRegion?: string;
+}
+
 export interface WebviewContext {
 	currentTeamId: string;
 	sessionStart?: number;
@@ -184,6 +188,7 @@ export interface WebviewContext {
 	onboardStep: number;
 	pendingProtocolHandlerUrl?: string;
 	pendingProtocolHandlerQuery?: any;
+	__teamless__?: TeamlessContext;
 }
 
 export interface SessionState {

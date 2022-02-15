@@ -16,9 +16,8 @@ import { logError } from "../logger";
 import { CodeStreamState } from "@codestream/webview/store";
 import { LoginResult } from "@codestream/protocols/api";
 import { goToNewUserEntry, goToCompanyCreation, goToLogin } from "../store/context/actions";
+import { setEnvironment } from "../store/session/actions";
 import { completeSignup } from "./actions";
-import { setContext } from "../store/context/actions";
-import { UpdateServerUrlRequestType } from "../ipc/host.protocol";
 import { InlineMenu } from "../src/components/controls/InlineMenu";
 import { ModalRoot } from "../Stream/Modal"; // HACK ALERT: including this component is NOT the right way
 import Tooltip from "../Stream/Tooltip";
@@ -44,7 +43,7 @@ export const SignupNewRelic = () => {
 	const dispatch = useDispatch();
 	const derivedState = useSelector((state: CodeStreamState) => {
 		const { environmentHosts } = state.configs;
-		const { selectedRegion } = state.context;
+		const { selectedRegion } = state.context.__teamless__ || {};
 
 		return {
 			ide: state.ide,
@@ -69,13 +68,14 @@ export const SignupNewRelic = () => {
 	let regionItems,
 		regionSelected = "";
 	if (derivedState.environmentHosts) {
+		const usHost = derivedState.environmentHosts["us"];
 		regionItems = Object.keys(derivedState.environmentHosts).map(key => ({
 			key,
 			label: derivedState.environmentHosts![key].name,
 			action: () => setSelectedRegion(key)
 		}));
-		if (!derivedState.selectedRegion) {
-			dispatch(setContext({ selectedRegion: "us" }));
+		if (!derivedState.selectedRegion && usHost) {
+			dispatch(setEnvironment("us", usHost.host));
 		}
 		regionSelected =
 			derivedState.environmentHosts && derivedState.selectedRegion
@@ -84,12 +84,9 @@ export const SignupNewRelic = () => {
 	}
 
 	const setSelectedRegion = region => {
-		dispatch(setContext({ selectedRegion: region }));
 		const host = derivedState.environmentHosts![region];
-		if (host && host.host) {
-			HostApi.instance.send(UpdateServerUrlRequestType, {
-				serverUrl: host.host
-			});
+		if (host) {
+			dispatch(setEnvironment(region, host.host));
 		}
 	};
 

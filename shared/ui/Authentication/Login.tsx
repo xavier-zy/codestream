@@ -11,9 +11,7 @@ import { InlineMenu } from "../src/components/controls/InlineMenu";
 import Tooltip from "../Stream/Tooltip";
 import { ModalRoot } from "../Stream/Modal"; // HACK ALERT: including this component is NOT the right way
 import { EnvironmentHost } from "../protocols/agent/agent.protocol";
-import { setContext } from "../store/context/actions";
-import { HostApi } from "../webview-api";
-import { UpdateServerUrlRequestType } from "../ipc/host.protocol";
+import { setEnvironment } from "../store/session/actions";
 
 const isPasswordInvalid = password => password.length === 0;
 const isEmailInvalid = email => {
@@ -47,7 +45,7 @@ interface DispatchProps {
 	goToForgotPassword: typeof goToForgotPassword;
 	goToOktaConfig: typeof goToOktaConfig;
 	startIDESignin: typeof startIDESignin;
-	setContext: typeof setContext;
+	setEnvironment: typeof setEnvironment;
 }
 
 interface Props extends ConnectedProps, DispatchProps {}
@@ -239,13 +237,9 @@ class Login extends React.Component<Props, State> {
 	};
 
 	setSelectedRegion = region => {
-		this.props.setContext({ selectedRegion: region });
 		const host = this.props.environmentHosts![region];
-		if (host && host.host) {
-			HostApi.instance.send(UpdateServerUrlRequestType, {
-				serverUrl: host.host,
-				environment: region
-			});
+		if (host) {
+			this.props.setEnvironment(region, host.host);
 		}
 	};
 
@@ -253,13 +247,14 @@ class Login extends React.Component<Props, State> {
 		let regionItems,
 			regionSelected = "";
 		if (this.props.environmentHosts) {
+			const usHost = this.props.environmentHosts["us"];
 			regionItems = Object.keys(this.props.environmentHosts).map(key => ({
 				key,
 				label: this.props.environmentHosts![key].name,
 				action: () => this.setSelectedRegion(key)
 			}));
-			if (!this.props.selectedRegion) {
-				this.props.setContext({ selectedRegion: "us" });
+			if (!this.props.selectedRegion && usHost) {
+				this.props.setEnvironment("us", usHost.host);
 			}
 			regionSelected =
 				this.props.environmentHosts && this.props.selectedRegion
@@ -430,7 +425,7 @@ const ConnectedLogin = connect<ConnectedProps, any, any, CodeStreamState>(
 			isInVSCode: state.ide.name === "VSC",
 			supportsVSCodeGithubSignin: state.capabilities.vsCodeGithubSignin,
 			environmentHosts: state.configs.environmentHosts,
-			selectedRegion: state.context.selectedRegion
+			selectedRegion: state.context.__teamless__?.selectedRegion
 		};
 	},
 	{
@@ -441,7 +436,7 @@ const ConnectedLogin = connect<ConnectedProps, any, any, CodeStreamState>(
 		startIDESignin,
 		goToForgotPassword,
 		goToOktaConfig,
-		setContext
+		setEnvironment
 	}
 )(Login);
 

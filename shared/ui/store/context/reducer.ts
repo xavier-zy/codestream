@@ -61,6 +61,8 @@ export function reduceContext(
 	switch (action.type) {
 		case ContextActionsType.SetContext:
 			return { ...state, ...action.payload };
+		case ContextActionsType.SetTeamlessContext:
+			return { ...state, __teamless__: { ...(state.__teamless__ || {}), ...action.payload } };
 		case ContextActionsType.SetCurrentStream: {
 			const { streamId, threadId } = action.payload;
 			return { ...state, currentStreamId: streamId, threadId };

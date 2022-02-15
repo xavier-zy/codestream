@@ -9,6 +9,7 @@ import {
 	goToLogin,
 	goToCompanyCreation
 } from "../store/context/actions";
+import { setEnvironment } from "../store/session/actions";
 import { TextInput } from "./TextInput";
 import Button from "../Stream/Button";
 import { DispatchProp } from "../store/common";
@@ -23,7 +24,6 @@ import {
 import { LoginResult } from "@codestream/protocols/api";
 import { authenticate, completeSignup } from "./actions";
 import Icon from "../Stream/Icon";
-import { UpdateServerUrlRequestType } from "../ipc/host.protocol";
 
 const errorToMessageId = {
 	[LoginResult.InvalidToken]: "confirmation.invalid",
@@ -122,10 +122,7 @@ export const EmailConfirmation = (connect() as any)((props: Props) => {
 				console.log(
 					`Upon confirmation, received instruction to change environments to ${environment}:${serverUrl}`
 				);
-				await HostApi.instance.send(UpdateServerUrlRequestType, {
-					serverUrl,
-					environment
-				});
+				props.dispatch(setEnvironment(environment, serverUrl));
 			}
 			switch (result.status) {
 				case LoginResult.NotInCompany: {

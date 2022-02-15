@@ -17,6 +17,7 @@ export enum ContextActionsType {
 	SetCodemarkAuthorFilter = "@context/SetCodemarkAuthorFilter",
 	SetChannelFilter = "@context/SetChannelFilter",
 	SetContext = "@context/Set",
+	SetTeamlessContext = "@context/Teamless/Set",
 	OpenPanel = "@context/OpenPanel",
 	ClosePanel = "@context/ClosePanel",
 	OpenModal = "@context/OpenModal",

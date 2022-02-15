@@ -8,7 +8,7 @@ import Menu from "./Menu";
 import { HostApi } from "../webview-api";
 import { OpenUrlRequestType } from "@codestream/protocols/webview";
 import { sortBy as _sortBy } from "lodash-es";
-import { logout, switchToTeam } from "../store/session/actions";
+import { logout, switchToForeignCompany, switchToTeam } from "../store/session/actions";
 import { EMPTY_STATUS } from "./StartWork";
 import { MarkdownText } from "./MarkdownText";
 import { setProfileUser, openModal } from "../store/context/actions";
@@ -76,11 +76,15 @@ export function EllipsisMenu(props: EllipsisMenuProps) {
 					noHover: isCurrentCompany,
 					action: () => {
 						if (isCurrentCompany) return;
-						const team = userTeams.find(_ => _.companyId === company.id);
-						if (team) {
-							dispatch(switchToTeam(team.id));
+						if (company.host) {
+							dispatch(switchToForeignCompany(company.id));
 						} else {
-							console.error(`Could not switch to a team in ${company.id}`);
+							const team = userTeams.find(_ => _.companyId === company.id);
+							if (team) {
+								dispatch(switchToTeam(team.id));
+							} else {
+								console.error(`Could not switch to a team in ${company.id}`);
+							}
 						}
 					}
 				};

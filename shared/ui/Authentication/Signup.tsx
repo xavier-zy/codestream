@@ -16,6 +16,7 @@ import {
 	goToLogin,
 	goToNewRelicSignup
 } from "../store/context/actions";
+import { setEnvironment } from "../store/session/actions";
 import { TextInput } from "./TextInput";
 import { LoginResult } from "@codestream/protocols/api";
 import { RegisterUserRequestType, GetUserInfoRequestType } from "@codestream/protocols/agent";
@@ -31,8 +32,6 @@ import { PresentTOS } from "./PresentTOS";
 import Tooltip from "../Stream/Tooltip";
 import { confirmPopup } from "../Stream/Confirm";
 import styled from "styled-components";
-import { setContext } from "../store/context/actions";
-import { UpdateServerUrlRequestType } from "../ipc/host.protocol";
 
 const isPasswordValid = (password: string) => password.length >= 6;
 export const isEmailValid = (email: string) => {
@@ -80,7 +79,7 @@ export const Signup = (props: Props) => {
 	const dispatch = useDispatch();
 	const derivedState = useSelector((state: CodeStreamState) => {
 		const { serverUrl, isOnPrem, environment, isProductionCloud, environmentHosts } = state.configs;
-		const { selectedRegion } = state.context;
+		const { selectedRegion } = state.context.__teamless__ || {};
 		let whichServer = isOnPrem ? serverUrl : "CodeStream's cloud service";
 		if (!isProductionCloud) {
 			whichServer += ` (${environment.toUpperCase()})`;
@@ -123,13 +122,14 @@ export const Signup = (props: Props) => {
 	let regionItems,
 		regionSelected = "";
 	if (derivedState.environmentHosts) {
+		const usHost = derivedState.environmentHosts["us"];
 		regionItems = Object.keys(derivedState.environmentHosts).map(key => ({
 			key,
 			label: derivedState.environmentHosts![key].name,
 			action: () => setSelectedRegion(key)
 		}));
-		if (!derivedState.selectedRegion) {
-			dispatch(setContext({ selectedRegion: "us" }));
+		if (!derivedState.selectedRegion && usHost) {
+			dispatch(setEnvironment("us", usHost.host));
 		}
 		regionSelected =
 			derivedState.environmentHosts && derivedState.selectedRegion
@@ -138,13 +138,9 @@ export const Signup = (props: Props) => {
 	}
 
 	const setSelectedRegion = region => {
-		dispatch(setContext({ selectedRegion: region }));
 		const host = derivedState.environmentHosts![region];
 		if (host && host.host) {
-			HostApi.instance.send(UpdateServerUrlRequestType, {
-				serverUrl: host.host,
-				environment: region
-			});
+			dispatch(setEnvironment(region, host.host));
 		}
 	};
 

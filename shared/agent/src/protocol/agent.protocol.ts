@@ -165,6 +165,7 @@ export interface EnvironmentHost {
 	name: string;
 	host: string;
 	key?: string;
+	accessToken?: string;
 }
 
 export interface VerifyConnectivityResponse {

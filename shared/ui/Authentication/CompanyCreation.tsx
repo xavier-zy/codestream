@@ -19,13 +19,12 @@ import {
 	JoinCompanyRequest,
 	JoinCompanyResponse
 } from "@codestream/protocols/agent";
-import { changeRegistrationEmail } from "../store/session/actions";
+import { changeRegistrationEmail, setEnvironment } from "../store/session/actions";
 import { CSCompany, CSEligibleJoinCompany } from "@codestream/protocols/api";
 import { isUndefined as _isUndefined } from "lodash-es";
 import { ReloadAllWindows } from "./ReloadAllWindows";
 import { ModalRoot } from "../Stream/Modal";
 import { CodeStreamState } from "@codestream/webview/store";
-import { UpdateServerUrlRequestType } from "../ipc/host.protocol";
 
 export const CheckboxRow = styled.div`
 	padding: 5px 0 5px 0;
@@ -208,10 +207,7 @@ export function CompanyCreation(props: {
 				console.log(
 					`Joining company ${organization.name} requires switching host to ${organization.host.name} at ${organization.host.host}`
 				);
-				await HostApi.instance.send(UpdateServerUrlRequestType, {
-					serverUrl: organization.host.host,
-					environment: organization.host.key
-				});
+				dispatch(setEnvironment(organization.host.key!, organization.host.host));
 			}
 			const request: JoinCompanyRequest = {
 				companyId: organization.id

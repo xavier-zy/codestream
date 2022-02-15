@@ -1,7 +1,7 @@
 "use strict";
 
 import { ParsedDiff } from "diff";
-import { RepoScmStatus, ThirdPartyProviders } from "./agent.protocol";
+import { EnvironmentHost, RepoScmStatus, ThirdPartyProviders } from "./agent.protocol";
 import { CSReviewCheckpoint } from "./api.protocol";
 
 export interface CSEntity {
@@ -460,6 +460,7 @@ export type CSTeamProviderInfos = CSTeamMSTeamsProviderInfo | CSTeamSlackProvide
 
 export interface CSCompany extends CSEntity {
 	name: string;
+	everyoneTeamId: string;
 	trialStartDate?: number;
 	trialEndDate?: number;
 	plan?: string;
@@ -471,6 +472,7 @@ export interface CSCompany extends CSEntity {
 	nrOrgIds?: number[];
 	nrAccountIds?: number[];
 	isNRConnected?: boolean;
+	host?: EnvironmentHost;
 }
 
 export interface CSTeam extends CSEntity {

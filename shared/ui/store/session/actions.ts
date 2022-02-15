@@ -11,14 +11,15 @@ import {
 	isLoginFailResponse,
 	TokenLoginRequest,
 	DeleteMeUserRequestType,
-	ConfirmLoginCodeRequest
+	ConfirmLoginCodeRequest,
+	EnvironmentInfo
 } from "@codestream/protocols/agent";
 import { CodeStreamState } from "../index";
 import { CSMe } from "@codestream/protocols/api";
 import { onLogin, PasswordLoginParams } from "@codestream/webview/Authentication/actions";
 import { logError } from "@codestream/webview/logger";
-import { goToSignup } from "../context/actions";
-// import { DisconnectFromIDEProviderRequestType } from "../../ipc/host.protocol";
+import { goToSignup, setTeamlessContext } from "../context/actions";
+import { UpdateServerUrlRequestType } from "../../ipc/host.protocol";
 
 export { reset };
 
@@ -84,6 +85,77 @@ export const switchToTeam = (
 
 	if (isLoginFailResponse(response)) {
 		logError("Failed to switch teams", { ...response, userId: user.id, email: user.email });
+		return dispatch(setBootstrapped(true));
+	}
+
+	dispatch(setUserPreference(["lastTeamId"], teamId));
+
+	return dispatch(onLogin(response));
+};
+
+export const setEnvironment = (environment: string, serverUrl: string) => async (
+	dispatch,
+	getState: () => CodeStreamState
+) => {
+	await HostApi.instance.send(UpdateServerUrlRequestType, {
+		serverUrl,
+		environment
+	});
+	dispatch(setTeamlessContext({ selectedRegion: environment! }));
+};
+
+export const switchToForeignCompany = (companyId: string) => async (
+	dispatch,
+	getState: () => CodeStreamState
+) => {
+	const { companies, session, users } = getState();
+	const company = companies[companyId];
+	const user = users[session.userId!] as CSMe;
+	const teamId = company.everyoneTeamId;
+	if (!company) {
+		console.error(`Could not switch to organization ${companyId}, not found`);
+		return;
+	} else if (!company.host) {
+		console.error(`Could not switch to organization ${companyId}, not a foregin company`);
+		return;
+	} else if (!company.host.accessToken) {
+		console.error(`Could not switch to organization ${companyId}, no access token`);
+	}
+
+	// must switch environments (i.e., host, region, etc) to join this organization
+	console.log(
+		`Joining company ${company.name} requires switching host to ${company.host.name} at ${company.host.host}`
+	);
+	await HostApi.instance.send(UpdateServerUrlRequestType, {
+		serverUrl: company.host.host,
+		environment: company.host.key
+	});
+	dispatch(setTeamlessContext({ selectedRegion: company.host.key }));
+
+	dispatch(setBootstrapped(false));
+	dispatch(reset());
+
+	await HostApi.instance.send(LogoutRequestType, { newServerUrl: company.host.host });
+	const response = await HostApi.instance.send(TokenLoginRequestType, {
+		token: {
+			email: user.email,
+			value: company.host.accessToken!,
+			url: company.host.host,
+			teamId
+		},
+		setEnvironment: {
+			environment: company.host.key!,
+			serverUrl: company.host.host
+		},
+		teamId
+	});
+
+	if (isLoginFailResponse(response)) {
+		logError("Failed to switch to foreign company", {
+			...response,
+			userId: user.id,
+			email: user.email
+		});
 		return dispatch(setBootstrapped(true));
 	}
 

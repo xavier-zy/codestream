@@ -1,5 +1,17 @@
 # Change Log
 
+## [12.10.0] - 2022-2-16
+
+### Changed
+
+- Observability section is now placed at the top of the sidebar for users signing up with New Relic
+- Jira tickets with a status of `Resolved` are not displayed in the Issues section
+
+### Fixed
+
+- Fixes an issue where the the merge action for GitHub Enterprise PRs was always defaulting to "Squash & merge"
+- Fixes an issue where extraneous diffs in a Feedback Request resulted in a error about payload size
+
 ## [12.9.0] - 2022-2-9
 
 ### Changed

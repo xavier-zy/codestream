@@ -74,8 +74,8 @@ export class GitHubEnterpriseProvider extends GitHubProvider {
 				});
 			}
 		} catch (ex) {
-			Logger.error(ex);
-			this._version = this.DEFAULT_VERSION;
+			Logger.warn(ex.message || ex.toString());
+			return this.DEFAULT_VERSION;
 		}
 		return this._version;
 	}

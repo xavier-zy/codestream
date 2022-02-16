@@ -11,6 +11,7 @@
 
 - Fixes an issue where the the merge action for GitHub Enterprise PRs was always defaulting to "Squash & merge"
 - Fixes an issue where extraneous diffs in a Feedback Request resulted in a error about payload size
+- Fixes an issue where GitHub Enterprise would not work properly if the server was not accessible when CodeStream started
 
 ## [12.9.0] - 2022-2-9
 

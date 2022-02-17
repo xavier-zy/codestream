@@ -56,7 +56,8 @@ import {
 	ReposScm,
 	StackTraceResponse,
 	ThirdPartyDisconnect,
-	ThirdPartyProviderConfig
+	ThirdPartyProviderConfig,
+	CrashOrException
 } from "../protocol/agent.protocol";
 import { CSNewRelicProviderInfo } from "../protocol/api.protocol";
 import { CodeStreamSession } from "../session";
@@ -1492,6 +1493,8 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				... on ApmApplicationEntity {
 				  guid
 				  name
+				  type
+				  entityType
 				  exception(occurrenceId: $occurrenceId) {
 					message
 					stackTrace {
@@ -1507,6 +1510,8 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				... on BrowserApplicationEntity {
 				  guid
 				  name
+				  type
+				  entityType
 				  exception(fingerprint: $fingerprintId) {
 					message
 					stackTrace {
@@ -1522,11 +1527,14 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				... on MobileApplicationEntity {
 				  guid
 				  name
+				  type
+				  entityType
 				  exception(occurrenceId: $occurrenceId) {
 					stackTrace {
 					  frames {
-						line
+						filepath						
 						formatted
+						line
 						name
 					  }
 					}
@@ -1534,8 +1542,9 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				  crash(occurrenceId: $occurrenceId) {
 					stackTrace {
 					  frames {
-						line
+						filepath						
 						formatted
+						line
 						name
 					  }
 					}
@@ -1672,8 +1681,14 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			stackTrace = await stackTracePromise;
 			if (stackTrace && occurrenceId && response?.actor?.entity) {
 				if (response.actor.entity) {
-					response.actor.entity.crash = stackTrace.actor.entity.crash;
-					response.actor.entity.exception = stackTrace.actor.entity.exception;
+					response.actor.entity.crash = this.tryFormatStack(
+						stackTrace.actor.entity.entityType,
+						stackTrace.actor.entity.crash
+					);
+					response.actor.entity.exception = this.tryFormatStack(
+						stackTrace.actor.entity.entityType,
+						stackTrace.actor.entity.exception
+					);
 				}
 			}
 		} catch (ex) {
@@ -1684,6 +1699,46 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		}
 
 		return response;
+	}
+
+	tryFormatStack(entityType: string, exceptionLike: CrashOrException | undefined) {
+		const mobileApplicationType = "MOBILE_APPLICATION_ENTITY";
+		if (entityType !== mobileApplicationType || !exceptionLike) return exceptionLike;
+
+		try {
+			const len = Math.min(exceptionLike.stackTrace.frames.length, 10);
+			let fixCount = 0;
+
+			/** if the frame has a formatted property, but it isn't actually formatted
+			 * with the filepath and line number, we attempt to make it so  */
+			for (let i = 0; i < len; i++) {
+				const frame = exceptionLike.stackTrace.frames[i];
+				if (
+					frame.formatted &&
+					frame.line &&
+					frame.formatted.indexOf(frame.line.toString()) === -1 &&
+					frame.filepath &&
+					frame.formatted.indexOf(frame.filepath) === -1
+				) {
+					fixCount++;
+				}
+			}
+
+			// if more than a quarter of the frames we checked have an issue
+			if (fixCount >= Math.round(len * 0.25)) {
+				Logger.log(`fixing ${mobileApplicationType}`);
+				for (const frame of exceptionLike.stackTrace.frames) {
+					// there have been line numbers like "-2" ;(
+					if (frame.filepath && frame.line && frame.line > 0) {
+						frame.formatted = `${frame.formatted || ""}(${frame.filepath}:${frame.line})`;
+					}
+				}
+			}
+		} catch (ex) {
+			Logger.error(ex, "tryFormatStack");
+		}
+
+		return exceptionLike;
 	}
 
 	private async buildErrorDetailSettings(

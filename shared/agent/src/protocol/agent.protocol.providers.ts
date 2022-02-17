@@ -1077,14 +1077,14 @@ export const GetObservabilityErrorGroupMetadataRequestType = new RequestType<
 	void
 >("codestream/newrelic/errorGroup/metadata");
 
-interface CrashOrException {
+export interface CrashOrException {
 	message?: string;
 	stackTrace: StackTrace;
 }
 
-interface EntityCrash extends CrashOrException {}
+export interface EntityCrash extends CrashOrException {}
 
-interface EntityException extends CrashOrException {}
+export interface EntityException extends CrashOrException {}
 
 interface StackTrace {
 	frames: { filepath?: string; line?: number; name?: string; formatted: string }[];
@@ -1120,6 +1120,7 @@ export interface ErrorGroupResponse {
 export interface StackTraceResponse {
 	actor: {
 		entity: {
+			entityType: string;
 			// we will have an exception or a crash
 			exception?: EntityException;
 			crash?: EntityCrash;

@@ -203,21 +203,25 @@ export function CompanyCreation(props: {
 
 		try {
 			if (organization.host) {
-				// must switch environments (i.e., host, region, etc) to join this organization
+				// now switch environments (i.e., host, region, etc) to join this organization
 				console.log(
 					`Joining company ${organization.name} requires switching host to ${organization.host.name} at ${organization.host.host}`
 				);
-				dispatch(setEnvironment(organization.host.key!, organization.host.host));
+				dispatch(setEnvironment(organization.host.key, organization.host.host));
 			}
+
 			const request: JoinCompanyRequest = {
 				companyId: organization.id
 			};
 			if (organization.host) {
 				// explicitly add the environment to the request, since the switch-over may still be in progress
-				// NOTE: the environment here is the environment we are switching FROM, not TO
+				// NOTE: we also add the server we are switching TO, since the call to set environments, above,
+				// may not have actually sync'd through to the agent
+				// isn't this fun???
 				request.fromEnvironment = {
 					serverUrl: derivedState.serverUrl,
-					userId: props.userId!
+					userId: props.userId!,
+					toServerUrl: organization.host.host
 				};
 			}
 			const result = (await HostApi.instance.send(
@@ -236,7 +240,7 @@ export function CompanyCreation(props: {
 					byDomain: true,
 					setEnvironment: organization.host
 						? {
-								environment: organization.host.key!,
+								environment: organization.host.key,
 								serverUrl: organization.host.host
 						  }
 						: undefined

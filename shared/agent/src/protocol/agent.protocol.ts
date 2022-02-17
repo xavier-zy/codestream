@@ -5,6 +5,7 @@ import { LoginResponse } from "./agent.protocol.auth";
 import { Unreads } from "./agent.protocol.notifications";
 import { ThirdPartyProviders } from "./agent.protocol.providers";
 import { CSCompany, CSMePreferences, CSRepository, CSStream, CSTeam, CSUser } from "./api.protocol";
+import { CreateCompanyRequest, CreateCompanyResponse } from "./agent.protocol.companies";
 
 export * from "./agent.protocol.notifications";
 
@@ -164,7 +165,7 @@ export const ApiRequestType = new RequestType<ApiRequest, any, void, void>("code
 export interface EnvironmentHost {
 	name: string;
 	host: string;
-	key?: string;
+	key: string;
 	accessToken?: string;
 }
 
@@ -352,6 +353,22 @@ export const UploadFileRequestType = new RequestType<
 	void,
 	void
 >("codestream/upload/file");
+
+export interface CreateForeignCompanyRequest {
+	request: CreateCompanyRequest;
+	host: EnvironmentHost;
+}
+
+export interface CreateForeignCompanyResponse extends CreateCompanyResponse {
+	accessToken: string;
+}
+
+export const CreateForeignCompanyRequestType = new RequestType<
+	CreateForeignCompanyRequest,
+	CreateForeignCompanyResponse,
+	void,
+	void
+>("codestream/company/createForeign");
 
 export const CodeStreamApiGetRequestType = new RequestType<any, any, void, void>(
 	"codestream/api/get"

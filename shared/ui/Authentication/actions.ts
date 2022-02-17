@@ -48,6 +48,7 @@ import { emptyObject, uuid } from "../utils";
 import { localStore } from "../utilities/storage";
 import { setSession, setMaintenanceMode } from "../store/session/actions";
 import { moveCursorToLine } from "../Stream/api-functions";
+import { updateConfigs } from "../store/configs/actions";
 
 export enum SignupType {
 	JoinTeam = "joinTeam",
@@ -276,6 +277,13 @@ export const onLogin = (
 			}
 		})
 	);
+	if (response.loginResponse.runtimeEnvironment) {
+		dispatch(
+			updateConfigs({
+				environment: response.loginResponse.runtimeEnvironment
+			})
+		);
+	}
 
 	if (response.state.codemarkId) {
 		let { codemarks } = getState();

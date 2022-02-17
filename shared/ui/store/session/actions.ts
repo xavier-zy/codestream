@@ -126,16 +126,12 @@ export const switchToForeignCompany = (companyId: string) => async (
 	console.log(
 		`Joining company ${company.name} requires switching host to ${company.host.name} at ${company.host.host}`
 	);
-	await HostApi.instance.send(UpdateServerUrlRequestType, {
-		serverUrl: company.host.host,
-		environment: company.host.key
-	});
-	dispatch(setTeamlessContext({ selectedRegion: company.host.key }));
 
 	dispatch(setBootstrapped(false));
 	dispatch(reset());
 
 	await HostApi.instance.send(LogoutRequestType, { newServerUrl: company.host.host });
+	await dispatch(setEnvironment(company.host.key, company.host.host));
 	const response = await HostApi.instance.send(TokenLoginRequestType, {
 		token: {
 			email: user.email,
@@ -144,7 +140,7 @@ export const switchToForeignCompany = (companyId: string) => async (
 			teamId
 		},
 		setEnvironment: {
-			environment: company.host.key!,
+			environment: company.host.key,
 			serverUrl: company.host.host
 		},
 		teamId

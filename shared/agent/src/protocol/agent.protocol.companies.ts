@@ -56,6 +56,7 @@ export interface JoinCompanyRequest {
 	fromEnvironment?: {
 		serverUrl: string;
 		userId: string;
+		toServerUrl: string;
 	};
 }
 

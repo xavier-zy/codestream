@@ -38,6 +38,8 @@ import {
 	CreateCompanyRequestType,
 	CreateDirectStreamRequest,
 	CreateExternalPostRequest,
+	CreateForeignCompanyRequest,
+	CreateForeignCompanyRequestType,
 	CreateMarkerLocationRequest,
 	CreateMarkerRequest,
 	CreatePostRequest,
@@ -1922,13 +1924,21 @@ export class CodeStreamApiProvider implements ApiProvider {
 	}
 
 	async joinCompanyFromEnvironment(request: JoinCompanyRequest): Promise<JoinCompanyResponse> {
-		const { serverUrl, userId } = request.fromEnvironment!;
+		const { serverUrl, userId, toServerUrl } = request.fromEnvironment!;
+
+		// explicitly set the host to call, because even though we're switching, the
+		// switch may not have fully sync'd yet
+		this.setServerUrl(toServerUrl);
+
+		// NOTE that this._token here is the access token for the server we are switching FROM,
+		// this is OK, since in this request, the access token actually gets passed on to the
+		// server we are switching FROM, by the server we are switching TO
+		// isn't this awesome???
 		const xenvRequest = {
 			serverUrl,
-			userId,
-			accessToken: this._token
+			userId
 		};
-		return this.put(`/xenv/join-company/${request.companyId}`, xenvRequest);
+		return this.put(`/xenv/join-company/${request.companyId}`, xenvRequest, this._token);
 	}
 
 	@lspHandler(UpdateCompanyRequestType)
@@ -1994,6 +2004,16 @@ export class CodeStreamApiProvider implements ApiProvider {
 	@lspHandler(CreateCompanyRequestType)
 	createCompany(request: CreateCompanyRequest) {
 		return this.post("/companies", request, this._token);
+	}
+
+	@log()
+	@lspHandler(CreateForeignCompanyRequestType)
+	createForeignCompany(request: CreateForeignCompanyRequest) {
+		const body = {
+			...request.request,
+			serverUrl: request.host.host
+		};
+		return this.post("/create-xenv-company", body, this._token);
 	}
 
 	@lspHandler(CreateTeamTagRequestType)

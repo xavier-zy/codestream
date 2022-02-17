@@ -4,28 +4,57 @@ import { Button } from "../src/components/Button";
 import { FormattedMessage } from "react-intl";
 import { CodeStreamState } from "../store";
 import { useSelector, useDispatch } from "react-redux";
-import { switchToTeam } from "../store/session/actions";
+import { switchToTeam, setEnvironment, switchToForeignCompany } from "../store/session/actions";
 import { CSCompany } from "@codestream/protocols/api";
 import { wait } from "../utils";
 import { Dialog } from "../src/components/Dialog";
 import { closeModal } from "./actions";
-import { createCompany } from "../store/companies/actions";
+import { createCompany, createForeignCompany } from "../store/companies/actions";
+import { InlineMenu } from "../src/components/controls/InlineMenu";
+import Tooltip from "./Tooltip";
+import Icon from "./Icon";
 
 export function CreateCompanyPage() {
 	const dispatch = useDispatch();
-	const [companyName, setCompanyName] = React.useState("");
-	const [teamNameValidity, setTeamNameValidity] = React.useState(true);
-	const [companyNameValidity, setCompanyNameValidity] = React.useState(true);
-	const { currentCompanyId, companies } = useSelector((state: CodeStreamState) => {
+	const derivedState = useSelector((state: CodeStreamState) => {
+		const { environmentHosts, environment } = state.configs;
+		const { currentTeamId } = state.context;
 		return {
-			currentCompanyId: state.teams[state.context.currentTeamId].companyId,
+			environmentHosts,
+			environment,
+			currentCompanyId: state.teams[currentTeamId].companyId,
 			companies: state.companies
 		};
 	});
 
+	let regionItems,
+		defaultRegion = "";
+	if (derivedState.environmentHosts) {
+		const usHost = derivedState.environmentHosts["us"];
+		regionItems = Object.keys(derivedState.environmentHosts).map(key => ({
+			key,
+			label: derivedState.environmentHosts![key].name,
+			action: () => {
+				setRegion(derivedState.environmentHosts![key].name);
+			}
+		}));
+		defaultRegion = derivedState.environmentHosts
+			? derivedState.environmentHosts[derivedState.environment]?.name
+			: usHost
+			? usHost.name
+			: "";
+	}
+
+	const [companyName, setCompanyName] = React.useState("");
+	const [teamNameValidity, setTeamNameValidity] = React.useState(true);
+	const [companyNameValidity, setCompanyNameValidity] = React.useState(true);
+	const [region, setRegion] = React.useState(defaultRegion);
+
 	const [isLoading, setIsLoading] = React.useState(false);
 	const isCompanyNameUnique = (name: string) => {
-		return !Object.values(companies).some(c => c.name.toLowerCase() === name.toLowerCase());
+		return !Object.values(derivedState.companies).some(
+			c => c.name.toLowerCase() === name.toLowerCase()
+		);
 	};
 
 	const isCompanyNameValid = (name: string) => {
@@ -48,10 +77,31 @@ export function CreateCompanyPage() {
 		setIsLoading(true);
 
 		try {
-			const team = ((await dispatch(createCompany({ name: companyName }))) as unknown) as CSCompany;
-			// artificial delay to ensure analytics from creating the team are actually processed before we logout below
-			await wait(1000);
-			await dispatch(switchToTeam(team.id));
+			if (
+				derivedState.environmentHosts &&
+				region !== derivedState.environmentHosts[derivedState.environment].name
+			) {
+				const key = Object.keys(derivedState.environmentHosts).find(
+					key => derivedState.environmentHosts![key].name === region
+				);
+				if (key) {
+					const host = derivedState.environmentHosts[key];
+					// what's not to love about code like this?
+					const company = ((await dispatch(
+						createForeignCompany({ name: companyName }, host)
+					)) as unknown) as CSCompany;
+					// artificial delay to ensure analytics from creating the team are actually processed before we logout below
+					await wait(1000);
+					await dispatch(switchToForeignCompany(company.id));
+				}
+			} else {
+				const team = ((await dispatch(
+					createCompany({ name: companyName })
+				)) as unknown) as CSCompany;
+				// artificial delay to ensure analytics from creating the team are actually processed before we logout below
+				await wait(1000);
+				await dispatch(switchToTeam(team.id));
+			}
 		} catch (error) {
 		} finally {
 			setIsLoading(false);
@@ -82,6 +132,18 @@ export function CreateCompanyPage() {
 										? "Required"
 										: !isCompanyNameUnique(companyName) && "Name already in use"}
 								</small>
+							)}
+							{regionItems && (
+								<>
+									<br />
+									<br />
+									Region: <InlineMenu items={regionItems}>{region}</InlineMenu>{" "}
+									<Tooltip
+										title={`Select the region where the CodeStream data for this organization should be stored.`}
+									>
+										<Icon name="question" />
+									</Tooltip>
+								</>
 							)}
 						</div>
 						<br />

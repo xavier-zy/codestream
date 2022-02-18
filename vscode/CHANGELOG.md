@@ -1,5 +1,11 @@
 # Change Log
 
+## [12.11.0] - 2022-2-18
+
+### Fixed
+
+- Addresses [#699](https://github.com/TeamCodeStream/CodeStream/issues/699) &mdash; GitLab - "Checkout Branch" and "Code Review" broken
+
 ## [12.10.0] - 2022-2-16
 
 ### Changed

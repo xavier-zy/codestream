@@ -36,6 +36,8 @@ export function EllipsisMenu(props: EllipsisMenuProps) {
 		const user = state.users[state.session.userId!];
 		const onPrem = state.configs.isOnPrem;
 		const currentCompanyId = team.companyId;
+		const { environmentHosts, environment } = state.configs;
+		const currentHost = environmentHosts?.find(host => host.shortName === environment);
 
 		return {
 			sidebarPanePreferences: state.preferences.sidebarPanes || EMPTY_HASH,
@@ -57,20 +59,33 @@ export function EllipsisMenu(props: EllipsisMenuProps) {
 			xraySetting: team.settings ? team.settings.xray : "",
 			multipleReviewersApprove: isFeatureEnabled(state, "multipleReviewersApprove"),
 			autoJoinSupported: isFeatureEnabled(state, "autoJoin"),
-			isOnPrem: onPrem
+			isOnPrem: onPrem,
+			currentHost
 		};
 	});
 
 	const buildSwitchTeamMenuItem = () => {
-		const { userCompanies, currentCompanyId, userTeams } = derivedState;
+		const { userCompanies, currentCompanyId, userTeams, currentHost } = derivedState;
 
 		const buildSubmenu = () => {
 			const items = userCompanies.map(company => {
 				const isCurrentCompany = company.id === currentCompanyId;
+				const companyHost = company.host || currentHost;
+				const companyRegion = companyHost?.name;
 
 				return {
 					key: company.id,
-					label: company.name,
+					label: (
+						<>
+							{company.name}
+							{companyRegion && (
+								<>
+									<br />
+									{companyRegion}
+								</>
+							)}{" "}
+						</>
+					),
 					// icon: isCurrentTeam ? <Icon name="check" /> : undefined,
 					checked: isCurrentCompany,
 					noHover: isCurrentCompany,
@@ -307,7 +322,17 @@ export function EllipsisMenu(props: EllipsisMenuProps) {
 		...[
 			{ label: "-" },
 			{
-				label: <h3>{derivedState.company.name}</h3>,
+				label: (
+					<>
+						<h3>{derivedState.company.name}</h3>
+						{derivedState.currentHost && (
+							<>
+								<br />
+								{derivedState.currentHost.name}
+							</>
+						)}
+					</>
+				),
 				key: "companyHeader",
 				noHover: true,
 				disabled: true

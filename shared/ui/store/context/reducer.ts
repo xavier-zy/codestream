@@ -249,7 +249,8 @@ export function reduceContext(
 			return {
 				...initialState,
 				route: { name: Route.Login, params: {} },
-				chatProviderAccess: state.chatProviderAccess
+				chatProviderAccess: state.chatProviderAccess,
+				__teamless__: state.__teamless__
 			};
 		default:
 			return { ...initialState, ...state };

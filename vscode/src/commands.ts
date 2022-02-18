@@ -561,12 +561,16 @@ export class Commands implements Disposable {
 	}
 
 	@command("signOut")
-	async signOut(reason = SessionSignedOutReason.UserSignedOutFromExtension, newServerUrl?: string) {
+	async signOut(
+		reason = SessionSignedOutReason.UserSignedOutFromExtension,
+		newServerUrl?: string,
+		newEnvironment?: string
+	) {
 		try {
 			if (reason === SessionSignedOutReason.UserSignedOutFromExtension) {
 				Container.webview.hide();
 			}
-			await Container.session.logout(reason, newServerUrl);
+			await Container.session.logout(reason, newServerUrl, newEnvironment);
 		} catch (ex) {
 			Logger.error(ex);
 		}

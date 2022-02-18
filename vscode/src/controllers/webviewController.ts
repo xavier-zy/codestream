@@ -880,7 +880,8 @@ export class WebviewController implements Disposable {
 				webview.onIpcRequest(LogoutRequestType, e, async (_type, _params) => {
 					await Container.commands.signOut(
 						SessionSignedOutReason.UserSignedOutFromWebview,
-						_params.newServerUrl
+						_params.newServerUrl,
+						_params.newEnvironment
 					);
 					return emptyObj;
 				});
@@ -1304,7 +1305,6 @@ export class WebviewController implements Disposable {
 					teams: {}
 				}
 			);
-
 			if (!this.session.signedIn) {
 				if (this._context && this._context.__teamless__) {
 					const newState: WebviewState = {
@@ -1320,13 +1320,15 @@ export class WebviewController implements Disposable {
 			const teamId = this.session.signedIn && this.session.team && this.session.team.id;
 
 			const teams = prevState.teams || {};
+			const teamless = prevState.teamless || undefined;
 			teams[teamId] = {
 				context: this._context
 			};
 
 			Container.context.workspaceState.update(WorkspaceState.webviewState, {
 				hidden,
-				teams
+				teams,
+				teamless
 			});
 
 			if (

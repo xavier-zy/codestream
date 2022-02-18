@@ -556,7 +556,8 @@ export class CodeStreamSession implements Disposable {
 	@log()
 	async logout(
 		reason: SessionSignedOutReason = SessionSignedOutReason.UserSignedOutFromWebview,
-		newServerUrl?: string
+		newServerUrl?: string,
+		newEnvironment?: string
 	) {
 		this._id = undefined;
 		this._loginPromise = undefined;
@@ -575,6 +576,10 @@ export class CodeStreamSession implements Disposable {
 
 			this._email = undefined;
 			this._status = SessionStatus.SignedOut;
+			if (newEnvironment && this._environmentInfo) {
+				this._environmentInfo!.environment = newEnvironment;
+				Container.statusBar.update();
+			}
 
 			if (Container.agent !== undefined) {
 				void (await Container.agent.logout(newServerUrl));

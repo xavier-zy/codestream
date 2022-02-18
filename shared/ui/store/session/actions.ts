@@ -129,7 +129,10 @@ export const switchToForeignCompany = (companyId: string) => async (
 	dispatch(setBootstrapped(false));
 	dispatch(reset());
 
-	await HostApi.instance.send(LogoutRequestType, { newServerUrl: company.host.host });
+	await HostApi.instance.send(LogoutRequestType, {
+		newServerUrl: company.host.host,
+		newEnvironment: company.host.shortName
+	});
 	await dispatch(setEnvironment(company.host.shortName, company.host.host));
 	const response = await HostApi.instance.send(TokenLoginRequestType, {
 		token: {

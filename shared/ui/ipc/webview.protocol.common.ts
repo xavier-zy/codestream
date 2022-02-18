@@ -236,7 +236,7 @@ export interface WebviewConfigs {
 	isProductionCloud: boolean;
 	isWebmail?: boolean;
 	showGoldenSignalsInEditor?: boolean;
-	environmentHosts?: { [key: string]: EnvironmentHost };
+	environmentHosts?: EnvironmentHost[];
 }
 
 export interface IpcHost {

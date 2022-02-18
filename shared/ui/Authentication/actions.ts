@@ -277,13 +277,6 @@ export const onLogin = (
 			}
 		})
 	);
-	if (response.loginResponse.runtimeEnvironment) {
-		dispatch(
-			updateConfigs({
-				environment: response.loginResponse.runtimeEnvironment
-			})
-		);
-	}
 
 	if (response.state.codemarkId) {
 		let { codemarks } = getState();

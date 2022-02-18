@@ -67,26 +67,31 @@ export const SignupNewRelic = () => {
 
 	let regionItems,
 		regionSelected = "";
-	if (derivedState.environmentHosts) {
-		const usHost = derivedState.environmentHosts["us"];
-		regionItems = Object.keys(derivedState.environmentHosts).map(key => ({
-			key,
-			label: derivedState.environmentHosts![key].name,
-			action: () => setSelectedRegion(key)
+	if (derivedState.environmentHosts && derivedState.environmentHosts.length > 1) {
+		const usHost = derivedState.environmentHosts.find(host => host.shortName === "us");
+		regionItems = derivedState.environmentHosts.map(host => ({
+			key: host.shortName,
+			label: host.name,
+			action: () => setSelectedRegion(host.shortName)
 		}));
 		if (!derivedState.selectedRegion && usHost) {
-			dispatch(setEnvironment("us", usHost.host));
+			dispatch(setEnvironment(usHost.shortName, usHost.host));
 		}
-		regionSelected =
-			derivedState.environmentHosts && derivedState.selectedRegion
-				? derivedState.environmentHosts[derivedState.selectedRegion].name
-				: "";
+
+		if (derivedState.selectedRegion) {
+			const selectedHost = derivedState.environmentHosts.find(
+				host => host.shortName === derivedState.selectedRegion
+			);
+			if (selectedHost) {
+				regionSelected = selectedHost.name;
+			}
+		}
 	}
 
 	const setSelectedRegion = region => {
-		const host = derivedState.environmentHosts![region];
+		const host = derivedState.environmentHosts!.find(host => host.shortName === region);
 		if (host) {
-			dispatch(setEnvironment(region, host.host));
+			dispatch(setEnvironment(host.shortName, host.host));
 		}
 	};
 

@@ -408,21 +408,13 @@ export class CodeStreamSession {
 		});
 
 		this._api.verifyConnectivity().then(response => {
-			if (!response.environment) {
-				// for versions of api server pre 8.2.34, which did not support returning environment
-				// in connectivity response ... this code can be eliminated once we're enforcing
-				// versions higher than this
-				this._environmentInfo = this.getEnvironmentFromServerUrl(this._options.serverUrl);
-				Logger.warn("No environment in response, got it from server URL:", this._environmentInfo);
-			} else {
-				this._environmentInfo = {
-					environment: response.environment,
-					isOnPrem: response.isOnPrem || false,
-					isProductionCloud: response.isProductionCloud || false,
-					newRelicLandingServiceUrl: response.newRelicLandingServiceUrl
-				};
-				Logger.log("Got environment from connectivity response:", this._environmentInfo);
-			}
+			this._environmentInfo = {
+				environment: response.environment || "",
+				isOnPrem: response.isOnPrem || false,
+				isProductionCloud: response.isProductionCloud || false,
+				newRelicLandingServiceUrl: response.newRelicLandingServiceUrl
+			};
+			Logger.log("Got environment from connectivity response:", this._environmentInfo);
 			this.agent.sendNotification(DidSetEnvironmentNotificationType, this._environmentInfo);
 		});
 		const versionManager = new VersionMiddlewareManager(this._api);

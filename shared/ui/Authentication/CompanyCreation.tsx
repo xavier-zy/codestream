@@ -207,7 +207,7 @@ export function CompanyCreation(props: {
 				console.log(
 					`Joining company ${organization.name} requires switching host to ${organization.host.name} at ${organization.host.host}`
 				);
-				dispatch(setEnvironment(organization.host.key, organization.host.host));
+				dispatch(setEnvironment(organization.host.shortName, organization.host.host));
 			}
 
 			const request: JoinCompanyRequest = {
@@ -240,7 +240,7 @@ export function CompanyCreation(props: {
 					byDomain: true,
 					setEnvironment: organization.host
 						? {
-								environment: organization.host.key,
+								environment: organization.host.shortName,
 								serverUrl: organization.host.host
 						  }
 						: undefined

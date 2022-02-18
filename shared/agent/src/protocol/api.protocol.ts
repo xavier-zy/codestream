@@ -124,7 +124,6 @@ export interface CSLoginResponse {
 		environment: string;
 		host: string;
 	};
-	runtimeEnvironment?: string;
 }
 
 export interface CSRegisterRequest {

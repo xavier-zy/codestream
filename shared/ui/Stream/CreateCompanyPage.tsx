@@ -4,7 +4,7 @@ import { Button } from "../src/components/Button";
 import { FormattedMessage } from "react-intl";
 import { CodeStreamState } from "../store";
 import { useSelector, useDispatch } from "react-redux";
-import { switchToTeam, setEnvironment, switchToForeignCompany } from "../store/session/actions";
+import { switchToTeam, switchToForeignCompany } from "../store/session/actions";
 import { CSCompany } from "@codestream/protocols/api";
 import { wait } from "../utils";
 import { Dialog } from "../src/components/Dialog";
@@ -29,20 +29,23 @@ export function CreateCompanyPage() {
 
 	let regionItems,
 		defaultRegion = "";
-	if (derivedState.environmentHosts) {
-		const usHost = derivedState.environmentHosts["us"];
-		regionItems = Object.keys(derivedState.environmentHosts).map(key => ({
-			key,
-			label: derivedState.environmentHosts![key].name,
-			action: () => {
-				setRegion(derivedState.environmentHosts![key].name);
-			}
+	if (derivedState.environmentHosts && derivedState.environmentHosts.length > 1) {
+		const usHost = derivedState.environmentHosts.find(host => host.shortName === "us");
+		regionItems = derivedState.environmentHosts.map(host => ({
+			key: host.shortName,
+			label: host.name,
+			action: () => setRegion(host.name)
 		}));
-		defaultRegion = derivedState.environmentHosts
-			? derivedState.environmentHosts[derivedState.environment]?.name
-			: usHost
-			? usHost.name
-			: "";
+		if (derivedState.environment) {
+			const host = derivedState.environmentHosts.find(
+				host => host.shortName === derivedState.environment
+			);
+			if (host) {
+				defaultRegion = host.name;
+			} else if (usHost) {
+				defaultRegion = usHost.name;
+			}
+		}
 	}
 
 	const [companyName, setCompanyName] = React.useState("");
@@ -77,18 +80,15 @@ export function CreateCompanyPage() {
 		setIsLoading(true);
 
 		try {
-			if (
+			const currentHost =
 				derivedState.environmentHosts &&
-				region !== derivedState.environmentHosts[derivedState.environment].name
-			) {
-				const key = Object.keys(derivedState.environmentHosts).find(
-					key => derivedState.environmentHosts![key].name === region
-				);
-				if (key) {
-					const host = derivedState.environmentHosts[key];
+				derivedState.environmentHosts.find(host => host.shortName === derivedState.environment);
+			if (derivedState.environmentHosts && currentHost && region !== currentHost.name) {
+				const selectedHost = derivedState.environmentHosts.find(host => host.name === region);
+				if (selectedHost) {
 					// what's not to love about code like this?
 					const company = ((await dispatch(
-						createForeignCompany({ name: companyName }, host)
+						createForeignCompany({ name: companyName }, selectedHost)
 					)) as unknown) as CSCompany;
 					// artificial delay to ensure analytics from creating the team are actually processed before we logout below
 					await wait(1000);

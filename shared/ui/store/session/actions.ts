@@ -11,8 +11,7 @@ import {
 	isLoginFailResponse,
 	TokenLoginRequest,
 	DeleteMeUserRequestType,
-	ConfirmLoginCodeRequest,
-	EnvironmentInfo
+	ConfirmLoginCodeRequest
 } from "@codestream/protocols/agent";
 import { CodeStreamState } from "../index";
 import { CSMe } from "@codestream/protocols/api";
@@ -101,7 +100,7 @@ export const setEnvironment = (environment: string, serverUrl: string) => async 
 		serverUrl,
 		environment
 	});
-	dispatch(setTeamlessContext({ selectedRegion: environment! }));
+	dispatch(setTeamlessContext({ selectedRegion: environment }));
 };
 
 export const switchToForeignCompany = (companyId: string) => async (
@@ -131,7 +130,7 @@ export const switchToForeignCompany = (companyId: string) => async (
 	dispatch(reset());
 
 	await HostApi.instance.send(LogoutRequestType, { newServerUrl: company.host.host });
-	await dispatch(setEnvironment(company.host.key, company.host.host));
+	await dispatch(setEnvironment(company.host.shortName, company.host.host));
 	const response = await HostApi.instance.send(TokenLoginRequestType, {
 		token: {
 			email: user.email,
@@ -140,7 +139,7 @@ export const switchToForeignCompany = (companyId: string) => async (
 			teamId
 		},
 		setEnvironment: {
-			environment: company.host.key,
+			environment: company.host.shortName,
 			serverUrl: company.host.host
 		},
 		teamId
@@ -156,7 +155,6 @@ export const switchToForeignCompany = (companyId: string) => async (
 	}
 
 	dispatch(setUserPreference(["lastTeamId"], teamId));
-
 	return dispatch(onLogin(response));
 };
 

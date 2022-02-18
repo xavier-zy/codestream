@@ -27,7 +27,7 @@ interface ConnectedProps {
 	oktaEnabled?: boolean;
 	isInVSCode?: boolean;
 	supportsVSCodeGithubSignin?: boolean;
-	environmentHosts?: { [key: string]: EnvironmentHost };
+	environmentHosts?: EnvironmentHost[];
 	selectedRegion?: string;
 }
 
@@ -237,29 +237,33 @@ class Login extends React.Component<Props, State> {
 	};
 
 	setSelectedRegion = region => {
-		const host = this.props.environmentHosts![region];
+		const host = this.props.environmentHosts!.find(host => host.shortName === region);
 		if (host) {
-			this.props.setEnvironment(region, host.host);
+			this.props.setEnvironment(host.shortName, host.host);
 		}
 	};
 
 	render() {
 		let regionItems,
 			regionSelected = "";
-		if (this.props.environmentHosts) {
-			const usHost = this.props.environmentHosts["us"];
-			regionItems = Object.keys(this.props.environmentHosts).map(key => ({
-				key,
-				label: this.props.environmentHosts![key].name,
-				action: () => this.setSelectedRegion(key)
+		if (this.props.environmentHosts && this.props.environmentHosts.length > 1) {
+			const usHost = this.props.environmentHosts.find(host => host.shortName === "us");
+			regionItems = this.props.environmentHosts.map(host => ({
+				key: host.shortName,
+				label: host.name,
+				action: () => this.setSelectedRegion(host.shortName)
 			}));
 			if (!this.props.selectedRegion && usHost) {
-				this.props.setEnvironment("us", usHost.host);
+				this.props.setEnvironment(usHost.shortName, usHost.host);
 			}
-			regionSelected =
-				this.props.environmentHosts && this.props.selectedRegion
-					? this.props.environmentHosts[this.props.selectedRegion].name
-					: "";
+			if (this.props.selectedRegion) {
+				const selectedHost = this.props.environmentHosts.find(
+					host => host.shortName === this.props.selectedRegion
+				);
+				if (selectedHost) {
+					regionSelected = selectedHost.name;
+				}
+			}
 		}
 
 		return (

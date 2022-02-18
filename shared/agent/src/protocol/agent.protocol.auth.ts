@@ -144,12 +144,6 @@ export const RegisterNrUserRequestType = new RequestType<
 
 export interface ConfirmRegistrationRequest extends CSConfirmRegistrationRequest {}
 
-export interface EnvironmentInfo {
-	key: string;
-	name: string;
-	host: string;
-}
-
 export interface ConfirmRegistrationResponse {
 	user?: {
 		id: string;

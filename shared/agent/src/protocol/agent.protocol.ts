@@ -164,8 +164,8 @@ export const ApiRequestType = new RequestType<ApiRequest, any, void, void>("code
 
 export interface EnvironmentHost {
 	name: string;
+	shortName: string;
 	host: string;
-	key: string;
 	accessToken?: string;
 }
 
@@ -182,7 +182,7 @@ export interface VerifyConnectivityResponse {
 	isOnPrem?: boolean;
 	isProductionCloud?: boolean;
 	newRelicLandingServiceUrl?: string;
-	environmentHosts?: { [key: string]: EnvironmentHost };
+	environmentHosts?: EnvironmentHost[];
 }
 
 export const VerifyConnectivityRequestType = new RequestType<

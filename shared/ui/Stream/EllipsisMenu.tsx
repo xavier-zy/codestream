@@ -60,18 +60,25 @@ export function EllipsisMenu(props: EllipsisMenuProps) {
 			multipleReviewersApprove: isFeatureEnabled(state, "multipleReviewersApprove"),
 			autoJoinSupported: isFeatureEnabled(state, "autoJoin"),
 			isOnPrem: onPrem,
-			currentHost
+			currentHost,
+			hasMultipleEnvironments: environmentHosts && environmentHosts.length > 1
 		};
 	});
 
 	const buildSwitchTeamMenuItem = () => {
-		const { userCompanies, currentCompanyId, userTeams, currentHost } = derivedState;
+		const {
+			userCompanies,
+			currentCompanyId,
+			userTeams,
+			currentHost,
+			hasMultipleEnvironments
+		} = derivedState;
 
 		const buildSubmenu = () => {
 			const items = userCompanies.map(company => {
 				const isCurrentCompany = company.id === currentCompanyId;
 				const companyHost = company.host || currentHost;
-				const companyRegion = companyHost?.name;
+				const companyRegion = hasMultipleEnvironments && companyHost?.name;
 
 				return {
 					key: company.id,
@@ -325,7 +332,7 @@ export function EllipsisMenu(props: EllipsisMenuProps) {
 				label: (
 					<>
 						<h3>{derivedState.company.name}</h3>
-						{derivedState.currentHost && (
+						{derivedState.currentHost && derivedState.hasMultipleEnvironments && (
 							<>
 								<br />
 								{derivedState.currentHost.name}

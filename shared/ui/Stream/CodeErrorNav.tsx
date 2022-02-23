@@ -838,6 +838,7 @@ export function CodeErrorNav(props: Props) {
 					exit();
 				}}
 				onSubmit={r => {
+					setIsLoading(true);
 					return new Promise((resolve, reject) => {
 						const payload = {
 							url: r.remote,

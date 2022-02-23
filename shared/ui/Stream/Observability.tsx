@@ -594,7 +594,7 @@ export const Observability = React.memo((props: Props) => {
 
 	return (
 		<Root>
-			<PaneHeader title="Observability" id={WebviewPanels.Observability} count={"Preview"}>
+			<PaneHeader title="Observability" id={WebviewPanels.Observability}>
 				{derivedState.newRelicIsConnected ? (
 					<>
 						<Icon

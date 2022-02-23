@@ -6,6 +6,7 @@ import { groupBy, last, orderBy } from "lodash-es";
 import { compressToBase64 } from "lz-string";
 import sizeof from "object-sizeof";
 import * as path from "path";
+import { ResponseError } from "vscode-jsonrpc/lib/messages";
 import { TextDocumentIdentifier } from "vscode-languageserver";
 import { URI } from "vscode-uri";
 import { Marker, MarkerLocation } from "../api/extensions";
@@ -43,6 +44,11 @@ import {
 	EditPostRequest,
 	EditPostRequestType,
 	EditPostResponse,
+	ERROR_REVIEW_BRANCH_NOT_FOUND,
+	ERROR_REVIEW_COMMITS_NOT_FOUND,
+	ERROR_REVIEW_NO_REMOTES,
+	ERROR_REVIEW_REPO_NOT_FOUND,
+	ERROR_REVIEW_SCM_NOT_FOUND,
 	FetchActivityRequest,
 	FetchActivityRequestType,
 	FetchActivityResponse,
@@ -1480,10 +1486,11 @@ export class PostsManager extends EntityManagerBase<CSPost> {
 		// FIXME the logic for amendments became significantly different, so it should be a separate method
 		//  or a builder class similar to MarkersBuilder
 		const { scm, includeSaved, includeStaged, excludedFiles, newFiles } = repoChange;
-		if (!scm) throw new Error("Unable to create review: SCM info not found");
-		if (!scm.repoId) throw new Error("Unable to create review: git repository not found");
-		if (!scm.branch) throw new Error("Unable to create review: branch not found");
-		if (!scm.commits) throw new Error("Unable to create review: commit history not found");
+		if (!scm) throw new ResponseError(ERROR_REVIEW_SCM_NOT_FOUND, "Unable to create review: SCM info not found");
+		if (!scm.remotes?.length) throw new ResponseError(ERROR_REVIEW_NO_REMOTES, "Unable to create review: git repository has no remotes");
+		if (!scm.repoId) throw new ResponseError(ERROR_REVIEW_REPO_NOT_FOUND, "Unable to create review: git repository not found");
+		if (!scm.branch) throw new ResponseError(ERROR_REVIEW_BRANCH_NOT_FOUND, "Unable to create review: branch not found");
+		if (!scm.commits) throw new ResponseError(ERROR_REVIEW_COMMITS_NOT_FOUND, "Unable to create review: commit history not found");
 		const { git, reviews, scm: scmManager } = SessionContainer.instance();
 
 		let checkpoint = 0;

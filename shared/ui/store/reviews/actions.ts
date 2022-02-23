@@ -156,8 +156,8 @@ export const createReview = (attributes: NewReviewAttributes) => async (
 			return result;
 		}
 	} catch (error) {
-		logError("Error creating a review", { message: error.toString() });
-		throw { reason: "create", message: error.toString() } as CreateReviewError;
+		logError("Error creating a review", error);
+		throw { reason: "create", ...error } as CreateReviewError;
 	}
 };
 

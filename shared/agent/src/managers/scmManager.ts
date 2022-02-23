@@ -485,7 +485,7 @@ export class ScmManager {
 					const repo = await git.getRepositoryByFilePath(repoPath);
 					repoId = repo && repo.id;
 
-					const gitRemotes = await git.getRepoRemotes(repoPath);
+					const gitRemotes = await git.getRepoRemotes(repoPath, true);
 					remotes = [...Iterables.map(gitRemotes, r => ({ name: r.name, url: r.normalizedUrl }))];
 
 					if (commits && commits.length > 1 && !startCommit && includeLatestCommit) {

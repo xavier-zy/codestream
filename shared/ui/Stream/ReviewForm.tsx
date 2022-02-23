@@ -548,6 +548,17 @@ class ReviewForm extends React.Component<Props, State> {
 				});
 			}
 
+			if (statusInfo.scm?.remotes?.length === 0) {
+				this.setState({
+					isLoadingScm: false,
+					isReloadingScm: false,
+					scmError: true,
+					scmErrorMessage: "This repository has no remotes.\n" +
+						"Please configure a remote URL for this repository before creating a review."
+				});
+				return;
+			}
+
 			this._disposableDidChangeDataNotification &&
 				this._disposableDidChangeDataNotification.dispose();
 			const self = this;
@@ -2019,7 +2030,9 @@ class ReviewForm extends React.Component<Props, State> {
 
 		const repoMenuItems =
 			openRepos && !isAmending
-				? openRepos.map(repo => {
+				? openRepos
+					.filter(repo => repo.remotes?.length > 0)
+					.map(repo => {
 						const repoName = repo.id && repos[repo.id] && repos[repo.id].name;
 						return {
 							label: repoName || repo.folder.uri,

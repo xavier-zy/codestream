@@ -736,14 +736,17 @@ export class GitService implements IGitService, Disposable {
 		return push || fetch;
 	}
 
-	getRepoRemotes(repoUri: URI): Promise<GitRemote[]>;
-	getRepoRemotes(repoPath: string): Promise<GitRemote[]>;
+	getRepoRemotes(repoUri: URI, reloadMemoized?: boolean): Promise<GitRemote[]>;
+	getRepoRemotes(repoPath: string, reloadMemoized?: boolean): Promise<GitRemote[]>;
 	@log({
 		exit: (result: GitRemote[]) =>
 			`returned [${result.length !== 0 ? result.map(r => r.uri.toString(true)).join(", ") : ""}]`
 	})
-	getRepoRemotes(repoUriOrPath: URI | string): Promise<GitRemote[]> {
+	getRepoRemotes(repoUriOrPath: URI | string, reloadMemoized?: boolean): Promise<GitRemote[]> {
 		const repoPath = typeof repoUriOrPath === "string" ? repoUriOrPath : repoUriOrPath.fsPath;
+		if (reloadMemoized) {
+			this._memoizedGetRepoRemotes.cache.delete(repoPath);
+		}
 		return this._memoizedGetRepoRemotes(repoPath);
 	}
 	private async _getRepoRemotes(repoPath: string) {

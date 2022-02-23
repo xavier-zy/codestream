@@ -423,7 +423,7 @@ export function CodeErrorNav(props: Props) {
 			let targetRemote;
 			const hasStackTrace =
 				errorGroupResult?.errorGroup?.hasStackTrace || !!codeError?.stackTraces?.length;
-			if (!hasStackTrace) {
+			if (hasStackTrace) {
 				setIsResolved(true);
 				setRepoWarning({ message: "There is no stack trace associated with this error." });
 			} else {
@@ -838,6 +838,7 @@ export function CodeErrorNav(props: Props) {
 					exit();
 				}}
 				onSubmit={r => {
+					setIsLoading(true);
 					return new Promise((resolve, reject) => {
 						const payload = {
 							url: r.remote,

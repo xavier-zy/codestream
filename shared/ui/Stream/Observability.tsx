@@ -268,30 +268,26 @@ export const Observability = React.memo((props: Props) => {
 					.map(r => r.replace("newrelic-errors-in-repo-", ""));
 				repoIds = repoIds.filter(r => !hiddenRepos.includes(r));
 
-				if (repoIds.length) {
-					loading(repoIds, true);
+				loading(repoIds, true);
 
-					HostApi.instance
-						.send(GetObservabilityErrorsRequestType, {
-							filters: buildFilters(repoIds)
-						})
-						.then(response => {
-							if (response?.repos) {
-								setObservabilityErrors(response.repos!);
-							}
-							HostApi.instance
-								.send(GetObservabilityEntitiesRequestType, {
-									appNames: response?.repos?.map(r => r.repoName)
-								})
-								.then(_ => {
-									setHasEntities(!_isEmpty(_.entities));
-									setLoadingEntities(false);
-								});
-							loading(repoIds, false);
-						});
-				} else {
-					setLoadingEntities(false);
-				}
+				HostApi.instance
+					.send(GetObservabilityErrorsRequestType, {
+						filters: buildFilters(repoIds)
+					})
+					.then(response => {
+						if (response?.repos) {
+							setObservabilityErrors(response.repos!);
+						}
+						HostApi.instance
+							.send(GetObservabilityEntitiesRequestType, {
+								appNames: response?.repos?.map(r => r.repoName)
+							})
+							.then(_ => {
+								setHasEntities(!_isEmpty(_.entities));
+								setLoadingEntities(false);
+							});
+						loading(repoIds, false);
+					});
 			});
 	};
 
@@ -336,18 +332,18 @@ export const Observability = React.memo((props: Props) => {
 			Object.keys(derivedState.hiddenPaneNodes).forEach(_ => {
 				if (_.indexOf("newrelic-errors-in-repo-") > -1) {
 					const repoId = _.replace("newrelic-errors-in-repo-", "");
-					if (
-						!observabilityErrors.find(_ => _.repoId === repoId) &&
-						derivedState.hiddenPaneNodes[_] === false &&
-						previousHiddenPaneNodes[_] === true
-					) {
+					if (derivedState.hiddenPaneNodes[_] === false && previousHiddenPaneNodes[_] === true) {
 						loading(repoId, true);
 
 						HostApi.instance
 							.send(GetObservabilityErrorsRequestType, { filters: buildFilters([repoId]) })
 							.then(response => {
 								if (response?.repos) {
-									setObservabilityErrors(response.repos!);
+									const existingObservabilityErrors = observabilityErrors.filter(
+										_ => _.repoId !== repoId
+									);
+									existingObservabilityErrors.push(response.repos[0]);
+									setObservabilityErrors(existingObservabilityErrors);
 								}
 								loading(repoId, false);
 							});

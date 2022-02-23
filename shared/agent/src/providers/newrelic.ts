@@ -782,99 +782,108 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			const { scm } = SessionContainer.instance();
 			const reposResponse = await scm.getRepos({ inEditorOnly: true, includeRemotes: true });
 			let filteredRepos: ReposScm[] | undefined = reposResponse?.repositories;
+			let filteredRepoIds: string[] = [];
 			if (request?.filters?.length) {
-				const repoIds = request.filters.map(_ => _.repoId);
-				filteredRepos = reposResponse.repositories?.filter(r => r.id && repoIds.includes(r.id))!;
+				filteredRepoIds = request.filters.map(_ => _.repoId);
+				filteredRepos = reposResponse.repositories?.filter(
+					r => r.id && filteredRepoIds.includes(r.id)
+				)!;
 			}
 			filteredRepos = filteredRepos?.filter(_ => _.id);
 
 			if (!filteredRepos || !filteredRepos.length) return response;
 
 			for (const repo of filteredRepos) {
-				if (!repo.remotes) continue;
+				if (!repo.remotes || !repo.id) continue;
 
 				const observabilityErrors: ObservabilityError[] = [];
-				const remotes = repo.remotes.map(_ => {
-					return (_ as any).uri!.toString();
-				});
+				// don't ask for NR error data if we don't have
+				// an explicit want for this repo id
+				if (filteredRepoIds.includes(repo.id)) {
+					const remotes = repo.remotes.map(_ => {
+						return (_ as any).uri!.toString();
+					});
 
-				const repositoryEntitiesResponse = await this.findRepositoryEntitiesByRepoRemotes(remotes);
-				let gotoEnd = false;
-				if (repositoryEntitiesResponse?.entities?.length) {
-					const entityFilter = request.filters?.find(_ => _.repoId === repo.id!);
-					for (const entity of repositoryEntitiesResponse.entities) {
-						const accountIdTag = entity.tags?.find(_ => _.key === "accountId");
-						if (!accountIdTag) {
-							ContextLogger.warn("count not find accountId for repo entity", {
-								entityGuid: entity.guid
-							});
-							continue;
-						}
+					const repositoryEntitiesResponse = await this.findRepositoryEntitiesByRepoRemotes(
+						remotes
+					);
+					let gotoEnd = false;
+					if (repositoryEntitiesResponse?.entities?.length) {
+						const entityFilter = request.filters?.find(_ => _.repoId === repo.id!);
+						for (const entity of repositoryEntitiesResponse.entities) {
+							const accountIdTag = entity.tags?.find(_ => _.key === "accountId");
+							if (!accountIdTag) {
+								ContextLogger.warn("count not find accountId for repo entity", {
+									entityGuid: entity.guid
+								});
+								continue;
+							}
 
-						const accountIdValue = parseInt(accountIdTag.values[0] || "0", 10);
-						const urlTag = entity.tags?.find(_ => _.key === "url");
-						const urlValue = urlTag?.values[0];
+							const accountIdValue = parseInt(accountIdTag.values[0] || "0", 10);
+							const urlTag = entity.tags?.find(_ => _.key === "url");
+							const urlValue = urlTag?.values[0];
 
-						const relatedEntities = await this.findRelatedEntityByRepositoryGuid(entity.guid);
+							const relatedEntities = await this.findRelatedEntityByRepositoryGuid(entity.guid);
 
-						let builtFromApplications = relatedEntities.actor.entity.relatedEntities.results.filter(
-							r => r.type === "BUILT_FROM"
-						);
-						if (entityFilter && entityFilter.entityGuid) {
-							builtFromApplications = builtFromApplications.filter(
-								_ => _.source?.entity.guid === entityFilter.entityGuid
+							let builtFromApplications = relatedEntities.actor.entity.relatedEntities.results.filter(
+								r => r.type === "BUILT_FROM"
 							);
-						}
-						for (const application of builtFromApplications) {
-							if (!application.source.entity.guid) continue;
+							if (entityFilter && entityFilter.entityGuid) {
+								builtFromApplications = builtFromApplications.filter(
+									_ => _.source?.entity.guid === entityFilter.entityGuid
+								);
+							}
+							for (const application of builtFromApplications) {
+								if (!application.source.entity.guid) continue;
 
-							const response = await this.findFingerprintedErrorTraces(
-								accountIdValue,
-								application.source.entity.guid
-							);
-							if (response.actor.account.nrql.results) {
-								const errorTraces = response.actor.account.nrql.results;
-								for (const errorTrace of errorTraces) {
-									try {
-										const response = await this.getErrorGroupFromNameMessageEntity(
-											errorTrace.errorClass,
-											errorTrace.message,
-											errorTrace.entityGuid
-										);
+								const response = await this.findFingerprintedErrorTraces(
+									accountIdValue,
+									application.source.entity.guid
+								);
+								if (response.actor.account.nrql.results) {
+									const errorTraces = response.actor.account.nrql.results;
+									for (const errorTrace of errorTraces) {
+										try {
+											const response = await this.getErrorGroupFromNameMessageEntity(
+												errorTrace.errorClass,
+												errorTrace.message,
+												errorTrace.entityGuid
+											);
 
-										if (response && response.actor.errorsInbox.errorGroup) {
-											observabilityErrors.push({
-												entityId: errorTrace.entityGuid,
-												appName: errorTrace.appName,
-												errorClass: errorTrace.errorClass,
-												message: errorTrace.message,
-												remote: urlValue!,
-												errorGroupGuid: response.actor.errorsInbox.errorGroup.id,
-												occurrenceId: errorTrace.occurrenceId,
-												count: errorTrace.length,
-												lastOccurrence: errorTrace.lastOccurrence,
-												errorGroupUrl: response.actor.errorsInbox.errorGroup.url
-											});
-											if (observabilityErrors.length > 4) {
-												gotoEnd = true;
-												break;
+											if (response && response.actor.errorsInbox.errorGroup) {
+												observabilityErrors.push({
+													entityId: errorTrace.entityGuid,
+													appName: errorTrace.appName,
+													errorClass: errorTrace.errorClass,
+													message: errorTrace.message,
+													remote: urlValue!,
+													errorGroupGuid: response.actor.errorsInbox.errorGroup.id,
+													occurrenceId: errorTrace.occurrenceId,
+													count: errorTrace.length,
+													lastOccurrence: errorTrace.lastOccurrence,
+													errorGroupUrl: response.actor.errorsInbox.errorGroup.url
+												});
+												if (observabilityErrors.length > 4) {
+													gotoEnd = true;
+													break;
+												}
 											}
+										} catch (ex) {
+											ContextLogger.warn("internal error getErrorGroupGuid", {
+												ex: ex
+											});
 										}
-									} catch (ex) {
-										ContextLogger.warn("internal error getErrorGroupGuid", {
-											ex: ex
-										});
+									}
+
+									if (gotoEnd) {
+										break;
 									}
 								}
-
-								if (gotoEnd) {
-									break;
-								}
 							}
-						}
 
-						if (gotoEnd) {
-							break;
+							if (gotoEnd) {
+								break;
+							}
 						}
 					}
 				}

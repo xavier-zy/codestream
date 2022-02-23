@@ -94,7 +94,14 @@ export const connectProvider = (
 			return {};
 		}
 	} catch (error) {
-		logError(`Failed to connect ${provider.name}: ${error}`);
+		logError(
+			`Failed to connect ${provider.name}: ${
+				error && error.message ? error.message : error.toString()
+			}`,
+			{
+				error: error
+			}
+		);
 	}
 	return {};
 };
@@ -179,7 +186,14 @@ export const configureProvider = (
 			dispatch(setIssueProvider(providerId));
 		}
 	} catch (error) {
-		logError(`Failed to connect ${provider.name}: ${error}`);
+		logError(
+			`Failed to connect ${provider.name}: ${
+				error && error.message ? error.message : error.toString()
+			}`,
+			{
+				error: error
+			}
+		);
 		if (throwOnError) {
 			throw error;
 		}

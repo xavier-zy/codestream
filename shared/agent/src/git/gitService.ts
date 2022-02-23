@@ -745,7 +745,7 @@ export class GitService implements IGitService, Disposable {
 	getRepoRemotes(repoUriOrPath: URI | string, reloadMemoized?: boolean): Promise<GitRemote[]> {
 		const repoPath = typeof repoUriOrPath === "string" ? repoUriOrPath : repoUriOrPath.fsPath;
 		if (reloadMemoized) {
-			this._memoizedGetRepoRemotes.cache.delete(repoPath);
+			(this._memoizedGetRepoRemotes as any).cache.delete(repoPath);
 		}
 		return this._memoizedGetRepoRemotes(repoPath);
 	}

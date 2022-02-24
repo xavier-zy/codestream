@@ -202,7 +202,11 @@ export class SlackSharingApiProvider {
 
 				let slackUsers: CSUser[] = [];
 				if (conversations == null) {
-					conversations = this.filterConversationsByIm(await this.fetchConversations(cc));
+					conversations = this.filterConversationsByIm(
+						await this.fetchConversations(cc),
+						undefined,
+						[this._slackUserId]
+					);
 				}
 
 				if (conversations?.length) {
@@ -512,7 +516,9 @@ export class SlackSharingApiProvider {
 
 		try {
 			const conversations = await this.fetchConversations(cc);
-			const imConversations = this.filterConversationsByIm(conversations);
+			const imConversations = this.filterConversationsByIm(conversations, undefined, [
+				this._slackUserId
+			]);
 			const userMaps = await this.ensureUserMaps(imConversations);
 
 			const pendingRequestsQueue: DeferredStreamRequest<
@@ -1184,6 +1190,7 @@ export class SlackSharingApiProvider {
 	 * 			is_user_deleted: boolean;
 	 * 		}[]} conversations
 	 * @param {number} [limit=50]
+	 * @param {string[]} [priorityUsers=[]]
 	 * @return {*}
 	 * @memberof SlackSharingApiProvider
 	 */
@@ -1196,13 +1203,16 @@ export class SlackSharingApiProvider {
 			is_archived: boolean;
 			is_user_deleted: boolean;
 		}[],
-		limit: number = 50
+		limit: number = 50,
+		priorityUsers: string[] = []
 	) {
 		conversations = conversations || [];
 		const originalLength = conversations.length;
 		conversations = take(
 			orderBy(
-				conversations.filter(_ => _.is_im && !_.is_archived && !_.is_user_deleted),
+				conversations
+					.map(_ => (priorityUsers.includes(_.user) ? { ..._, priority: _.priority + 1 } : _))
+					.filter(_ => _.is_im && !_.is_archived && !_.is_user_deleted),
 				"priority",
 				"desc"
 			),

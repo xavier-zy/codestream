@@ -203,7 +203,6 @@ export class GitLabProvider extends ThirdPartyIssueProviderBase<CSGitLabProvider
 				}
 			} catch (err) {
 				Logger.error(err);
-				debugger;
 			}
 			boards = gitLabProjects.map(p => {
 				return {

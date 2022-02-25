@@ -460,26 +460,36 @@ export const openErrorGroup = (
 		await dispatch(addCodeErrors([response.codeError]));
 	}
 
-	dispatch(findErrorGroupByObjectId(errorGroupGuid, occurrenceId)).then(codeError => {
-		// if we found an existing codeError, it exists in the data store
-		const pendingId = codeError ? codeError.id : PENDING_CODE_ERROR_ID_FORMAT(errorGroupGuid);
+	dispatch(findErrorGroupByObjectId(errorGroupGuid, occurrenceId))
+		.then(codeError => {
+			// if we found an existing codeError, it exists in the data store
+			const pendingId = codeError ? codeError.id : PENDING_CODE_ERROR_ID_FORMAT(errorGroupGuid);
 
-		// this signals that when the user provides an API key (which they don't have yet),
-		// we will circle back to this action to try to claim the code error again
-		if (response.needNRToken) {
-			data.claimWhenConnected = true;
-		} else {
-			data.pendingRequiresConnection = data.claimWhenConnected = false;
-		}
+			// this signals that when the user provides an API key (which they don't have yet),
+			// we will circle back to this action to try to claim the code error again
+			if (response.needNRToken) {
+				data.claimWhenConnected = true;
+			} else {
+				data.pendingRequiresConnection = data.claimWhenConnected = false;
+			}
 
-		// NOTE don't really like this "PENDING" business, but it's something to say we need to CREATE a codeError
-		// rationalie is: instead of creating _another_ codeError router-like UI,
-		// just re-use the CodeErrorNav component which already does some work for
-		// directing / opening a codeError
-		dispatch(setCurrentCodeError(pendingId, data));
+			// NOTE don't really like this "PENDING" business, but it's something to say we need to CREATE a codeError
+			// rationalie is: instead of creating _another_ codeError router-like UI,
+			// just re-use the CodeErrorNav component which already does some work for
+			// directing / opening a codeError
+			dispatch(setCurrentCodeError(pendingId, data));
 
-		dispatch(openPanel(WebviewPanels.CodemarksForFile));
-	});
+			dispatch(openPanel(WebviewPanels.CodemarksForFile));
+		})
+		.catch(ex => {
+			logError(`failed to findErrorGroupByObjectId`, {
+				ex,
+				errorGroupGuid,
+				occurrenceId,
+				claimResponse: response,
+				data
+			});
+		});
 };
 
 export const PENDING_CODE_ERROR_ID_PREFIX = "PENDING";

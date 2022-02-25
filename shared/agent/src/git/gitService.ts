@@ -838,6 +838,8 @@ export class GitService implements IGitService, Disposable {
 				.replace(/^\//, "")
 				.replace(/\/$/, "")
 				.replace(/\/\/+/g, "/")
+				.replace(/\(/g, "")
+				.replace(/\)/g, "")
 				// 7.
 				.replace(/\.$/, "")
 				// 8.

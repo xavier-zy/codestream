@@ -568,6 +568,8 @@ export const StartWork = (props: Props) => {
 			.replace(/["\\|<>\*\?:]/g, "")
 			.trim()
 			.replace(/[\s]+/g, "-")
+			.replace(/\(/g, "")
+			.replace(/\)/g, "")
 			.substr(0, derivedState.branchMaxLength);
 
 		return derivedState.branchPreserveCase ? str : str.toLowerCase();

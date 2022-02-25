@@ -38,6 +38,7 @@ export enum GitRemoteType {
 
 export class GitRemote implements GitRemoteLike {
 	readonly uri: URI;
+	readonly rawUrl: string;
 
 	constructor(
 		public readonly repoPath: string,
@@ -48,6 +49,7 @@ export class GitRemote implements GitRemoteLike {
 		public readonly path: string,
 		public readonly types: { type: GitRemoteType; url: string }[]
 	) {
+		this.rawUrl = url;
 		this.uri = URI.parse(scheme ? url : `ssh://${url}`);
 	}
 

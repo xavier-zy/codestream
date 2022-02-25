@@ -211,6 +211,7 @@ export interface ReposScm {
 		webUrl: string;
 		remoteWeight?: number;
 		types?: { url: string; type: string }[];
+		rawUrl?: string;
 	}[];
 	/**
 	 * If this repo has a remote that is managed and connected to a provider,

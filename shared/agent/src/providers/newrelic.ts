@@ -671,10 +671,10 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				for (const remote of repo.remotes) {
 					if (remote.name === "origin" || remote.remoteWeight === 0) {
 						// this is the origin remote
-						remotes = [remote.uri.toString()];
+						remotes = [remote.rawUrl!];
 						break;
 					} else {
-						remotes.push(remote.uri.toString());
+						remotes.push(remote.rawUrl!);
 					}
 				}
 
@@ -2635,26 +2635,26 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			if (!remoteVariants.length) return undefined;
 
 			const remoteFilters = remoteVariants.map((_: string) => `tags.url = '${_}'`).join(" OR ");
-
-			const queryResponse = await this.query<EntitySearchResponse>(`{
-			actor {
-			  entitySearch(query: "type = 'REPOSITORY' and (${remoteFilters})") {
-				count
-				query
-				results {
-				  entities {
-					guid
-					name
-					tags {
-					  key
-					  values
-					}
-				  }
-				}
-			  }
+			const query = `{
+	actor {
+	  entitySearch(query: "type = 'REPOSITORY' and (${remoteFilters})") {
+		count
+		query
+		results {
+		  entities {
+			guid
+			name
+			tags {
+			  key
+			  values
 			}
 		  }
-		  `);
+		}
+	  }
+	}
+  }
+  `;
+			const queryResponse = await this.query<EntitySearchResponse>(query);
 			return {
 				entities: queryResponse.actor.entitySearch.results.entities,
 				remotes: remoteVariants

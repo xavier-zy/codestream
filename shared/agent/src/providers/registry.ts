@@ -71,7 +71,8 @@ import {
 	ThirdPartyIssueProvider,
 	ThirdPartyPostProvider,
 	ThirdPartyProvider,
-	ThirdPartyProviderSupportsPullRequests
+	ThirdPartyProviderSupportsPullRequests,
+	ThirdPartyProviderSupportsViewingPullRequests
 } from "./provider";
 
 // NOTE: You must include all new providers here, otherwise the webpack build will exclude them
@@ -165,7 +166,7 @@ export class ThirdPartyProviderRegistry {
 		if (!user) return;
 
 		const providers = this.getConnectedProviders(user, (p): p is ThirdPartyIssueProvider &
-			ThirdPartyProviderSupportsPullRequests => {
+			ThirdPartyProviderSupportsViewingPullRequests => {
 			const thirdPartyIssueProvider = p as ThirdPartyIssueProvider;
 			const name = thirdPartyIssueProvider.getConfig().name;
 			return (
@@ -543,17 +544,17 @@ export class ThirdPartyProviderRegistry {
 		const pullRequestProvider = provider as ThirdPartyIssueProvider;
 		if (
 			pullRequestProvider == null ||
-			typeof pullRequestProvider.supportsPullRequests !== "function" ||
-			!pullRequestProvider.supportsPullRequests()
+			typeof pullRequestProvider.supportsCreatingPullRequests !== "function" ||
+			!pullRequestProvider.supportsCreatingPullRequests()
 		) {
 			throw new Error(`Provider(${provider.name}) doesn't support pull requests`);
 		}
-
 		const response = await pullRequestProvider.createPullRequest(request);
 		return response;
 	}
 
 	async getRepoInfo(request: ProviderGetRepoInfoRequest) {
+		// this is used in the create pr flow hence the check for create
 		const provider = getProvider(request.providerId);
 		if (provider === undefined) {
 			throw new Error(`No registered provider for '${request.providerId}'`);
@@ -562,14 +563,11 @@ export class ThirdPartyProviderRegistry {
 		const pullRequestProvider = provider as ThirdPartyIssueProvider;
 		if (
 			pullRequestProvider == null ||
-			typeof pullRequestProvider.supportsPullRequests !== "function" ||
-			!pullRequestProvider.supportsPullRequests()
+			typeof pullRequestProvider.supportsCreatingPullRequests !== "function" ||
+			!pullRequestProvider.supportsCreatingPullRequests()
 		) {
 			throw new Error(`Provider(${provider.name}) doesn't support pull requests`);
 		}
-
-		// TODO clean it up remote here
-
 		const response = await pullRequestProvider.getRepoInfo(request);
 		return response;
 	}
@@ -645,9 +643,13 @@ export class ThirdPartyProviderRegistry {
 			const uri = URI.parse(request.url);
 			const providers = getRegisteredProviders();
 			for (const provider of providers.filter(_ => {
-				const provider = _ as ThirdPartyIssueProvider & ThirdPartyProviderSupportsPullRequests;
+				const provider = _ as ThirdPartyIssueProvider &
+					ThirdPartyProviderSupportsViewingPullRequests;
 				try {
-					return provider.supportsPullRequests != undefined && provider.supportsPullRequests();
+					return (
+						provider.supportsViewingPullRequests != undefined &&
+						provider.supportsViewingPullRequests()
+					);
 				} catch {
 					return false;
 				}
@@ -825,12 +827,12 @@ export class ThirdPartyProviderRegistry {
 
 	private getPullRequestProvider(
 		provider: ThirdPartyProvider
-	): ThirdPartyIssueProvider & ThirdPartyProviderSupportsPullRequests {
+	): ThirdPartyIssueProvider & ThirdPartyProviderSupportsViewingPullRequests {
 		const pullRequestProvider = provider as ThirdPartyIssueProvider;
 		if (
 			pullRequestProvider == null ||
-			typeof pullRequestProvider.supportsPullRequests !== "function" ||
-			!pullRequestProvider.supportsPullRequests()
+			typeof pullRequestProvider.supportsViewingPullRequests !== "function" ||
+			!pullRequestProvider.supportsViewingPullRequests()
 		) {
 			throw new Error(`Provider(${provider.name}) doesn't support pull requests`);
 		}

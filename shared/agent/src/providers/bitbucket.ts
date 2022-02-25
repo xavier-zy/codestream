@@ -300,13 +300,6 @@ export class BitbucketProvider extends ThirdPartyIssueProviderBase<CSBitbucketPr
 		throw new Error("Method not implemented.");
 	}
 
-	@log()
-	getMyPullRequests(
-		request: GetMyPullRequestsRequest
-	): Promise<GetMyPullRequestsResponse[][] | undefined> {
-		throw new Error("Method not implemented.");
-	}
-
 	async getRemotePaths(repo: any, _projectsByRemotePath: any) {
 		// TODO don't need this ensureConnected -- doesn't hit api
 		await this.ensureConnected();

@@ -92,17 +92,23 @@ export interface ThirdPartyProviderSupportsStatus {
 }
 
 export interface ThirdPartyProviderSupportsPullRequests {
-	createPullRequest(
-		request: ProviderCreatePullRequestRequest
-	): Promise<ProviderCreatePullRequestResponse | undefined>;
 	getRepoInfo(request: ProviderGetRepoInfoRequest): Promise<ProviderGetRepoInfoResponse>;
 	getIsMatchingRemotePredicate(): (remoteLike: GitRemoteLike) => boolean;
 	getRemotePaths(repo: GitRepository, _projectsByRemotePath: any): any;
+}
 
+export interface ThirdPartyProviderSupportsCreatingPullRequests
+	extends ThirdPartyProviderSupportsPullRequests {
+	createPullRequest(
+		request: ProviderCreatePullRequestRequest
+	): Promise<ProviderCreatePullRequestResponse | undefined>;
+}
+
+export interface ThirdPartyProviderSupportsViewingPullRequests
+	extends ThirdPartyProviderSupportsPullRequests {
 	getPullRequest(
 		request: FetchThirdPartyPullRequestRequest
 	): Promise<FetchThirdPartyPullRequestResponse>;
-
 	getPullRequestCommits(
 		request: FetchThirdPartyPullRequestCommitsRequest
 	): Promise<FetchThirdPartyPullRequestCommitsResponse>;
@@ -121,10 +127,17 @@ export namespace ThirdPartyIssueProvider {
 			(provider as any).createCard !== undefined
 		);
 	}
-	export function supportsPullRequests(
+
+	export function supportsViewingPullRequests(
 		provider: ThirdPartyProvider
 	): provider is ThirdPartyProvider & ThirdPartyProviderSupportsPullRequests {
-		return ((provider as any).getMyPullRequests !== undefined);
+		return (provider as any).getMyPullRequests !== undefined;
+	}
+
+	export function supportsCreatingPullRequests(
+		provider: ThirdPartyProvider
+	): provider is ThirdPartyProvider & ThirdPartyProviderSupportsPullRequests {
+		return (provider as any).createPullRequest !== undefined;
 	}
 }
 
@@ -166,7 +179,10 @@ export interface ThirdPartyProvider {
 
 export interface ThirdPartyIssueProvider extends ThirdPartyProvider {
 	supportsIssues(): this is ThirdPartyIssueProvider & ThirdPartyProviderSupportsIssues;
-	supportsPullRequests(): this is ThirdPartyIssueProvider & ThirdPartyProviderSupportsPullRequests;
+	supportsViewingPullRequests(): this is ThirdPartyIssueProvider &
+		ThirdPartyProviderSupportsViewingPullRequests;
+	supportsCreatingPullRequests(): this is ThirdPartyIssueProvider &
+		ThirdPartyProviderSupportsCreatingPullRequests;
 }
 
 export interface ThirdPartyPostProvider extends ThirdPartyProvider {
@@ -668,8 +684,13 @@ export abstract class ThirdPartyIssueProviderBase<
 	supportsIssues(): this is ThirdPartyIssueProvider & ThirdPartyProviderSupportsIssues {
 		return ThirdPartyIssueProvider.supportsIssues(this);
 	}
-	supportsPullRequests(): this is ThirdPartyIssueProvider & ThirdPartyProviderSupportsPullRequests {
-		return ThirdPartyIssueProvider.supportsPullRequests(this);
+	supportsViewingPullRequests(): this is ThirdPartyIssueProvider &
+		ThirdPartyProviderSupportsViewingPullRequests {
+		return ThirdPartyIssueProvider.supportsViewingPullRequests(this);
+	}
+	supportsCreatingPullRequests(): this is ThirdPartyIssueProvider &
+		ThirdPartyProviderSupportsCreatingPullRequests {
+		return ThirdPartyIssueProvider.supportsCreatingPullRequests(this);
 	}
 	protected createDescription(request: ProviderCreatePullRequestRequest): string | undefined {
 		if (

@@ -11,6 +11,7 @@ import { useDidMount } from "../utilities/hooks";
 import { HostApi } from "../webview-api";
 import { DropdownButton } from "./DropdownButton";
 import { WarningBox } from "./WarningBox";
+import Tooltip from "./Tooltip";
 
 interface EntityAssociatorProps {
 	title?: string;
@@ -72,48 +73,50 @@ export const EntityAssociator = React.memo((props: PropsWithChildren<EntityAssoc
 			>
 				{selected ? selected.name : "Select entity"}
 			</DropdownButton>{" "}
-			<Button
-				isLoading={isLoading}
-				disabled={isLoading || !selected}
-				onClick={e => {
-					e.preventDefault();
-					setIsLoading(true);
-					setWarningOrErrors(undefined);
+			<Tooltip placement="bottom" title={`Associate with ${props.remote}`}>
+				<Button
+					isLoading={isLoading}
+					disabled={isLoading || !selected}
+					onClick={e => {
+						e.preventDefault();
+						setIsLoading(true);
+						setWarningOrErrors(undefined);
 
-					const payload = {
-						url: props.remote,
-						name: props.remoteName,
-						applicationEntityGuid: selected?.guid,
-						entityId: selected?.guid,
-						parseableAccountId: selected?.guid
-					};
-					dispatch(api("assignRepository", payload)).then(_ => {
-						setTimeout(() => {
-							if (_?.directives) {
-								console.log("assignRepository", {
-									directives: _?.directives
-								});
-								// a little fragile, but we're trying to get the entity guid back
-								props.onSuccess &&
-									props.onSuccess({
-										entityGuid: _?.directives.find(d => d.type === "assignRepository")?.data
-											?.entityGuid
+						const payload = {
+							url: props.remote,
+							name: props.remoteName,
+							applicationEntityGuid: selected?.guid,
+							entityId: selected?.guid,
+							parseableAccountId: selected?.guid
+						};
+						dispatch(api("assignRepository", payload)).then(_ => {
+							setTimeout(() => {
+								if (_?.directives) {
+									console.log("assignRepository", {
+										directives: _?.directives
 									});
-							} else if (_?.error) {
-								setWarningOrErrors([{ message: _.error }]);
-							} else {
-								console.warn("Could not find directive", {
-									_: _,
-									payload: payload
-								});
-							}
-							setIsLoading(false);
-						}, 2500);
-					});
-				}}
-			>
-				Associate
-			</Button>
+									// a little fragile, but we're trying to get the entity guid back
+									props.onSuccess &&
+										props.onSuccess({
+											entityGuid: _?.directives.find(d => d.type === "assignRepository")?.data
+												?.entityGuid
+										});
+								} else if (_?.error) {
+									setWarningOrErrors([{ message: _.error }]);
+								} else {
+									console.warn("Could not find directive", {
+										_: _,
+										payload: payload
+									});
+								}
+								setIsLoading(false);
+							}, 2500);
+						});
+					}}
+				>
+					Associate
+				</Button>
+			</Tooltip>
 			{props.children}
 		</NoContent>
 	);

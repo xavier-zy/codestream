@@ -160,6 +160,9 @@ export const MethodLevelTelemetryPanel = () => {
 								"NR Account ID": derivedState.currentMethodLevelTelemetry.newRelicAccountId + ""
 							});
 							HostApi.instance.send(RefreshEditorsCodeLensRequestType, {});
+							HostApi.instance.emit(DidChangeObservabilityDataNotificationType.method, {
+								type: "RepositoryAssociation"
+							});
 							dispatch(closeAllPanels());
 						}}
 						remote={derivedState.currentMethodLevelTelemetry.repo.remote}

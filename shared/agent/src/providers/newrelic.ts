@@ -1812,8 +1812,8 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			return undefined;
 		}
 
-		const remotes = await repoForFile.getRemotes();
-		const remote = remotes.map(_ => _.uri.toString())[0];
+		const remotes = await repoForFile.getWeightedRemotesByStrategy(undefined, "prioritizeUpstream");
+		const remote = remotes.map(_ => _.rawUrl)[0];
 
 		let relativeFilePath = relative(repoForFile.path, request.filePath);
 		if (relativeFilePath[0] !== sep) {

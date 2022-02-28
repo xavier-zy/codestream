@@ -666,7 +666,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					);
 					continue;
 				}
-				const folderName = this.getRepoName(repo.folder);
+				const folderName = this.getRepoName(repo);
 				let remotes: string[] = [];
 				for (const remote of repo.remotes) {
 					if (remote.name === "origin" || remote.remoteWeight === 0) {
@@ -911,7 +911,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				}
 				response.repos.push({
 					repoId: repo.id!,
-					repoName: this.getRepoName(repo.folder),
+					repoName: this.getRepoName(repo),
 					errors: observabilityErrors!
 				});
 			}
@@ -1830,7 +1830,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			return {
 				repo: {
 					id: repoForFile.id,
-					name: this.getRepoName(repoForFile.folder),
+					name: this.getRepoName(repoForFile),
 					remote: remote
 				},
 				error: {
@@ -1950,7 +1950,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				newRelicEntityAccounts: observabilityRepo.entityAccounts,
 				repo: {
 					id: repoForFile.id,
-					name: this.getRepoName(repoForFile.folder),
+					name: this.getRepoName(repoForFile),
 					remote: remote
 				},
 				relativeFilePath: relativeFilePath,
@@ -3123,16 +3123,24 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		return undefined;
 	}
 
-	private getRepoName(folder: { name?: string; uri: string }) {
+	private getRepoName(repoLike: { folder: { name?: string; uri: string }; path: string }) {
 		try {
-			const folderName = (folder.name ||
-				URI.parse(folder.uri)
-					.fsPath.split(/[\\/]+/)
-					.pop())!;
-			return folderName;
+			if (!repoLike) return "repo";
+
+			if (repoLike.folder && (repoLike.folder.name || repoLike.folder.uri)) {
+				const folderName = (repoLike.folder.name ||
+					URI.parse(repoLike.folder.uri)
+						.fsPath.split(/[\\/]+/)
+						.pop())!;
+				return folderName;
+			}
+			if (repoLike.path) {
+				const folderName = repoLike.path.split(/[\\/]+/).pop()!;
+				return folderName;
+			}
 		} catch (ex) {
 			ContextLogger.warn("getRepoName", {
-				folder: folder,
+				repoLike: repoLike,
 				error: ex
 			});
 		}

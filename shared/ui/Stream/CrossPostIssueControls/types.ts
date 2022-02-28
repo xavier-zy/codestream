@@ -82,9 +82,9 @@ export const PROVIDER_MAPPINGS: { [provider: string]: ProviderDisplay } = {
 			'See <a href="https://docs.newrelic.com/docs/codestream/codestream-ui-overview/pull-requests-section/#github">custom queries</a> for a detailed list of qualifiers. ',
 		customPullRequestFilterHelpLink:
 			//https://docs.github.com/en/github/searching-for-information-on-github/searching-on-github/searching-issues-and-pull-requests
-			"https://docs.newrelic.com/docs/codestream/codestream-ui-overview/pull-requests-section/#github",
+			"https://docs.newrelic.com/docs/codestream/how-use-codestream/pull-requests#github",
 		customPullRequestFilterExample:
-			'See <a href="https://docs.newrelic.com/docs/codestream/codestream-ui-overview/pull-requests-section/#github">custom queries</a> for a detailed list of qualifiers. ',
+			'See <a href="https://docs.newrelic.com/docs/codestream/how-use-codestream/pull-requests#github">custom queries</a> for a detailed list of qualifiers. ',
 		supportsStartWork: true,
 		supportsPRManagement: true
 	},
@@ -100,10 +100,10 @@ export const PROVIDER_MAPPINGS: { [provider: string]: ProviderDisplay } = {
 		hasCustomFilters: true,
 		customFilterExample: "Example: <code>is:open milestone:jan assignee:@me</code>",
 		customFilterHelp:
-			'See <a href="https://docs.newrelic.com/docs/codestream/codestream-ui-overview/pull-requests-section/#github">custom queries</a> for a detailed list of qualifiers. ',
+			'See <a href="https://docs.newrelic.com/docs/codestream/how-use-codestream/pull-requests#github">custom queries</a> for a detailed list of qualifiers. ',
 		customPullRequestFilterExample:
-			'See <a href="https://docs.newrelic.com/docs/codestream/codestream-ui-overview/pull-requests-section/#github">custom queries</a> for a detailed list of qualifiers. ',
-		customPullRequestFilterHelpLink: "https://docs.newrelic.com/docs/codestream/codestream-ui-overview/pull-requests-section/#github",
+			'See <a href="https://docs.newrelic.com/docs/codestream/how-use-codestream/pull-requests#github">custom queries</a> for a detailed list of qualifiers. ',
+		customPullRequestFilterHelpLink: "https://docs.newrelic.com/docs/codestream/how-use-codestream/pull-requests#github",
 		supportsStartWork: true,
 		supportsPRManagement: true
 	},
@@ -116,11 +116,11 @@ export const PROVIDER_MAPPINGS: { [provider: string]: ProviderDisplay } = {
 		hasCustomFilters: true,
 		customFilterExample: "Example: <code>scope=assigned_to_me&project_id=22</code> ",
 		customFilterHelp:
-			'See <a href="https://docs.newrelic.com/docs/codestream/codestream-ui-overview/pull-requests-section/#gitlab">this article</a> for search syntax and the available parameters. To search issues for a project, use parameter <code>project_id=X</code>. Use an <code>&</code> between parameters in the query. ',
+			'See <a href="https://docs.newrelic.com/docs/codestream/how-use-codestream/pull-requests#gitlab">this article</a> for search syntax and the available parameters. To search issues for a project, use parameter <code>project_id=X</code>. Use an <code>&</code> between parameters in the query. ',
 		customPullRequestFilterExample:
-			'See <a href="https://docs.newrelic.com/docs/codestream/codestream-ui-overview/pull-requests-section/#gitlab">this article</a> for search syntax and the available parameters. To search merge requests for a project, use parameter <code>project_id=X</code>. Use an <code>&</code> between parameters in the query. ',
+			'See <a href="https://docs.newrelic.com/docs/codestream/how-use-codestream/pull-requests#gitlab">this article</a> for search syntax and the available parameters. To search merge requests for a project, use parameter <code>project_id=X</code>. Use an <code>&</code> between parameters in the query. ',
 		customPullRequestFilterHelpLink:
-			"https://docs.newrelic.com/docs/codestream/codestream-ui-overview/pull-requests-section/#gitlab",
+			"https://docs.newrelic.com/docs/codestream/how-use-codestream/pull-requests#gitlab",
 		supportsStartWork: true,
 		supportsPRManagement: true
 	},
@@ -136,11 +136,11 @@ export const PROVIDER_MAPPINGS: { [provider: string]: ProviderDisplay } = {
 		hasCustomFilters: true,
 		customFilterExample: "Example: <code>scope=assigned_to_me&project_id=22</code> ",
 		customFilterHelp:
-			'See <a href="https://docs.newrelic.com/docs/codestream/codestream-ui-overview/pull-requests-section/#gitlab">this article</a> for search syntax and the available parameters. To search issues for a project, use parameter <code>project_id=X</code>. Use an <code>&</code> between parameters in the query. ',
+			'See <a href="https://docs.newrelic.com/docs/codestream/how-use-codestream/pull-requests#gitlab">this article</a> for search syntax and the available parameters. To search issues for a project, use parameter <code>project_id=X</code>. Use an <code>&</code> between parameters in the query. ',
 		customPullRequestFilterExample:
-			'See <a href="https://docs.newrelic.com/docs/codestream/codestream-ui-overview/pull-requests-section/#gitlab">this article</a> for search syntax and the available parameters. To search merge requests for a project, use parameter <code>project_id=X</code>. Use an <code>&</code> between parameters in the query. ',
+			'See <a href="https://docs.newrelic.com/docs/codestream/how-use-codestream/pull-requests#gitlab">this article</a> for search syntax and the available parameters. To search merge requests for a project, use parameter <code>project_id=X</code>. Use an <code>&</code> between parameters in the query. ',
 		customPullRequestFilterHelpLink:
-			"https://docs.newrelic.com/docs/codestream/codestream-ui-overview/pull-requests-section/#gitlab",
+			"https://docs.newrelic.com/docs/codestream/how-use-codestream/pull-requests#gitlab",
 		supportsStartWork: true,
 		supportsPRManagement: true,
 		versionMinimum: "12.10"

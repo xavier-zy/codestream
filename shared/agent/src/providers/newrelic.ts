@@ -647,10 +647,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		try {
 			const { scm } = SessionContainer.instance();
 			const reposResponse = await scm.getRepos({ inEditorOnly: true, includeRemotes: true });
-			console.warn("eric reposResponse", reposResponse);
 			let filteredRepos: ReposScm[] | undefined = reposResponse?.repositories;
-			console.warn("eric filteredRepos", filteredRepos);
-			console.warn("eric request", request);
 			if (request?.filters?.length) {
 				const repoIds = request.filters.map(_ => _.repoId);
 				filteredRepos = reposResponse.repositories?.filter(r => r.id && repoIds.includes(r.id))!;

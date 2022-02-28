@@ -166,7 +166,7 @@ export function GlobalNav() {
 									feedback requests and replies.
 									<Link
 										className="learn-more"
-										href="https://docs.newrelic.com/docs/codestream/codestream-ui-overview/activity-feed/"
+										href="https://docs.newrelic.com/docs/codestream/how-use-codestream/ui-overview/#ui-activity"
 									>
 										learn more
 									</Link>
@@ -217,7 +217,7 @@ export function GlobalNav() {
 									requests, and codestream content.
 									<Link
 										className="learn-more"
-										href="https://docs.newrelic.com/docs/codestream/codestream-ui-overview/filter-search/"
+										href="https://docs.newrelic.com/docs/codestream/how-use-codestream/ui-overview/#ui-activity"
 									>
 										learn more
 									</Link>

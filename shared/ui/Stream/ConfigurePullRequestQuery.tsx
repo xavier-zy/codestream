@@ -255,11 +255,11 @@ export function ConfigurePullRequestQuery(props: Props) {
 											Missing required qualifier.{" "}
 											{providerIdField === "github*com" ||
 											providerIdField === "github/enterprise" ? (
-												<Link href="https://docs.newrelic.com/docs/codestream/codestream-ui-overview/pull-requests-section/#github">
+												<Link href="https://docs.newrelic.com/docs/codestream/how-use-codestream/pull-requests#github">
 													Learn more.
 												</Link>
 											) : (
-												<Link href="https://docs.newrelic.com/docs/codestream/codestream-ui-overview/pull-requests-section/#gitlab">
+												<Link href="https://docs.newrelic.com/docs/codestream/how-use-codestream/pull-requests#gitlab">
 													Learn more.
 												</Link>
 											)}
@@ -272,11 +272,11 @@ export function ConfigurePullRequestQuery(props: Props) {
 												Invalid query.{" "}
 												{providerIdField === "github*com" ||
 												providerIdField === "github/enterprise" ? (
-													<Link href="https://docs.newrelic.com/docs/codestream/codestream-ui-overview/pull-requests-section/#github">
+													<Link href="https://docs.newrelic.com/docs/codestream/how-use-codestream/pull-requests#github">
 														Learn more.
 													</Link>
 												) : (
-													<Link href="https://docs.newrelic.com/docs/codestream/codestream-ui-overview/pull-requests-section/#gitlab">
+													<Link href="https://docs.newrelic.com/docs/codestream/how-use-codestream/pull-requests#gitlab">
 														Learn more.
 													</Link>
 												)}

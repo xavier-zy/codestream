@@ -79,7 +79,7 @@ export const PROVIDER_MAPPINGS: { [provider: string]: ProviderDisplay } = {
 		hasCustomFilters: true,
 		customFilterExample: "Example: <code>is:open milestone:jan assignee:@me</code>",
 		customFilterHelp:
-			'See <a href="https://docs.newrelic.com/docs/codestream/codestream-ui-overview/pull-requests-section/#github">custom queries</a> for a detailed list of qualifiers. ',
+			'See <a href="https://docs.newrelic.com/docs/codestream/how-use-codestream/pull-requests#githubb">custom queries</a> for a detailed list of qualifiers. ',
 		customPullRequestFilterHelpLink:
 			//https://docs.github.com/en/github/searching-for-information-on-github/searching-on-github/searching-issues-and-pull-requests
 			"https://docs.newrelic.com/docs/codestream/how-use-codestream/pull-requests#github",

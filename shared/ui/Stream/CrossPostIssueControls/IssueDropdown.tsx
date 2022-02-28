@@ -1066,11 +1066,11 @@ export const IssueList = React.memo((props: React.PropsWithChildren<IssueListPro
 										Missing required qualifier.
 										{addingCustomFilterForProvider.id === "github*com" ||
 										addingCustomFilterForProvider.id === "github/enterprise" ? (
-											<Link href="https://docs.newrelic.com/docs/codestream/codestream-ui-overview/pull-requests-section/#github">
+											<Link href="https://docs.newrelic.com/docs/codestream/how-use-codestream/pull-requests#github">
 												Learn more.
 											</Link>
 										) : (
-											<Link href="https://docs.newrelic.com/docs/codestream/codestream-ui-overview/pull-requests-section/#gitlab">
+											<Link href="https://docs.newrelic.com/docs/codestream/how-use-codestream/pull-requests#gitlab">
 												Learn more.
 											</Link>
 										)}
@@ -1083,11 +1083,11 @@ export const IssueList = React.memo((props: React.PropsWithChildren<IssueListPro
 											Invalid query.{" "}
 											{addingCustomFilterForProvider.id === "github*com" ||
 											addingCustomFilterForProvider.id === "github/enterprise" ? (
-												<Link href="https://docs.newrelic.com/docs/codestream/codestream-ui-overview/pull-requests-section/#github">
+												<Link href="https://docs.newrelic.com/docs/codestream/how-use-codestream/pull-requests#github">
 													Learn more.
 												</Link>
 											) : (
-												<Link href="https://docs.newrelic.com/docs/codestream/codestream-ui-overview/pull-requests-section/#gitlab">
+												<Link href="https://docs.newrelic.com/docs/codestream/how-use-codestream/pull-requests#gitlab">
 													Learn more.
 												</Link>
 											)}

@@ -78,37 +78,25 @@ export function RepositoryAssociator(props: {
 
 				const results: (ReposScm & EnhancedRepoScm)[] = [];
 				for (const repo of _.repositories) {
-					if (repo.remotes && repo.remotes.length > 1) {
+					if (repo.remotes) {
 						for (const e of repo.remotes) {
 							const id = repo.id || "";
-							if (!e.types || !id) continue;
-							const remoteUrl = e.types?.find(_ => _.type === "fetch")?.url;
-							if (!remoteUrl) continue;
+							const remoteUrl = e.rawUrl;
+							if (!remoteUrl || !id) continue;
 
 							const name = derivedState.repos[id] ? derivedState.repos[id].name : "repo";
 							const label = `${name} (${remoteUrl})`;
 							results.push({
 								...repo,
-								remote: remoteUrl!,
 								key: btoa(remoteUrl!),
+								remote: remoteUrl!,
 								label: label,
 								name: name
 							});
 						}
-						setMultiRemoteRepository(true);
-					} else {
-						const id = repo.id || "";
-						if (!repo.remotes || !repo.remotes[0].types || !id) continue;
-						const url = repo.remotes[0].types.find(_ => _.type === "fetch")?.url!;
-						const name = derivedState.repos[id] ? derivedState.repos[id].name : "repo";
-						const label = `${name} (${url})`;
-						results.push({
-							...repo,
-							key: btoa(url),
-							remote: url,
-							label: label,
-							name: name
-						});
+						if (repo.remotes.length > 1) {
+							setMultiRemoteRepository(true);
+						}
 					}
 				}
 

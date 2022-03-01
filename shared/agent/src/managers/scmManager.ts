@@ -1589,18 +1589,9 @@ export class ScmManager {
 			};
 		}
 		try {
+			let fetchReferenceFailed = false;
 			if (repo && request.ref) {
-				const success = await git.fetchReference(repo, request.ref);
-				if (!success) {
-					Logger.warn("getForkPointRequestType: ref not found");
-					return {
-						sha: "",
-						error: {
-							message: "ref not found",
-							type: "REPO_NOT_FOUND"
-						}
-					};
-				}
+				fetchReferenceFailed = !await git.fetchReference(repo, request.ref);
 			}
 			const shas = [request.baseSha, request.headSha];
 			const results = await Promise.all(
@@ -1620,6 +1611,17 @@ export class ScmManager {
 				(await git.getRepoBranchForkPoint(repoPath, request.baseSha, request.headSha)) || "";
 
 			if (!forkPointSha) {
+				if (fetchReferenceFailed) {
+					Logger.warn("getForkPointRequestType: ref not found");
+					return {
+						sha: "",
+						error: {
+							message: "ref not found",
+							type: "REPO_NOT_FOUND"
+						}
+					};
+				}
+
 				Logger.warn(
 					`getForkPointRequestType: Could not find forkpoint for shas ${shas.join(
 						" and "

@@ -1,5 +1,24 @@
 # Change Log
 
+## [12.12.0] - 2022-3-1
+
+### Changed
+
+- Complete refactor of the "Open a Pull Request" form
+- Allow for selection of repo when opening an error from New Relic where the service is associated with multiple repos
+- Jira tickets with a resolution set are exluded from the Issues section
+
+### Fixed
+
+- Fixes an issue with repo associations not working for remote URLs that start with `ssh://`
+- Addresses [#867](https://github.com/TeamCodeStream/CodeStream/issues/867) &mdash; Can't get new relic observability to actually show something other than "set up monitoring"
+- Fixes an where you'd get a "object Object" error trying to submit a feedback request against a repo with no commits and no remotes
+- Fixes an issue where the list of errors in the Observability section was limited when the recent errors had very high occurence counts
+- Addresses [#848](https://github.com/TeamCodeStream/CodeStream/issues/848) &mdash; Git command needs some escaping
+- Fixes a `PR Api is not compatible` error when trying to access a GitHub Enterprise instance when not connected to the VPN
+- Addresses [#847](https://github.com/TeamCodeStream/CodeStream/issues/847) &mdash; Slack channel selector stopped working
+- Fixes an unexpected error when opening a pull request without the given repo open in your IDE
+
 ## [12.11.0] - 2022-2-18
 
 ### Fixed

@@ -314,8 +314,8 @@ export class SimpleStream extends PureComponent {
 		// this will show for any old, lingering users that have not accepted as part of a new registration
 		// if (!acceptedTOS) return <PresentTOS />;
 
-		// FIXME -- remove this before October 19th
-		if (!acceptedPrereleaseTOS) return <PresentPrereleaseTOS />;
+		// use with beta users
+		//if (!acceptedPrereleaseTOS) return <PresentPrereleaseTOS />;
 
 		if (activePanel === WebviewPanels.LandingRedirect) activePanel = WebviewPanels.Sidebar;
 

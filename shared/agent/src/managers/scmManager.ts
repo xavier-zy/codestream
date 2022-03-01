@@ -1590,7 +1590,17 @@ export class ScmManager {
 		}
 		try {
 			if (repo && request.ref) {
-				await git.fetchReference(repo, request.ref);
+				const success = await git.fetchReference(repo, request.ref);
+				if (!success) {
+					Logger.warn("getForkPointRequestType: ref not found");
+					return {
+						sha: "",
+						error: {
+							message: "ref not found",
+							type: "REPO_NOT_FOUND"
+						}
+					};
+				}
 			}
 			const shas = [request.baseSha, request.headSha];
 			const results = await Promise.all(

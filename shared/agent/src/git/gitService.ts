@@ -766,16 +766,17 @@ export class GitService implements IGitService, Disposable {
 		return this._gitServiceLite.getRepoRoot(filePath);
 	}
 
-	async fetchReference(repo: GitRepository, ref: string): Promise<void> {
+	async fetchReference(repo: GitRepository, ref: string): Promise<boolean> {
 		const remotes = await repo.getWeightedRemotes();
 		for (const remote of remotes) {
 			try {
 				await git({ cwd: repo.path }, "fetch", remote.name, ref);
 				Logger.log(`Fetched ref ${ref} from ${remote.name} in ${repo.path}`);
-				return;
+				return true;
 			} catch (ignore) {}
 		}
 		Logger.log(`Could not find ref ${ref} in any remote of ${repo.path}`);
+		return false;
 	}
 
 	async getCommit(repoUri: URI, ref: string): Promise<GitCommit | undefined>;

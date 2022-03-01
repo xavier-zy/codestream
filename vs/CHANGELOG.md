@@ -18,6 +18,7 @@
 - Fixes a `PR Api is not compatible` error when trying to access a GitHub Enterprise instance when not connected to the VPN
 - Addresses [#847](https://github.com/TeamCodeStream/CodeStream/issues/847) &mdash; Slack channel selector stopped working
 - Fixes an unexpected error when opening a pull request without the given repo open in your IDE
+- Addresses [#844](https://github.com/TeamCodeStream/CodeStream/issues/844) &mdash; Codemarks position themselves at the end of file
 
 ## [12.11.0] - 2022-2-18
 

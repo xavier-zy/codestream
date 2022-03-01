@@ -647,7 +647,10 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		try {
 			const { scm } = SessionContainer.instance();
 			const reposResponse = await scm.getRepos({ inEditorOnly: true, includeRemotes: true });
+			console.warn("eric reposResponse", reposResponse);
 			let filteredRepos: ReposScm[] | undefined = reposResponse?.repositories;
+			console.warn("eric filteredRepos", filteredRepos);
+			console.warn("eric request", request);
 			if (request?.filters?.length) {
 				const repoIds = request.filters.map(_ => _.repoId);
 				filteredRepos = reposResponse.repositories?.filter(r => r.id && repoIds.includes(r.id))!;
@@ -666,7 +669,15 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					);
 					continue;
 				}
-				const folderName = this.getRepoName(repo);
+				const folderName = this.getRepoName(repo.folder);
+
+				if (response.repos.some(_ => _?.repoName === folderName)) {
+					ContextLogger.warn("getObservabilityRepos skipping duplicate repo name", {
+						repo: repo
+					});
+					continue;
+				}
+
 				let remotes: string[] = [];
 				for (const remote of repo.remotes) {
 					if (remote.name === "origin" || remote.remoteWeight === 0) {

@@ -606,6 +606,15 @@ export class ReviewsManager extends CachedEntityManagerBase<CSReview> {
 					error: { type: "REPO_NOT_FOUND" }
 				};
 			}
+			if (!request.headRefName) {
+				try {
+					request.headRefName = await git.getCurrentBranch(repo.path);
+				} catch (ex) {
+					Logger.warn("checkPullRequestPreconditions currentBranch", {
+						error: ex
+					});
+				}
+			}
 
 			const localModifications = await git.getHasModifications(repo.path);
 			const localCommits = await git.getHasLocalCommits(repo.path, request.headRefName);

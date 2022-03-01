@@ -287,19 +287,13 @@ export const CreatePullRequestPanel = (props: { closePanel: MouseEventHandler<El
 				repoId: "",
 				headRefName: ""
 			};
-			if (
-				isRepoUpdate &&
-				pending?.baseRefName &&
-				pending?.headRefName &&
-				selectedRepo &&
-				model?.provider?.id
-			) {
-				// if we're updating data, we must get branches and repo from state
-				args.providerId = model!.provider!.id;
+
+			if (isRepoUpdate && selectedRepo) {
+				// if we're updating the repo don't assume we have a providerId -- it could be different
 				args.repoId = selectedRepo!.id;
-				args.baseRefName = pending?.baseRefName;
-				args.headRefName = pending?.headRefName;
 				args.skipLocalModificationsCheck = true;
+				// resetting everything we've built up
+				setPending({} as any);
 			} else if (!derivedState.reviewId) {
 				// if we're not creating a PR from a review, then get the current
 				// repo and branch from the editor
@@ -355,10 +349,15 @@ export const CreatePullRequestPanel = (props: { closePanel: MouseEventHandler<El
 				if (result.repo) {
 					setCommitsBehindOrigin(+result.repo.commitsBehindOriginHeadBranch!);
 				}
-				let newBaseRefName = pending?.headRefName;
-				let newHeadRefName = args.headRefName || pending?.headRefName || result.repo?.branch || "";
-				if (result.provider?.repo?.defaultBranch) {
-					newBaseRefName = result.provider!.repo!.defaultBranch;
+				let newBaseRefName;
+				let newHeadRefName;
+				if (isRepoUpdate && selectedRepo) {
+					// if we're updating the repo use the results
+					newBaseRefName = result.provider!.repo!.defaultBranch || result.repo?.branch || "";
+					newHeadRefName = result.repo?.branch || "";
+				} else {
+					newBaseRefName = pending?.baseRefName || result.provider?.repo?.defaultBranch || "";
+					newHeadRefName = pending?.headRefName || result.repo?.branch || "";
 				}
 
 				if (result.review && result.review.title) changePRTitle(result.review.title);
@@ -380,6 +379,8 @@ export const CreatePullRequestPanel = (props: { closePanel: MouseEventHandler<El
 				if (isFork) {
 					setAcrossForks(true);
 					await fetchRepositoryForks(result.provider?.id!, result.repo?.remoteUrl!);
+				} else {
+					setAcrossForks(false);
 				}
 
 				setCurrentStep(3);
@@ -442,7 +443,6 @@ export const CreatePullRequestPanel = (props: { closePanel: MouseEventHandler<El
 
 		fetchPreconditionData();
 	}, [
-		selectedRepo && selectedRepo.id,
 		derivedState.isConnectedToGitHub,
 		derivedState.isConnectedToGitLab,
 		derivedState.isConnectedToGitHubEnterprise,
@@ -450,6 +450,13 @@ export const CreatePullRequestPanel = (props: { closePanel: MouseEventHandler<El
 		derivedState.isConnectedToBitbucket,
 		derivedState.isConnectedToBitbucketServer
 	]);
+
+	useEffect(() => {
+		// prevent this from firing if we haven't mounted yet
+		if (!hasMounted) return;
+
+		fetchPreconditionData(true);
+	}, [selectedRepo && selectedRepo.id]);
 
 	useEffect(() => {
 		if (prProviderId) {
@@ -861,7 +868,7 @@ export const CreatePullRequestPanel = (props: { closePanel: MouseEventHandler<El
 			return (
 				<span>
 					<DropdownButton variant="secondary" items={items}>
-						<span className="subtle">repo:</span>{" "}
+						<span className="subtle">in</span>{" "}
 						<strong>{derivedState.repos[selectedRepo.id].name}</strong>
 					</DropdownButton>
 				</span>
@@ -1035,29 +1042,10 @@ export const CreatePullRequestPanel = (props: { closePanel: MouseEventHandler<El
 			if (!element) return null;
 
 			return (
-				<>
-					{(acrossForks || openRepos.length > 1) && (
-						<PRError>
-							<div className="control-group">
-								<PRCompare>
-									<PRDropdown>
-										{acrossForks ? (
-											<> {renderBaseReposAcrossForksDropdown()}</>
-										) : (
-											<>
-												<Icon name="repo" /> {renderBaseReposDropdown()}
-											</>
-										)}
-									</PRDropdown>
-								</PRCompare>
-							</div>
-						</PRError>
-					)}
-					<PRError>
-						<Icon name="alert" />
-						{element}
-					</PRError>
-				</>
+				<PRError>
+					<Icon name="alert" />
+					{element}
+				</PRError>
 			);
 		}
 		return null;
@@ -1375,18 +1363,19 @@ export const CreatePullRequestPanel = (props: { closePanel: MouseEventHandler<El
 
 	return (
 		<Root className="full-height-codemark-form">
-			<PanelHeader title={`Open a ${prLabel.PullRequest}`}>
-				{derivedState.reviewId ? "" : `Choose two branches to start a new ${prLabel.pullrequest}.`}
-				{!derivedState.reviewId && (isLoadingForkInfo || isLoading) && (
-					<Icon className="spin smaller" name="sync" />
-				)}
-				{!isLoadingForkInfo && forkedRepos.length > 0 && (
+			<PanelHeader
+				title={
 					<>
-						{" "}
-						If you need to, you can also{" "}
-						<a onClick={() => setAcrossForks(!acrossForks)}>compare across forks</a>.
+						Open a {prLabel.PullRequest}{" "}
+						{isLoadingForkInfo || isLoading ? (
+							<Icon className="spin smaller" name="sync" />
+						) : (
+							<PRDropdown>{renderBaseReposDropdown()}</PRDropdown>
+						)}
 					</>
-				)}
+				}
+			>
+				{derivedState.reviewId ? "" : `Choose two branches to start a new ${prLabel.pullrequest}.`}
 			</PanelHeader>
 			<CancelButton onClick={props.closePanel} />
 			<span className="plane-container">
@@ -1437,13 +1426,6 @@ export const CreatePullRequestPanel = (props: { closePanel: MouseEventHandler<El
 												</>
 											) : (
 												<>
-													{/* if we're not across forks, and there is a review, dont show this */}
-													{openRepos.length > 0 && !derivedState.reviewId && (
-														<PRDropdown>
-															<Icon name="repo" />
-															{renderBaseReposDropdown()}
-														</PRDropdown>
-													)}
 													<PRDropdown>
 														<Icon name="git-compare" />
 														{renderBaseBranchesDropdown()}

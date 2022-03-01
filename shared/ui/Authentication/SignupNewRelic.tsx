@@ -19,6 +19,7 @@ import { goToNewUserEntry, goToCompanyCreation, goToLogin } from "../store/conte
 import { setEnvironment } from "../store/session/actions";
 import { completeSignup } from "./actions";
 import { InlineMenu } from "../src/components/controls/InlineMenu";
+// TODO: BRIAN FIX (remove this dependency)...
 import { ModalRoot } from "../Stream/Modal"; // HACK ALERT: including this component is NOT the right way
 import Tooltip from "../Stream/Tooltip";
 

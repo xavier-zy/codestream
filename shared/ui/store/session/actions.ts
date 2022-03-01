@@ -111,14 +111,20 @@ export const switchToForeignCompany = (companyId: string) => async (
 	const company = companies[companyId];
 	const user = users[session.userId!] as CSMe;
 	const teamId = company.everyoneTeamId;
+	let error;
 	if (!company) {
-		console.error(`Could not switch to organization ${companyId}, not found`);
+		error = "Failed to switch to foreign company, companyId not found";
 		return;
 	} else if (!company.host) {
-		console.error(`Could not switch to organization ${companyId}, not a foregin company`);
+		error = "Failed to switch to organization, not a foreign company";
 		return;
 	} else if (!company.host.accessToken) {
-		console.error(`Could not switch to organization ${companyId}, no access token`);
+		error = "Failed to switch to organization, no access token";
+	}
+	if (error) {
+		console.error(error, companyId);
+		logError(error, { companyId, userId: user.id, email: user.email });
+		return;
 	}
 
 	// must switch environments (i.e., host, region, etc) to join this organization

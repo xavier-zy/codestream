@@ -6,6 +6,7 @@ import Icon from "../Stream/Icon";
 import Button from "../Stream/Button";
 import { InlineMenu } from "../src/components/controls/InlineMenu";
 import { Link } from "../Stream/Link";
+// TODO: BRIAN FIX (remove this dependency)...
 import { ModalRoot } from "../Stream/Modal"; // HACK ALERT: including this component is NOT the right way
 import {
 	goToNewUserEntry,

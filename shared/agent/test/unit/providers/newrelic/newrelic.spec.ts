@@ -109,20 +109,20 @@ describe("NewRelicProvider", async () => {
 		);
 
 		expect(results?.stackTrace.frames.map(_ => _.formatted)).to.deep.equal([
-			"com.newrelic.common.Logger(Logger.kt:67)",
-			"com.newrelic.common.Logger(Logger.kt:28)",
-			"com.newrelic.common.Logger(Logger.kt:18)",
-			"com.newrelic.login.api.query.RefreshTokenQuery(RefreshTokenQuery.kt:62)",
-			"com.newrelic.login.api.query.RefreshTokenQuery$refreshToken$1",
-			"kotlin.coroutines.jvm.internal.BaseContinuationImpl(ContinuationImpl.kt:33)",
-			"kotlinx.coroutines.DispatchedTask(DispatchedTask.kt:104)",
-			"android.os.Handler(Handler.java:883)",
-			"android.os.Handler(Handler.java:100)",
-			"android.os.Looper(Looper.java:224)",
-			"android.app.ActivityThread(ActivityThread.java:7561)",
-			"java.lang.reflect.Method",
-			"com.android.internal.os.RuntimeInit$MethodAndArgsCaller(RuntimeInit.java:539)",
-			"com.android.internal.os.ZygoteInit(ZygoteInit.java:995)"
+			"\tcom.newrelic.common.Logger(Logger.kt:67)",
+			"\tcom.newrelic.common.Logger(Logger.kt:28)",
+			"\tcom.newrelic.common.Logger(Logger.kt:18)",
+			"\tcom.newrelic.login.api.query.RefreshTokenQuery(RefreshTokenQuery.kt:62)",
+			"\tcom.newrelic.login.api.query.RefreshTokenQuery$refreshToken$1",
+			"\tkotlin.coroutines.jvm.internal.BaseContinuationImpl(ContinuationImpl.kt:33)",
+			"\tkotlinx.coroutines.DispatchedTask(DispatchedTask.kt:104)",
+			"\tandroid.os.Handler(Handler.java:883)",
+			"\tandroid.os.Handler(Handler.java:100)",
+			"\tandroid.os.Looper(Looper.java:224)",
+			"\tandroid.app.ActivityThread(ActivityThread.java:7561)",
+			"\tjava.lang.reflect.Method",
+			"\tcom.android.internal.os.RuntimeInit$MethodAndArgsCaller(RuntimeInit.java:539)",
+			"\tcom.android.internal.os.ZygoteInit(ZygoteInit.java:995)"
 		]);
 	});
 });

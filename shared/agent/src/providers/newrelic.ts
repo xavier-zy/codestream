@@ -1048,12 +1048,15 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					entityUrl: `${this.productUrl}/redirect/entity/${errorGroupResponse.entityGuid}`
 				};
 
-				if (errorGroupFullResponse.actor?.entity?.exception?.stackTrace) {
+				if (
+					errorGroupFullResponse.actor?.entity?.exception?.stackTrace ||
+					errorGroupFullResponse.actor?.entity?.crash?.stackTrace
+				) {
 					errorGroup.errorTrace = {
 						path: errorGroupFullResponse.actor.entity.name,
 						stackTrace: errorGroupFullResponse.actor.entity.crash
 							? errorGroupFullResponse.actor.entity.crash.stackTrace.frames
-							: errorGroupFullResponse.actor.entity.exception.stackTrace.frames
+							: errorGroupFullResponse.actor.entity.exception?.stackTrace?.frames || []
 					};
 					errorGroup.hasStackTrace = true;
 				}
@@ -2558,6 +2561,9 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					// there have been line numbers like "-2" ;(
 					if (frame.filepath && frame.line && frame.line > 0) {
 						frame.formatted = `${frame.formatted || ""}(${frame.filepath}:${frame.line})`;
+					}
+					if (frame.formatted && frame.formatted[0] !== "\t") {
+						frame.formatted = `\t${frame.formatted}`;
 					}
 				}
 			}

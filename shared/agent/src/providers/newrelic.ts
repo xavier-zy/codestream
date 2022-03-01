@@ -666,7 +666,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					);
 					continue;
 				}
-				const folderName = this.getRepoName(repo.folder);
+				const folderName = this.getRepoName(repo);
 
 				if (response.repos.some(_ => _?.repoName === folderName)) {
 					ContextLogger.warn("getObservabilityRepos skipping duplicate repo name", {

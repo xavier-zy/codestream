@@ -123,14 +123,19 @@ export const Signup = (props: Props) => {
 	let regionItems,
 		regionSelected = "";
 	if (derivedState.environmentHosts && derivedState.environmentHosts.length > 1) {
-		const usHost = derivedState.environmentHosts.find(host => host.shortName === "us");
+		let usHost = derivedState.environmentHosts.find(host =>
+			host.shortName.match(/(^|[^a-zA-Z\d\s:])us($|[^a-zA-Z\d\s:])/)
+		);
+		if (!usHost) {
+			usHost = derivedState.environmentHosts[0];
+		}
 		regionItems = derivedState.environmentHosts.map(host => ({
 			key: host.shortName,
 			label: host.name,
 			action: () => setSelectedRegion(host.shortName)
 		}));
 		if (!derivedState.selectedRegion && usHost) {
-			dispatch(setEnvironment(usHost.shortName, usHost.host));
+			dispatch(setEnvironment(usHost.shortName, usHost.publicApiUrl));
 		}
 
 		if (derivedState.selectedRegion) {
@@ -146,7 +151,7 @@ export const Signup = (props: Props) => {
 	const setSelectedRegion = region => {
 		const host = derivedState.environmentHosts!.find(host => host.shortName === region);
 		if (host) {
-			dispatch(setEnvironment(host.shortName, host.host));
+			dispatch(setEnvironment(host.shortName, host.publicApiUrl));
 		}
 	};
 

@@ -205,9 +205,9 @@ export function CompanyCreation(props: {
 			if (organization.host) {
 				// now switch environments (i.e., host, region, etc) to join this organization
 				console.log(
-					`Joining company ${organization.name} requires switching host to ${organization.host.name} at ${organization.host.host}`
+					`Joining company ${organization.name} requires switching host to ${organization.host.name} at ${organization.host.publicApiUrl}`
 				);
-				dispatch(setEnvironment(organization.host.shortName, organization.host.host));
+				dispatch(setEnvironment(organization.host.shortName, organization.host.publicApiUrl));
 			}
 
 			const request: JoinCompanyRequest = {
@@ -221,7 +221,7 @@ export function CompanyCreation(props: {
 				request.fromEnvironment = {
 					serverUrl: derivedState.serverUrl,
 					userId: props.userId!,
-					toServerUrl: organization.host.host
+					toServerUrl: organization.host.publicApiUrl
 				};
 			}
 			const result = (await HostApi.instance.send(
@@ -241,7 +241,7 @@ export function CompanyCreation(props: {
 					setEnvironment: organization.host
 						? {
 								environment: organization.host.shortName,
-								serverUrl: organization.host.host
+								serverUrl: organization.host.publicApiUrl
 						  }
 						: undefined
 				})

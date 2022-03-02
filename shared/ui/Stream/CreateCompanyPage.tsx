@@ -30,7 +30,12 @@ export function CreateCompanyPage() {
 	let regionItems,
 		defaultRegion = "";
 	if (derivedState.environmentHosts && derivedState.environmentHosts.length > 1) {
-		const usHost = derivedState.environmentHosts.find(host => host.shortName === "us");
+		let usHost = derivedState.environmentHosts.find(host =>
+			host.shortName.match(/(^|[^a-zA-Z\d\s:])us($|[^a-zA-Z\d\s:])/)
+		);
+		if (!usHost) {
+			usHost = derivedState.environmentHosts[0];
+		}
 		regionItems = derivedState.environmentHosts.map(host => ({
 			key: host.shortName,
 			label: host.name,

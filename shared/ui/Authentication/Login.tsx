@@ -239,7 +239,7 @@ class Login extends React.Component<Props, State> {
 	setSelectedRegion = region => {
 		const host = this.props.environmentHosts!.find(host => host.shortName === region);
 		if (host) {
-			this.props.setEnvironment(host.shortName, host.host);
+			this.props.setEnvironment(host.shortName, host.publicApiUrl);
 		}
 	};
 
@@ -247,14 +247,19 @@ class Login extends React.Component<Props, State> {
 		let regionItems,
 			regionSelected = "";
 		if (this.props.environmentHosts && this.props.environmentHosts.length > 1) {
-			const usHost = this.props.environmentHosts.find(host => host.shortName === "us");
+			let usHost = this.props.environmentHosts.find(host =>
+				host.shortName.match(/(^|[^a-zA-Z\d\s:])us($|[^a-zA-Z\d\s:])/)
+			);
+			if (!usHost) {
+				usHost = this.props.environmentHosts[0];
+			}
 			regionItems = this.props.environmentHosts.map(host => ({
 				key: host.shortName,
 				label: host.name,
 				action: () => this.setSelectedRegion(host.shortName)
 			}));
 			if (!this.props.selectedRegion && usHost) {
-				this.props.setEnvironment(usHost.shortName, usHost.host);
+				this.props.setEnvironment(usHost.shortName, usHost.publicApiUrl);
 			}
 			if (this.props.selectedRegion) {
 				const selectedHost = this.props.environmentHosts.find(

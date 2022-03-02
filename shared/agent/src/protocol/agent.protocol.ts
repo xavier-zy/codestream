@@ -165,7 +165,7 @@ export const ApiRequestType = new RequestType<ApiRequest, any, void, void>("code
 export interface EnvironmentHost {
 	name: string;
 	shortName: string;
-	host: string;
+	publicApiUrl: string;
 	accessToken?: string;
 }
 

@@ -2011,7 +2011,7 @@ export class CodeStreamApiProvider implements ApiProvider {
 	createForeignCompany(request: CreateForeignCompanyRequest) {
 		const body = {
 			...request.request,
-			serverUrl: request.host.host
+			serverUrl: request.host.publicApiUrl
 		};
 		return this.post("/create-xenv-company", body, this._token);
 	}

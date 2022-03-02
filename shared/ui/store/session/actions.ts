@@ -129,27 +129,27 @@ export const switchToForeignCompany = (companyId: string) => async (
 
 	// must switch environments (i.e., host, region, etc) to join this organization
 	console.log(
-		`Joining company ${company.name} requires switching host to ${company.host.name} at ${company.host.host}`
+		`Joining company ${company.name} requires switching host to ${company.host.name} at ${company.host.publicApiUrl}`
 	);
 
 	dispatch(setBootstrapped(false));
 	dispatch(reset());
 
 	await HostApi.instance.send(LogoutRequestType, {
-		newServerUrl: company.host.host,
+		newServerUrl: company.host.publicApiUrl,
 		newEnvironment: company.host.shortName
 	});
-	await dispatch(setEnvironment(company.host.shortName, company.host.host));
+	await dispatch(setEnvironment(company.host.shortName, company.host.publicApiUrl));
 	const response = await HostApi.instance.send(TokenLoginRequestType, {
 		token: {
 			email: user.email,
 			value: company.host.accessToken!,
-			url: company.host.host,
+			url: company.host.publicApiUrl,
 			teamId
 		},
 		setEnvironment: {
 			environment: company.host.shortName,
-			serverUrl: company.host.host
+			serverUrl: company.host.publicApiUrl
 		},
 		teamId
 	});

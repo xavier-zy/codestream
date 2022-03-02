@@ -103,6 +103,7 @@ export class StatusBarController implements Disposable {
 			case CodeStreamEnvironment.Production:
 			case CodeStreamEnvironment.RegionEU:
 			case CodeStreamEnvironment.RegionUS:
+			case CodeStreamEnvironment.Unknown:
 				env = "";
 				break;
 			default:

@@ -191,6 +191,7 @@ export const Observability = React.memo((props: Props) => {
 		};
 	}, shallowEqual);
 
+	const [noAccess, setNoAccess] = useState<boolean>(false);
 	const [loadingErrors, setLoadingErrors] = useState<{ [repoId: string]: boolean } | undefined>(
 		undefined
 	);
@@ -240,16 +241,19 @@ export const Observability = React.memo((props: Props) => {
 	};
 
 	const loadAssignments = () => {
-		if (hiddenPaneNodes["newrelic-errors-assigned-to-me"] !== true) {
-			setLoadingAssigments(true);
+		setLoadingAssigments(true);
 
-			HostApi.instance
-				.send(GetObservabilityErrorAssignmentsRequestType, {})
-				.then((_: GetObservabilityErrorAssignmentsResponse) => {
-					setObservabilityAssignments(_.items);
-					setLoadingAssigments(false);
-				});
-		}
+		HostApi.instance
+			.send(GetObservabilityErrorAssignmentsRequestType, {})
+			.then((_: GetObservabilityErrorAssignmentsResponse) => {
+				setObservabilityAssignments(_.items);
+				setLoadingAssigments(false);
+				if (_.error) {
+					setNoAccess(true);
+				} else {
+					setNoAccess(false);
+				}
+			});
 	};
 
 	const _useDidMount = () => {
@@ -632,136 +636,152 @@ export const Observability = React.memo((props: Props) => {
 					<div style={{ padding: "0 10px 0 20px" }}></div>
 					{derivedState.newRelicIsConnected ? (
 						<>
-							<PaneNode>
-								{loadingEntities && <ErrorRow isLoading={true} title="Loading..."></ErrorRow>}
-								{!loadingEntities && !hasEntities && (
-									<NoEntitiesWrapper>
-										<NoEntitiesCopy>
-											Set up application performance monitoring for your project so that you can
-											discover and investigate errors with CodeStream
-										</NoEntitiesCopy>
-										<Button style={{ width: "100%" }} onClick={handleSetUpMonitoring}>
-											Set Up Monitoring
-										</Button>
-									</NoEntitiesWrapper>
-								)}
-								{hasEntities && renderAssignments()}
-								{observabilityRepos.length == 0 && (
-									<>
-										{loadingErrors && Object.keys(loadingErrors).length > 0 && (
+							{noAccess ? (
+								<div style={{ padding: "0 20px 20px 20px" }}>
+									<span>
+										Your New Relic One account doesn’t have access to the integration with
+										CodeStream. Contact your New Relic admin to upgrade.
+									</span>
+								</div>
+							) : (
+								<>
+									<PaneNode>
+										{loadingEntities && <ErrorRow isLoading={true} title="Loading..."></ErrorRow>}
+										{!loadingEntities && !hasEntities && (
+											<NoEntitiesWrapper>
+												<NoEntitiesCopy>
+													Set up application performance monitoring for your project so that you can
+													discover and investigate errors with CodeStream
+												</NoEntitiesCopy>
+												<Button style={{ width: "100%" }} onClick={handleSetUpMonitoring}>
+													Set Up Monitoring
+												</Button>
+											</NoEntitiesWrapper>
+										)}
+										{hasEntities && renderAssignments()}
+										{observabilityRepos.length == 0 && (
 											<>
-												<PaneNodeName
-													title="Recent errors"
-													id="newrelic-errors-empty"
-												></PaneNodeName>
-												{!hiddenPaneNodes["newrelic-errors-empty"] && (
-													<ErrorRow title="No repositories found"></ErrorRow>
+												{loadingErrors && Object.keys(loadingErrors).length > 0 && (
+													<>
+														<PaneNodeName
+															title="Recent errors"
+															id="newrelic-errors-empty"
+														></PaneNodeName>
+														{!hiddenPaneNodes["newrelic-errors-empty"] && (
+															<ErrorRow title="No repositories found"></ErrorRow>
+														)}
+													</>
 												)}
 											</>
 										)}
-									</>
-								)}
-								{observabilityRepos.length !== 0 && hasEntities && (
-									<>
-										{observabilityRepos
-											.filter(_ => _)
-											.map((or: ObservabilityRepo) => {
-												return (
-													<>
-														<PaneNodeName
-															title={or.repoName}
-															id={"newrelic-errors-in-repo-" + or.repoId}
-															subtitle={
-																!or.entityAccounts || or.entityAccounts.length < 2 ? (
-																	undefined
+										{observabilityRepos.length !== 0 && hasEntities && (
+											<>
+												{observabilityRepos
+													.filter(_ => _)
+													.map((or: ObservabilityRepo) => {
+														return (
+															<>
+																<PaneNodeName
+																	title={or.repoName}
+																	id={"newrelic-errors-in-repo-" + or.repoId}
+																	subtitle={
+																		!or.entityAccounts || or.entityAccounts.length < 2 ? (
+																			undefined
+																		) : (
+																			<>
+																				<InlineMenu
+																					key="codemark-display-options"
+																					className="subtle no-padding"
+																					noFocusOnSelect
+																					preventMenuStopPropagation={true}
+																					items={inlineMenuEntityItems(or)}
+																					title="Entities"
+																				>
+																					{buildSelectedLabel(or.repoId, or.entityAccounts)}
+																				</InlineMenu>
+																			</>
+																		)
+																	}
+																></PaneNodeName>
+																{loadingErrors && loadingErrors[or.repoId] ? (
+																	<>
+																		<ErrorRow isLoading={true} title="Loading..."></ErrorRow>
+																	</>
 																) : (
 																	<>
-																		<InlineMenu
-																			key="codemark-display-options"
-																			className="subtle no-padding"
-																			noFocusOnSelect
-																			preventMenuStopPropagation={true}
-																			items={inlineMenuEntityItems(or)}
-																			title="Entities"
-																		>
-																			{buildSelectedLabel(or.repoId, or.entityAccounts)}
-																		</InlineMenu>
-																	</>
-																)
-															}
-														></PaneNodeName>
-														{loadingErrors && loadingErrors[or.repoId] ? (
-															<>
-																<ErrorRow isLoading={true} title="Loading..."></ErrorRow>
-															</>
-														) : (
-															<>
-																{!hiddenPaneNodes["newrelic-errors-in-repo-" + or.repoId] && (
-																	<>
-																		{observabilityErrors?.find(
-																			oe => oe.repoId === or.repoId && oe.errors.length > 0
-																		) ? (
+																		{!hiddenPaneNodes["newrelic-errors-in-repo-" + or.repoId] && (
 																			<>
-																				{observabilityErrors
-																					.filter(oe => oe.repoId === or.repoId)
-																					.map(oe => {
-																						return oe.errors.map(err => {
-																							return (
-																								<ErrorRow
-																									title={`${err.errorClass} (${err.count})`}
-																									tooltip={err.message}
-																									subtle={err.message}
-																									timestamp={err.lastOccurrence}
-																									url={err.errorGroupUrl}
-																									onClick={e => {
-																										dispatch(
-																											openErrorGroup(
-																												err.errorGroupGuid,
-																												err.occurrenceId,
-																												{
-																													timestamp: err.lastOccurrence,
-																													remote: or.repoRemote,
-																													sessionStart: derivedState.sessionStart,
-																													pendingEntityId: err.entityId,
-																													occurrenceId: err.occurrenceId,
-																													pendingErrorGroupGuid: err.errorGroupGuid,
-																													src: "Observability Section"
-																												}
-																											)
-																										);
-																									}}
-																								/>
-																							);
-																						});
-																					})}
-																			</>
-																		) : or.hasRepoAssociation ? (
-																			<ErrorRow title="No errors to display" />
-																		) : (
-																			<EntityAssociator
-																				label="Associate this repo with an entity on New Relic in order to see errors"
-																				onSuccess={async e => {
-																					HostApi.instance.track("NR Entity Association", {
-																						"Repo ID": or.repoId
-																					});
+																				{observabilityErrors?.find(
+																					oe => oe.repoId === or.repoId && oe.errors.length > 0
+																				) ? (
+																					<>
+																						{observabilityErrors
+																							.filter(oe => oe.repoId === or.repoId)
+																							.map(oe => {
+																								return oe.errors.map(err => {
+																									return (
+																										<ErrorRow
+																											title={`${err.errorClass} (${err.count})`}
+																											tooltip={err.message}
+																											subtle={err.message}
+																											timestamp={err.lastOccurrence}
+																											url={err.errorGroupUrl}
+																											onClick={e => {
+																												dispatch(
+																													openErrorGroup(
+																														err.errorGroupGuid,
+																														err.occurrenceId,
+																														{
+																															timestamp: err.lastOccurrence,
+																															remote: or.repoRemote,
+																															sessionStart:
+																																derivedState.sessionStart,
+																															pendingEntityId: err.entityId,
+																															occurrenceId: err.occurrenceId,
+																															pendingErrorGroupGuid:
+																																err.errorGroupGuid,
+																															src: "Observability Section"
+																														}
+																													)
+																												);
+																											}}
+																										/>
+																									);
+																								});
+																							})}
+																					</>
+																				) : or.hasRepoAssociation ? (
+																					<ErrorRow title="No errors to display" />
+																				) : (
+																					<EntityAssociator
+																						label="Associate this repo with an entity on New Relic in order to see errors"
+																						onSuccess={async e => {
+																							HostApi.instance.track("NR Entity Association", {
+																								"Repo ID": or.repoId
+																							});
 
-																					await fetchObservabilityRepos(e.entityGuid, or.repoId);
-																					fetchObservabilityErrors(e.entityGuid, or.repoId);
-																				}}
-																				remote={or.repoRemote}
-																				remoteName={or.repoName}
-																			/>
+																							await fetchObservabilityRepos(
+																								e.entityGuid,
+																								or.repoId
+																							);
+																							fetchObservabilityErrors(e.entityGuid, or.repoId);
+																						}}
+																						remote={or.repoRemote}
+																						remoteName={or.repoName}
+																					/>
+																				)}
+																			</>
 																		)}
 																	</>
 																)}
 															</>
-														)}
-													</>
-												);
-											})}
-									</>
-								)}
-							</PaneNode>
+														);
+													})}
+											</>
+										)}
+									</PaneNode>
+								</>
+							)}
 						</>
 					) : (
 						<>

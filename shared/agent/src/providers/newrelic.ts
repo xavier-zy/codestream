@@ -671,6 +671,16 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			ContextLogger.warn("getObservabilityErrorAssignments", {
 				error: ex
 			});
+			// handle basic users not having access
+			const _ex: any = ex;
+			if (
+				_ex.response?.errors?.length > 0 &&
+				_ex.response.errors[0].extensions &&
+				_ex.response.errors[0].extensions.errorClass === "SERVER_ERROR" &&
+				_ex.response.errors[0].extensions.classification === "DataFetchingException"
+			) {
+				response.error = true;
+			}
 		}
 
 		return response;

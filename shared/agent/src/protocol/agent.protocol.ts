@@ -89,6 +89,8 @@ export enum CodeStreamEnvironment {
 	Local = "local",
 	Production = "prod",
 	OnPrem = "onprem",
+	RegionUS = "us",
+	RegionEU = "eu",
 	Unknown = "unknown"
 }
 

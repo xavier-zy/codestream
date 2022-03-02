@@ -82,7 +82,7 @@ export const Signup = (props: Props) => {
 		const { serverUrl, isOnPrem, environment, isProductionCloud, environmentHosts } = state.configs;
 		const { selectedRegion } = state.context.__teamless__ || {};
 		let whichServer = isOnPrem ? serverUrl : "CodeStream's cloud service";
-		if (!isProductionCloud) {
+		if (!isProductionCloud || (environmentHosts || []).length > 1) {
 			whichServer += ` (${environment.toUpperCase()})`;
 		}
 

@@ -36,7 +36,7 @@ export function EllipsisMenu(props: EllipsisMenuProps) {
 		const user = state.users[state.session.userId!];
 		const onPrem = state.configs.isOnPrem;
 		const currentCompanyId = team.companyId;
-		const { environmentHosts, environment } = state.configs;
+		const { environmentHosts, environment, isProductionCloud } = state.configs;
 		const currentHost = environmentHosts?.find(host => host.shortName === environment);
 
 		return {
@@ -61,7 +61,9 @@ export function EllipsisMenu(props: EllipsisMenuProps) {
 			autoJoinSupported: isFeatureEnabled(state, "autoJoin"),
 			isOnPrem: onPrem,
 			currentHost,
-			hasMultipleEnvironments: environmentHosts && environmentHosts.length > 1
+			hasMultipleEnvironments: environmentHosts && environmentHosts.length > 1,
+			environment,
+			isProductionCloud
 		};
 	});
 
@@ -435,11 +437,11 @@ export function EllipsisMenu(props: EllipsisMenuProps) {
 	// menuItems.push({ label: "Sign Out", action: "signout" });
 
 	// menuItems.push({ label: "-" });
-	const text = (
-		<span style={{ fontSize: "smaller" }}>
-			This is CodeStream version {derivedState.pluginVersion}
-		</span>
-	);
+	let versionStatement = `This is CodeStream version ${derivedState.pluginVersion}`;
+	if (!derivedState.isProductionCloud || derivedState.hasMultipleEnvironments) {
+		versionStatement += ` (${derivedState.environment.toLocaleUpperCase()})`;
+	}
+	const text = <span style={{ fontSize: "smaller" }}>{versionStatement}</span>;
 	menuItems.push({ label: text, action: "", noHover: true, disabled: true });
 
 	return (

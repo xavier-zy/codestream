@@ -98,8 +98,11 @@ export class StatusBarController implements Disposable {
 
 		let env;
 		switch (Container.session.environment) {
+			// suppress additional environment message for production, or, once we have
+			// region support in place, for production regions
 			case CodeStreamEnvironment.Production:
-			case CodeStreamEnvironment.Unknown:
+			case CodeStreamEnvironment.RegionEU:
+			case CodeStreamEnvironment.RegionUS:
 				env = "";
 				break;
 			default:

@@ -1,5 +1,6 @@
 import * as assert from "assert";
 import * as vscode from "vscode";
+import * as p from "path";
 import { SymbolLocator } from "../../providers/symbolLocator";
 import { CancellationTokenSource } from "vscode-languageclient";
 
@@ -12,10 +13,10 @@ suite("SymbolLocator Test Suite", () => {
 				"ms-python.python"
 			);
 
-			const uri = vscode.Uri.parse(`${vscode.workspace.workspaceFolders![0].uri.fsPath}/app.py`);
+			const uri = vscode.Uri.parse(
+				p.join(vscode.workspace.workspaceFolders![0].uri.toString(), `app.py`)
+			);
 
-			// why do we need both of these? the world will never know...
-			await vscode.commands.executeCommand("vscode.open", uri);
 			const document = await vscode.workspace.openTextDocument(uri);
 
 			const result = await new SymbolLocator().locate(

@@ -562,7 +562,17 @@ export abstract class ThirdPartyProviderBase<
 					if (options?.useRawResponse) {
 						json = resp.text() as any;
 					} else {
-						json = resp.json() as Promise<R>;
+						try {
+							json = resp.json() as Promise<R>;
+						} catch (jsonError) {
+							Container.instance().errorReporter.reportBreadcrumb({
+								message: `provider fetchCore parseJsonError`,
+								data: {
+									jsonError,
+									text: resp.text() as any
+								}
+							});
+						}
 					}
 				}
 			}
@@ -570,6 +580,12 @@ export abstract class ThirdPartyProviderBase<
 			if (resp !== undefined && !resp.ok) {
 				traceResult = `${this.displayName}: FAILED(${retryCount}x) ${method} ${absoluteUrl}`;
 				const error = await this.handleErrorResponse(resp);
+				Container.instance().errorReporter.reportBreadcrumb({
+					message: `provider fetchCore response`,
+					data: {
+						error
+					}
+				});
 				throw error;
 			}
 

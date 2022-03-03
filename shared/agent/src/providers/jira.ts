@@ -188,6 +188,7 @@ export class JiraProvider extends ThirdPartyIssueProviderBase<CSJiraProviderInfo
 			Logger.debug("Jira: fetching projects");
 			const jiraBoards: JiraBoard[] = [];
 			let nextPage: string | undefined = "/rest/api/2/project/search";
+			let pageNum = 0;
 
 			while (nextPage) {
 				try {
@@ -213,20 +214,24 @@ export class JiraProvider extends ThirdPartyIssueProviderBase<CSJiraProviderInfo
 					Logger.debug(`Jira: is last page? ${body.isLast} - nextPage ${body.nextPage}`);
 					if (body.nextPage) {
 						nextPage = body.nextPage.substring(body.nextPage.indexOf("/rest/api/2"));
+						pageNum++;
 					} else {
 						Logger.debug("Jira: there are no more projects");
 						nextPage = undefined;
 					}
 				} catch (e) {
+					const message = e instanceof Error ? e.message : JSON.stringify(e);
 					Container.instance().errorReporter.reportMessage({
 						type: ReportingMessageType.Error,
 						message: `Jira: Error fetching jira projects: ${nextPage}`,
 						source: "agent",
 						extra: {
-							message: e.message
+							message,
+							nextPage,
+							pageNum
 						}
 					});
-					Logger.error(e);
+					Logger.error(e, message);
 					Logger.debug("Jira: Stopping project search");
 					nextPage = undefined;
 				}
@@ -337,13 +342,15 @@ export class JiraProvider extends ThirdPartyIssueProviderBase<CSJiraProviderInfo
 		try {
 			Logger.debug("Jira: fetching cards");
 			const jiraCards: JiraCard[] = [];
-			let nextPage: string | undefined = `/rest/api/2/search?${qs.stringify({
+			let pageNum = 0;
+			const queryString = qs.stringify({
 				jql:
 					request.customFilter ||
 					"assignee=currentuser() AND NOT((status in (Closed, Done, Resolved)) OR resolution != Unresolved)",
 				expand: "transitions,names",
 				fields: "summary,description,updated,subtasks,status,issuetype,priority,assignee"
-			})}`;
+			});
+			let nextPage: string | undefined = `/rest/api/2/search?${queryString}`;
 
 			while (nextPage !== undefined) {
 				try {
@@ -357,20 +364,25 @@ export class JiraProvider extends ThirdPartyIssueProviderBase<CSJiraProviderInfo
 					Logger.debug(`Jira: is last page? ${body.isLast} - nextPage ${body.nextPage}`);
 					if (body.nextPage) {
 						nextPage = body.nextPage.substring(body.nextPage.indexOf("/rest/api/2"));
+						pageNum++;
 					} else {
 						Logger.debug("Jira: there are no more cards");
 						nextPage = undefined;
 					}
 				} catch (e) {
+					const message = e instanceof Error ? e.message : JSON.stringify(e);
 					Container.instance().errorReporter.reportMessage({
 						type: ReportingMessageType.Error,
 						message: "Jira: Error fetching jira cards",
 						source: "agent",
 						extra: {
-							message: e.message
+							message,
+							queryString,
+							nextPage,
+							pageNum
 						}
 					});
-					Logger.error(e);
+					Logger.error(e, message);
 					Logger.debug("Jira: Stopping card search");
 					nextPage = undefined;
 				}
@@ -382,13 +394,14 @@ export class JiraProvider extends ThirdPartyIssueProviderBase<CSJiraProviderInfo
 			return { cards };
 		} catch (error) {
 			debugger;
+			const message = error instanceof Error ? error.message : JSON.stringify(error);
 			Container.instance().errorReporter.reportMessage({
 				type: ReportingMessageType.Error,
-				message: "Jira: Error fetching jira cards",
+				message: "Jira: Uncaught error fetching jira cards",
 				source: "agent",
-				extra: { message: error.message }
+				extra: { message }
 			});
-			Logger.error(error, "Error fetching jira cards");
+			Logger.error(error, "Uncaught error fetching jira cards");
 			return { cards: [] };
 		}
 	}

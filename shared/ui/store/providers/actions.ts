@@ -94,14 +94,10 @@ export const connectProvider = (
 			return {};
 		}
 	} catch (error) {
-		logError(
-			`Failed to connect ${provider.name}: ${
-				error && error.message ? error.message : error.toString()
-			}`,
-			{
-				error: error
-			}
-		);
+		const message = error instanceof Error ? error.message : JSON.stringify(error);
+		logError(`Failed to connect ${provider.name}: ${message}`, {
+			error: error
+		});
 	}
 	return {};
 };
@@ -186,14 +182,10 @@ export const configureProvider = (
 			dispatch(setIssueProvider(providerId));
 		}
 	} catch (error) {
-		logError(
-			`Failed to connect ${provider.name}: ${
-				error && error.message ? error.message : error.toString()
-			}`,
-			{
-				error: error
-			}
-		);
+		const message = error instanceof Error ? error.message : JSON.stringify(error);
+		logError(`Failed to connect ${provider.name}: ${message}`, {
+			error: error
+		});
 		if (throwOnError) {
 			throw error;
 		}

@@ -1052,7 +1052,6 @@ export const GetObservabilityEntitiesRequestType = new RequestType<
 export interface GetObservabilityErrorAssignmentsRequest {}
 export interface GetObservabilityErrorAssignmentsResponse {
 	items: ObservabilityErrorCore[];
-	error?: boolean;
 }
 export const GetObservabilityErrorAssignmentsRequestType = new RequestType<
 	GetObservabilityErrorAssignmentsRequest,

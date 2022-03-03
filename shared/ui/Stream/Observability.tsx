@@ -248,11 +248,10 @@ export const Observability = React.memo((props: Props) => {
 			.then((_: GetObservabilityErrorAssignmentsResponse) => {
 				setObservabilityAssignments(_.items);
 				setLoadingAssigments(false);
-				if (_.error) {
-					setNoAccess(true);
-				} else {
-					setNoAccess(false);
-				}
+				setNoAccess(false);
+			})
+			.catch(ex => {
+				setNoAccess(true);
 			});
 	};
 

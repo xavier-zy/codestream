@@ -74,7 +74,8 @@ import {
 	ThirdPartyDisconnect,
 	ThirdPartyProviderConfig,
 	CrashOrException,
-	EntityType
+	EntityType,
+	ERROR_NR_INSUFFICIENT_API_KEY
 } from "../protocol/agent.protocol";
 import { CSMe, CSNewRelicProviderInfo } from "../protocol/api.protocol";
 import { CodeStreamSession } from "../session";
@@ -402,7 +403,9 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			response: {
 				errors: {
 					extensions: {
-						error_code: string;
+						error_code?: string;
+						errorClass?: string;
+						classification?: string;
 					};
 					message: string;
 				}[];
@@ -414,8 +417,16 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			requestError.response.errors &&
 			requestError.response.errors.length
 		) {
-			return requestError.response.errors.find(
-				_ => _.extensions && _.extensions.error_code === "BAD_API_KEY"
+			return (
+				requestError.response.errors.find(
+					_ => _.extensions && _.extensions.error_code === "BAD_API_KEY"
+				) ||
+				requestError.response.errors.find(
+					_ =>
+						_.extensions &&
+						_.extensions.errorClass === "SERVER_ERROR" &&
+						_.extensions.classification === "DataFetchingException"
+				)
 			);
 		}
 		return undefined;
@@ -668,19 +679,14 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				ContextLogger.log("getObservabilityErrorAssignments (none)");
 			}
 		} catch (ex) {
+			const accessTokenError = this.getAccessTokenError(ex);
+			if (accessTokenError) {
+				throw new ResponseError(ERROR_NR_INSUFFICIENT_API_KEY, "Insufficient New Relic API key");
+			}
+
 			ContextLogger.warn("getObservabilityErrorAssignments", {
 				error: ex
 			});
-			// handle basic users not having access
-			const _ex: any = ex;
-			if (
-				_ex.response?.errors?.length > 0 &&
-				_ex.response.errors[0].extensions &&
-				_ex.response.errors[0].extensions.errorClass === "SERVER_ERROR" &&
-				_ex.response.errors[0].extensions.classification === "DataFetchingException"
-			) {
-				response.error = true;
-			}
 		}
 
 		return response;

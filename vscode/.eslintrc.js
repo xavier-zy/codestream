@@ -15,7 +15,13 @@ module.exports = {
 	rules: {
 		"@typescript-eslint/adjacent-overload-signatures": "error",
 		"@typescript-eslint/array-type": "error",
-		"@typescript-eslint/naming-convention": "warn",
+		"@typescript-eslint/naming-convention": [
+			"warn",
+			{
+				selector: "class",
+				format: ["PascalCase"]
+			}
+		],
 		"@typescript-eslint/consistent-type-assertions": ["error", { assertionStyle: "as" }],
 		"@typescript-eslint/consistent-type-definitions": ["error", "interface"],
 		"@typescript-eslint/member-delimiter-style": [

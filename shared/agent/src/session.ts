@@ -412,7 +412,8 @@ export class CodeStreamSession {
 				environment: response.environment || "",
 				isOnPrem: response.isOnPrem || false,
 				isProductionCloud: response.isProductionCloud || false,
-				newRelicLandingServiceUrl: response.newRelicLandingServiceUrl
+				newRelicLandingServiceUrl: response.newRelicLandingServiceUrl,
+				environmentHosts: response.environmentHosts
 			};
 			Logger.log("Got environment from connectivity response:", this._environmentInfo);
 			this.agent.sendNotification(DidSetEnvironmentNotificationType, this._environmentInfo);
@@ -731,6 +732,16 @@ export class CodeStreamSession {
 
 	get environment() {
 		return this.environmentInfo.environment;
+	}
+
+	get environmentName() {
+		const host =
+			this._environmentInfo.environmentHosts &&
+			this._environmentInfo.environmentHosts.find(host => {
+				return host.shortName === this._environmentInfo.environment;
+			});
+		if (host) return host.name;
+		else return undefined;
 	}
 
 	get isOnPrem() {
@@ -1528,6 +1539,11 @@ export class CodeStreamSession {
 		}
 
 		let userId = this._codestreamUserId || user.id;
+
+		const environmentName = this.environmentName;
+		if (environmentName) {
+			props["Region"] = environmentName;
+		}
 
 		const { telemetry } = Container.instance();
 		await telemetry.ready();

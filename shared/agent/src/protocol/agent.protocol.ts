@@ -99,6 +99,7 @@ export interface CodeStreamEnvironmentInfo {
 	isOnPrem: boolean;
 	isProductionCloud: boolean;
 	newRelicLandingServiceUrl?: string;
+	environmentHosts?: EnvironmentHost[];
 }
 
 export enum TraceLevel {

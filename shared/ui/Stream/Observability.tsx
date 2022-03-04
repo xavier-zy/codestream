@@ -561,10 +561,11 @@ export const Observability = React.memo((props: Props) => {
 			return {
 				label: ea.entityName,
 				searchLabel: ea.entityName,
-				subtle:
+				subtle: `${
 					ea.accountName && ea.accountName.length > 25
 						? ea.accountName.substr(0, 25) + "..."
-						: ea.accountName,
+						: ea.accountName
+				}${ea.domain ? ` (${ea.domain})` : ""}`,
 				key: ea.entityGuid,
 				action: () => {
 					fetchObservabilityErrors(ea.entityGuid, or.repoId);

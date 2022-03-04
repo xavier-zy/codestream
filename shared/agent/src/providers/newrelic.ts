@@ -762,7 +762,8 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 									},
 									guid: relatedResult.source.entity.guid,
 									name: relatedResult.source.entity.name,
-									alertSeverity: relatedResult.source.entity.alertSeverity
+									alertSeverity: relatedResult.source.entity.alertSeverity,
+									domain: relatedResult.source.entity.domain
 								});
 							}
 						}
@@ -781,7 +782,8 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 								accountName: entity.account?.name || "Account",
 								entityGuid: entity.guid,
 								entityName: entity.name,
-								tags: entity.tags
+								tags: entity.tags,
+								domain: entity.domain
 							} as EntityAccount;
 						})
 						.filter(Boolean)
@@ -2739,6 +2741,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				  results {
 					source {
 					  entity {
+						domain
 						name
 						guid
 						type

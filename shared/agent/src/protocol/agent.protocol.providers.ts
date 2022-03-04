@@ -1229,6 +1229,7 @@ export interface Entity {
 		name: string;
 		id: number;
 	};
+	domain?: string;
 	alertSeverity?: string;
 	guid: string;
 	name: string;

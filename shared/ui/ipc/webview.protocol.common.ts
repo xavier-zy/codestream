@@ -142,6 +142,7 @@ export interface CodeErrorData {
 
 export interface TeamlessContext {
 	selectedRegion?: string;
+	forceRegion?: string;
 }
 
 export interface WebviewContext {
@@ -188,6 +189,7 @@ export interface WebviewContext {
 	onboardStep: number;
 	pendingProtocolHandlerUrl?: string;
 	pendingProtocolHandlerQuery?: any;
+	forceRegion?: string;
 	__teamless__?: TeamlessContext;
 }
 

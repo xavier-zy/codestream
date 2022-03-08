@@ -316,3 +316,9 @@ export const setPendingProtocolHandlerUrl = (params: { url?: string; query?: any
 
 export const clearPendingProtocolHandlerUrl = (params = {}) =>
 	action(ContextActionsType.SetPendingProtocolHandlerUrl, { url: undefined, query: undefined });
+
+export const setForceRegion = (params: { region: string }) =>
+	action(ContextActionsType.SetTeamlessContext, { forceRegion: params.region });
+
+export const clearForceRegion = (params = {}) =>
+	action(ContextActionsType.SetTeamlessContext, { forceRegion: undefined });

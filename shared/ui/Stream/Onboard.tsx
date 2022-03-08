@@ -34,7 +34,8 @@ import { TelemetryRequestType } from "@codestream/protocols/agent";
 import {
 	setOnboardStep,
 	handlePendingProtocolHandlerUrl,
-	clearPendingProtocolHandlerUrl
+	clearPendingProtocolHandlerUrl,
+	clearForceRegion
 } from "../store/context/actions";
 
 export const Step = styled.div`
@@ -1191,6 +1192,7 @@ export const InviteTeammates = (props: { className: string; skip: Function; unwr
 		if (pendingProtocolHandlerUrl) {
 			await dispatch(handlePendingProtocolHandlerUrl(pendingProtocolHandlerUrl));
 			dispatch(clearPendingProtocolHandlerUrl());
+			dispatch(clearForceRegion());
 		}
 
 		setSendingInvites(false);

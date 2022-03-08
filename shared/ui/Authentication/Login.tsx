@@ -5,7 +5,12 @@ import Icon from "../Stream/Icon";
 import Button from "../Stream/Button";
 import { authenticate, generateLoginCode, startSSOSignin, startIDESignin } from "./actions";
 import { CodeStreamState } from "../store";
-import { goToNewUserEntry, goToForgotPassword, goToOktaConfig } from "../store/context/actions";
+import {
+	goToNewUserEntry,
+	goToForgotPassword,
+	goToOktaConfig,
+	clearForceRegion
+} from "../store/context/actions";
 import { supportsSSOSignIn } from "../store/configs/reducer";
 import { InlineMenu } from "../src/components/controls/InlineMenu";
 import Tooltip from "../Stream/Tooltip";
@@ -46,6 +51,7 @@ interface DispatchProps {
 	goToOktaConfig: typeof goToOktaConfig;
 	startIDESignin: typeof startIDESignin;
 	setEnvironment: typeof setEnvironment;
+	clearForceRegion: typeof clearForceRegion;
 }
 
 interface Props extends ConnectedProps, DispatchProps {}
@@ -237,15 +243,18 @@ class Login extends React.Component<Props, State> {
 	};
 
 	setSelectedRegion = region => {
-		const host = this.props.environmentHosts!.find(host => host.shortName === region);
-		if (host) {
-			this.props.setEnvironment(host.shortName, host.publicApiUrl);
+		if (this.props.environmentHosts) {
+			const host = this.props.environmentHosts!.find(host => host.shortName === region);
+			if (host) {
+				this.props.setEnvironment(host.shortName, host.publicApiUrl);
+			}
+			this.props.clearForceRegion();
 		}
 	};
 
 	render() {
 		let regionItems,
-			regionSelected = "";
+			selectedRegionName = "";
 		if (this.props.environmentHosts && this.props.environmentHosts.length > 1) {
 			let usHost = this.props.environmentHosts.find(host =>
 				host.shortName.match(/(^|[^a-zA-Z\d\s:])us($|[^a-zA-Z\d\s:])/)
@@ -266,7 +275,7 @@ class Login extends React.Component<Props, State> {
 					host => host.shortName === this.props.selectedRegion
 				);
 				if (selectedHost) {
-					regionSelected = selectedHost.name;
+					selectedRegionName = selectedHost.name;
 				}
 			}
 		}
@@ -405,7 +414,7 @@ class Login extends React.Component<Props, State> {
 								{regionItems && (
 									<p>
 										Trouble signing in? Make sure you're in the right region:{" "}
-										<InlineMenu items={regionItems}>{regionSelected}</InlineMenu>{" "}
+										<InlineMenu items={regionItems}>{selectedRegionName}</InlineMenu>{" "}
 										<Tooltip title={`Select the region where your CodeStream data is stored.`}>
 											<Icon name="question" />
 										</Tooltip>
@@ -445,7 +454,8 @@ const ConnectedLogin = connect<ConnectedProps, any, any, CodeStreamState>(
 		startIDESignin,
 		goToForgotPassword,
 		goToOktaConfig,
-		setEnvironment
+		setEnvironment,
+		clearForceRegion
 	}
 )(Login);
 

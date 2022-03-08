@@ -80,7 +80,7 @@ export const Signup = (props: Props) => {
 	const dispatch = useDispatch();
 	const derivedState = useSelector((state: CodeStreamState) => {
 		const { serverUrl, isOnPrem, environment, isProductionCloud, environmentHosts } = state.configs;
-		const { selectedRegion } = state.context.__teamless__ || {};
+		const { selectedRegion, forceRegion } = state.context.__teamless__ || {};
 		let whichServer = isOnPrem ? serverUrl : "CodeStream's cloud service";
 		if (!isProductionCloud || (environmentHosts || []).length > 1) {
 			whichServer += ` (${environment.toUpperCase()})`;
@@ -98,7 +98,8 @@ export const Signup = (props: Props) => {
 			webviewFocused: state.context.hasFocus,
 			pendingProtocolHandlerQuerySource: state.context.pendingProtocolHandlerQuery?.src,
 			environmentHosts,
-			selectedRegion
+			selectedRegion,
+			forceRegion
 		};
 	});
 
@@ -120,40 +121,53 @@ export const Signup = (props: Props) => {
 
 	const wasInvited = props.inviteCode !== undefined;
 
-	let regionItems,
-		regionSelected = "";
-	if (derivedState.environmentHosts && derivedState.environmentHosts.length > 1) {
-		let usHost = derivedState.environmentHosts.find(host =>
+	const { environmentHosts, selectedRegion, forceRegion } = derivedState;
+
+	const setSelectedRegion = region => {
+		const { environmentHosts } = derivedState;
+		if (environmentHosts) {
+			const host = environmentHosts!.find(host => host.shortName === region);
+			if (host) {
+				dispatch(setEnvironment(host.shortName, host.publicApiUrl));
+			}
+		}
+	};
+
+	let regionItems, forceRegionName, selectedRegionName;
+	if (environmentHosts && environmentHosts.length > 1) {
+		let usHost = environmentHosts.find(host =>
 			host.shortName.match(/(^|[^a-zA-Z\d\s:])us($|[^a-zA-Z\d\s:])/)
 		);
 		if (!usHost) {
-			usHost = derivedState.environmentHosts[0];
+			usHost = environmentHosts[0];
 		}
-		regionItems = derivedState.environmentHosts.map(host => ({
+
+		regionItems = environmentHosts.map(host => ({
 			key: host.shortName,
 			label: host.name,
 			action: () => setSelectedRegion(host.shortName)
 		}));
-		if (!derivedState.selectedRegion && usHost) {
+
+		let forceHost;
+		if (forceRegion) {
+			forceHost = environmentHosts.find(host => host.shortName === forceRegion);
+			if (forceHost) {
+				dispatch(setEnvironment(forceHost.shortName, forceHost.publicApiUrl));
+				forceRegionName = forceHost.name;
+			}
+		}
+
+		if (!forceHost && !selectedRegion && usHost) {
 			dispatch(setEnvironment(usHost.shortName, usHost.publicApiUrl));
 		}
 
-		if (derivedState.selectedRegion) {
-			const selectedHost = derivedState.environmentHosts.find(
-				host => host.shortName === derivedState.selectedRegion
-			);
+		if (selectedRegion) {
+			const selectedHost = environmentHosts.find(host => host.shortName === selectedRegion);
 			if (selectedHost) {
-				regionSelected = selectedHost.name;
+				selectedRegionName = selectedHost.name;
 			}
 		}
 	}
-
-	const setSelectedRegion = region => {
-		const host = derivedState.environmentHosts!.find(host => host.shortName === region);
-		if (host) {
-			dispatch(setEnvironment(host.shortName, host.publicApiUrl));
-		}
-	};
 
 	const getUserInfo = async () => {
 		const response = await HostApi.instance.send(GetUserInfoRequestType, {});
@@ -442,9 +456,9 @@ export const Signup = (props: Props) => {
 							<div className="border-bottom-box">
 								<h3>Create a CodeStream account, for free</h3>
 								<br />
-								{regionItems && (
+								{regionItems && !forceRegionName && (
 									<>
-										Region: <InlineMenu items={regionItems}>{regionSelected}</InlineMenu>{" "}
+										Region: <InlineMenu items={regionItems}>{selectedRegionName}</InlineMenu>{" "}
 										<Tooltip
 											title={`Select the region where your CodeStream data should be stored.`}
 										>
@@ -452,6 +466,7 @@ export const Signup = (props: Props) => {
 										</Tooltip>
 									</>
 								)}
+								{forceRegionName && <>Region: {forceRegionName}</>}
 								{!limitAuthentication && (
 									<Button className="row-button no-top-margin" onClick={onClickNewRelicSignup}>
 										<Icon name="newrelic" />

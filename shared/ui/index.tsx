@@ -86,7 +86,8 @@ import {
 	clearCurrentPullRequest,
 	setPendingProtocolHandlerUrl,
 	goToNewRelicSignup,
-	setCurrentMethodLevelTelemetry
+	setCurrentMethodLevelTelemetry,
+	setForceRegion
 } from "./store/context/actions";
 import { URI } from "vscode-uri";
 import { moveCursorToLine } from "./Stream/api-functions";
@@ -546,8 +547,8 @@ function listenForEvents(store) {
 							ide?: string;
 							timestamp?: number;
 							multipleRepos?: number;
+							env?: string;
 						}>;
-
 						definedQuery.query.occurrenceId =
 							definedQuery.query.occurrenceId || definedQuery.query.traceId;
 
@@ -557,6 +558,9 @@ function listenForEvents(store) {
 							store.dispatch(
 								setPendingProtocolHandlerUrl({ url: e.url, query: definedQuery.query })
 							);
+							if (definedQuery.query.env) {
+								store.dispatch(setForceRegion({ region: definedQuery.query.env }));
+							}
 							if (route.query["anonymousId"]) {
 								await HostApi.instance.send(TelemetrySetAnonymousIdRequestType, {
 									anonymousId: route.query["anonymousId"]
@@ -588,7 +592,8 @@ function listenForEvents(store) {
 								pendingRequiresConnection: !isConnected(state, {
 									id: "newrelic*com"
 								}),
-								openType: "Open in IDE Flow"
+								openType: "Open in IDE Flow",
+								environment: definedQuery.query.env
 							})
 						);
 						break;

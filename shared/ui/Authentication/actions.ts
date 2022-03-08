@@ -30,7 +30,8 @@ import {
 	setCurrentCodeError,
 	handlePendingProtocolHandlerUrl,
 	clearPendingProtocolHandlerUrl,
-	goToEmailConfirmation
+	goToEmailConfirmation,
+	clearForceRegion
 } from "../store/context/actions";
 import { fetchCodemarks } from "../Stream/actions";
 import { getCodemark } from "../store/codemarks/reducer";
@@ -300,6 +301,7 @@ export const onLogin = (
 	if (context.pendingProtocolHandlerUrl && !teamCreated) {
 		await dispatch(handlePendingProtocolHandlerUrl(context.pendingProtocolHandlerUrl));
 		dispatch(clearPendingProtocolHandlerUrl());
+		dispatch(clearForceRegion());
 	}
 };
 

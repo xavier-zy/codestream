@@ -421,26 +421,34 @@ export const openErrorGroup = (
 	occurrenceId?: string,
 	data: any = {}
 ) => async (dispatch, getState: () => CodeStreamState) => {
-	const response = await claimCodeError({
-		objectId: errorGroupGuid,
-		objectType: "errorGroup"
-	});
+	const { environment } = getState().configs;
+	let message, response;
+	if (data.environment && data.environment !== environment) {
+		message = "This error group belongs to an account in a different region.";
+	} else {
+		response = await claimCodeError({
+			objectId: errorGroupGuid,
+			objectType: "errorGroup"
+		});
 
-	if (response.unauthorized) {
-		let message;
-		if (response.unauthorizedAccount) {
-			message = "You do not have access to this New Relic account.";
-		} else if (response.unauthorizedErrorGroup) {
-			message = "You do not have access to this error group.";
-		} else {
-			const orgDesc = response.ownedBy
-				? `the ${response.ownedBy} organization`
-				: "another organization";
-			message = `This error can't be displayed because it's owned by ${orgDesc} on CodeStream.`;
+		if (response.unauthorized) {
+			if (response.unauthorizedAccount) {
+				message = "You do not have access to this New Relic account.";
+			} else if (response.unauthorizedErrorGroup) {
+				message = "You do not have access to this error group.";
+			} else {
+				const orgDesc = response.ownedBy
+					? `the ${response.ownedBy} organization`
+					: "another organization";
+				message = `This error can't be displayed because it's owned by ${orgDesc} on CodeStream.`;
+			}
 		}
+	}
+
+	if (message) {
 		HostApi.instance.track("Error Roadblocked", {
 			"Error Group ID": errorGroupGuid,
-			"NR Account ID": response.accountId
+			"NR Account ID": response && response.accountId
 		});
 		confirmPopup({
 			title: "Error Can't Be Opened",
@@ -455,7 +463,7 @@ export const openErrorGroup = (
 		});
 		logError(`Error Can't Be Opened`, { message, errorGroupGuid, occurrenceId, data });
 		return;
-	} else if (response.codeError) {
+	} else if (response && response.codeError) {
 		await dispatch(addCodeErrors([response.codeError]));
 	}
 

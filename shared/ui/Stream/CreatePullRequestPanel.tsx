@@ -1581,6 +1581,7 @@ export const CreatePullRequestPanel = (props: { closePanel: MouseEventHandler<El
 													>
 														<Tooltip
 															title={`This will run 'git push -u ${prRemoteName} ${pending?.headRefName}' before creating the ${prLabel.pullrequest}`}
+															placement="top"
 														>
 															<span className="subtle">
 																Set upstream to{" "}

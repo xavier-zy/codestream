@@ -73,7 +73,7 @@ export class GitLabEnterpriseProvider extends GitLabProvider {
 		this.session.updateProviders();
 	}
 
-	protected getOwnerFromRemote(remote: string): { owner: string; name: string } {
+	getOwnerFromRemote(remote: string): { owner: string; name: string } {
 		const uri = URI.parse(remote);
 		const split = uri.path.split("/");
 
@@ -86,8 +86,8 @@ export class GitLabEnterpriseProvider extends GitLabProvider {
 		}
 
 		// for special cases when there is a /gitlab/ subdirectory as part
-		// of the installation, we ignore that part
-		if (owner && owner[0] && owner[0].toLowerCase() === "gitlab") {
+		// of the installation, we ignore that part, but only if it's not the _only_ part
+		if (owner && owner.length > 1 && owner[0] && owner[0].toLowerCase() === "gitlab") {
 			owner.shift();
 		}
 

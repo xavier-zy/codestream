@@ -849,7 +849,7 @@ export abstract class ThirdPartyIssueProviderBase<
 		}
 	}
 
-	protected getOwnerFromRemote(remote: string): { owner: string; name: string } {
+	getOwnerFromRemote(remote: string): { owner: string; name: string } {
 		return {
 			owner: "",
 			name: ""

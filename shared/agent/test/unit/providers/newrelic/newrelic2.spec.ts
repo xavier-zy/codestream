@@ -1,7 +1,7 @@
 "use strict";
 
 import { expect } from "chai";
-import { NewRelicProvider } from "../../../src/providers/newrelic";
+import { NewRelicProvider } from "../../../../src/providers/newrelic";
 require("mocha").describe;
 require("mocha").it;
 

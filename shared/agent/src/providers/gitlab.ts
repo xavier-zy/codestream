@@ -421,7 +421,7 @@ export class GitLabProvider extends ThirdPartyIssueProviderBase<CSGitLabProvider
 		return remotePaths;
 	}
 
-	protected getOwnerFromRemote(remote: string): { owner: string; name: string } {
+	getOwnerFromRemote(remote: string): { owner: string; name: string } {
 		// HACKitude yeah, sorry
 		const uri = URI.parse(remote);
 		const split = uri.path.split("/");
@@ -525,6 +525,7 @@ export class GitLabProvider extends ThirdPartyIssueProviderBase<CSGitLabProvider
 				);
 			} catch (ex) {
 				Logger.error(ex, `${this.displayName}: failed to get projects`, {
+					remote: request.remote,
 					owner: owner,
 					name: name,
 					hasProviderInfo: this._providerInfo != null

@@ -239,6 +239,7 @@ export interface WebviewConfigs {
 	isWebmail?: boolean;
 	showGoldenSignalsInEditor?: boolean;
 	environmentHosts?: EnvironmentHost[];
+	newRelicApiUrl?: string;
 }
 
 export interface IpcHost {

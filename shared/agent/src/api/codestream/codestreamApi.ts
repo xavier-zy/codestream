@@ -2889,6 +2889,7 @@ export class CodeStreamApiProvider implements ApiProvider {
 				response.isOnPrem = json.isOnPrem;
 				response.isProductionCloud = json.isProductionCloud;
 				response.newRelicLandingServiceUrl = json.newRelicLandingServiceUrl;
+				response.newRelicApiUrl = json.newRelicApiUrl;
 				response.environmentHosts = json.environmentHosts;
 			}
 		} catch (err) {

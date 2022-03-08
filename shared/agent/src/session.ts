@@ -407,17 +407,8 @@ export class CodeStreamSession {
 			}
 		});
 
-		this._api.verifyConnectivity().then(response => {
-			this._environmentInfo = {
-				environment: response.environment || "",
-				isOnPrem: response.isOnPrem || false,
-				isProductionCloud: response.isProductionCloud || false,
-				newRelicLandingServiceUrl: response.newRelicLandingServiceUrl,
-				environmentHosts: response.environmentHosts
-			};
-			Logger.log("Got environment from connectivity response:", this._environmentInfo);
-			this.agent.sendNotification(DidSetEnvironmentNotificationType, this._environmentInfo);
-		});
+		this.verifyConnectivity();
+
 		const versionManager = new VersionMiddlewareManager(this._api);
 		versionManager.onDidChangeCompatibility(this.onVersionCompatibilityChanged, this);
 		versionManager.onDidChangeApiCompatibility(this.onApiVersionCompatibilityChanged, this);
@@ -517,6 +508,10 @@ export class CodeStreamSession {
 			this._environmentInfo.environment = options.environment;
 			this.agent.sendNotification(DidSetEnvironmentNotificationType, this._environmentInfo);
 		}
+
+		// whenever we set the server URL, verify we can reach it, this also fetches
+		// necessary environment-related info
+		this.verifyConnectivity();
 	}
 
 	private _didEncounterMaintenanceMode() {
@@ -756,6 +751,10 @@ export class CodeStreamSession {
 		return this.environmentInfo.newRelicLandingServiceUrl;
 	}
 
+	get newRelicApiUrl() {
+		return this.environmentInfo.newRelicApiUrl;
+	}
+
 	get disableStrictSSL(): boolean {
 		return this._options.disableStrictSSL != null ? this._options.disableStrictSSL : false;
 	}
@@ -865,7 +864,19 @@ export class CodeStreamSession {
 
 	@log({ singleLine: true })
 	async verifyConnectivity(): Promise<VerifyConnectivityResponse> {
-		return this.api.verifyConnectivity();
+		if (!this._api) throw new Error("cannot verify connectivity, no API connection established");
+		const response = await this._api.verifyConnectivity();
+		this._environmentInfo = {
+			environment: response.environment || "",
+			isOnPrem: response.isOnPrem || false,
+			isProductionCloud: response.isProductionCloud || false,
+			newRelicLandingServiceUrl: response.newRelicLandingServiceUrl,
+			newRelicApiUrl: response.newRelicApiUrl,
+			environmentHosts: response.environmentHosts
+		};
+		Logger.log("Got environment from connectivity response:", this._environmentInfo);
+		this.agent.sendNotification(DidSetEnvironmentNotificationType, this._environmentInfo);
+		return response;
 	}
 
 	@log({ singleLine: true })

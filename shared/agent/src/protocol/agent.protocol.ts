@@ -99,6 +99,7 @@ export interface CodeStreamEnvironmentInfo {
 	isOnPrem: boolean;
 	isProductionCloud: boolean;
 	newRelicLandingServiceUrl?: string;
+	newRelicApiUrl?: string;
 	environmentHosts?: EnvironmentHost[];
 }
 
@@ -185,6 +186,7 @@ export interface VerifyConnectivityResponse {
 	isOnPrem?: boolean;
 	isProductionCloud?: boolean;
 	newRelicLandingServiceUrl?: string;
+	newRelicApiUrl?: string;
 	environmentHosts?: EnvironmentHost[];
 }
 

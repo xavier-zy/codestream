@@ -162,7 +162,8 @@ export async function initialize(selector: string) {
 					isOnPrem: resp.isOnPrem,
 					environment: resp.environment,
 					isProductionCloud: resp.isProductionCloud,
-					environmentHosts: resp.environmentHosts
+					environmentHosts: resp.environmentHosts,
+					newRelicApiUrl: resp.newRelicApiUrl
 				})
 			);
 		}

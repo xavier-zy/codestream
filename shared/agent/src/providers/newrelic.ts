@@ -141,15 +141,16 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 	}
 
 	private getApiUrlCore(data?: { apiUrl?: string; usingEU?: boolean; [key: string]: any }): string {
+		const newRelicApiUrl = SessionContainer.instance().session.newRelicApiUrl;
 		if (data) {
 			if (data.apiUrl) {
 				return Strings.trimEnd(data.apiUrl, "/").toLowerCase();
 			}
 			if (data.usingEU) {
-				return "https://api.eu.newrelic.com";
+				return newRelicApiUrl || "https://api.eu.newrelic.com";
 			}
 		}
-		return "https://api.newrelic.com";
+		return newRelicApiUrl || "https://api.newrelic.com";
 	}
 
 	get productUrl() {

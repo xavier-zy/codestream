@@ -35,6 +35,7 @@ interface Props {
 		name: string;
 	};
 	isProductionCloud?: boolean;
+	newRelicApiUrl?: string;
 	closeAllPanels: Function;
 	configureProvider: Function;
 	onClose?: Function;
@@ -78,7 +79,7 @@ class ConfigureNewRelic extends Component<Props> {
 		const { providerId } = this.props;
 		const { apiKey } = this.state;
 		const apiUrl: string | undefined = this.props.isProductionCloud
-			? "https://api.newrelic.com"
+			? this.props.newRelicApiUrl || "https://api.newrelic.com"
 			: "https://staging-api.newrelic.com";
 
 		// configuring is as good as connecting, since we are letting the user
@@ -274,6 +275,7 @@ const mapStateToProps = state => {
 	const connected = isConnected(state, { id: "newrelic*com" });
 	return {
 		isProductionCloud: state.configs.isProductionCloud,
+		newRelicApiUrl: state.configs.newRelicApiUrl,
 		providers,
 		ide,
 		isNewRelicConnected: connected

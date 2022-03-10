@@ -276,6 +276,8 @@ class Login extends React.Component<Props, State> {
 				);
 				if (selectedHost) {
 					selectedRegionName = selectedHost.name;
+				} else if (usHost) {
+					this.props.setEnvironment(usHost.shortName, usHost.publicApiUrl);
 				}
 			}
 		}

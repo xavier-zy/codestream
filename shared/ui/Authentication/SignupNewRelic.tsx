@@ -111,6 +111,8 @@ export const SignupNewRelic = () => {
 			const selectedHost = environmentHosts.find(host => host.shortName === selectedRegion);
 			if (selectedHost) {
 				selectedRegionName = selectedHost.name;
+			} else if (usHost) {
+				dispatch(setEnvironment(usHost.shortName, usHost.publicApiUrl));
 			}
 		}
 	}

@@ -156,7 +156,6 @@ export const Signup = (props: Props) => {
 				forceRegionName = forceHost.name;
 			}
 		}
-
 		if (!forceHost && !selectedRegion && usHost) {
 			dispatch(setEnvironment(usHost.shortName, usHost.publicApiUrl));
 		}
@@ -165,6 +164,8 @@ export const Signup = (props: Props) => {
 			const selectedHost = environmentHosts.find(host => host.shortName === selectedRegion);
 			if (selectedHost) {
 				selectedRegionName = selectedHost.name;
+			} else if (usHost) {
+				dispatch(setEnvironment(usHost.shortName, usHost.publicApiUrl));
 			}
 		}
 	}

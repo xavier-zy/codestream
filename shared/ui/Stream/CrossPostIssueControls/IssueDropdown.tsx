@@ -520,9 +520,11 @@ export const IssueList = React.memo((props: React.PropsWithChildren<IssueListPro
 			// dispatch(bootstrapCodemarks());
 		}
 		//setup blank data state for provider cards
-		props.providers.forEach(provider => {
-			updateDataState(provider.id, { cards: [] });
-		});
+		setTimeout(() => {
+			props.providers.forEach(provider => {
+				updateDataState(provider.id, { cards: [] });
+			});
+		}, 1000);
 	});
 
 	useEffect(() => {
@@ -593,11 +595,11 @@ export const IssueList = React.memo((props: React.PropsWithChildren<IssueListPro
 		};
 	}, [derivedState.providerIds, reload]);
 
-	const delay = n => {
-		return new Promise(resolve => {
-			setTimeout(resolve, n * 1000);
-		});
-	};
+	// const delay = n => {
+	// 	return new Promise(resolve => {
+	// 		setTimeout(resolve, n * 1000);
+	// 	});
+	// };
 
 	// Fetch initial cards here, api call triggered once initial updateDataState is complete
 	// Without doing this, we run into an issue where cards are fetched too early and nothing
@@ -616,7 +618,7 @@ export const IssueList = React.memo((props: React.PropsWithChildren<IssueListPro
 				// Calling this too early on initial load can cause an issue where
 				// nothing is returned.
 				// @TODO: See if there is further optimization that could be done here.
-				await delay(1);
+				// await delay(1);
 				await Promise.all(
 					props.providers.map(async provider => {
 						const filterCustom = getFilterCustom(provider.id);
@@ -1309,12 +1311,14 @@ export const IssueList = React.memo((props: React.PropsWithChildren<IssueListPro
 					{cards.length == 0 &&
 					selectedLabel !== "issues assigned to you" &&
 					!props.loadingMessage &&
+					initialLoadComplete &&
 					(props.providers.length > 0 || derivedState.skipConnect) ? (
 						<FilterMissing>The selected filter(s) did not return any issues.</FilterMissing>
 					) : (
 						!props.loadingMessage &&
 						(props.providers.length > 0 || derivedState.skipConnect) &&
-						cards.length == 0 && (
+						cards.length == 0 &&
+						initialLoadComplete && (
 							<FilterMissing>There are no open issues assigned to you.</FilterMissing>
 						)
 					)}

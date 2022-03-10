@@ -520,11 +520,9 @@ export const IssueList = React.memo((props: React.PropsWithChildren<IssueListPro
 			// dispatch(bootstrapCodemarks());
 		}
 		//setup blank data state for provider cards
-		setTimeout(() => {
-			props.providers.forEach(provider => {
-				updateDataState(provider.id, { cards: [] });
-			});
-		}, 1000);
+		props.providers.forEach(provider => {
+			updateDataState(provider.id, { cards: [] });
+		});
 	});
 
 	useEffect(() => {

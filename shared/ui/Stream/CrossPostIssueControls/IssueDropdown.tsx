@@ -593,6 +593,12 @@ export const IssueList = React.memo((props: React.PropsWithChildren<IssueListPro
 		};
 	}, [derivedState.providerIds, reload]);
 
+	const delay = n => {
+		return new Promise(resolve => {
+			setTimeout(resolve, n * 1000);
+		});
+	};
+
 	// Fetch initial cards here, api call triggered once initial updateDataState is complete
 	// Without doing this, we run into an issue where cards are fetched too early and nothing
 	// is loaded into cards array.  User would have to use reload button to see cards.
@@ -606,6 +612,11 @@ export const IssueList = React.memo((props: React.PropsWithChildren<IssueListPro
 		if (selectedProvidersHaveBeenInitialized && !initialLoadComplete) {
 			void (async () => {
 				setIsLoading(true);
+				// API needs a second to register with third party providers ???
+				// Calling this too early on initial load can cause an issue where
+				// nothing is returned.
+				// @TODO: See if there is further optimization that could be done here.
+				await delay(1);
 				await Promise.all(
 					props.providers.map(async provider => {
 						const filterCustom = getFilterCustom(provider.id);

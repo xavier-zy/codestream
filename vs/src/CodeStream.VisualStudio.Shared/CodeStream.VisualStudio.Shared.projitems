@@ -1,0 +1,47 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <MSBuildAllProjects Condition="'$(MSBuildVersion)' == '' Or '$(MSBuildVersion)' &lt; '16.0'">$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
+    <HasSharedItems>true</HasSharedItems>
+    <SharedGUID>265384f3-291c-4dbf-9aa9-830473fba966</SharedGUID>
+  </PropertyGroup>
+  <PropertyGroup Label="Configuration">
+    <Import_RootNamespace>CodeStream.VisualStudio.Shared</Import_RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="$(MSBuildThisFileDirectory)Commands\AddCodemarkCommandBase.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Commands\AddCodemarkCommands.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Commands\AuthenticationCommand.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Commands\RequestCodeReviewCommand.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Commands\StartWorkCommand.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Commands\UserCommand.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Commands\WebViewDevToolsCommand.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Commands\WebViewReloadCommand.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Commands\WebViewToggleCommand.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Controllers\ConfigurationController.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Services\AuthenticationService.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Services\AuthenticationServiceFactory.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Services\CodeStreamAgentService.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Services\CodeStreamAgentServiceFactory.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Services\CodeStreamService.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Services\CredentialsService.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Services\CredentialsServiceBase.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Services\DiffViewerService.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Services\DotNetBrowserService.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Services\EditorService.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Services\EventAggregator.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Services\IdeService.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Services\LiveShare\CollaborationHostService.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Services\LiveShare\CollaborationHostServiceFactory.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Services\Providers\ShellSettingsProvider.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Services\ServiceFactory.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Services\ServiceProviderExtensions.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Services\SessionService.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Services\SettingsService.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Services\SolutionEventsListener.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Services\ThemeEventsService.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Services\UserSettingsService.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Services\WebviewUserSettingsService.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Services\WpfTextViewCache.cs" />
+  </ItemGroup>
+</Project>

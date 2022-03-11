@@ -128,6 +128,12 @@ const StatusMetaRow = styled.div`
 				border-radius: 6px;
 				overflow: hidden;
 				background-color: #fff;
+				&.appIconFallback {
+					color: #678;
+					display: flex;
+					align-items: center;
+					justify-content: center;
+				}
 			}
 		}
 	}
@@ -1828,15 +1834,7 @@ const CommitCheckRun = (props: { checkData: CheckData }) => {
 				)}
 			</PRIconButton>
 			{checkData.appIcon && checkData.appIcon.src && (
-				<Icon
-					src={
-						checkData.appIcon.src.match(/^http/)
-							? checkData.appIcon.src
-							: `https://github.com${checkData.appIcon.src}`
-					}
-					title={checkData.appIcon.title}
-					className="appIcon"
-				/>
+				<CheckAppIcon src={checkData.appIcon.src} title={checkData.appIcon.title} />
 			)}
 			{checkData.Description && <>{checkData.Description}</>}
 			<Link href={checkData.detailsLink} className="details">
@@ -1844,6 +1842,33 @@ const CommitCheckRun = (props: { checkData: CheckData }) => {
 			</Link>
 		</div>
 	);
+};
+
+const CheckAppIcon = (props: { src: string; title: string }) => {
+	const src = props.src.match(/^http/) ? props.src : `https://github.com${props.src}`;
+	const [imageError, setImageError] = useState(false);
+
+	useEffect(() => {
+		setImageError(false);
+	}, [props.src]);
+
+	if (imageError) {
+		return <Icon name="server" title={props.title} className="appIcon appIconFallback" />;
+	}
+	const image = (
+		<span className="icon appIcon">
+			<img src={src} onError={() => setImageError(true)} />
+		</span>
+	);
+	if (props.title) {
+		return (
+			<Tooltip content={props.title}>
+				<span>{image}</span>
+			</Tooltip>
+		);
+	} else {
+		return image;
+	}
 };
 
 const CopyableTerminal = (props: any) => {
@@ -1967,7 +1992,7 @@ const getChecksData = (statusChecks: (CheckRun | StatusContext)[]) => {
 
 			checkData.appIcon = {
 				src: check.avatarUrl,
-				title: ` generated this status`
+				title: ""
 			};
 			checkData.Description = (
 				<div className="description">

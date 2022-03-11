@@ -73,46 +73,11 @@
       <DependentUpon>CodeStreamPackage.vsct</DependentUpon>
     </Compile>
     <Compile Include="GlobalSuppressions.cs" />
-    <Compile Include="Packages\AsyncPackageHelper.cs" />
     <Compile Include="Packages\SettingsPackage.cs" />
     <Compile Include="Packages\ProtocolHandlerPackage.cs" />
     <Compile Include="Packages\CommandsPackage.cs" />
     <Compile Include="Packages\WebViewPackage.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="UI\DiffViewCreationListener.cs" />
-    <Compile Include="UI\DocumentMarkerManager.cs" />
-    <Compile Include="UI\Extensions\AnimationExtensions.cs" />
-    <Compile Include="UI\Glyphs\DocumentMarkGlyphFactory.cs" />
-    <Compile Include="UI\Glyphs\DocumentMarkGlyphFactoryProvider.cs" />
-    <Compile Include="UI\Glyphs\DocumentMarkGlyphTag.cs" />
-    <Compile Include="UI\InfoBarProvider.cs" />
-    <Compile Include="UI\Margins\CodeStreamMarginExtensions.cs" />
-    <Compile Include="UI\Margins\DocumentMark.xaml.cs">
-      <DependentUpon>DocumentMark.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="UI\Margins\DocumentMarkMargin.cs" />
-    <Compile Include="UI\Margins\DocumentMarkMarginProvider.cs" />
-    <Compile Include="UI\Margins\DocumentMarkScrollbar.cs" />
-    <Compile Include="UI\Margins\DocumentMarkScrollbarFormat.cs" />
-    <Compile Include="UI\Margins\DocumentMarkScrollbarMarkersEnabledOption.cs" />
-    <Compile Include="UI\Margins\DocumentMarkScrollbarProvider.cs" />
-    <Compile Include="UI\Margins\DocumentMarkViewModel.cs" />
-    <Compile Include="UI\Margins\ICodeStreamMarginProvider.cs" />
-    <Compile Include="UI\Margins\IGlyphMetadata.cs" />
-    <Compile Include="UI\PredefinedCodestreamNames.cs" />
-    <Compile Include="UI\Settings\OptionsDialogPage.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Include="UI\SuggestedActions\CodemarkSuggestedActionsSource.cs" />
-    <Compile Include="UI\SuggestedActions\CodemarkSuggestedActionsSourceProvider.cs" />
-    <Compile Include="UI\Taggers\DocumentMarkTagger.cs" />
-    <Compile Include="UI\Taggers\DocumentMarkTaggerProvider.cs" />
-    <Compile Include="UI\TextViewCreationListener.cs" />
-    <Compile Include="UI\ToolWindows\WebViewControl.xaml.cs">
-      <DependentUpon>WebViewControl.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="UI\ToolWindows\WebViewToolWindowPane.cs" />
-    <Compile Include="UI\Wpf\KeyChordGesture.cs" />
     <Compile Include="WebViewRouter.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -525,16 +490,6 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup />
-  <ItemGroup>
-    <Page Include="UI\Margins\DocumentMark.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </Page>
-    <Page Include="UI\ToolWindows\WebViewControl.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </Page>
-  </ItemGroup>
   <ItemGroup>
     <Resource Include="Resources\Assets\codestream.svg" />
     <Resource Include="Resources\Assets\marker-bookmark-aqua.png" />

@@ -504,83 +504,109 @@ class EditorService(val project: Project) {
     }
 
     suspend fun reveal(uri: String, ref: String?, range: Range?, atTop: Boolean? = null): Boolean {
+        var success = revealCore(uri, ref, range, atTop)
+        if (!success) {
+            success = revealCore(sanitizeURI(uri)!!, ref, range, atTop)
+        }
+        return success
+    }
+
+    private suspend fun revealCore(uri: String, ref: String?, range: Range?, atTop: Boolean? = null): Boolean {
         val future = CompletableDeferred<Boolean>()
 
         ApplicationManager.getApplication().invokeLater {
-            if (!ref.isNullOrEmpty()) {
-                val vFile = getCSGitFile(uri, ref, project)
-                val editorManager = FileEditorManager.getInstance(project)
-                editorManager.openTextEditor(OpenFileDescriptor(project, vFile, range?.start?.line ?: 0, 0), false)
-                future.complete(true)
-                return@invokeLater
-            }
-
-            val editor = FileEditorManager.getInstance(project).selectedTextEditor
-            editor?.let {
-                if (it.document.uri == uri && (range == null || it.isRangeVisible(range))) {
+            try {
+                if (!ref.isNullOrEmpty()) {
+                    val vFile = getCSGitFile(uri, ref, project)
+                    val editorManager = FileEditorManager.getInstance(project)
+                    editorManager.openTextEditor(OpenFileDescriptor(project, vFile, range?.start?.line ?: 0, 0), false)
                     future.complete(true)
                     return@invokeLater
                 }
-            }
 
-            val line = range?.start?.line ?: 0
-            val virtualFile = LocalFileSystem.getInstance().findFileByIoFile(File(URI(uri)))
-            if (virtualFile == null) {
-                future.complete(false)
-                return@invokeLater
-            }
-
-            if (editor?.document?.uri == uri && range != null && atTop == true) {
-                val logicalPosition = LogicalPosition(range.start.line, range.start.character)
-                val point = editor.logicalPositionToXY(logicalPosition)
-                editor.scrollingModel.scrollVertically(point.y)
-            } else {
-                val editorManager = FileEditorManager.getInstance(project)
-                editorManager.openTextEditor(OpenFileDescriptor(project, virtualFile, line, 0), true)
-            }
-
-            future.complete(true)
-        }
-        return future.await()
-    }
-
-    suspend fun select(uriString: String, selection: EditorSelection, preserveFocus: Boolean): Boolean {
-        val future = CompletableDeferred<Boolean>()
-        ApplicationManager.getApplication().invokeLater {
-            var editor = FileEditorManager.getInstance(project).selectedTextEditor
-            if (editor?.document?.uri != uriString || !editor.isRangeVisible(selection)) {
-                val uri = URI(uriString)
-                val virtualFile = if (uri.scheme == ReviewDiffFileSystem.protocol) {
-                    FileEditorManager.getInstance(project).openFiles.find { it.uri == uriString }
-                } else {
-                    LocalFileSystem.getInstance().findFileByIoFile(File(uri))
+                val editor = FileEditorManager.getInstance(project).selectedTextEditor
+                editor?.let {
+                    if (it.document.uri == uri && (range == null || it.isRangeVisible(range))) {
+                        future.complete(true)
+                        return@invokeLater
+                    }
                 }
 
+                val line = range?.start?.line ?: 0
+                val virtualFile = LocalFileSystem.getInstance().findFileByIoFile(File(URI(uri)))
                 if (virtualFile == null) {
                     future.complete(false)
                     return@invokeLater
                 }
 
-                val editorManager = FileEditorManager.getInstance(project)
-                val line = selection.start.line
-                editor = editorManager.openTextEditor(OpenFileDescriptor(project, virtualFile, line, 0), true)
-            }
+                if (editor?.document?.uri == uri && range != null && atTop == true) {
+                    val logicalPosition = LogicalPosition(range.start.line, range.start.character)
+                    val point = editor.logicalPositionToXY(logicalPosition)
+                    editor.scrollingModel.scrollVertically(point.y)
+                } else {
+                    val editorManager = FileEditorManager.getInstance(project)
+                    editorManager.openTextEditor(OpenFileDescriptor(project, virtualFile, line, 0), true)
+                }
 
-            if (editor == null) {
+                future.complete(true)
+            } catch (ex: Exception) {
+                logger.warn(ex)
                 future.complete(false)
-                return@invokeLater
             }
+        }
+        return future.await()
+    }
 
-            editor.apply {
-                val start = getOffset(selection.start)
-                val end = getOffset(selection.end)
-                val caret = getOffset(selection.cursor)
-                selectionModel.setSelection(start, end)
-                caretModel.moveToOffset(caret)
-                if (!preserveFocus) component.grabFocus()
+    suspend fun select(uriString: String, selection: EditorSelection, preserveFocus: Boolean): Boolean {
+        var success = selectCore(uriString, selection, preserveFocus)
+        if (!success) {
+            success = selectCore(sanitizeURI(uriString)!!, selection, preserveFocus)
+        }
+        return success
+    }
+
+    private suspend fun selectCore(uriString: String, selection: EditorSelection, preserveFocus: Boolean): Boolean {
+        val future = CompletableDeferred<Boolean>()
+        ApplicationManager.getApplication().invokeLater {
+            try {
+                var editor = FileEditorManager.getInstance(project).selectedTextEditor
+                if (editor?.document?.uri != uriString || !editor.isRangeVisible(selection)) {
+                    val uri = URI(uriString)
+                    val virtualFile = if (uri.scheme == ReviewDiffFileSystem.protocol) {
+                        FileEditorManager.getInstance(project).openFiles.find { it.uri == uriString }
+                    } else {
+                        LocalFileSystem.getInstance().findFileByIoFile(File(uri))
+                    }
+
+                    if (virtualFile == null) {
+                        future.complete(false)
+                        return@invokeLater
+                    }
+
+                    val editorManager = FileEditorManager.getInstance(project)
+                    val line = selection.start.line
+                    editor = editorManager.openTextEditor(OpenFileDescriptor(project, virtualFile, line, 0), true)
+                }
+
+                if (editor == null) {
+                    future.complete(false)
+                    return@invokeLater
+                }
+
+                editor.apply {
+                    val start = getOffset(selection.start)
+                    val end = getOffset(selection.end)
+                    val caret = getOffset(selection.cursor)
+                    selectionModel.setSelection(start, end)
+                    caretModel.moveToOffset(caret)
+                    if (!preserveFocus) component.grabFocus()
+                }
+
+                future.complete(true)
+            } catch (ex: Exception) {
+                logger.warn(ex)
+                future.complete(false)
             }
-
-            future.complete(true)
         }
         return future.await()
     }

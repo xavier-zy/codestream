@@ -301,16 +301,17 @@ export class NRManager {
 		}
 
 		const fullPath = path.join(repoPath, filePath);
-		let normalizedPath = Strings.normalizePath(URI.parse(fullPath).toString(true), {
-			addLeadingSlash: this._isWindows
+		let normalizedPath = Strings.normalizePath(fullPath, {
+			addLeadingSlash: this._isWindows && !fullPath.startsWith("\\\\")
 		});
 		if (this._isWindows) {
 			normalizedPath = normalizedPath.replace(":", "%3A");
 		}
+		const uri = "file://" + normalizedPath;
 
 		if (!ref) {
 			return {
-				path: normalizedPath,
+				path: uri,
 				line: line,
 				column: column
 			};
@@ -318,7 +319,7 @@ export class NRManager {
 		const position = await this.getCurrentStackTracePosition(ref, fullPath, line, column);
 		return {
 			...position,
-			path: normalizedPath
+			path: uri
 		};
 	}
 

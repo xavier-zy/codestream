@@ -12,7 +12,6 @@ import {
 } from "@codestream/protocols/api";
 import Icon from "./Icon";
 import { Dialog } from "../src/components/Dialog";
-import { Link } from "./Link";
 
 export const Notifications = props => {
 	const dispatch = useDispatch();
@@ -39,6 +38,7 @@ export const Notifications = props => {
 			reviewReminderDelivery: state.preferences.reviewReminderDelivery === false ? false : true,
 			createReviewOnDetectUnreviewedCommits: createReviewOnDetectUnreviewedCommits,
 			weeklyEmailDelivery: state.preferences.weeklyEmailDelivery === false ? false : true,
+			toastPrNotify: state.preferences.toastPrNotify === false ? false : true,
 			hasDesktopNotifications,
 			notificationDeliverySupported,
 			emailSupported
@@ -50,6 +50,10 @@ export const Notifications = props => {
 	const [
 		loadingCreateReviewOnDetectUnreviewedCommits,
 		setLoadingCreateReviewOnDetectUnreviewedCommits
+	] = useState(false);
+	const [
+		loadingToastPrNotify,
+		setLoadingToastPrNotify
 	] = useState(false);
 	const [loadingWeeklyEmailDelivery, setLoadingWeeklyEmailDelivery] = useState(false);
 
@@ -68,13 +72,6 @@ export const Notifications = props => {
 		setLoadingReminderDelivery(false);
 	};
 
-	const handleChangeCreateReviewOnDetectUnreviewedCommits = async (value: boolean) => {
-		setLoadingCreateReviewOnDetectUnreviewedCommits(true);
-		HostApi.instance.track("Review Create On Detect Unreviewed Commits Changed", { Value: value });
-		dispatch(setUserPreference(["reviewCreateOnDetectUnreviewedCommits"], value));
-		setLoadingCreateReviewOnDetectUnreviewedCommits(false);
-	};
-
 	const handleChangeWeeklyEmailDelivery = async (value: boolean) => {
 		setLoadingWeeklyEmailDelivery(true);
 		// @ts-ignore
@@ -88,6 +85,20 @@ export const Notifications = props => {
 		// @ts-ignore
 		await dispatch(setUserPreference(["notificationDelivery"], value));
 		setLoadingDelivery(false);
+	};
+
+	const handleChangeCreateReviewOnDetectUnreviewedCommits = async (value: boolean) => {
+		setLoadingCreateReviewOnDetectUnreviewedCommits(true);
+		HostApi.instance.track("Review Create On Detect Unreviewed Commits Changed", { Value: value });
+		dispatch(setUserPreference(["reviewCreateOnDetectUnreviewedCommits"], value));
+		setLoadingCreateReviewOnDetectUnreviewedCommits(false);
+	};
+
+	const handleToastPrNotify = async (value: boolean) => {
+		setLoadingToastPrNotify(true);
+		HostApi.instance.track("Toast New PR Notify Changed", { Value: value });
+		dispatch(setUserPreference(["toastPrNotify"], value));
+		setLoadingToastPrNotify(false);
 	};
 
 	return (
@@ -144,7 +155,7 @@ export const Notifications = props => {
 								</RadioGroup>
 							</div>
 						)}
-						<h3>Other Notifications</h3>
+						<h3>Email Notifications</h3>
 						<div style={{ marginTop: "20px" }}>
 							<Checkbox
 								name="frReminders"
@@ -157,16 +168,6 @@ export const Notifications = props => {
 						</div>
 						<div style={{ marginTop: "20px" }}>
 							<Checkbox
-								name="createReviewOnDetectUnreviewedCommits"
-								checked={derivedState.createReviewOnDetectUnreviewedCommits}
-								onChange={handleChangeCreateReviewOnDetectUnreviewedCommits}
-								loading={loadingCreateReviewOnDetectUnreviewedCommits}
-							>
-								Notify me about new unreviewed commits from teammates when I pull
-							</Checkbox>
-						</div>
-						<div style={{ marginTop: "20px" }}>
-							<Checkbox
 								name="weeklyEmails"
 								checked={derivedState.weeklyEmailDelivery}
 								onChange={handleChangeWeeklyEmailDelivery}
@@ -175,13 +176,31 @@ export const Notifications = props => {
 								Send me weekly emails summarizing my activity
 							</Checkbox>
 						</div>
+						{derivedState.hasDesktopNotifications && derivedState.notificationDeliverySupported && (
+							<div>
+								<h3>Toast Notifications</h3>
+								<div style={{marginTop: "20px"}}>
+									<Checkbox
+										name="createReviewOnDetectUnreviewedCommits"
+										checked={derivedState.createReviewOnDetectUnreviewedCommits}
+										onChange={handleChangeCreateReviewOnDetectUnreviewedCommits}
+										loading={loadingCreateReviewOnDetectUnreviewedCommits}
+									>
+										Notify me about new unreviewed commits from teammates when I pull
+									</Checkbox>
+								</div>
+								<div style={{marginTop: "20px"}}>
+									<Checkbox
+										name="toastPrNotify"
+										checked={derivedState.toastPrNotify}
+										onChange={handleToastPrNotify}
+										loading={loadingToastPrNotify}
+									>
+										Notify me about pull requests assigned to me
+									</Checkbox>
+								</div>
+							</div>)}
 						<p>&nbsp;</p>
-
-						<p>
-							<Link href="https://docs.newrelic.com/docs/codestream/codestream-integrations/notifications/">
-								Learn more about CodeStream Notifications
-							</Link>
-						</p>
 					</div>
 				</fieldset>
 			</form>

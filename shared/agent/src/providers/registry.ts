@@ -1,6 +1,5 @@
 "use strict";
 import { differenceWith } from "lodash-es";
-import { CSMe } from "protocol/api.protocol";
 import semver from "semver";
 import { URI } from "vscode-uri";
 import { SessionContainer } from "../container";
@@ -61,6 +60,7 @@ import {
 	UpdateThirdPartyStatusRequestType,
 	UpdateThirdPartyStatusResponse
 } from "../protocol/agent.protocol";
+import { CSMe, CSMePreferences, CSNotificationDeliveryPreference } from "../protocol/api.protocol.models";
 import { CodeStreamSession } from "../session";
 import { getProvider, getRegisteredProviders, log, lsp, lspHandler } from "../system";
 import { GitLabEnterpriseProvider } from "./gitlabEnterprise";
@@ -206,10 +206,17 @@ export class ThirdPartyProviderRegistry {
 		if (succeededCount > 0) {
 			const newProvidersPRs = this.getProvidersPRsDiff(providersPullRequests);
 			this._lastProvidersPRs = providersPullRequests;
-
-			this.fireNewPRsNotifications(newProvidersPRs);
+			if (user.preferences && this.shouldToastNotify(user.preferences)) {
+				this.fireNewPRsNotifications(newProvidersPRs);
+			}
 		}
 	}
+
+    private shouldToastNotify = (prefs: CSMePreferences): boolean => {
+        const notificationDelivery = prefs?.notificationDelivery;
+        return (notificationDelivery === CSNotificationDeliveryPreference.ToastOnly ||
+            notificationDelivery === CSNotificationDeliveryPreference.All) && prefs?.toastPrNotify;
+    }
 
 	private getProvidersPRsDiff = (providersPRs: ProviderPullRequests[]): ProviderPullRequests[] => {
 		const newProvidersPRs: ProviderPullRequests[] = [];

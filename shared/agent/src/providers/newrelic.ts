@@ -1359,7 +1359,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				};
 			}>(
 				`mutation ReferenceEntityCreateOrUpdateRepository($accountId: Int!, $name: String!, $url: String!) {
-					referenceEntityCreateOrUpdateRepository(repositories: [{accountId: $accountId, name: $name, url: $url}]) {
+					referenceEntityCreateOrUpdateRepository(sync:true, repositories: [{accountId: $accountId, name: $name, url: $url}]) {
 					  created
 					  updated
 					  failures {

@@ -74,6 +74,7 @@ export class Container {
 	static setServerUrl(serverUrl: string, disableStrictSSL: boolean, environment?: string) {
 		this._session.setServerUrl(serverUrl, environment);
 		this._agent.sendRequest(SetServerUrlRequestType, { serverUrl, disableStrictSSL, environment });
+		this._agent.setServerUrl(serverUrl);
 		this._statusBar.update();
 	}
 

@@ -174,3 +174,68 @@ export const changeRegistrationEmail = (userId: string) => async (
 	await HostApi.instance.send(DeleteMeUserRequestType, { userId: userId });
 	return dispatch(goToSignup({}));
 };
+
+export const setSelectedRegion = region => async (dispatch, getState: () => CodeStreamState) => {
+	const { environmentHosts } = getState().configs;
+	if (environmentHosts) {
+		const host = environmentHosts!.find(host => host.shortName === region);
+		if (host) {
+			dispatch(setEnvironment(host.shortName, host.publicApiUrl));
+		}
+	}
+};
+
+// based on the currently "forced" region, or the selected region, or default region,
+// make sure our environment settings and serverUrl settings are in sync
+export const handleSelectedRegion = () => async (dispatch, getState: () => CodeStreamState) => {
+	const { environmentHosts, serverUrl } = getState().configs;
+	const { selectedRegion, forceRegion } = getState().context.__teamless__ || {};
+	let currentHost;
+
+	// if no environment hosts, we are in a single environment setup, nothing to do
+	if (!environmentHosts) {
+		return;
+	}
+
+	// if forcing a region, meaning we're making the user sign-in to particular region without
+	// giving them a choice of selecting another region, then get us to the host info for that region
+	if (forceRegion) {
+		currentHost = environmentHosts.find(host => host.shortName === forceRegion);
+	}
+
+	// otherwise if a current region is selected (in one of the sign-up or sign-in modals),
+	// get us to the host info for that region
+	if (selectedRegion) {
+		currentHost = environmentHosts.find(host => host.shortName === selectedRegion);
+		if (currentHost) {
+			if (serverUrl !== currentHost.publicApiUrl) {
+				// currently connected server doesn't match the selected host ... in this case,
+				// the connected server overrides the selection, and we force the selection to
+				// match the connected server
+				const connectedHost = environmentHosts.find(host => host.publicApiUrl === serverUrl);
+				if (connectedHost) {
+					return dispatch(
+						setTeamlessContext({
+							selectedRegion: connectedHost.shortName
+						})
+					);
+				}
+			}
+		}
+	}
+
+	// if no current host found yet, look for a host that matches "US", otherwise just pick the first one
+	if (!currentHost) {
+		currentHost = environmentHosts.find(host =>
+			host.shortName.match(/(^|[^a-zA-Z\d\s:])us($|[^a-zA-Z\d\s:])/)
+		);
+		if (!currentHost) {
+			currentHost = environmentHosts[0];
+		}
+	}
+
+	// finally set our environment "short name" (apepars in status bar), and serverUrl
+	if (currentHost) {
+		dispatch(setEnvironment(currentHost.shortName, currentHost.publicApiUrl));
+	}
+};

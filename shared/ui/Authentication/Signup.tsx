@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import cx from "classnames";
 import { CodeStreamState } from "../store";
 import { FormattedMessage } from "react-intl";
@@ -17,7 +17,7 @@ import {
 	goToLogin,
 	goToNewRelicSignup
 } from "../store/context/actions";
-import { setEnvironment } from "../store/session/actions";
+import { handleSelectedRegion, setSelectedRegion } from "../store/session/actions";
 import { TextInput } from "./TextInput";
 import { LoginResult } from "@codestream/protocols/api";
 import { RegisterUserRequestType, GetUserInfoRequestType } from "@codestream/protocols/agent";
@@ -123,49 +123,29 @@ export const Signup = (props: Props) => {
 
 	const { environmentHosts, selectedRegion, forceRegion } = derivedState;
 
-	const setSelectedRegion = region => {
-		const { environmentHosts } = derivedState;
-		if (environmentHosts) {
-			const host = environmentHosts!.find(host => host.shortName === region);
-			if (host) {
-				dispatch(setEnvironment(host.shortName, host.publicApiUrl));
-			}
-		}
-	};
+	useEffect(() => {
+		dispatch(handleSelectedRegion());
+	}, [environmentHosts, selectedRegion, forceRegion]);
 
 	let regionItems, forceRegionName, selectedRegionName;
-	if (environmentHosts && environmentHosts.length > 1) {
-		let usHost = environmentHosts.find(host =>
-			host.shortName.match(/(^|[^a-zA-Z\d\s:])us($|[^a-zA-Z\d\s:])/)
-		);
-		if (!usHost) {
-			usHost = environmentHosts[0];
-		}
-
+	if (environmentHosts) {
 		regionItems = environmentHosts.map(host => ({
 			key: host.shortName,
 			label: host.name,
-			action: () => setSelectedRegion(host.shortName)
+			action: () => {
+				dispatch(setSelectedRegion(host.shortName));
+			}
 		}));
 
-		let forceHost;
 		if (forceRegion) {
-			forceHost = environmentHosts.find(host => host.shortName === forceRegion);
+			const forceHost = environmentHosts.find(host => host.shortName === forceRegion);
 			if (forceHost) {
-				dispatch(setEnvironment(forceHost.shortName, forceHost.publicApiUrl));
 				forceRegionName = forceHost.name;
 			}
-		}
-		if (!forceHost && !selectedRegion && usHost) {
-			dispatch(setEnvironment(usHost.shortName, usHost.publicApiUrl));
-		}
-
-		if (selectedRegion) {
+		} else if (selectedRegion) {
 			const selectedHost = environmentHosts.find(host => host.shortName === selectedRegion);
 			if (selectedHost) {
 				selectedRegionName = selectedHost.name;
-			} else if (usHost) {
-				dispatch(setEnvironment(usHost.shortName, usHost.publicApiUrl));
 			}
 		}
 	}

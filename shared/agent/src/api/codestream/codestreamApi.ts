@@ -474,7 +474,7 @@ export class CodeStreamApiProvider implements ApiProvider {
 		}
 
 		// 💩see above
-		if (response.companies.length === 0) {
+		if (response.companies.length === 0 || response.teams.length === 0) {
 			// save the accessToken for the call to create a team
 			this._token = response.accessToken;
 			throw {
@@ -494,14 +494,14 @@ export class CodeStreamApiProvider implements ApiProvider {
 		}
 
 		// 💩see above
-		if (response.teams.length === 0) {
-			// save the accessToken for the call to create a team
-			this._token = response.accessToken;
-			throw {
-				error: LoginResult.NotOnTeam,
-				extra: { token: response.accessToken, email: response.user.email, userId: response.user.id }
-			} as LoginFailResponse;
-		}
+		//if (response.teams.length === 0) {
+		//	// save the accessToken for the call to create a team
+		//	this._token = response.accessToken;
+		//	throw {
+		//		error: LoginResult.NotOnTeam,
+		//		extra: { token: response.accessToken, email: response.user.email, userId: response.user.id }
+		//	} as LoginFailResponse;
+		//}
 
 		let pickedTeamReason;
 		let team: CSTeam | undefined;

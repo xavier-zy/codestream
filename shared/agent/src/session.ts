@@ -1204,8 +1204,8 @@ export class CodeStreamSession {
 			const response = await (this._api as CodeStreamApiProvider).register(request);
 
 			if (isCSLoginResponse(response)) {
-				if (response.teams.length === 0) {
-					return { status: LoginResult.NotOnTeam, token: response.accessToken };
+				if (response.companies.length === 0 || response.teams.length === 0) {
+					return { status: LoginResult.NotInCompany, token: response.accessToken };
 				}
 
 				this._teamId = response.teams.find(_ => _.isEveryoneTeam)!.id;
@@ -1244,9 +1244,9 @@ export class CodeStreamSession {
 			const response = await (this._api as CodeStreamApiProvider).registerNr(request);
 			// @TODO: this logic could be cleaner and easier to read
 			if (isCSNRLoginResponse(response)) {
-				if (response.companies.length === 0) {
+				if (response.companies.length === 0 || response.teams.length === 0) {
 					return {
-						status: LoginResult.NotOnTeam,
+						status: LoginResult.NotInCompany,
 						token: response.accessToken,
 						email: response.user?.email,
 						eligibleJoinCompanies: response.eligibleJoinCompanies,
@@ -1321,22 +1321,22 @@ export class CodeStreamSession {
 			};
 			if (response.setEnvironment) {
 				Logger.log(
-					`Passing directive to switch environments to ${response.setEnvironment.environment}:${response.setEnvironment.host}`
+					`Passing directive to switch environments to ${response.setEnvironment.environment}:${response.setEnvironment.publicApiUrl}`
 				);
 				result.setEnvironment = {
 					environment: response.setEnvironment.environment,
-					serverUrl: response.setEnvironment.host
+					serverUrl: response.setEnvironment.publicApiUrl
 				};
 			}
 
-			if (response.companies.length === 0) {
+			if (response.companies.length === 0 || response.teams.length === 0) {
 				result.status = LoginResult.NotInCompany;
 				return result;
 			}
-			if (response.teams.length === 0) {
-				result.status = LoginResult.NotOnTeam;
-				return result;
-			}
+			//if (response.teams.length === 0) {
+			//	result.status = LoginResult.NotOnTeam;
+			//	return result;
+			//}
 
 			this._teamId = response.teams.find(_ => _.isEveryoneTeam)!.id;
 			result.status = LoginResult.Success;

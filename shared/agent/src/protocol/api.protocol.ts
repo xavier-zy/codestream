@@ -122,7 +122,7 @@ export interface CSLoginResponse {
 	isWebmail?: boolean;
 	setEnvironment?: {
 		environment: string;
-		host: string;
+		publicApiUrl: string;
 	};
 }
 

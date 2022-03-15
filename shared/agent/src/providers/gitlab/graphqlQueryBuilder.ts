@@ -235,6 +235,27 @@ export class GraphqlQueryBuilder {
 				}
 			},
 			{
+				selector: (currentVersion: string) => semver.lt(currentVersion, "13.6.4"),
+				query: {
+					head: {
+						value: {
+							key: "discussionFragment"
+						},
+						next: {
+							value: {
+								key: "notes"
+							},
+							next: {
+								value: {
+									key: "nodes",
+									removals: ["resolved"]
+								}
+							}
+						}
+					}
+				}
+			},
+			{
 				selector: (currentVersion: string) => semver.lt(currentVersion, "13.8.0"),
 				query: {
 					head: {
@@ -249,7 +270,7 @@ export class GraphqlQueryBuilder {
 							next: {
 								value: {
 									key: "nodes",
-									removals: ["resolved", "systemNoteIconName"]
+									removals: ["systemNoteIconName"]
 								}
 							}
 						}

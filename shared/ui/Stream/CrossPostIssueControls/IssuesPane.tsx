@@ -28,7 +28,8 @@ import {
 	setIssueProvider,
 	setNewPostEntry
 } from "../../store/context/actions";
-import { connectProvider } from "../../store/providers/actions";
+import { configureAndConnectProvider } from "../../store/providers/actions";
+import { getUserProviderInfo } from "../../store/providers/utils";
 import { setUserPreference, setUserStatus } from "../actions";
 import { ErrorMessage } from "../ConfigurePullRequestQuery";
 import Filter from "../Filter";
@@ -231,6 +232,13 @@ export default function IssuesPane(props: Props) {
 	};
 
 	const onChangeProvider = async (providerInfo: ProviderInfo) => {
+		await this.props.configureAndConnectProvider(providerInfo.provider.id, "Compose Modal");
+
+		/*
+		// Per https://newrelic.atlassian.net/browse/CDSTRM-1591, the need for the "pre-PR" modal
+		// is discontinued ... if we bring it back, suggest we figure out a way not to repeat the
+		// logic below across all our launch integration points - Colin
+		
 		if (
 			(providerInfo.provider.needsConfigure ||
 				(providerInfo.provider.needsConfigureForOnPrem && derivedState.isOnPrem)) &&
@@ -243,15 +251,15 @@ export default function IssuesPane(props: Props) {
 			!providerIsConnected(providerInfo.provider.id)
 		) {
 			const { name, id } = providerInfo.provider;
-			/* if (name === "github_enterprise") {
-                this.setState({
-                    propsForPrePRProviderInfoModal: {
-                        providerName: name,
-                        onClose: () => this.setState({ propsForPrePRProviderInfoModal: undefined }),
-                        action: () => this.props.openPanel(`configure-enterprise-${name}-${id}`)
-                    }
-                });
-            } else */
+			// if (name === "github_enterprise") {
+			//	this.setState({
+			//		propsForPrePRProviderInfoModal: {
+			//		providerName: name,
+			//		onClose: () => this.setState({ propsForPrePRProviderInfoModal: undefined }),
+			//		action: () => this.props.openPanel(`configure-enterprise-${name}-${id}`)
+			//		}
+			//	});
+			//	} else 
 			dispatch(openPanel(`configure-enterprise-${name}-${id}-Issues Section`));
 		} else {
 			const { name } = providerInfo.provider;
@@ -285,6 +293,7 @@ export default function IssuesPane(props: Props) {
 				}
 			}
 		}
+		*/
 	};
 
 	const activeProviders = useMemo(() => {

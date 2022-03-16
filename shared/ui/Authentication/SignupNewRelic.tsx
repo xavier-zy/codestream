@@ -74,7 +74,7 @@ export const SignupNewRelic = () => {
 	}, [environmentHosts, selectedRegion, forceRegion]);
 
 	let regionItems, forceRegionName, selectedRegionName;
-	if (environmentHosts) {
+	if (environmentHosts && environmentHosts.length > 1) {
 		regionItems = environmentHosts.map(host => ({
 			key: host.shortName,
 			label: host.name,

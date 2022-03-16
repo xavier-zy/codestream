@@ -27,7 +27,7 @@ export const configureAndConnectProvider = (
 	connectionLocation: ViewLocation,
 	force?: boolean
 ) => async (dispatch, getState) => {
-	const { providers, configs } = getState();
+	const { providers, configs, ide, capabilities } = getState();
 	const provider = providers[providerId];
 	const {
 		forEnterprise,
@@ -38,12 +38,13 @@ export const configureAndConnectProvider = (
 		supportsOAuthOrPAT
 	} = provider;
 	const onprem = configs.isOnPrem;
+	const isVSCGitHub = ide.name === "VSC" && name === "github" && capabilities.vsCodeGithubSignin;
 	connectionLocation = connectionLocation || "Integrations Panel";
 	if (needsConfigure || (onprem && needsConfigureForOnPrem)) {
 		dispatch(openPanel(`configure-provider-${provider.name}-${provider.id}-${connectionLocation}`));
 	} else if ((forEnterprise || isEnterprise) && name !== "jiraserver") {
 		dispatch(openPanel(`configure-enterprise-${name}-${provider.id}-${connectionLocation}`));
-	} else if (supportsOAuthOrPAT) {
+	} else if (supportsOAuthOrPAT && !isVSCGitHub) {
 		dispatch(openPanel(`oauthpat-provider-${provider.name}-${provider.id}-${connectionLocation}`));
 	} else {
 		dispatch(connectProvider(provider.id, connectionLocation, force));

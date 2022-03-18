@@ -556,6 +556,9 @@ export const IssueList = React.memo((props: React.PropsWithChildren<IssueListPro
 				})
 			);
 			setLoadedBoards(loadedBoards + 1);
+			if (!initialLoadComplete) {
+				setIsLoading(false);
+			}
 		};
 
 		const fetchCards = async () => {
@@ -574,11 +577,9 @@ export const IssueList = React.memo((props: React.PropsWithChildren<IssueListPro
 						});
 					} catch (error) {
 						console.warn("Error Loading Cards: ", error);
-					} finally {
 					}
 				})
 			);
-
 			setIsLoading(false);
 			setLoadedCards(loadedCards + 1);
 		};
@@ -631,7 +632,6 @@ export const IssueList = React.memo((props: React.PropsWithChildren<IssueListPro
 							});
 						} catch (error) {
 							console.warn("Error Loading Cards: ", error);
-						} finally {
 						}
 					})
 				);

@@ -149,7 +149,7 @@ export class ConfigureJiraServerPanel extends Component {
 								</label>
 								<input
 									className="input-text control"
-									type="text"
+									type="password"
 									name="token"
 									tabIndex={this.tabIndex()}
 									value={this.state.token}

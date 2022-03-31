@@ -1980,14 +1980,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			const metricTimesliceNames = Object.keys(groupedByTransactionName);
 
 			request.options = request.options || {};
-			let [throughputResponse, averageDurationResponse, errorRateResponse] = await Promise.all([
-				request.options.includeThroughput && metricTimesliceNames?.length
-					? this.getMethodThroughput({
-							newRelicAccountId,
-							newRelicEntityGuid,
-							metricTimesliceNames
-					  })
-					: undefined,
+			let [averageDurationResponse, throughputResponse, errorRateResponse] = await Promise.all([
 				request.options.includeAverageDuration && metricTimesliceNames?.length
 					? this.getMethodAverageDuration({
 							newRelicAccountId,
@@ -1995,6 +1988,14 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 							metricTimesliceNames
 					  })
 					: undefined,
+				request.options.includeThroughput && metricTimesliceNames?.length
+					? this.getMethodThroughput({
+							newRelicAccountId,
+							newRelicEntityGuid,
+							metricTimesliceNames
+					  })
+					: undefined,
+
 				request.options.includeErrorRate && metricTimesliceNames?.length
 					? this.getMethodErrorRate({
 							newRelicAccountId,
@@ -2004,7 +2005,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					: undefined
 			]);
 
-			[throughputResponse, averageDurationResponse, errorRateResponse].forEach(_ => {
+			[averageDurationResponse, throughputResponse, errorRateResponse].forEach(_ => {
 				if (_) {
 					_.actor.account.nrql.results = this.addMethodName(
 						groupedByTransactionName,

@@ -455,11 +455,11 @@ class AgentService(private val project: Project) : Disposable {
         return gson.fromJson(json)
     }
 
-    suspend fun setServerUrl(params: SetServerUrlParams): SetServerUrlResult {
+    suspend fun setServerUrl(params: SetServerUrlParams): SetServerUrlResult? {
         val json = remoteEndpoint
             .request("codestream/set-server", params)
-            .await() as JsonObject
-        return gson.fromJson(json)
+            .await() as JsonObject?
+        return json?.let { gson.fromJson(it) }
     }
 
     suspend fun getFileContentsAtRevision(params: GetFileContentsAtRevisionParams): GetFileContentsAtRevisionResult {

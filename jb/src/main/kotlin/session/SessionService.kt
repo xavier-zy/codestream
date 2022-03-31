@@ -52,9 +52,13 @@ class SessionService(val project: Project) {
         userLoggedInObservers.forEach { it(new) }
     }
 
-    private var _environmentInfo: EnvironmentInfo by Delegates.observable<EnvironmentInfo>(EnvironmentInfo("unknown",
+    private var _environmentInfo: EnvironmentInfo by Delegates.observable<EnvironmentInfo>(EnvironmentInfo(
+        "unknown",
         isOnPrem = false,
-        isProductionCloud = false
+        isProductionCloud = false,
+        "",
+        "",
+        listOf()
     )) { _, _, new ->
         environmentInfoObservers.forEach { it(new) }
     }

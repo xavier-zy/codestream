@@ -80,7 +80,20 @@ class UserLoggedIn(
     val teamId get() = state.teamId
 }
 
-class EnvironmentInfo(val environment: String, val isOnPrem: Boolean, val isProductionCloud: Boolean)
+
+class EnvironmentHost(
+    val name: String,
+    val publicApiUrl: String,
+    val shortName: String
+)
+class EnvironmentInfo(
+    val environment: String,
+    val isOnPrem: Boolean,
+    val isProductionCloud: Boolean,
+    val newRelicLandingServiceUrl: String,
+    val newRelicApiUrl: String,
+    val environmentHosts: List<EnvironmentHost>
+)
 
 class CSUser(
     val id: String,

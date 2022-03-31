@@ -60,6 +60,17 @@ class SettingsService(val project: Project) : PersistentStateComponent<SettingsS
         jsonObject["hasFocus"] =
             if (codeStream != null) codeStream.isVisible && codeStream.isFocused
             else false
+
+        jsonObject["__teamless__"] = jsonObject["__teamless__"] ?: JsonObject()
+        val teamless = jsonObject["__teamless__"].asJsonObject
+        val selectedRegion = teamless["selectedRegion"]
+        if (selectedRegion == null || selectedRegion.isJsonNull || selectedRegion.asString.isNullOrBlank()) {
+            project.sessionService?.environmentInfo?.environmentHosts?.let { hosts ->
+                val shortNames = hosts.map { it.shortName }
+                teamless["selectedRegion"] = shortNames.find { it.lowercase().contains("us") } ?: shortNames.first()
+            }
+        }
+
         return jsonObject
     }
 

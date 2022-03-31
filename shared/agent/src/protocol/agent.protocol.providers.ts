@@ -1240,6 +1240,8 @@ export interface StackTraceResponse {
 	};
 }
 
+export type EntityType = "BROWSER_APPLICATION_ENTITY" | "GENERIC_ENTITY" | "MOBILE_APPLICATION_ENTITY";
+
 export interface Entity {
 	account?: {
 		name: string;
@@ -1250,6 +1252,7 @@ export interface Entity {
 	guid: string;
 	name: string;
 	type?: "APPLICATION" | "REPOSITORY";
+	entityType?: EntityType;
 	tags?: {
 		key: string;
 		values: string[];

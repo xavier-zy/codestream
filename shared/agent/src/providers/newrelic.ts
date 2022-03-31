@@ -72,7 +72,8 @@ import {
 	StackTraceResponse,
 	ThirdPartyDisconnect,
 	ThirdPartyProviderConfig,
-	CrashOrException
+	CrashOrException,
+	EntityType
 } from "../protocol/agent.protocol";
 import { CSMe, CSNewRelicProviderInfo } from "../protocol/api.protocol";
 import { CodeStreamSession } from "../session";
@@ -532,6 +533,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				  entitySearch(query: "type='APPLICATION' and (${statements.join(" or ")})") {
 					count
 					results(cursor:$cursor) {
+					  nextCursor
 					  entities {
 						guid
 						name
@@ -568,7 +570,6 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 						actor {
 						  entitySearch(query: "type='APPLICATION'", sortBy:MOST_RELEVANT) {
 							results {
-							 nextCursor
 							  entities {
 								account {
 									name
@@ -916,48 +917,46 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 							for (const application of builtFromApplications) {
 								if (!application.source.entity.guid) continue;
 
-								const response = await this.findFingerprintedErrorTraces(
+								const errorTraces = await this.findFingerprintedErrorTraces(
 									accountIdValue,
-									application.source.entity.guid
+									application.source.entity.guid,
+									application.source.entity.entityType
 								);
-								if (response.actor.account.nrql.results) {
-									const errorTraces = response.actor.account.nrql.results;
-									for (const errorTrace of errorTraces) {
-										try {
-											const response = await this.getErrorGroupFromNameMessageEntity(
-												errorTrace.errorClass,
-												errorTrace.message,
-												errorTrace.entityGuid
-											);
+								for (const errorTrace of errorTraces) {
+									try {
+										const response = await this.getErrorGroupFromNameMessageEntity(
+											errorTrace.errorClass,
+											errorTrace.message,
+											errorTrace.entityGuid
+										);
 
-											if (response && response.actor.errorsInbox.errorGroup) {
-												observabilityErrors.push({
-													entityId: errorTrace.entityGuid,
-													appName: errorTrace.appName,
-													errorClass: errorTrace.errorClass,
-													message: errorTrace.message,
-													remote: urlValue!,
-													errorGroupGuid: response.actor.errorsInbox.errorGroup.id,
-													occurrenceId: errorTrace.occurrenceId,
-													count: errorTrace.length,
-													lastOccurrence: errorTrace.lastOccurrence,
-													errorGroupUrl: response.actor.errorsInbox.errorGroup.url
-												});
-												if (observabilityErrors.length > 4) {
-													gotoEnd = true;
-													break;
-												}
-											}
-										} catch (ex) {
-											ContextLogger.warn("internal error getErrorGroupGuid", {
-												ex: ex
+										if (response && response.actor.errorsInbox.errorGroup) {
+											observabilityErrors.push({
+												entityId: errorTrace.entityGuid,
+												appName: errorTrace.appName,
+												errorClass: errorTrace.errorClass,
+												message: errorTrace.message,
+												remote: urlValue!,
+												errorGroupGuid: response.actor.errorsInbox.errorGroup.id,
+												occurrenceId: errorTrace.occurrenceId,
+												count: errorTrace.length,
+												lastOccurrence: errorTrace.lastOccurrence,
+												errorGroupUrl: response.actor.errorsInbox.errorGroup.url
 											});
+											if (observabilityErrors.length > 4) {
+												gotoEnd = true;
+												break;
+											}
 										}
+									} catch (ex) {
+										ContextLogger.warn("internal error getErrorGroupGuid", {
+											ex: ex
+										});
 									}
+								}
 
-									if (gotoEnd) {
-										break;
-									}
+								if (gotoEnd) {
+									break;
 								}
 							}
 
@@ -2775,16 +2774,8 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		}
 	}
 
-	/**
-	 * Find a list of error traces grouped by fingerprint
-	 *
-	 * @param accountId the NR1 account id to query against
-	 * @param applicationGuid the entityGuid for the application to query for
-	 * @returns list of most recent error traces for each unique fingerprint
-	 */
-	@log({ timed: true })
-	private async findFingerprintedErrorTraces(accountId: number, applicationGuid: string) {
-		const nrql = [
+	private getFingerprintedErrorTraceQueries(applicationGuid: String, entityType?: EntityType): String[] {
+		const apmNrql = [
 			"SELECT",
 			"latest(timestamp) AS 'lastOccurrence',", // first field is used to sort with FACET
 			"latest(id) AS 'occurrenceId',",
@@ -2799,19 +2790,100 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			"SINCE 3 days ago",
 			"LIMIT MAX"
 		].join(" ");
-		return this.query(
-			`query fetchErrorsInboxFacetedData($accountId:Int!) {
-				actor {
-				  account(id: $accountId) {
-					nrql(query: "${nrql}") { nrql results }
-				  }
+
+		const browserNrql  = [
+			"SELECT",
+			"latest(timestamp) AS 'lastOccurrence',", // first field is used to sort with FACET
+			"latest(guid) AS 'occurrenceId',",
+			"latest(appName) AS 'appName',",
+			"latest(error.class) AS 'errorClass',",
+			"latest(message) AS 'message',",
+			"latest(entityGuid) AS 'entityGuid',",
+			"count(guid) as 'length'",
+			"FROM JavaScriptError",
+			`WHERE entityGuid='${applicationGuid}'`,
+			"FACET stackTrace", // group the results by fingerprint
+			"SINCE 3 days ago",
+			"LIMIT MAX"
+		].join(" ");
+
+		const mobileNrql1  = [
+			"SELECT",
+			"latest(timestamp) AS 'lastOccurrence',", // first field is used to sort with FACET
+			"latest(occurrenceId) AS 'occurrenceId',",
+			"latest(appName) AS 'appName',",
+			"latest(crashLocationClass) AS 'errorClass',",
+			"latest(crashMessage) AS 'message',",
+			"latest(entityGuid) AS 'entityGuid',",
+			"count(occurrenceId) as 'length'",
+			"FROM MobileCrash",
+			`WHERE entityGuid='${applicationGuid}'`,
+			"FACET crashFingerprint", // group the results by fingerprint
+			"SINCE 3 days ago",
+			"LIMIT MAX"
+		].join(" ");
+
+		const mobileNrql2  = [
+			"SELECT",
+			"latest(timestamp) AS 'lastOccurrence',", // first field is used to sort with FACET
+			"latest(handledExceptionUuid) AS 'occurrenceId',",
+			"latest(appName) AS 'appName',",
+			"latest(exceptionLocationClass) AS 'errorClass',",
+			"latest(exceptionMessage) AS 'message',",
+			"latest(entityGuid) AS 'entityGuid',",
+			"count(handledExceptionUuid) as 'length'",
+			"FROM MobileHandledException",
+			`WHERE entityGuid='${applicationGuid}'`,
+			"FACET handledExceptionUuid", // group the results by fingerprint
+			"SINCE 3 days ago",
+			"LIMIT MAX"
+		].join(" ");
+
+		switch (entityType) {
+			case "BROWSER_APPLICATION_ENTITY":
+				return [ browserNrql ];
+			case "MOBILE_APPLICATION_ENTITY":
+				return [ mobileNrql1, mobileNrql2 ];
+			default:
+				return [ apmNrql ];
+		}
+	}
+
+	/**
+	 * Find a list of error traces grouped by fingerprint
+	 *
+	 * @param accountId the NR1 account id to query against
+	 * @param applicationGuid the entityGuid for the application to query for
+	 * @returns list of most recent error traces for each unique fingerprint
+	 */
+	@log({ timed: true })
+	private async findFingerprintedErrorTraces(accountId: number, applicationGuid: string, entityType?: EntityType) {
+		const queries = this.getFingerprintedErrorTraceQueries(applicationGuid, entityType);
+
+		try {
+			const results = [];
+			for (const query of queries) {
+				const response = await this.query(
+					`query fetchErrorsInboxFacetedData($accountId:Int!) {
+						actor {
+						  account(id: $accountId) {
+							nrql(query: "${query}") { nrql results }
+						  }
+						}
+					  }
+					  `,
+					{
+						accountId: accountId
+					}
+				);
+				if (response.actor.account.nrql.results?.length) {
+					results.push(...response.actor.account.nrql.results);
 				}
-			  }
-			  `,
-			{
-				accountId: accountId
 			}
-		);
+			return results;
+		} catch (err) {
+			throw err;
+		}
 	}
 
 	private async findRelatedEntityByRepositoryGuids(
@@ -2887,6 +2959,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 						name
 						guid
 						type
+						entityType
 					  }
 					}
 					target {
@@ -2894,6 +2967,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 						name
 						guid
 						type
+						entityType
 						tags {
 							key
 							values

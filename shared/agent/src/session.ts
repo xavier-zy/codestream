@@ -1539,7 +1539,7 @@ export class CodeStreamSession {
 
 		if (user.providerInfo) {
 			const data =
-				(team && user.providerInfo[team.id]?.newrelic?.data) || user.providerInfo.newrelic.data;
+				(team && user.providerInfo[team.id]?.newrelic?.data) || user.providerInfo.newrelic?.data;
 			if (data) {
 				if (data.userId) {
 					props["NR User ID"] = data.userId;

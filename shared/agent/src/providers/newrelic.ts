@@ -1,10 +1,12 @@
 "use strict";
 import fs from "fs";
+import { RepositoryLocator } from "git/repositoryLocator";
 import { GraphQLClient } from "graphql-request";
 import { Dictionary } from "lodash";
 import {
 	flatten as _flatten,
 	groupBy as _groupBy,
+	isEmpty as _isEmpty,
 	memoize,
 	result,
 	sortBy as _sortBy,
@@ -714,7 +716,8 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					);
 					continue;
 				}
-				const folderName = this.getRepoName({ path: repo.path });
+				const repoPath = !_isEmpty(repo.path) ? { path: repo.path } : repo;
+				const folderName = this.getRepoName(repoPath);
 
 				if (response.repos.some(_ => _?.repoName === folderName)) {
 					ContextLogger.warn("getObservabilityRepos skipping duplicate repo name", {
@@ -3241,10 +3244,12 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					URI.parse(repoLike.folder.uri)
 						.fsPath.split(/[\\/]+/)
 						.pop())!;
+				ContextLogger.log(`getRepoName parsed ${folderName}`);
 				return folderName;
 			}
 			if (repoLike.path) {
 				const folderName = repoLike.path.split(/[\\/]+/).pop()!;
+				ContextLogger.log(`getRepoName parsed ${folderName}`);
 				return folderName;
 			}
 		} catch (ex) {

@@ -1543,6 +1543,7 @@ export class CodeStreamSession {
 			if (data) {
 				if (data.userId) {
 					props["NR User ID"] = data.userId;
+					props["NR Connected Org"] = true;
 				}
 				if (data?.orgIds && data.orgIds?.length) {
 					props["NR Organization ID"] = data?.orgIds[0];

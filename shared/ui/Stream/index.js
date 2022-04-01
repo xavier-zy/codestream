@@ -377,7 +377,7 @@ export class SimpleStream extends PureComponent {
 		const oauthOrPATProvider = activePanel.startsWith("oauthpat-provider-");
 		let [, , providerName, providerId, origin] = configureProviderInfo || [];
 		const customConfigureProvider = providerName
-			? ["azuredevops", "youtrack", "newrelic"].find(name => name === providerName)
+			? ["azuredevops", "youtrack", "jiraserver", "newrelic"].find(name => name === providerName)
 			: null;
 
 		// status and teams panels have been deprecated

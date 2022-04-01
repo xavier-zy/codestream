@@ -67,7 +67,7 @@ class SettingsService(val project: Project) : PersistentStateComponent<SettingsS
         if (selectedRegion == null || selectedRegion.isJsonNull || selectedRegion.asString.isNullOrBlank()) {
             project.sessionService?.environmentInfo?.environmentHosts?.let { hosts ->
                 val shortNames = hosts.map { it.shortName }
-                teamless["selectedRegion"] = shortNames.find { it.lowercase().contains("us") } ?: shortNames.first()
+                teamless["selectedRegion"] = shortNames.find { it.lowercase().contains("us") } ?: shortNames.firstOrNull()
             }
         }
 

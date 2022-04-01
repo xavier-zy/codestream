@@ -2399,18 +2399,23 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 	@log()
 	private async fetchStackTrace(
 		entityGuid: string,
-		occurrenceId: string
+		occurrenceId: number | string
 	): Promise<StackTraceResponse> {
 		let fingerprintId = 0;
 		try {
 			// BrowserApplicationEntity uses a fingerprint instead of an occurrence and it's a number
-			if (occurrenceId && occurrenceId.match(/^-?\d+$/)) {
+			if ((typeof occurrenceId === "string" && occurrenceId.match(/^-?\d+$/))) {
 				fingerprintId = parseInt(occurrenceId, 10);
+			} else if (typeof occurrenceId === "number") {
+				fingerprintId = occurrenceId;
+			}
+
+			if (fingerprintId) {
 				occurrenceId = "";
 			}
 		} catch {}
 		return this.query(
-			`query getStackTrace($entityGuid: EntityGuid!, $occurrenceId: String!, $fingerprintId: Int!) {
+			`query getStackTrace($entityGuid: EntityGuid!, $occurrenceId: String, $fingerprintId: Int!) {
 			actor {
 			  entity(guid: $entityGuid) {
 				... on ApmApplicationEntity {
@@ -2794,14 +2799,14 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		const browserNrql  = [
 			"SELECT",
 			"latest(timestamp) AS 'lastOccurrence',", // first field is used to sort with FACET
-			"latest(guid) AS 'occurrenceId',",
+			"latest(stackHash) AS 'occurrenceId',",
 			"latest(appName) AS 'appName',",
 			"latest(errorClass) AS 'errorClass',",
 			"latest(errorMessage) AS 'message',",
 			"latest(entityGuid) AS 'entityGuid',",
 			"count(guid) as 'length'",
 			"FROM JavaScriptError",
-			`WHERE guid IS NOT NULL AND entityGuid='${applicationGuid}'`,
+			`WHERE stackHash IS NOT NULL AND entityGuid='${applicationGuid}'`,
 			"FACET stackTrace", // group the results by fingerprint
 			"SINCE 3 days ago",
 			"LIMIT MAX"

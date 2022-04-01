@@ -1,5 +1,21 @@
 # Change Log
 
+## [12.14.0] - 2022-4-1
+
+### Added
+
+- Adds support for remote URLs using the git protocol
+
+### Changed
+
+- Changes the color of the icon displayed in the editor gutter for pull request comments to green
+
+### Fixed
+
+- Fixes an issue where commenting in a feedback request cleared out the viewed state for all files
+- Fixes an issue with non-repository entries appearing in the Observability section
+- Fixes issues with the display of headshots in pull requests from GitHub Enterprise
+
 ## [12.13.0] - 2022-3-22
 
 ### Added

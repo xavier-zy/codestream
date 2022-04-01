@@ -2796,12 +2796,12 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			"latest(timestamp) AS 'lastOccurrence',", // first field is used to sort with FACET
 			"latest(guid) AS 'occurrenceId',",
 			"latest(appName) AS 'appName',",
-			"latest(error.class) AS 'errorClass',",
-			"latest(message) AS 'message',",
+			"latest(errorClass) AS 'errorClass',",
+			"latest(errorMessage) AS 'message',",
 			"latest(entityGuid) AS 'entityGuid',",
 			"count(guid) as 'length'",
 			"FROM JavaScriptError",
-			`WHERE entityGuid='${applicationGuid}'`,
+			`WHERE guid IS NOT NULL AND entityGuid='${applicationGuid}'`,
 			"FACET stackTrace", // group the results by fingerprint
 			"SINCE 3 days ago",
 			"LIMIT MAX"

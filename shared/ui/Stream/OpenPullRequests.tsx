@@ -24,7 +24,7 @@ import {
 	ThirdPartyProviderConfig,
 	UpdateTeamSettingsRequestType,
 	FetchThirdPartyPullRequestPullRequest,
-	GitLabMergeRequest
+	SwitchBranchRequestType
 } from "@codestream/protocols/agent";
 import {
 	NewPullRequestNotificationType,
@@ -61,11 +61,14 @@ import {
 	getCurrentProviderPullRequest,
 	getMyPullRequests as getMyPullRequestsSelector,
 	getPullRequestExactId,
-	getPullRequestId
+	getPullRequestId,
+	getProviderPullRequestRepoObject
 } from "../store/providerPullRequests/reducer";
 import { InlineMenu } from "../src/components/controls/InlineMenu";
 import { getPRLabel } from "../store/providers/reducer";
 import { PullRequestFilesChangedTab } from "./PullRequestFilesChangedTab";
+import copy from "copy-to-clipboard";
+import { logError } from "../logger";
 
 const Root = styled.div`
 	height: 100%;
@@ -288,7 +291,8 @@ export const OpenPullRequests = React.memo((props: Props) => {
 			currentPullRequest: currentPullRequest,
 			providerPullRequests: state.providerPullRequests.pullRequests,
 			currentPullRequestId: getPullRequestId(state),
-			currentPullRequestIdExact: getPullRequestExactId(state)
+			currentPullRequestIdExact: getPullRequestExactId(state),
+			currentRepoObject: getProviderPullRequestRepoObject(state)
 		};
 	}, shallowEqual);
 
@@ -712,6 +716,59 @@ export const OpenPullRequests = React.memo((props: Props) => {
 		)) as any;
 	};
 
+	const checkout = async (event, pr) => {
+		event.preventDefault();
+		if (!pr) return;
+
+		const repoId = derivedState.currentRepoObject?.currentRepo?.id || "";
+		const result = await HostApi.instance.send(SwitchBranchRequestType, {
+			branch: pr!.headRefName,
+			repoId: repoId
+		});
+		if (result.error) {
+			logError(result.error, {
+				...(derivedState.currentRepoObject || {}),
+				branch: pr.headRefName,
+				repoId: repoId,
+				prRepository: pr!.repository
+			});
+
+			confirmPopup({
+				title: "Git Error",
+				className: "wide",
+				message: (
+					<div className="monospace" style={{ fontSize: "11px" }}>
+						{result.error}
+					</div>
+				),
+				centered: false,
+				buttons: [{ label: "OK", className: "control-button" }]
+			});
+		} else {
+			// getOpenRepos();
+		}
+	};
+
+	const cantCheckoutReason = pr => {
+		if (pr) {
+			// Check for a name match in two places, covers edge case if repo was recently renamed
+			const currentRepo = props.openRepos.find(
+				_ =>
+					_?.name?.toLowerCase() === pr.repository?.name?.toLowerCase() ||
+					_?.folder?.name?.toLowerCase() === pr.repository?.name?.toLowerCase()
+			);
+			if (!currentRepo) {
+				return `You don't have the ${pr.repository?.name} repo open in your IDE`;
+			}
+			if (currentRepo.currentBranch == pr.headRefName) {
+				return `You are on the ${pr.headRefName} branch`;
+			}
+			return "";
+		} else {
+			return "PR not loaded";
+		}
+	};
+
 	useEffect(() => {
 		const providerPullRequests =
 			derivedState.providerPullRequests[derivedState.currentPullRequestProviderId!];
@@ -986,11 +1043,6 @@ export const OpenPullRequests = React.memo((props: Props) => {
 													)}
 												</div>
 												<div className="icons">
-													<Icon
-														name="info"
-														placement="top"
-														title={<PullRequestTooltip pr={pr} />}
-													/>
 													<span
 														onClick={e => {
 															e.preventDefault();
@@ -1001,21 +1053,40 @@ export const OpenPullRequests = React.memo((props: Props) => {
 														}}
 													>
 														<Icon
-															name="globe"
+															name="link-external"
 															className="clickable"
 															title="View on GitHub"
 															placement="bottomLeft"
 															delay={1}
 														/>
+													</span>
+													<Icon
+														title="Copy"
+														placement="bottom"
+														name="copy"
+														className="clickable"
+														onClick={e => copy(pr.url)}
+													/>
+													<span className={cantCheckoutReason(pr) ? "disabled" : ""}>
 														<Icon
-															name="review"
-															className="clickable"
-															title="Review Changes"
-															placement="bottomLeft"
+															title={
+																<>
+																	Checkout Branch
+																	{cantCheckoutReason(pr) && (
+																		<div className="subtle smaller" style={{ maxWidth: "200px" }}>
+																			Disabled: {cantCheckoutReason(pr)}
+																		</div>
+																	)}
+																</>
+															}
+															trigger={["hover"]}
 															delay={1}
+															onClick={e => checkout(e, pr)}
+															placement="bottom"
+															name="git-branch"
 														/>
 													</span>
-
+													{/* eric here */}
 													<Timestamp time={pr.createdAt} relative abbreviated />
 												</div>
 											</Row>
@@ -1089,7 +1160,7 @@ export const OpenPullRequests = React.memo((props: Props) => {
 														placement="bottomLeft"
 														delay={1}
 													/>
-													<Timestamp time={pr.created_at} relative abbreviated />
+													<Timestamp time={pr.created_at} relative abbreviated /> sdfgsdfg
 													{pr.user_notes_count > 0 && (
 														<span
 															className="badge"

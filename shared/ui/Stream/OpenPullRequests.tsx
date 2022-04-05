@@ -725,9 +725,10 @@ export const OpenPullRequests = React.memo((props: Props) => {
 		)) as any;
 	};
 
-	const checkout = async (event, prToCheckout) => {
+	const checkout = async (event, prToCheckout, cantCheckoutReason) => {
 		event.preventDefault();
-		if (!prToCheckout) return;
+
+		if (!prToCheckout || cantCheckoutReason) return;
 
 		const currentRepo = openRepos.find(
 			_ =>
@@ -766,17 +767,11 @@ export const OpenPullRequests = React.memo((props: Props) => {
 
 	const cantCheckoutReason = prToCheckout => {
 		if (prToCheckout) {
-			// Check for a name match in two places, covers edge case if repo was recently renamed
-
 			const currentRepo = openRepos.find(
 				_ =>
 					_?.name?.toLowerCase() === prToCheckout.headRepository?.name?.toLowerCase() ||
 					_?.folder?.name?.toLowerCase() === prToCheckout.headRepository?.name?.toLowerCase()
 			);
-
-			console.warn("eric currentRepo", currentRepo);
-			console.warn("eric pr.repository", prToCheckout.headRepository);
-			console.warn("eric props.openRepos", props.openRepos);
 
 			if (!currentRepo) {
 				return `You don't have the ${prToCheckout.headRepository?.name} repo open in your IDE`;
@@ -1116,8 +1111,7 @@ export const OpenPullRequests = React.memo((props: Props) => {
 																</>
 															}
 															trigger={["hover"]}
-															delay={1}
-															onClick={e => checkout(e, pr)}
+															onClick={e => checkout(e, pr, cantCheckoutReason(pr))}
 															placement="bottom"
 															name="git-branch"
 														/>

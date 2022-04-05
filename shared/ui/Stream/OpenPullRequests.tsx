@@ -24,7 +24,8 @@ import {
 	ThirdPartyProviderConfig,
 	UpdateTeamSettingsRequestType,
 	FetchThirdPartyPullRequestPullRequest,
-	SwitchBranchRequestType
+	SwitchBranchRequestType,
+	GetReposScmRequestType
 } from "@codestream/protocols/agent";
 import {
 	NewPullRequestNotificationType,
@@ -139,6 +140,10 @@ const PrErrorText = styled.small`
 	display: block;
 `;
 
+interface ReposScmPlusName extends ReposScm {
+	name: string;
+}
+
 export const PullRequestTooltip = (props: { pr: GetMyPullRequestsResponse }) => {
 	const { pr } = props;
 	const statusIcon =
@@ -222,6 +227,7 @@ interface Props {
 	paneState: PaneState;
 }
 
+const EMPTY_ARRAY = [] as any;
 const EMPTY_HASH = {} as any;
 const EMPTY_HASH_2 = {} as any;
 
@@ -292,7 +298,8 @@ export const OpenPullRequests = React.memo((props: Props) => {
 			providerPullRequests: state.providerPullRequests.pullRequests,
 			currentPullRequestId: getPullRequestId(state),
 			currentPullRequestIdExact: getPullRequestExactId(state),
-			currentRepoObject: getProviderPullRequestRepoObject(state)
+			currentRepoObject: getProviderPullRequestRepoObject(state),
+			reposState: state.repos
 		};
 	}, shallowEqual);
 
@@ -313,6 +320,7 @@ export const OpenPullRequests = React.memo((props: Props) => {
 	const [loadFromUrlOpen, setLoadFromUrlOpen] = React.useState("");
 	const [prError, setPrError] = React.useState("");
 	const [prCommitsRange, setPrCommitsRange] = React.useState<string[]>([]);
+	const [openRepos, setOpenRepos] = React.useState<ReposScmPlusName[]>(EMPTY_ARRAY);
 
 	const [pullRequestGroups, setPullRequestGroups] = React.useState<{
 		[providerId: string]: GetMyPullRequestsResponse[][];
@@ -534,6 +542,7 @@ export const OpenPullRequests = React.memo((props: Props) => {
 				fetchPRs(queries, undefined, "useDidMount").then(_ => {
 					mountedRef.current = true;
 				});
+				getOpenRepos();
 			}
 		})();
 	});
@@ -716,21 +725,27 @@ export const OpenPullRequests = React.memo((props: Props) => {
 		)) as any;
 	};
 
-	const checkout = async (event, pr) => {
+	const checkout = async (event, prToCheckout) => {
 		event.preventDefault();
-		if (!pr) return;
+		if (!prToCheckout) return;
 
-		const repoId = derivedState.currentRepoObject?.currentRepo?.id || "";
+		const currentRepo = openRepos.find(
+			_ =>
+				_?.name?.toLowerCase() === prToCheckout.headRepository?.name?.toLowerCase() ||
+				_?.folder?.name?.toLowerCase() === prToCheckout.headRepository?.name?.toLowerCase()
+		);
+
+		const repoId = currentRepo?.id || "";
 		const result = await HostApi.instance.send(SwitchBranchRequestType, {
-			branch: pr!.headRefName,
+			branch: prToCheckout!.headRefName,
 			repoId: repoId
 		});
 		if (result.error) {
 			logError(result.error, {
 				...(derivedState.currentRepoObject || {}),
-				branch: pr.headRefName,
+				branch: prToCheckout.headRefName,
 				repoId: repoId,
-				prRepository: pr!.repository
+				prRepository: prToCheckout!.repository
 			});
 
 			confirmPopup({
@@ -745,27 +760,48 @@ export const OpenPullRequests = React.memo((props: Props) => {
 				buttons: [{ label: "OK", className: "control-button" }]
 			});
 		} else {
-			// getOpenRepos();
+			getOpenRepos();
 		}
 	};
 
-	const cantCheckoutReason = pr => {
-		if (pr) {
+	const cantCheckoutReason = prToCheckout => {
+		if (prToCheckout) {
 			// Check for a name match in two places, covers edge case if repo was recently renamed
-			const currentRepo = props.openRepos.find(
+
+			const currentRepo = openRepos.find(
 				_ =>
-					_?.name?.toLowerCase() === pr.repository?.name?.toLowerCase() ||
-					_?.folder?.name?.toLowerCase() === pr.repository?.name?.toLowerCase()
+					_?.name?.toLowerCase() === prToCheckout.headRepository?.name?.toLowerCase() ||
+					_?.folder?.name?.toLowerCase() === prToCheckout.headRepository?.name?.toLowerCase()
 			);
+
+			console.warn("eric currentRepo", currentRepo);
+			console.warn("eric pr.repository", prToCheckout.headRepository);
+			console.warn("eric props.openRepos", props.openRepos);
+
 			if (!currentRepo) {
-				return `You don't have the ${pr.repository?.name} repo open in your IDE`;
+				return `You don't have the ${prToCheckout.headRepository?.name} repo open in your IDE`;
 			}
-			if (currentRepo.currentBranch == pr.headRefName) {
-				return `You are on the ${pr.headRefName} branch`;
+			if (currentRepo.currentBranch == prToCheckout.headRefName) {
+				return `You are on the ${prToCheckout.headRefName} branch`;
 			}
 			return "";
 		} else {
 			return "PR not loaded";
+		}
+	};
+
+	const getOpenRepos = async () => {
+		const { reposState } = derivedState;
+		const response = await HostApi.instance.send(GetReposScmRequestType, {
+			inEditorOnly: true,
+			includeCurrentBranches: true
+		});
+		if (response && response.repositories) {
+			const repos = response.repositories.map(repo => {
+				const id = repo.id || "";
+				return { ...repo, name: reposState[id] ? reposState[id].name : "" };
+			});
+			setOpenRepos(repos);
 		}
 	};
 

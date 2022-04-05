@@ -720,9 +720,12 @@ export const OpenPullRequests = React.memo((props: Props) => {
 		// if (message) setIsLoadingMessage(message);
 		setIsLoadingPR(pullRequestId);
 
-		const response = (await dispatch(
-			getPullRequestConversationsFromProvider(providerId, pullRequestId)
-		)) as any;
+		// const response = (await dispatch(
+		// 	getPullRequestConversationsFromProvider(providerId, pullRequestId)
+		// )) as any;
+		await dispatch(getPullRequestConversationsFromProvider(providerId, pullRequestId)) as any;
+
+		setIsLoadingPR("");
 	};
 
 	const checkout = async (event, prToCheckout, cantCheckoutReason) => {
@@ -783,6 +786,32 @@ export const OpenPullRequests = React.memo((props: Props) => {
 		} else {
 			return "PR not loaded";
 		}
+	};
+
+	/**
+	 * This is called when a user clicks the "reload" button.
+	 * with a "hard-reload" we need to refresh the conversation and file data
+	 * @param message
+	 */
+	const reload = async (message?: string) => {
+		console.log("PullRequest is reloading");
+		// if (message) setIsLoadingMessage(message);
+		// setIsLoadingPR(true);
+		fetchOnePR(derivedState.currentPullRequestProviderId!, derivedState.currentPullRequestId);
+
+		// just clear the files and commits data -- it will be fetched if necessary (since it has its own api call)
+		// dispatch(
+		// 	clearPullRequestFiles(
+		// 		derivedState.currentPullRequestProviderId!,
+		// 		derivedState.currentPullRequestId!
+		// 	)
+		// );
+		// dispatch(
+		// 	clearPullRequestCommits(
+		// 		derivedState.currentPullRequestProviderId!,
+		// 		derivedState.currentPullRequestId!
+		// 	)
+		// );
 	};
 
 	const getOpenRepos = async () => {
@@ -1114,6 +1143,23 @@ export const OpenPullRequests = React.memo((props: Props) => {
 															onClick={e => checkout(e, pr, cantCheckoutReason(pr))}
 															placement="bottom"
 															name="git-branch"
+														/>
+													</span>
+													<span>
+														<Icon
+															title="Reload"
+															trigger={["hover"]}
+															delay={1}
+															onClick={() => {
+																if (isLoadingPR) {
+																	console.warn("reloading pr, cancelling...");
+																	return;
+																}
+																reload("Reloading...");
+															}}
+															placement="bottom"
+															className={`${isLoadingPR ? "spin" : ""}`}
+															name="refresh"
 														/>
 													</span>
 													{/* eric here */}

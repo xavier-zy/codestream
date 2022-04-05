@@ -2415,7 +2415,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			}
 		} catch {}
 		return this.query(
-			`query getStackTrace($entityGuid: EntityGuid!, $occurrenceId: String, $fingerprintId: Int!) {
+			`query getStackTrace($entityGuid: EntityGuid!, $occurrenceId: String!, $fingerprintId: Int!) {
 			actor {
 			  entity(guid: $entityGuid) {
 				... on ApmApplicationEntity {

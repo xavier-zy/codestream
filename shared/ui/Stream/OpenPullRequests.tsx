@@ -46,6 +46,7 @@ import { setUserPreference, openPanel } from "./actions";
 import { PROVIDER_MAPPINGS } from "./CrossPostIssueControls/types";
 import { confirmPopup } from "./Confirm";
 import { ConfigurePullRequestQuery } from "./ConfigurePullRequestQuery";
+import { PullRequestDetailsRow } from "./PullRequestDetailsRow";
 import { PullRequestQuery } from "@codestream/protocols/api";
 import { configureAndConnectProvider } from "../store/providers/actions";
 import {
@@ -723,7 +724,7 @@ export const OpenPullRequests = React.memo((props: Props) => {
 		// const response = (await dispatch(
 		// 	getPullRequestConversationsFromProvider(providerId, pullRequestId)
 		// )) as any;
-		await dispatch(getPullRequestConversationsFromProvider(providerId, pullRequestId)) as any;
+		(await dispatch(getPullRequestConversationsFromProvider(providerId, pullRequestId))) as any;
 
 		setIsLoadingPR("");
 	};
@@ -1071,101 +1072,114 @@ export const OpenPullRequests = React.memo((props: Props) => {
 											);
 										});
 										return [
-											<Row
-												key={"pr-" + pr.id}
-												className={selected ? "pr-row selected" : "pr-row"}
-												onClick={() => clickPR(pr)}
-											>
-												<div style={{ display: "flex" }}>
-													{selected && <Icon name="arrow-right" className="selected-icon" />}
-													{chevronIcon}
-													<PRHeadshot person={pr.author} />
-												</div>
-												<div>
-													<span>
-														#{pr.number} {pr.title}
-													</span>
-													{pr.labels &&
-														pr.labels.nodes &&
-														pr.labels.nodes.length > 0 &&
-														!derivedState.hideLabels && (
-															<span className="cs-tag-container">
-																{pr.labels.nodes.map((_, index) => (
-																	<Tag
-																		key={index}
-																		tag={{ label: _?.name, color: `#${_?.color}` }}
-																	/>
-																))}
-															</span>
+											<>
+												<Row
+													key={"pr-" + pr.id}
+													className={selected ? "pr-row selected" : "pr-row"}
+													onClick={() => clickPR(pr)}
+												>
+													<div style={{ display: "flex" }}>
+														{selected && <Icon name="arrow-right" className="selected-icon" />}
+														{chevronIcon}
+														<PRHeadshot person={pr.author} />
+													</div>
+													<div>
+														<span>
+															#{pr.number} {pr.title}
+														</span>
+														{pr.labels &&
+															pr.labels.nodes &&
+															pr.labels.nodes.length > 0 &&
+															!derivedState.hideLabels && (
+																<span className="cs-tag-container">
+																	{pr.labels.nodes.map((_, index) => (
+																		<Tag
+																			key={index}
+																			tag={{ label: _?.name, color: `#${_?.color}` }}
+																		/>
+																	))}
+																</span>
+															)}
+														{!derivedState.hideDescriptions && (
+															<span className="subtle">{pr.bodyText || pr.body}</span>
 														)}
-													{!derivedState.hideDescriptions && (
-														<span className="subtle">{pr.bodyText || pr.body}</span>
-													)}
-												</div>
-												<div className="icons">
-													<span
-														onClick={e => {
-															e.preventDefault();
-															e.stopPropagation();
-															HostApi.instance.send(OpenUrlRequestType, {
-																url: pr.url
-															});
-														}}
-													>
-														<Icon
-															name="link-external"
-															className="clickable"
-															title="View on GitHub"
-															placement="bottomLeft"
-															delay={1}
-														/>
-													</span>
-													<Icon
-														title="Copy"
-														placement="bottom"
-														name="copy"
-														className="clickable"
-														onClick={e => copy(pr.url)}
-													/>
-													<span className={cantCheckoutReason(pr) ? "disabled" : ""}>
-														<Icon
-															title={
-																<>
-																	Checkout Branch
-																	{cantCheckoutReason(pr) && (
-																		<div className="subtle smaller" style={{ maxWidth: "200px" }}>
-																			Disabled: {cantCheckoutReason(pr)}
-																		</div>
-																	)}
-																</>
-															}
-															trigger={["hover"]}
-															onClick={e => checkout(e, pr, cantCheckoutReason(pr))}
-															placement="bottom"
-															name="git-branch"
-														/>
-													</span>
-													<span>
-														<Icon
-															title="Reload"
-															trigger={["hover"]}
-															delay={1}
-															onClick={() => {
-																if (isLoadingPR) {
-																	console.warn("reloading pr, cancelling...");
-																	return;
-																}
-																reload("Reloading...");
+													</div>
+													<div className="icons">
+														<span
+															onClick={e => {
+																e.preventDefault();
+																e.stopPropagation();
+																HostApi.instance.send(OpenUrlRequestType, {
+																	url: pr.url
+																});
 															}}
+														>
+															<Icon
+																name="link-external"
+																className="clickable"
+																title="View on GitHub"
+																placement="bottomLeft"
+																delay={1}
+															/>
+														</span>
+														<Icon
+															title="Copy"
 															placement="bottom"
-															className={`${isLoadingPR ? "spin" : ""}`}
-															name="refresh"
+															name="copy"
+															className="clickable"
+															onClick={e => copy(pr.url)}
 														/>
-													</span>
-													{/* eric here */}
-													<Timestamp time={pr.createdAt} relative abbreviated />
-												</div>
-											</Row>
+														<span className={cantCheckoutReason(pr) ? "disabled" : ""}>
+															<Icon
+																title={
+																	<>
+																		Checkout Branch
+																		{cantCheckoutReason(pr) && (
+																			<div className="subtle smaller" style={{ maxWidth: "200px" }}>
+																				Disabled: {cantCheckoutReason(pr)}
+																			</div>
+																		)}
+																	</>
+																}
+																trigger={["hover"]}
+																onClick={e => checkout(e, pr, cantCheckoutReason(pr))}
+																placement="bottom"
+																name="git-branch"
+															/>
+														</span>
+														<span>
+															<Icon
+																title="Reload"
+																trigger={["hover"]}
+																delay={1}
+																onClick={() => {
+																	if (isLoadingPR) {
+																		console.warn("reloading pr, cancelling...");
+																		return;
+																	}
+																	reload("Reloading...");
+																}}
+																placement="bottom"
+																className={`${isLoadingPR ? "spin" : ""}`}
+																name="refresh"
+															/>
+														</span>
+														<Timestamp time={pr.createdAt} relative abbreviated />
+														{/* eric here */}
+													</div>
+												</Row>
+												{expanded && (
+													<>
+														<PullRequestDetailsRow pullRequest={pr} key={`pr_detail_row_${index}`} />
+														<PaneNode key={index}>
+															<PaneNodeName title={"Files"}></PaneNodeName>
+															<Row className={"pr-row"} key={"12345"}>
+																File 1
+															</Row>
+														</PaneNode>
+													</>
+												)}
+											</>
 										];
 									} else if (providerId === "gitlab*com" || providerId === "gitlab/enterprise") {
 										const selected = false;
@@ -1236,7 +1250,7 @@ export const OpenPullRequests = React.memo((props: Props) => {
 														placement="bottomLeft"
 														delay={1}
 													/>
-													<Timestamp time={pr.created_at} relative abbreviated /> sdfgsdfg
+													<Timestamp time={pr.created_at} relative abbreviated />
 													{pr.user_notes_count > 0 && (
 														<span
 															className="badge"

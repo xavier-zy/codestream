@@ -87,7 +87,15 @@ export default function ConfigureNewRelic(props: Props) {
 		setLoading(true);
 		try {
 			await dispatch(
-				configureProvider(providerId, { apiKey, apiUrl }, true, props.originLocation, true)
+				configureProvider(
+					providerId,
+					{ accessToken: apiKey, data: { apiUrl } },
+					{
+						setConnectedWhenConfigured: true,
+						connectionLocation: props.originLocation,
+						throwOnError: true
+					}
+				)
 			);
 			setError(null);
 

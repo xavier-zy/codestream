@@ -338,7 +338,7 @@ export class ThirdPartyProviderRegistry {
 			throw new Error(`No registered provider for '${request.providerId}'`);
 		}
 
-		await provider.configure(request.data);
+		await provider.configure(request.data, request.verify);
 		return {};
 	}
 

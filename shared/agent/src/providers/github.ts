@@ -36,7 +36,6 @@ import {
 	MergeMethod,
 	MoveThirdPartyCardRequest,
 	MoveThirdPartyCardResponse,
-	ProviderConfigurationData,
 	ProviderGetForkedReposResponse,
 	ReportingMessageType,
 	ThirdPartyDisconnect,
@@ -446,14 +445,8 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 		return response;
 	}
 
-	@log()
-	async configure(request: ProviderConfigurationData) {
-		await this.session.api.setThirdPartyProviderToken({
-			providerId: this.providerConfig.id,
-			token: request.token,
-			data: request.data
-		});
-		this.session.updateProviders();
+	canConfigure() {
+		return true;
 	}
 
 	@log()

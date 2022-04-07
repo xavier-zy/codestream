@@ -46,7 +46,9 @@ import { setUserPreference, openPanel } from "./actions";
 import { PROVIDER_MAPPINGS } from "./CrossPostIssueControls/types";
 import { confirmPopup } from "./Confirm";
 import { ConfigurePullRequestQuery } from "./ConfigurePullRequestQuery";
-import { PullRequestDetailsRow } from "./PullRequestDetailsRow";
+
+import { PullRequestExpandedSidebar } from "./PullRequestExpandedSidebar";
+
 import { PullRequestQuery } from "@codestream/protocols/api";
 import { configureAndConnectProvider } from "../store/providers/actions";
 import {
@@ -857,7 +859,7 @@ export const OpenPullRequests = React.memo((props: Props) => {
 		if (conversations.repository && conversations.repository.pullRequest)
 			return conversations.repository.pullRequest;
 		return undefined;
-	}, [derivedState.currentPullRequest, derivedState.hideDiffs]);
+	}, [derivedState.currentPullRequest, derivedState.hideDiffs, derivedState.expandedPullRequestId]);
 
 	const renderExpanded = pr => {
 		return (
@@ -1165,27 +1167,20 @@ export const OpenPullRequests = React.memo((props: Props) => {
 															/>
 														</span>
 														<Timestamp time={pr.createdAt} relative abbreviated />
-														{/* eric here */}
 													</div>
 												</Row>
-												{/* 
+												{/* eric construction */}
 												{expanded && (
-													<>
-														<PullRequestDetailsRow
-															pullRequest={pr}
-															key={`pr_detail_row_${index}`}
-														/>
-														<PaneNode key={index}>
-															<PaneNodeName title={"Files"}></PaneNodeName>
-															<Row className={"pr-row"} key={"12345"}>
-																File 1
-															</Row>
-														</PaneNode>
-													</>
+													<PullRequestExpandedSidebar
+														key={`pr_detail_row_${index}`}
+														pullRequest={pr}
+														thirdPartyPrObject={expandedPR}
+														fetchOnePR={fetchOnePR}
+														prCommitsRange={prCommitsRange}
+														setPrCommitsRange={setPrCommitsRange}
+													/>
 												)}
-												*/}
-											</>,
-											expanded && renderExpanded(pr)
+											</>
 										];
 									} else if (providerId === "gitlab*com" || providerId === "gitlab/enterprise") {
 										const selected = false;

@@ -75,18 +75,16 @@ import { GHOST } from "./PullRequestTimelineItems";
 import { logError } from "../logger";
 import { Row } from "./CrossPostIssueControls/IssueDropdown";
 
-const Root = styled.div`
-	display: flex;
-	.pr-detail-row {
-		padding-left: 60px !important;
-	}
-`;
-
-interface PullRequestDetailsRowProps {
+// @TODO: update with more specific types
+interface PullRequestExpandedSidebarProps {
 	pullRequest: any;
+	thirdPartyPrObject?: any;
+	fetchOnePR?: any;
+	prCommitsRange?: any;
+	setPrCommitsRange?: any;
 }
 
-export const PullRequestDetailsRow = (props: PullRequestDetailsRowProps) => {
+export const PullRequestExpandedSidebar = (props: PullRequestExpandedSidebarProps) => {
 	const dispatch = useDispatch();
 	const derivedState = useSelector((state: CodeStreamState) => {
 		return {
@@ -104,9 +102,24 @@ export const PullRequestDetailsRow = (props: PullRequestDetailsRowProps) => {
 	};
 
 	return (
-		<Row onClick={handleClick} style={{ paddingLeft: "60px" }}>
-			<Icon name="git-branch" />
-			PR Details
-		</Row>
+		<>
+			<Row onClick={handleClick} style={{ paddingLeft: "60px" }}>
+				<Icon name="git-branch" />
+				PR Details
+			</Row>
+			{props.thirdPartyPrObject && (
+				<PullRequestFilesChangedTab
+					key="files-changed"
+					pr={props.thirdPartyPrObject as FetchThirdPartyPullRequestPullRequest}
+					fetch={() => {
+						props.fetchOnePR(props.thirdPartyPrObject.providerId, props.thirdPartyPrObject.id);
+					}}
+					setIsLoadingMessage={() => {}}
+					sidebarView
+					prCommitsRange={props.prCommitsRange}
+					setPrCommitsRange={props.setPrCommitsRange}
+				/>
+			)}
+		</>
 	);
 };

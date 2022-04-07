@@ -197,15 +197,13 @@ export const handleSelectedRegion = () => async (dispatch, getState: () => CodeS
 		return;
 	}
 
-	// if forcing a region, meaning we're making the user sign-in to particular region without
-	// giving them a choice of selecting another region, then get us to the host info for that region
 	if (forceRegion) {
+		// if forcing a region, meaning we're making the user sign-in to particular region without
+		// giving them a choice of selecting another region, then get us to the host info for that region
 		currentHost = environmentHosts.find(host => host.shortName === forceRegion);
-	}
-
-	// otherwise if a current region is selected (in one of the sign-up or sign-in modals),
-	// get us to the host info for that region
-	if (selectedRegion) {
+	} else if (selectedRegion) {
+		// otherwise if a current region is selected (in one of the sign-up or sign-in modals),
+		// get us to the host info for that region
 		currentHost = environmentHosts.find(host => host.shortName === selectedRegion);
 		if (currentHost) {
 			if (serverUrl !== currentHost.publicApiUrl) {

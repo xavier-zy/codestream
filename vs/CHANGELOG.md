@@ -1,5 +1,11 @@
 # Change Log
 
+## [12.15.0] - 2022-4-7
+
+### Changed
+
+- Pull requests and issues from archived GitHub repos are no longer displayed by default
+
 ## [12.14.0] - 2022-4-1
 
 ### Added

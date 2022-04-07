@@ -103,12 +103,16 @@ export const SignupNewRelic = () => {
 	const onSubmit = async (event: React.SyntheticEvent) => {
 		event.preventDefault();
 		setLoading(true);
-		//@TODO: add eu support
-		const apiRegion = derivedState.isProductionCloud
-			? derivedState.selectedRegion?.match(/eu/i)
-				? "eu"
-				: undefined
-			: "staging";
+
+		let apiRegion;
+		if (!derivedState.isProductionCloud) {
+			apiRegion = "staging";
+		} else {
+			let region = derivedState.selectedRegion || derivedState.forceRegion;
+			if (region && region.match(/eu/i)) {
+				apiRegion = "eu";
+			}
+		}
 		let data = { apiKey, apiRegion };
 
 		try {

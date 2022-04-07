@@ -138,7 +138,7 @@ interface ConnectedProps {
 	currentMarkerId?: string;
 	isRepositioning?: boolean;
 	review?: CSReview;
-	codeError?: CSCodeError
+	codeError?: CSCodeError;
 	post?: CSPost;
 	moveMarkersEnabled: boolean;
 	unread: boolean;
@@ -1307,7 +1307,8 @@ export class Codemark extends React.Component<Props, State> {
 			author,
 			marker,
 			isRepositioning,
-			repositionCodemark
+			repositionCodemark,
+			post
 		} = this.props;
 		const { menuOpen, menuTarget, isInjecting } = this.state;
 
@@ -1324,15 +1325,17 @@ export class Codemark extends React.Component<Props, State> {
 		const mine = author && author.id === this.props.currentUser.id;
 
 		let menuItems: any[] = [
-			{
-				label: "Share",
-				key: "share",
-				action: () => this.setState({ shareModalOpen: true })
-			}
 			// { label: "Add Reaction", action: "react" },
 			// { label: "Get Permalink", action: "get-permalink" },
 			// { label: "-" }
 		];
+		if (!(post && post?.sharedTo && post?.sharedTo?.length > 0)) {
+			menuItems.push({
+				label: "Share",
+				key: "share",
+				action: () => this.setState({ shareModalOpen: true })
+			});
+		}
 
 		if (!codemark || !codemark.reviewId) {
 			if (codemark && (codemark.followerIds || []).indexOf(this.props.currentUser.id) !== -1) {
@@ -2018,7 +2021,9 @@ export class Codemark extends React.Component<Props, State> {
 					<li>
 						Codemarks are <b>branch-agnostic</b>. That means this codemark will appear "in the right
 						place" even for your teammates who are checked out to a different version of this file.{" "}
-						<a href="https://docs.newrelic.com/docs/codestream/how-use-codestream/discuss-code/">learn more</a>
+						<a href="https://docs.newrelic.com/docs/codestream/how-use-codestream/discuss-code/">
+							learn more
+						</a>
 					</li>
 					<li>
 						Codemarks <b>move with the code</b>, so your conversation remains connected to the right
@@ -2030,12 +2035,16 @@ export class Codemark extends React.Component<Props, State> {
 					<li>
 						Codemarks <b>can be managed</b> by archiving or deleting them if they're no longer
 						relevant.{" "}
-						<a href="https://docs.newrelic.com/docs/codestream/how-use-codestream/discuss-code/">see how</a>
+						<a href="https://docs.newrelic.com/docs/codestream/how-use-codestream/discuss-code/">
+							see how
+						</a>
 					</li>
 					<li>
 						<b>Replies can be promoted</b> with a <Icon name="star" /> so the best answer surfaces
 						to the top, like in stack overflow.{" "}
-						<a href="https://docs.newrelic.com/docs/codestream/how-use-codestream/discuss-code/">see how</a>
+						<a href="https://docs.newrelic.com/docs/codestream/how-use-codestream/discuss-code/">
+							see how
+						</a>
 					</li>
 				</ul>
 			</div>

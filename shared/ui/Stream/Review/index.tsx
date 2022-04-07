@@ -166,6 +166,7 @@ export interface BaseReviewHeaderProps {
 
 export interface BaseReviewMenuProps {
 	review: CSReview;
+	post?: CSPost;
 	setIsEditing: Function;
 	setIsAmending?: Function;
 	changeRequests?: CodemarkPlus[];
@@ -271,6 +272,7 @@ export const BaseReviewHeader = (props: PropsWithChildren<BaseReviewHeaderProps>
 					{props.children || (
 						<BaseReviewMenu
 							review={review}
+							post={props.post}
 							collapsed={collapsed}
 							changeRequests={changeRequests}
 							setIsEditing={props.setIsEditing}
@@ -285,7 +287,7 @@ export const BaseReviewHeader = (props: PropsWithChildren<BaseReviewHeaderProps>
 };
 
 export const BaseReviewMenu = (props: BaseReviewMenuProps) => {
-	const { review, collapsed, setIsAmending } = props;
+	const { review, post, collapsed, setIsAmending } = props;
 
 	const dispatch = useDispatch();
 	const derivedState = useSelector((state: CodeStreamState) => {
@@ -381,11 +383,6 @@ export const BaseReviewMenu = (props: BaseReviewMenuProps) => {
 	const menuItems = React.useMemo(() => {
 		const items: any[] = [
 			{
-				label: "Share",
-				key: "share",
-				action: () => setShareModalOpen(true)
-			},
-			{
 				label: "Copy link",
 				key: "copy-permalink",
 				action: () => {
@@ -412,6 +409,14 @@ export const BaseReviewMenu = (props: BaseReviewMenuProps) => {
 				}
 			}
 		];
+
+		if (!(post && post?.sharedTo && post?.sharedTo?.length > 0)) {
+			items.unshift({
+				label: "Share",
+				key: "share",
+				action: () => setShareModalOpen(true)
+			});
+		}
 
 		if (review.creatorId === derivedState.currentUser.id) {
 			items.push(
@@ -497,7 +502,7 @@ export const BaseReviewMenu = (props: BaseReviewMenuProps) => {
 		}
 
 		return items;
-	}, [review, collapsed]);
+	}, [review, post, collapsed]);
 
 	if (shareModalOpen)
 		return (

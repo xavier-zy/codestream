@@ -104,11 +104,7 @@ export const SignupNewRelic = () => {
 		event.preventDefault();
 		setLoading(true);
 		//@TODO: add eu support
-		const apiRegion = derivedState.isProductionCloud
-			? derivedState.selectedRegion?.match(/eu/i)
-				? "eu"
-				: undefined
-			: "staging";
+		const apiRegion = derivedState.isProductionCloud ? "" : "staging";
 		let data = { apiKey, apiRegion };
 
 		try {

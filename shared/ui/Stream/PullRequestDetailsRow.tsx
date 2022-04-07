@@ -87,7 +87,7 @@ interface PullRequestDetailsRowProps {
 }
 
 export const PullRequestDetailsRow = (props: PullRequestDetailsRowProps) => {
-	// const dispatch = useDispatch();
+	const dispatch = useDispatch();
 	const derivedState = useSelector((state: CodeStreamState) => {
 		return {
 			viewPreference: getPreferences(state).pullRequestView || "auto"
@@ -98,9 +98,13 @@ export const PullRequestDetailsRow = (props: PullRequestDetailsRowProps) => {
 	// const [scrollPosition, setScrollPosition] = useState([]);
 	// const [ghRepo, setGhRepo] = useState<any>([]);
 
+	const handleClick = () => {
+		const { pullRequest } = props;
+		dispatch(setCurrentPullRequest(pullRequest.providerId, pullRequest.id, "", "", "details"));
+	};
+
 	return (
-		<Row style={{ paddingLeft: "60px" }}>
-			{" "}
+		<Row onClick={handleClick} style={{ paddingLeft: "60px" }}>
 			<Icon name="git-branch" />
 			PR Details
 		</Row>

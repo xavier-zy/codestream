@@ -1168,9 +1168,13 @@ export const OpenPullRequests = React.memo((props: Props) => {
 														{/* eric here */}
 													</div>
 												</Row>
+												{/* 
 												{expanded && (
 													<>
-														<PullRequestDetailsRow pullRequest={pr} key={`pr_detail_row_${index}`} />
+														<PullRequestDetailsRow
+															pullRequest={pr}
+															key={`pr_detail_row_${index}`}
+														/>
 														<PaneNode key={index}>
 															<PaneNodeName title={"Files"}></PaneNodeName>
 															<Row className={"pr-row"} key={"12345"}>
@@ -1179,7 +1183,9 @@ export const OpenPullRequests = React.memo((props: Props) => {
 														</PaneNode>
 													</>
 												)}
-											</>
+												*/}
+											</>,
+											expanded && renderExpanded(pr)
 										];
 									} else if (providerId === "gitlab*com" || providerId === "gitlab/enterprise") {
 										const selected = false;

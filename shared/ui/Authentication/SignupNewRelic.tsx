@@ -104,7 +104,7 @@ export const SignupNewRelic = () => {
 		event.preventDefault();
 		setLoading(true);
 
-		let apiRegion = "";
+		let apiRegion;
 		if (!derivedState.isProductionCloud) {
 			apiRegion = "staging";
 		} else {

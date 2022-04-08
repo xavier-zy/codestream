@@ -140,7 +140,6 @@ export interface CSRegisterResponse {
 }
 
 export interface CSNRRegisterRequest {
-	apiRegion: string;
 	apiKey: string;
 }
 

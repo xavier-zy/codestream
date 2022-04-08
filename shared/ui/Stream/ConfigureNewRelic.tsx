@@ -78,9 +78,6 @@ class ConfigureNewRelic extends Component<Props> {
 		let isOnSubmittedPromise = false;
 		const { providerId } = this.props;
 		const { apiKey } = this.state;
-		const apiUrl: string | undefined = this.props.isProductionCloud
-			? this.props.newRelicApiUrl || "https://api.newrelic.com"
-			: "https://staging-api.newrelic.com";
 
 		// configuring is as good as connecting, since we are letting the user
 		// set the access token ... sending the fourth argument as true here lets the
@@ -90,7 +87,7 @@ class ConfigureNewRelic extends Component<Props> {
 		try {
 			await this.props.configureProvider(
 				providerId,
-				{ apiKey, apiUrl },
+				{ apiKey },
 				true,
 				this.props.originLocation,
 				true

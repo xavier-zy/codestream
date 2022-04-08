@@ -115,7 +115,6 @@ export const RegisterUserRequestType = new RequestType<
 >("codestream/registration");
 
 export interface RegisterNrUserRequest {
-	apiRegion: string;
 	apiKey: string;
 }
 

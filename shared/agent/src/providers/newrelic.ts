@@ -139,8 +139,9 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 	}
 
 	get apiUrl() {
-		const data = this._providerInfo && this._providerInfo.data;
-		return this.getApiUrlCore(data);
+		const newRelicApiUrl = (this._sessionServiceContainer || SessionContainer.instance()).session
+			.newRelicApiUrl;
+		return newRelicApiUrl || "https://api.newrelic.com";
 	}
 
 	private _sessionServiceContainer: SessionServiceContainer | undefined;
@@ -151,20 +152,6 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 	 */
 	set sessionServiceContainer(value: SessionServiceContainer) {
 		this._sessionServiceContainer = value;
-	}
-
-	private getApiUrlCore(data?: { apiUrl?: string; usingEU?: boolean; [key: string]: any }): string {
-		const newRelicApiUrl = (this._sessionServiceContainer || SessionContainer.instance()).session
-			.newRelicApiUrl;
-		if (data) {
-			if (data.apiUrl) {
-				return Strings.trimEnd(data.apiUrl, "/").toLowerCase();
-			}
-			if (data.usingEU) {
-				return newRelicApiUrl || "https://api.eu.newrelic.com";
-			}
-		}
-		return newRelicApiUrl || "https://api.newrelic.com";
 	}
 
 	get productUrl() {
@@ -269,10 +256,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		// 		resolve();
 		// 	});
 		// });
-		const client = this.createClient(
-			this.getApiUrlCore({ apiUrl: request.apiUrl }) + "/graphql",
-			request.apiKey
-		);
+		const client = this.createClient(this.apiUrl + "/graphql", request.apiKey);
 		const { userId, accounts } = await this.validateApiKey(client);
 		ContextLogger.log(`Found ${accounts.length} New Relic accounts`);
 		const accountIds = accounts.map(_ => _.id);
@@ -2404,7 +2388,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		let fingerprintId = 0;
 		try {
 			// BrowserApplicationEntity uses a fingerprint instead of an occurrence and it's a number
-			if ((typeof occurrenceId === "string" && occurrenceId.match(/^-?\d+$/))) {
+			if (typeof occurrenceId === "string" && occurrenceId.match(/^-?\d+$/)) {
 				fingerprintId = parseInt(occurrenceId, 10);
 			} else if (typeof occurrenceId === "number") {
 				fingerprintId = occurrenceId;
@@ -2779,7 +2763,10 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		}
 	}
 
-	private getFingerprintedErrorTraceQueries(applicationGuid: String, entityType?: EntityType): String[] {
+	private getFingerprintedErrorTraceQueries(
+		applicationGuid: String,
+		entityType?: EntityType
+	): String[] {
 		const apmNrql = [
 			"SELECT",
 			"latest(timestamp) AS 'lastOccurrence',", // first field is used to sort with FACET
@@ -2796,7 +2783,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			"LIMIT MAX"
 		].join(" ");
 
-		const browserNrql  = [
+		const browserNrql = [
 			"SELECT",
 			"latest(timestamp) AS 'lastOccurrence',", // first field is used to sort with FACET
 			"latest(stackHash) AS 'occurrenceId',",
@@ -2812,7 +2799,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			"LIMIT MAX"
 		].join(" ");
 
-		const mobileNrql1  = [
+		const mobileNrql1 = [
 			"SELECT",
 			"latest(timestamp) AS 'lastOccurrence',", // first field is used to sort with FACET
 			"latest(occurrenceId) AS 'occurrenceId',",
@@ -2828,7 +2815,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			"LIMIT MAX"
 		].join(" ");
 
-		const mobileNrql2  = [
+		const mobileNrql2 = [
 			"SELECT",
 			"latest(timestamp) AS 'lastOccurrence',", // first field is used to sort with FACET
 			"latest(handledExceptionUuid) AS 'occurrenceId',",
@@ -2846,11 +2833,11 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 
 		switch (entityType) {
 			case "BROWSER_APPLICATION_ENTITY":
-				return [ browserNrql ];
+				return [browserNrql];
 			case "MOBILE_APPLICATION_ENTITY":
-				return [ mobileNrql1, mobileNrql2 ];
+				return [mobileNrql1, mobileNrql2];
 			default:
-				return [ apmNrql ];
+				return [apmNrql];
 		}
 	}
 
@@ -2862,7 +2849,11 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 	 * @returns list of most recent error traces for each unique fingerprint
 	 */
 	@log({ timed: true })
-	private async findFingerprintedErrorTraces(accountId: number, applicationGuid: string, entityType?: EntityType) {
+	private async findFingerprintedErrorTraces(
+		accountId: number,
+		applicationGuid: string,
+		entityType?: EntityType
+	) {
 		const queries = this.getFingerprintedErrorTraceQueries(applicationGuid, entityType);
 
 		try {

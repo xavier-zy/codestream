@@ -103,10 +103,8 @@ export const SignupNewRelic = () => {
 	const onSubmit = async (event: React.SyntheticEvent) => {
 		event.preventDefault();
 		setLoading(true);
-		//@TODO: add eu support
-		const apiRegion = derivedState.isProductionCloud ? "" : "staging";
-		let data = { apiKey, apiRegion };
 
+		let data = { apiKey };
 		try {
 			const {
 				teamId,

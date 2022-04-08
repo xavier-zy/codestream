@@ -29,7 +29,7 @@ import {
 } from "../store/providerPullRequests/reducer";
 import { CompareFilesProps } from "./PullRequestFilesChangedList";
 import { TernarySearchTree } from "../utilities/searchTree";
-import { PRErrorBox } from "./PullRequestComponents";
+import { PRErrorBox, PRErrorBoxSidebar } from "./PullRequestComponents";
 
 export const Directory = styled.div`
 	cursor: pointer;
@@ -506,11 +506,16 @@ export const PullRequestFilesChanged = (props: Props) => {
 
 	return (
 		<>
-			{(errorMessage || repoErrorMessage) && (
+			{(errorMessage || repoErrorMessage) && !props.sidebarView && (
 				<PRErrorBox>
 					<Icon name="alert" className="alert" />
 					<div className="message">{errorMessage || repoErrorMessage}</div>
 				</PRErrorBox>
+			)}
+			{(errorMessage || repoErrorMessage) && props.sidebarView && (
+				<PRErrorBoxSidebar>
+					<span>{errorMessage || repoErrorMessage}</span>
+				</PRErrorBoxSidebar>
 			)}
 			{changedFiles.length > 0 && !props.sidebarView && (
 				<Meta id="changed-files">

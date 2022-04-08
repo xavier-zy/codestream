@@ -189,10 +189,17 @@ export const PullRequestFilesChangedTab = (props: {
 		return;
 	}, [pr, prCommits]);
 
-	if (isLoading)
+	if (isLoading && !props.sidebarView)
 		return (
 			<div style={{ marginTop: "100px" }}>
 				<LoadingMessage>Loading Changed Files...</LoadingMessage>
+			</div>
+		);
+
+	if (isLoading && !props.sidebarView)
+		return (
+			<div>
+				<LoadingMessage>Preparing changed files...</LoadingMessage>
 			</div>
 		);
 

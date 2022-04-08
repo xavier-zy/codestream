@@ -13,6 +13,7 @@ import {
 	getPullRequestFilesFromProvider
 } from "../store/providerPullRequests/actions";
 import { PullRequestFilesChangedList } from "./PullRequestFilesChangedList";
+import { Directory } from "./PullRequestFilesChanged";
 import {
 	ChangeDataType,
 	DidChangeDataNotificationType,
@@ -64,6 +65,8 @@ export const PullRequestFilesChangedTab = (props: {
 	const [filesChanged, setFilesChanged] = useState<any[]>([]);
 	const [prCommits, setPrCommits] = useState<FetchThirdPartyPullRequestCommitsResponse[]>([]);
 	const [accessRawDiffs, setAccessRawDiffs] = useState(false);
+	const [showDirectory, setShowDirectory] = useState(true);
+
 	// const [lastReviewCommitOid, setLastReviewCommitOid] = useState<string | undefined>();
 
 	const _mapData = data => {
@@ -145,6 +148,11 @@ export const PullRequestFilesChangedTab = (props: {
 		}
 	};
 
+	const toggleDirectory = e => {
+		e.preventDefault();
+		setShowDirectory(!showDirectory);
+	};
+
 	const commitBased = useMemo(() => prCommitsRange.length > 0, [prCommitsRange]);
 	const baseRef = useMemo(() => {
 		if (prCommitsRange.length === 1) {
@@ -192,7 +200,7 @@ export const PullRequestFilesChangedTab = (props: {
 
 	const dropdownLabel =
 		prCommitsRange.length === 0
-			? "Changes from all commits"
+			? "all commits"
 			: (() => {
 					let commitsInRange;
 					if (prCommitsRange.length === 1) {
@@ -287,37 +295,54 @@ export const PullRequestFilesChangedTab = (props: {
 			style={{ position: "relative", margin: props.sidebarView ? "0" : "0 0 20px 20px" }}
 		>
 			{derivedState.currentRepo && (
-				<div
-					className="files-changed-list-dropdown"
-					style={{ margin: props.sidebarView ? "0" : "0 0 10px 0" }}
-				>
-					{props.sidebarView && <Icon className="margin-right" name="plus-minus" />}
-					<DropdownButton
-						variant="text"
-						items={dropdownItems}
-						isMultiSelect={true}
-						itemsRange={prCommitsRange}
-					>
-						{dropdownLabel}
-					</DropdownButton>
-				</div>
+				<>
+					{props.sidebarView && (
+						<Directory onClick={e => toggleDirectory(e)} className="files-changed-list-dropdown">
+							<Icon name={showDirectory ? "chevron-down-thin" : "chevron-right-thin"} /> Files:{" "}
+							<DropdownButton
+								variant="text"
+								items={dropdownItems}
+								isMultiSelect={true}
+								itemsRange={prCommitsRange}
+							>
+								{dropdownLabel}
+							</DropdownButton>
+						</Directory>
+					)}
+
+					{!props.sidebarView && (
+						<div className="files-changed-list-dropdown" style={{ margin: "0 0 10px 0" }}>
+							Files:{" "}
+							<DropdownButton
+								variant="text"
+								items={dropdownItems}
+								isMultiSelect={true}
+								itemsRange={prCommitsRange}
+							>
+								{dropdownLabel}
+							</DropdownButton>
+						</div>
+					)}
+				</>
 			)}
-			<PullRequestFilesChangedList
-				pr={pr}
-				filesChanged={filesChanged}
-				repositoryName={pr.repository && pr.repository.name}
-				baseRef={baseRef}
-				baseRefName={commitBased ? pr.headRefName : pr.baseRefName}
-				headRef={commitBased ? prCommitsRange[prCommitsRange.length - 1] : pr.headRefOid}
-				headRefName={pr.headRefName}
-				isLoading={isLoading}
-				setIsLoadingMessage={props.setIsLoadingMessage!}
-				commitBased={commitBased}
-				sidebarView={props.sidebarView}
-				accessRawDiffs={accessRawDiffs}
-				setAccessRawDiffs={setAccessRawDiffs}
-				initialScrollPosition={props.initialScrollPosition}
-			/>
+			{showDirectory && (
+				<PullRequestFilesChangedList
+					pr={pr}
+					filesChanged={filesChanged}
+					repositoryName={pr.repository && pr.repository.name}
+					baseRef={baseRef}
+					baseRefName={commitBased ? pr.headRefName : pr.baseRefName}
+					headRef={commitBased ? prCommitsRange[prCommitsRange.length - 1] : pr.headRefOid}
+					headRefName={pr.headRefName}
+					isLoading={isLoading}
+					setIsLoadingMessage={props.setIsLoadingMessage!}
+					commitBased={commitBased}
+					sidebarView={props.sidebarView}
+					accessRawDiffs={accessRawDiffs}
+					setAccessRawDiffs={setAccessRawDiffs}
+					initialScrollPosition={props.initialScrollPosition}
+				/>
+			)}
 		</div>
 	);
 };

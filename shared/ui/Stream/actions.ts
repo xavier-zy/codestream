@@ -38,7 +38,8 @@ import {
 	CodemarkPlus,
 	GetPostRequestType,
 	CreateThirdPartyPostRequestType,
-	MarkItemReadRequestType
+	MarkItemReadRequestType,
+	UpdatePostSharingDataRequestType
 } from "@codestream/protocols/agent";
 import { CSPost, StreamType, CSReviewStatus } from "@codestream/protocols/api";
 import { logError } from "../logger";
@@ -72,7 +73,7 @@ import * as postsActions from "../store/posts/actions";
 import { updatePreferences } from "../store/preferences/actions";
 import * as streamActions from "../store/streams/actions";
 import { addUsers, updateUser } from "../store/users/actions";
-import { uuid, isNotOnDisk, uriToFilePath } from "../utils";
+import { uuid, isNotOnDisk, uriToFilePath, capitalize } from "../utils";
 import { updateTeam } from "../store/teams/actions";
 import { HostApi } from "../webview-api";
 import { CodeStreamState } from "../store";
@@ -85,6 +86,7 @@ import { PostEntryPoint } from "../store/context/types";
 import { middlewareInjector } from "../store/middleware-injector";
 import { PostsActionsType } from "../store/posts/types";
 import { getPost } from "../store/posts/reducer";
+import { getConnectedProviders } from "../store/providers/reducer";
 
 export {
 	openPanel,
@@ -307,7 +309,7 @@ export const createPost = (
 	mentions?: string[],
 	extra: any = {}
 ) => async (dispatch, getState: () => CodeStreamState) => {
-	const { session, context } = getState();
+	const { session, context, posts } = getState();
 	const pendingId = uuid();
 
 	// no need for pending post when creating a codemark
@@ -392,6 +394,57 @@ export const createPost = (
 			});
 		}
 		const response = await responsePromise;
+
+		if (response) {
+			if (
+				parentPostId &&
+				posts.byStream[streamId] &&
+				posts.byStream[streamId][parentPostId] &&
+				posts.byStream[streamId][parentPostId].sharedTo &&
+				posts.byStream[streamId][parentPostId].sharedTo![0].providerId === "slack*com"
+			) {
+				const sharedTo = posts.byStream[streamId][parentPostId].sharedTo![0];
+				try {
+					const { post, ts, permalink } = await HostApi.instance.send(
+						CreateThirdPartyPostRequestType,
+						{
+							providerId: sharedTo.providerId,
+							channelId: sharedTo.channelId,
+							providerTeamId: sharedTo.teamId,
+							parentPostId: sharedTo.postId,
+							text: text,
+							codemark: response.codemark,
+							mentionedUserIds: mentions
+						}
+					);
+					if (ts) {
+						await HostApi.instance.send(UpdatePostSharingDataRequestType, {
+							postId: response.post.id,
+							sharedTo: [
+								{
+									createdAt: post.createdAt,
+									providerId: sharedTo.providerId,
+									teamId: sharedTo.teamId,
+									teamName: sharedTo.teamName,
+									channelId: sharedTo.channelId,
+									channelName: sharedTo.channelName,
+									postId: ts,
+									url: permalink || ""
+								}
+							]
+						});
+					}
+					HostApi.instance.track("Shared Post", {
+						Destination: capitalize(
+							getConnectedProviders(getState()).find(config => config.id === sharedTo.providerId)!
+								.name
+						)
+					});
+				} catch (error) {
+					logError("Error sharing a post", { message: error.toString() });
+				}
+			}
+		}
 
 		if (response.codemark) {
 			dispatch(saveCodemarks([response.codemark]));

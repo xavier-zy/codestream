@@ -331,6 +331,8 @@ export const OpenPullRequests = React.memo((props: Props) => {
 
 	const [isLoadingPRs, setIsLoadingPRs] = React.useState(false);
 	const [isLoadingPRGroup, setIsLoadingPRGroup] = React.useState<number | undefined>(undefined);
+	const [individualLoadingPR, setindividualLoadingPR] = React.useState("");
+
 	const [editingQuery, setEditingQuery] = React.useState<
 		{ providerId: string; index: number } | undefined
 	>(undefined);
@@ -711,24 +713,24 @@ export const OpenPullRequests = React.memo((props: Props) => {
 			const view = derivedState.hideDiffs ? "details" : "sidebar-diffs";
 			dispatch(setCurrentPullRequest(pr.providerId, pr.id, "", "", view));
 
+			fetchOnePR(pr.providerId, pr.id);
+
 			HostApi.instance.track("PR Clicked", {
 				Host: pr.providerId
 			});
 		}
 	};
 
-	const [isLoadingPR, setIsLoadingPR] = React.useState("");
-
 	const fetchOnePR = async (providerId: string, pullRequestId: string, message?: string) => {
 		// if (message) setIsLoadingMessage(message);
-		setIsLoadingPR(pullRequestId);
+		setindividualLoadingPR(pullRequestId);
 
 		// const response = (await dispatch(
 		// 	getPullRequestConversationsFromProvider(providerId, pullRequestId)
 		// )) as any;
 		(await dispatch(getPullRequestConversationsFromProvider(providerId, pullRequestId))) as any;
 
-		setIsLoadingPR("");
+		setindividualLoadingPR("");
 	};
 
 	const checkout = async (event, prToCheckout, cantCheckoutReason) => {
@@ -853,13 +855,30 @@ export const OpenPullRequests = React.memo((props: Props) => {
 	const expandedPR: any = useMemo(() => {
 		if (!derivedState.currentPullRequest || derivedState.hideDiffs) return undefined;
 		const conversations = derivedState.currentPullRequest.conversations;
-		if (!conversations) return undefined;
+
+		//eric to-do tomorrow implement:
+		// const response = (await dispatch(
+		// 	getPullRequestConversations(
+		// 		derivedState.currentPullRequestProviderId!,
+		// 		derivedState.currentPullRequestId!
+		// 	)
+		// )) as {
+		// 	error?: {
+		// 		message: string;
+		// 	};
+		// };
+
+		if (!conversations) {
+			// fetchOnePR(derivedState.currentPullRequestProviderId!, derivedState.currentPullRequestId);
+			return undefined;
+		}
+
 		if (conversations.project && conversations.project.mergeRequest)
 			return conversations.project.mergeRequest;
 		if (conversations.repository && conversations.repository.pullRequest)
 			return conversations.repository.pullRequest;
 		return undefined;
-	}, [derivedState.currentPullRequest, derivedState.hideDiffs, derivedState.expandedPullRequestId]);
+	}, [derivedState.currentPullRequest, derivedState.hideDiffs]);
 
 	const renderExpanded = pr => {
 		return (
@@ -1060,6 +1079,7 @@ export const OpenPullRequests = React.memo((props: Props) => {
 								prGroup &&
 								prGroup.map((pr: any, index) => {
 									const expanded = pr.id === derivedState.expandedPullRequestId;
+									const isLoadingPR = pr.id === individualLoadingPR;
 									const chevronIcon = derivedState.hideDiffs ? null : expanded ? (
 										<Icon name="chevron-down-thin" />
 									) : (
@@ -1175,6 +1195,7 @@ export const OpenPullRequests = React.memo((props: Props) => {
 														key={`pr_detail_row_${index}`}
 														pullRequest={pr}
 														thirdPartyPrObject={expandedPR}
+														loadingThirdPartyPrObject={isLoadingPR}
 														fetchOnePR={fetchOnePR}
 														prCommitsRange={prCommitsRange}
 														setPrCommitsRange={setPrCommitsRange}
@@ -1261,8 +1282,7 @@ export const OpenPullRequests = React.memo((props: Props) => {
 														</span>
 													)}
 												</div>
-											</Row>,
-											expanded && renderExpanded(pr)
+											</Row>
 										];
 									} else return undefined;
 								})}

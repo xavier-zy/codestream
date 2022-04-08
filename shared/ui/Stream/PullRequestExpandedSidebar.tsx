@@ -79,6 +79,7 @@ import { Row } from "./CrossPostIssueControls/IssueDropdown";
 interface PullRequestExpandedSidebarProps {
 	pullRequest: any;
 	thirdPartyPrObject?: any;
+	loadingThirdPartyPrObject: boolean;
 	fetchOnePR?: any;
 	prCommitsRange?: any;
 	setPrCommitsRange?: any;
@@ -107,6 +108,9 @@ export const PullRequestExpandedSidebar = (props: PullRequestExpandedSidebarProp
 				<Icon name="git-branch" />
 				PR Details
 			</Row>
+			{props.loadingThirdPartyPrObject && !props.thirdPartyPrObject && (
+				<div>LOADING PLEASE REPLACE</div>
+			)}
 			{props.thirdPartyPrObject && (
 				<PullRequestFilesChangedTab
 					key="files-changed"

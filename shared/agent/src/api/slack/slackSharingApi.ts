@@ -528,7 +528,7 @@ export class SlackSharingApiProvider {
 			const [channels, groups, ims] = await Promise.all([
 				this.fetchChannels(
 					// Filter out shared channels for now, until we can convert to the conversation apis
-					conversations.filter(c => c.is_channel && !c.is_shared),
+					conversations.filter(c => c.is_channel),
 					undefined,
 					pendingRequestsQueue
 				),

@@ -9,13 +9,19 @@ import { useDidMount } from "@codestream/webview/utilities/hooks";
 import React, { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { closeAllPanels, openPanel, setWantNewRelicOptions } from "../store/context/actions";
-import { configureProvider, ViewLocation } from "../store/providers/actions";
+import {
+	configureProvider,
+	disconnectProvider,
+	ViewLocation,
+	getUserProviderInfoFromState
+} from "../store/providers/actions";
 import { isConnected } from "../store/providers/reducer";
 import { HostApi } from "../webview-api";
 import Button from "./Button";
 import { PROVIDER_MAPPINGS } from "./CrossPostIssueControls/types";
 import Icon from "./Icon";
 import { Link } from "./Link";
+import { CSProviderInfo } from "@codestream/protocols/api";
 
 interface Props {
 	isInternalUser?: boolean;
@@ -36,13 +42,25 @@ export default function ConfigureNewRelic(props: Props) {
 	const [apiKeyTouched, setApiKeyTouched] = useState(false);
 	const [submitAttempted, setSubmitAttempted] = useState(false);
 	const [error, setError] = useState<string | null>(null);
+	const [alreadyConnected, setAlreadyConnected] = useState(false);
 
 	const derivedState = useSelector((state: CodeStreamState) => {
-		const isNewRelicConnected = isConnected(state, { id: "newrelic*com" });
+		const accessTokenError = { accessTokenError: undefined };
+		const isNewRelicConnected = isConnected(
+			state,
+			{ id: "newrelic*com" },
+			undefined,
+			accessTokenError
+		);
 		const { providers, ide } = state;
 		const provider = providers[props.providerId];
 		const providerDisplay = PROVIDER_MAPPINGS[provider.name];
+		const userProviderInfo = getUserProviderInfoFromState(provider.name, state) as CSProviderInfo;
 		const { newRelicApiUrl, isProductionCloud } = state.configs;
+		const didConnect =
+			isNewRelicConnected &&
+			!accessTokenError.accessTokenError &&
+			!userProviderInfo.pendingVerification;
 		return {
 			isNewRelicConnected,
 			providers,
@@ -50,18 +68,27 @@ export default function ConfigureNewRelic(props: Props) {
 			newRelicApiUrl,
 			isProductionCloud,
 			provider,
-			providerDisplay
+			providerDisplay,
+			didConnect,
+			verificationError: accessTokenError.accessTokenError,
+			userProviderInfo
 		};
 	});
 
 	const dispatch = useDispatch();
 
 	useDidMount(() => {
-		if (derivedState.isNewRelicConnected) {
-			dispatch(closeAllPanels());
-		}
 		initialInput.current?.focus();
 	});
+
+	const { didConnect, verificationError, userProviderInfo } = derivedState;
+	useEffect(() => {
+		if (didConnect) {
+			onConnected();
+		} else if (verificationError) {
+			setLoading(false);
+		}
+	}, [didConnect, verificationError, userProviderInfo]);
 
 	useEffect(() => {
 		// automatically close the panel
@@ -70,81 +97,97 @@ export default function ConfigureNewRelic(props: Props) {
 		}
 	}, [derivedState.isNewRelicConnected]);
 
+	useEffect(() => {
+		return () => {
+			if (derivedState.verificationError) {
+				dispatch(disconnectProvider(props.providerId, props.originLocation!));
+			}
+		};
+	}, [verificationError]);
+
 	const onSubmit = async e => {
 		e.preventDefault();
 		setSubmitAttempted(true);
 		if (isFormInvalid()) return;
-		let isOnSubmittedPromise = false;
 		const { providerId } = props;
-		const apiUrl: string | undefined = derivedState.isProductionCloud
-			? derivedState.newRelicApiUrl || "https://api.newrelic.com"
-			: "https://staging-api.newrelic.com";
 
 		// configuring is as good as connecting, since we are letting the user
 		// set the access token ... sending the fourth argument as true here lets the
 		// configureProvider function know that they can mark New Relic as connected as soon
 		// as the access token entered by the user has been saved to the server
 		setLoading(true);
-		try {
-			await dispatch(
-				configureProvider(
-					providerId,
-					{ accessToken: apiKey, data: { apiUrl } },
-					{
-						setConnectedWhenConfigured: true,
-						connectionLocation: props.originLocation,
-						throwOnError: true
-					}
-				)
-			);
-			setError(null);
+		await dispatch(
+			configureProvider(
+				providerId,
+				{ accessToken: apiKey },
+				{
+					setConnectedWhenConfigured: true,
+					connectionLocation: props.originLocation,
+					verify: true
+				}
+			)
+		);
+		setError(null);
+	};
 
-			HostApi.instance.track("NR Connected", {
-				"Connection Location": props.originLocation
-			});
-			if (props.onSubmited) {
-				const result = props.onSubmited(e);
-				if (typeof result?.then === "function") {
-					isOnSubmittedPromise = true;
-					result.then(_ => {
-						setLoading(false);
-					});
-				}
-			}
-			if (!props.disablePostConnectOnboarding) {
-				const reposResponse = await HostApi.instance.send(GetReposScmRequestType, {
-					inEditorOnly: true,
-					guessProjectTypes: true
-				});
-				if (!reposResponse.error) {
-					const knownRepo = (reposResponse.repositories || []).find(repo => {
-						return repo.id && repo.projectType !== RepoProjectType.Unknown;
-					});
-					if (knownRepo && knownRepo.projectType) {
-						await dispatch(
-							setWantNewRelicOptions(
-								knownRepo.projectType,
-								knownRepo.id,
-								knownRepo.path,
-								knownRepo.projects
-							)
-						);
-						await dispatch(openPanel(WebviewPanels.OnboardNewRelic));
-					}
-				}
-			}
-		} catch (ex) {
-			setError(ex.message);
-			setLoading(false);
+	const onConnected = async () => {
+		if (alreadyConnected) {
+			return;
 		}
+		setAlreadyConnected(true);
+		//await dispatch(closeAllPanels());
+		let isOnSubmittedPromise = false;
+		HostApi.instance.track("NR Connected", {
+			"Connection Location": props.originLocation
+		});
+		if (props.onSubmited) {
+			const result = props.onSubmited();
+			if (typeof result?.then === "function") {
+				isOnSubmittedPromise = true;
+				result.then(_ => {
+					setLoading(false);
+				});
+			}
+		}
+
+		if (!props.disablePostConnectOnboarding) {
+			const reposResponse = await HostApi.instance.send(GetReposScmRequestType, {
+				inEditorOnly: true,
+				guessProjectTypes: true
+			});
+			if (!reposResponse.error) {
+				const knownRepo = (reposResponse.repositories || []).find(repo => {
+					return repo.id && repo.projectType !== RepoProjectType.Unknown;
+				});
+				if (knownRepo && knownRepo.projectType) {
+					await dispatch(
+						setWantNewRelicOptions(
+							knownRepo.projectType,
+							knownRepo.id,
+							knownRepo.path,
+							knownRepo.projects
+						)
+					);
+					await dispatch(openPanel(WebviewPanels.OnboardNewRelic));
+				}
+			}
+		}
+
 		if (!isOnSubmittedPromise) {
 			setLoading(false);
 		}
 	};
 
 	const renderError = () => {
-		if (error) {
-			return <small className="error-message">{error}</small>;
+		let errorMessage = error;
+		if (!errorMessage && derivedState.verificationError) {
+			errorMessage =
+				(derivedState.verificationError as any).providerMessage ||
+				(derivedState.verificationError as any).error?.info?.error?.message ||
+				"Access token invalid";
+		}
+		if (errorMessage) {
+			return <small className="error-message">{errorMessage}</small>;
 		}
 		return;
 	};
@@ -178,7 +221,7 @@ export default function ConfigureNewRelic(props: Props) {
 		await HostApi.instance.send(OpenUrlRequestType, { url });
 	};
 
-	if (derivedState.isNewRelicConnected) {
+	if (derivedState.didConnect) {
 		return null;
 	}
 	const { providerId, headerChildren, showSignupUrl } = props;

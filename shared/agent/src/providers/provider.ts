@@ -163,7 +163,7 @@ export interface ThirdPartyProvider {
 	hasTokenError?: boolean;
 	connect(): Promise<void>;
 	canConfigure(): boolean;
-	configure(data: ProviderConfigurationData, verify?: boolean): Promise<void>;
+	configure(data: ProviderConfigurationData, verify?: boolean): Promise<boolean>;
 	disconnect(request: ThirdPartyDisconnect): Promise<void>;
 	addEnterpriseHost(request: AddEnterpriseProviderRequest): Promise<AddEnterpriseProviderResponse>;
 	removeEnterpriseHost(request: RemoveEnterpriseProviderRequest): Promise<void>;
@@ -390,7 +390,7 @@ export abstract class ThirdPartyProviderBase<
 	}
 
 	@log()
-	async configure(config: ProviderConfigurationData, verify?: boolean) {
+	async configure(config: ProviderConfigurationData, verify?: boolean): Promise<boolean> {
 		if (verify) {
 			config.pendingVerification = true;
 		}
@@ -398,13 +398,15 @@ export abstract class ThirdPartyProviderBase<
 			providerId: this.providerConfig.id,
 			data: config
 		});
+		let result = true;
 		if (verify) {
-			await this.verifyAndUpdate(config);
+			result = await this.verifyAndUpdate(config);
 		}
 		this.session.updateProviders();
+		return result;
 	}
 
-	async verifyAndUpdate(config: ProviderConfigurationData) {
+	async verifyAndUpdate(config: ProviderConfigurationData): Promise<boolean> {
 		let tokenError;
 		try {
 			await this.verifyConnection(config);
@@ -423,6 +425,7 @@ export abstract class ThirdPartyProviderBase<
 			providerId: this.providerConfig.id,
 			data: config
 		});
+		return !tokenError;
 	}
 
 	protected async onConfigured() {}

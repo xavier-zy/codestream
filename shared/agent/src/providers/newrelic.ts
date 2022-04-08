@@ -264,9 +264,9 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 	}
 
 	@log()
-	async configure(config: ProviderConfigurationData, verify?: boolean) {
+	async configure(config: ProviderConfigurationData, verify?: boolean): Promise<boolean> {
 		if (verify) {
-			await super.configure(config, true);
+			if (!(await super.configure(config, true))) return false;
 		}
 		const newRelicData = (config.data || {}) as NewRelicConfigurationData;
 		await this.createClientAndValidateKey(newRelicData.apiUrl!, config.accessToken!);
@@ -309,6 +309,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 
 		// update telemetry super-properties
 		this.session.addNewRelicSuperProps(this._newRelicUserId!, uniqueOrgIds[0]);
+		return true;
 	}
 
 	private async validateApiKey(

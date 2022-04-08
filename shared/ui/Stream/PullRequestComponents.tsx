@@ -1128,6 +1128,12 @@ export const PRErrorBox = styled.div`
 	}
 `;
 
+export const PRErrorBoxSidebar = styled.div`
+	padding-left: 80px;
+	fontsize: smaller;
+	background: ${PENDING_BACKGROUND_COLOR};
+`;
+
 export const PRCommentsInPatch = styled.div`
 	border-top: 1px solid var(--base-border-color);
 	border-bottom: 1px solid var(--base-border-color);

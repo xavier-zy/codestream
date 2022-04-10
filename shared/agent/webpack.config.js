@@ -188,7 +188,7 @@ module.exports = function(env, argv) {
 					use: "tslint-loader"
 				},
 				{
-					exclude: /node_modules|\.d\.ts$/,
+					exclude: [/node_modules|\.d\.ts$/, path.resolve(__dirname, "./esbuild.ts")],
 					test: /\.tsx?$/,
 					use: "ts-loader"
 				},

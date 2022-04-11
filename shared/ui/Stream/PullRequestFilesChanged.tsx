@@ -316,26 +316,35 @@ export const PullRequestFilesChanged = (props: Props) => {
 		// i is a temp variable to create the correct scope binding
 		const i = index;
 		const commentCount = (props.commentMap[f.file] || []).length;
+		// badge={commentCount > 0 ? <span className="badge">{commentCount}</span> : undefined}
+		console.warn("eric props.commentMap", props.commentMap);
+		// render comments here
 		return (
 			<>
 				<ChangesetFile
 					selected={selected}
 					viewMode={props.viewMode}
-					icon={
+					iconLast={
 						isDisabled ? null : (
-							<Icon
-								onClick={
-									visited
-										? async e => {
-												e.preventDefault();
-												e.stopPropagation();
-												unVisitFile(f.file);
-										  }
-										: undefined
-								}
-								name={icon}
-								className={iconClass}
-							/>
+							<span
+								style={{
+									margin: "0 10px 0 auto"
+								}}
+							>
+								<Icon
+									onClick={
+										visited
+											? async e => {
+													e.preventDefault();
+													e.stopPropagation();
+													unVisitFile(f.file);
+											  }
+											: undefined
+									}
+									name={icon}
+									className={iconClass}
+								/>
+							</span>
 						)
 					}
 					noHover={isDisabled || loading}
@@ -347,26 +356,6 @@ export const PullRequestFilesChanged = (props: Props) => {
 									goDiff(i);
 							  }
 					}
-					badge={commentCount > 0 ? <span className="badge">{commentCount}</span> : undefined}
-					actionIcons={
-						!loading &&
-						!isDisabled && (
-							<div className="actions">
-								<Icon
-									name="goto-file"
-									className="clickable action"
-									title="Open File"
-									placement="left"
-									delay={1}
-									onClick={async e => {
-										e.stopPropagation();
-										e.preventDefault();
-										openFile(i);
-									}}
-								/>
-							</div>
-						)
-					}
 					key={i + ":" + f.file}
 					depth={depth}
 					{...f}
@@ -376,6 +365,20 @@ export const PullRequestFilesChanged = (props: Props) => {
 	};
 
 	const renderDirectory = (fullPath, dirPath, depth) => {
+		const hideKey = "hide:" + fullPath.join("/");
+		const hidden = visitedFiles[hideKey];
+		return (
+			<Directory
+				style={{ paddingLeft: `${depth * 12}px` }}
+				onClick={() => props.toggleDirectory(hideKey)}
+			>
+				<Icon name={hidden ? "chevron-right-thin" : "chevron-down-thin"} />
+				{path.join(...dirPath)}
+			</Directory>
+		);
+	};
+
+	const renderComment = (fullPath, dirPath, depth) => {
 		const hideKey = "hide:" + fullPath.join("/");
 		const hidden = visitedFiles[hideKey];
 		return (

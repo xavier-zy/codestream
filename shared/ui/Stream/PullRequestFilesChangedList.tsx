@@ -275,12 +275,19 @@ export const PullRequestFilesChangedList = (props: Props) => {
 		return map;
 	}, [pr?.updatedAt, derivedState.currentPullRequestProviderId]);
 
-	if (isLoading || isLoadingVisited)
+	if ((isLoading || isLoadingVisited) && !props.sidebarView)
 		return (
 			<div style={{ marginTop: "100px" }}>
 				<LoadingMessage>Loading Changed Files...</LoadingMessage>
 			</div>
 		);
+
+	// if ((isLoading || isLoadingVisited) && props.sidebarView)
+	// return (
+	// 	<div>
+	// 		<LoadingMessage>Preparing changed files...</LoadingMessage>
+	// 	</div>
+	// );
 
 	if (!filesChanged || !filesChanged.length) return null;
 

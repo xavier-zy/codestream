@@ -196,7 +196,7 @@ export const PullRequestFilesChangedTab = (props: {
 			</div>
 		);
 
-	if (isLoading && !props.sidebarView)
+	if (isLoading && props.sidebarView)
 		return (
 			<div>
 				<LoadingMessage>Preparing changed files...</LoadingMessage>

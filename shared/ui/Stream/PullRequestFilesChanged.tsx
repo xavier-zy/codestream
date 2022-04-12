@@ -346,6 +346,7 @@ export const PullRequestFilesChanged = (props: Props) => {
 					goDiff={goDiff}
 					depth={depth}
 					visited={visited}
+					filesChanged={props.filesChanged}
 				/>
 			</>
 		);

@@ -293,6 +293,7 @@ export const PullRequestPatch = (props: {
 								case shouldSkipLine:
 									return undefined;
 								default:
+									console.warn("eric here 2", rightLine);
 									return (
 										<React.Fragment key={index}>
 											<div className="line added">

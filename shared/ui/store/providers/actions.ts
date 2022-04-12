@@ -231,7 +231,7 @@ export const disconnectProvider = (
 	providerTeamId?: string
 ) => async (dispatch, getState) => {
 	try {
-		const { context, providers, users, session, ide } = getState();
+		const { context, providers, ide } = getState();
 		const provider = providers[providerId];
 		if (!provider) return;
 		const api = HostApi.instance;
@@ -240,7 +240,7 @@ export const disconnectProvider = (
 			await api.send(DisconnectFromIDEProviderRequestType, { provider: provider.name });
 		}
 		dispatch(deleteForProvider(providerId, providerTeamId));
-		if (getState().context.issueProvider === provider.host) {
+		if (context.issueProvider === providerId) {
 			dispatch(setIssueProvider(undefined));
 		}
 	} catch (error) {

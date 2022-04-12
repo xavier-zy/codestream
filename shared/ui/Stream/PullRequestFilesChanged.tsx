@@ -326,15 +326,13 @@ export const PullRequestFilesChanged = (props: Props) => {
 		const iconClass = loading ? "file-icon spin" : "file-icon";
 		// i is a temp variable to create the correct scope binding
 		const i = index;
+
 		const hasComments = (props.commentMap[f.file] || []).length > 0;
-		// badge={commentCount > 0 ? <span className="badge">{commentCount}</span> : undefined}
-		console.warn("eric props.commentMap", props.commentMap);
-		// render comments here
 
 		return (
 			<>
 				<PullRequestFilesChangedFileComments
-					commentMap={props.commentMap}
+					comments={hasComments && props.commentMap[f.file]}
 					icon={icon}
 					iconClass={iconClass}
 					index={i}
@@ -351,99 +349,6 @@ export const PullRequestFilesChanged = (props: Props) => {
 				/>
 			</>
 		);
-		// if (!hasComments) {
-		// 	return (
-		// 		<>
-		// 			<ChangesetFile
-		// 				selected={selected}
-		// 				viewMode={props.viewMode}
-		// 				iconLast={
-		// 					isDisabled ? null : (
-		// 						<span
-		// 							style={{
-		// 								margin: "0 10px 0 auto"
-		// 							}}
-		// 						>
-		// 							<Icon
-		// 								onClick={
-		// 									visited
-		// 										? async e => {
-		// 												e.preventDefault();
-		// 												e.stopPropagation();
-		// 												unVisitFile(f.file);
-		// 										  }
-		// 										: undefined
-		// 								}
-		// 								name={icon}
-		// 								className={iconClass}
-		// 							/>
-		// 						</span>
-		// 					)
-		// 				}
-		// 				noHover={isDisabled || loading}
-		// 				onClick={
-		// 					isDisabled || loading
-		// 						? undefined
-		// 						: async e => {
-		// 								e.preventDefault();
-		// 								goDiff(i);
-		// 						  }
-		// 				}
-		// 				key={i + ":" + f.file}
-		// 				depth={depth}
-		// 				{...f}
-		// 			/>
-		// 		</>
-		// 	);
-		// } else {
-		// 	// {/* FOR ERIC TOMORROW, break this into its own component its the only way*/}
-
-		// 	return (
-		// 		<>
-		// 			<FileWithComments onClick={() => props.toggleDirectory("")}>
-		// 				<ChangesetFile
-		// 					selected={selected}
-		// 					viewMode={props.viewMode}
-		// 					iconLast={
-		// 						isDisabled ? null : (
-		// 							<span
-		// 								style={{
-		// 									margin: "0 10px 0 auto"
-		// 								}}
-		// 							>
-		// 								<Icon
-		// 									onClick={
-		// 										visited
-		// 											? async e => {
-		// 													e.preventDefault();
-		// 													e.stopPropagation();
-		// 													unVisitFile(f.file);
-		// 											  }
-		// 											: undefined
-		// 									}
-		// 									name={icon}
-		// 									className={iconClass}
-		// 								/>
-		// 							</span>
-		// 						)
-		// 					}
-		// 					noHover={isDisabled || loading}
-		// 					onClick={
-		// 						isDisabled || loading
-		// 							? undefined
-		// 							: async e => {
-		// 									e.preventDefault();
-		// 									goDiff(i);
-		// 							  }
-		// 					}
-		// 					key={i + ":" + f.file}
-		// 					depth={depth}
-		// 					{...f}
-		// 				/>
-		// 			</FileWithComments>
-		// 		</>
-		// 	);
-		// }
 	};
 
 	const renderDirectory = (fullPath, dirPath, depth) => {

@@ -12,7 +12,6 @@ export const FileWithComments = styled.div`
 export const Comment = styled.div`
 	cursor: pointer;
 	margin: 0 !important;
-	padding-left: 112px;
 	overflow: hidden;
 	text-overflow: ellipsis;
 	width: calc(100%);
@@ -204,7 +203,7 @@ export const PullRequestFilesChangedFileComments = (props: Props) => {
 					<>
 						{comments.map(c => {
 							return (
-								<Comment>
+								<Comment style={depth ? { paddingLeft: `${depth * 10}px` } : {}}>
 									{lineNumber(c) && <span>Line {lineNumber(c)}: </span>}
 									{c.comment.bodyText}
 								</Comment>

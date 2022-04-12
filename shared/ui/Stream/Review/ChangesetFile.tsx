@@ -17,6 +17,7 @@ interface Props {
 	depth?: number;
 	viewMode?: "files" | "tree";
 	badge?: React.ReactNode;
+	chevron?: any;
 }
 
 export const ChangesetFile = styled((props: ReviewChangesetFileInfo & Props) => {
@@ -34,6 +35,7 @@ export const ChangesetFile = styled((props: ReviewChangesetFileInfo & Props) => 
 			onClick={props.onClick}
 			style={props.depth ? { paddingLeft: `${props.depth * 12}px` } : {}}
 		>
+			{props.chevron}
 			{props.icon}
 			<Tooltip title={props.tooltip} placement="bottom" delay={1}>
 				<span className="file-info ellipsis-left">

@@ -13,12 +13,27 @@ export const FileWithComments = styled.div`
 	}
 `;
 
+export const Comment = styled.div`
+	cursor: pointer;
+	margin: 0 !important;
+	padding-left: 112px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	width: calc(98%);
+	white-space: nowrap;
+	&:hover {
+		background: var(--app-background-color-hover);
+		color: var(--text-color-highlight);
+	}
+`;
+
 //@TODO: better typescript-ify these props
 interface Props {
 	hasComments?: any;
 	selected?: any;
 	viewMode?: any;
 	commentMap?: any;
+	comments?: any;
 	icon?: any;
 	iconClass?: any;
 	index?: any;
@@ -31,9 +46,16 @@ interface Props {
 	visited?: any;
 }
 
+/**
+ * File line in PR sidebar, shows comments if available
+ *
+ * @param props
+ * @returns jsx
+ */
 export const PullRequestFilesChangedFileComments = (props: Props) => {
 	const {
 		hasComments,
+		comments,
 		selected,
 		viewMode,
 		commentMap,
@@ -48,6 +70,15 @@ export const PullRequestFilesChangedFileComments = (props: Props) => {
 		depth,
 		visited
 	} = props;
+
+	const [showComments, setShowComments] = React.useState(false);
+
+	const handleClick = e => {
+		e.preventDefault();
+		setShowComments(!showComments);
+	};
+
+	console.warn("eric comments", comments);
 
 	if (!hasComments) {
 		return (
@@ -97,8 +128,9 @@ export const PullRequestFilesChangedFileComments = (props: Props) => {
 		// hasComments
 		return (
 			<>
-				<FileWithComments>
+				<FileWithComments onClick={e => handleClick(e)}>
 					<ChangesetFile
+						chevron={<Icon name={showComments ? "chevron-down-thin" : "chevron-right-thin"} />}
 						selected={selected}
 						viewMode={props.viewMode}
 						iconLast={
@@ -138,101 +170,14 @@ export const PullRequestFilesChangedFileComments = (props: Props) => {
 						{...fileObject}
 					/>
 				</FileWithComments>
+				{showComments && (
+					<>
+						{comments.map(c => {
+							return <Comment>{c.comment.bodyText}</Comment>;
+						})}
+					</>
+				)}
 			</>
 		);
 	}
 };
-
-// if (!props.hasComments) {
-// 	return (
-// 		<>
-// 			<ChangesetFile
-// 				selected={props.selected}
-// 				viewMode={props.viewMode}
-// 				iconLast={
-// 					isDisabled ? null : (
-// 						<span
-// 							style={{
-// 								margin: "0 10px 0 auto"
-// 							}}
-// 						>
-// 							<Icon
-// 								onClick={
-// 									visited
-// 										? async e => {
-// 												e.preventDefault();
-// 												e.stopPropagation();
-// 												unVisitFile(f.file);
-// 										  }
-// 										: undefined
-// 								}
-// 								name={icon}
-// 								className={iconClass}
-// 							/>
-// 						</span>
-// 					)
-// 				}
-// 				noHover={isDisabled || loading}
-// 				onClick={
-// 					isDisabled || loading
-// 						? undefined
-// 						: async e => {
-// 								e.preventDefault();
-// 								goDiff(i);
-// 						  }
-// 				}
-// 				key={i + ":" + f.file}
-// 				depth={depth}
-// 				{...f}
-// 			/>
-// 		</>
-// 	);
-// } else {
-// 	// {/* FOR ERIC TOMORROW, break this into its own component its the only way*/}
-
-// 	return (
-// 		<>
-// 			<FileWithComments onClick={() => props.toggleDirectory("")}>
-// 				<ChangesetFile
-// 					selected={selected}
-// 					viewMode={props.viewMode}
-// 					iconLast={
-// 						isDisabled ? null : (
-// 							<span
-// 								style={{
-// 									margin: "0 10px 0 auto"
-// 								}}
-// 							>
-// 								<Icon
-// 									onClick={
-// 										visited
-// 											? async e => {
-// 													e.preventDefault();
-// 													e.stopPropagation();
-// 													unVisitFile(f.file);
-// 											  }
-// 											: undefined
-// 									}
-// 									name={icon}
-// 									className={iconClass}
-// 								/>
-// 							</span>
-// 						)
-// 					}
-// 					noHover={isDisabled || loading}
-// 					onClick={
-// 						isDisabled || loading
-// 							? undefined
-// 							: async e => {
-// 									e.preventDefault();
-// 									goDiff(i);
-// 							  }
-// 					}
-// 					key={i + ":" + f.file}
-// 					depth={depth}
-// 					{...f}
-// 				/>
-// 			</FileWithComments>
-// 		</>
-// 	);
-// }

@@ -30,8 +30,19 @@ import {
 import { CompareFilesProps } from "./PullRequestFilesChangedList";
 import { TernarySearchTree } from "../utilities/searchTree";
 import { PRErrorBox, PRErrorBoxSidebar } from "./PullRequestComponents";
+import { PullRequestFilesChangedFileComments } from "./PullRequestFilesChangedFileComments";
 
 export const Directory = styled.div`
+	cursor: pointer;
+	padding: 2px 0;
+	margin: 0 !important;
+	&:hover {
+		background: var(--app-background-color-hover);
+		color: var(--text-color-highlight);
+	}
+`;
+
+export const FileWithComments = styled.div`
 	cursor: pointer;
 	padding: 2px 0;
 	margin: 0 !important;
@@ -315,70 +326,127 @@ export const PullRequestFilesChanged = (props: Props) => {
 		const iconClass = loading ? "file-icon spin" : "file-icon";
 		// i is a temp variable to create the correct scope binding
 		const i = index;
-		const commentCount = (props.commentMap[f.file] || []).length;
+		const hasComments = (props.commentMap[f.file] || []).length > 0;
 		// badge={commentCount > 0 ? <span className="badge">{commentCount}</span> : undefined}
 		console.warn("eric props.commentMap", props.commentMap);
 		// render comments here
+
 		return (
 			<>
-				<ChangesetFile
+				<PullRequestFilesChangedFileComments
+					commentMap={props.commentMap}
+					icon={icon}
+					iconClass={iconClass}
+					index={i}
+					hasComments={hasComments}
 					selected={selected}
 					viewMode={props.viewMode}
-					iconLast={
-						isDisabled ? null : (
-							<span
-								style={{
-									margin: "0 10px 0 auto"
-								}}
-							>
-								<Icon
-									onClick={
-										visited
-											? async e => {
-													e.preventDefault();
-													e.stopPropagation();
-													unVisitFile(f.file);
-											  }
-											: undefined
-									}
-									name={icon}
-									className={iconClass}
-								/>
-							</span>
-						)
-					}
-					noHover={isDisabled || loading}
-					onClick={
-						isDisabled || loading
-							? undefined
-							: async e => {
-									e.preventDefault();
-									goDiff(i);
-							  }
-					}
-					key={i + ":" + f.file}
+					fileObject={f}
+					isDisabled={isDisabled}
+					loading={loading}
+					unVisitFile={unVisitFile}
+					goDiff={goDiff}
 					depth={depth}
-					{...f}
+					visited={visited}
 				/>
 			</>
 		);
+		// if (!hasComments) {
+		// 	return (
+		// 		<>
+		// 			<ChangesetFile
+		// 				selected={selected}
+		// 				viewMode={props.viewMode}
+		// 				iconLast={
+		// 					isDisabled ? null : (
+		// 						<span
+		// 							style={{
+		// 								margin: "0 10px 0 auto"
+		// 							}}
+		// 						>
+		// 							<Icon
+		// 								onClick={
+		// 									visited
+		// 										? async e => {
+		// 												e.preventDefault();
+		// 												e.stopPropagation();
+		// 												unVisitFile(f.file);
+		// 										  }
+		// 										: undefined
+		// 								}
+		// 								name={icon}
+		// 								className={iconClass}
+		// 							/>
+		// 						</span>
+		// 					)
+		// 				}
+		// 				noHover={isDisabled || loading}
+		// 				onClick={
+		// 					isDisabled || loading
+		// 						? undefined
+		// 						: async e => {
+		// 								e.preventDefault();
+		// 								goDiff(i);
+		// 						  }
+		// 				}
+		// 				key={i + ":" + f.file}
+		// 				depth={depth}
+		// 				{...f}
+		// 			/>
+		// 		</>
+		// 	);
+		// } else {
+		// 	// {/* FOR ERIC TOMORROW, break this into its own component its the only way*/}
+
+		// 	return (
+		// 		<>
+		// 			<FileWithComments onClick={() => props.toggleDirectory("")}>
+		// 				<ChangesetFile
+		// 					selected={selected}
+		// 					viewMode={props.viewMode}
+		// 					iconLast={
+		// 						isDisabled ? null : (
+		// 							<span
+		// 								style={{
+		// 									margin: "0 10px 0 auto"
+		// 								}}
+		// 							>
+		// 								<Icon
+		// 									onClick={
+		// 										visited
+		// 											? async e => {
+		// 													e.preventDefault();
+		// 													e.stopPropagation();
+		// 													unVisitFile(f.file);
+		// 											  }
+		// 											: undefined
+		// 									}
+		// 									name={icon}
+		// 									className={iconClass}
+		// 								/>
+		// 							</span>
+		// 						)
+		// 					}
+		// 					noHover={isDisabled || loading}
+		// 					onClick={
+		// 						isDisabled || loading
+		// 							? undefined
+		// 							: async e => {
+		// 									e.preventDefault();
+		// 									goDiff(i);
+		// 							  }
+		// 					}
+		// 					key={i + ":" + f.file}
+		// 					depth={depth}
+		// 					{...f}
+		// 				/>
+		// 			</FileWithComments>
+		// 		</>
+		// 	);
+		// }
 	};
 
 	const renderDirectory = (fullPath, dirPath, depth) => {
-		const hideKey = "hide:" + fullPath.join("/");
-		const hidden = visitedFiles[hideKey];
-		return (
-			<Directory
-				style={{ paddingLeft: `${depth * 12}px` }}
-				onClick={() => props.toggleDirectory(hideKey)}
-			>
-				<Icon name={hidden ? "chevron-right-thin" : "chevron-down-thin"} />
-				{path.join(...dirPath)}
-			</Directory>
-		);
-	};
-
-	const renderComment = (fullPath, dirPath, depth) => {
 		const hideKey = "hide:" + fullPath.join("/");
 		const hidden = visitedFiles[hideKey];
 		return (

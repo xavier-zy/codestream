@@ -7,10 +7,6 @@ export const FileWithComments = styled.div`
 	cursor: pointer;
 	padding: 2px 0;
 	margin: 0 !important;
-	&:hover {
-		background: var(--app-background-color-hover);
-		color: var(--text-color-highlight);
-	}
 `;
 
 export const Comment = styled.div`
@@ -21,10 +17,6 @@ export const Comment = styled.div`
 	text-overflow: ellipsis;
 	width: calc(98%);
 	white-space: nowrap;
-	&:hover {
-		background: var(--app-background-color-hover);
-		color: var(--text-color-highlight);
-	}
 `;
 
 //@TODO: better typescript-ify these props
@@ -44,6 +36,7 @@ interface Props {
 	goDiff?: any;
 	depth?: any;
 	visited?: any;
+	filesChanged?: any;
 }
 
 /**
@@ -68,7 +61,8 @@ export const PullRequestFilesChangedFileComments = (props: Props) => {
 		unVisitFile,
 		goDiff,
 		depth,
-		visited
+		visited,
+		filesChanged
 	} = props;
 
 	const [showComments, setShowComments] = React.useState(false);
@@ -78,7 +72,40 @@ export const PullRequestFilesChangedFileComments = (props: Props) => {
 		setShowComments(!showComments);
 	};
 
-	console.warn("eric comments", comments);
+	/**
+	 * Github/lab makes it difficult to find a comment line number, so we have to
+	 * parse the diffHunk and do some basic math
+	 * @param commentObject
+	 * @returns string lineNumber
+	 */
+	const lineNumber = commentObject => {
+		// With git, the "line number" is actually 2 numbers, left and right
+		// For now, we are going to base it off of the right number, subject to change.
+		// let leftLine: number;
+		let rightLine = 0;
+
+		if (!commentObject?.comment || !commentObject?.review) {
+			return "";
+		}
+
+		let diffHunk = commentObject.comment?.diffHunk || commentObject.review?.diffHunk || "";
+		let diffHunkNewLineLength = diffHunk.split("\n").length - 1;
+
+		console.warn("eric diffHunk", diffHunk);
+		diffHunk.split("\n").map(d => {
+			const matches = d.match(/@@ \-(\d+).*? \+(\d+)/);
+			if (matches) {
+				// leftLine = parseInt(matches[1], 10) - 1;
+				rightLine = parseInt(matches[2]) - 1;
+			}
+		});
+
+		if (rightLine) {
+			return rightLine + diffHunkNewLineLength;
+		} else {
+			return "";
+		}
+	};
 
 	if (!hasComments) {
 		return (
@@ -173,7 +200,12 @@ export const PullRequestFilesChangedFileComments = (props: Props) => {
 				{showComments && (
 					<>
 						{comments.map(c => {
-							return <Comment>{c.comment.bodyText}</Comment>;
+							return (
+								<Comment>
+									{lineNumber(c) && <span>Line {lineNumber(c)}: </span>}
+									{c.comment.bodyText}
+								</Comment>
+							);
 						})}
 					</>
 				)}

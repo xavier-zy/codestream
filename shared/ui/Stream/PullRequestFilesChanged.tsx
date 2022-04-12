@@ -357,7 +357,7 @@ export const PullRequestFilesChanged = (props: Props) => {
 		const hidden = visitedFiles[hideKey];
 		return (
 			<Directory
-				style={{ paddingLeft: `${depth * 12}px` }}
+				style={{ paddingLeft: `${depth * 9}px` }}
 				onClick={() => props.toggleDirectory(hideKey)}
 			>
 				<Icon name={hidden ? "chevron-right-thin" : "chevron-down-thin"} />

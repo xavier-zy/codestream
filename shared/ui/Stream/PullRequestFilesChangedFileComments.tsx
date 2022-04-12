@@ -15,8 +15,12 @@ export const Comment = styled.div`
 	padding-left: 112px;
 	overflow: hidden;
 	text-overflow: ellipsis;
-	width: calc(98%);
+	width: calc(100%);
 	white-space: nowrap;
+	&:hover {
+		background: var(--app-background-color-hover);
+		color: var(--text-color-highlight);
+	}
 `;
 
 //@TODO: better typescript-ify these props
@@ -91,7 +95,6 @@ export const PullRequestFilesChangedFileComments = (props: Props) => {
 		let diffHunk = commentObject.comment?.diffHunk || commentObject.review?.diffHunk || "";
 		let diffHunkNewLineLength = diffHunk.split("\n").length - 1;
 
-		console.warn("eric diffHunk", diffHunk);
 		diffHunk.split("\n").map(d => {
 			const matches = d.match(/@@ \-(\d+).*? \+(\d+)/);
 			if (matches) {

@@ -14,7 +14,6 @@ import {
 	fetchBoardsAndCardsAction,
 	updateForProvider
 } from "@codestream/webview/store/activeIntegrations/actions";
-import { getUserProviderInfo } from "@codestream/webview/store/providers/utils";
 import { useDidMount, useInterval, usePrevious } from "@codestream/webview/utilities/hooks";
 import { keyFilter, mapFilter } from "@codestream/webview/utils";
 import React, { useEffect, useMemo, useState } from "react";
@@ -208,7 +207,9 @@ export default function IssuesPane(props: Props) {
 
 	const selectIssueProvider = providerId => {
 		setIssueProviderMenuOpen(false);
-		if (!providerId) return;
+		if (!providerId) {
+			return;
+		}
 		if (providerId === "codestream") {
 			dispatch(setIssueProvider(undefined));
 			return;
@@ -232,7 +233,7 @@ export default function IssuesPane(props: Props) {
 	};
 
 	const onChangeProvider = async (providerInfo: ProviderInfo) => {
-		await this.props.configureAndConnectProvider(providerInfo.provider.id, "Compose Modal");
+		await dispatch(configureAndConnectProvider(providerInfo.provider.id, "Compose Modal"));
 
 		/*
 		// Per https://newrelic.atlassian.net/browse/CDSTRM-1591, the need for the "pre-PR" modal

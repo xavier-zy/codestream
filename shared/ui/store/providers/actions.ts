@@ -18,8 +18,6 @@ import {
 import { logError } from "../../logger";
 import { setIssueProvider, openPanel } from "../context/actions";
 import { deleteForProvider } from "../activeIntegrations/actions";
-import { CodeStreamState } from "../../store";
-import { ViewMethodLevelTelemetryNotificationType } from "@codestream/protocols/webview";
 
 export const reset = () => action("RESET");
 

@@ -9,12 +9,8 @@ import { useDidMount } from "@codestream/webview/utilities/hooks";
 import React, { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { closeAllPanels, openPanel, setWantNewRelicOptions } from "../store/context/actions";
-import {
-	configureProvider,
-	disconnectProvider,
-	ViewLocation,
-	getUserProviderInfoFromState
-} from "../store/providers/actions";
+import { configureProvider, disconnectProvider, ViewLocation } from "../store/providers/actions";
+import { getUserProviderInfoFromState } from "../store/providers/utils";
 import { isConnected } from "../store/providers/reducer";
 import { HostApi } from "../webview-api";
 import Button from "./Button";

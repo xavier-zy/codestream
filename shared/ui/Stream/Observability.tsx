@@ -251,7 +251,9 @@ export const Observability = React.memo((props: Props) => {
 				setNoAccess(false);
 			})
 			.catch(ex => {
-				setNoAccess(true);
+				if (ex.code === 100004) {
+					setNoAccess(true);
+				}
 			});
 	};
 

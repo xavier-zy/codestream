@@ -855,65 +855,15 @@ export const OpenPullRequests = React.memo((props: Props) => {
 	const expandedPR: any = useMemo(() => {
 		if (!derivedState.currentPullRequest || derivedState.hideDiffs) return undefined;
 		const conversations = derivedState.currentPullRequest.conversations;
-
-		//eric to-do tomorrow implement:
-		// const response = (await dispatch(
-		// 	getPullRequestConversations(
-		// 		derivedState.currentPullRequestProviderId!,
-		// 		derivedState.currentPullRequestId!
-		// 	)
-		// )) as {
-		// 	error?: {
-		// 		message: string;
-		// 	};
-		// };
-
 		if (!conversations) {
-			// fetchOnePR(derivedState.currentPullRequestProviderId!, derivedState.currentPullRequestId);
 			return undefined;
 		}
-
 		if (conversations.project && conversations.project.mergeRequest)
 			return conversations.project.mergeRequest;
 		if (conversations.repository && conversations.repository.pullRequest)
 			return conversations.repository.pullRequest;
 		return undefined;
 	}, [derivedState.currentPullRequest, derivedState.hideDiffs]);
-
-	const renderExpanded = pr => {
-		return (
-			<>
-				<Row
-					className="pr-row"
-					onClick={() => {
-						dispatch(setCurrentPullRequest(pr.providerId, pr.id, "", "", "details"));
-
-						HostApi.instance.track("PR Clicked", {
-							Host: pr.providerId
-						});
-					}}
-				>
-					<div style={{ paddingLeft: "20px" }}>
-						<Icon name="screen-full" />
-					</div>
-					<div>View Overview &amp; Details</div>
-				</Row>
-				{expandedPR && (
-					<PullRequestFilesChangedTab
-						key="files-changed"
-						pr={expandedPR as FetchThirdPartyPullRequestPullRequest}
-						fetch={() => {
-							fetchOnePR(expandedPR.providerId, expandedPR.id);
-						}}
-						setIsLoadingMessage={() => {}}
-						sidebarView
-						prCommitsRange={prCommitsRange}
-						setPrCommitsRange={setPrCommitsRange}
-					/>
-				)}
-			</>
-		);
-	};
 
 	const settingsMenuItems = [
 		{
@@ -1189,7 +1139,6 @@ export const OpenPullRequests = React.memo((props: Props) => {
 														<Timestamp time={pr.createdAt} relative abbreviated />
 													</div>
 												</Row>
-												{/* eric construction */}
 												{expanded && (
 													<PullRequestExpandedSidebar
 														key={`pr_detail_row_${index}`}

@@ -27,6 +27,7 @@ import {
 	ERROR_NR_CONNECTION_INVALID_API_KEY,
 	ERROR_NR_CONNECTION_MISSING_API_KEY,
 	ERROR_NR_CONNECTION_MISSING_URL,
+	ERROR_NR_INSUFFICIENT_API_KEY,
 	ERROR_PIXIE_NOT_CONFIGURED,
 	ErrorGroup,
 	ErrorGroupResponse,
@@ -389,6 +390,10 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				if (accessTokenError) {
 					throw new AccessTokenError(accessTokenError.message, ex, true);
 				}
+				const insufficientApiKeyError = this.getInsufficientApiKeyError(ex);
+				if (insufficientApiKeyError) {
+					throw new ResponseError(ERROR_NR_INSUFFICIENT_API_KEY, "Insufficient New Relic API key");
+				}
 
 				// this is an unexpected error, throw the exception normally
 				throw ex;
@@ -403,7 +408,9 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			response: {
 				errors: {
 					extensions: {
-						error_code: string;
+						error_code?: string;
+						errorClass?: string;
+						classification?: string;
 					};
 					message: string;
 				}[];
@@ -417,6 +424,35 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		) {
 			return requestError.response.errors.find(
 				_ => _.extensions && _.extensions.error_code === "BAD_API_KEY"
+			);
+		}
+		return undefined;
+	}
+
+	private getInsufficientApiKeyError(ex: any): { message: string } | undefined {
+		const requestError = ex as {
+			response: {
+				errors: {
+					extensions: {
+						error_code?: string;
+						errorClass?: string;
+						classification?: string;
+					};
+					message: string;
+				}[];
+			};
+		};
+		if (
+			requestError &&
+			requestError.response &&
+			requestError.response.errors &&
+			requestError.response.errors.length
+		) {
+			return requestError.response.errors.find(
+				_ =>
+					_.extensions &&
+					_.extensions.errorClass === "SERVER_ERROR" &&
+					_.extensions.classification === "DataFetchingException"
 			);
 		}
 		return undefined;
@@ -672,6 +708,9 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			ContextLogger.warn("getObservabilityErrorAssignments", {
 				error: ex
 			});
+			if (ex.code === ERROR_NR_INSUFFICIENT_API_KEY) {
+				throw ex;
+			}
 		}
 
 		return response;
@@ -964,6 +1003,9 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			}
 		} catch (ex) {
 			ContextLogger.error(ex, "getObservabilityErrors");
+			if (ex.code === ERROR_NR_INSUFFICIENT_API_KEY) {
+				throw ex;
+			}
 		}
 		return response as any;
 	}

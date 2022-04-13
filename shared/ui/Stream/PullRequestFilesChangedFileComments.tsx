@@ -86,7 +86,7 @@ export const PullRequestFilesChangedFileComments = (props: Props) => {
 	const lineNumber = commentObject => {
 		// With git, the "line number" is actually 2 numbers, left and right
 		// For now, we are going to base it off of the right number, subject to change.
-		// let leftLine: number;
+		// let leftLine = 0;
 		let rightLine = 0;
 
 		if (!commentObject?.comment || !commentObject?.review) {

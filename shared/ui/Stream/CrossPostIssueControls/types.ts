@@ -31,6 +31,12 @@ export interface ProviderDisplay {
 
 	helpPATUrl?: string;
 	namePAT?: string;
+
+	directPAT?: {
+		path: string;
+		scopesParam: string;
+		descriptionParam?: string;
+	};
 }
 
 export const PROVIDER_MAPPINGS: { [provider: string]: ProviderDisplay } = {
@@ -94,7 +100,12 @@ export const PROVIDER_MAPPINGS: { [provider: string]: ProviderDisplay } = {
 		supportsStartWork: true,
 		supportsPRManagement: true,
 		helpPATUrl:
-			"https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token"
+			"https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token",
+		directPAT: {
+			path: "settings/tokens/new",
+			descriptionParam: "description",
+			scopesParam: "scopes"
+		}
 	},
 	github_enterprise: {
 		displayName: "GitHub Enterprise",
@@ -116,7 +127,12 @@ export const PROVIDER_MAPPINGS: { [provider: string]: ProviderDisplay } = {
 			"https://docs.newrelic.com/docs/codestream/how-use-codestream/pull-requests#github",
 		supportsStartWork: true,
 		supportsPRManagement: true,
-		invalidHosts: ["github.com"]
+		invalidHosts: ["github.com"],
+		directPAT: {
+			path: "settings/tokens/new",
+			descriptionParam: "description",
+			scopesParam: "scopes"
+		}
 	},
 	gitlab: {
 		displayName: "GitLab",

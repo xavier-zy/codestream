@@ -36,17 +36,28 @@ export const ConfigureOAuthOrPATPanel = (props: {
 
 	const { providerId } = props;
 	const { providers } = derivedState;
+	const provider = providers[providerId];
 	const { name, scopes = [] } = providers[providerId] || {};
 	const mapping = PROVIDER_MAPPINGS[name] || {};
 	const {
 		displayName = "",
 		helpPATUrl = "",
 		icon = "",
-		namePAT = "Personal Access Token"
+		namePAT = "Personal Access Token",
+		directPAT
 	} = mapping;
 
 	const [accessToken, setAccessToken] = useState("");
 	const [errorMessage, setErrorMessage] = useState("");
+
+	let providerUrl = helpPATUrl;
+	if (directPAT) {
+		providerUrl = `https://${provider.host}/${directPAT.path}?`;
+		if (directPAT.descriptionParam) {
+			providerUrl += `${directPAT.descriptionParam}=CodeStream`;
+		}
+		providerUrl += `&${directPAT.scopesParam}=${(scopes || []).join(",")}`;
+	}
 
 	const connectWithOAuth = async e => {
 		e.preventDefault();
@@ -79,9 +90,8 @@ export const ConfigureOAuthOrPATPanel = (props: {
 					<div id="controls">
 						<h3>Connect with {namePAT}</h3>
 						<div>
-							Provide a <Link href={helpPATUrl}>{namePAT.toLowerCase()}</Link> CodeStream can use to
-							access your
-							{displayName} projects. Your token should have the following scopes:{" "}
+							Provide a <Link href={providerUrl}>{namePAT.toLowerCase()}</Link> with the following
+							scopes so that CodeStream can access your pull requests and issues:{" "}
 							<b>{scopes.join(",")}</b>
 						</div>
 						{errorMessage && <small className="error-message">{errorMessage}</small>}

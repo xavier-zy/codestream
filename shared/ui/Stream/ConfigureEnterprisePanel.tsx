@@ -127,12 +127,21 @@ export default function ConfigureEnterprisePanel(props: Props) {
 		urlPlaceholder,
 		getUrl,
 		helpUrl,
+		directPAT,
 		versionMinimum,
 		checkVersionUrl,
 		invalidHosts,
 		namePAT = "Personal Access Token"
 	} = providerDisplay;
 	const providerShortName = providerDisplay.shortDisplayName || displayName;
+	let providerUrl = helpUrl;
+	if (directPAT) {
+		providerUrl = `${baseUrl}/${directPAT.path}?`;
+		if (directPAT.descriptionParam) {
+			providerUrl += `${directPAT.descriptionParam}=CodeStream`;
+		}
+		providerUrl += `&${directPAT.scopesParam}=${(scopes || []).join(",")}`;
+	}
 
 	return (
 		<div className="panel configure-provider-panel">
@@ -174,13 +183,11 @@ export default function ConfigureEnterprisePanel(props: Props) {
 								</strong>
 							</label>
 							<label>
-								Please provide a <a href={helpUrl}>{namePAT.toLowerCase()}</a> we can use to access
-								your {providerShortName} projects and issues.
-								{scopes && scopes.length && (
-									<span>
-										&nbsp;Your PAT should have the following scopes: <b>{scopes.join(", ")}</b>.
-									</span>
-								)}
+								Provide a <a href={providerUrl}>{namePAT.toLowerCase()}</a> with the following
+								scopes so that CodeStream can access your pull requests and issues:
+								<span>
+									&nbsp;<b>{scopes!.join(", ")}</b>.
+								</span>
 							</label>
 							<input
 								className="input-text control"

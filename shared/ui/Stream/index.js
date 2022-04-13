@@ -35,77 +35,62 @@ import InlineCodemarks from "./InlineCodemarks";
 import { CreateTeamPage } from "./CreateTeamPage";
 import { CreateCompanyPage } from "./CreateCompanyPage";
 import { Tester } from "./Tester";
-import Icon from "./Icon";
 import CancelButton from "./CancelButton";
-import Tooltip, { TipTitle, placeArrowTopRight } from "./Tooltip";
 import OfflineBanner from "./OfflineBanner";
 import { PRProviderErrorBanner } from "./PRProviderErrorBanner";
 import ConfigureAzureDevOpsPanel from "./ConfigureAzureDevOpsPanel";
 import ConfigureYouTrackPanel from "./ConfigureYouTrackPanel";
-import ConfigureJiraPanel from "./ConfigureJiraPanel";
-import ConfigureJiraServerPanel from "./ConfigureJiraServerPanel";
-import ConfigureJiraServerOAuthPanel from "./ConfigureJiraServerOAuthPanel";
 import ConfigureEnterprisePanel from "./ConfigureEnterprisePanel";
+import { ConfigureOAuthOrPATPanel } from "./ConfigureOAuthOrPATPanel";
 import ConfigureNewRelicPanel from "./ConfigureNewRelicPanel";
 import ConfigureTokenProviderPanel from "./ConfigureTokenProviderPanel";
 import { PrePRProviderInfoModal } from "./PrePRProviderInfoModal";
 import * as actions from "./actions";
 import { canCreateCodemark, editCodemark } from "../store/codemarks/actions";
-import { ComponentUpdateEmitter, safe, toMapBy, isNotOnDisk, uriToFilePath } from "../utils";
-import { ModalRoot, Modal } from "./Modal";
-import { getPostsForStream, getPost } from "../store/posts/reducer";
+import { ComponentUpdateEmitter, safe } from "../utils";
+import { Modal, ModalRoot } from "./Modal";
+import { getPost } from "../store/posts/reducer";
 import { isFeatureEnabled } from "../store/apiVersioning/reducer";
 import { getStreamForId, getStreamForTeam } from "../store/streams/reducer";
 import { getCodemark } from "../store/codemarks/reducer";
-import { getTeamMembers } from "../store/users/reducer";
 import { HostApi } from "../webview-api";
 import {
-	NewCodemarkNotificationType,
-	NewReviewNotificationType,
-	NewPullRequestNotificationType,
 	EditorSelectRangeRequestType,
+	NewCodemarkNotificationType,
+	NewPullRequestNotificationType,
+	NewReviewNotificationType,
 	PixieDynamicLoggingType,
-	StartWorkNotificationType,
-	WebviewPanels,
-	WebviewModals
+	WebviewModals,
+	WebviewPanels
 } from "../ipc/webview.protocol";
 import {
-	SetCodemarkPinnedRequestType,
-	TelemetryRequestType,
+	AddBlameMapRequestType,
 	GetRangeScmInfoRequestType,
-	DeleteUserRequestType,
 	GetUserInfoRequestType,
-	AddBlameMapRequestType
+	SetCodemarkPinnedRequestType
 } from "@codestream/protocols/agent";
-import { getFileScmError } from "../store/editorContext/reducer";
 import { CodemarkView } from "./CodemarkView";
-import { CodeErrorView } from "./CodeErrorView";
-import { Review } from "./Review";
-import { Link } from "./Link";
 import {
-	setCurrentStream,
-	setNewPostEntry,
-	setIsFirstPageview,
+	setCurrentCodeError,
+	setCurrentCodemark,
+	setCurrentInstrumentationOptions,
+	setCurrentPixieDynamicLoggingOptions,
+	setCurrentPullRequest,
 	setCurrentReview,
 	setCurrentReviewOptions,
-	setCurrentPullRequest,
-	setNewPullRequestOptions,
-	setCurrentCodemark,
-	setCurrentCodeError,
-	setCurrentInstrumentationOptions,
-	setCurrentPixieDynamicLoggingOptions
+	setCurrentStream,
+	setIsFirstPageview,
+	setNewPostEntry,
+	setNewPullRequestOptions
 } from "../store/context/actions";
-import { last as _last, findLastIndex } from "lodash-es";
+import { last as _last } from "lodash-es";
 import { Keybindings } from "./Keybindings";
-import { FlowPanel, VideoLink } from "./Flow";
+import { FlowPanel } from "./Flow";
 import { PixieDynamicLoggingPanel } from "./PixieDynamicLogging/PixieDynamicLoggingPanel";
 import { MethodLevelTelemetryPanel } from "./MethodLevelTelemetry/MethodLevelTelemetryPanel";
 import { PRInfoModal } from "./SpatialView/PRInfoModal";
 import { GlobalNav } from "./GlobalNav";
-import { EnjoyingCodeStream } from "./EnjoyingCodeStream";
 import { getTestGroup } from "../store/context/reducer";
-import { PresentTOS } from "../Authentication/PresentTOS";
-import { PresentPrereleaseTOS } from "../Authentication/PresentPrereleaseTOS";
 import { Loading } from "../Container/Loading";
 import { DelayedRender } from "../Container/DelayedRender";
 import { clearDynamicLogging } from "../store/dynamicLogging/actions";
@@ -271,7 +256,7 @@ export class SimpleStream extends PureComponent {
 	addBlameMapForGitEmailMismatch = async () => {
 		const {
 			setUserPreference,
-			blameMap,
+			blameMap = {},
 			addBlameMapEnabled,
 			skipGitEmailCheck,
 			currentUser
@@ -326,7 +311,8 @@ export class SimpleStream extends PureComponent {
 		if (isFirstPageview && !this.props.pendingProtocolHandlerUrl) return null;
 
 		const isConfigurationPanel =
-			activePanel && activePanel.match(/^configure\-(provider|enterprise)-/);
+			activePanel && activePanel.match(/^(oauthpat|configure)\-(provider|enterprise)-/);
+
 		// if we're conducting a review, we need the compose functionality of spatial view
 		if (this.props.currentReviewId || this.props.currentCodeErrorId) {
 			activePanel = WebviewPanels.CodemarksForFile;
@@ -370,7 +356,8 @@ export class SimpleStream extends PureComponent {
 			// !this.props.currentReviewId &&
 			// !this.props.currentPullRequestId &&
 			!activePanel.startsWith("configure-provider-") &&
-			!activePanel.startsWith("configure-enterprise-");
+			!activePanel.startsWith("configure-enterprise-") &&
+			!activePanel.startsWith("oauthpat-provider-");
 
 		// if (this.state.floatCompose) renderNav = false;
 		// if (threadId) renderNav = false;
@@ -382,18 +369,17 @@ export class SimpleStream extends PureComponent {
 				: "content vscroll inline";
 		const configureProviderInfo =
 			activePanel.startsWith("configure-provider-") ||
-			activePanel.startsWith("configure-enterprise-")
+			activePanel.startsWith("configure-enterprise-") ||
+			activePanel.startsWith("oauthpat-provider-")
 				? activePanel.split("-")
 				: null;
 		const enterpriseProvider = activePanel.startsWith("configure-enterprise-");
-		const [, , providerName, providerId, origin] = configureProviderInfo || [];
+		const oauthOrPATProvider = activePanel.startsWith("oauthpat-provider-");
+		let [, , providerName, providerId, origin] = configureProviderInfo || [];
 		const customConfigureProvider = providerName
-			? ["azuredevops", "youtrack", "jiraserver", "jiraserverold", "jira", "newrelic"].find(
-					name => name === providerName
-			  )
+			? ["azuredevops", "youtrack", "newrelic"].find(name => name === providerName)
 			: null;
 
-		// console.warn("ACTIVE: ", activePanel);
 		// status and teams panels have been deprecated
 		return (
 			<div id="stream-root" className={streamClass}>
@@ -523,12 +509,15 @@ export class SimpleStream extends PureComponent {
 								<CreatePullRequestPanel closePanel={this.props.closePanel} />
 							)}
 							{activePanel === WebviewPanels.GettingStarted && <GettingStarted />}
-							{configureProviderInfo && !enterpriseProvider && !customConfigureProvider && (
-								<ConfigureTokenProviderPanel providerId={providerId} originLocation={origin} />
-							)}
-							{customConfigureProvider === "jira" && (
-								<ConfigureJiraPanel providerId={providerId} originLocation={origin} />
-							)}
+							{configureProviderInfo &&
+								!enterpriseProvider &&
+								!customConfigureProvider &&
+								!oauthOrPATProvider && (
+									<ConfigureTokenProviderPanel providerId={providerId} originLocation={origin} />
+								)}
+							{/*{customConfigureProvider === "jira" && (*/}
+							{/*	<ConfigureJiraPanel providerId={providerId} originLocation={origin} />*/}
+							{/*)}*/}
 							{customConfigureProvider === "youtrack" && (
 								<ConfigureYouTrackPanel providerId={providerId} originLocation={origin} />
 							)}
@@ -538,14 +527,18 @@ export class SimpleStream extends PureComponent {
 							{customConfigureProvider === "azuredevops" && (
 								<ConfigureAzureDevOpsPanel providerId={providerId} originLocation={origin} />
 							)}
-							{customConfigureProvider === "jiraserver" && (
+							{/*customConfigureProvider === "jiraserver" && (
 								<ConfigureJiraServerPanel providerId={providerId} originLocation={origin} />
-							)}
-							{customConfigureProvider === "jiraserverold" && (
-								<ConfigureJiraServerOAuthPanel providerId={providerId} originLocation={origin} />
-							)}
+							)*/}
 							{enterpriseProvider && (
 								<ConfigureEnterprisePanel providerId={providerId} originLocation={origin} />
+							)}
+							{oauthOrPATProvider && (
+								<ConfigureOAuthOrPATPanel
+									providerId={providerId}
+									originLocation={origin}
+									closePanel={this.props.closePanel}
+								/>
 							)}
 						</Modal>
 					)}
@@ -791,7 +784,6 @@ const mapStateToProps = state => {
 		preferences.acceptedPrereleaseTOS ||
 		(team.settings ? team.settings.acceptedPrereleaseTOS : false);
 
-	// console.warn("COMP: ", companies);
 	return {
 		addBlameMapEnabled: isFeatureEnabled(state, "addBlameMap"),
 		blameMap: team.settings ? team.settings.blameMap : {},

@@ -12,11 +12,10 @@ import {
 	FetchThirdPartyCardsResponse,
 	JiraBoard,
 	JiraCard,
-	JiraConfigurationData,
 	JiraUser,
 	MoveThirdPartyCardRequest,
-	ProviderConfigurationData,
 	ReportingMessageType,
+	ThirdPartyDisconnect,
 	ThirdPartyProviderCard
 } from "../protocol/agent.protocol";
 import { CSJiraProviderInfo } from "../protocol/api.protocol";
@@ -164,21 +163,16 @@ export class JiraProvider extends ThirdPartyIssueProviderBase<CSJiraProviderInfo
 		Logger.debug(`Jira: api url is ${this._urlAddon}`);
 	}
 
-	async onDisconnected() {
+	async onDisconnected(request?: ThirdPartyDisconnect) {
+		this._urlAddon = "";
+		this._webUrl = "";
+		delete this.domain;
 		this.boards = [];
+		return super.onDisconnected(request);
 	}
 
-	@log()
-	async configure(request: JiraConfigurationData) {
-		await this.session.api.setThirdPartyProviderToken({
-			providerId: this.providerConfig.id,
-			token: request.token,
-			data: {
-				email: request.email,
-				baseUrl: request.baseUrl
-			}
-		});
-		this.session.updateProviders();
+	canConfigure() {
+		return true;
 	}
 
 	@log()
@@ -253,21 +247,6 @@ export class JiraProvider extends ThirdPartyIssueProviderBase<CSJiraProviderInfo
 			Logger.error(error, "Error fetching jira boards");
 			return { boards: [] };
 		}
-	}
-
-	/*
-	This is the start of an idea based on this link:
-	https://confluence.atlassian.com/jiracore/createmeta-rest-endpoint-to-be-removed-975040986.html
-	which suggests that the createmeta endpoint is problematic and going away
-	Indeed, it is very slow, but so far I have not been able to get their suggested replacement to work,
-	so am leaving this alternate method commented out for now, perhaps to be revisited later - Colin
-	*/
-	private async isCompatibleProject(project: JiraProject): Promise<JiraBoard | undefined> {
-		const response = await this.get<JiraProjectsMetaResponse>(
-			`/rest/api/2/issue/createmeta/${project.id}/issuetypes`
-		);
-		// TODO: do something with this response, like what filterBoards does, below
-		return undefined;
 	}
 
 	private async filterBoards(projects: JiraProject[]): Promise<JiraBoard[]> {

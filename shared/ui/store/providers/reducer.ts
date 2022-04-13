@@ -1,6 +1,6 @@
+import { getUserProviderInfo } from "@codestream/webview/store/providers/utils";
 import { ActionType } from "../common";
 import * as actions from "./actions";
-import { getUserProviderInfo } from "./actions";
 import { ProvidersState, ProvidersActionsType } from "./types";
 import { CodeStreamState } from "..";
 import {
@@ -13,7 +13,6 @@ import { mapFilter, safe } from "@codestream/webview/utils";
 import { ThirdPartyProviderConfig } from "@codestream/protocols/agent";
 import { createSelector } from "reselect";
 import { PROVIDER_MAPPINGS } from "@codestream/webview/Stream/CrossPostIssueControls/types";
-import { ContextState } from "../context/types";
 import { UsersState } from "../users/types";
 import { SessionState } from "../session/types";
 
@@ -170,14 +169,14 @@ export const isConnectedSelectorFriendly = (
 
 	// ensure there's provider info for the user
 	if (currentUser.providerInfo == undefined) return false;
-
 	if (isNameOption(option)) {
 		const providerName = option.name;
 		const info = getUserProviderInfo(currentUser, providerName, currentTeamId);
 		switch (providerName) {
 			case "github_enterprise":
 			case "gitlab_enterprise":
-			case "bitbucket_server": {
+			case "bitbucket_server":
+			case "jiraserver": {
 				// these providers now only depend on having a personal access token
 				if (info != undefined) {
 					const isConnected = info.accessToken != undefined;
@@ -188,22 +187,6 @@ export const isConnectedSelectorFriendly = (
 					return isConnected;
 				}
 				return false;
-			}
-			case "jiraserver": {
-				// jiraserver is now the only enterprise/on-prem provider that actually uses hosts
-				return (
-					info != undefined &&
-					info.hosts != undefined &&
-					Object.keys(info.hosts).some(host => {
-						const isConnected =
-							providers[host] != undefined && info.hosts![host].accessToken != undefined;
-						if (isConnected && accessTokenError) {
-							// see comment on accessTokenError in the method parameters, above
-							accessTokenError.accessTokenError = info.hosts![host].tokenError;
-						}
-						return isConnected;
-					})
-				);
 			}
 			default: {
 				// is there an accessToken for the provider?

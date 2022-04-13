@@ -18,6 +18,7 @@ export interface ThirdPartyProviderConfig {
 	supportsAuth?: boolean;
 	needsConfigure?: boolean;
 	needsConfigureForOnPrem?: boolean;
+	supportsOAuthOrPAT?: boolean;
 	oauthData?: { [key: string]: any };
 	scopes?: string[];
 	canFilterByAssignees?: boolean;
@@ -46,7 +47,8 @@ export const ConnectThirdPartyProviderRequestType = new RequestType<
 
 export interface ConfigureThirdPartyProviderRequest {
 	providerId: string;
-	data: { [key: string]: any };
+	data: ProviderConfigurationData;
+	verify?: boolean;
 }
 
 export interface ConfigureThirdPartyProviderResponse {}
@@ -304,18 +306,17 @@ export const CreateThirdPartyCardRequestType = new RequestType<
 	void
 >("codestream/provider/cards/create");
 
-interface ThirdPartyProviderSetTokenData {
+export interface ProviderConfigurationData {
 	host?: string;
-	token: string;
-	data?: { [key: string]: any };
+	baseUrl?: string;
+	accessToken?: string;
+	pendingVerification?: boolean;
+	[key: string]: any;
 }
 
-export interface ThirdPartyProviderSetTokenRequestData extends ThirdPartyProviderSetTokenData {
-	teamId: string;
-}
-
-export interface ThirdPartyProviderSetTokenRequest extends ThirdPartyProviderSetTokenData {
+export interface ThirdPartyProviderSetInfoRequest {
 	providerId: string;
+	data: ProviderConfigurationData;
 }
 
 export interface AddEnterpriseProviderHostRequest {
@@ -333,15 +334,6 @@ export interface RemoveEnterpriseProviderHostRequest {
 	provider: string;
 	providerId: string;
 	teamId: string;
-}
-
-export interface ProviderConfigurationData {
-	host?: string;
-	baseUrl?: string;
-	token: string;
-	data?: {
-		[key: string]: any;
-	};
 }
 
 export interface FetchThirdPartyPullRequestRequest {

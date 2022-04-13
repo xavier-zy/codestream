@@ -7,7 +7,12 @@ import { InstrumentableCodeLensController } from "controllers/instrumentableCode
 import { BaseAgentOptions, CodeStreamAgentConnection } from "./agent/agentConnection";
 import { CodeStreamSession } from "./api/session";
 import { Commands } from "./commands";
-import { Config, configuration, ConfigurationWillChangeEvent } from "./configuration";
+import {
+	Config,
+	configuration,
+	ConfigurationWillChangeEvent,
+	ConfigSettingsNeedingReload
+} from "./configuration";
 import { NotificationsController } from "./controllers/notificationsController";
 import { StatusBarController } from "./controllers/statusBarController";
 import { WebviewController } from "./controllers/webviewController";
@@ -72,6 +77,7 @@ export class Container {
 	];
 
 	static setServerUrl(serverUrl: string, disableStrictSSL: boolean, environment?: string) {
+		this._pendingServerUrl = serverUrl;
 		this._session.setServerUrl(serverUrl, environment);
 		this._agent.sendRequest(SetServerUrlRequestType, { serverUrl, disableStrictSSL, environment });
 		this._agent.setServerUrl(serverUrl);
@@ -83,6 +89,22 @@ export class Container {
 
 		if (configuration.changed(e.change, configuration.name("traceLevel").value)) {
 			Logger.level = configuration.get<TraceLevel>(configuration.name("traceLevel").value);
+		}
+
+		const needReload = ConfigSettingsNeedingReload.find(config => {
+			const configName = configuration.name(config as keyof Config).value;
+			const isChanging = configuration.changed(e.change, configName);
+			const changedTo = configuration.get<string>(configName);
+			const changingToPendingServerUrl =
+				configName === "serverUrl" && changedTo === this._pendingServerUrl;
+			if (changingToPendingServerUrl) {
+				delete this._pendingServerUrl;
+			}
+			return isChanging && !changingToPendingServerUrl;
+		});
+		if (needReload) {
+			Logger.log(`Config value ${needReload} changed, prompting IDE reload...`);
+			this._webview!.onConfigChangeReload();
 		}
 	}
 
@@ -196,5 +218,10 @@ export class Container {
 	private static _webview: WebviewController;
 	static get webview() {
 		return this._webview;
+	}
+
+	private static _pendingServerUrl: string | undefined;
+	static setPendingServerUrl(url: string) {
+		this._pendingServerUrl = url;
 	}
 }

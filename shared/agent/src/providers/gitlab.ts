@@ -39,7 +39,8 @@ import {
 	MoveThirdPartyCardResponse,
 	Note,
 	ProviderGetForkedReposResponse,
-	ThirdPartyProviderConfig
+	ThirdPartyProviderConfig,
+	ThirdPartyDisconnect
 } from "../protocol/agent.protocol";
 import { CSGitLabProviderInfo } from "../protocol/api.protocol";
 import { CodeStreamSession } from "../session";
@@ -137,6 +138,10 @@ export class GitLabProvider extends ThirdPartyIssueProviderBase<CSGitLabProvider
 
 	async ensureInitialized() {
 		await this.getCurrentUser();
+	}
+
+	canConfigure() {
+		return true;
 	}
 
 	protected getPRExternalContent(comment: PullRequestComment) {
@@ -1015,6 +1020,16 @@ export class GitLabProvider extends ThirdPartyIssueProviderBase<CSGitLabProvider
 
 		Logger.log(`getCurrentUser ${JSON.stringify(currentUser)} for id=${this.providerConfig.id}`);
 		return currentUser;
+	}
+
+	onDisconnected(request: ThirdPartyDisconnect) {
+		this._currentGitlabUsers.clear();
+		this._projectsByRemotePath.clear();
+		this._assignableUsersCache.clear();
+		this._pullRequestCache.clear();
+		this._ignoredFeatures.clear();
+		this._pullRequestIdCache.clear();
+		return super.onDisconnected(request);
 	}
 
 	_pullRequestCache: Map<string, GitLabMergeRequestWrapper> = new Map();

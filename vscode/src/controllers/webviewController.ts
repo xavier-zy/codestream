@@ -2,6 +2,7 @@
 import {
 	ApiVersionCompatibility,
 	BootstrapResponse,
+	ConfigChangeReloadNotificationType,
 	ConnectionStatus,
 	DidChangeApiVersionCompatibilityNotification,
 	DidChangeApiVersionCompatibilityNotificationType,
@@ -1023,12 +1024,15 @@ export class WebviewController implements Disposable {
 			}
 			case UpdateServerUrlRequestType.method: {
 				webview.onIpcRequest(UpdateServerUrlRequestType, e, async (_type, params) => {
+					Container.setPendingServerUrl(params.serverUrl);
 					await configuration.update("serverUrl", params.serverUrl, ConfigurationTarget.Global);
-					await configuration.update(
-						"disableStrictSSL",
-						params.disableStrictSSL,
-						ConfigurationTarget.Global
-					);
+					if (params.disableStrictSSL !== undefined) {
+						await configuration.update(
+							"disableStrictSSL",
+							params.disableStrictSSL,
+							ConfigurationTarget.Global
+						);
+					}
 					Container.setServerUrl(
 						params.serverUrl,
 						params.disableStrictSSL ? true : false,
@@ -1374,5 +1378,10 @@ export class WebviewController implements Disposable {
 		} else {
 			Logger.log("No session for github to disconnect");
 		}
+	}
+
+	@log()
+	async onConfigChangeReload() {
+		this._webview!.notify(ConfigChangeReloadNotificationType, {});
 	}
 }

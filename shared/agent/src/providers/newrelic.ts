@@ -67,6 +67,7 @@ import {
 	ObservabilityError,
 	ObservabilityErrorCore,
 	ObservabilityRepo,
+	ProviderConfigurationData,
 	RelatedEntity,
 	ReposScm,
 	StackTraceResponse,
@@ -108,6 +109,7 @@ class AccessTokenError extends Error {
 @lspProvider("newrelic")
 export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProviderInfo> {
 	private _newRelicUserId: number | undefined = undefined;
+	private _accountIds: number[] | undefined = undefined;
 	private _memoizedBuildRepoRemoteVariants: any;
 	private _codeStreamUser: CSMe | undefined = undefined;
 	private _mltTimedCache: any;
@@ -139,8 +141,9 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 	}
 
 	get apiUrl() {
-		const data = this._providerInfo && this._providerInfo.data;
-		return this.getApiUrlCore(data);
+		const newRelicApiUrl = (this._sessionServiceContainer || SessionContainer.instance()).session
+			.newRelicApiUrl;
+		return newRelicApiUrl || "https://api.newrelic.com";
 	}
 
 	private _sessionServiceContainer: SessionServiceContainer | undefined;
@@ -151,20 +154,6 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 	 */
 	set sessionServiceContainer(value: SessionServiceContainer) {
 		this._sessionServiceContainer = value;
-	}
-
-	private getApiUrlCore(data?: { apiUrl?: string; usingEU?: boolean; [key: string]: any }): string {
-		const newRelicApiUrl = (this._sessionServiceContainer || SessionContainer.instance()).session
-			.newRelicApiUrl;
-		if (data) {
-			if (data.apiUrl) {
-				return Strings.trimEnd(data.apiUrl, "/").toLowerCase();
-			}
-			if (data.usingEU) {
-				return newRelicApiUrl || "https://api.eu.newrelic.com";
-			}
-		}
-		return newRelicApiUrl || "https://api.newrelic.com";
 	}
 
 	get productUrl() {
@@ -189,6 +178,9 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		delete this._client;
 		delete this._newRelicUserId;
 		delete this._codeStreamUser;
+		delete this._accountIds;
+		this._mltTimedCache.clear();
+		this._applicationEntitiesCache = {};
 
 		try {
 			// remove these when a user disconnects -- don't want them lingering around
@@ -202,7 +194,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			ContextLogger.warn("failed to remove observabilityRepoEntities", ex);
 		}
 
-		super.onDisconnected(request);
+		return super.onDisconnected(request);
 	}
 
 	protected async client(): Promise<GraphQLClient> {
@@ -253,31 +245,33 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		return client;
 	}
 
-	@log()
-	async configure(request: NewRelicConfigurationData) {
-		// FIXME - this rather sucks as a way to ensure we have the access token
-		// const userPromise = new Promise<void>(resolve => {
-		// 	this.session.api.onDidReceiveMessage(e => {
-		// 		if (e.type !== MessageType.Users) return;
-		//
-		// 		const me = e.data.find((u: any) => u.id === this.session.userId) as CSMe | null | undefined;
-		// 		if (me == null) return;
-		//
-		// 		const providerInfo = this.getProviderInfo(me);
-		// 		if (providerInfo == null || !providerInfo.accessToken) return;
-		//
-		// 		resolve();
-		// 	});
-		// });
-		const client = this.createClient(
-			this.getApiUrlCore({ apiUrl: request.apiUrl }) + "/graphql",
-			request.apiKey
-		);
-		const { userId, accounts } = await this.validateApiKey(client);
+	canConfigure() {
+		return true;
+	}
+
+	async verifyConnection(config: ProviderConfigurationData): Promise<void> {
+		const newRelicData = (config.data || {}) as NewRelicConfigurationData;
+		await this.createClientAndValidateKey(newRelicData.apiUrl!, config.accessToken!);
+	}
+
+	async createClientAndValidateKey(apiUrl: string, apiKey: string) {
+		if (this._client && this._newRelicUserId && this._accountIds) return;
+		this._client = this.createClient(this.apiUrl + "/graphql", apiKey);
+		const { userId, accounts } = await this.validateApiKey(this._client!);
+		this._newRelicUserId = userId;
 		ContextLogger.log(`Found ${accounts.length} New Relic accounts`);
-		const accountIds = accounts.map(_ => _.id);
+		this._accountIds = accounts.map(_ => _.id);
+	}
+
+	@log()
+	async configure(config: ProviderConfigurationData, verify?: boolean): Promise<boolean> {
+		if (verify) {
+			if (!(await super.configure(config, true))) return false;
+		}
+		const newRelicData = (config.data || {}) as NewRelicConfigurationData;
+		await this.createClientAndValidateKey(newRelicData.apiUrl!, config.accessToken!);
 		const accountsToOrgs = await this.session.api.lookupNewRelicOrganizations({
-			accountIds
+			accountIds: this._accountIds!
 		});
 		const orgIdsSet = new Set(accountsToOrgs.map(_ => _.orgId));
 		const uniqueOrgIds = Array.from(orgIdsSet.values());
@@ -296,9 +290,9 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					);
 					await this.session.api.addCompanyNewRelicInfo(company.id, undefined, uniqueNewOrgIds);
 				}
-			} else if (accounts.length) {
+			} else if (this._accountIds!.length) {
 				const existingAccountIds = company.nrAccountIds || [];
-				const newAccountIds = accountIds.filter(_ => existingAccountIds.indexOf(_) < 0);
+				const newAccountIds = this._accountIds!.filter(_ => existingAccountIds.indexOf(_) < 0);
 				if (newAccountIds.length) {
 					ContextLogger.log(
 						`Associating company ${company.id} with NR accounts ${newAccountIds.join(", ")}`
@@ -308,19 +302,14 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			}
 		}
 
-		await this.session.api.setThirdPartyProviderToken({
-			providerId: this.providerConfig.id,
-			token: request.apiKey,
-			data: {
-				userId,
-				accountId: request.accountId,
-				apiUrl: request.apiUrl,
-				orgIds: uniqueOrgIds
-			}
-		});
+		config.data = config.data || {};
+		config.data.userId = this._newRelicUserId;
+		config.data.orgIds = uniqueOrgIds;
+		await super.configure(config);
 
 		// update telemetry super-properties
-		this.session.addNewRelicSuperProps(userId, uniqueOrgIds[0]);
+		this.session.addNewRelicSuperProps(this._newRelicUserId!, uniqueOrgIds[0]);
+		return true;
 	}
 
 	private async validateApiKey(
@@ -2404,7 +2393,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		let fingerprintId = 0;
 		try {
 			// BrowserApplicationEntity uses a fingerprint instead of an occurrence and it's a number
-			if ((typeof occurrenceId === "string" && occurrenceId.match(/^-?\d+$/))) {
+			if (typeof occurrenceId === "string" && occurrenceId.match(/^-?\d+$/)) {
 				fingerprintId = parseInt(occurrenceId, 10);
 			} else if (typeof occurrenceId === "number") {
 				fingerprintId = occurrenceId;
@@ -2779,7 +2768,10 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		}
 	}
 
-	private getFingerprintedErrorTraceQueries(applicationGuid: String, entityType?: EntityType): String[] {
+	private getFingerprintedErrorTraceQueries(
+		applicationGuid: String,
+		entityType?: EntityType
+	): String[] {
 		const apmNrql = [
 			"SELECT",
 			"latest(timestamp) AS 'lastOccurrence',", // first field is used to sort with FACET
@@ -2796,7 +2788,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			"LIMIT MAX"
 		].join(" ");
 
-		const browserNrql  = [
+		const browserNrql = [
 			"SELECT",
 			"latest(timestamp) AS 'lastOccurrence',", // first field is used to sort with FACET
 			"latest(stackHash) AS 'occurrenceId',",
@@ -2812,7 +2804,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			"LIMIT MAX"
 		].join(" ");
 
-		const mobileNrql1  = [
+		const mobileNrql1 = [
 			"SELECT",
 			"latest(timestamp) AS 'lastOccurrence',", // first field is used to sort with FACET
 			"latest(occurrenceId) AS 'occurrenceId',",
@@ -2828,7 +2820,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			"LIMIT MAX"
 		].join(" ");
 
-		const mobileNrql2  = [
+		const mobileNrql2 = [
 			"SELECT",
 			"latest(timestamp) AS 'lastOccurrence',", // first field is used to sort with FACET
 			"latest(handledExceptionUuid) AS 'occurrenceId',",
@@ -2846,11 +2838,11 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 
 		switch (entityType) {
 			case "BROWSER_APPLICATION_ENTITY":
-				return [ browserNrql ];
+				return [browserNrql];
 			case "MOBILE_APPLICATION_ENTITY":
-				return [ mobileNrql1, mobileNrql2 ];
+				return [mobileNrql1, mobileNrql2];
 			default:
-				return [ apmNrql ];
+				return [apmNrql];
 		}
 	}
 
@@ -2862,7 +2854,11 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 	 * @returns list of most recent error traces for each unique fingerprint
 	 */
 	@log({ timed: true })
-	private async findFingerprintedErrorTraces(accountId: number, applicationGuid: string, entityType?: EntityType) {
+	private async findFingerprintedErrorTraces(
+		accountId: number,
+		applicationGuid: string,
+		entityType?: EntityType
+	) {
 		const queries = this.getFingerprintedErrorTraceQueries(applicationGuid, entityType);
 
 		try {

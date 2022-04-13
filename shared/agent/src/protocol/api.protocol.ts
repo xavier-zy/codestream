@@ -140,7 +140,6 @@ export interface CSRegisterResponse {
 }
 
 export interface CSNRRegisterRequest {
-	apiRegion: string;
 	apiKey: string;
 }
 
@@ -912,3 +911,10 @@ export interface TriggerMsTeamsProactiveMessageRequest {
 }
 
 export interface TriggerMsTeamsProactiveMessageResponse {}
+
+export interface CSThirdPartyProviderSetInfoRequestData {
+	teamId: string;
+	host?: string;
+	data: { [key: string]: any };
+	pendingVerification?: boolean;
+}

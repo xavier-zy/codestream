@@ -114,6 +114,7 @@ export async function activate(context: ExtensionContext) {
 			isDebugging: Logger.isDebugging,
 			serverUrl: cfg.serverUrl,
 			disableStrictSSL: cfg.disableStrictSSL,
+			extraCerts: cfg.extraCerts,
 			traceLevel: Logger.level,
 			machineId: env.machineId
 		},

@@ -100,6 +100,12 @@
 					"description": "Allow self-signed certificates to be used in network requests",
 					"scope": "window"
 				},
+				"codestream.extraCerts": {
+					"type": "string",
+					"default": null,
+					"description": "Specify path to file containing any certificate(s) you wish CodeStream connections to trust",
+					"scope": "window"
+				},
 				"codestream.email": {
 					"type": "string",
 					"default": null,

@@ -233,8 +233,6 @@ export const PullRequestFilesChanged = (props: Props) => {
 					setErrorMessage(err || "Could not open file diff");
 				}
 
-				visitFile(f.file, index);
-
 				HostApi.instance.track("PR Diff Viewed", {
 					Host: pr && pr.providerId
 				});
@@ -309,15 +307,15 @@ export const PullRequestFilesChanged = (props: Props) => {
 	const renderFile = (f, index, depth) => {
 		const selected = derivedState.parsedDiffUri && derivedState.parsedDiffUri.path == f.file;
 		const visited = visitedFiles[f.file];
-		if (selected && !visited) {
-			visitFile(f.file, index);
-		}
+		// if (selected && !visited) {
+		// 	visitFile(f.file, index);
+		// }
 
 		let icon;
 		// if we're loading, show a spinner
 		if (loading) icon = "sync";
 		// this file is currently selected, and visible in diff view
-		else if (selected) icon = "arrow-right";
+		// else if (selected) icon = "arrow-right";
 		// this file has been visitied during the review
 		else if (visited) icon = "ok";
 		// not yet visited, but part of the review
@@ -343,6 +341,7 @@ export const PullRequestFilesChanged = (props: Props) => {
 					isDisabled={isDisabled}
 					loading={loading}
 					unVisitFile={unVisitFile}
+					visitFile={visitFile}
 					goDiff={goDiff}
 					depth={depth}
 					visited={visited}

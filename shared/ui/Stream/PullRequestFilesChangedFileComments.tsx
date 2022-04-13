@@ -22,7 +22,7 @@ export const Comment = styled.div`
 	}
 `;
 
-//@TODO: better typescript-ify these props
+//@TODO: better typescript-ify this interface
 interface Props {
 	hasComments?: any;
 	selected?: any;
@@ -36,6 +36,7 @@ interface Props {
 	isDisabled?: any;
 	loading?: any;
 	unVisitFile?: any;
+	visitFile?: any;
 	goDiff?: any;
 	depth?: any;
 	visited?: any;
@@ -62,6 +63,7 @@ export const PullRequestFilesChangedFileComments = (props: Props) => {
 		isDisabled,
 		loading,
 		unVisitFile,
+		visitFile,
 		goDiff,
 		depth,
 		visited,
@@ -109,6 +111,16 @@ export const PullRequestFilesChangedFileComments = (props: Props) => {
 		}
 	};
 
+	const handleIconClick = e => {
+		e.preventDefault();
+		e.stopPropagation();
+		if (visited) {
+			unVisitFile(fileObject.file);
+		} else {
+			visitFile(fileObject.file, index);
+		}
+	};
+
 	if (!hasComments) {
 		return (
 			<>
@@ -122,19 +134,7 @@ export const PullRequestFilesChangedFileComments = (props: Props) => {
 									margin: "0 10px 0 auto"
 								}}
 							>
-								<Icon
-									onClick={
-										visited
-											? async e => {
-													e.preventDefault();
-													e.stopPropagation();
-													unVisitFile(fileObject.file);
-											  }
-											: undefined
-									}
-									name={icon}
-									className={iconClass}
-								/>
+								<Icon onClick={e => handleIconClick(e)} name={icon} className={iconClass} />
 							</span>
 						)
 					}
@@ -169,19 +169,7 @@ export const PullRequestFilesChangedFileComments = (props: Props) => {
 										margin: "0 10px 0 auto"
 									}}
 								>
-									<Icon
-										onClick={
-											visited
-												? async e => {
-														e.preventDefault();
-														e.stopPropagation();
-														unVisitFile(fileObject.file);
-												  }
-												: undefined
-										}
-										name={icon}
-										className={iconClass}
-									/>
+									<Icon onClick={e => handleIconClick(e)} name={icon} className={iconClass} />
 								</span>
 							)
 						}

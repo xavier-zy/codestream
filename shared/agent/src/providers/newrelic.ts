@@ -250,12 +250,14 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 	}
 
 	async verifyConnection(config: ProviderConfigurationData): Promise<void> {
-		const newRelicData = (config.data || {}) as NewRelicConfigurationData;
-		await this.createClientAndValidateKey(newRelicData.apiUrl!, config.accessToken!);
+		delete this._client;
+		await this.createClientAndValidateKey(config.accessToken!);
 	}
 
-	async createClientAndValidateKey(apiUrl: string, apiKey: string) {
-		if (this._client && this._newRelicUserId && this._accountIds) return;
+	async createClientAndValidateKey(apiKey: string) {
+		if (this._client && this._newRelicUserId && this._accountIds) {
+			return;
+		}
 		this._client = this.createClient(this.apiUrl + "/graphql", apiKey);
 		const { userId, accounts } = await this.validateApiKey(this._client!);
 		this._newRelicUserId = userId;
@@ -268,8 +270,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		if (verify) {
 			if (!(await super.configure(config, true))) return false;
 		}
-		const newRelicData = (config.data || {}) as NewRelicConfigurationData;
-		await this.createClientAndValidateKey(newRelicData.apiUrl!, config.accessToken!);
+		await this.createClientAndValidateKey(config.accessToken!);
 		const accountsToOrgs = await this.session.api.lookupNewRelicOrganizations({
 			accountIds: this._accountIds!
 		});

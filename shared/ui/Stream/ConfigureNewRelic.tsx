@@ -107,10 +107,6 @@ export default function ConfigureNewRelic(props: Props) {
 		if (isFormInvalid()) return;
 		const { providerId } = props;
 
-		// configuring is as good as connecting, since we are letting the user
-		// set the access token ... sending the fourth argument as true here lets the
-		// configureProvider function know that they can mark New Relic as connected as soon
-		// as the access token entered by the user has been saved to the server
 		setLoading(true);
 		await dispatch(
 			configureProvider(
@@ -131,7 +127,6 @@ export default function ConfigureNewRelic(props: Props) {
 			return;
 		}
 		setAlreadyConnected(true);
-		//await dispatch(closeAllPanels());
 		let isOnSubmittedPromise = false;
 		HostApi.instance.track("NR Connected", {
 			"Connection Location": props.originLocation

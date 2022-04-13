@@ -707,7 +707,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			ContextLogger.warn("getObservabilityErrorAssignments", {
 				error: ex
 			});
-			if (ex.code === 100004) {
+			if (ex.code === ERROR_NR_INSUFFICIENT_API_KEY) {
 				throw ex;
 			}
 		}
@@ -1002,6 +1002,9 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			}
 		} catch (ex) {
 			ContextLogger.error(ex, "getObservabilityErrors");
+			if (ex.code === ERROR_NR_INSUFFICIENT_API_KEY) {
+				throw ex;
+			}
 		}
 		return response as any;
 	}

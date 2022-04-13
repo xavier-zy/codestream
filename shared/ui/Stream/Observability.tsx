@@ -11,6 +11,7 @@ import styled from "styled-components";
 import {
 	DidChangeObservabilityDataNotificationType,
 	EntityAccount,
+	ERROR_NR_INSUFFICIENT_API_KEY,
 	GetObservabilityEntitiesRequestType,
 	GetObservabilityErrorAssignmentsRequestType,
 	GetObservabilityErrorAssignmentsResponse,
@@ -251,7 +252,8 @@ export const Observability = React.memo((props: Props) => {
 				setNoAccess(false);
 			})
 			.catch(ex => {
-				if (ex.code === 100004) {
+				setLoadingAssigments(false);
+				if (ex.code === ERROR_NR_INSUFFICIENT_API_KEY) {
 					setNoAccess(true);
 				}
 			});
@@ -295,6 +297,12 @@ export const Observability = React.memo((props: Props) => {
 								setLoadingEntities(false);
 							});
 						loading(repoIds, false);
+					})
+					.catch(ex => {
+						loading(repoIds, false);
+						if (ex.code === ERROR_NR_INSUFFICIENT_API_KEY) {
+							setNoAccess(true);
+						}
 					});
 			});
 	};
@@ -360,6 +368,12 @@ export const Observability = React.memo((props: Props) => {
 									setObservabilityErrors(existingObservabilityErrors);
 								}
 								loading(repoId, false);
+							})
+							.catch(ex => {
+								loading(repoId, false);
+								if (ex.code === ERROR_NR_INSUFFICIENT_API_KEY) {
+									setNoAccess(true);
+								}
 							});
 					}
 				}
@@ -382,6 +396,12 @@ export const Observability = React.memo((props: Props) => {
 				}
 
 				loading(repoId, false);
+			})
+			.catch(ex => {
+				loading(repoId, false);
+				if (ex.code === ERROR_NR_INSUFFICIENT_API_KEY) {
+					setNoAccess(true);
+				}
 			});
 	};
 

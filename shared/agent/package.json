@@ -33,7 +33,7 @@
 		"rebuild": "npm run clean && npm install --no-save && npm run build",
 		"update:emoji": "pushd emoji && node ./shortcodeToEmoji.js && popd",
 		"watch": "webpack --watch --env development=true",
-		"test:ci": "npm run test-unit-with-coverage",
+		"test:ci": "npm run test-unit",
 		"test-acceptance": "cross-env TS_NODE_COMPILER_OPTIONS=\"{ \\\"module\\\": \\\"commonjs\\\", \\\"types\\\": [\\\"node\\\"] }\" mocha -r ts-node/register -r esm --recursive \"test/acceptance/**/*.spec.ts\"",
 		"test-acceptance-ci": "npm run test-acceptance -- --reporter mocha-teamcity-reporter",
 		"test-apiserver": "cross-env TS_NODE_COMPILER_OPTIONS=\"{ \\\"module\\\": \\\"commonjs\\\", \\\"types\\\": [\\\"node\\\"] }\" mocha -r ts-node/register -r esm --recursive \"test/api_server/**/*.spec.ts\"",

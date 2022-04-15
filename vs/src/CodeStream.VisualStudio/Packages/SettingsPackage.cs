@@ -81,35 +81,16 @@ namespace CodeStream.VisualStudio.Packages {
 			}
 			else if (args.PropertyName == nameof(_settingsManager.ServerUrl) ||
 					 args.PropertyName == nameof(_settingsManager.ProxyStrictSsl) ||
+					 args.PropertyName == nameof(_settingsManager.ProxySupport) ||
 					 args.PropertyName == nameof(_settingsManager.DisableStrictSSL)) {
 
 				try {
-					try {
-						var languageServerClientManager = _componentModel.GetService<ILanguageServerClientManager>();
-						if (languageServerClientManager != null) {
-							try {
-								ThreadHelper.JoinableTaskFactory.Run(async () => {
-									await languageServerClientManager.RestartAsync();
-								});
-							}
-							catch (Exception ex) {
-
-							}
-						}
-					}
-					catch {
-						//languageServerClientManager won't be there if the agent is not already activated
-					}
-
 					var sessionService = _componentModel.GetService<ISessionService>();
 					if (sessionService?.IsAgentReady == true || sessionService?.IsReady == true) {
-						var browserService = _componentModel.GetService<IBrowserService>();
-						browserService?.ReloadWebView();
+						_ = _componentModel.GetService<ICodeStreamService>().ConfigChangeReloadNotificationAsync();
 					}
 				}
-				catch (Exception ex) {
-
-				}
+				catch {}
 			}
 		}
 

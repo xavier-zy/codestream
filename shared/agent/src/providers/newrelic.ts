@@ -21,12 +21,15 @@ import { GitRemoteParser } from "../git/parsers/remoteParser";
 import { Logger } from "../logger";
 import {
 	BuiltFromResult,
+	CrashOrException,
 	Entity,
 	EntityAccount,
 	EntitySearchResponse,
+	EntityType,
 	ERROR_NR_CONNECTION_INVALID_API_KEY,
 	ERROR_NR_CONNECTION_MISSING_API_KEY,
 	ERROR_NR_CONNECTION_MISSING_URL,
+	ERROR_NR_INSUFFICIENT_API_KEY,
 	ERROR_PIXIE_NOT_CONFIGURED,
 	ErrorGroup,
 	ErrorGroupResponse,
@@ -69,12 +72,11 @@ import {
 	ObservabilityRepo,
 	ProviderConfigurationData,
 	RelatedEntity,
+	RelatedEntityByRepositoryGuidsResult,
 	ReposScm,
 	StackTraceResponse,
 	ThirdPartyDisconnect,
-	ThirdPartyProviderConfig,
-	CrashOrException,
-	EntityType
+	ThirdPartyProviderConfig
 } from "../protocol/agent.protocol";
 import { CSMe, CSNewRelicProviderInfo } from "../protocol/api.protocol";
 import { CodeStreamSession } from "../session";
@@ -250,12 +252,14 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 	}
 
 	async verifyConnection(config: ProviderConfigurationData): Promise<void> {
-		const newRelicData = (config.data || {}) as NewRelicConfigurationData;
-		await this.createClientAndValidateKey(newRelicData.apiUrl!, config.accessToken!);
+		delete this._client;
+		await this.createClientAndValidateKey(config.accessToken!);
 	}
 
-	async createClientAndValidateKey(apiUrl: string, apiKey: string) {
-		if (this._client && this._newRelicUserId && this._accountIds) return;
+	async createClientAndValidateKey(apiKey: string) {
+		if (this._client && this._newRelicUserId && this._accountIds) {
+			return;
+		}
 		this._client = this.createClient(this.apiUrl + "/graphql", apiKey);
 		const { userId, accounts } = await this.validateApiKey(this._client!);
 		this._newRelicUserId = userId;
@@ -268,8 +272,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		if (verify) {
 			if (!(await super.configure(config, true))) return false;
 		}
-		const newRelicData = (config.data || {}) as NewRelicConfigurationData;
-		await this.createClientAndValidateKey(newRelicData.apiUrl!, config.accessToken!);
+		await this.createClientAndValidateKey(config.accessToken!);
 		const accountsToOrgs = await this.session.api.lookupNewRelicOrganizations({
 			accountIds: this._accountIds!
 		});
@@ -388,6 +391,10 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				if (accessTokenError) {
 					throw new AccessTokenError(accessTokenError.message, ex, true);
 				}
+				const insufficientApiKeyError = this.getInsufficientApiKeyError(ex);
+				if (insufficientApiKeyError) {
+					throw new ResponseError(ERROR_NR_INSUFFICIENT_API_KEY, "Insufficient New Relic API key");
+				}
 
 				// this is an unexpected error, throw the exception normally
 				throw ex;
@@ -402,7 +409,9 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			response: {
 				errors: {
 					extensions: {
-						error_code: string;
+						error_code?: string;
+						errorClass?: string;
+						classification?: string;
 					};
 					message: string;
 				}[];
@@ -416,6 +425,35 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		) {
 			return requestError.response.errors.find(
 				_ => _.extensions && _.extensions.error_code === "BAD_API_KEY"
+			);
+		}
+		return undefined;
+	}
+
+	private getInsufficientApiKeyError(ex: any): { message: string } | undefined {
+		const requestError = ex as {
+			response: {
+				errors: {
+					extensions: {
+						error_code?: string;
+						errorClass?: string;
+						classification?: string;
+					};
+					message: string;
+				}[];
+			};
+		};
+		if (
+			requestError &&
+			requestError.response &&
+			requestError.response.errors &&
+			requestError.response.errors.length
+		) {
+			return requestError.response.errors.find(
+				_ =>
+					_.extensions &&
+					_.extensions.errorClass === "SERVER_ERROR" &&
+					_.extensions.classification === "DataFetchingException"
 			);
 		}
 		return undefined;
@@ -671,6 +709,9 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			ContextLogger.warn("getObservabilityErrorAssignments", {
 				error: ex
 			});
+			if (ex.code === ERROR_NR_INSUFFICIENT_API_KEY) {
+				throw ex;
+			}
 		}
 
 		return response;
@@ -683,7 +724,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 	async getObservabilityRepos(request: GetObservabilityReposRequest) {
 		const response: GetObservabilityReposResponse = { repos: [] };
 		try {
-			const { scm } = SessionContainer.instance();
+			const { scm } = this._sessionServiceContainer || SessionContainer.instance();
 			const reposResponse = await scm.getRepos({ inEditorOnly: true, includeRemotes: true });
 			let filteredRepos: ReposScm[] | undefined = reposResponse?.repositories;
 			if (request?.filters?.length) {
@@ -713,16 +754,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					continue;
 				}
 
-				let remotes: string[] = [];
-				for (const remote of repo.remotes) {
-					if (remote.name === "origin" || remote.remoteWeight === 0) {
-						// this is the origin remote
-						remotes = [remote.rawUrl!];
-						break;
-					} else {
-						remotes.push(remote.rawUrl!);
-					}
-				}
+				const remotes: string[] = repo.remotes?.map(_ => _.rawUrl!);
 
 				// find REPOSITORY entities tied to a remote
 				const repositoryEntitiesResponse = await this.findRepositoryEntitiesByRepoRemotes(remotes);
@@ -963,6 +995,9 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			}
 		} catch (ex) {
 			ContextLogger.error(ex, "getObservabilityErrors");
+			if (ex.code === ERROR_NR_INSUFFICIENT_API_KEY) {
+				throw ex;
+			}
 		}
 		return response as any;
 	}
@@ -2689,7 +2724,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		return undefined;
 	}
 
-	private async buildRepoRemoteVariants(remotes: string[]): Promise<string[]> {
+	protected async buildRepoRemoteVariants(remotes: string[]): Promise<string[]> {
 		const set = new Set<string>();
 
 		await Promise.all(
@@ -2722,7 +2757,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 	 * 	>)}
 	 * @memberof NewRelicProvider
 	 */
-	private async findRepositoryEntitiesByRepoRemotes(
+	protected async findRepositoryEntitiesByRepoRemotes(
 		remotes: string[]
 	): Promise<
 		| {
@@ -2887,17 +2922,9 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		}
 	}
 
-	private async findRelatedEntityByRepositoryGuids(
+	protected async findRelatedEntityByRepositoryGuids(
 		repositoryGuids: string[]
-	): Promise<{
-		actor: {
-			entities: {
-				relatedEntities: {
-					results: RelatedEntity[];
-				};
-			}[];
-		};
-	}> {
+	): Promise<RelatedEntityByRepositoryGuidsResult> {
 		return this.query(
 			`query fetchRelatedEntities($guids:[EntityGuid]!){
 			actor {

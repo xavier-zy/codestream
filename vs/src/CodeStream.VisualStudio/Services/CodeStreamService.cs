@@ -246,5 +246,17 @@ namespace CodeStream.VisualStudio.Services {
 
 			await Task.CompletedTask;
 		}
+
+		public async Task ConfigChangeReloadNotificationAsync() {
+			if (IsReady) {
+				try {
+					_ = _browserService.NotifyAsync(new ConfigChangeReloadNotificationType());
+				}
+				catch (Exception ex) {
+					Log.Error(ex, nameof(ConfigChangeReloadNotificationAsync));
+				}
+			}
+			await Task.CompletedTask;
+		}
 	}
 }

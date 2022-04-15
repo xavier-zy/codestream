@@ -1232,7 +1232,10 @@ export interface StackTraceResponse {
 	};
 }
 
-export type EntityType = "BROWSER_APPLICATION_ENTITY" | "GENERIC_ENTITY" | "MOBILE_APPLICATION_ENTITY";
+export type EntityType =
+	| "BROWSER_APPLICATION_ENTITY"
+	| "GENERIC_ENTITY"
+	| "MOBILE_APPLICATION_ENTITY";
 
 export interface Entity {
 	account?: {
@@ -1393,4 +1396,14 @@ export interface GoldenMetricsResult {
 		"Response time (ms)": string;
 		Throughput: string;
 	}[];
+}
+
+export interface RelatedEntityByRepositoryGuidsResult {
+	actor: {
+		entities: {
+			relatedEntities: {
+				results: RelatedEntity[];
+			};
+		}[];
+	};
 }

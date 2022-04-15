@@ -31,6 +31,12 @@ export interface ProviderDisplay {
 
 	helpPATUrl?: string;
 	namePAT?: string;
+
+	directPAT?: {
+		path: string;
+		scopesParam: string;
+		descriptionParam?: string;
+	};
 }
 
 export const PROVIDER_MAPPINGS: { [provider: string]: ProviderDisplay } = {
@@ -60,10 +66,10 @@ export const PROVIDER_MAPPINGS: { [provider: string]: ProviderDisplay } = {
 			"https://confluence.atlassian.com/bitbucketserver/personal-access-tokens-939515499.html",
 		invalidHosts: ["bitbucket.org"]
 	},
-	clubhouse: {
-		displayName: "Clubhouse",
-		icon: "clubhouse",
-		helpUrl: "https://help.clubhouse.io/hc/en-us/articles/205701199-Clubhouse-API-Tokens",
+	shortcut: {
+		displayName: "Shortcut",
+		icon: "shortcut",
+		helpUrl: "https://help.shortcut.com/hc/en-us/articles/205701199-Clubhouse-API-Tokens",
 		supportsStartWork: true
 	},
 	linear: {
@@ -94,7 +100,12 @@ export const PROVIDER_MAPPINGS: { [provider: string]: ProviderDisplay } = {
 		supportsStartWork: true,
 		supportsPRManagement: true,
 		helpPATUrl:
-			"https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token"
+			"https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token",
+		directPAT: {
+			path: "settings/tokens/new",
+			descriptionParam: "description",
+			scopesParam: "scopes"
+		}
 	},
 	github_enterprise: {
 		displayName: "GitHub Enterprise",
@@ -116,7 +127,12 @@ export const PROVIDER_MAPPINGS: { [provider: string]: ProviderDisplay } = {
 			"https://docs.newrelic.com/docs/codestream/how-use-codestream/pull-requests#github",
 		supportsStartWork: true,
 		supportsPRManagement: true,
-		invalidHosts: ["github.com"]
+		invalidHosts: ["github.com"],
+		directPAT: {
+			path: "settings/tokens/new",
+			descriptionParam: "description",
+			scopesParam: "scopes"
+		}
 	},
 	gitlab: {
 		displayName: "GitLab",

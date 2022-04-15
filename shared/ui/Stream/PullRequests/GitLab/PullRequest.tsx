@@ -288,6 +288,8 @@ let insertText;
 let insertNewline;
 let focusOnMessageInput;
 
+const GL_404_HELP = "https://docs.newrelic.com/docs/codestream/troubleshooting/reverse-proxy";
+
 export const PullRequest = () => {
 	const dispatch = useDispatch();
 	const derivedState = useSelector((state: CodeStreamState) => {
@@ -638,11 +640,17 @@ export const PullRequest = () => {
 				</div>
 				{generalError && (
 					<ErrorMessage>
-						Error Loading Pull Request:
+						Error Loading Merge Request:
 						<br />
 						<div style={{ overflow: "auto", width: "100%", height: "7vh" }}>
 							{generalError.replace(/\\t/g, "     ").replace(/\\n/g, "")}
 						</div>
+						{generalError.includes("404 Project Not Found") && (
+							<div>
+								Using apache2 reverse proxy? Click <Link href={GL_404_HELP}>here</Link> for a
+								possible solution.
+							</div>
+						)}
 					</ErrorMessage>
 				)}
 				{!generalError && <LoadingMessage>Loading Merge Request...</LoadingMessage>}

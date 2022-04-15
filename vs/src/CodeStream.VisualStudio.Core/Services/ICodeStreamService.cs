@@ -30,5 +30,6 @@ namespace CodeStream.VisualStudio.Core.Services {
 		//Task LogoutAsync();
 		IBrowserService BrowserService { get; }
 		bool IsReady { get; }
+		Task ConfigChangeReloadNotificationAsync();
 	}
 }

@@ -4,3 +4,4 @@ npm-debug.log
 .idea/dictionaries
 .idea/workspace.xml
 .nyc_output
+src/protocol/*.js

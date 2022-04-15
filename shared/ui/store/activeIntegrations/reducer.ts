@@ -45,12 +45,12 @@ export function getIntegrationData<T extends ActiveIntegrationData>(
 	state: ActiveIntegrationsState,
 	providerId: string
 ): T {
-	return (state[providerId] || emptyObject) as T;
+	return (state.integrations[providerId] || emptyObject) as T;
 }
 
 export const getBoards = (state: ActiveIntegrationsState, providerId?: string) => {
 	if (providerId == undefined) return emptyArray;
-	const data = state[providerId];
+	const data = state.integrations[providerId];
 	if (!data) return emptyArray;
 	return (data as any).boards;
 };

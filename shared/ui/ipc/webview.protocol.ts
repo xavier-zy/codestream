@@ -19,6 +19,7 @@ export interface ShowCodemarkNotification {
 	codemarkId: string;
 	sourceUri?: string;
 }
+
 export const ShowCodemarkNotificationType = new NotificationType<ShowCodemarkNotification, void>(
 	`${IpcRoutes.Webview}/codemark/show`
 );
@@ -29,6 +30,7 @@ export interface ShowReviewNotification {
 	openFirstDiff?: boolean;
 	sourceUri?: string;
 }
+
 export const ShowReviewNotificationType = new NotificationType<ShowReviewNotification, void>(
 	`${IpcRoutes.Webview}/review/show`
 );
@@ -37,6 +39,7 @@ export const ShowReviewNotificationType = new NotificationType<ShowReviewNotific
 export interface ShowCodeErrorNotification {
 	codeErrorId: string;
 }
+
 export const ShowCodeErrorNotificationType = new NotificationType<ShowCodeErrorNotification, void>(
 	`${IpcRoutes.Webview}/codeError/show`
 );
@@ -50,6 +53,7 @@ export interface ShowPullRequestwNotification {
 	url?: string;
 	source?: string;
 }
+
 export const ShowPullRequestNotificationType = new NotificationType<
 	ShowPullRequestwNotification,
 	void
@@ -61,6 +65,7 @@ export interface ShowStreamNotification {
 	threadId?: string;
 	codemarkId?: string;
 }
+
 export const ShowStreamNotificationType = new NotificationType<ShowStreamNotification, void>(
 	`${IpcRoutes.Webview}/stream/show`
 );
@@ -159,3 +164,11 @@ export const ViewMethodLevelTelemetryNotificationType = new NotificationType<
 	ViewMethodLevelTelemetryNotification,
 	void
 >(`${IpcRoutes.Webview}/mlt/view`);
+
+export interface ShowProgressIndicator {
+	progressStatus: boolean;
+}
+
+export const ShowProgressIndicatorType = new NotificationType<ShowProgressIndicator, void>(
+	`${IpcRoutes.Webview}/system/progressIndicator`
+);

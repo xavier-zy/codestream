@@ -1,4 +1,5 @@
 import "@formatjs/intl-listformat/polyfill-locales";
+import { setBootstrapped } from "@codestream/webview/store/bootstrapped/actions";
 import React from "react";
 import { render } from "react-dom";
 import Container from "./Container";
@@ -24,7 +25,8 @@ import {
 	ShowPullRequestNotificationType,
 	HostDidChangeLayoutNotificationType,
 	RouteWithQuery,
-	ViewMethodLevelTelemetryNotificationType
+	ViewMethodLevelTelemetryNotificationType,
+	ShowProgressIndicatorType
 } from "./ipc/webview.protocol";
 import { createCodeStreamStore } from "./store";
 import { HostApi } from "./webview-api";
@@ -433,9 +435,9 @@ function listenForEvents(store) {
 									codemarks = store.getState().codemarks;
 								}
 								const codemark = getCodemark(codemarks, route.id);
-								if (codemark && codemark.type === CodemarkType.Link && codemark.markerIds?.length)
+								if (codemark && codemark.type === CodemarkType.Link && codemark.markerIds?.length) {
 									moveCursorToLine(codemark!.markerIds![0]);
-								else {
+								} else {
 									const markerId =
 										route.query && route.query.marker ? route.query.marker : undefined;
 									store.dispatch(setCurrentCodemark(route.id, markerId));
@@ -774,6 +776,10 @@ function listenForEvents(store) {
 
 	api.on(ConfigChangeReloadNotificationType, params => {
 		store.dispatch(updateConfigs({ configChangeReloadRequired: true }));
+	});
+
+	api.on(ShowProgressIndicatorType, params => {
+		store.dispatch(setBootstrapped(!params.progressStatus));
 	});
 }
 

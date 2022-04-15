@@ -12,6 +12,7 @@ import {
 	setCurrentPullRequest,
 	setNewPostEntry
 } from "../store/context/actions";
+import { bootstrapReviews } from "../store/reviews/actions";
 import Tooltip from "./Tooltip";
 import Timestamp from "./Timestamp";
 import { HostApi } from "../webview-api";
@@ -268,6 +269,7 @@ export const OpenPullRequests = React.memo((props: Props) => {
 			teamId: team.id,
 			isCurrentUserAdmin,
 			pullRequestQueries: state.preferences.pullRequestQueries,
+			reviewsStateBootstrapped: state.reviews.bootstrapped,
 			myPullRequests,
 			// Currently always showing, regardless of provider, might be reverted in future
 			isPRSupportedCodeHostConnected: prConnectedProvidersLength > 0,
@@ -712,6 +714,10 @@ export const OpenPullRequests = React.memo((props: Props) => {
 			// depending on the user's preference
 			const view = derivedState.hideDiffs ? "details" : "sidebar-diffs";
 			dispatch(setCurrentPullRequest(pr.providerId, pr.id, "", "", view));
+
+			// if (!derivedState.reviewsStateBootstrapped) {
+			// 	dispatch(bootstrapReviews());
+			// }
 
 			fetchOnePR(pr.providerId, pr.id);
 

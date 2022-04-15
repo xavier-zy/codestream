@@ -176,6 +176,7 @@ export interface WebviewContext {
 				source?: string;
 				/* details means show the full PR as the only view. sidebar-diffs means to show it as an expanded tree node */
 				view?: "details" | "sidebar-diffs";
+				previousView?: "details" | "sidebar-diffs" | undefined;
 				metadata?: any;
 		  }
 		| undefined;

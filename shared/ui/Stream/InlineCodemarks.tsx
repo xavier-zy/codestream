@@ -125,6 +125,7 @@ interface Props {
 	webviewFocused: boolean;
 	currentReviewId?: string;
 	currentCodeErrorId?: string;
+	currentPullRequestCommentId?: string;
 	currentPullRequestId?: string;
 	currentPullRequestProviderId?: string;
 	lightningCodeReviewsEnabled: boolean;
@@ -1177,7 +1178,8 @@ export class SimpleInlineCodemarks extends Component<Props, State> {
 			currentPullRequestId,
 			currentCodeErrorId,
 			currentPullRequestProviderId,
-			composeCodemarkActive
+			composeCodemarkActive,
+			currentPullRequestCommentId
 		} = this.props;
 
 		const composeOpen = composeCodemarkActive ? true : false;
@@ -1185,12 +1187,18 @@ export class SimpleInlineCodemarks extends Component<Props, State> {
 			currentPullRequestId &&
 			(currentPullRequestProviderId === "gitlab*com" ||
 				currentPullRequestProviderId === "gitlab/enterprise");
+
+		// <Modal
+		// 	onClose={isGitLabPR || currentCodeErrorId ? undefined : () => this.close()}
+		// 	translucent={currentPullRequestCommentId ? true : undefined}
+		// >
 		return (
 			<Modal
-				noScroll
-				noPadding
+				noScroll={!currentPullRequestCommentId ? true : undefined}
+				noPadding={!currentPullRequestCommentId ? true : undefined}
 				onClose={isGitLabPR || currentCodeErrorId ? undefined : () => this.close()}
 				sidebarBackground={!!currentReviewId || !!currentCodeErrorId}
+				translucent={currentPullRequestCommentId ? true : undefined}
 			>
 				<div style={{ overflow: isGitLabPR ? "visible" : "hidden" }}>
 					{currentReviewId ? (
@@ -1421,7 +1429,10 @@ const mapStateToProps = (state: CodeStreamState) => {
 		webviewFocused: context.hasFocus,
 		lightningCodeReviewsEnabled: isFeatureEnabled(state, "lightningCodeReviews"),
 		composeCodemarkActive: context.composeCodemarkActive,
-		newPostEntryPoint: context.newPostEntryPoint
+		newPostEntryPoint: context.newPostEntryPoint,
+		currentPullRequestCommentId: context.currentPullRequest
+			? context.currentPullRequest.commentId
+			: undefined
 	};
 };
 

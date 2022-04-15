@@ -74,6 +74,7 @@ export const PullRequestFilesChangedFileComments = (props: Props) => {
 
 	const handleClick = e => {
 		e.preventDefault();
+		console.warn(comments);
 		setShowComments(!showComments);
 	};
 

@@ -11,6 +11,8 @@ import { FileStatus } from "@codestream/protocols/api";
 import { CodeStreamState } from "../store";
 import styled from "styled-components";
 import { Modal } from "./Modal";
+import { Dialog } from "../src/components/Dialog";
+
 import { useDidMount } from "../utilities/hooks";
 
 const Root = styled.div`
@@ -29,7 +31,7 @@ interface Props {
 	pr: FetchThirdPartyPullRequestPullRequest;
 
 	setIsLoadingMessage: Function;
-	commentId: string;
+	commentId: string | undefined;
 	quote: Function;
 	onClose: Function;
 }
@@ -127,6 +129,8 @@ export const PullRequestFileComments = (props: PropsWithChildren<Props>) => {
 	}, [pr, pr?.updatedAt]);
 
 	if (!filename) return null;
+
+	// <Modal translucent onClose={() => props.onClose()}>
 
 	return (
 		<Modal translucent onClose={() => props.onClose()}>

@@ -150,6 +150,7 @@ export function reduceContext(
 		case ContextActionsType.SetCreatePullRequest:
 			return { ...state, createPullRequestReviewId: action.payload.reviewId };
 		case ContextActionsType.SetCurrentPullRequest:
+			console.warn("PREVIOUS STATE", state.currentPullRequest);
 			return {
 				...state,
 				currentPullRequest:
@@ -159,7 +160,8 @@ export function reduceContext(
 								id: action.payload.id,
 								commentId: action.payload.commentId,
 								source: action.payload.source,
-								view: action.payload.view
+								view: action.payload.view,
+								previousView: state?.currentPullRequest?.view
 						  }
 						: undefined,
 				pullRequestCheckoutBranch: false

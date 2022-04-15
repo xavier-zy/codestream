@@ -138,6 +138,9 @@ export const PullRequest = () => {
 			currentPullRequestSource: state.context.currentPullRequest
 				? state.context.currentPullRequest.source
 				: undefined,
+			previousPullRequestView: state.context.currentPullRequest
+				? state.context.currentPullRequest.previousView
+				: undefined,
 			currentPullRequest: currentPullRequest,
 			currentPullRequestLastUpdated: providerPullRequestLastUpdated,
 			composeCodemarkActive: state.context.composeCodemarkActive,
@@ -151,6 +154,7 @@ export const PullRequest = () => {
 	});
 
 	const pr = derivedState.currentPullRequest?.conversations?.repository?.pullRequest;
+	console.warn("previousPullRequestView", derivedState.previousPullRequestView);
 	useEffect(() => {
 		if (!derivedState.currentPullRequestCommentId) return;
 
@@ -175,6 +179,7 @@ export const PullRequest = () => {
 	const [title, setTitle] = useState("");
 	const [currentRepoChanged, setCurrentRepoChanged] = useState(false);
 	const [finishReviewOpen, setFinishReviewOpen] = useState(false);
+	const [oneLayerModal, setOneLayerModal] = useState(false);
 	const [autoCheckedMergeability, setAutoCheckedMergeability] = useState<
 		autoCheckedMergeabilityStatus
 	>("UNCHECKED");
@@ -434,7 +439,14 @@ export const PullRequest = () => {
 	const closeFileComments = () => {
 		// note we're passing no value for the 3rd argument, which clears
 		// the commentId
-		if (pr) dispatch(setCurrentPullRequest(pr.providerId, pr.id));
+		// if (pr) dispatch(setCurrentPullRequest(pr.providerId, pr.id));
+		if (oneLayerModal && pr) {
+			dispatch(setCurrentPullRequest(pr.providerId, pr.id, "", "", "sidebar-diffs"));
+		}
+
+		if (!oneLayerModal && pr) {
+			dispatch(setCurrentPullRequest(pr.providerId, pr.id, "", "", "details"));
+		}
 	};
 
 	const linkHijacker = (e: any) => {
@@ -484,6 +496,17 @@ export const PullRequest = () => {
 		if (!derivedState.reviewsStateBootstrapped) {
 			dispatch(bootstrapReviews());
 		}
+		if (
+			derivedState.currentPullRequestCommentId &&
+			!derivedState.composeCodemarkActive &&
+			derivedState.previousPullRequestView === "sidebar-diffs"
+		) {
+			setOneLayerModal(true);
+		}
+
+		// if (derivedState.previousPullRequestView === "sidebar-diffs") {
+		// 	setOneLayerModal(true);
+		// }
 		getOpenRepos();
 		initialFetch().then((_: any) => {
 			HostApi.instance.track("PR Details Viewed", {
@@ -648,6 +671,23 @@ export const PullRequest = () => {
 	} else {
 		const statusIcon = pr.state === "OPEN" || pr.state === "CLOSED" ? "pull-request" : "git-merge";
 		const action = pr.merged ? "merged " : "wants to merge ";
+
+		if (oneLayerModal) {
+			return (
+				<ThemeProvider theme={addViewPreferencesToTheme}>
+					<Root className="panel full-height">
+						<CreateCodemarkIcons narrow onebutton />
+						<PullRequestFileComments
+							pr={pr}
+							setIsLoadingMessage={setIsLoadingMessage}
+							commentId={derivedState.currentPullRequestCommentId}
+							quote={() => {}}
+							onClose={closeFileComments}
+						/>
+					</Root>
+				</ThemeProvider>
+			);
+		}
 
 		return (
 			<ThemeProvider theme={addViewPreferencesToTheme}>
@@ -875,12 +915,12 @@ export const PullRequest = () => {
 								<PRBadge>{pr.commits.totalCount}</PRBadge>
 							</Tab>
 							{/*
-		<Tab onClick={e => switchActiveTab(3)} active={activeTab == 3}>
-			<Icon name="check" />
-			<span className="wide-text">Checks</span>
-			<PRBadge>{pr.numChecks}</PRBadge>
-		</Tab>
-		 */}
+							<Tab onClick={e => switchActiveTab(3)} active={activeTab == 3}>
+								<Icon name="check" />
+								<span className="wide-text">Checks</span>
+								<PRBadge>{pr.numChecks}</PRBadge>
+							</Tab>
+							*/}
 							<Tab onClick={e => switchActiveTab(4)} active={activeTab == 4}>
 								<Icon name="plus-minus" />
 								<span className="wide-text">Files Changed</span>
@@ -967,6 +1007,7 @@ export const PullRequest = () => {
 							</div>
 						</ScrollBox>
 					)}
+
 					{!derivedState.composeCodemarkActive && derivedState.currentPullRequestCommentId && (
 						<PullRequestFileComments
 							pr={pr}

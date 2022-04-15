@@ -186,17 +186,19 @@ export default function ConfigureEnterprisePanel(props: Props) {
 							{scopes && (
 								<label>
 									Provide a <a href={providerUrl}>{namePAT.toLowerCase()}</a> with the following
-									scopes so that CodeStream can access{" "}
-									{supportsPRManagement && "your pull requests and "}issues:
+									scopes so that CodeStream can access your{" "}
+									{supportsPRManagement && "pull requests and "}issues:
 									<span>
 										&nbsp;<b>{scopes!.join(", ")}</b>.
 									</span>
 								</label>
 							)}
-							<label>
-								Provide a <a href={providerUrl}>{namePAT.toLowerCase()}</a> so that CodeStream can
-								access your {supportsPRManagement && "pull requests and "}issues.
-							</label>
+							{!scopes && (
+								<label>
+									Provide a <a href={providerUrl}>{namePAT.toLowerCase()}</a> so that CodeStream can
+									access your {supportsPRManagement && "pull requests and "}issues.
+								</label>
+							)}
 							<input
 								className="input-text control"
 								type="password"

@@ -446,7 +446,7 @@ export const PullRequestFilesChangedList = (props: Props) => {
 					commentMap={commentMap}
 					commitBased={props.commitBased}
 					sidebarView={props.sidebarView}
-					startingDepth={8}
+					startingDepth={5}
 					accessRawDiffs={props.accessRawDiffs}
 					setAccessRawDiffs={props.setAccessRawDiffs}
 				/>

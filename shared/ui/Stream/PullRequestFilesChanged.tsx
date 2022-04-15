@@ -346,6 +346,7 @@ export const PullRequestFilesChanged = (props: Props) => {
 					depth={depth}
 					visited={visited}
 					filesChanged={props.filesChanged}
+					pullRequest={pr}
 				/>
 			</>
 		);

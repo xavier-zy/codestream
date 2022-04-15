@@ -1,7 +1,9 @@
-import React, { useEffect, useState, useCallback, useMemo } from "react";
+import React from "react";
+import { useDispatch, useSelector } from "react-redux";
 import styled from "styled-components";
 import { ChangesetFile } from "./Review/ChangesetFile";
 import Icon from "./Icon";
+import { setCurrentPullRequest } from "../store/context/actions";
 
 export const FileWithComments = styled.div`
 	cursor: pointer;
@@ -41,6 +43,7 @@ interface Props {
 	depth?: any;
 	visited?: any;
 	filesChanged?: any;
+	pullRequest?: any;
 }
 
 /**
@@ -67,9 +70,11 @@ export const PullRequestFilesChangedFileComments = (props: Props) => {
 		goDiff,
 		depth,
 		visited,
-		filesChanged
+		filesChanged,
+		pullRequest
 	} = props;
 
+	const dispatch = useDispatch();
 	const [showComments, setShowComments] = React.useState(false);
 
 	const handleClick = e => {
@@ -112,14 +117,29 @@ export const PullRequestFilesChangedFileComments = (props: Props) => {
 		}
 	};
 
-	const handleIconClick = e => {
-		e.preventDefault();
-		e.stopPropagation();
+	const handleIconClick = event => {
+		event.preventDefault();
+		event.stopPropagation();
 		if (visited) {
 			unVisitFile(fileObject.file);
 		} else {
 			visitFile(fileObject.file, index);
 		}
+	};
+
+	const handleCommentClick = (event, comment) => {
+		event.preventDefault();
+		event.stopPropagation();
+
+		dispatch(
+			setCurrentPullRequest(
+				pullRequest.providerId,
+				pullRequest.id,
+				comment?.comment?.id || comment?.review?.id,
+				"",
+				"details"
+			)
+		);
 	};
 
 	if (!hasComments) {
@@ -192,7 +212,10 @@ export const PullRequestFilesChangedFileComments = (props: Props) => {
 					<>
 						{comments.map(c => {
 							return (
-								<Comment style={depth ? { paddingLeft: `${depth * 10}px` } : {}}>
+								<Comment
+									onClick={e => handleCommentClick(e, c)}
+									style={depth ? { paddingLeft: `${depth * 10}px` } : {}}
+								>
 									{lineNumber(c) && <span>Line {lineNumber(c)}: </span>}
 									{c.comment.bodyText}
 								</Comment>

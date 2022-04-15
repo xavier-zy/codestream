@@ -659,9 +659,9 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 												{props.errorGroup && (
 													<>
 														<Link href={props.errorGroup.entityUrl}>
-															<span className="subtle">{props.errorGroup.entityName}</span>
-														</Link>{" "}
-														<Icon name="link-external" className="open-external"></Icon>
+															<span className="subtle">{props.errorGroup.entityName}</span>{" "}
+															<Icon name="link-external" className="open-external"></Icon>
+														</Link>
 													</>
 												)}
 											</>

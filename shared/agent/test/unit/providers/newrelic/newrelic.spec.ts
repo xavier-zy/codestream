@@ -1,13 +1,19 @@
 "use strict";
 
 import { expect } from "chai";
-import { ObservabilityRepo } from "../../../../src/protocol/agent.protocol";
+
+import {
+	Entity,
+	GetReposScmResponse,
+	ObservabilityRepo,
+	RelatedEntity,
+	RelatedEntityByRepositoryGuidsResult
+} from "../../../../src/protocol/agent.protocol";
 import { CSMe } from "../../../../src/protocol/api.protocol.models";
+import { MetricQueryRequest, NewRelicProvider, Span } from "../../../../src/providers/newrelic";
 
 require("mocha").describe;
 require("mocha").it;
-import { MetricQueryRequest, NewRelicProvider, Span } from "../../../../src/providers/newrelic";
-
 describe("NewRelicProvider", async () => {
 	it("tryFormatStack", async () => {
 		const data = {
@@ -361,6 +367,55 @@ describe("NewRelicProvider", async () => {
 
 		expect(provider.generateEntityQueryStatements("")).to.eq(undefined);
 	});
+
+	it("getObservabilityRepos", async () => {
+		const serviceLocatorStub = {
+			scm: {
+				getRepos: function(): Promise<GetReposScmResponse> {
+					return new Promise(resolve => {
+						resolve({
+							repositories: [
+								{
+									id: "123",
+									path: "",
+									folder: { uri: "", name: "repo" },
+									remotes: [
+										{
+											repoPath: "/Users/johndoe/code/johndoe_foo-account-persister",
+											name: "origin",
+											domain: "yoursourcecode.net",
+											path: "johndoe/foo-account-persister",
+											rawUrl: "git@yoursourcecode.net:johndoe/foo-account-persister.git",
+											webUrl: "//yoursourcecode.net/johndoe/foo-account-persister"
+										},
+										{
+											repoPath: "/Users/johndoe/code/johndoe_foo-account-persister",
+											name: "upstream",
+											domain: "yoursourcecode.net",
+											path: "biz-enablement/foo-account-persister",
+											rawUrl: "git@yoursourcecode.net:biz-enablement/foo-account-persister.git",
+											webUrl: "//yoursourcecode.net/biz-enablement/foo-account-persister"
+										}
+									]
+								}
+							]
+						});
+					});
+				}
+			}
+		} as any;
+
+		const provider = new NewRelicProviderStub2({} as any, {} as any);
+		provider.sessionServiceContainer = serviceLocatorStub;
+
+		const results = await provider.getObservabilityRepos({});
+
+		expect(results?.repos?.length).to.eq(1);
+		expect(results?.repos[0].entityAccounts.length).to.eq(1);
+		expect(results?.repos[0].repoRemote).to.eq(
+			"git@yoursourcecode.net:biz-enablement/foo-account-persister.git"
+		);
+	});
 });
 
 class NewRelicProviderStubBase extends NewRelicProvider {
@@ -414,6 +469,71 @@ class NewRelicProviderStubBase extends NewRelicProvider {
 						results: []
 					}
 				}
+			}
+		};
+	}
+
+	protected async findRepositoryEntitiesByRepoRemotes(remotes: string[]): Promise<any> {
+		return {
+			entities: [
+				{
+					guid: "123456",
+					name: "my-entity",
+					tags: [
+						{
+							key: "accountId",
+							values: ["1"]
+						},
+						{
+							key: "url",
+							values: ["git@yoursourcecode.net:biz-enablement/foo-account-persister.git"]
+						}
+					]
+				}
+			] as Entity[],
+			remotes: await this.buildRepoRemoteVariants(remotes)
+		};
+	}
+
+	protected async findRelatedEntityByRepositoryGuids(
+		repositoryGuids: string[]
+	): Promise<RelatedEntityByRepositoryGuidsResult> {
+		return {
+			actor: {
+				entities: [
+					{
+						relatedEntities: {
+							results: [
+								{
+									source: {
+										entity: {
+											name: "src-entity",
+											type: "APPLICATION",
+											tags: [
+												{
+													key: "accountId",
+													values: ["1"]
+												}
+											]
+										}
+									},
+									target: {
+										entity: {
+											name: "target-entity",
+											type: "REPOSITORY",
+											tags: [
+												{
+													key: "accountId",
+													values: ["1"]
+												}
+											]
+										}
+									}
+								}
+							] as RelatedEntity[]
+						}
+					}
+				]
 			}
 		};
 	}

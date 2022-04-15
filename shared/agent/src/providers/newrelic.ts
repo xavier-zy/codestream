@@ -21,9 +21,11 @@ import { GitRemoteParser } from "../git/parsers/remoteParser";
 import { Logger } from "../logger";
 import {
 	BuiltFromResult,
+	CrashOrException,
 	Entity,
 	EntityAccount,
 	EntitySearchResponse,
+	EntityType,
 	ERROR_NR_CONNECTION_INVALID_API_KEY,
 	ERROR_NR_CONNECTION_MISSING_API_KEY,
 	ERROR_NR_CONNECTION_MISSING_URL,
@@ -70,12 +72,11 @@ import {
 	ObservabilityRepo,
 	ProviderConfigurationData,
 	RelatedEntity,
+	RelatedEntityByRepositoryGuidsResult,
 	ReposScm,
 	StackTraceResponse,
 	ThirdPartyDisconnect,
-	ThirdPartyProviderConfig,
-	CrashOrException,
-	EntityType
+	ThirdPartyProviderConfig
 } from "../protocol/agent.protocol";
 import { CSMe, CSNewRelicProviderInfo } from "../protocol/api.protocol";
 import { CodeStreamSession } from "../session";
@@ -723,7 +724,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 	async getObservabilityRepos(request: GetObservabilityReposRequest) {
 		const response: GetObservabilityReposResponse = { repos: [] };
 		try {
-			const { scm } = SessionContainer.instance();
+			const { scm } = this._sessionServiceContainer || SessionContainer.instance();
 			const reposResponse = await scm.getRepos({ inEditorOnly: true, includeRemotes: true });
 			let filteredRepos: ReposScm[] | undefined = reposResponse?.repositories;
 			if (request?.filters?.length) {
@@ -753,16 +754,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					continue;
 				}
 
-				let remotes: string[] = [];
-				for (const remote of repo.remotes) {
-					if (remote.name === "origin" || remote.remoteWeight === 0) {
-						// this is the origin remote
-						remotes = [remote.rawUrl!];
-						break;
-					} else {
-						remotes.push(remote.rawUrl!);
-					}
-				}
+				const remotes: string[] = repo.remotes?.map(_ => _.rawUrl!);
 
 				// find REPOSITORY entities tied to a remote
 				const repositoryEntitiesResponse = await this.findRepositoryEntitiesByRepoRemotes(remotes);
@@ -2732,7 +2724,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		return undefined;
 	}
 
-	private async buildRepoRemoteVariants(remotes: string[]): Promise<string[]> {
+	protected async buildRepoRemoteVariants(remotes: string[]): Promise<string[]> {
 		const set = new Set<string>();
 
 		await Promise.all(
@@ -2765,7 +2757,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 	 * 	>)}
 	 * @memberof NewRelicProvider
 	 */
-	private async findRepositoryEntitiesByRepoRemotes(
+	protected async findRepositoryEntitiesByRepoRemotes(
 		remotes: string[]
 	): Promise<
 		| {
@@ -2930,17 +2922,9 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		}
 	}
 
-	private async findRelatedEntityByRepositoryGuids(
+	protected async findRelatedEntityByRepositoryGuids(
 		repositoryGuids: string[]
-	): Promise<{
-		actor: {
-			entities: {
-				relatedEntities: {
-					results: RelatedEntity[];
-				};
-			}[];
-		};
-	}> {
+	): Promise<RelatedEntityByRepositoryGuidsResult> {
 		return this.query(
 			`query fetchRelatedEntities($guids:[EntityGuid]!){
 			actor {

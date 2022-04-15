@@ -198,7 +198,7 @@ export const PullRequestFilesChangedTab = (props: {
 
 	if (isLoading && props.sidebarView)
 		return (
-			<div style={{ marginLeft: "60px" }}>
+			<div style={{ marginLeft: "45px" }}>
 				Loading... <Icon name="sync" className="spin row-icon" />
 			</div>
 		);

@@ -35,12 +35,12 @@ export const PullRequestExpandedSidebar = (props: PullRequestExpandedSidebarProp
 
 	return (
 		<>
-			<Row onClick={handleClick} style={{ paddingLeft: "60px" }}>
+			<Row onClick={handleClick} style={{ paddingLeft: "45px" }}>
 				<Icon name="git-branch" />
 				PR Details
 			</Row>
 			{props.loadingThirdPartyPrObject && !props.thirdPartyPrObject && (
-				<div style={{ paddingLeft: "60px" }}>
+				<div style={{ paddingLeft: "45px" }}>
 					Loading... <Icon className="spin" name="sync" />
 				</div>
 			)}

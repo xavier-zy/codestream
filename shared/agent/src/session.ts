@@ -448,7 +448,7 @@ export class CodeStreamSession {
 				const { companies, repos, streams, teams, users, codeErrors } = SessionContainer.instance();
 
 				// needed to ensure we subscribe to object streams for all code errors we have access to
-				codeErrors.ensureCached();
+				await codeErrors.ensureCached();
 
 				const promise = Promise.all([
 					companies.get(),

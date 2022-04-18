@@ -21,6 +21,9 @@ import { Button } from "../src/components/Button";
 import { api } from "../store/providerPullRequests/actions";
 import { useDispatch } from "react-redux";
 import { GHOST } from "./PullRequestTimelineItems";
+import { prettyPrintOne } from "code-prettify";
+import { escapeHtml } from "../utils";
+import * as Path from "path-browserify";
 
 const ReviewIcons = {
 	APPROVED: <Icon name="check" className="circled green" />,
@@ -38,6 +41,7 @@ interface Props {
 	comment: any;
 	author: any;
 	skipResolvedCheck?: boolean;
+	isFirst?: boolean;
 }
 
 export const PullRequestFileCommentCard = (props: PropsWithChildren<Props>) => {
@@ -129,6 +133,25 @@ export const PullRequestFileCommentCard = (props: PropsWithChildren<Props>) => {
 			});
 	};
 
+	const codeBlock = () => {
+		const path = comment.path || "";
+		let extension = Path.extname(path).toLowerCase();
+		if (extension.startsWith(".")) {
+			extension = extension.substring(1);
+		}
+
+		const codeHTML = prettyPrintOne(escapeHtml(comment.diffHunk), extension, comment.position);
+		return (
+			<pre
+				className="code prettyprint"
+				data-scrollable="true"
+				dangerouslySetInnerHTML={{ __html: codeHTML }}
+			/>
+		);
+	};
+
+	console.warn("eric comment", comment);
+
 	if (
 		!props.skipResolvedCheck &&
 		comment.isResolved &&
@@ -193,17 +216,20 @@ export const PullRequestFileCommentCard = (props: PropsWithChildren<Props>) => {
 								done={() => doneEditingComment(comment.id)}
 							/>
 						) : (
-							<MarkdownText
-								text={
-									comment.bodyHTML
-										? comment.bodyHTML
-										: comment.bodyHtml
-										? comment.bodyHtml
-										: comment.bodyText
-								}
-								isHtml={comment.bodyHTML || comment.bodyHtml ? true : false}
-								inline
-							/>
+							<>
+								<MarkdownText
+									text={
+										comment.bodyHTML
+											? comment.bodyHTML
+											: comment.bodyHtml
+											? comment.bodyHtml
+											: comment.bodyText
+									}
+									isHtml={comment.bodyHTML || comment.bodyHtml ? true : false}
+									inline
+								/>
+								{props.isFirst && <>{codeBlock()} </>}
+							</>
 						)}
 					</>
 				)}

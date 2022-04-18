@@ -150,7 +150,6 @@ export function reduceContext(
 		case ContextActionsType.SetCreatePullRequest:
 			return { ...state, createPullRequestReviewId: action.payload.reviewId };
 		case ContextActionsType.SetCurrentPullRequest:
-			console.warn("PREVIOUS STATE", state.currentPullRequest);
 			return {
 				...state,
 				currentPullRequest:

@@ -205,20 +205,18 @@ export const PullRequestFileComments = (props: PropsWithChildren<Props>) => {
 							</span>
 						</h1>
 
-						{commentsArray.map(c => {
-							const _comment = c.comment;
-							const _review = c.review;
+						{commentsArray.map((c, index) => {
+							const isFirst = index === 0;
 
-							console.warn("comment", _comment);
-							console.warn("review", _review);
 							return (
 								<CardContainer>
 									<PullRequestFileCommentCard
 										pr={pr}
-										comment={_comment}
-										review={_review}
+										comment={c.comment}
+										review={c.review}
 										setIsLoadingMessage={props.setIsLoadingMessage}
 										author={"eric"}
+										isFirst={isFirst}
 									/>
 								</CardContainer>
 							);

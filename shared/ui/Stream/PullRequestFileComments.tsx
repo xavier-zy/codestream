@@ -12,7 +12,7 @@ import { CodeStreamState } from "../store";
 import styled from "styled-components";
 import { Modal } from "./Modal";
 import { Dialog } from "../src/components/Dialog";
-
+import { PullRequestFileCommentCard } from "./PullRequestFileCommentCard";
 import { useDidMount } from "../utilities/hooks";
 
 const Root = styled.div`
@@ -23,13 +23,58 @@ const Root = styled.div`
 	}
 `;
 
+const CommentsContainer = styled.div`
+	margin: 0 0 20px 0;
+	h1 {
+		display: flex;
+		align-items: center;
+		border-radius: 5px 5px 0 0;
+		font-size: 12px;
+		font-weight: normal;
+		margin: 0;
+		padding: 10px;
+		background: var(--app-background-color);
+		border: 1px solid var(--base-border-color);
+		width: 100%;
+		overflow: hidden;
+		position: sticky;
+		top: -14px;
+		z-index: 5;
+		.filename-container {
+			overflow: hidden;
+			text-overflow: ellipsis;
+		}
+		&.hidden {
+			border-radius: 5px;
+		}
+		.toggle {
+			display: inline-block;
+			margin-right: 5px;
+			margin-top: -2px;
+		}
+		.viewed {
+			flex-shrink: 0;
+			margin-left: auto;
+		}
+		a .icon {
+			color: var(--text-color);
+		}
+	}
+`;
+
+const CardContainer = styled.div`
+	margin: 10px;
+	padding: 10px;
+	background: var(--base-background-color);
+	border-radius: 6px;
+`;
+
 const STATUS_MAP = {
 	modified: FileStatus.modified
 };
 
 interface Props {
 	pr: FetchThirdPartyPullRequestPullRequest;
-
 	setIsLoadingMessage: Function;
 	commentId: string | undefined;
 	quote: Function;
@@ -130,48 +175,56 @@ export const PullRequestFileComments = (props: PropsWithChildren<Props>) => {
 
 	if (!filename) return null;
 
-	// <Modal translucent onClose={() => props.onClose()}>
+	const commentsArray = commentMap[filename];
 
 	return (
 		<Modal translucent onClose={() => props.onClose()}>
 			<Root>
-				<PRDiffHunk>
-					<h1>
-						<span className="filename-container">
-							<span className="filename">{filename}</span>{" "}
-							<Icon
-								title="Copy File Path"
-								placement="bottom"
-								name="copy"
-								className="clickable"
-								onClick={e => copy(filename)}
-							/>{" "}
-							{pr && pr.url && (
-								<Link href={pr.url.replace(/\/pull\/\d+$/, `/blob/${pr.headRefOid}/${filename}`)}>
-									<Icon
-										title="Open File on Remote"
-										placement="bottom"
-										name="link-external"
-										className="clickable"
+				<CommentsContainer>
+					<>
+						<h1>
+							<span className="filename-container">
+								<span className="filename">{filename}</span>{" "}
+								<Icon
+									title="Copy File Path"
+									placement="bottom"
+									name="copy"
+									className="clickable"
+									onClick={e => copy(filename)}
+								/>{" "}
+								{pr && pr.url && (
+									<Link href={pr.url.replace(/\/pull\/\d+$/, `/blob/${pr.headRefOid}/${filename}`)}>
+										<Icon
+											title="Open File on Remote"
+											placement="bottom"
+											name="link-external"
+											className="clickable"
+										/>
+									</Link>
+								)}
+							</span>
+						</h1>
+
+						{commentsArray.map(c => {
+							const _comment = c.comment;
+							const _review = c.review;
+
+							console.warn("comment", _comment);
+							console.warn("review", _review);
+							return (
+								<CardContainer>
+									<PullRequestFileCommentCard
+										pr={pr}
+										comment={_comment}
+										review={_review}
+										setIsLoadingMessage={props.setIsLoadingMessage}
+										author={"eric"}
 									/>
-								</Link>
-							)}
-						</span>
-					</h1>
-					{fileInfo && (
-						<PullRequestPatch
-							pr={pr}
-							patch={fileInfo.patch}
-							hunks={fileInfo.hunks}
-							filename={filename}
-							canComment
-							comments={commentMap[filename]}
-							commentId={props.commentId}
-							setIsLoadingMessage={props.setIsLoadingMessage}
-							quote={quote}
-						/>
-					)}
-				</PRDiffHunk>
+								</CardContainer>
+							);
+						})}
+					</>
+				</CommentsContainer>
 			</Root>
 		</Modal>
 	);

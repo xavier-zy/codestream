@@ -132,7 +132,7 @@ const Root = styled.div`
 		}
 	}
 	.files-changed-list-dropdown {
-		padding-left: 60px;
+		padding-left: 45px;
 	}
 	.files-changed-list .row-with-icon-actions {
 		padding-left: 80px;

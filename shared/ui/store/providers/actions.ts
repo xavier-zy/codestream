@@ -41,7 +41,7 @@ export const configureAndConnectProvider = (
 	const onprem = configs.isOnPrem;
 	const isVSCGitHub = ide.name === "VSC" && name === "github" && capabilities.vsCodeGithubSignin;
 	connectionLocation = connectionLocation || "Integrations Panel";
-	if (needsConfigure || (onprem && needsConfigureForOnPrem)) {
+	if (name !== "jiraserver" && (needsConfigure || (onprem && needsConfigureForOnPrem))) {
 		dispatch(openPanel(`configure-provider-${provider.name}-${provider.id}-${connectionLocation}`));
 	} else if (forEnterprise || isEnterprise) {
 		dispatch(openPanel(`configure-enterprise-${name}-${provider.id}-${connectionLocation}`));

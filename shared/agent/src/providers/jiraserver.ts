@@ -175,7 +175,7 @@ export class JiraServerProvider extends ThirdPartyIssueProviderBase<CSJiraServer
 	}
 
 	async verifyConnection(config: ProviderConfigurationData): Promise<void> {
-		await this._getJira("/rest/api/2/permissions");
+		await this._getJira("/rest/api/2/mypermissions");
 	}
 
 	get baseUrl() {

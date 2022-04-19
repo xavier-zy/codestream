@@ -102,6 +102,7 @@ export class JiraProvider extends ThirdPartyIssueProviderBase<CSJiraProviderInfo
 	private _webUrl = "";
 	private boards: JiraBoard[] = [];
 	private domain?: string;
+	private _workspaces: string[] | undefined;
 
 	get displayName() {
 		return "Jira";
@@ -157,6 +158,7 @@ export class JiraProvider extends ThirdPartyIssueProviderBase<CSJiraProviderInfo
 
 		// FIXME: this is problematic, user may be in multiple workspaces and
 		// we're assuming the first one here
+		this._workspaces = response.body.map(_ => _.id);
 		this._urlAddon = `/ex/jira/${response.body[0].id}`;
 		this._webUrl = response.body[0].url;
 
@@ -223,7 +225,9 @@ export class JiraProvider extends ThirdPartyIssueProviderBase<CSJiraProviderInfo
 						extra: {
 							message,
 							nextPage,
-							pageNum
+							pageNum,
+							baseUrl: this.baseUrl,
+							workspaces: this._workspaces
 						}
 					});
 					Logger.error(e, message);
@@ -243,7 +247,11 @@ export class JiraProvider extends ThirdPartyIssueProviderBase<CSJiraProviderInfo
 				type: ReportingMessageType.Error,
 				message: "Jira: Error fetching jira boards",
 				source: "agent",
-				extra: { message: error.message }
+				extra: {
+					message: error.message,
+					baseUrl: this.baseUrl,
+					workspaces: this._workspaces
+				}
 			});
 			Logger.error(error, "Error fetching jira boards");
 			return { boards: [] };
@@ -265,7 +273,11 @@ export class JiraProvider extends ThirdPartyIssueProviderBase<CSJiraProviderInfo
 				type: ReportingMessageType.Error,
 				message: "Jira: Error fetching issue metadata for projects",
 				source: "agent",
-				extra: { message: error.message }
+				extra: {
+					message: error.message,
+					baseUrl: this.baseUrl,
+					workspaces: this._workspaces
+				}
 			});
 			Logger.error(
 				error,
@@ -360,7 +372,9 @@ export class JiraProvider extends ThirdPartyIssueProviderBase<CSJiraProviderInfo
 							message,
 							queryString,
 							nextPage,
-							pageNum
+							pageNum,
+							baseUrl: this.baseUrl,
+							workspaces: this._workspaces
 						}
 					});
 					Logger.error(e, message);
@@ -380,7 +394,11 @@ export class JiraProvider extends ThirdPartyIssueProviderBase<CSJiraProviderInfo
 				type: ReportingMessageType.Error,
 				message: "Jira: Uncaught error fetching jira cards",
 				source: "agent",
-				extra: { message }
+				extra: {
+					message,
+					baseUrl: this.baseUrl,
+					workspaces: this._workspaces
+				}
 			});
 			Logger.error(error, "Uncaught error fetching jira cards");
 			return { cards: [] };
@@ -434,7 +452,11 @@ export class JiraProvider extends ThirdPartyIssueProviderBase<CSJiraProviderInfo
 				type: ReportingMessageType.Error,
 				message: "Jira: Error moving jira card",
 				source: "agent",
-				extra: { message: error.message }
+				extra: {
+					message: error.message,
+					baseUrl: this.baseUrl,
+					workspaces: this._workspaces
+				}
 			});
 			Logger.error(error, "Error moving jira card");
 			return {};

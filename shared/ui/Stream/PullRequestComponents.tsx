@@ -471,6 +471,16 @@ export const PRButtonRow = styled.div`
 	}
 `;
 
+export const PRButtonRowFlex = styled.div`
+	padding-top: 10px;
+	text-align: left;
+	display: flex;
+
+	button + button {
+		margin-left: 10px;
+	}
+`;
+
 export const PRThreadedCommentCard = styled.div`
 	position: relative;
 	border: 1px solid;
@@ -931,7 +941,7 @@ export const PRCodeCommentReply = styled.div`
 	font-family: var(--font-family);
 	position: relative;
 	#input-div {
-		height: 28px !important; // 2px for the border, 30px matches headshot height
+		height: 30px !important; // 2px for the border, 30px matches headshot height
 		min-height: 28px !important;
 		padding: 5px !important;
 	}

@@ -1,7 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 import styled from "styled-components";
-import { PRButtonRow, PRCodeCommentReply, PRCodeCommentReplyInput } from "./PullRequestComponents";
+import {
+	PRButtonRowFlex,
+	PRCodeCommentReply,
+	PRCodeCommentReplyInput
+} from "./PullRequestComponents";
 import { HostApi } from "../webview-api";
 import { FetchThirdPartyPullRequestPullRequest } from "@codestream/protocols/agent";
 import MessageInput from "./MessageInput";
@@ -19,10 +23,12 @@ interface Props {
 	parentId?: string;
 	isOpen: boolean;
 	__onDidRender: Function;
+	alwaysOpen?: boolean;
+	children?: any;
 }
 
 export const PullRequestReplyComment = styled((props: Props) => {
-	const { pr, databaseId, parentId } = props;
+	const { alwaysOpen, pr, databaseId, parentId } = props;
 	const dispatch = useDispatch();
 
 	const [text, setText] = useState("");
@@ -100,16 +106,22 @@ export const PullRequestReplyComment = styled((props: Props) => {
 					__onDidRender={stuff => props.__onDidRender(stuff)}
 				/>
 			</PRCodeCommentReplyInput>
-			{open && !isPreviewing && (
-				<PRButtonRow>
-					<Button variant="secondary" onClick={handleCancelComment}>
+			{(alwaysOpen || open) && !isPreviewing && (
+				<PRButtonRowFlex>
+					{props.children}
+
+					<Button
+						style={alwaysOpen ? { marginLeft: "auto" } : ""}
+						variant="secondary"
+						onClick={handleCancelComment}
+					>
 						Cancel
 					</Button>
 
 					<Button variant="primary" isLoading={isSubmitting} onClick={handleComment}>
 						Comment
 					</Button>
-				</PRButtonRow>
+				</PRButtonRowFlex>
 			)}
 		</PRCodeCommentReply>
 	);

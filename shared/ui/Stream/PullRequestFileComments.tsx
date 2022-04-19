@@ -215,7 +215,7 @@ export const PullRequestFileComments = (props: PropsWithChildren<Props>) => {
 										comment={c.comment}
 										review={c.review}
 										setIsLoadingMessage={props.setIsLoadingMessage}
-										author={"eric"}
+										author={c?.author?.login || ""}
 										isFirst={isFirst}
 									/>
 								</CardContainer>

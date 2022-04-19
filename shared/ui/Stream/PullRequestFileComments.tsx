@@ -192,16 +192,6 @@ export const PullRequestFileComments = (props: PropsWithChildren<Props>) => {
 									className="clickable"
 									onClick={e => copy(filename)}
 								/>{" "}
-								{pr && pr.url && (
-									<Link href={pr.url.replace(/\/pull\/\d+$/, `/blob/${pr.headRefOid}/${filename}`)}>
-										<Icon
-											title="Open File on Remote"
-											placement="bottom"
-											name="link-external"
-											className="clickable"
-										/>
-									</Link>
-								)}
 							</span>
 						</h1>
 

@@ -1,6 +1,7 @@
 import {
 	PRActionIcons,
 	PRButtonRow,
+	PRButtonRowFlex,
 	PRCodeCommentBody,
 	PRCodeCommentWrapper,
 	PRThreadedCommentHeader
@@ -251,7 +252,7 @@ export const PullRequestFileCommentCard = (props: PropsWithChildren<Props>) => {
 									isHtml={comment.bodyHTML || comment.bodyHtml ? true : false}
 									inline
 								/>
-								{codeBlock()}
+								<div style={{ marginTop: "10px" }}>{codeBlock()}</div>
 							</>
 						)}
 					</>
@@ -331,7 +332,7 @@ export const PullRequestFileCommentCard = (props: PropsWithChildren<Props>) => {
 					);
 				})}
 			{review.state !== "PENDING" && (
-				<>
+				<PRButtonRow className="align-left">
 					{/* 
 						GitHub doesn't allow replies on existing comments
 						when there is a pending review 
@@ -347,34 +348,32 @@ export const PullRequestFileCommentCard = (props: PropsWithChildren<Props>) => {
 									databaseId={comment.databaseId}
 									isOpen={openComments[comment.databaseId]}
 									__onDidRender={__onDidRender}
-								/>
-								<div style={{ height: "15px" }}></div>
+									alwaysOpen={true}
+								>
+									{comment.isResolved && comment.viewerCanUnresolve && (
+										<Button
+											variant="secondary"
+											isLoading={isResolving}
+											onClick={e => handleUnresolve(e, comment.threadId)}
+											style={{ marginRight: "10px " }}
+										>
+											Unresolve
+										</Button>
+									)}
+									{!comment.isResolved && comment.viewerCanResolve && (
+										<Button
+											variant="secondary"
+											isLoading={isResolving}
+											onClick={e => handleResolve(e, comment.threadId)}
+											style={{ marginRight: "10px " }}
+										>
+											Resolve
+										</Button>
+									)}
+								</PullRequestReplyComment>
 							</>
 						))}
-
-					{comment.isResolved && comment.viewerCanUnresolve && (
-						<PRButtonRow className="align-left border-top">
-							<Button
-								variant="secondary"
-								isLoading={isResolving}
-								onClick={e => handleUnresolve(e, comment.threadId)}
-							>
-								Unresolve conversation
-							</Button>
-						</PRButtonRow>
-					)}
-					{!comment.isResolved && comment.viewerCanResolve && (
-						<PRButtonRow className="align-left border-top">
-							<Button
-								variant="secondary"
-								isLoading={isResolving}
-								onClick={e => handleResolve(e, comment.threadId)}
-							>
-								Resolve conversation
-							</Button>
-						</PRButtonRow>
-					)}
-				</>
+				</PRButtonRow>
 			)}
 		</PRCodeCommentWrapper>
 	);

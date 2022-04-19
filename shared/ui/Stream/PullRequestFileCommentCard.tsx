@@ -1,7 +1,7 @@
 import {
 	PRActionIcons,
 	PRButtonRow,
-	PRButtonRowFlex,
+	PRBranch,
 	PRCodeCommentBody,
 	PRCodeCommentWrapper,
 	PRThreadedCommentHeader
@@ -25,14 +25,20 @@ import { GHOST } from "./PullRequestTimelineItems";
 import { prettyPrintOne } from "code-prettify";
 import { escapeHtml } from "../utils";
 import * as Path from "path-browserify";
+import styled from "styled-components";
+import { Link } from "./Link";
 
-const ReviewIcons = {
-	APPROVED: <Icon name="check" className="circled green" />,
-	CHANGES_REQUESTED: <Icon name="plus-minus" className="circled red" />,
-	COMMENTED: <Icon name="eye" className="circled" />,
-	DISMISSED: <Icon name="x" className="circled" />,
-	PENDING: <Icon name="eye" className="circled" />
-};
+const PRBranchContainer = styled.div`
+	display: inline-block;
+	font-family: Menlo, Consolas, "DejaVu Sans Mono", monospace;
+	color: var(--text-color-subtle);
+`;
+
+const CodeBlockContainerIcons = styled.div`
+	display: flex;
+	margin-bottom: 5px;
+	color: var(--text-color-subtle) !important;
+`;
 
 interface Props {
 	pr: FetchThirdPartyPullRequestPullRequest;
@@ -82,6 +88,10 @@ export const PullRequestFileCommentCard = (props: PropsWithChildren<Props>) => {
 			...expandedComments,
 			[id]: !expandedComments[id]
 		});
+	};
+
+	const handleDiffClick = () => {
+		return null;
 	};
 
 	const handleResolve = async (e, threadId) => {
@@ -175,6 +185,7 @@ export const PullRequestFileCommentCard = (props: PropsWithChildren<Props>) => {
 	};
 
 	console.warn("eric comment", comment);
+	console.warn("eric pr", pr);
 
 	if (
 		!props.skipResolvedCheck &&
@@ -252,7 +263,43 @@ export const PullRequestFileCommentCard = (props: PropsWithChildren<Props>) => {
 									isHtml={comment.bodyHTML || comment.bodyHtml ? true : false}
 									inline
 								/>
-								<div style={{ marginTop: "10px" }}>{codeBlock()}</div>
+								<div style={{ marginTop: "10px" }}>
+									<CodeBlockContainerIcons>
+										<div>
+											<Icon name="git-branch" />
+											<PRBranchContainer>{pr.baseRefName}</PRBranchContainer>
+										</div>
+										<div style={{ marginLeft: "auto" }}>
+											<span onClick={handleDiffClick}>
+												<Icon
+													name="diff"
+													title="Open Diff in IDE"
+													placement="bottom"
+													className="clickable"
+												/>
+											</span>
+										</div>
+										<div style={{ marginLeft: "5px" }}>
+											{/* @TODO FIX HREF PATH WITH ${filename} */}
+
+											{pr && pr.url && (
+												<Link
+													href={pr.url.replace(/\/pull\/\d+$/, `/blob/${pr.headRefOid}/filename}`)}
+												>
+													<span style={{ color: "var(--text-color-subtle)" }}>
+														<Icon
+															title="Open File on Remote"
+															placement="bottom"
+															name="link-external"
+															className="clickable"
+														/>
+													</span>
+												</Link>
+											)}
+										</div>
+									</CodeBlockContainerIcons>
+									{codeBlock()}
+								</div>
 							</>
 						)}
 					</>

@@ -7,13 +7,13 @@ import { setCurrentPullRequest } from "../store/context/actions";
 
 export const FileWithComments = styled.div`
 	cursor: pointer;
-	padding: 2px 0;
 	margin: 0 !important;
 `;
 
 export const Comment = styled.div`
 	cursor: pointer;
 	margin: 0 !important;
+	padding: 2px 0 2px 0;
 	overflow: hidden;
 	text-overflow: ellipsis;
 	width: calc(100%);

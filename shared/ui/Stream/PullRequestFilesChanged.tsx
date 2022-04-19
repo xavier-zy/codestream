@@ -44,7 +44,6 @@ export const Directory = styled.div`
 
 export const FileWithComments = styled.div`
 	cursor: pointer;
-	padding: 2px 0;
 	margin: 0 !important;
 	&:hover {
 		background: var(--app-background-color-hover);

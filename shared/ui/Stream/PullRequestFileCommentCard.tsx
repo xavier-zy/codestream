@@ -140,7 +140,7 @@ export const PullRequestFileCommentCard = (props: PropsWithChildren<Props>) => {
 			extension = extension.substring(1);
 		}
 
-		const codeHTML = prettyPrintOne(escapeHtml(comment.diffHunk), extension, comment.position);
+		const codeHTML = prettyPrintOne(escapeHtml(comment.diffHunk), extension, lineNumber());
 		return (
 			<pre
 				className="code prettyprint"
@@ -148,6 +148,29 @@ export const PullRequestFileCommentCard = (props: PropsWithChildren<Props>) => {
 				dangerouslySetInnerHTML={{ __html: codeHTML }}
 			/>
 		);
+	};
+
+	const lineNumber = () => {
+		let rightLine = 0;
+
+		if (!comment || !review) {
+			return "";
+		}
+
+		let diffHunk = comment?.diffHunk || review?.diffHunk || "";
+
+		diffHunk.split("\n").map(d => {
+			const matches = d.match(/@@ \-(\d+).*? \+(\d+)/);
+			if (matches) {
+				rightLine = parseInt(matches[2]) - 1;
+			}
+		});
+
+		if (rightLine) {
+			return rightLine;
+		} else {
+			return "";
+		}
 	};
 
 	console.warn("eric comment", comment);
@@ -228,7 +251,7 @@ export const PullRequestFileCommentCard = (props: PropsWithChildren<Props>) => {
 									isHtml={comment.bodyHTML || comment.bodyHtml ? true : false}
 									inline
 								/>
-								{props.isFirst && <>{codeBlock()} </>}
+								{codeBlock()}
 							</>
 						)}
 					</>
@@ -309,8 +332,10 @@ export const PullRequestFileCommentCard = (props: PropsWithChildren<Props>) => {
 				})}
 			{review.state !== "PENDING" && (
 				<>
-					{/* GitHub doesn't allow replies on existing comments
-				when there is a pending review */}
+					{/* 
+						GitHub doesn't allow replies on existing comments
+						when there is a pending review 
+					*/}
 					{pr.providerId.includes("gitlab") ||
 						(!pr.pendingReview && (
 							<>

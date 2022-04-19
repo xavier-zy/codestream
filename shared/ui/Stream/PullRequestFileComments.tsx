@@ -102,6 +102,7 @@ export const PullRequestFileComments = (props: PropsWithChildren<Props>) => {
 	const [fileInfo, setFileInfo] = useState<any>({});
 	const [filename, setFilename] = useState("");
 
+	//eric here maybe for lines
 	const _mapData = data => {
 		const fileInfo = data
 			.filter(_ => _.filename === filename)

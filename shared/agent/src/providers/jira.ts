@@ -178,6 +178,7 @@ export class JiraProvider extends ThirdPartyIssueProviderBase<CSJiraProviderInfo
 	@log()
 	async getBoards(request: FetchThirdPartyBoardsRequest): Promise<FetchThirdPartyBoardsResponse> {
 		if (this.boards.length > 0) return { boards: this.boards };
+		await this.ensureConnected();
 		try {
 			Logger.debug("Jira: fetching projects");
 			const jiraBoards: JiraBoard[] = [];
@@ -313,6 +314,7 @@ export class JiraProvider extends ThirdPartyIssueProviderBase<CSJiraProviderInfo
 
 	@log()
 	async getCards(request: FetchThirdPartyCardsRequest): Promise<FetchThirdPartyCardsResponse> {
+		await this.ensureConnected();
 		// /rest/api/2/search?jql=assignee=currentuser()
 		// https://developer.atlassian.com/server/jira/platform/jira-rest-api-examples/
 		// why don't we get assignees for subtasks?
@@ -387,6 +389,7 @@ export class JiraProvider extends ThirdPartyIssueProviderBase<CSJiraProviderInfo
 
 	@log()
 	async createCard(request: CreateThirdPartyCardRequest) {
+		await this.ensureConnected();
 		const data = request.data as CreateJiraCardRequest;
 		// using /api/2 because 3 returns nonsense errors for the same request
 		const body: { [k: string]: any } = {
@@ -417,6 +420,7 @@ export class JiraProvider extends ThirdPartyIssueProviderBase<CSJiraProviderInfo
 
 	@log()
 	async moveCard(request: MoveThirdPartyCardRequest) {
+		await this.ensureConnected();
 		try {
 			Logger.debug("Jira: moving card");
 			const response = await this.post(`/rest/api/2/issue/${request.cardId}/transitions`, {
@@ -441,6 +445,7 @@ export class JiraProvider extends ThirdPartyIssueProviderBase<CSJiraProviderInfo
 	// https://community.atlassian.com/t5/Jira-questions/Paging-is-broken-for-user-search-queries/qaq-p/712071
 	@log()
 	async getAssignableUsers(request: { boardId: string }) {
+		await this.ensureConnected();
 		const { body } = await this.get<JiraUser[]>(
 			`/rest/api/2/user/assignable/search?${qs.stringify({
 				project: request.boardId,

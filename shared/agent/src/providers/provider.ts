@@ -4,15 +4,12 @@ import { Agent as HttpsAgent } from "https";
 import HttpsProxyAgent from "https-proxy-agent";
 import fetch, { RequestInit, Response } from "node-fetch";
 import * as url from "url";
-import { URI } from "vscode-uri";
 import { InternalError, ReportSuppressedMessages } from "../agentError";
 import { MessageType } from "../api/apiProvider";
-import { MarkerLocation, User } from "../api/extensions";
+import { User } from "../api/extensions";
 import { Container, SessionContainer } from "../container";
 import { GitRemote, GitRemoteLike, GitRepository } from "../git/gitService";
 import { Logger } from "../logger";
-import { Markerish, MarkerLocationManager } from "../managers/markerLocationManager";
-import { findBestMatchingLine, MAX_RANGE_VALUE } from "../markerLocation/calculator";
 import {
 	AddEnterpriseProviderRequest,
 	AddEnterpriseProviderResponse,
@@ -47,10 +44,9 @@ import {
 	UpdateThirdPartyStatusRequest,
 	UpdateThirdPartyStatusResponse
 } from "../protocol/agent.protocol";
-import { CodemarkType, CSMe, CSProviderInfos, CSReferenceLocation } from "../protocol/api.protocol";
+import { CSMe, CSProviderInfos } from "../protocol/api.protocol";
 import { CodeStreamSession } from "../session";
-import { Functions, Strings } from "../system";
-import { log } from "../system";
+import { Functions, log, Strings } from "../system";
 
 export const providerDisplayNamesByNameKey = new Map<string, string>([
 	["asana", "Asana"],
@@ -485,8 +481,9 @@ export abstract class ThirdPartyProviderBase<
 		}
 
 		await this.refreshToken(request);
-		await this.onConnected(this._providerInfo);
-
+		this._readyPromise = this.onConnected(this._providerInfo);
+		await this._readyPromise;
+		this.resetReady();
 		this._ensuringConnection = undefined;
 	}
 

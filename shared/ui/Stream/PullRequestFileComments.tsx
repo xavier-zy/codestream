@@ -63,7 +63,7 @@ const CommentsContainer = styled.div`
 `;
 
 const CardContainer = styled.div`
-	margin: 10px;
+	margin: 10px 10px 15px 10px;
 	padding: 10px;
 	background: var(--base-background-color);
 	border-radius: 6px;

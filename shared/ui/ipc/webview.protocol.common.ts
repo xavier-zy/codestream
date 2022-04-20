@@ -178,6 +178,7 @@ export interface WebviewContext {
 				view?: "details" | "sidebar-diffs";
 				previousView?: "details" | "sidebar-diffs" | undefined;
 				metadata?: any;
+				groupIndex?: string | undefined;
 		  }
 		| undefined;
 	profileUserId?: string;

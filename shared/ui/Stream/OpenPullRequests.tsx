@@ -715,10 +715,6 @@ export const OpenPullRequests = React.memo((props: Props) => {
 			const view = derivedState.hideDiffs ? "details" : "sidebar-diffs";
 			dispatch(setCurrentPullRequest(pr.providerId, pr.id, "", "", view));
 
-			// if (!derivedState.reviewsStateBootstrapped) {
-			// 	dispatch(bootstrapReviews());
-			// }
-
 			fetchOnePR(pr.providerId, pr.id);
 
 			HostApi.instance.track("PR Clicked", {
@@ -1168,76 +1164,127 @@ export const OpenPullRequests = React.memo((props: Props) => {
 										// 	);
 										// });
 										return [
-											<Row
-												key={"pr-" + pr.base_id}
-												className={selected ? "pr-row selected" : "pr-row"}
-												onClick={() => clickPR(pr)}
-											>
-												<div style={{ display: "flex" }}>
-													{" "}
-													{selected && <Icon name="arrow-right" className="selected-icon" />}
-													{chevronIcon}
-													<PRHeadshot
-														person={{
-															login: pr.author.login,
-															avatarUrl: pr.author.avatar_url
-														}}
-													/>
-												</div>
-												<div>
-													<span>
-														!{pr.number} {pr.title}
-													</span>
-													{pr.labels &&
-														pr.labels &&
-														pr.labels.length > 0 &&
-														!derivedState.hideLabels && (
-															<span className="cs-tag-container">
-																{pr.labels.map((_, index) => (
-																	<Tag key={index} tag={{ label: _?.name, color: `${_?.color}` }} />
-																))}
+											<>
+												<Row
+													key={"pr-" + pr.base_id}
+													className={selected ? "pr-row selected" : "pr-row"}
+													onClick={() => clickPR(pr)}
+												>
+													<div style={{ display: "flex" }}>
+														{" "}
+														{selected && <Icon name="arrow-right" className="selected-icon" />}
+														{chevronIcon}
+														<PRHeadshot
+															person={{
+																login: pr.author.login,
+																avatarUrl: pr.author.avatar_url
+															}}
+														/>
+													</div>
+													<div>
+														<span>
+															!{pr.number} {pr.title}
+														</span>
+														{pr.labels &&
+															pr.labels &&
+															pr.labels.length > 0 &&
+															!derivedState.hideLabels && (
+																<span className="cs-tag-container">
+																	{pr.labels.map((_, index) => (
+																		<Tag
+																			key={index}
+																			tag={{ label: _?.name, color: `${_?.color}` }}
+																		/>
+																	))}
+																</span>
+															)}
+														{!derivedState.hideDescriptions && (
+															<span className="subtle">{pr.description}</span>
+														)}
+													</div>
+													<div className="icons">
+														<span
+															onClick={e => {
+																e.preventDefault();
+																e.stopPropagation();
+																HostApi.instance.send(OpenUrlRequestType, {
+																	url: pr.url
+																});
+															}}
+														>
+															<Icon
+																name="link-external"
+																className="clickable"
+																title="View on GitHub"
+																placement="bottomLeft"
+																delay={1}
+															/>
+														</span>
+														<Icon
+															title="Copy"
+															placement="bottom"
+															name="copy"
+															className="clickable"
+															onClick={e => copy(pr.url)}
+														/>
+														<span className={cantCheckoutReason(pr) ? "disabled" : ""}>
+															<Icon
+																title={
+																	<>
+																		Checkout Branch
+																		{cantCheckoutReason(pr) && (
+																			<div className="subtle smaller" style={{ maxWidth: "200px" }}>
+																				Disabled: {cantCheckoutReason(pr)}
+																			</div>
+																		)}
+																	</>
+																}
+																trigger={["hover"]}
+																onClick={e => checkout(e, pr, cantCheckoutReason(pr))}
+																placement="bottom"
+																name="git-branch"
+															/>
+														</span>
+														<span>
+															<Icon
+																title="Reload"
+																trigger={["hover"]}
+																delay={1}
+																onClick={() => {
+																	if (isLoadingPR) {
+																		console.warn("reloading pr, cancelling...");
+																		return;
+																	}
+																	reload("Reloading...");
+																}}
+																placement="bottom"
+																className={`${isLoadingPR ? "spin" : ""}`}
+																name="refresh"
+															/>
+														</span>
+														<Timestamp time={pr.created_at} relative abbreviated />
+														{pr.user_notes_count > 0 && (
+															<span
+																className="badge"
+																style={{ margin: "0 0 0 10px", flexGrow: 0, flexShrink: 0 }}
+															>
+																{pr.user_notes_count}
 															</span>
 														)}
-													{!derivedState.hideDescriptions && (
-														<span className="subtle">{pr.description}</span>
-													)}
-												</div>
-												<div className="icons">
-													<span
-														onClick={e => {
-															e.preventDefault();
-															e.stopPropagation();
-															HostApi.instance.send(OpenUrlRequestType, {
-																url: pr.web_url
-															});
-														}}
-													>
-														<Icon
-															name="globe"
-															className="clickable"
-															title="View on GitLab"
-															placement="bottomLeft"
-															delay={1}
-														/>
-													</span>
-													<Icon
-														name="review"
-														className="clickable"
-														title="Review Changes"
-														placement="bottomLeft"
-														delay={1}
+													</div>
+												</Row>
+												{expanded && (
+													<PullRequestExpandedSidebar
+														key={`pr_detail_row_${index}`}
+														pullRequest={pr}
+														thirdPartyPrObject={expandedPR}
+														loadingThirdPartyPrObject={isLoadingPR}
+														fetchOnePR={fetchOnePR}
+														prCommitsRange={prCommitsRange}
+														setPrCommitsRange={setPrCommitsRange}
 													/>
-													<Timestamp time={pr.created_at} relative abbreviated />
-													{pr.user_notes_count > 0 && (
-														<span
-															className="badge"
-															style={{ margin: "0 0 0 10px", flexGrow: 0, flexShrink: 0 }}
-														>
-															{pr.user_notes_count}
-														</span>
-													)}
-												</div>
-											</Row>
+												)}
+											</>
 										];
 									} else return undefined;
 								})}

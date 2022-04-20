@@ -504,9 +504,6 @@ export const PullRequest = () => {
 			setOneLayerModal(true);
 		}
 
-		// if (derivedState.previousPullRequestView === "sidebar-diffs") {
-		// 	setOneLayerModal(true);
-		// }
 		getOpenRepos();
 		initialFetch().then((_: any) => {
 			HostApi.instance.track("PR Details Viewed", {

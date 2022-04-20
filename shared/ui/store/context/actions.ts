@@ -186,8 +186,17 @@ export const setCurrentPullRequest = (
 	id: string,
 	commentId?: string,
 	source?: string,
-	view?: "details" | "sidebar-diffs"
-) => action(ContextActionsType.SetCurrentPullRequest, { providerId, id, commentId, source, view });
+	view?: "details" | "sidebar-diffs",
+	groupIndex?: string
+) =>
+	action(ContextActionsType.SetCurrentPullRequest, {
+		providerId,
+		id,
+		commentId,
+		source,
+		view,
+		groupIndex
+	});
 
 export const setCurrentErrorsInboxOptions = (
 	stack?: string,

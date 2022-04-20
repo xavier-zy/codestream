@@ -263,6 +263,7 @@ export const OpenPullRequests = React.memo((props: Props) => {
 			context.currentPullRequest.view === "sidebar-diffs" &&
 			context.currentPullRequest.id;
 		const currentPullRequest = getCurrentProviderPullRequest(state);
+		const expandedPullRequestGroupIndex = context.currentPullRequest?.groupIndex;
 		return {
 			repos,
 			teamSettings,
@@ -300,6 +301,7 @@ export const OpenPullRequests = React.memo((props: Props) => {
 				? state.context.currentPullRequest.source
 				: undefined,
 			currentPullRequest: currentPullRequest,
+			expandedPullRequestGroupIndex,
 			providerPullRequests: state.providerPullRequests.pullRequests,
 			currentPullRequestId: getPullRequestId(state),
 			currentPullRequestIdExact: getPullRequestExactId(state),
@@ -705,7 +707,7 @@ export const OpenPullRequests = React.memo((props: Props) => {
 		return total;
 	}, [pullRequestGroups]);
 
-	const clickPR = pr => {
+	const clickPR = (pr, groupIndex) => {
 		// if we have an expanded PR diffs in the sidebar, collapse it
 		if (pr.id === derivedState.expandedPullRequestId) {
 			dispatch(clearCurrentPullRequest());
@@ -713,7 +715,7 @@ export const OpenPullRequests = React.memo((props: Props) => {
 			// otherwise, either open the PR details or show the diffs,
 			// depending on the user's preference
 			const view = derivedState.hideDiffs ? "details" : "sidebar-diffs";
-			dispatch(setCurrentPullRequest(pr.providerId, pr.id, "", "", view));
+			dispatch(setCurrentPullRequest(pr.providerId, pr.id, "", "", view, groupIndex));
 
 			fetchOnePR(pr.providerId, pr.id);
 
@@ -990,6 +992,7 @@ export const OpenPullRequests = React.memo((props: Props) => {
 					</>
 				)}
 				{Object.values(providerQueries).map((query: PullRequestQuery, index) => {
+					const groupIndex = index.toString();
 					const providerGroups = pullRequestGroups[providerId];
 					const prGroup = providerGroups && providerGroups[index];
 					const count = prGroup ? prGroup.length : 0;
@@ -1030,7 +1033,10 @@ export const OpenPullRequests = React.memo((props: Props) => {
 							{!query.hidden &&
 								prGroup &&
 								prGroup.map((pr: any, index) => {
-									const expanded = pr.id === derivedState.expandedPullRequestId;
+									console.warn("eric prGroup", prGroup);
+									const expanded =
+										pr.id === derivedState.expandedPullRequestId &&
+										derivedState.expandedPullRequestGroupIndex === groupIndex;
 									const isLoadingPR = pr.id === individualLoadingPR;
 									const chevronIcon = derivedState.hideDiffs ? null : expanded ? (
 										<Icon name="chevron-down-thin" />
@@ -1050,7 +1056,7 @@ export const OpenPullRequests = React.memo((props: Props) => {
 												<Row
 													key={"pr-" + pr.id}
 													className={selected ? "pr-row selected" : "pr-row"}
-													onClick={() => clickPR(pr)}
+													onClick={() => clickPR(pr, groupIndex)}
 												>
 													<div style={{ display: "flex" }}>
 														{selected && <Icon name="arrow-right" className="selected-icon" />}
@@ -1168,7 +1174,7 @@ export const OpenPullRequests = React.memo((props: Props) => {
 												<Row
 													key={"pr-" + pr.base_id}
 													className={selected ? "pr-row selected" : "pr-row"}
-													onClick={() => clickPR(pr)}
+													onClick={() => clickPR(pr, groupIndex)}
 												>
 													<div style={{ display: "flex" }}>
 														{" "}

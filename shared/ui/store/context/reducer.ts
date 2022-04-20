@@ -160,7 +160,8 @@ export function reduceContext(
 								commentId: action.payload.commentId,
 								source: action.payload.source,
 								view: action.payload.view,
-								previousView: state?.currentPullRequest?.view
+								previousView: state?.currentPullRequest?.view,
+								groupIndex: action.payload?.groupIndex
 						  }
 						: undefined,
 				pullRequestCheckoutBranch: false

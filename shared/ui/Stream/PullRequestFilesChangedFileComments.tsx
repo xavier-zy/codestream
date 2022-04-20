@@ -106,7 +106,7 @@ export const PullRequestFilesChangedFileComments = (props: Props) => {
 			const matches = d.match(/@@ \-(\d+).*? \+(\d+)/);
 			if (matches) {
 				// leftLine = parseInt(matches[1], 10) - 1;
-				rightLine = parseInt(matches[2]) - 1;
+				rightLine = parseInt(matches[2]);
 			}
 		});
 
@@ -141,6 +141,11 @@ export const PullRequestFilesChangedFileComments = (props: Props) => {
 			)
 		);
 	};
+
+	let commentsSortedByLineNumber = comments;
+	if (hasComments) {
+		commentsSortedByLineNumber.sort((a, b) => (a.comment.position > b.comment.position ? 1 : -1));
+	}
 
 	if (!hasComments) {
 		return (
@@ -210,7 +215,7 @@ export const PullRequestFilesChangedFileComments = (props: Props) => {
 				</FileWithComments>
 				{showComments && (
 					<>
-						{comments.map(c => {
+						{commentsSortedByLineNumber.map(c => {
 							return (
 								<Comment
 									onClick={e => handleCommentClick(e, c)}

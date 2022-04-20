@@ -1033,7 +1033,6 @@ export const OpenPullRequests = React.memo((props: Props) => {
 							{!query.hidden &&
 								prGroup &&
 								prGroup.map((pr: any, index) => {
-									console.warn("eric prGroup", prGroup);
 									const expanded =
 										pr.id === derivedState.expandedPullRequestId &&
 										derivedState.expandedPullRequestGroupIndex === groupIndex;

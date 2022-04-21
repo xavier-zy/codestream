@@ -5,3 +5,4 @@ npm-debug.log
 .idea/workspace.xml
 .nyc_output
 src/protocol/*.js
+stats.json

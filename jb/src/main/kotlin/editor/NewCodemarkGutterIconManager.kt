@@ -84,9 +84,9 @@ class NewCodemarkGutterIconManager(val editor: Editor) : EditorMouseMotionListen
         ) ?: false
         if (!canAddHighlighter) return
 
-        lineHighlighters.getOrPut(line, {
+        lineHighlighters.getOrPut(line) {
             editor.markupModel.addLineHighlighter(line, HighlighterLayer.LAST, null)
-        }).updateRenderer(renderer.also { it.line = line })
+        }.updateRenderer(renderer.also { it.line = line })
         lastHighlightedLine = line
     }
 

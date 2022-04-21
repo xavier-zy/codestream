@@ -32,6 +32,7 @@ import { HostApi } from "..";
 import { CodeStreamState } from "@codestream/webview/store";
 import { CompareLocalFilesRequestType } from "../ipc/host.protocol";
 import {
+	getProviderPullRequestCollaborators,
 	getProviderPullRequestRepo,
 	getPullRequestId
 } from "../store/providerPullRequests/reducer";
@@ -100,7 +101,8 @@ export const PullRequestFileCommentCard = (props: PropsWithChildren<Props>) => {
 			currentRepo: getProviderPullRequestRepo(state),
 			pullRequestId: getPullRequestId(state),
 			documentMarkers: state.documentMarkers[state.editorContext.textEditorUri || ""] || [],
-			textEditorUri: state.editorContext.textEditorUri
+			textEditorUri: state.editorContext.textEditorUri,
+			collaborators: getProviderPullRequestCollaborators(state)
 		};
 	});
 
@@ -198,7 +200,8 @@ export const PullRequestFileCommentCard = (props: PropsWithChildren<Props>) => {
 				? {
 						pullRequest: {
 							providerId: pr.providerId,
-							id: derivedState.pullRequestId
+							id: derivedState.pullRequestId,
+							collaborators: derivedState.collaborators
 						}
 				  }
 				: undefined

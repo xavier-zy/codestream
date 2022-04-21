@@ -1584,6 +1584,7 @@ export class Codemark extends React.Component<Props, State> {
 								ref={this.permalinkRef}
 								value={codemark.permalink}
 								style={{ position: "absolute", left: "-9999px" }}
+								readOnly={true}
 							/>
 						)}
 						<div

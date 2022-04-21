@@ -2,8 +2,11 @@ package com.codestream.protocols.webview
 
 import com.codestream.protocols.CodemarkType
 import com.codestream.protocols.agent.CSRepo
+import com.codestream.protocols.agent.CreateShareableCodemarkResult
 import com.codestream.protocols.agent.FileLevelTelemetryOptions
 import com.codestream.protocols.agent.PixieDynamicLoggingFunctionParameter
+import com.google.gson.JsonElement
+import com.google.gson.JsonObject
 import org.eclipse.lsp4j.Range
 
 interface WebViewNotification {
@@ -106,6 +109,13 @@ object PullRequestNotifications {
         val commentId: String? = null
     ) : WebViewNotification {
         override fun getMethod() = "webview/pullRequest/show"
+    }
+
+    class HandleDirectives(
+        val pullRequest: JsonObject?,
+        val directives: JsonObject?
+    ) : WebViewNotification {
+        override fun getMethod() = "webview/pullRequest/handleDirectives"
     }
 }
 

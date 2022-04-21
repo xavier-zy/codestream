@@ -119,7 +119,8 @@ export const CreateCodemarkIcons = (props: Props) => {
 			activePanel,
 			activePanelName: WebviewPanelNames[activePanel],
 			sidebarLocation: getSidebarLocation(state),
-			parsedDiffUri
+			parsedDiffUri,
+			isInJetBrains: state.ide.name === "JETBRAINS"
 		};
 	};
 
@@ -356,7 +357,9 @@ export const CreateCodemarkIcons = (props: Props) => {
 	const lineHeight = metrics.lineHeight || codeHeight() / numLinesVisible;
 	const paddingTop = (metrics.margins && metrics.margins.top) || 0;
 
-	if (iconsOnLine0 >= 0) {
+	if (derivedState.isInJetBrains) {
+		return null;
+	} else if (iconsOnLine0 >= 0) {
 		// const top = (codeHeight * iconsOnLine0) / (numLinesVisible + 1);
 		// const top = paddingTop ? "calc(" + topPct + " + " + paddingTop + "px)" : topPct;
 		const top = lineHeight * iconsOnLine0 + paddingTop;

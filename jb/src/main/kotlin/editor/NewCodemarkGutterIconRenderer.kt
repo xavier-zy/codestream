@@ -1,13 +1,23 @@
 package com.codestream.editor
 
+import com.codestream.actions.AddComment
+import com.codestream.actions.CreateIssue
+import com.codestream.actions.GetPermalink
+import com.codestream.agentService
 import com.codestream.codeStream
+import com.codestream.extensions.file
+import com.codestream.extensions.inlineTextFieldManager
 import com.codestream.extensions.selectionOrCurrentLine
 import com.codestream.extensions.uri
 import com.codestream.protocols.CodemarkType
 import com.codestream.protocols.webview.CodemarkNotifications
+import com.codestream.review.PULL_REQUEST
+import com.codestream.review.ReviewDiffVirtualFile
 import com.codestream.webViewService
+import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.markup.GutterDraggableObject
@@ -15,8 +25,11 @@ import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.vfs.VirtualFile
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import java.awt.Cursor
 import java.awt.dnd.DragSource
+import java.util.concurrent.CompletableFuture
 import javax.swing.Icon
 
 val ICON = IconLoader.getIcon("/images/marker-add-comment-green.svg")
@@ -42,8 +55,47 @@ class NewCodemarkGutterIconRenderer(
         return line.hashCode()
     }
 
-    override fun getClickAction(): AnAction {
-        return NewCodemarkGutterIconRendererClickAction(editor, line, onClick)
+    override fun getClickAction(): AnAction? {
+        return if (editor.document.getUserData(PULL_REQUEST) != null) {
+            null
+        } else if (editor.document.file is ReviewDiffVirtualFile) {
+            NewInlineCodemarkGutterIconRendererClickAction(editor, line, onClick)
+        } else {
+            null
+        }
+    }
+
+    private val isGitLab: Boolean by lazy {
+        val pullRequest = editor.document.getUserData(PULL_REQUEST)
+        pullRequest?.providerId?.lowercase()?.contains("gitlab") == true
+    }
+    private val addComment = AddComment().also { it.telemetrySource = "Gutter" }
+    private val createIssue = CreateIssue().also { it.telemetrySource = "Gutter" }
+    private val getPermalink = GetPermalink().also { it.telemetrySource = "Gutter" }
+
+    private val startReviewAction = PullRequestCommentAction("Start a review", true, editor, line, onClick)
+    private val addSingleCommentText = if (isGitLab) "Add comment now" else "Add single comment"
+    private val addSingleCommentAction =
+                        PullRequestCommentAction(addSingleCommentText, false, editor, line, onClick)
+    private val addCommentToReviewAction =
+                        PullRequestCommentAction("Add comment to review", true, editor, line, onClick)
+    override fun getPopupMenuActions(): ActionGroup? {
+        val pullRequest = editor.document.getUserData(PULL_REQUEST)
+        return if (pullRequest != null) {
+            val agent = editor.project?.agentService ?: return null
+            val future = CompletableFuture<DefaultActionGroup>()
+            GlobalScope.launch {
+                val reviewId = agent.getPullRequestReviewId(pullRequest.id, pullRequest.providerId)
+                if (reviewId == null || !reviewId.asBoolean) {
+                    future.complete(DefaultActionGroup(startReviewAction, addSingleCommentAction))
+                } else {
+                    future.complete(DefaultActionGroup(addCommentToReviewAction))
+                }
+            }
+            future.join()
+        } else {
+            DefaultActionGroup(addComment, createIssue, getPermalink)
+        }
     }
 
     override fun getDraggableObject(): GutterDraggableObject {
@@ -54,28 +106,26 @@ class NewCodemarkGutterIconRenderer(
     override fun getAlignment() = Alignment.LEFT
 }
 
-class NewCodemarkGutterIconRendererClickAction(val editor: Editor, val line: Int, val onClick: () -> Unit) :
+class PullRequestCommentAction(
+    val name: String,
+    val isReview: Boolean,
+    val editor: Editor,
+    val line: Int,
+    val onClick: () -> Unit
+) : AnAction(name) {
+    override fun actionPerformed(e: AnActionEvent) {
+        editor.inlineTextFieldManager?.showTextField(isReview)
+    }
+}
+
+class NewInlineCodemarkGutterIconRendererClickAction(
+    val editor: Editor,
+    val line: Int,
+    val onClick: () -> Unit
+) :
     DumbAwareAction() {
     override fun actionPerformed(e: AnActionEvent) {
-        ApplicationManager.getApplication().invokeLater {
-            val project = editor.project
-            if (!editor.selectionModel.hasSelection()) {
-                val startOffset = editor.document.getLineStartOffset(line)
-                val endOffset = editor.document.getLineEndOffset(line)
-                editor.selectionModel.setSelection(startOffset, endOffset)
-            }
-            project?.codeStream?.show {
-                project.webViewService?.postNotification(
-                    CodemarkNotifications.New(
-                        editor.document.uri,
-                        editor.selectionOrCurrentLine,
-                        CodemarkType.COMMENT,
-                        "Gutter"
-                    )
-                )
-                onClick()
-            }
-        }
+        editor.inlineTextFieldManager?.showTextField()
     }
 }
 

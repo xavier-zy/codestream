@@ -13,6 +13,7 @@ import Button from "./Button";
 import CancelButton from "./CancelButton";
 import { PROVIDER_MAPPINGS } from "./CrossPostIssueControls/types";
 import { CSProviderInfo } from "@codestream/protocols/api";
+import { Link } from "./Link";
 
 interface Props {
 	providerId: string;
@@ -154,13 +155,13 @@ export default function ConfigureEnterprisePanel(props: Props) {
 				<fieldset className="form-body" disabled={inactive}>
 					{getUrl && (
 						<p style={{ textAlign: "center" }} className="explainer">
-							Not a {displayName} customer yet? <a href={getUrl}>Get {displayName}</a>
+							Not a {displayName} customer yet? <Link href={getUrl}>Get {displayName}</Link>
 						</p>
 					)}
 					{versionMinimum && (
 						<p style={{ textAlign: "center" }} className="explainer">
 							Requires {displayName} {versionMinimum} or later.{" "}
-							<a href={checkVersionUrl}>Check your version</a>.
+							<Link href={checkVersionUrl}>Check your version</Link>.
 						</p>
 					)}
 					<br />
@@ -185,8 +186,8 @@ export default function ConfigureEnterprisePanel(props: Props) {
 							</label>
 							{scopes && (
 								<label>
-									Provide a <a href={providerUrl}>{namePAT.toLowerCase()}</a> with the following
-									scopes so that CodeStream can access your{" "}
+									Provide a <Link href={providerUrl}>{namePAT.toLowerCase()}</Link> with the
+									following scopes so that CodeStream can access your{" "}
 									{supportsPRManagement && "pull requests and "}issues:
 									<span>
 										&nbsp;<b>{scopes!.join(", ")}</b>.
@@ -195,8 +196,8 @@ export default function ConfigureEnterprisePanel(props: Props) {
 							)}
 							{!scopes && (
 								<label>
-									Provide a <a href={providerUrl}>{namePAT.toLowerCase()}</a> so that CodeStream can
-									access your {supportsPRManagement && "pull requests and "}issues.
+									Provide a <Link href={providerUrl}>{namePAT.toLowerCase()}</Link> so that
+									CodeStream can access your {supportsPRManagement && "pull requests and "}issues.
 								</label>
 							)}
 							<input

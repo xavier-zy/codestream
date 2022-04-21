@@ -134,7 +134,7 @@ export default function ConfigureEnterprisePanel(props: Props) {
 	} = providerDisplay;
 	const providerShortName = providerDisplay.shortDisplayName || displayName;
 	let providerUrl = helpUrl;
-	if (directPAT) {
+	if (directPAT && baseUrl.length > 0) {
 		providerUrl = `${baseUrl}/${directPAT.path}?`;
 		if (directPAT.descriptionParam) {
 			providerUrl += `${directPAT.descriptionParam}=CodeStream`;

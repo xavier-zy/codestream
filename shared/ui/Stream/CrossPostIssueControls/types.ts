@@ -113,7 +113,7 @@ export const PROVIDER_MAPPINGS: { [provider: string]: ProviderDisplay } = {
 		icon: "mark-github",
 		urlPlaceholder: "https://git.myorg.com",
 		helpUrl:
-			"https://help.github.com/en/enterprise/2.15/user/articles/creating-a-personal-access-token-for-the-command-line",
+			"https://docs.github.com/en/enterprise-server@3.4/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token",
 		boardLabel: "repo",
 		listLabel: "type",
 		cardLabel: "issue",

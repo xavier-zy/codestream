@@ -24,6 +24,7 @@ import { Link } from "./Link";
 import { Meta, MetaLabel } from "./Codemark/BaseCodemark";
 import { MetaIcons } from "./Review";
 import {
+	getProviderPullRequestCollaborators,
 	getProviderPullRequestRepo,
 	getPullRequestId
 } from "../store/providerPullRequests/reducer";
@@ -106,7 +107,8 @@ export const PullRequestFilesChanged = (props: Props) => {
 			currentRepo: getProviderPullRequestRepo(state),
 			numFiles: props.filesChanged.length,
 			isInVscode: state.ide.name === "VSC",
-			pullRequestId: getPullRequestId(state)
+			pullRequestId: getPullRequestId(state),
+			collaborators: getProviderPullRequestCollaborators(state)
 		};
 	});
 
@@ -221,7 +223,8 @@ export const PullRequestFilesChanged = (props: Props) => {
 						? {
 								pullRequest: {
 									providerId: pr.providerId,
-									id: derivedState.pullRequestId
+									id: derivedState.pullRequestId,
+									collaborators: derivedState.collaborators
 								}
 						  }
 						: undefined

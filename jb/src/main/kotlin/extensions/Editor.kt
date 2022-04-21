@@ -1,5 +1,7 @@
 package com.codestream.extensions
 
+import com.codestream.editor.InlineTextFieldManager
+import com.codestream.editorService
 import com.codestream.protocols.webview.EditorMargins
 import com.codestream.protocols.webview.EditorSelection
 import com.codestream.review.ReviewDiffVirtualFile
@@ -173,3 +175,6 @@ fun Editor.isRangeVisible(range: Range): Boolean {
     val lastRange = ranges.last()
     return range.start.line >= firstRange.start.line && range.end.line <= lastRange.end.line
 }
+
+val Editor.inlineTextFieldManager: InlineTextFieldManager?
+    get() = this.project?.editorService?.getInlineTextFieldManager(this)

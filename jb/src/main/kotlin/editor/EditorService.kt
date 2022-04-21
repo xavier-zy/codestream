@@ -39,6 +39,7 @@ import com.intellij.diff.DiffContentFactory
 import com.intellij.diff.DiffManager
 import com.intellij.diff.requests.SimpleDiffRequest
 import com.intellij.diff.util.DiffUserDataKeys
+import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.components.ServiceManager
@@ -49,6 +50,7 @@ import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
+import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.markup.EffectType
 import com.intellij.openapi.editor.markup.HighlighterLayer
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
@@ -94,6 +96,7 @@ class EditorService(val project: Project) {
     private val appSettings = ServiceManager.getService(ApplicationSettingsService::class.java)
 
     private val gitDocuments = mutableSetOf<Document>()
+    private val reviewDocuments = mutableSetOf<Document>()
     private val managedDocuments = mutableMapOf<Document, DocumentVersion>()
     private val managedEditors = mutableSetOf<Editor>()
     private val rangeHighlighters = mutableMapOf<Editor, MutableSet<RangeHighlighter>>()
@@ -101,6 +104,7 @@ class EditorService(val project: Project) {
     private val documentMarkers = mutableMapOf<Document, List<DocumentMarker>>()
     private var spatialViewActive = project.settingsService?.webViewContext?.spatialViewVisible ?: false
     private var codeStreamVisible = project.codeStream?.isVisible ?: false
+    private val inlineTextFieldManagers = mutableMapOf<Editor, InlineTextFieldManager>()
 
     fun add(editor: Editor) {
         val document = editor.document
@@ -117,10 +121,18 @@ class EditorService(val project: Project) {
         rangeHighlighters[editor] = mutableSetOf()
         editor.selectionModel.addSelectionListener(SelectionListenerImpl(project))
         editor.scrollingModel.addVisibleAreaListener(VisibleAreaListenerImpl(project))
-        NewCodemarkGutterIconManager(editor)
+        (editor as? EditorImpl)?.let {
+            NewCodemarkGutterIconManager(editor)
+            if (reviewFile != null) {
+                inlineTextFieldManagers[editor] = InlineTextFieldManager(editor)
+            }
+        }
 
         if (document.gitSha != null) {
             gitDocuments.add(document)
+        }
+        if (reviewFile != null) {
+            reviewDocuments.add(document)
         }
 
         // Enable LSP document management only for local files
@@ -141,8 +153,10 @@ class EditorService(val project: Project) {
     fun remove(editor: Editor) {
         val agentService = project.agentService ?: return
         gitDocuments.remove(editor.document)
+        reviewDocuments.remove(editor.document)
         managedEditors.remove(editor)
         rangeHighlighters.remove(editor)
+        inlineTextFieldManagers.remove(editor)
 
         val document = editor.document
         agentService.onDidStart {
@@ -225,6 +239,9 @@ class EditorService(val project: Project) {
         for (document in gitDocuments) {
             updateMarkers(document)
         }
+        for (document in reviewDocuments) {
+            updateMarkers(document)
+        }
     }
 
     fun updateMarkers(uri: String) {
@@ -234,6 +251,10 @@ class EditorService(val project: Project) {
         }
         val gitDocuments = gitDocuments.filter { it.uri == uri }
         gitDocuments.forEach {
+            updateMarkers(it)
+        }
+        val reviewDocuments = reviewDocuments.filter { uri.endsWith(it.getUserData(DiffUserDataKeysEx.FILE_NAME) ?: "nothing") }
+        reviewDocuments.forEach {
             updateMarkers(it)
         }
     }
@@ -691,6 +712,10 @@ class EditorService(val project: Project) {
                 }
             }
         }
+    }
+
+    fun getInlineTextFieldManager(editor: Editor) : InlineTextFieldManager? {
+        return inlineTextFieldManagers[editor]
     }
 
     // var count = 0

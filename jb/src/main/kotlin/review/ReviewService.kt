@@ -3,7 +3,6 @@ package com.codestream.review
 import com.codestream.agentService
 import com.codestream.codeStream
 import com.codestream.protocols.agent.GetLocalReviewContentsParams
-import com.codestream.protocols.agent.GetReviewContentsResult
 import com.codestream.protocols.webview.ReviewNotifications
 import com.codestream.sessionService
 import com.codestream.webViewService
@@ -32,6 +31,8 @@ enum class ReviewDiffSide(val path: String) {
 
 val REVIEW_DIFF = KeyWithDefaultValue.create("REVIEW_DIFF", false)
 val REPO_ID = Key<String>("REPO_ID")
+val PARENT_POST_ID = Key<String>("PARENT_POST_ID")
+val PULL_REQUEST = Key<CodeStreamDiffUriPullRequest?>("PULL_REQUEST")
 val PATH = Key<String>("PATH")
 
 class ReviewService(private val project: Project) {
@@ -117,24 +118,26 @@ class ReviewService(private val project: Project) {
                 rightVersion
             )
         )
-        showDiffContent("local", null, repoId, path, oldPath, contents, "New Review")
-    }
+        // showDiffContent("local", null, repoId, path, oldPath, contents, "New Review")
+    // }
+    //
+    // private fun showDiffContent(
+    //     reviewId: String,
+    //     checkpoint: Int?,
+    //     repoId: String,
+    //     path: String,
+    //     oldPath: String?,
+    //     contents: GetReviewContentsResult,
+    //     title: String
+    // ) {
+        val title = "New Review"
 
-    private fun showDiffContent(
-        reviewId: String,
-        checkpoint: Int?,
-        repoId: String,
-        path: String,
-        oldPath: String?,
-        contents: GetReviewContentsResult,
-        title: String
-    ) {
         val leftContent =
             createReviewDiffContent(
                 project,
                 contents.repoRoot,
-                reviewId,
-                checkpoint,
+                null,
+                null,
                 repoId,
                 ReviewDiffSide.LEFT,
                 oldPath ?: path,
@@ -144,8 +147,8 @@ class ReviewService(private val project: Project) {
             createReviewDiffContent(
                 project,
                 contents.repoRoot,
-                reviewId,
-                checkpoint,
+                null,
+                null,
                 repoId,
                 ReviewDiffSide.RIGHT,
                 path,

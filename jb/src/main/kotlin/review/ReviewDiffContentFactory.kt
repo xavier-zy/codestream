@@ -1,6 +1,7 @@
 package com.codestream.review
 
 import com.codestream.extensions.file
+import com.codestream.protocols.agent.Review
 import com.intellij.codeInsight.daemon.OutsidersPsiFileSupport
 import com.intellij.diff.contents.DocumentContent
 import com.intellij.diff.contents.DocumentContentImpl
@@ -20,7 +21,7 @@ import java.io.File
 fun createReviewDiffContent(
     project: Project,
     repoRoot: String?,
-    reviewId: String,
+    review: Review?,
     checkpoint: Int?,
     repoId: String,
     side: ReviewDiffSide,
@@ -28,9 +29,10 @@ fun createReviewDiffContent(
     text: String
 ): DocumentContent {
     val checkpointStr = checkpoint?.toString() ?: "undefined"
+    val reviewId = review?.id ?: "local"
     val fullPath = "$reviewId/$checkpointStr/$repoId/${side.path}/$path"
 
-    return createDiffContent(project, repoRoot, fullPath, side, path, text, reviewId != "local")
+    return createDiffContent(project, repoRoot, review?.postId, null, fullPath, side, path, text, reviewId != "local")
 }
 
 fun createRevisionDiffContent(
@@ -40,12 +42,14 @@ fun createRevisionDiffContent(
     side: ReviewDiffSide,
     text: String
 ): DocumentContent {
-    return createDiffContent(project, repoRoot, data.toEncodedPath(), side, data.path, text, true)
+    return createDiffContent(project, repoRoot, null, data.context, data.toEncodedPath(), side, data.path, text, true)
 }
 
 fun createDiffContent(
     project: Project,
     repoRoot: String?,
+    parentPostId: String?,
+    context: CodeStreamDiffUriContext?,
     fullPath: String,
     side: ReviewDiffSide,
     path: String,
@@ -70,6 +74,9 @@ fun createDiffContent(
         PsiDocumentManager.getInstance(project).getPsiFile(document)
         document
     } ?: EditorFactory.getInstance().createDocument(correctedText).also { it.setReadOnly(true) }
+    document.putUserData(PARENT_POST_ID, parentPostId)
+    document.putUserData(PULL_REQUEST, context?.pullRequest)
+    document.putUserData(DiffUserDataKeysEx.FILE_NAME, filePath.name)
 
     val content: DocumentContent =
         DocumentContentImpl(project, document, fileType, document.file, separator, null, null)

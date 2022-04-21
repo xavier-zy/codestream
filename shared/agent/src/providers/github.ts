@@ -1760,6 +1760,11 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 	 * @param request
 	 */
 	async getPullRequestReviewId(request: { pullRequestId: string }) {
+		const cachedPR = this._pullRequestCache.get(request.pullRequestId);
+		if (cachedPR?.repository?.pullRequest) {
+			return cachedPR.repository.pullRequest.pendingReview?.id;
+		}
+
 		const metaData = await this.getRepoOwnerFromPullRequestId(request.pullRequestId);
 
 		const response = await this.query<any>(

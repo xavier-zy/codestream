@@ -10,6 +10,8 @@ import {
 	AsanaUser,
 	AsanaWorkspace,
 	CreateThirdPartyCardRequest,
+	FetchAssignableUsersAutocompleteRequest,
+	FetchAssignableUsersResponse,
 	FetchThirdPartyBoardsRequest,
 	FetchThirdPartyBoardsResponse,
 	FetchThirdPartyCardsRequest,

@@ -3,12 +3,13 @@ import * as qs from "querystring";
 import { Logger } from "../logger";
 import {
 	CreateThirdPartyCardRequest,
+	FetchAssignableUsersAutocompleteRequest,
+	FetchAssignableUsersResponse,
 	FetchThirdPartyBoardsRequest,
 	FetchThirdPartyBoardsResponse,
 	FetchThirdPartyCardsRequest,
 	FetchThirdPartyCardsResponse,
 	MoveThirdPartyCardRequest,
-	ShortcutConfigurationData,
 	ShortcutCreateCardRequest,
 	ShortcutCreateCardResponse,
 	ShortcutMember,

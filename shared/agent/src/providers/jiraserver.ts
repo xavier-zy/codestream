@@ -8,6 +8,8 @@ import { Logger } from "../logger";
 import {
 	CreateJiraCardRequest,
 	CreateThirdPartyCardRequest,
+	FetchAssignableUsersAutocompleteRequest,
+	FetchAssignableUsersResponse,
 	FetchThirdPartyBoardsRequest,
 	FetchThirdPartyBoardsResponse,
 	FetchThirdPartyCardsRequest,
@@ -257,7 +259,6 @@ export class JiraServerProvider extends ThirdPartyIssueProviderBase<CSJiraServer
 	@log()
 	async getBoards(request: FetchThirdPartyBoardsRequest): Promise<FetchThirdPartyBoardsResponse> {
 		if (this.boards.length > 0) return { boards: this.boards };
-		await this.ensureConnected();
 		try {
 			this.boards = [];
 			const response: JiraProject[] = await this._getJira<JiraProject[]>("/rest/api/2/project");
@@ -284,11 +285,11 @@ export class JiraServerProvider extends ThirdPartyIssueProviderBase<CSJiraServer
 				`/rest/api/2/issue/createmeta/${project.id}/issuetypes`
 			);
 
-			const issuetypes: IssueTypeDescriptor[] = [];
+			const issueTypes: IssueTypeDescriptor[] = [];
 
 			jiraProjectsFieldDetails.projects.push({
 				...project,
-				issuetypes
+				issueTypes
 			});
 
 			for (const issueType of issueTypesResponse) {
@@ -300,7 +301,7 @@ export class JiraServerProvider extends ThirdPartyIssueProviderBase<CSJiraServer
 					fields[field.name] = { ...field };
 				}
 
-				issuetypes.push({ ...issueType, fields });
+				issueTypes.push({ ...issueType, fields });
 			}
 		}
 		return jiraProjectsFieldDetails;
@@ -335,25 +336,25 @@ export class JiraServerProvider extends ThirdPartyIssueProviderBase<CSJiraServer
 			};
 
 			const issueTypes = Array.from(
-				Iterables.filterMap(project.issuetypes, type => {
-					if (type.fields.summary && type.fields.description) {
+				Iterables.filterMap(project.issueTypes, type => {
+					if (type.fields.Summary && type.fields.Description) {
 						const hasOtherRequiredFields = Object.entries(type.fields).find(
 							([name, attributes]) =>
-								name !== "summary" &&
-								name !== "description" &&
-								name !== "issuetype" &&
-								name !== "project" &&
-								name !== "reporter" &&
+								name !== "Summary" &&
+								name !== "Description" &&
+								name !== "Issue Type" &&
+								name !== "Project" &&
+								name !== "Reporter" &&
 								attributes.required &&
 								!attributes.hasDefaultValue
 						);
 
 						board.issueTypeIcons[type.name] = type.iconUrl;
 
-						if (type.fields.assignee === undefined) {
+						if (type.fields.Assignee === undefined) {
 							board.assigneesDisabled = true;
 						} else {
-							board.assigneesRequired = type.fields.assignee.required;
+							board.assigneesRequired = type.fields.Assignee.required;
 						}
 						return hasOtherRequiredFields ? undefined : type.name;
 					}
@@ -504,7 +505,7 @@ export class JiraServerProvider extends ThirdPartyIssueProviderBase<CSJiraServer
 	// apparently there's no way to get more than 1000 users
 	// https://community.atlassian.com/t5/Jira-questions/Paging-is-broken-for-user-search-queries/qaq-p/712071
 	@log()
-	async getAssignableUsers(request: { boardId: string }) {
+	async getAssignableUsers(request: { boardId: string }): Promise<FetchAssignableUsersResponse> {
 		const board = (this.boards || []).find(board => board.id === request.boardId);
 		if (!board) {
 			return { users: [] };
@@ -513,6 +514,24 @@ export class JiraServerProvider extends ThirdPartyIssueProviderBase<CSJiraServer
 			`/rest/api/2/user/assignable/search?${qs.stringify({
 				project: board.key,
 				maxResults: 1000
+			})}`
+		)) as JiraUser[];
+		return { users: result.map(u => ({ ...u, id: u.accountId })) };
+	}
+
+	@log()
+	async getAssignableUsersAutocomplete(
+		request: FetchAssignableUsersAutocompleteRequest
+	): Promise<FetchAssignableUsersResponse> {
+		const board = (this.boards || []).find(board => board.id === request.boardId);
+		if (!board) {
+			return { users: [] };
+		}
+		const result = (await this._getJira(
+			`/rest/api/2/user/assignable/search?${qs.stringify({
+				username: request.search,
+				project: board.key,
+				maxResults: 50
 			})}`
 		)) as JiraUser[];
 		return { users: result.map(u => ({ ...u, id: u.accountId })) };

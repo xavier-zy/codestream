@@ -19,6 +19,7 @@ import {
 	CreateThirdPartyPostResponse,
 	DocumentMarker,
 	DocumentMarkerExternalContent,
+	FetchAssignableUsersAutocompleteRequest,
 	FetchAssignableUsersRequest,
 	FetchAssignableUsersResponse,
 	FetchThirdPartyBoardsRequest,
@@ -77,6 +78,9 @@ export interface ThirdPartyProviderSupportsIssues {
 	): Promise<FetchThirdPartyCardWorkflowResponse>;
 	moveCard(request: MoveThirdPartyCardRequest): Promise<MoveThirdPartyCardResponse>;
 	getAssignableUsers(request: FetchAssignableUsersRequest): Promise<FetchAssignableUsersResponse>;
+	getAssignableUsersAutocomplete(
+		request: FetchAssignableUsersAutocompleteRequest
+	): Promise<FetchAssignableUsersResponse>;
 	createCard(request: CreateThirdPartyCardRequest): Promise<CreateThirdPartyCardResponse>;
 }
 
@@ -968,6 +972,13 @@ export abstract class ThirdPartyIssueProviderBase<
 				message: errorMessage
 			}
 		};
+	}
+
+	@log()
+	async getAssignableUsersAutocomplete(
+		request: FetchAssignableUsersAutocompleteRequest
+	): Promise<FetchAssignableUsersResponse> {
+		throw new Error("ERR_METHOD_NOT_IMPLEMENTED");
 	}
 }
 

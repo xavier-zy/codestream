@@ -6,6 +6,8 @@ import { Logger } from "../logger";
 import {
 	CreateJiraCardRequest,
 	CreateThirdPartyCardRequest,
+	FetchAssignableUsersAutocompleteRequest,
+	FetchAssignableUsersResponse,
 	FetchThirdPartyBoardsRequest,
 	FetchThirdPartyBoardsResponse,
 	FetchThirdPartyCardsRequest,
@@ -467,11 +469,24 @@ export class JiraProvider extends ThirdPartyIssueProviderBase<CSJiraProviderInfo
 	// https://community.atlassian.com/t5/Jira-questions/Paging-is-broken-for-user-search-queries/qaq-p/712071
 	@log()
 	async getAssignableUsers(request: { boardId: string }) {
-		await this.ensureConnected();
 		const { body } = await this.get<JiraUser[]>(
 			`/rest/api/2/user/assignable/search?${qs.stringify({
 				project: request.boardId,
 				maxResults: 1000
+			})}`
+		);
+		return { users: body.map(u => ({ ...u, id: u.accountId })) };
+	}
+
+	@log()
+	async getAssignableUsersAutocomplete(
+		request: FetchAssignableUsersAutocompleteRequest
+	): Promise<FetchAssignableUsersResponse> {
+		const { body } = await this.get<JiraUser[]>(
+			`/rest/api/2/user/assignable/search?${qs.stringify({
+				query: request.search,
+				project: request.boardId,
+				maxResults: 50
 			})}`
 		);
 		return { users: body.map(u => ({ ...u, id: u.accountId })) };

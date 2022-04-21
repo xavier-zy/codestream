@@ -33,7 +33,7 @@ export interface IssueTypeDescriptor {
 }
 
 export interface JiraProjectMeta extends JiraProject {
-	issuetypes: IssueTypeDescriptor[];
+	issueTypes: IssueTypeDescriptor[];
 }
 
 export interface JiraProjectsMetaResponse {

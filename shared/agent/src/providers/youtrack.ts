@@ -1,9 +1,9 @@
 "use strict";
 import * as qs from "querystring";
-import { MessageType } from "../api/apiProvider";
-import { Logger } from "../logger";
 import {
 	CreateThirdPartyCardRequest,
+	FetchAssignableUsersAutocompleteRequest,
+	FetchAssignableUsersResponse,
 	FetchThirdPartyBoardsRequest,
 	FetchThirdPartyBoardsResponse,
 	FetchThirdPartyCardsRequest,
@@ -13,12 +13,11 @@ import {
 	ThirdPartyDisconnect,
 	YouTrackBoard,
 	YouTrackCard,
-	YouTrackConfigurationData,
 	YouTrackCreateCardRequest,
 	YouTrackCreateCardResponse,
 	YouTrackUser
 } from "../protocol/agent.protocol";
-import { CSMe, CSYouTrackProviderInfo } from "../protocol/api.protocol";
+import { CSYouTrackProviderInfo } from "../protocol/api.protocol";
 import { log, lspProvider } from "../system";
 import { ThirdPartyIssueProviderBase } from "./provider";
 

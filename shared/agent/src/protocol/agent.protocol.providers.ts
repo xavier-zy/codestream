@@ -277,6 +277,12 @@ export interface FetchAssignableUsersRequest {
 	boardId: string;
 }
 
+export interface FetchAssignableUsersAutocompleteRequest {
+	providerId: string;
+	boardId: string;
+	search: string;
+}
+
 export interface FetchAssignableUsersResponse {
 	users: ThirdPartyProviderUser[];
 }
@@ -287,6 +293,13 @@ export const FetchAssignableUsersRequestType = new RequestType<
 	void,
 	void
 >("codestream/provider/cards/users");
+
+export const FetchAssignableUsersAutocompleteRequestType = new RequestType<
+	FetchAssignableUsersAutocompleteRequest,
+	FetchAssignableUsersResponse,
+	void,
+	void
+>("codestream/provider/cards/users/search");
 
 export interface CreateThirdPartyCardRequest {
 	providerId: string;

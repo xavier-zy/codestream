@@ -1,13 +1,16 @@
 import { CodeStreamState } from "@codestream/webview/store";
 import { useDidMount } from "@codestream/webview/utilities/hooks";
 import { normalizeUrl } from "@codestream/webview/utilities/urls";
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { configureProvider, ViewLocation } from "../store/providers/actions";
+import { configureProvider, disconnectProvider, ViewLocation } from "../store/providers/actions";
+import { isConnected } from "../store/providers/reducer";
 import { closePanel } from "./actions";
 import Button from "./Button";
 import CancelButton from "./CancelButton";
 import { PROVIDER_MAPPINGS } from "./CrossPostIssueControls/types";
+import { getUserProviderInfoFromState } from "../store/providers/utils";
+import { CSProviderInfo } from "@codestream/protocols/api";
 
 interface Props {
 	providerId: string;
@@ -21,8 +24,21 @@ export default function ConfigureYouTrackPanel(props: Props) {
 		const { providers, ide } = state;
 		const provider = providers[props.providerId];
 		const isInVscode = ide.name === "VSC";
+		const userProviderInfo = getUserProviderInfoFromState(provider.name, state) as CSProviderInfo;
 		const providerDisplay = PROVIDER_MAPPINGS[provider.name];
-		return { provider, providerDisplay, isInVscode };
+		const accessTokenError = { accessTokenError: undefined };
+		const didConnect =
+			isConnected(state, { name: provider.name }, undefined, accessTokenError) &&
+			!accessTokenError.accessTokenError &&
+			!userProviderInfo.pendingVerification;
+		return {
+			provider,
+			providerDisplay,
+			isInVscode,
+			verificationError: accessTokenError.accessTokenError,
+			didConnect,
+			userProviderInfo
+		};
 	});
 
 	const [baseUrl, setBaseUrl] = useState("");
@@ -37,6 +53,15 @@ export default function ConfigureYouTrackPanel(props: Props) {
 	useDidMount(() => {
 		initialInput.current?.focus();
 	});
+
+	const { didConnect, verificationError, userProviderInfo } = derivedState;
+	useEffect(() => {
+		if (didConnect) {
+			dispatch(closePanel());
+		} else if (verificationError) {
+			setLoading(false);
+		}
+	}, [didConnect, verificationError, userProviderInfo]);
 
 	const onSubmit = async e => {
 		e.preventDefault();
@@ -53,15 +78,22 @@ export default function ConfigureYouTrackPanel(props: Props) {
 			configureProvider(
 				providerId,
 				{ data: { baseUrl: normalizeUrl(baseUrl) || "" }, accessToken: token },
-				{ setConnectedWhenConfigured: true, connectionLocation: props.originLocation }
+				{ setConnectedWhenConfigured: true, connectionLocation: props.originLocation, verify: true }
 			)
 		);
-
-		setLoading(false);
-		await dispatch(closePanel());
 	};
 
-	const renderError = () => {};
+	const renderError = () => {
+		if (derivedState.verificationError) {
+			const message =
+				(derivedState.verificationError as any).providerMessage ||
+				(derivedState.verificationError as any).error?.info?.error?.message ||
+				"Access token invalid";
+			return <p className="error-message">Unable to verify connection: {message}.</p>;
+		} else {
+			return "";
+		}
+	};
 
 	const onBlurBaseUrl = () => {
 		setBaseUrlTouched(true);
@@ -91,6 +123,13 @@ export default function ConfigureYouTrackPanel(props: Props) {
 		return baseUrl.length === 0 || token.length === 0;
 	};
 
+	const onCancel = () => {
+		if (submitAttempted) {
+			dispatch(disconnectProvider(props.providerId, props.originLocation));
+		}
+		dispatch(closePanel());
+	};
+
 	const inactive = false;
 	const { providerDisplay } = derivedState;
 	const { displayName, urlPlaceholder, getUrl } = providerDisplay;
@@ -98,7 +137,7 @@ export default function ConfigureYouTrackPanel(props: Props) {
 		<div className="panel configure-provider-panel">
 			<form className="standard-form vscroll" onSubmit={onSubmit}>
 				<div className="panel-header">
-					<CancelButton onClick={() => dispatch(closePanel())} />
+					<CancelButton onClick={() => onCancel()} />
 					<span className="panel-title">Configure {displayName}</span>
 				</div>
 				<fieldset className="form-body" disabled={inactive}>
@@ -173,7 +212,7 @@ export default function ConfigureYouTrackPanel(props: Props) {
 								className="control-button cancel"
 								tabIndex={tabIndex()}
 								type="button"
-								onClick={() => dispatch(closePanel())}
+								onClick={() => onCancel()}
 							>
 								Cancel
 							</Button>

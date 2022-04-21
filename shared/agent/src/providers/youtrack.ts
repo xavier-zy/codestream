@@ -9,6 +9,8 @@ import {
 	FetchThirdPartyCardsRequest,
 	FetchThirdPartyCardsResponse,
 	MoveThirdPartyCardRequest,
+	ProviderConfigurationData,
+	ThirdPartyDisconnect,
 	YouTrackBoard,
 	YouTrackCard,
 	YouTrackConfigurationData,
@@ -22,6 +24,8 @@ import { ThirdPartyIssueProviderBase } from "./provider";
 
 @lspProvider("youtrack")
 export class YouTrackProvider extends ThirdPartyIssueProviderBase<CSYouTrackProviderInfo> {
+	_assignableUsers: YouTrackUser[] | undefined;
+
 	get displayName() {
 		return "YouTrack";
 	}
@@ -55,6 +59,14 @@ export class YouTrackProvider extends ThirdPartyIssueProviderBase<CSYouTrackProv
 
 	get baseUrl() {
 		return `${this.myUrl}${this.apiPath}`;
+	}
+
+	protected async onDisconnected(request?: ThirdPartyDisconnect) {
+		delete this._assignableUsers;
+	}
+
+	async verifyConnection(config: ProviderConfigurationData) {
+		await this.getAssignableUsers({ boardId: "" });
 	}
 
 	@log()
@@ -130,12 +142,15 @@ export class YouTrackProvider extends ThirdPartyIssueProviderBase<CSYouTrackProv
 
 	@log()
 	async getAssignableUsers(request: { boardId: string }) {
+		if (this._assignableUsers) return { users: this._assignableUsers };
+
 		const { body } = await this.get<YouTrackUser[]>(
 			`/admin/users/?${qs.stringify({
 				fields: "id,name,fullName"
 			})}`
 		);
-		return { users: body.map(u => ({ ...u, displayName: u.fullName })) };
+		this._assignableUsers = body.map(u => ({ ...u, displayName: u.fullName }));
+		return { users: this._assignableUsers };
 	}
 
 	canConfigure() {

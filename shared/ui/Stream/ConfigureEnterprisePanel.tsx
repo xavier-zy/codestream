@@ -6,7 +6,6 @@ import React, { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { configureProvider, disconnectProvider, ViewLocation } from "../store/providers/actions";
 import { getUserProviderInfoFromState } from "../store/providers/utils";
-
 import { isConnected } from "../store/providers/reducer";
 import { closePanel } from "./actions";
 import Button from "./Button";
@@ -82,8 +81,6 @@ export default function ConfigureEnterprisePanel(props: Props) {
 				{ setConnectedWhenConfigured: true, connectionLocation: props.originLocation, verify: true }
 			)
 		);
-		//setLoading(false);
-		//await dispatch(closePanel());
 	};
 
 	const renderError = () => {

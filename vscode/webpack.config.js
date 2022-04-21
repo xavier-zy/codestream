@@ -18,7 +18,7 @@ class CompileStatsPlugin {
 	constructor(name, env) {
 		this.name = name
 		this.enabled = !env.production;
-		this.filename = `./stats-webpack-${this.name}`
+		this.filename = `./stats-webpack-${this.name}.json`
 	}
 	total = 0;
 	count = 0;

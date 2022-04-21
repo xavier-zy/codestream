@@ -37,25 +37,31 @@ const getFilterCustom = (startWorkPreferences: any, providerId: string) => {
 		: EMPTY_CUSTOM_FILTERS;
 };
 
-export const fetchBoardsAndCardsAction = (activeProviders: ThirdPartyProviderConfig[]):
-	ThunkAction<void, CodeStreamState, unknown, AnyAction> =>
-	async (dispatch, getState) => {
+export const fetchBoardsAndCardsAction = (
+	activeProviders: ThirdPartyProviderConfig[]
+): ThunkAction<void, CodeStreamState, unknown, AnyAction> => async (dispatch, getState) => {
+	console.debug(
+		"Loading boards/cards for providers",
+		JSON.stringify(activeProviders.map(p => p.id))
+	);
+	dispatch(setLoading({ issuesLoading: true }));
+	try {
+		const startWorkPreferences = getState().preferences.startWork || {};
+		await Promise.all([
+			_fetchBoards(dispatch, activeProviders),
+			_fetchCards(dispatch, activeProviders, startWorkPreferences)
+		]);
+		dispatch(setLoading({ initialLoadComplete: true }));
+	} finally {
+		dispatch(setLoading({ issuesLoading: false }));
+	}
+};
 
-		console.debug("Loading boards/cards for providers", JSON.stringify(activeProviders.map(p => p.id)));
-		dispatch(setLoading({ issuesLoading: true }));
-		try {
-			const startWorkPreferences = getState().preferences.startWorkPreferences || {};
-			await Promise.all([
-				_fetchBoards(dispatch, activeProviders),
-				_fetchCards(dispatch, activeProviders, startWorkPreferences)
-			]);
-			dispatch(setLoading({ initialLoadComplete: true }));
-		} finally {
-			dispatch(setLoading({ issuesLoading: false }));
-		}
-	};
-
-const _fetchCards = async (dispatch: ThunkDispatch<any, any, any>, activeProviders, startWorkPreferences: any) => {
+const _fetchCards = async (
+	dispatch: ThunkDispatch<any, any, any>,
+	activeProviders,
+	startWorkPreferences: any
+) => {
 	const start = Date.now();
 	try {
 		await Promise.all(

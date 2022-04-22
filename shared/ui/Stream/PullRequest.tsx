@@ -680,6 +680,7 @@ export const PullRequest = () => {
 							commentId={derivedState.currentPullRequestCommentId}
 							quote={() => {}}
 							onClose={closeFileComments}
+							prCommitsRange={prCommitsRange}
 						/>
 					</Root>
 				</ThemeProvider>
@@ -1012,6 +1013,7 @@ export const PullRequest = () => {
 							commentId={derivedState.currentPullRequestCommentId}
 							quote={() => {}}
 							onClose={closeFileComments}
+							prCommitsRange={prCommitsRange}
 						/>
 					)}
 				</Root>

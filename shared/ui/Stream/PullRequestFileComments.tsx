@@ -79,10 +79,11 @@ interface Props {
 	commentId: string | undefined;
 	quote: Function;
 	onClose: Function;
+	prCommitsRange?: string[];
 }
 
 export const PullRequestFileComments = (props: PropsWithChildren<Props>) => {
-	const { quote, pr } = props;
+	const { quote, pr, prCommitsRange } = props;
 	const dispatch = useDispatch();
 
 	const derivedState = useSelector((state: CodeStreamState) => {
@@ -102,7 +103,6 @@ export const PullRequestFileComments = (props: PropsWithChildren<Props>) => {
 	const [fileInfo, setFileInfo] = useState<any>({});
 	const [filename, setFilename] = useState("");
 
-	//eric here maybe for lines
 	const _mapData = data => {
 		const fileInfo = data
 			.filter(_ => _.filename === filename)
@@ -178,6 +178,9 @@ export const PullRequestFileComments = (props: PropsWithChildren<Props>) => {
 
 	const commentsArray = commentMap[filename];
 
+	let commentsSortedByLineNumber = commentsArray;
+	commentsSortedByLineNumber.sort((a, b) => (a.comment.position > b.comment.position ? 1 : -1));
+
 	return (
 		<Modal translucent onClose={() => props.onClose()}>
 			<Root>
@@ -196,7 +199,7 @@ export const PullRequestFileComments = (props: PropsWithChildren<Props>) => {
 							</span>
 						</h1>
 
-						{commentsArray.map((c, index) => {
+						{commentsSortedByLineNumber.map((c, index) => {
 							const isFirst = index === 0;
 
 							return (
@@ -208,6 +211,8 @@ export const PullRequestFileComments = (props: PropsWithChildren<Props>) => {
 										setIsLoadingMessage={props.setIsLoadingMessage}
 										author={c?.author?.login || ""}
 										isFirst={isFirst}
+										fileInfo={fileInfo}
+										prCommitsRange={prCommitsRange}
 									/>
 								</CardContainer>
 							);

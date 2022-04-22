@@ -6,7 +6,7 @@ import {
 	PRCodeCommentWrapper,
 	PRThreadedCommentHeader
 } from "./PullRequestComponents";
-import React, { PropsWithChildren, useState } from "react";
+import React, { PropsWithChildren, useState, useMemo } from "react";
 import { PRHeadshot } from "../src/components/Headshot";
 import Timestamp from "./Timestamp";
 import Icon from "./Icon";
@@ -20,13 +20,21 @@ import { PullRequestEditingComment } from "./PullRequestEditingComment";
 import { PullRequestReplyComment } from "./PullRequestReplyComment";
 import { Button } from "../src/components/Button";
 import { api } from "../store/providerPullRequests/actions";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { GHOST } from "./PullRequestTimelineItems";
 import { prettyPrintOne } from "code-prettify";
 import { escapeHtml } from "../utils";
 import * as Path from "path-browserify";
 import styled from "styled-components";
 import { Link } from "./Link";
+import { HostApi } from "..";
+import { CodeStreamState } from "@codestream/webview/store";
+import { CompareLocalFilesRequestType } from "../ipc/host.protocol";
+import {
+	getProviderPullRequestRepo,
+	getPullRequestId
+} from "../store/providerPullRequests/reducer";
+import { EditorHighlightRangeRequestType } from "@codestream/protocols/webview";
 
 const PRBranchContainer = styled.div`
 	display: inline-block;
@@ -49,11 +57,29 @@ interface Props {
 	author: any;
 	skipResolvedCheck?: boolean;
 	isFirst?: boolean;
+	fileInfo?: any;
+	prCommitsRange?: string[];
 }
 
 export const PullRequestFileCommentCard = (props: PropsWithChildren<Props>) => {
-	const { review, comment, author, setIsLoadingMessage, pr } = props;
+	const { review, prCommitsRange, fileInfo, comment, author, setIsLoadingMessage, pr } = props;
 	const dispatch = useDispatch();
+
+	const derivedState = useSelector((state: CodeStreamState) => {
+		return {
+			providerPullRequests: state.providerPullRequests.pullRequests,
+			pullRequestFilesChangedMode: state.preferences.pullRequestFilesChangedMode || "files",
+			currentPullRequestProviderId: state.context.currentPullRequest
+				? state.context.currentPullRequest.providerId
+				: undefined,
+			currentPullRequestId: state.context.currentPullRequest
+				? state.context.currentPullRequest.id
+				: undefined,
+			currentRepo: getProviderPullRequestRepo(state),
+			pullRequestId: getPullRequestId(state),
+			documentMarkers: state.documentMarkers[state.editorContext.textEditorUri || ""] || []
+		};
+	});
 
 	const [openComments, setOpenComments] = useState({});
 	const [pendingComments, setPendingComments] = useState({});
@@ -90,8 +116,82 @@ export const PullRequestFileCommentCard = (props: PropsWithChildren<Props>) => {
 		});
 	};
 
-	const handleDiffClick = () => {
-		return null;
+	// const commitBased = useMemo(() => {
+	// 	if (prCommitsRange) {
+	// 		return prCommitsRange?.length > 0;
+	// 	} else {
+	// 		return false;
+	// 	}
+	// }, [prCommitsRange]);
+	//
+	// const baseRef = useMemo(() => {
+	// 	if (prCommitsRange.length === 1) {
+	// 		let commitIndex;
+	// 		prCommits.map((commit, index) => {
+	// 			if (commit.oid === prCommitsRange[0]) {
+	// 				commitIndex = index - 1;
+	// 			}
+	// 		});
+	// 		if (commitIndex >= 0) {
+	// 			return prCommits[commitIndex].oid;
+	// 		}
+	// 		return pr.baseRefOid;
+	// 	}
+	// 	if (prCommitsRange.length > 1) {
+	// 		if (filesChanged.length > 0) {
+	// 			return filesChanged[0].sha;
+	// 		}
+	// 		return prCommitsRange[0];
+	// 	}
+	// 	return pr.baseRefOid;
+	// }, [prCommitsRange]);
+
+	const handleDiffClick = async () => {
+		// console.warn("eric pr", pr);
+
+		const request = {
+			baseBranch: pr.baseRefName,
+			baseSha: pr.baseRefOid,
+			headBranch: pr.headRefName,
+			headSha: pr.headRefOid,
+			filePath: fileInfo.filename,
+			previousFilePath: fileInfo?.previousFilename,
+			repoId: derivedState.currentRepo!.id!,
+			context: pr
+				? {
+						pullRequest: {
+							providerId: pr.providerId,
+							id: derivedState.pullRequestId
+						}
+				  }
+				: undefined
+		};
+		try {
+			await HostApi.instance.send(CompareLocalFilesRequestType, request);
+		} catch (err) {
+			console.warn(err);
+		}
+
+		HostApi.instance.track("PR Diff Viewed", {
+			Host: pr && pr.providerId
+		});
+
+		const marker = derivedState.documentMarkers.find(dm => {
+			return dm.file === fileInfo.filename;
+		});
+
+		console.warn("eric documentMarkers", derivedState.documentMarkers);
+		console.warn("eric marker", marker);
+
+		// commentsSortedByLineNumber.sort((a, b) => (a.comment.position > b.comment.position ? 1 : -1));
+
+		if (marker?.range) {
+			HostApi.instance.send(EditorHighlightRangeRequestType, {
+				uri: marker?.fileUri,
+				range: marker?.range,
+				highlight: true
+			});
+		}
 	};
 
 	const handleResolve = async (e, threadId) => {
@@ -186,6 +286,7 @@ export const PullRequestFileCommentCard = (props: PropsWithChildren<Props>) => {
 
 	console.warn("eric comment", comment);
 	console.warn("eric pr", pr);
+	console.warn("eric fileInfo", fileInfo);
 
 	if (
 		!props.skipResolvedCheck &&

@@ -173,6 +173,34 @@ const ErrorRow = (props: {
 	);
 };
 
+const SystemLevelTelemetryRow = (props: {
+	title: string;
+	subtle?: string;
+	tooltip?: string;
+	isLoading?: boolean;
+	onClick?: Function;
+}) => {
+	return (
+		<Row
+			className="pr-row"
+			onClick={e => {
+				props.onClick && props.onClick();
+			}}
+		>
+			{/* <div>{props.isLoading ? <Icon className="spin" name="sync" /> : <Icon name="alert" />}</div> */}
+			<div>
+				<Tooltip title={props.tooltip} delay={1} placement="bottom">
+					<>
+						<span>{props.title}</span>
+						{props.subtle && <div className="subtle-tight"> {props.subtle}</div>}
+					</>
+				</Tooltip>
+			</div>
+			<div className="icons">27% ^</div>
+		</Row>
+	);
+};
+
 const EMPTY_HASH = {};
 const EMPTY_ARRAY = [];
 let hasLoadedOnce = false;
@@ -206,7 +234,10 @@ export const Observability = React.memo((props: Props) => {
 		ObservabilityErrorCore[]
 	>([]);
 	const [observabilityErrors, setObservabilityErrors] = useState<ObservabilityRepoError[]>([]);
+	const [observabilityGoldenSignals, setObservabilityGoldenSignals] = useState<any[]>([]);
+
 	const [observabilityRepos, setObservabilityRepos] = useState<ObservabilityRepo[]>([]);
+
 	const previousHiddenPaneNodes = usePrevious(derivedState.hiddenPaneNodes);
 	const previousNewRelicIsConnected = usePrevious(derivedState.newRelicIsConnected);
 
@@ -287,6 +318,7 @@ export const Observability = React.memo((props: Props) => {
 						if (response?.repos) {
 							setObservabilityErrors(response.repos!);
 						}
+
 						HostApi.instance
 							.send(GetObservabilityEntitiesRequestType, {
 								appNames: response?.repos?.map(r => r.repoName),
@@ -726,6 +758,7 @@ export const Observability = React.memo((props: Props) => {
 																		)
 																	}
 																></PaneNodeName>
+
 																{loadingErrors && loadingErrors[or.repoId] ? (
 																	<>
 																		<ErrorRow isLoading={true} title="Loading..."></ErrorRow>
@@ -793,6 +826,23 @@ export const Observability = React.memo((props: Props) => {
 																						remoteName={or.repoName}
 																					/>
 																				)}
+
+																				<>
+																					{observabilityErrors
+																						.filter(oe => oe.repoId === or.repoId)
+																						.map(oe => {
+																							return oe.systemLevelTelemetry.goldenSignalValuesV2.signalValues.map(
+																								_ => {
+																									return (
+																										<SystemLevelTelemetryRow
+																											title={`${_.name}`}
+																											subtle={`Last 5 min avg: ${_.summaryValue}`}
+																										/>
+																									);
+																								}
+																							);
+																						})}
+																				</>
 																			</>
 																		)}
 																	</>

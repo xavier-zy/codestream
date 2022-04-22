@@ -1001,6 +1001,7 @@ export interface ObservabilityRepoError {
 	repoId: string;
 	repoName: string;
 	errors: ObservabilityError[];
+	systemLevelTelemetry: any;
 }
 
 export interface ObservabilityRepo {
@@ -1418,5 +1419,32 @@ export interface RelatedEntityByRepositoryGuidsResult {
 				results: RelatedEntity[];
 			};
 		}[];
+	};
+}
+
+export interface GoldenSignalDeviation {
+	anomalyScore: number;
+	comparisonMean: number;
+	comparisonStandardDeviation: number;
+	fullyQualifiedSignalName: string;
+	name: string;
+	percentChange: number;
+	selectionMean: number;
+}
+
+export interface SignalValue {
+	fullyQualifiedSignalName: string;
+	name: string;
+	summaryValue: number;
+}
+
+export interface GoldenSignalDeviationsResponse {
+	actor: {
+		entity: {
+			goldenSignalDeviations: GoldenSignalDeviation[];
+			goldenSignalValuesV2: {
+				signalValues: SignalValue[];
+			};
+		};
 	};
 }

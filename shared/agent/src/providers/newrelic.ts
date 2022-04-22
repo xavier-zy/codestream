@@ -78,7 +78,8 @@ import {
 	ReposScm,
 	StackTraceResponse,
 	ThirdPartyDisconnect,
-	ThirdPartyProviderConfig
+	ThirdPartyProviderConfig,
+	GoldenSignalDeviationsResponse
 } from "../protocol/agent.protocol";
 import { CSMe, CSNewRelicProviderInfo } from "../protocol/api.protocol";
 import { CodeStreamSession } from "../session";
@@ -137,6 +138,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		return "newrelic";
 	}
 
+	// TODO is this unused???
 	get headers() {
 		return {
 			"Api-Key": this.accessToken!,
@@ -207,7 +209,8 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		client.setHeaders({
 			"Api-Key": this.accessToken!,
 			"Content-Type": "application/json",
-			"NewRelic-Requesting-Services": "CodeStream"
+			"NewRelic-Requesting-Services": "CodeStream",
+			"nerd-graph-unsafe-experimental-opt-in": "GoldenSignal"
 		});
 		ContextLogger.setData({
 			nrUrl: this.graphQlBaseUrl,
@@ -243,7 +246,8 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		client.setHeaders({
 			"Api-Key": accessToken!,
 			"Content-Type": "application/json",
-			"NewRelic-Requesting-Services": "CodeStream"
+			"NewRelic-Requesting-Services": "CodeStream",
+			"nerd-graph-unsafe-experimental-opt-in": "GoldenSignal"
 		});
 
 		return client;
@@ -901,6 +905,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				if (!repo.remotes || !repo.id) continue;
 
 				const observabilityErrors: ObservabilityError[] = [];
+				let systemLevelTelemetry = {};
 				// don't ask for NR error data if we don't have
 				// an explicit want for this repo id
 				if (filteredRepoIds.includes(repo.id)) {
@@ -936,6 +941,21 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 								builtFromApplications = builtFromApplications.filter(
 									_ => _.source?.entity.guid === entityFilter.entityGuid
 								);
+							}
+
+							for (const application of builtFromApplications) {
+								if (!application.source.entity.guid) continue;
+
+								try {
+									const goldenSignalDeviations = await this.getGoldenSignalDeviations(
+										application.source.entity.guid
+									);
+									systemLevelTelemetry = {
+										goldenSignalDeviations:
+											goldenSignalDeviations.actor.entity.goldenSignalDeviations,
+										goldenSignalValuesV2: goldenSignalDeviations.actor.entity.goldenSignalValuesV2
+									};
+								} catch {}
 							}
 							for (const application of builtFromApplications) {
 								if (!application.source.entity.guid) continue;
@@ -992,7 +1012,8 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				response.repos.push({
 					repoId: repo.id!,
 					repoName: this.getRepoName(repo),
-					errors: observabilityErrors!
+					errors: observabilityErrors!,
+					systemLevelTelemetry: systemLevelTelemetry
 				});
 			}
 		} catch (ex) {
@@ -3262,6 +3283,94 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			ContextLogger.error(ex, "getEntityCount");
 		}
 		return 0;
+	}
+
+	private getGoldenSignalDeviations(entityGuid: string): Promise<GoldenSignalDeviationsResponse> {
+		return new Promise(resolve => {
+			resolve({
+				actor: {
+					entity: {
+						goldenSignalDeviations: [
+							{
+								anomalyScore: -0.7349684152591681,
+								comparisonMean: 23.933333333333334,
+								comparisonStandardDeviation: 0.2494438257849294,
+								fullyQualifiedSignalName: "APM_APPLICATION_THROUGHPUT",
+								name: "throughput",
+								percentChange: 0.766016713091923,
+								selectionMean: 23.75
+							},
+							{
+								anomalyScore: -0.1759993570381885,
+								comparisonMean: 0.587119654238512,
+								comparisonStandardDeviation: 0.03337317914900616,
+								fullyQualifiedSignalName: "APM_APPLICATION_RESPONSETIMEMS",
+								name: "responseTimeMs",
+								percentChange: 1.0004192552816913,
+								selectionMean: 0.5812459961659666
+							},
+							{
+								anomalyScore: -0.6503938504153625,
+								comparisonMean: 3.771407004830918,
+								comparisonStandardDeviation: 0.0997630369030172,
+								fullyQualifiedSignalName: "APM_APPLICATION_ERRORRATE",
+								name: "errorRate",
+								percentChange: 1.7204524894122966,
+								selectionMean: 3.7065217391304346
+							}
+						],
+						goldenSignalValuesV2: {
+							signalValues: [
+								{
+									fullyQualifiedSignalName: "APM_APPLICATION_RESPONSETIMEMS",
+									name: "responseTimeMs",
+									summaryValue: 0.4126283102863471
+								},
+								{
+									fullyQualifiedSignalName: "APM_APPLICATION_ERRORRATE",
+									name: "errorRate",
+									summaryValue: 1531
+								},
+								{
+									fullyQualifiedSignalName: "APM_APPLICATION_THROUGHPUT",
+									name: "throughput",
+									summaryValue: 1531
+								}
+							]
+						}
+					}
+				}
+			});
+		});
+
+		// return this.query(
+		// 	`query goldenSignalDeviations($entityGuid: EntityGuid!) {
+		// 	actor {
+		// 	  entity(guid: $entityGuid) {
+		// 		goldenSignalDeviations {
+		// 		  anomalyScore
+		// 		  comparisonMean
+		// 		  comparisonStandardDeviation
+		// 		  fullyQualifiedSignalName
+		// 		  name
+		// 		  percentChange
+		// 		  selectionMean
+		// 		}
+		// 		goldenSignalValuesV2 {
+		// 		  signalValues {
+		// 			fullyQualifiedSignalName
+		// 			name
+		// 			summaryValue
+		// 		  }
+		// 		}
+		// 	  }
+		// 	}
+		//   }
+		//   `,
+		// 	{
+		// 		entityGuid
+		// 	}
+		// );
 	}
 
 	private findBuiltFrom(relatedEntities: RelatedEntity[]): BuiltFromResult | undefined {

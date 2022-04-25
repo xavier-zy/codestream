@@ -27,6 +27,8 @@ import {
 	DisconnectThirdPartyProviderResponse,
 	ExecuteThirdPartyRequest,
 	ExecuteThirdPartyRequestUntypedType,
+	FetchAssignableUsersAutocompleteRequest,
+	FetchAssignableUsersAutocompleteRequestType,
 	FetchAssignableUsersRequest,
 	FetchAssignableUsersRequestType,
 	FetchProviderDefaultPullRequest,
@@ -393,6 +395,25 @@ export class ThirdPartyProviderRegistry {
 		}
 
 		return issueProvider.getAssignableUsers(request);
+	}
+
+	@log()
+	@lspHandler(FetchAssignableUsersAutocompleteRequestType)
+	fetchAssignableUsersAutocomplete(request: FetchAssignableUsersAutocompleteRequest) {
+		const provider = getProvider(request.providerId);
+		if (provider === undefined) {
+			throw new Error(`No registered provider for '${request.providerId}'`);
+		}
+		const issueProvider = provider as ThirdPartyIssueProvider;
+		if (
+			issueProvider == null ||
+			typeof issueProvider.supportsIssues !== "function" ||
+			!issueProvider.supportsIssues()
+		) {
+			throw new Error(`Provider(${provider.name}) doesn't support issues`);
+		}
+
+		return issueProvider.getAssignableUsersAutocomplete(request);
 	}
 
 	@log()

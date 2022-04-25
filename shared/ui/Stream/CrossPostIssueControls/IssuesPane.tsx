@@ -855,7 +855,7 @@ export const IssueList = React.memo((props: React.PropsWithChildren<IssueListPro
 		items.services = props.knownIssueProviderOptions;
 
 		return items;
-	}, [loadedCards, derivedState.startWorkPreferences]);
+	}, [loadedCards, derivedState.startWorkPreferences, props.knownIssueProviderOptions]);
 
 	const saveCustomFilter = query => {
 		if (isValidQuery(query)) {

@@ -35,6 +35,10 @@ interface GoldenSignalListener {
     fun setMLTFormat(value: String)
 }
 
+interface ConfigChangeListener {
+    fun onCriticalConfigurationChange(resetContext: Boolean);
+}
+
 data class ApplicationSettingsServiceState(
     var autoSignIn: Boolean = true,
     var email: String? = null,
@@ -59,6 +63,7 @@ class ApplicationSettingsService : PersistentStateComponent<ApplicationSettingsS
     private var _state = ApplicationSettingsServiceState()
     private val logger = Logger.getInstance(ApplicationSettingsService::class.java)
     private val goldenSignalListeners = mutableSetOf<GoldenSignalListener>()
+    private val configChangeListeners = mutableSetOf<ConfigChangeListener>()
 
     override fun getState(): ApplicationSettingsServiceState = _state
 
@@ -73,6 +78,14 @@ class ApplicationSettingsService : PersistentStateComponent<ApplicationSettingsS
 
     fun removeGoldenSignalsListener(listener: GoldenSignalListener) {
         goldenSignalListeners.remove(listener)
+    }
+
+    fun addConfigChangeListener(listener: ConfigChangeListener) {
+        configChangeListeners.add(listener)
+    }
+
+    fun removeConfigChangeListener(listener: ConfigChangeListener) {
+        configChangeListeners.remove(listener)
     }
 
     val environmentVersion: String
@@ -171,6 +184,12 @@ class ApplicationSettingsService : PersistentStateComponent<ApplicationSettingsS
     private fun fireGoldenSignalEnabledChange(value: Boolean) {
         for (listener in goldenSignalListeners) {
             listener.setEnabled(value)
+        }
+    }
+
+    fun fireCriticalConfigChange(resetContext: Boolean) {
+        for (listener in configChangeListeners) {
+            listener.onCriticalConfigurationChange(resetContext)
         }
     }
 

@@ -177,3 +177,11 @@ object MethodLevelTelemetryNotifications {
         )
     }
 }
+
+object ShowProgressIndicator {
+    class Start(
+        val progressStatus: Boolean = true
+    ) : WebViewNotification {
+        override fun getMethod() = "webview/system/progressIndicator"
+    }
+}

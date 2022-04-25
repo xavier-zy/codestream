@@ -3,12 +3,21 @@ package com.codestream.settings
 import com.codestream.agentService
 import com.codestream.protocols.agent.TelemetryParams
 import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.project.ProjectManager
 import javax.swing.JComponent
 
+data class RestartOpts(
+    val needsRestart: Boolean,
+    val resetContext: Boolean
+)
+
 class CodeStreamConfigurable : SearchableConfigurable {
     private var _gui: CodeStreamConfigurableGUI? = null
+    private val logger = Logger.getInstance(CodeStreamConfigurable::class.java)
+    private val settingsService = ServiceManager.getService(ApplicationSettingsService::class.java)
+    private val startingState = settingsService.state.copy()
 
     override fun isModified(): Boolean {
         return true
@@ -23,30 +32,58 @@ class CodeStreamConfigurable : SearchableConfigurable {
     }
 
     override fun apply() {
-        val settingsService = ServiceManager.getService(ApplicationSettingsService::class.java)
         val state = settingsService.state
         val gui = _gui
         gui?.let {
+            val serverUrl =
+                if (gui.serverUrl.text.isNullOrEmpty()) gui.serverUrl.text else gui.serverUrl.text.trimEnd('/')
+            val proxySupport = gui.proxySupport.selectedItem as ProxySupport
             val showNewCodemarkGutterIconOnHover = gui.showNewCodemarkGutterIconOnHover.isSelected
             if (state.showNewCodemarkGutterIconOnHover != showNewCodemarkGutterIconOnHover) {
-                val params = TelemetryParams("Hover Compose Setting Changed", mapOf("Enabled" to showNewCodemarkGutterIconOnHover))
+                val params = TelemetryParams(
+                    "Hover Compose Setting Changed",
+                    mapOf("Enabled" to showNewCodemarkGutterIconOnHover)
+                )
                 ProjectManager.getInstance().openProjects.firstOrNull()?.agentService?.agent?.telemetry(params)
             }
 
             settingsService.autoSignIn = gui.autoSignIn.isSelected
-            settingsService.serverUrl = if (gui.serverUrl.text.isNullOrEmpty()) gui.serverUrl.text else gui.serverUrl.text.trimEnd('/')
+            settingsService.serverUrl = serverUrl
             settingsService.disableStrictSSL = gui.disableStrictSSL.isSelected
             settingsService.avatars = gui.showAvatars.isSelected
             settingsService.showFeedbackSmiley = gui.showFeedbackSmiley.isSelected
             settingsService.showMarkers = gui.showMarkers.isSelected
             settingsService.showNewCodemarkGutterIconOnHover = showNewCodemarkGutterIconOnHover
             settingsService.autoHideMarkers = gui.autoHideMarkers.isSelected
-            settingsService.setProxySupport(gui.proxySupport.selectedItem as ProxySupport)
+            settingsService.setProxySupport(proxySupport)
             settingsService.proxyStrictSSL = gui.proxyStrictSSL.isSelected
             settingsService.jcef = gui.jcef.isSelected
             settingsService.showGoldenSignalsInEditor = gui.showGoldenSignalsInEditor.isSelected
             settingsService.goldenSignalsInEditorFormat = gui.goldenSignalsInEditorFormat.text
         }
+    }
+
+    private fun needsAgentRestart(): RestartOpts {
+        val needsRestart = settingsService.serverUrl != startingState.serverUrl ||
+            settingsService.disableStrictSSL != startingState.disableStrictSSL ||
+            settingsService.proxyStrictSSL != startingState.proxyStrictSSL ||
+            settingsService.proxySupport != startingState.proxySupport.value
+        val needsResetContext = settingsService.serverUrl != startingState.serverUrl
+        return RestartOpts(needsRestart, needsResetContext)
+    }
+
+    private fun checkAgentRestartNeeded() {
+        val restartOpts = needsAgentRestart()
+        if (restartOpts.needsRestart) {
+            logger.info("Opening restart notification")
+            settingsService.fireCriticalConfigChange(restartOpts.resetContext)
+        }
+    }
+
+    // Check if restart needed on "close" / disposeUIResources
+    override fun disposeUIResources() {
+        checkAgentRestartNeeded()
+        super.disposeUIResources()
     }
 
     override fun createComponent(): JComponent? {

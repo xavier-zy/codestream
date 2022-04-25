@@ -18,6 +18,8 @@ import {
 	CreateThirdPartyCardRequest,
 	DidChangePullRequestCommentsNotificationType,
 	DiscussionNode,
+	FetchAssignableUsersAutocompleteRequest,
+	FetchAssignableUsersResponse,
 	FetchThirdPartyBoardsRequest,
 	FetchThirdPartyBoardsResponse,
 	FetchThirdPartyCardsRequest,
@@ -39,8 +41,8 @@ import {
 	MoveThirdPartyCardResponse,
 	Note,
 	ProviderGetForkedReposResponse,
-	ThirdPartyProviderConfig,
-	ThirdPartyDisconnect
+	ThirdPartyDisconnect,
+	ThirdPartyProviderConfig
 } from "../protocol/agent.protocol";
 import { CSGitLabProviderInfo } from "../protocol/api.protocol";
 import { CodeStreamSession } from "../session";
@@ -411,6 +413,7 @@ export class GitLabProvider extends ThirdPartyIssueProviderBase<CSGitLabProvider
 	>();
 
 	private _isMatchingRemotePredicate = (r: GitRemoteLike) => r.domain === "gitlab.com";
+
 	getIsMatchingRemotePredicate() {
 		return this._isMatchingRemotePredicate;
 	}
@@ -986,6 +989,7 @@ export class GitLabProvider extends ThirdPartyIssueProviderBase<CSGitLabProvider
 	async restPut<T extends object, R extends object>(url: string, variables: any) {
 		return this.put<T, R>(url, variables);
 	}
+
 	async restDelete<R extends object>(url: string, options: { useRawResponse: boolean }) {
 		return this.delete<R>(url, {}, options);
 	}
@@ -3550,6 +3554,7 @@ export class GitLabProvider extends ThirdPartyIssueProviderBase<CSGitLabProvider
 			return match.replace(group1, `${this.baseWebUrl}/${projectFullPath}${group1}`);
 		});
 	}
+
 	/**
 	 * Adds fully-qualified URLs to an html property.
 	 * Only required when sending to the webview

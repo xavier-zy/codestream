@@ -1,8 +1,9 @@
 "use strict";
 import { GraphQLClient } from "graphql-request";
-import { Logger } from "logger";
 import {
 	CreateThirdPartyCardRequest,
+	FetchAssignableUsersAutocompleteRequest,
+	FetchAssignableUsersResponse,
 	FetchThirdPartyBoardsRequest,
 	FetchThirdPartyBoardsResponse,
 	FetchThirdPartyCardsRequest,

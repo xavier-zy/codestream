@@ -101,7 +101,7 @@ export const ConfigureOAuthOrPATPanel = (props: {
 							value={accessToken}
 							className="input-text control"
 							autoFocus
-							type="text"
+							type="password"
 							onChange={e => {
 								setErrorMessage("");
 								setAccessToken(e.target.value);

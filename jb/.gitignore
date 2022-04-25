@@ -16,3 +16,4 @@ node_modules
 temp.json
 .gradle
 .DS_Store
+stats.json

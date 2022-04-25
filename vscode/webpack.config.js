@@ -14,6 +14,80 @@ const BundleAnalyzerPlugin = require("webpack-bundle-analyzer").BundleAnalyzerPl
 const HtmlWebpackInlineSourcePlugin = require("@effortlessmotion/html-webpack-inline-source-plugin");
 const CssMinimizerPlugin = require("css-minimizer-webpack-plugin");
 
+class CompileStatsPlugin {
+	constructor(name, env) {
+		this.name = name
+		this.enabled = !env.production;
+		this.filename = `./stats-webpack-${this.name}.json`
+	}
+	total = 0;
+	count = 0;
+	since = Date.now();
+
+	deserialize() {
+		if (!fs.existsSync(this.filename)) {
+			return;
+		}
+		try {
+			const dataStr = fs.readFileSync(this.filename, { encoding: "utf8" });
+			const data = JSON.parse(dataStr);
+			this.total = data.total;
+			this.count = data.count;
+			this.since = data.since;
+		} catch (e) {
+			// ignore
+		}
+	}
+
+	serialize() {
+		fs.writeFileSync(
+			this.filename,
+			JSON.stringify({ count: this.count, total: this.total, since: this.since }, null, 2),
+			{ encoding: "utf8" }
+		);
+	}
+
+	timeSpan(ms) {
+		let day, hour, minute, seconds;
+		seconds = Math.floor(ms / 1000);
+		minute = Math.floor(seconds / 60);
+		seconds = seconds % 60;
+		hour = Math.floor(minute / 60);
+		minute = minute % 60;
+		day = Math.floor(hour / 24);
+		hour = hour % 24;
+		return {
+			day,
+			hour,
+			minute,
+			seconds
+		};
+	}
+
+	done(stats) {
+		const elapsed = stats.endTime - stats.startTime;
+		this.total += elapsed;
+		this.count++;
+		const { day, hour, minute, seconds } = this.timeSpan(this.total);
+		const totalTime = `${day}d ${hour}h ${minute}m ${seconds}s`;
+		this.serialize();
+		const sinceStr = new Date(this.since).toLocaleString();
+		// nextTick to make stats is last line after webpack logs
+		process.nextTick(() =>
+			console.info(
+				`⌛ ${this.name} compileTime: ${elapsed}ms, compilCount: ${this.count}, totalCompileTime: ${totalTime}, since: ${sinceStr}`
+			)
+		);
+	}
+
+	apply(compiler) {
+		if (this.enabled) {
+			this.deserialize();
+			compiler.hooks.done.tap("done", this.done.bind(this));
+		}
+	}
+}
+
 module.exports = function(env, argv) {
 	env = env || {};
 	env.analyzeBundle = Boolean(env.analyzeBundle);
@@ -87,7 +161,8 @@ function getExtensionConfig(mode, env) {
 					}
 				]
 			}
-		})
+		}),
+		new CompileStatsPlugin("extensions", env)
 	];
 
 	if (env.analyzeDeps) {
@@ -223,7 +298,8 @@ function getWebviewConfig(mode, env) {
 		new HtmlWebpackInlineSourcePlugin(),
 		new ForkTsCheckerPlugin({
 			async: false
-		})
+		}),
+		new CompileStatsPlugin("webview", env)
 	];
 
 	if (env.analyzeBundleWebview) {

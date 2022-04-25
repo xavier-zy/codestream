@@ -10,7 +10,10 @@ import React, { PropsWithChildren, useState, useMemo } from "react";
 import Timestamp from "./Timestamp";
 import Icon from "./Icon";
 import { MarkdownText } from "./MarkdownText";
-import { FetchThirdPartyPullRequestPullRequest } from "@codestream/protocols/agent";
+import {
+	FetchThirdPartyPullRequestPullRequest,
+	GetReposScmRequestType
+} from "@codestream/protocols/agent";
 import { PRAuthorBadges } from "./PullRequestConversationTab";
 import { PullRequestReactButton, PullRequestReactions } from "./PullRequestReactions";
 import { PullRequestCommentMenu } from "./PullRequestCommentMenu";
@@ -33,7 +36,11 @@ import {
 	getProviderPullRequestRepo,
 	getPullRequestId
 } from "../store/providerPullRequests/reducer";
-import { EditorHighlightRangeRequestType } from "@codestream/protocols/webview";
+import {
+	EditorHighlightRangeRequestType,
+	EditorRevealRangeRequestType
+} from "@codestream/protocols/webview";
+import { Range } from "vscode-languageserver-types";
 
 const PRBranchContainer = styled.div`
 	display: inline-block;
@@ -95,6 +102,7 @@ export const PullRequestFileCommentCard = (props: PropsWithChildren<Props>) => {
 	const [editingComments, setEditingComments] = useState({});
 	const [expandedComments, setExpandedComments] = useState({});
 	const [isResolving, setIsResolving] = useState(false);
+	const [currentRepoRoot, setCurrentRepoRoot] = useState("");
 
 	const doneEditingComment = id => {
 		setEditingComments({ ...editingComments, [id]: false });
@@ -162,6 +170,37 @@ export const PullRequestFileCommentCard = (props: PropsWithChildren<Props>) => {
 				uri: marker?.fileUri,
 				range: marker?.range,
 				highlight: true
+			});
+		}
+	};
+
+	const handleOpenFile = async () => {
+		let repoRoot = currentRepoRoot;
+		if (!repoRoot) {
+			const response = await HostApi.instance.send(GetReposScmRequestType, {
+				inEditorOnly: false
+			});
+			if (!response.repositories) return;
+			// const repoIdToCheck = props.repoId
+			// 	? props.repoId
+			// 	: derivedState.currentRepo
+			// 	? derivedState.currentRepo.id
+			// 	: undefined;
+
+			const repoIdToCheck = derivedState.currentRepo ? derivedState.currentRepo.id : undefined;
+			if (repoIdToCheck) {
+				const currentRepoInfo = response.repositories.find(r => r.id === repoIdToCheck);
+				if (currentRepoInfo) {
+					setCurrentRepoRoot(currentRepoInfo.path);
+					repoRoot = currentRepoInfo.path;
+				}
+			}
+		}
+
+		if (repoRoot) {
+			HostApi.instance.send(EditorRevealRangeRequestType, {
+				uri: Path.join("file://", repoRoot, comment?.path),
+				range: Range.create(0, 0, 0, 0)
 			});
 		}
 	};
@@ -350,24 +389,18 @@ export const PullRequestFileCommentCard = (props: PropsWithChildren<Props>) => {
 												</span>
 											</div>
 											<div style={{ marginLeft: "5px" }}>
-												{/* @TODO FIX HREF PATH WITH ${filename} */}
-
 												{pr && pr.url && (
-													<Link
-														href={pr.url.replace(
-															/\/pull\/\d+$/,
-															`/blob/${pr.headRefOid}/filename}`
-														)}
+													<span
+														onClick={handleOpenFile}
+														style={{ color: "var(--text-color-subtle)" }}
 													>
-														<span style={{ color: "var(--text-color-subtle)" }}>
-															<Icon
-																title="Open File on Remote"
-																placement="bottom"
-																name="link-external"
-																className="clickable"
-															/>
-														</span>
-													</Link>
+														<Icon
+															title="Open Local File"
+															placement="bottom"
+															name="goto-file"
+															className="clickable"
+														/>
+													</span>
 												)}
 											</div>
 										</CodeBlockContainerIcons>

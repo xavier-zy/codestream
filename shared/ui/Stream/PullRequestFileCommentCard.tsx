@@ -66,6 +66,7 @@ interface Props {
 	fileInfo?: any;
 	prCommitsRange?: string[];
 	cardIndex: any;
+	commentRef: any;
 }
 
 export const PullRequestFileCommentCard = (props: PropsWithChildren<Props>) => {
@@ -77,7 +78,8 @@ export const PullRequestFileCommentCard = (props: PropsWithChildren<Props>) => {
 		comment,
 		author,
 		setIsLoadingMessage,
-		pr
+		pr,
+		commentRef
 	} = props;
 	const dispatch = useDispatch();
 
@@ -311,7 +313,7 @@ export const PullRequestFileCommentCard = (props: PropsWithChildren<Props>) => {
 		);
 	}
 	return (
-		<div id={`comment_card_${comment.id}`}>
+		<div ref={commentRef} id={`comment_card_${comment.id}`}>
 			<PRCodeCommentWrapper>
 				<PRCodeCommentBody>
 					{review.isMinimized && !expandedComments[review.id] ? (

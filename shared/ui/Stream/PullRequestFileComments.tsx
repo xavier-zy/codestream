@@ -102,6 +102,7 @@ export const PullRequestFileComments = (props: PropsWithChildren<Props>) => {
 	const [isLoading, setIsLoading] = useState(true);
 	const [fileInfo, setFileInfo] = useState<any>({});
 	const [filename, setFilename] = useState("");
+	const [sortedComments, setSortedComments] = useState<any[]>([]);
 
 	const _mapData = data => {
 		const fileInfo = data
@@ -127,7 +128,34 @@ export const PullRequestFileComments = (props: PropsWithChildren<Props>) => {
 			);
 			_mapData(data);
 		})();
+
+		let commentsArray = commentMap[filename];
+		commentsArray.sort((a, b) => (a.comment.position > b.comment.position ? 1 : -1));
+		let sortedCommentsWithRefs = commentsArray.map(c => ({
+			...c,
+			ref: React.createRef()
+		}));
+
+		setSortedComments(sortedCommentsWithRefs);
 	});
+
+	useEffect(() => {
+		if (sortedComments) {
+			sortedComments.map(c => {
+				let el = c.ref.current;
+				if (c.comment.id === props.commentId) {
+					setTimeout(() => {
+						el.scrollIntoView();
+						// window.scrollTo({
+						// 	behavior: "smooth",
+						// 	left: 0,
+						// 	top: el.offsetTop
+						// });
+					}, 1000);
+				}
+			});
+		}
+	}, [sortedComments]);
 
 	const commentMap = React.useMemo(() => {
 		const map = {} as any;
@@ -176,11 +204,6 @@ export const PullRequestFileComments = (props: PropsWithChildren<Props>) => {
 
 	if (!filename) return null;
 
-	const commentsArray = commentMap[filename];
-
-	let commentsSortedByLineNumber = commentsArray;
-	commentsSortedByLineNumber.sort((a, b) => (a.comment.position > b.comment.position ? 1 : -1));
-
 	return (
 		<Modal translucent onClose={() => props.onClose()}>
 			<Root>
@@ -198,26 +221,30 @@ export const PullRequestFileComments = (props: PropsWithChildren<Props>) => {
 								/>{" "}
 							</span>
 						</h1>
+						{sortedComments && (
+							<>
+								{sortedComments.map((c, index) => {
+									const isFirst = index === 0;
 
-						{commentsSortedByLineNumber.map((c, index) => {
-							const isFirst = index === 0;
-
-							return (
-								<CardContainer>
-									<PullRequestFileCommentCard
-										pr={pr}
-										comment={c.comment}
-										review={c.review}
-										setIsLoadingMessage={props.setIsLoadingMessage}
-										author={c?.author?.login || ""}
-										isFirst={isFirst}
-										fileInfo={fileInfo}
-										prCommitsRange={prCommitsRange}
-										cardIndex={index}
-									/>
-								</CardContainer>
-							);
-						})}
+									return (
+										<CardContainer>
+											<PullRequestFileCommentCard
+												pr={pr}
+												comment={c.comment}
+												review={c.review}
+												setIsLoadingMessage={props.setIsLoadingMessage}
+												author={c?.author?.login || ""}
+												isFirst={isFirst}
+												fileInfo={fileInfo}
+												prCommitsRange={prCommitsRange}
+												cardIndex={index}
+												commentRef={c.ref}
+											/>
+										</CardContainer>
+									);
+								})}
+							</>
+						)}
 					</>
 				</CommentsContainer>
 			</Root>

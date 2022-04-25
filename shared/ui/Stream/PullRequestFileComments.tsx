@@ -144,14 +144,7 @@ export const PullRequestFileComments = (props: PropsWithChildren<Props>) => {
 			sortedComments.map(c => {
 				let el = c.ref.current;
 				if (c.comment.id === props.commentId) {
-					setTimeout(() => {
-						el.scrollIntoView();
-						// window.scrollTo({
-						// 	behavior: "smooth",
-						// 	left: 0,
-						// 	top: el.offsetTop
-						// });
-					}, 1000);
+					el.scrollIntoView();
 				}
 			});
 		}

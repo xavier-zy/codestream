@@ -25,6 +25,7 @@ interface Props {
 	__onDidRender: Function;
 	alwaysOpen?: boolean;
 	children?: any;
+	noHeadshot?: boolean;
 }
 
 export const PullRequestReplyComment = styled((props: Props) => {
@@ -93,7 +94,7 @@ export const PullRequestReplyComment = styled((props: Props) => {
 
 	return (
 		<PRCodeCommentReply className={props.className}>
-			<PRHeadshot size={30} person={pr.viewer} />
+			{!props.noHeadshot && <PRHeadshot size={30} person={pr.viewer} />}
 
 			<PRCodeCommentReplyInput className={open ? "open-comment" : ""} onClick={() => setOpen(true)}>
 				<MessageInput

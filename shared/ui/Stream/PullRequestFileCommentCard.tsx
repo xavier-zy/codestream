@@ -7,7 +7,6 @@ import {
 	PRThreadedCommentHeader
 } from "./PullRequestComponents";
 import React, { PropsWithChildren, useState, useMemo } from "react";
-import { PRHeadshot } from "../src/components/Headshot";
 import Timestamp from "./Timestamp";
 import Icon from "./Icon";
 import { MarkdownText } from "./MarkdownText";
@@ -59,10 +58,20 @@ interface Props {
 	isFirst?: boolean;
 	fileInfo?: any;
 	prCommitsRange?: string[];
+	cardIndex: any;
 }
 
 export const PullRequestFileCommentCard = (props: PropsWithChildren<Props>) => {
-	const { review, prCommitsRange, fileInfo, comment, author, setIsLoadingMessage, pr } = props;
+	const {
+		review,
+		cardIndex,
+		prCommitsRange,
+		fileInfo,
+		comment,
+		author,
+		setIsLoadingMessage,
+		pr
+	} = props;
 	const dispatch = useDispatch();
 
 	const derivedState = useSelector((state: CodeStreamState) => {
@@ -116,39 +125,7 @@ export const PullRequestFileCommentCard = (props: PropsWithChildren<Props>) => {
 		});
 	};
 
-	// const commitBased = useMemo(() => {
-	// 	if (prCommitsRange) {
-	// 		return prCommitsRange?.length > 0;
-	// 	} else {
-	// 		return false;
-	// 	}
-	// }, [prCommitsRange]);
-	//
-	// const baseRef = useMemo(() => {
-	// 	if (prCommitsRange.length === 1) {
-	// 		let commitIndex;
-	// 		prCommits.map((commit, index) => {
-	// 			if (commit.oid === prCommitsRange[0]) {
-	// 				commitIndex = index - 1;
-	// 			}
-	// 		});
-	// 		if (commitIndex >= 0) {
-	// 			return prCommits[commitIndex].oid;
-	// 		}
-	// 		return pr.baseRefOid;
-	// 	}
-	// 	if (prCommitsRange.length > 1) {
-	// 		if (filesChanged.length > 0) {
-	// 			return filesChanged[0].sha;
-	// 		}
-	// 		return prCommitsRange[0];
-	// 	}
-	// 	return pr.baseRefOid;
-	// }, [prCommitsRange]);
-
 	const handleDiffClick = async () => {
-		// console.warn("eric pr", pr);
-
 		const request = {
 			baseBranch: pr.baseRefName,
 			baseSha: pr.baseRefOid,
@@ -176,15 +153,10 @@ export const PullRequestFileCommentCard = (props: PropsWithChildren<Props>) => {
 			Host: pr && pr.providerId
 		});
 
-		const marker = derivedState.documentMarkers.find(dm => {
-			return dm.file === fileInfo.filename;
-		});
-
-		console.warn("eric documentMarkers", derivedState.documentMarkers);
+		let _docMarkers = derivedState.documentMarkers;
+		_docMarkers.sort((a, b) => (a?.range?.start?.line > b?.range?.start?.line ? 1 : -1));
+		const marker = _docMarkers[cardIndex];
 		console.warn("eric marker", marker);
-
-		// commentsSortedByLineNumber.sort((a, b) => (a.comment.position > b.comment.position ? 1 : -1));
-
 		if (marker?.range) {
 			HostApi.instance.send(EditorHighlightRangeRequestType, {
 				uri: marker?.fileUri,
@@ -257,6 +229,7 @@ export const PullRequestFileCommentCard = (props: PropsWithChildren<Props>) => {
 				className="code prettyprint"
 				data-scrollable="true"
 				dangerouslySetInnerHTML={{ __html: codeHTML }}
+				onClick={handleDiffClick}
 			/>
 		);
 	};
@@ -273,7 +246,7 @@ export const PullRequestFileCommentCard = (props: PropsWithChildren<Props>) => {
 		diffHunk.split("\n").map(d => {
 			const matches = d.match(/@@ \-(\d+).*? \+(\d+)/);
 			if (matches) {
-				rightLine = parseInt(matches[2]) - 1;
+				rightLine = parseInt(matches[2]);
 			}
 		});
 
@@ -283,10 +256,6 @@ export const PullRequestFileCommentCard = (props: PropsWithChildren<Props>) => {
 			return "";
 		}
 	};
-
-	console.warn("eric comment", comment);
-	console.warn("eric pr", pr);
-	console.warn("eric fileInfo", fileInfo);
 
 	if (
 		!props.skipResolvedCheck &&
@@ -318,7 +287,6 @@ export const PullRequestFileCommentCard = (props: PropsWithChildren<Props>) => {
 						/>
 					) : (
 						<>
-							<PRHeadshot key={comment.id} size={30} person={comment.author || GHOST} />
 							<PRThreadedCommentHeader>
 								<b>{author.login}</b>
 								<Timestamp time={comment.createdAt} relative />
@@ -431,7 +399,6 @@ export const PullRequestFileCommentCard = (props: PropsWithChildren<Props>) => {
 						return (
 							<div key={i}>
 								<PRCodeCommentBody>
-									<PRHeadshot key={c.id + i} size={30} person={c.author || GHOST} />
 									<PRThreadedCommentHeader>
 										<b>{(c.author || GHOST).login}</b>
 										<Timestamp time={c.createdAt} relative />
@@ -495,6 +462,7 @@ export const PullRequestFileCommentCard = (props: PropsWithChildren<Props>) => {
 									<PullRequestReplyComment
 										pr={pr}
 										mode={props.mode}
+										noHeadshot={true}
 										/* GitLab-specific */
 										parentId={comment?.discussion?.id}
 										databaseId={comment.databaseId}

@@ -44,6 +44,7 @@ interface Props {
 	visited?: any;
 	filesChanged?: any;
 	pullRequest?: any;
+	cardIndex?: any;
 }
 
 /**
@@ -71,7 +72,8 @@ export const PullRequestFilesChangedFileComments = (props: Props) => {
 		depth,
 		visited,
 		filesChanged,
-		pullRequest
+		pullRequest,
+		cardIndex
 	} = props;
 
 	const dispatch = useDispatch();

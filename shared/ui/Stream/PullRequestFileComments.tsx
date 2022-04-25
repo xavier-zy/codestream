@@ -213,6 +213,7 @@ export const PullRequestFileComments = (props: PropsWithChildren<Props>) => {
 										isFirst={isFirst}
 										fileInfo={fileInfo}
 										prCommitsRange={prCommitsRange}
+										cardIndex={index}
 									/>
 								</CardContainer>
 							);

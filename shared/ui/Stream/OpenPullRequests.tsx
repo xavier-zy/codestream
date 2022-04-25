@@ -328,6 +328,7 @@ export const OpenPullRequests = React.memo((props: Props) => {
 	const [prError, setPrError] = React.useState("");
 	const [prCommitsRange, setPrCommitsRange] = React.useState<string[]>([]);
 	const [openRepos, setOpenRepos] = React.useState<ReposScmPlusName[]>(EMPTY_ARRAY);
+	const [currentGroupIndex, setCurrentGroupIndex] = React.useState();
 
 	const [pullRequestGroups, setPullRequestGroups] = React.useState<{
 		[providerId: string]: GetMyPullRequestsResponse[][];
@@ -716,7 +717,7 @@ export const OpenPullRequests = React.memo((props: Props) => {
 			// depending on the user's preference
 			const view = derivedState.hideDiffs ? "details" : "sidebar-diffs";
 			dispatch(setCurrentPullRequest(pr.providerId, pr.id, "", "", view, groupIndex));
-
+			setCurrentGroupIndex(groupIndex);
 			fetchOnePR(pr.providerId, pr.id);
 
 			HostApi.instance.track("PR Clicked", {
@@ -1035,7 +1036,8 @@ export const OpenPullRequests = React.memo((props: Props) => {
 								prGroup.map((pr: any, index) => {
 									const expanded =
 										pr.id === derivedState.expandedPullRequestId &&
-										derivedState.expandedPullRequestGroupIndex === groupIndex;
+										(derivedState.expandedPullRequestGroupIndex === groupIndex ||
+											currentGroupIndex === groupIndex);
 									const isLoadingPR = pr.id === individualLoadingPR;
 									const chevronIcon = derivedState.hideDiffs ? null : expanded ? (
 										<Icon name="chevron-down-thin" />

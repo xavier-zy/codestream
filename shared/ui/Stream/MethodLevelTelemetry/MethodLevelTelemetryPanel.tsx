@@ -158,7 +158,7 @@ export const MethodLevelTelemetryPanel = () => {
 				<div className="embedded-panel">
 					<EntityAssociator
 						title="Method-Level Telemetry"
-						label="Associate this repository with an entity from New Relic One so that you can see golden signals right in your editor, and errors in the Observability section."
+						label="Associate this repository with an entity from New Relic so that you can see golden signals right in your editor, and errors in the Observability section."
 						onSuccess={async e => {
 							HostApi.instance.track("MLT Repo Association", {
 								"NR Account ID": derivedState.currentMethodLevelTelemetry.newRelicAccountId + ""
@@ -223,7 +223,7 @@ export const MethodLevelTelemetryPanel = () => {
 					/>
 
 					{telemetryResponse && telemetryResponse.newRelicUrl && (
-						<Tooltip title="View service summary on New Relic One" placement="bottom" delay={1}>
+						<Tooltip title="View service summary on New Relic" placement="bottom" delay={1}>
 							<span style={{ opacity: ".5" }}>
 								<ApmServiceTitle>
 									<Link
@@ -383,7 +383,7 @@ export const MethodLevelTelemetryPanel = () => {
 									{/* {telemetryResponse && telemetryResponse.newRelicUrl && (
 										<div>
 											<Link className="external-link" href={telemetryResponse.newRelicUrl}>
-												View service summary on New Relic One <Icon name="link-external" />
+												View service summary on New Relic <Icon name="link-external" />
 											</Link>
 										</div>
 									)} */}

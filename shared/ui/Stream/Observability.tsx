@@ -160,7 +160,7 @@ const ErrorRow = (props: {
 						<Icon
 							name="globe"
 							className="clickable"
-							title="View on New Relic One"
+							title="View on New Relic"
 							placement="bottomLeft"
 							delay={1}
 						/>
@@ -662,7 +662,7 @@ export const Observability = React.memo((props: Props) => {
 							{noAccess ? (
 								<div style={{ padding: "0 20px 20px 20px" }}>
 									<span>
-										Your New Relic One account doesn’t have access to the integration with
+										Your New Relic account doesn’t have access to the integration with
 										CodeStream. Contact your New Relic admin to upgrade.
 									</span>
 								</div>
@@ -844,7 +844,7 @@ export const Observability = React.memo((props: Props) => {
 										}}
 									>
 										<Icon name="newrelic" />
-										Connect to New Relic One
+										Connect to New Relic
 									</span>
 								</Provider>
 							</div>

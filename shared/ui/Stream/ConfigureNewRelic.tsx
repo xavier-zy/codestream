@@ -265,7 +265,7 @@ export default function ConfigureNewRelic(props: Props) {
 									loading={loading}
 								>
 									<Icon name="newrelic" />
-									<div className="copy"> Connect to New Relic One</div>
+									<div className="copy"> Connect to New Relic</div>
 									<Icon name="chevron-right" />
 								</Button>
 							</div>
@@ -296,7 +296,7 @@ export default function ConfigureNewRelic(props: Props) {
 								}}
 							>
 								<Icon name="newrelic" />
-								<div className="copy">Sign Up for New Relic One</div>
+								<div className="copy">Sign Up for New Relic</div>
 								<Icon name="chevron-right" />
 							</Button>
 						</div>

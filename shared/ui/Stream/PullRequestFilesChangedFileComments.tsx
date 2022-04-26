@@ -4,6 +4,8 @@ import styled from "styled-components";
 import { ChangesetFile } from "./Review/ChangesetFile";
 import Icon from "./Icon";
 import { setCurrentPullRequest } from "../store/context/actions";
+import { openModal } from "../store/context/actions";
+import { WebviewModals } from "../ipc/webview.protocol.common";
 
 export const FileWithComments = styled.div`
 	cursor: pointer;
@@ -22,6 +24,16 @@ export const Comment = styled.div`
 		background: var(--app-background-color-hover);
 		color: var(--text-color-highlight);
 	}
+`;
+
+export const PendingCircle = styled.div`
+	margin-left: auto;
+	color: #bf8700;
+	border-radius: 50%;
+	border: 1px solid #bf8700;
+	width: 23px;
+	text-align: center;
+	margin-right: 10px;
 `;
 
 //@TODO: better typescript-ify this interface
@@ -144,6 +156,12 @@ export const PullRequestFilesChangedFileComments = (props: Props) => {
 		);
 	};
 
+	const handlePendingClick = event => {
+		event.preventDefault();
+		event.stopPropagation();
+		dispatch(openModal(WebviewModals.FinishReview));
+	};
+
 	let commentsSortedByLineNumber = comments;
 	if (hasComments) {
 		commentsSortedByLineNumber.sort((a, b) => (a.comment.position > b.comment.position ? 1 : -1));
@@ -218,13 +236,28 @@ export const PullRequestFilesChangedFileComments = (props: Props) => {
 				{showComments && (
 					<>
 						{commentsSortedByLineNumber.map(c => {
+							const isPending = c.comment.state === "PENDING";
 							return (
 								<Comment
 									onClick={e => handleCommentClick(e, c)}
 									style={depth ? { paddingLeft: `${depth * 10}px` } : {}}
 								>
-									{lineNumber(c) && <span>Line {lineNumber(c)}: </span>}
-									{c.comment.bodyText}
+									<div style={{ display: "flex" }}>
+										<div
+											style={{
+												overflow: "hidden",
+												textOverflow: "ellipsis",
+												width: "calc(100%)",
+												whiteSpace: "nowrap"
+											}}
+										>
+											{lineNumber(c) && <span>Line {lineNumber(c)}: </span>}
+											{c.comment.bodyText}
+										</div>
+										{isPending && (
+											<PendingCircle onClick={e => handlePendingClick(e)}>P</PendingCircle>
+										)}
+									</div>
 								</Comment>
 							);
 						})}

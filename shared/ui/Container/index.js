@@ -127,11 +127,11 @@ const Root = connect(mapStateToProps)(props => {
 					<p>Please click "Reload" when prompted by your IDE.</p>
 				</RoadBlock>
 			);
-		} else {
+		} else if (props.ide === "VS") {
 			return (
 				<RoadBlock title="Reload Required">
-					<p>This configuration change requires your IDE to reload.</p>
-					<p>Your IDE will reload when you click below.</p>
+					<p>This configuration change requires CodeStream to reload.</p>
+					<p>CodeStream will reload when you click OK.</p>
 					<Button
 						onClick={e => {
 							e.preventDefault();

@@ -1705,6 +1705,17 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				: `code.namespace like '${request.codeNamespace}%'`
 		}  SINCE 30 minutes AGO LIMIT 250`;
 
+		const innerQueryFuzzy = `SELECT name,\`transaction.name\`,code.lineno,code.namespace,traceId,transactionId from Span WHERE \`entity.guid\` = '${
+			request.newRelicEntityGuid
+		}' AND ${
+			codeFilePath
+				? `code.filepath like '%/${codeFilePath
+						.split("/")
+						.slice(-2)
+						.join("/")}%'`
+				: `code.namespace like '${request.codeNamespace}%'`
+		}  SINCE 30 minutes AGO LIMIT 250`;
+
 		const query = `query GetSpans($accountId:Int!) {
 			actor {
 				account(id: $accountId) {
@@ -1712,6 +1723,9 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 						results						 					
 					}
 					like:nrql(query: "${innerQueryLike}") { 						
+						results						 					
+					}
+					fuzzy:nrql(query: "${innerQueryFuzzy}") { 						
 						results						 					
 					}
 				}
@@ -1732,6 +1746,13 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					accountId: request.newRelicAccountId
 				});
 				return response.actor.account.like.results;
+			}
+			if (response?.actor?.account.fuzzy.results.length) {
+				Logger.warn("getSpans using fuzzy", {
+					query: query,
+					accountId: request.newRelicAccountId
+				});
+				return response.actor.account.fuzzy.results;
 			}
 		} catch (ex) {
 			Logger.error(ex, "getSpans", { request });
@@ -1762,7 +1783,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		}
 	}
 
-	private _languageSupport = new Set<string>(["python"]);
+	private _languageSupport = new Set<string>(["python", "ruby"]);
 
 	getGoldenSignalsEntity(
 		codestreamUser: CSMe,
@@ -1879,8 +1900,11 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 						className = split.pop();
 					}
 				}
-			} else if (_.metricTimesliceName) {
+			} else if (_.metricTimesliceName && _.metricTimesliceName.indexOf(".") > -1) {
 				functionName = _.metricTimesliceName.split(".").pop();
+			} else if (_.metricTimesliceName && _.metricTimesliceName.indexOf("/") > -1) {
+				// ruby
+				functionName = _.metricTimesliceName.split("/").pop();
 			}
 
 			return {

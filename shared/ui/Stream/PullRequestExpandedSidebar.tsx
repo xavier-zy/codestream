@@ -9,7 +9,7 @@ import { PullRequestFilesChangedTab } from "./PullRequestFilesChangedTab";
 import { getPreferences } from "../store/users/reducer";
 import { Row } from "./CrossPostIssueControls/IssuesPane";
 import { openModal } from "../store/context/actions";
-import { WebviewModals, WebviewPanelNames } from "../ipc/webview.protocol.common";
+import { WebviewModals } from "../ipc/webview.protocol.common";
 
 export const ReviewButton = styled.div`
 	color: white;

@@ -154,7 +154,6 @@ export const PullRequest = () => {
 	});
 
 	const pr = derivedState.currentPullRequest?.conversations?.repository?.pullRequest;
-	console.warn("previousPullRequestView", derivedState.previousPullRequestView);
 	useEffect(() => {
 		if (!derivedState.currentPullRequestCommentId) return;
 

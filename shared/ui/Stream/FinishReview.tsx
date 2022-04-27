@@ -14,6 +14,7 @@ import { Dialog } from "../src/components/Dialog";
 import { openModal, closeModal, setUserPreference } from "./actions";
 import { getCurrentProviderPullRequest } from "../store/providerPullRequests/reducer";
 import { CodeStreamState } from "../store";
+import { getPullRequestConversationsFromProvider } from "../store/providerPullRequests/actions";
 
 export const FinishReview = (props: { fetch?: Function }) => {
 	const dispatch = useDispatch();
@@ -35,7 +36,6 @@ export const FinishReview = (props: { fetch?: Function }) => {
 	const supportsFinishReviewTypes = pr && !pr.providerId.includes("gitlab");
 
 	const submitReview = async e => {
-		// setIsLoadingMessage("Submitting Review...");
 		setSubmittingReview(true);
 		HostApi.instance.track("PR Review Finished", {
 			Host: pr.providerId,
@@ -47,19 +47,18 @@ export const FinishReview = (props: { fetch?: Function }) => {
 				text: replaceHtml(reviewText)
 			})
 		);
-		// setFinishReviewOpen && setFinishReviewOpen(false);
-		// setIsLoadingMessage("");
+		dispatch(getPullRequestConversationsFromProvider(pr.providerId, pr.id));
+		dispatch(closeModal());
 	};
 
 	const cancelReview = async (e, id) => {
-		// setIsLoadingMessage("Canceling Review...");
 		await dispatch(
 			api("deletePullRequestReview", {
 				pullRequestReviewId: id
 			})
 		);
-		// setFinishReviewOpen && setFinishReviewOpen(false);
-		// setIsLoadingMessage("");
+		dispatch(getPullRequestConversationsFromProvider(pr.providerId, pr.id));
+		dispatch(closeModal());
 	};
 
 	const pendingCommentCount =
@@ -67,10 +66,6 @@ export const FinishReview = (props: { fetch?: Function }) => {
 
 	return (
 		<Dialog wide noPadding onClose={() => dispatch(closeModal())}>
-			{/* 
-			<PRCommentCard className={`add-comment finish-review-${mode}`}>
-			*/}
-
 			{pr && (
 				<div style={{ margin: "30px 15px 30px 15px" }}>
 					<div

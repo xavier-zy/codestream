@@ -336,7 +336,7 @@ export const OpenPullRequests = React.memo((props: Props) => {
 
 	const [isLoadingPRs, setIsLoadingPRs] = React.useState(false);
 	const [isLoadingPRGroup, setIsLoadingPRGroup] = React.useState<number | undefined>(undefined);
-	const [individualLoadingPR, setindividualLoadingPR] = React.useState("");
+	const [individualLoadingPR, setIndividualLoadingPR] = React.useState("");
 
 	const [editingQuery, setEditingQuery] = React.useState<
 		{ providerId: string; index: number } | undefined
@@ -727,15 +727,9 @@ export const OpenPullRequests = React.memo((props: Props) => {
 	};
 
 	const fetchOnePR = async (providerId: string, pullRequestId: string, message?: string) => {
-		// if (message) setIsLoadingMessage(message);
-		setindividualLoadingPR(pullRequestId);
-
-		// const response = (await dispatch(
-		// 	getPullRequestConversationsFromProvider(providerId, pullRequestId)
-		// )) as any;
+		setIndividualLoadingPR(pullRequestId);
 		(await dispatch(getPullRequestConversationsFromProvider(providerId, pullRequestId))) as any;
-
-		setindividualLoadingPR("");
+		setIndividualLoadingPR("");
 	};
 
 	const checkout = async (event, prToCheckout, cantCheckoutReason) => {
@@ -801,27 +795,12 @@ export const OpenPullRequests = React.memo((props: Props) => {
 	/**
 	 * This is called when a user clicks the "reload" button.
 	 * with a "hard-reload" we need to refresh the conversation and file data
+	 * @param event
 	 * @param message
 	 */
-	const reload = async (message?: string) => {
-		console.log("PullRequest is reloading");
-		// if (message) setIsLoadingMessage(message);
-		// setIsLoadingPR(true);
+	const reload = async (e, message?: string) => {
+		e.stopPropagation();
 		fetchOnePR(derivedState.currentPullRequestProviderId!, derivedState.currentPullRequestId);
-
-		// just clear the files and commits data -- it will be fetched if necessary (since it has its own api call)
-		// dispatch(
-		// 	clearPullRequestFiles(
-		// 		derivedState.currentPullRequestProviderId!,
-		// 		derivedState.currentPullRequestId!
-		// 	)
-		// );
-		// dispatch(
-		// 	clearPullRequestCommits(
-		// 		derivedState.currentPullRequestProviderId!,
-		// 		derivedState.currentPullRequestId!
-		// 	)
-		// );
 	};
 
 	const getOpenRepos = async () => {
@@ -1045,7 +1024,7 @@ export const OpenPullRequests = React.memo((props: Props) => {
 										<Icon name="chevron-right-thin" />
 									);
 									if (providerId === "github*com" || providerId === "github/enterprise") {
-										const selected = openReposWithName.find(repo => {
+										const selected = openRepos.find(repo => {
 											return (
 												repo.currentBranch === pr.headRefName &&
 												pr.headRepository &&
@@ -1133,12 +1112,12 @@ export const OpenPullRequests = React.memo((props: Props) => {
 																title="Reload"
 																trigger={["hover"]}
 																delay={1}
-																onClick={() => {
+																onClick={e => {
 																	if (isLoadingPR) {
 																		console.warn("reloading pr, cancelling...");
 																		return;
 																	}
-																	reload("Reloading...");
+																	reload(e, "Reloading...");
 																}}
 																placement="bottom"
 																className={`${isLoadingPR ? "spin" : ""}`}
@@ -1257,12 +1236,12 @@ export const OpenPullRequests = React.memo((props: Props) => {
 																title="Reload"
 																trigger={["hover"]}
 																delay={1}
-																onClick={() => {
+																onClick={e => {
 																	if (isLoadingPR) {
 																		console.warn("reloading pr, cancelling...");
 																		return;
 																	}
-																	reload("Reloading...");
+																	reload(e, "Reloading...");
 																}}
 																placement="bottom"
 																className={`${isLoadingPR ? "spin" : ""}`}

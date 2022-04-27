@@ -31,9 +31,11 @@ export const PendingCircle = styled.div`
 	color: #bf8700;
 	border-radius: 50%;
 	border: 1px solid #bf8700;
-	width: 23px;
+	width: 17px;
+	height: 16px;
 	text-align: center;
-	margin-right: 10px;
+	margin-right: 13px;
+	font-size: 10px;
 `;
 
 //@TODO: better typescript-ify this interface
@@ -70,8 +72,6 @@ export const PullRequestFilesChangedFileComments = (props: Props) => {
 		hasComments,
 		comments,
 		selected,
-		viewMode,
-		commentMap,
 		icon,
 		iconClass,
 		index,
@@ -83,9 +83,7 @@ export const PullRequestFilesChangedFileComments = (props: Props) => {
 		goDiff,
 		depth,
 		visited,
-		filesChanged,
-		pullRequest,
-		cardIndex
+		pullRequest
 	} = props;
 
 	const dispatch = useDispatch();

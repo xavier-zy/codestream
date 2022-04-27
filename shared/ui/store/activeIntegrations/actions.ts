@@ -73,7 +73,10 @@ const _fetchCards = async (
 						providerId: provider.id
 					});
 					dispatch(
-						updateForProvider(provider.id, { cards: response.cards } as any) // TODO Fix typing problem on ActiveIntegrationData
+						updateForProvider(provider.id, {
+							cards: response.cards,
+							fetchCardsError: response.error
+						} as any) // TODO Fix typing problem on ActiveIntegrationData
 					);
 				} catch (error) {
 					logError("Error Loading Cards: ", error);

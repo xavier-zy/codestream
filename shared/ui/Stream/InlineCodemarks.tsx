@@ -1188,10 +1188,6 @@ export class SimpleInlineCodemarks extends Component<Props, State> {
 			(currentPullRequestProviderId === "gitlab*com" ||
 				currentPullRequestProviderId === "gitlab/enterprise");
 
-		// <Modal
-		// 	onClose={isGitLabPR || currentCodeErrorId ? undefined : () => this.close()}
-		// 	translucent={currentPullRequestCommentId ? true : undefined}
-		// >
 		return (
 			<Modal
 				noScroll={!currentPullRequestCommentId ? true : undefined}

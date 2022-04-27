@@ -282,13 +282,6 @@ export const PullRequestFilesChangedList = (props: Props) => {
 			</div>
 		);
 
-	// if ((isLoading || isLoadingVisited) && props.sidebarView)
-	// return (
-	// 	<div>
-	// 		<LoadingMessage>Preparing changed files...</LoadingMessage>
-	// 	</div>
-	// );
-
 	if (!filesChanged || !filesChanged.length) return null;
 
 	const mode = props.sidebarView ? "tree" : derivedState.pullRequestFilesChangedMode;

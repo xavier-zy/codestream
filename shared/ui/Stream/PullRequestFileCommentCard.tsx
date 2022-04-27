@@ -183,11 +183,6 @@ export const PullRequestFileCommentCard = (props: PropsWithChildren<Props>) => {
 				inEditorOnly: false
 			});
 			if (!response.repositories) return;
-			// const repoIdToCheck = props.repoId
-			// 	? props.repoId
-			// 	: derivedState.currentRepo
-			// 	? derivedState.currentRepo.id
-			// 	: undefined;
 
 			const repoIdToCheck = derivedState.currentRepo ? derivedState.currentRepo.id : undefined;
 			if (repoIdToCheck) {

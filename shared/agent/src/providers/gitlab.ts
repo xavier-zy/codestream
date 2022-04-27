@@ -40,6 +40,7 @@ import {
 	MoveThirdPartyCardRequest,
 	MoveThirdPartyCardResponse,
 	Note,
+	ProviderConfigurationData,
 	ProviderGetForkedReposResponse,
 	ThirdPartyDisconnect,
 	ThirdPartyProviderConfig
@@ -144,6 +145,10 @@ export class GitLabProvider extends ThirdPartyIssueProviderBase<CSGitLabProvider
 
 	canConfigure() {
 		return true;
+	}
+
+	async verifyConnection(config: ProviderConfigurationData): Promise<void> {
+		await this.getCurrentUser();
 	}
 
 	protected getPRExternalContent(comment: PullRequestComment) {

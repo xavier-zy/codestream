@@ -534,11 +534,7 @@ export class SimpleStream extends PureComponent {
 								<ConfigureEnterprisePanel providerId={providerId} originLocation={origin} />
 							)}
 							{oauthOrPATProvider && (
-								<ConfigureOAuthOrPATPanel
-									providerId={providerId}
-									originLocation={origin}
-									closePanel={this.props.closePanel}
-								/>
+								<ConfigureOAuthOrPATPanel providerId={providerId} originLocation={origin} />
 							)}
 						</Modal>
 					)}

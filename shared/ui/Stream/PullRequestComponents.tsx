@@ -1139,7 +1139,7 @@ export const PRErrorBox = styled.div`
 `;
 
 export const PRErrorBoxSidebar = styled.div`
-	padding-left: 80px;
+	padding: 5px 10px 5px 10px;
 	fontsize: smaller;
 	background: ${PENDING_BACKGROUND_COLOR};
 `;

@@ -23,6 +23,7 @@ import React, { PureComponent } from "react";
 import { connect } from "react-redux";
 import { DelayedRender } from "../Container/DelayedRender";
 import { Loading } from "../Container/Loading";
+import { FinishReview } from "./FinishReview";
 import {
 	EditorSelectRangeRequestType,
 	NewCodemarkNotificationType,
@@ -469,6 +470,7 @@ export class SimpleStream extends PureComponent<Props> {
 						{activeModal === WebviewModals.ChangePassword && <ChangePassword />}
 						{activeModal === WebviewModals.ChangeTeamName && <ChangeTeamName />}
 						{activeModal === WebviewModals.ChangeCompanyName && <ChangeCompanyName />}
+						{activeModal === WebviewModals.FinishReview && <FinishReview />}
 						{activeModal === WebviewModals.Profile && <ProfilePanel />}
 						{activeModal === WebviewModals.BlameMap && <BlameMap />}
 						{activeModal === WebviewModals.Invite && <Invite />}

@@ -108,6 +108,7 @@ export enum WebviewModals {
 	ChangeCompanyName = "change-company-name",
 	CreateTeam = "create-team",
 	CreateCompany = "create-company",
+	FinishReview = "finish-review",
 	TeamSetup = "team-setup",
 	Keybindings = "keybindings",
 	Notifications = "notifications",

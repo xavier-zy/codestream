@@ -185,8 +185,9 @@ export const setCurrentPullRequest = (
 	providerId: string,
 	id: string,
 	commentId?: string,
-	source?: string
-) => action(ContextActionsType.SetCurrentPullRequest, { providerId, id, commentId, source });
+	source?: string,
+	view?: "details" | "sidebar-diffs"
+) => action(ContextActionsType.SetCurrentPullRequest, { providerId, id, commentId, source, view });
 
 export const setCurrentErrorsInboxOptions = (
 	stack?: string,
@@ -226,7 +227,8 @@ export const clearCurrentPullRequest = () =>
 		providerId: "",
 		id: "",
 		commentId: "",
-		source: ""
+		source: "",
+		view: undefined
 	});
 
 export const setOnboardStep = (step: number) => action(ContextActionsType.SetOnboardStep, { step });

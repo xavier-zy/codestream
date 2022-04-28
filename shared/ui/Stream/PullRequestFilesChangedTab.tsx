@@ -20,6 +20,7 @@ import {
 	FetchThirdPartyPullRequestPullRequest
 } from "@codestream/protocols/agent";
 import { HostApi } from "../webview-api";
+import Icon from "./Icon";
 
 const STATUS_MAP = {
 	modified: FileStatus.modified
@@ -43,6 +44,8 @@ export const PullRequestFilesChangedTab = (props: {
 	setPrCommitsRange: Function;
 	prCommitsRange: string[];
 	initialScrollPosition?: number;
+	sidebarView?: boolean;
+	fetch?: Function;
 }) => {
 	const { prCommitsRange, setPrCommitsRange, pr } = props;
 	const dispatch = useDispatch();
@@ -279,9 +282,16 @@ export const PullRequestFilesChangedTab = (props: {
 		});
 
 	return (
-		<div style={{ position: "relative", margin: "0 0 20px 20px" }}>
+		<div
+			className="files-changed-list"
+			style={{ position: "relative", margin: props.sidebarView ? "0" : "0 0 20px 20px" }}
+		>
 			{derivedState.currentRepo && (
-				<div style={{ margin: "0 0 10px 0" }}>
+				<div
+					className="files-changed-list-dropdown"
+					style={{ margin: props.sidebarView ? "0" : "0 0 10px 0" }}
+				>
+					{props.sidebarView && <Icon className="margin-right" name="plus-minus" />}
 					<DropdownButton
 						variant="text"
 						items={dropdownItems}
@@ -303,6 +313,7 @@ export const PullRequestFilesChangedTab = (props: {
 				isLoading={isLoading}
 				setIsLoadingMessage={props.setIsLoadingMessage!}
 				commitBased={commitBased}
+				sidebarView={props.sidebarView}
 				accessRawDiffs={accessRawDiffs}
 				setAccessRawDiffs={setAccessRawDiffs}
 				initialScrollPosition={props.initialScrollPosition}

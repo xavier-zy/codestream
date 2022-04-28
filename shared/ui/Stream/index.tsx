@@ -131,6 +131,7 @@ interface ConnectedProps {
 	currentCodeErrorId?: string;
 	currentCodemarkId?: string;
 	currentPullRequestId?: string;
+	currentPullRequestView?: string;
 	currentReviewId?: string;
 	currentUser: CSUser;
 	currentUserId: string;
@@ -370,7 +371,9 @@ export class SimpleStream extends PureComponent<Props> {
 		if (this.props.currentReviewId || this.props.currentCodeErrorId) {
 			activePanel = WebviewPanels.CodemarksForFile;
 		}
-		if (this.props.currentPullRequestId) activePanel = WebviewPanels.CodemarksForFile;
+		if (this.props.currentPullRequestId && this.props.currentPullRequestView !== "sidebar-diffs")
+			activePanel = WebviewPanels.CodemarksForFile;
+
 		if (!isConfigurationPanel && this.props.composeCodemarkActive) {
 			// don't override the activePanel if user is trying to configure a provider
 			// from the codemark (issue) form
@@ -790,9 +793,9 @@ const mapStateToProps = (state: CodeStreamState): ConnectedProps => {
 		currentCodeErrorId: context.currentCodeErrorId,
 		currentCodemarkId: context.currentCodemarkId,
 		currentPullRequestId: context.currentPullRequest ? context.currentPullRequest.id : undefined,
-		currentReviewId: context.currentReviewId,
-		currentUser: users[session.userId!] as CSMe,
-		currentUserId: session.userId!,
+		currentPullRequestView: context.currentPullRequest
+			? context.currentPullRequest.view
+			: undefined,
 		isFirstPageview: context.isFirstPageview,
 		// even though we don't use hasFocus, leave this in here because of a re-render
 		// call from Modal.tsx -Pez

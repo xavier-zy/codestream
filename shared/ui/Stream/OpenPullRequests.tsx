@@ -7,6 +7,7 @@ import { Row } from "./CrossPostIssueControls/IssuesPane";
 import Icon from "./Icon";
 import { PRHeadshot } from "../src/components/Headshot";
 import {
+	clearCurrentPullRequest,
 	setCreatePullRequest,
 	setCurrentPullRequest,
 	setNewPostEntry
@@ -21,7 +22,9 @@ import {
 	ChangeDataType,
 	FetchProviderDefaultPullRequestsType,
 	ThirdPartyProviderConfig,
-	UpdateTeamSettingsRequestType
+	UpdateTeamSettingsRequestType,
+	FetchThirdPartyPullRequestPullRequest,
+	GitLabMergeRequest
 } from "@codestream/protocols/agent";
 import {
 	NewPullRequestNotificationType,
@@ -29,7 +32,11 @@ import {
 	WebviewPanels
 } from "@codestream/protocols/webview";
 import { Button } from "../src/components/Button";
-import { getMyPullRequests, openPullRequestByUrl } from "../store/providerPullRequests/actions";
+import {
+	getMyPullRequests,
+	getPullRequestConversationsFromProvider,
+	openPullRequestByUrl
+} from "../store/providerPullRequests/actions";
 import { PRBranch } from "./PullRequestComponents";
 import { PRHeadshotName } from "../src/components/HeadshotName";
 import styled from "styled-components";
@@ -50,9 +57,15 @@ import {
 } from "../src/components/Pane";
 import { Provider, IntegrationButtons } from "./IntegrationsPanel";
 import { useDidMount, usePrevious } from "../utilities/hooks";
-import { getMyPullRequests as getMyPullRequestsSelector } from "../store/providerPullRequests/reducer";
+import {
+	getCurrentProviderPullRequest,
+	getMyPullRequests as getMyPullRequestsSelector,
+	getPullRequestExactId,
+	getPullRequestId
+} from "../store/providerPullRequests/reducer";
 import { InlineMenu } from "../src/components/controls/InlineMenu";
 import { getPRLabel } from "../store/providers/reducer";
+import { PullRequestFilesChangedTab } from "./PullRequestFilesChangedTab";
 
 const Root = styled.div`
 	height: 100%;
@@ -71,6 +84,12 @@ const Root = styled.div`
 			.selected-icon {
 				left: 40px;
 			}
+		}
+		.files-changed-list-dropdown {
+			padding-left: 80px;
+		}
+		.files-changed-list .row-with-icon-actions {
+			padding-left: 100px;
 		}
 	}
 	#pr-search-input-wrapper .pr-search-input {
@@ -103,6 +122,12 @@ const Root = styled.div`
 		button {
 			margin-top: 0px;
 		}
+	}
+	.files-changed-list-dropdown {
+		padding-left: 60px;
+	}
+	.files-changed-list .row-with-icon-actions {
+		padding-left: 80px;
 	}
 `;
 
@@ -204,7 +229,7 @@ export const OpenPullRequests = React.memo((props: Props) => {
 	const dispatch = useDispatch();
 	const mountedRef = useRef(false);
 	const derivedState = useSelector((state: CodeStreamState) => {
-		const { preferences, repos } = state;
+		const { preferences, repos, context } = state;
 
 		const team = state.teams[state.context.currentTeamId];
 		const teamSettings = team.settings ? team.settings : EMPTY_HASH;
@@ -220,6 +245,11 @@ export const OpenPullRequests = React.memo((props: Props) => {
 		const prConnectedProvidersWithErrors = prConnectedProviders.filter(_ => _.hasAccessTokenError);
 		const prConnectedProvidersLength = prConnectedProviders.length;
 		const myPullRequests = getMyPullRequestsSelector(state);
+		const expandedPullRequestId =
+			context.currentPullRequest &&
+			context.currentPullRequest.view === "sidebar-diffs" &&
+			context.currentPullRequest.id;
+		const currentPullRequest = getCurrentProviderPullRequest(state);
 		return {
 			repos,
 			teamSettings,
@@ -241,9 +271,24 @@ export const OpenPullRequests = React.memo((props: Props) => {
 					? true
 					: preferences.pullRequestQueryShowAllRepos,
 			hideLabels: preferences.pullRequestQueryHideLabels,
+			hideDiffs: preferences.pullRequestQueryHideDiffs,
 			hideDescriptions: preferences.pullRequestQueryHideDescriptions,
 			prLabel: getPRLabel(state),
-			pullRequestProviderHidden: preferences.pullRequestProviderHidden || EMPTY_HASH_2
+			pullRequestProviderHidden: preferences.pullRequestProviderHidden || EMPTY_HASH_2,
+			expandedPullRequestId,
+			currentPullRequestProviderId: state.context.currentPullRequest
+				? state.context.currentPullRequest.providerId
+				: undefined,
+			currentPullRequestCommentId: state.context.currentPullRequest
+				? state.context.currentPullRequest.commentId
+				: undefined,
+			currentPullRequestSource: state.context.currentPullRequest
+				? state.context.currentPullRequest.source
+				: undefined,
+			currentPullRequest: currentPullRequest,
+			providerPullRequests: state.providerPullRequests.pullRequests,
+			currentPullRequestId: getPullRequestId(state),
+			currentPullRequestIdExact: getPullRequestExactId(state)
 		};
 	}, shallowEqual);
 
@@ -263,6 +308,7 @@ export const OpenPullRequests = React.memo((props: Props) => {
 	const [loadFromUrlQuery, setLoadFromUrlQuery] = React.useState({});
 	const [loadFromUrlOpen, setLoadFromUrlOpen] = React.useState("");
 	const [prError, setPrError] = React.useState("");
+	const [prCommitsRange, setPrCommitsRange] = React.useState<string[]>([]);
 
 	const [pullRequestGroups, setPullRequestGroups] = React.useState<{
 		[providerId: string]: GetMyPullRequestsResponse[][];
@@ -639,6 +685,97 @@ export const OpenPullRequests = React.memo((props: Props) => {
 		return total;
 	}, [pullRequestGroups]);
 
+	const clickPR = pr => {
+		// if we have an expanded PR diffs in the sidebar, collapse it
+		if (pr.id === derivedState.expandedPullRequestId) {
+			dispatch(clearCurrentPullRequest());
+		} else {
+			// otherwise, either open the PR details or show the diffs,
+			// depending on the user's preference
+			const view = derivedState.hideDiffs ? "details" : "sidebar-diffs";
+			dispatch(setCurrentPullRequest(pr.providerId, pr.id, "", "", view));
+
+			HostApi.instance.track("PR Clicked", {
+				Host: pr.providerId
+			});
+		}
+	};
+
+	const [isLoadingPR, setIsLoadingPR] = React.useState("");
+
+	const fetchOnePR = async (providerId: string, pullRequestId: string, message?: string) => {
+		// if (message) setIsLoadingMessage(message);
+		setIsLoadingPR(pullRequestId);
+
+		const response = (await dispatch(
+			getPullRequestConversationsFromProvider(providerId, pullRequestId)
+		)) as any;
+	};
+
+	useEffect(() => {
+		const providerPullRequests =
+			derivedState.providerPullRequests[derivedState.currentPullRequestProviderId!];
+		if (providerPullRequests) {
+			let data = providerPullRequests[derivedState.currentPullRequestIdExact!];
+			if (data) {
+				return;
+			}
+		} else {
+			fetchOnePR(derivedState.currentPullRequestProviderId!, derivedState.currentPullRequestId);
+			console.warn(`could not find match for idExact=${derivedState.currentPullRequestIdExact}`);
+		}
+	}, [
+		derivedState.currentPullRequestProviderId,
+		derivedState.currentPullRequestIdExact,
+		derivedState.providerPullRequests
+	]);
+
+	const expandedPR: any = useMemo(() => {
+		if (!derivedState.currentPullRequest || derivedState.hideDiffs) return undefined;
+		const conversations = derivedState.currentPullRequest.conversations;
+		if (!conversations) return undefined;
+		if (conversations.project && conversations.project.mergeRequest)
+			return conversations.project.mergeRequest;
+		if (conversations.repository && conversations.repository.pullRequest)
+			return conversations.repository.pullRequest;
+		return undefined;
+	}, [derivedState.currentPullRequest, derivedState.hideDiffs]);
+
+	const renderExpanded = pr => {
+		return (
+			<>
+				<Row
+					className="pr-row"
+					onClick={() => {
+						dispatch(setCurrentPullRequest(pr.providerId, pr.id, "", "", "details"));
+
+						HostApi.instance.track("PR Clicked", {
+							Host: pr.providerId
+						});
+					}}
+				>
+					<div style={{ paddingLeft: "20px" }}>
+						<Icon name="screen-full" />
+					</div>
+					<div>View Overview &amp; Details</div>
+				</Row>
+				{expandedPR && (
+					<PullRequestFilesChangedTab
+						key="files-changed"
+						pr={expandedPR as FetchThirdPartyPullRequestPullRequest}
+						fetch={() => {
+							fetchOnePR(expandedPR.providerId, expandedPR.id);
+						}}
+						setIsLoadingMessage={() => {}}
+						sidebarView
+						prCommitsRange={prCommitsRange}
+						setPrCommitsRange={setPrCommitsRange}
+					/>
+				)}
+			</>
+		);
+	};
+
 	const settingsMenuItems = [
 		{
 			label: "Only show PRs from open repos",
@@ -662,6 +799,13 @@ export const OpenPullRequests = React.memo((props: Props) => {
 			checked: !derivedState.hideLabels,
 			action: () =>
 				dispatch(setUserPreference(["pullRequestQueryHideLabels"], !derivedState.hideLabels))
+		},
+		{
+			label: "Show Diffs in Sidebar",
+			key: "show-diffs",
+			checked: !derivedState.hideDiffs,
+			action: () =>
+				dispatch(setUserPreference(["pullRequestQueryHideDiffs"], !derivedState.hideDiffs))
 		}
 	] as any;
 	if (derivedState.isCurrentUserAdmin) {
@@ -795,6 +939,12 @@ export const OpenPullRequests = React.memo((props: Props) => {
 							{!query.hidden &&
 								prGroup &&
 								prGroup.map((pr: any, index) => {
+									const expanded = pr.id === derivedState.expandedPullRequestId;
+									const chevronIcon = derivedState.hideDiffs ? null : expanded ? (
+										<Icon name="chevron-down-thin" />
+									) : (
+										<Icon name="chevron-right-thin" />
+									);
 									if (providerId === "github*com" || providerId === "github/enterprise") {
 										const selected = openReposWithName.find(repo => {
 											return (

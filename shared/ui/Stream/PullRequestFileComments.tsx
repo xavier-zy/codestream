@@ -143,7 +143,7 @@ export const PullRequestFileComments = (props: PropsWithChildren<Props>) => {
 		if (sortedComments) {
 			sortedComments.map(c => {
 				let el = c.ref.current;
-				if (c.comment.id === props.commentId) {
+				if (c.comment.id === props.commentId && el) {
 					el.scrollIntoView();
 				}
 			});

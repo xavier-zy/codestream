@@ -174,6 +174,8 @@ export interface WebviewContext {
 				commentId?: string;
 				/* defined if this was triggered by an external means (like an IDE button, etc.) */
 				source?: string;
+				/* details means show the full PR as the only view. sidebar-diffs means to show it as an expanded tree node */
+				view?: "details" | "sidebar-diffs";
 				metadata?: any;
 		  }
 		| undefined;

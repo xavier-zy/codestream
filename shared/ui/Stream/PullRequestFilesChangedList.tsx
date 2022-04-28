@@ -131,8 +131,10 @@ interface Props extends CompareFilesProps {
 	isLoading: boolean;
 	pr?: FetchThirdPartyPullRequestPullRequest;
 	setIsLoadingMessage?: Function;
+	fetch?: Function;
 	readOnly?: boolean;
 	commitBased?: boolean;
+	sidebarView?: boolean;
 	accessRawDiffs?: boolean;
 	setAccessRawDiffs?: Function;
 	initialScrollPosition?: number;
@@ -282,7 +284,7 @@ export const PullRequestFilesChangedList = (props: Props) => {
 
 	if (!filesChanged || !filesChanged.length) return null;
 
-	const mode = derivedState.pullRequestFilesChangedMode;
+	const mode = props.sidebarView ? "tree" : derivedState.pullRequestFilesChangedMode;
 
 	const openFile = async record => {
 		const { filename, patch } = record;
@@ -356,59 +358,68 @@ export const PullRequestFilesChangedList = (props: Props) => {
 
 	return (
 		<>
-			<div style={{ display: "flex", alignItems: "center", flexWrap: "wrap" }}>
-				{derivedState.diffSelectorEnabled && (
-					<div style={{ margin: "0 10px 10px 0", flexGrow: 2 }}>
-						<PRSelectorButtons>
-							<span className={mode == "files" ? "selected" : ""} onClick={() => setMode("files")}>
-								<Icon name="list-flat" title="List View" placement="bottom" />
-							</span>
-							<span className={mode == "tree" ? "selected" : ""} onClick={() => setMode("tree")}>
-								<Icon name="list-tree" title="Tree View" placement="bottom" />
-							</span>
-							<span className={mode == "hunks" ? "selected" : ""} onClick={() => setMode("hunks")}>
-								<Icon name="file-diff" title="Diff Hunks" placement="bottom" />
-							</span>
-						</PRSelectorButtons>
-					</div>
-				)}
+			{!props.sidebarView && (
+				<div style={{ display: "flex", alignItems: "center", flexWrap: "wrap" }}>
+					{derivedState.diffSelectorEnabled && (
+						<div style={{ margin: "0 10px 10px 0", flexGrow: 2 }}>
+							<PRSelectorButtons>
+								<span
+									className={mode == "files" ? "selected" : ""}
+									onClick={() => setMode("files")}
+								>
+									<Icon name="list-flat" title="List View" placement="bottom" />
+								</span>
+								<span className={mode == "tree" ? "selected" : ""} onClick={() => setMode("tree")}>
+									<Icon name="list-tree" title="Tree View" placement="bottom" />
+								</span>
+								<span
+									className={mode == "hunks" ? "selected" : ""}
+									onClick={() => setMode("hunks")}
+								>
+									<Icon name="file-diff" title="Diff Hunks" placement="bottom" />
+								</span>
+							</PRSelectorButtons>
+						</div>
+					)}
 
-				<PRProgress style={{ margin: prProgressMarginStyle, minWidth: "30px" }}>
-					{totalVisitedFiles} / {totalFiles}{" "}
-					<span className="wide-text">
-						files viewed{" "}
-						<Icon
-							name="info"
-							placement="bottom"
-							title={
-								<div style={{ width: "250px" }}>
-									Marking files as viewed can help keep track of your progress, but will not affect
-									your submitted review
-								</div>
-							}
-						/>
-					</span>
-					<PRProgressLine>
-						{pct > 0 && <PRProgressFill style={{ width: pct + "%" }} />}
-					</PRProgressLine>
-				</PRProgress>
-
-				{pr && !pr.pendingReview && (
-					<PRSubmitReviewButton style={{ margin: "0 10px 10px auto", flexGrow: 0 }}>
-						<Button variant="success" onClick={() => setFinishReviewOpen(!finishReviewOpen)}>
-							Review<span className="wide-text"> changes</span> <Icon name="chevron-down" />
-						</Button>
-						{finishReviewOpen && (
-							<PullRequestFinishReview
-								pr={pr}
-								mode="dropdown"
-								setIsLoadingMessage={props.setIsLoadingMessage!}
-								setFinishReviewOpen={setFinishReviewOpen}
+					<PRProgress style={{ margin: prProgressMarginStyle, minWidth: "30px" }}>
+						{totalVisitedFiles} / {totalFiles}{" "}
+						<span className="wide-text">
+							files viewed{" "}
+							<Icon
+								name="info"
+								placement="bottom"
+								title={
+									<div style={{ width: "250px" }}>
+										Marking files as viewed can help keep track of your progress, but will not
+										affect your submitted review
+									</div>
+								}
 							/>
-						)}
-					</PRSubmitReviewButton>
-				)}
-			</div>
+						</span>
+						<PRProgressLine>
+							{pct > 0 && <PRProgressFill style={{ width: pct + "%" }} />}
+						</PRProgressLine>
+					</PRProgress>
+
+					{pr && !pr.pendingReview && (
+						<PRSubmitReviewButton style={{ margin: "0 10px 10px auto", flexGrow: 0 }}>
+							<Button variant="success" onClick={() => setFinishReviewOpen(!finishReviewOpen)}>
+								Review<span className="wide-text"> changes</span> <Icon name="chevron-down" />
+							</Button>
+							{finishReviewOpen && (
+								<PullRequestFinishReview
+									pr={pr}
+									mode="dropdown"
+									fetch={props.fetch!}
+									setIsLoadingMessage={props.setIsLoadingMessage!}
+									setFinishReviewOpen={setFinishReviewOpen}
+								/>
+							)}
+						</PRSubmitReviewButton>
+					)}
+				</div>
+			)}
 			{mode === "files" || mode === "tree" ? (
 				<PullRequestFilesChanged
 					pr={pr}
@@ -427,6 +438,8 @@ export const PullRequestFilesChangedList = (props: Props) => {
 					toggleDirectory={toggleDirectory}
 					commentMap={commentMap}
 					commitBased={props.commitBased}
+					sidebarView={props.sidebarView}
+					startingDepth={8}
 					accessRawDiffs={props.accessRawDiffs}
 					setAccessRawDiffs={props.setAccessRawDiffs}
 				/>

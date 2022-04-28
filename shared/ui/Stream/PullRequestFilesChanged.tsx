@@ -60,6 +60,8 @@ interface Props extends CompareFilesProps {
 		[path: string]: any;
 	};
 	commitBased?: boolean;
+	sidebarView?: boolean;
+	startingDepth?: number;
 	accessRawDiffs?: boolean;
 	setAccessRawDiffs?: Function;
 }
@@ -456,9 +458,11 @@ export const PullRequestFilesChanged = (props: Props) => {
 					siblings.forEach(n => render(n, [...fullPath, n.segment], dirPath, depth, false));
 				}
 			};
-			render((tree as any)._root, [], [], 0, true);
+			render((tree as any)._root, [], [], props.startingDepth || 0, true);
 		} else {
-			lines.push(...props.filesChanged.map((f, index) => renderFile(f, index, 0)));
+			lines.push(
+				...props.filesChanged.map((f, index) => renderFile(f, index, props.startingDepth || 0))
+			);
 			filesInOrder = [...props.filesChanged];
 		}
 		return [lines, filesInOrder];
@@ -508,7 +512,7 @@ export const PullRequestFilesChanged = (props: Props) => {
 					<div className="message">{errorMessage || repoErrorMessage}</div>
 				</PRErrorBox>
 			)}
-			{changedFiles.length > 0 && (
+			{changedFiles.length > 0 && !props.sidebarView && (
 				<Meta id="changed-files">
 					<MetaLabel>
 						{props.filesChanged.length} Changed Files

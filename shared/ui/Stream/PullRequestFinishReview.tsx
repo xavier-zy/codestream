@@ -29,6 +29,7 @@ export const PullRequestFinishReview = (props: {
 		  }
 		| FetchThirdPartyPullRequestPullRequest;
 	mode: "dropdown" | "timeline";
+	fetch?: Function;
 	setIsLoadingMessage: Function;
 	setFinishReviewOpen?: Function;
 }) => {

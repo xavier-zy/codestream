@@ -166,7 +166,6 @@ export const PullRequestFileCommentCard = (props: PropsWithChildren<Props>) => {
 		let _docMarkers = derivedState.documentMarkers;
 		_docMarkers.sort((a, b) => (a?.range?.start?.line > b?.range?.start?.line ? 1 : -1));
 		const marker = _docMarkers[cardIndex];
-		console.warn("eric marker", marker);
 		if (marker?.range) {
 			HostApi.instance.send(EditorHighlightRangeRequestType, {
 				uri: marker?.fileUri,

@@ -51,8 +51,6 @@ export const ChangesetFile = styled((props: ReviewChangesetFileInfo & Props) => 
 			{status === FileStatus.deleted && <span className="deleted">deleted </span>}
 			{props.badge}
 			{props.actionIcons}
-
-			{/* Work from here on Monday Eric */}
 			{props.iconLast}
 		</div>
 	);

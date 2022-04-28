@@ -460,7 +460,7 @@ export class SimpleCodemarksForFile extends Component<Props, State> {
 				<PaneNode>
 					<PaneNodeName
 						id="codemarks/external"
-						title={`${prLabel.PullRequest} Commentsdddd`}
+						title={`${prLabel.PullRequest} Comments`}
 						count={external.length}
 					/>
 					{!this.props.hiddenPaneNodes["codemarks/external"] && this.renderCodemarksList(external)}

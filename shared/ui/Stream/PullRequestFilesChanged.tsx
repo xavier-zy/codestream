@@ -306,16 +306,13 @@ export const PullRequestFilesChanged = (props: Props) => {
 	const renderFile = (f, index, depth) => {
 		const selected = derivedState.parsedDiffUri && derivedState.parsedDiffUri.path == f.file;
 		const visited = visitedFiles[f.file];
-		// if (selected && !visited) {
-		// 	visitFile(f.file, index);
-		// }
 
+		// This logic replaces old logic of auto-checking
+		// Now, we have the user manually check files off in their diff list
 		let icon;
 		// if we're loading, show a spinner
 		if (loading) icon = "sync";
 		// this file is currently selected, and visible in diff view
-		// else if (selected) icon = "arrow-right";
-		// this file has been visitied during the review
 		else if (visited) icon = "ok";
 		// not yet visited, but part of the review
 		else icon = "circle";

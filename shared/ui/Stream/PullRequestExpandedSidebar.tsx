@@ -1,14 +1,24 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { CodeStreamState } from "../store";
-import styled, { ThemeProvider } from "styled-components";
+import styled from "styled-components";
 import Icon from "./Icon";
 import { setCurrentPullRequest } from "../store/context/actions";
 import { FetchThirdPartyPullRequestPullRequest } from "@codestream/protocols/agent";
 import { PullRequestFilesChangedTab } from "./PullRequestFilesChangedTab";
-import { Skeleton } from "./Skeleton";
 import { getPreferences } from "../store/users/reducer";
-import { Row } from "./CrossPostIssueControls/IssueDropdown";
+import { Row } from "./CrossPostIssueControls/IssuesPane";
+import { openModal } from "../store/context/actions";
+import { WebviewModals, WebviewPanelNames } from "../ipc/webview.protocol.common";
+
+export const ReviewButton = styled.div`
+	color: white;
+	background-color: #24a100;
+	width: 50px;
+	text-align: center;
+	margin-left: auto;
+	border-radius: 5px;
+`;
 
 // @TODO: update with more specific types
 interface PullRequestExpandedSidebarProps {
@@ -28,16 +38,29 @@ export const PullRequestExpandedSidebar = (props: PullRequestExpandedSidebarProp
 		};
 	});
 
-	const handleClick = () => {
+	const handleRowClick = e => {
+		e.stopPropagation();
 		const { pullRequest } = props;
 		dispatch(setCurrentPullRequest(pullRequest.providerId, pullRequest.id, "", "", "details"));
 	};
 
+	const handleReviewClick = e => {
+		e.stopPropagation();
+		dispatch(openModal(WebviewModals.FinishReview));
+	};
+
 	return (
 		<>
-			<Row onClick={handleClick} style={{ padding: "4px 0 4px 45px" }}>
-				<Icon name="git-branch" />
-				PR Details
+			<Row onClick={e => handleRowClick(e)} style={{ padding: "4px 0 4px 45px" }}>
+				<div>
+					<Icon name="git-branch" />
+					PR Details
+				</div>
+				<div>
+					<ReviewButton onClick={e => handleReviewClick(e)}>
+						<span className="wide-text">Review</span>
+					</ReviewButton>
+				</div>
 			</Row>
 			{props.loadingThirdPartyPrObject && !props.thirdPartyPrObject && (
 				<div style={{ paddingLeft: "45px" }}>

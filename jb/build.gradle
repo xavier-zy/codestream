@@ -79,7 +79,7 @@ intellij {
 
     // sandboxDir = "$System.env.HOME/ide-sandbox" // It is sometimes useful to not have IDE config inside source control
 
-    plugins = ['git4idea', 'org.jetbrains.plugins.go:211.7142.36', 'Pythonid:211.7142.45']
+    plugins = ['git4idea', 'org.jetbrains.plugins.go:211.7142.36', 'Pythonid:211.7142.45', 'org.jetbrains.plugins.ruby:211.7142.13']
 }
 
 runIde {

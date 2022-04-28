@@ -209,7 +209,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			"Content-Type": "application/json",
 			"NewRelic-Requesting-Services": "CodeStream"
 		});
-		ContextLogger.setData({
+    ContextLogger.setData({
 			nrUrl: this.graphQlBaseUrl,
 			versionInfo: {
 				version: this.session.versionInfo?.extension?.version,
@@ -1662,14 +1662,14 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		const query = `query GetMethodErrorRate($accountId:Int!) {
 			actor {
 				account(id: $accountId) {
-					nrql(query: "${innerQuery}") { 						
+					nrql(query: "${innerQuery}") {
 						results
 						metadata {
 							timeWindow {
 								begin
-								end					   
+								end
 							}
-						}					
+						}
 					}
 				}
 			}
@@ -1692,27 +1692,27 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		const innerQueryEquals = `SELECT name,\`transaction.name\`,code.lineno,code.namespace,traceId,transactionId from Span WHERE \`entity.guid\` = '${
 			request.newRelicEntityGuid
 		}' AND ${
-			codeFilePath
-				? `code.filepath='${codeFilePath}'`
-				: `code.namespace like '${request.codeNamespace}%'`
-		}  SINCE 30 minutes AGO LIMIT 250`;
+			request.codeNamespace
+				? `code.namespace like '${request.codeNamespace}%'`
+				: `code.filepath='${codeFilePath}'`
+		} SINCE 30 minutes AGO LIMIT 250`;
 
 		const innerQueryLike = `SELECT name,\`transaction.name\`,code.lineno,code.namespace,traceId,transactionId from Span WHERE \`entity.guid\` = '${
 			request.newRelicEntityGuid
 		}' AND ${
-			codeFilePath
-				? `code.filepath like '%${codeFilePath}'`
-				: `code.namespace like '${request.codeNamespace}%'`
+			request.codeNamespace
+				? `code.namespace like '${request.codeNamespace}%'`
+				: `code.filepath like '%${codeFilePath}'`
 		}  SINCE 30 minutes AGO LIMIT 250`;
 
 		const query = `query GetSpans($accountId:Int!) {
 			actor {
 				account(id: $accountId) {
-					equals:nrql(query: "${innerQueryEquals}") { 						
-						results						 					
+					equals:nrql(query: "${innerQueryEquals}") {
+						results
 					}
-					like:nrql(query: "${innerQueryLike}") { 						
-						results						 					
+					like:nrql(query: "${innerQueryLike}") {
+						results
 					}
 				}
 			}
@@ -1762,7 +1762,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		}
 	}
 
-	private _languageSupport = new Set<string>(["python"]);
+	private _languageSupport = new Set<string>(["python", "ruby"]);
 
 	getGoldenSignalsEntity(
 		codestreamUser: CSMe,
@@ -1848,16 +1848,16 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		metricTimesliceNames: { metricTimesliceName: string }[]
 	) {
 		return metricTimesliceNames.map((_: any) => {
-			const indexOfColon = _.metricTimesliceName ? _.metricTimesliceName.indexOf(":") : -1;
 
 			const additionalMetadata = {} as any;
 			const metadata =
 				groupedByTransactionName[
-					_.metricTimesliceName
-						.replace("Errors/WebTransaction/", "")
-						.replace("WebTransaction/", "")
-						.replace("OtherTransaction/", "")
-				];
+				"Nested/" +
+				_.metricTimesliceName
+					.replace("Errors/WebTransaction/", "")
+					.replace("WebTransaction/", "")
+					.replace("OtherTransaction/", "")
+					];
 			if (metadata) {
 				["code.lineno", "traceId", "transactionId", "code.namespace"].forEach(_ => {
 					// TODO this won't work for lambdas
@@ -1865,9 +1865,9 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				});
 			}
 
-			let className = undefined;
-			let functionName =
-				indexOfColon > -1 ? _.metricTimesliceName.slice(indexOfColon + 1) : undefined;
+			let className = metadata[0]["code.namespace"];
+			const split = _.metricTimesliceName.split("/");
+			let functionName = split[split.length - 1];
 			if (functionName) {
 				const indexOfDot = functionName ? functionName.indexOf(".") : -1;
 				if (indexOfDot > -1) {
@@ -1898,7 +1898,6 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		request: GetFileLevelTelemetryRequest
 	): Promise<GetFileLevelTelemetryResponse | undefined> {
 		if (
-			!request.filePath ||
 			!request.languageId ||
 			!this._languageSupport.has(request.languageId)
 		) {
@@ -1967,6 +1966,8 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			relativeFilePath = join(sep, relativeFilePath);
 		}
 
+		relativeFilePath = relativeFilePath.replace("/rails7", "");
+
 		const observabilityRepo = await this.getObservabilityEntityRepos(repoForFile.id);
 		if (!observabilityRepo) {
 			ContextLogger.warn("getFileLevelTelemetry: no observabilityRepo");
@@ -1991,7 +1992,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 
 		const newRelicAccountId = entity.accountId;
 		const newRelicEntityGuid = entity.entityGuid;
-		let entityName = entity.entityName;
+		const entityName = entity.entityName;
 
 		try {
 			// get a list of file-based method telemetry
@@ -2005,19 +2006,19 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			const metricTimesliceNames = Object.keys(groupedByTransactionName);
 
 			request.options = request.options || {};
-			let [averageDurationResponse, throughputResponse, errorRateResponse] = await Promise.all([
+			const [averageDurationResponse, throughputResponse, errorRateResponse] = await Promise.all([
 				request.options.includeAverageDuration && metricTimesliceNames?.length
 					? this.getMethodAverageDuration({
 							newRelicAccountId,
 							newRelicEntityGuid,
-							metricTimesliceNames
+							codeNamespace: "Controller"
 					  })
 					: undefined,
 				request.options.includeThroughput && metricTimesliceNames?.length
 					? this.getMethodThroughput({
 							newRelicAccountId,
 							newRelicEntityGuid,
-							metricTimesliceNames
+						codeNamespace: "Controller"
 					  })
 					: undefined,
 
@@ -2025,7 +2026,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					? this.getMethodErrorRate({
 							newRelicAccountId,
 							newRelicEntityGuid,
-							metricTimesliceNames
+						codeNamespace: "Controller"
 					  })
 					: undefined
 			]);
@@ -2060,7 +2061,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					? averageDurationResponse.actor.account.nrql.results
 					: [],
 				errorRate: errorRateResponse ? errorRateResponse.actor.account.nrql.results : [],
-				sinceDateFormatted: "30 minutes ago", //begin ? Dates.toFormatter(new Date(begin)).fromNow() : "",
+				sinceDateFormatted: "30 minutes ago", // begin ? Dates.toFormatter(new Date(begin)).fromNow() : "",
 				lastUpdateDate:
 					errorRateResponse?.actor?.account?.nrql?.metadata?.timeWindow?.end ||
 					averageDurationResponse?.actor?.account?.nrql?.metadata?.timeWindow?.end ||
@@ -2486,7 +2487,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				  exception(occurrenceId: $occurrenceId) {
 					stackTrace {
 					  frames {
-						filepath						
+						filepath
 						formatted
 						line
 						name
@@ -2496,7 +2497,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 				  crash(occurrenceId: $occurrenceId) {
 					stackTrace {
 					  frames {
-						filepath						
+						filepath
 						formatted
 						line
 						name
@@ -3252,7 +3253,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			const result = await this.query(`{
 			actor {
 			  entitySearch(query: "type='APPLICATION'") {
-				count       
+				count
 			  }
 			}
 		  }`);

@@ -178,7 +178,7 @@ export const ChangesetFileList = (props: {
 		return (
 			<Directory
 				key={hideKey}
-				style={{ paddingLeft: `${depth * 9}px` }}
+				style={{ paddingLeft: `${depth * 10}px` }}
 				onClick={() => {
 					toggleDirectory(hideKey);
 				}}

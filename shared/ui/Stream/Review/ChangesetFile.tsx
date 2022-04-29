@@ -33,7 +33,7 @@ export const ChangesetFile = styled((props: ReviewChangesetFileInfo & Props) => 
 				"with-action-icons": !!props.actionIcons
 			})}
 			onClick={props.onClick}
-			style={props.depth ? { paddingLeft: `${props.depth * 9}px` } : {}}
+			style={props.depth ? { paddingLeft: `${props.depth * 10}px` } : {}}
 		>
 			{props.chevron}
 			{props.icon}

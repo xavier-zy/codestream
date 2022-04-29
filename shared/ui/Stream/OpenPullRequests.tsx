@@ -78,7 +78,7 @@ import { logError } from "../logger";
 const Root = styled.div`
 	height: 100%;
 	.pr-row {
-		padding-left: 40px;
+		padding-left: 30px;
 		.selected-icon {
 			left: 20px;
 		}
@@ -1039,7 +1039,6 @@ export const OpenPullRequests = React.memo((props: Props) => {
 													onClick={() => clickPR(pr, groupIndex)}
 												>
 													<div style={{ display: "flex" }}>
-														{selected && <Icon name="arrow-right" className="selected-icon" />}
 														{chevronIcon}
 														<PRHeadshot person={pr.author} />
 													</div>
@@ -1158,7 +1157,6 @@ export const OpenPullRequests = React.memo((props: Props) => {
 												>
 													<div style={{ display: "flex" }}>
 														{" "}
-														{selected && <Icon name="arrow-right" className="selected-icon" />}
 														{chevronIcon}
 														<PRHeadshot
 															person={{

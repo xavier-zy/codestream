@@ -18,6 +18,7 @@ export const ReviewButton = styled.div`
 	text-align: center;
 	margin-left: auto;
 	border-radius: 5px;
+	margin-right: 8px;
 `;
 
 // @TODO: update with more specific types
@@ -51,7 +52,7 @@ export const PullRequestExpandedSidebar = (props: PullRequestExpandedSidebarProp
 
 	return (
 		<>
-			<Row onClick={e => handleRowClick(e)} style={{ padding: "4px 0 4px 45px" }}>
+			<Row onClick={e => handleRowClick(e)} style={{ padding: "0 0 0 45px" }}>
 				<div>
 					<Icon name="git-branch" />
 					PR Details

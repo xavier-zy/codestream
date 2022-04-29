@@ -352,7 +352,7 @@ export const PullRequestFilesChanged = (props: Props) => {
 		const hidden = visitedFiles[hideKey];
 		return (
 			<Directory
-				style={{ paddingLeft: `${depth * 9}px` }}
+				style={{ paddingLeft: `${depth * 10}px` }}
 				onClick={() => props.toggleDirectory(hideKey)}
 				key={`directory_${dirPath}`}
 			>

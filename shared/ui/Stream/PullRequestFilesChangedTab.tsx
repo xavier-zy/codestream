@@ -13,7 +13,6 @@ import {
 	getPullRequestFilesFromProvider
 } from "../store/providerPullRequests/actions";
 import { PullRequestFilesChangedList } from "./PullRequestFilesChangedList";
-import { Directory } from "./PullRequestFilesChanged";
 import {
 	ChangeDataType,
 	DidChangeDataNotificationType,
@@ -22,11 +21,20 @@ import {
 } from "@codestream/protocols/agent";
 import { HostApi } from "../webview-api";
 import Icon from "./Icon";
+import styled from "styled-components";
 
 const STATUS_MAP = {
 	modified: FileStatus.modified
 };
 
+export const DirectoryTopLevel = styled.div`
+	cursor: pointer;
+	margin: 0 !important;
+	&:hover {
+		background: var(--app-background-color-hover);
+		color: var(--text-color-highlight);
+	}
+`;
 interface DropdownItem {
 	label: any;
 	key?: string;
@@ -304,22 +312,27 @@ export const PullRequestFilesChangedTab = (props: {
 			{derivedState.currentRepo && (
 				<>
 					{props.sidebarView && (
-						<Directory onClick={e => toggleDirectory(e)} className="files-changed-list-dropdown">
-							<Icon name={showDirectory ? "chevron-down-thin" : "chevron-right-thin"} /> Files:
+						<DirectoryTopLevel
+							onClick={e => toggleDirectory(e)}
+							className="files-changed-list-dropdown"
+						>
+							<Icon name={showDirectory ? "chevron-down-thin" : "chevron-right-thin"} /> Files
 							<DropdownButton
 								variant="text"
 								items={dropdownItems}
 								isMultiSelect={true}
 								itemsRange={prCommitsRange}
 							>
-								<span style={{ fontSize: "smaller" }}>{dropdownLabel}</span>
+								<span style={{ fontSize: "smaller", color: "var(--text-color-subtle)" }}>
+									{dropdownLabel}
+								</span>
 							</DropdownButton>
-						</Directory>
+						</DirectoryTopLevel>
 					)}
 
 					{!props.sidebarView && (
 						<div className="files-changed-list-dropdown" style={{ margin: "0 0 10px 0" }}>
-							Files:{" "}
+							Files
 							<DropdownButton
 								variant="text"
 								items={dropdownItems}

@@ -324,27 +324,26 @@ export const PullRequestFilesChanged = (props: Props) => {
 		const hasComments = (props.commentMap[f.file] || []).length > 0;
 
 		return (
-			<>
-				<PullRequestFilesChangedFileComments
-					comments={hasComments && props.commentMap[f.file]}
-					icon={icon}
-					iconClass={iconClass}
-					index={i}
-					hasComments={hasComments}
-					selected={selected}
-					viewMode={props.viewMode}
-					fileObject={f}
-					isDisabled={isDisabled}
-					loading={loading}
-					unVisitFile={unVisitFile}
-					visitFile={visitFile}
-					goDiff={goDiff}
-					depth={depth}
-					visited={visited}
-					filesChanged={props.filesChanged}
-					pullRequest={pr}
-				/>
-			</>
+			<PullRequestFilesChangedFileComments
+				key={i}
+				comments={hasComments && props.commentMap[f.file]}
+				icon={icon}
+				iconClass={iconClass}
+				index={i}
+				hasComments={hasComments}
+				selected={selected}
+				viewMode={props.viewMode}
+				fileObject={f}
+				isDisabled={isDisabled}
+				loading={loading}
+				unVisitFile={unVisitFile}
+				visitFile={visitFile}
+				goDiff={goDiff}
+				depth={depth}
+				visited={visited}
+				filesChanged={props.filesChanged}
+				pullRequest={pr}
+			/>
 		);
 	};
 

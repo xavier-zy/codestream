@@ -87,7 +87,8 @@ export const PullRequestFilesChangedFileComments = (props: Props) => {
 	} = props;
 
 	const dispatch = useDispatch();
-	const [showComments, setShowComments] = React.useState(false);
+	const [showComments, setShowComments] = React.useState(true);
+	const [showCheckIcon, setShowCheckIcon] = React.useState(false);
 
 	const handleClick = e => {
 		e.preventDefault();
@@ -159,6 +160,18 @@ export const PullRequestFilesChangedFileComments = (props: Props) => {
 		dispatch(openModal(WebviewModals.FinishReview));
 	};
 
+	const handleMouseEnter = event => {
+		event.preventDefault();
+		event.stopPropagation();
+		setShowCheckIcon(true);
+	};
+
+	const handleMouseLeave = event => {
+		event.preventDefault();
+		event.stopPropagation();
+		setShowCheckIcon(false);
+	};
+
 	let commentsSortedByLineNumber = comments;
 	if (hasComments) {
 		commentsSortedByLineNumber.sort((a, b) => (a.comment.position > b.comment.position ? 1 : -1));
@@ -166,7 +179,7 @@ export const PullRequestFilesChangedFileComments = (props: Props) => {
 
 	if (!hasComments) {
 		return (
-			<>
+			<div onMouseEnter={e => handleMouseEnter(e)} onMouseLeave={e => handleMouseLeave(e)}>
 				<ChangesetFile
 					selected={props.selected}
 					viewMode={props.viewMode}
@@ -174,7 +187,8 @@ export const PullRequestFilesChangedFileComments = (props: Props) => {
 						isDisabled ? null : (
 							<span
 								style={{
-									margin: "0 10px 0 auto"
+									margin: "0 10px 0 auto",
+									display: showCheckIcon || icon === "ok" ? "flex" : "none"
 								}}
 							>
 								<Icon onClick={e => handleIconClick(e)} name={icon} className={iconClass} />
@@ -194,12 +208,12 @@ export const PullRequestFilesChangedFileComments = (props: Props) => {
 					depth={depth}
 					{...fileObject}
 				/>
-			</>
+			</div>
 		);
 	} else {
 		// hasComments
 		return (
-			<>
+			<div onMouseEnter={e => handleMouseEnter(e)} onMouseLeave={e => handleMouseLeave(e)}>
 				<FileWithComments onClick={e => handleClick(e)}>
 					<ChangesetFile
 						chevron={<Icon name={showComments ? "chevron-down-thin" : "chevron-right-thin"} />}
@@ -209,7 +223,8 @@ export const PullRequestFilesChangedFileComments = (props: Props) => {
 							isDisabled ? null : (
 								<span
 									style={{
-										margin: "0 10px 0 auto"
+										margin: "0 10px 0 auto",
+										display: showCheckIcon || icon === "ok" ? "flex" : "none"
 									}}
 								>
 									<Icon onClick={e => handleIconClick(e)} name={icon} className={iconClass} />
@@ -262,7 +277,7 @@ export const PullRequestFilesChangedFileComments = (props: Props) => {
 						})}
 					</>
 				)}
-			</>
+			</div>
 		);
 	}
 };

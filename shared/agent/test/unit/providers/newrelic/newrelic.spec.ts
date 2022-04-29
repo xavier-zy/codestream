@@ -10,7 +10,7 @@ import {
 	RelatedEntityByRepositoryGuidsResult
 } from "../../../../src/protocol/agent.protocol";
 import { CSMe } from "../../../../src/protocol/api.protocol.models";
-import { MetricQueryRequest, NewRelicProvider, Span } from "../../../../src/providers/newrelic";
+import { MetricQueryRequest, MetricTimeslice, NewRelicProvider, Span } from "../../../../src/providers/newrelic";
 
 require("mocha").describe;
 require("mocha").it;
@@ -158,14 +158,24 @@ describe("NewRelicProvider", async () => {
 				]
 			},
 			[
-				{ metricTimesliceName: "Function/routes.app:hello_world" },
-				{ metricTimesliceName: "Function/routes.app:MyClass.my_method" }
+				{
+					facet: "Function/routes.app:hello_world",
+					averageDuration: 3.2,
+					metricTimesliceName: "Function/routes.app:hello_world"
+				},
+				{
+					facet: "Function/routes.app:MyClass.my_method",
+					averageDuration: 3.2,
+					metricTimesliceName: "Function/routes.app:MyClass.my_method"
+				}
 			]
 		);
 
 		expect(results).to.deep.eq([
 			{
+				averageDuration: 3.2,
 				className: undefined,
+				facet: "Function/routes.app:hello_world",
 				metricTimesliceName: "Function/routes.app:hello_world",
 				metadata: {
 					"code.lineno": 1,
@@ -176,6 +186,8 @@ describe("NewRelicProvider", async () => {
 				functionName: "hello_world"
 			},
 			{
+				averageDuration: 3.2,
+				facet: "Function/routes.app:MyClass.my_method",
 				className: "MyClass",
 				metricTimesliceName: "Function/routes.app:MyClass.my_method",
 				metadata: {
@@ -205,6 +217,8 @@ describe("NewRelicProvider", async () => {
 			},
 			[
 				{
+					facet: "OtherTransaction/Carrot/foo_bar.system.tasks.bill_credit_payment_item",
+					averageDuration: 3.2,
 					metricTimesliceName:
 						"OtherTransaction/Carrot/foo_bar.system.tasks.bill_credit_payment_item"
 				}
@@ -213,7 +227,9 @@ describe("NewRelicProvider", async () => {
 
 		expect(results).to.deep.eq([
 			{
+				averageDuration: 3.2,
 				className: undefined,
+				facet: "OtherTransaction/Carrot/foo_bar.system.tasks.bill_credit_payment_item",
 				metricTimesliceName:
 					"OtherTransaction/Carrot/foo_bar.system.tasks.bill_credit_payment_item",
 				metadata: {
@@ -225,6 +241,106 @@ describe("NewRelicProvider", async () => {
 				functionName: "bill_credit_payment_item"
 			}
 		]);
+	});
+
+	it("addMethodName handles ruby", () => {
+		const newrelic = new NewRelicProvider({} as any, {} as any);
+		const groupedByTransactionName = {
+			"Nested/Controller/agents/show": [
+				{
+					"code.lineno": 16,
+					"code.namespace": "AgentsController",
+					name: "Nested/Controller/agents/show",
+					timestamp: 1651192630939,
+					traceId: "289d61d8564a72ef01bcea7b76b95ca4",
+					"transaction.name": null,
+					transactionId: "5195e0f31cf1fce4"
+				}
+			],
+				"Nested/Controller/agents/create": [
+				{
+					"code.lineno": 30,
+					"code.namespace": "AgentsController",
+					name: "Nested/Controller/agents/create",
+					timestamp: 1651192612236,
+					traceId: "67e121ac35ff1cbe191fd1da94e50012",
+					"transaction.name": null,
+					transactionId: "2ac9f995b004df82"
+				}
+			],
+				"Nested/Controller/agents/destroy": [
+				{
+					"code.lineno": 55,
+					"code.namespace": "AgentsController",
+					name: "Nested/Controller/agents/destroy",
+					timestamp: 1651192599849,
+					traceId: "063c6612799ad82201ee739f4213ff39",
+					"transaction.name": null,
+					transactionId: "43d95607af1fa91f"
+				}
+			]
+		};
+
+		const metricTimesliceNames: MetricTimeslice[] = [
+			{
+				facet: "Nested/Controller/agents/create",
+				metricTimesliceName: "Nested/Controller/agents/create",
+				requestsPerMinute: 22.2
+			},
+			{
+				facet: "Nested/Controller/agents/show",
+				metricTimesliceName: "Nested/Controller/agents/show",
+				requestsPerMinute: 22.2
+			},
+			{
+				facet: "Nested/Controller/agents/destroy",
+				metricTimesliceName: "Nested/Controller/agents/destroy",
+				requestsPerMinute: 22.23
+			}
+		];
+
+		const results = newrelic.addMethodName(groupedByTransactionName, metricTimesliceNames, true);
+		expect(results).to.deep.eq([{
+			className: "AgentsController",
+			facet: "Nested/Controller/agents/create",
+			metricTimesliceName: "Nested/Controller/agents/create",
+			requestsPerMinute: 22.2,
+			metadata: {
+				"code.lineno": 30,
+				traceId: "67e121ac35ff1cbe191fd1da94e50012",
+				transactionId: "2ac9f995b004df82",
+				"code.namespace": "AgentsController"
+			},
+			functionName: "create"
+		},
+			{
+				className: "AgentsController",
+				facet: "Nested/Controller/agents/show",
+				metricTimesliceName: "Nested/Controller/agents/show",
+				requestsPerMinute: 22.2,
+				metadata: {
+					"code.lineno": 16,
+					traceId: "289d61d8564a72ef01bcea7b76b95ca4",
+					transactionId: "5195e0f31cf1fce4",
+					"code.namespace": "AgentsController"
+				},
+				functionName: "show"
+			},
+			{
+				className: "AgentsController",
+				facet: "Nested/Controller/agents/destroy",
+				metricTimesliceName: "Nested/Controller/agents/destroy",
+				requestsPerMinute: 22.23,
+				metadata: {
+					"code.lineno": 55,
+					traceId: "063c6612799ad82201ee739f4213ff39",
+					transactionId: "43d95607af1fa91f",
+					"code.namespace": "AgentsController"
+				},
+				functionName: "destroy"
+			}
+		]);
+		// console.info("result", JSON.stringify(result, null, 2));
 	});
 
 	it("getFileLevelTelemetry", async () => {

@@ -32,6 +32,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.NavigatablePsiElement
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
+import com.intellij.refactoring.suggested.startOffset
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import org.eclipse.lsp4j.Range
@@ -213,7 +214,7 @@ abstract class CLMEditorManager(
                     }
                 })
             val renderer = PresentationRenderer(referenceOnHoverPresentation)
-            val inlay = editor.inlayModel.addBlockElement(symbol.textOffset, false, true, 1, renderer)
+            val inlay = editor.inlayModel.addBlockElement(symbol.startOffset, false, true, 1, renderer)
             inlay.let {
                 inlays.add(it)
                 if (!analyticsTracked) {

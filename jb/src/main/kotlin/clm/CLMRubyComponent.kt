@@ -19,11 +19,10 @@ class CLMRubyComponent(project: Project) :
     }
 }
 
-class CLMRubyEditorManager(editor: Editor) : CLMEditorManager(editor, "ruby", true) {
+class CLMRubyEditorManager(editor: Editor) : CLMEditorManager(editor, "ruby", false) {
 
     override fun getLookupClassName(psiFile: PsiFile): String? {
-        if (psiFile !is RFileImpl) return null
-        return psiFile.structureElements.first { it is RClassImpl }.name
+        return null
     }
 
     override fun findClassFunctionFromFile(

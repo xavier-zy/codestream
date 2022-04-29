@@ -12,8 +12,7 @@ import {
 	setCurrentPullRequest,
 	setNewPostEntry
 } from "../store/context/actions";
-import { bootstrapReviews } from "../store/reviews/actions";
-import Tooltip from "./Tooltip";
+import { setPaneMaximized } from "@codestream/webview/Stream/actions";
 import Timestamp from "./Timestamp";
 import { HostApi } from "../webview-api";
 import {
@@ -264,6 +263,8 @@ export const OpenPullRequests = React.memo((props: Props) => {
 			context.currentPullRequest.id;
 		const currentPullRequest = getCurrentProviderPullRequest(state);
 		const expandedPullRequestGroupIndex = context.currentPullRequest?.groupIndex;
+		const panePreferences = preferences.sidebarPanes || EMPTY_HASH;
+		const settings = panePreferences["open-pull-requests"] || EMPTY_HASH;
 		return {
 			repos,
 			teamSettings,
@@ -306,7 +307,8 @@ export const OpenPullRequests = React.memo((props: Props) => {
 			currentPullRequestId: getPullRequestId(state),
 			currentPullRequestIdExact: getPullRequestExactId(state),
 			currentRepoObject: getProviderPullRequestRepoObject(state),
-			reposState: state.repos
+			reposState: state.repos,
+			maximized: settings.maximized
 		};
 	}, shallowEqual);
 
@@ -709,6 +711,9 @@ export const OpenPullRequests = React.memo((props: Props) => {
 	}, [pullRequestGroups]);
 
 	const clickPR = (pr, groupIndex) => {
+		if (!derivedState.maximized) {
+			dispatch(setPaneMaximized("open-pull-requests", !derivedState.maximized));
+		}
 		// if we have an expanded PR diffs in the sidebar, collapse it
 		if (pr.id === derivedState.expandedPullRequestId) {
 			dispatch(clearCurrentPullRequest());

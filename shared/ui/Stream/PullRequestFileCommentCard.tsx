@@ -375,7 +375,10 @@ export const PullRequestFileCommentCard = (props: PropsWithChildren<Props>) => {
 												<PRBranchContainer>{pr.baseRefName}</PRBranchContainer>
 											</div>
 											<div style={{ marginLeft: "auto" }}>
-												<span onClick={handleDiffClick}>
+												<span
+													style={{ color: "var(--text-color-subtle)" }}
+													onClick={handleDiffClick}
+												>
 													<Icon
 														name="diff"
 														title="Open Diff in IDE"

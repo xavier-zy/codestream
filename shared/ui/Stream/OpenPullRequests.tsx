@@ -87,13 +87,13 @@ const Root = styled.div`
 			padding-left: 40px;
 		}
 		.pr-row {
-			padding-left: 60px;
+			padding-left: 30px;
 			.selected-icon {
 				left: 40px;
 			}
 		}
 		.files-changed-list-dropdown {
-			padding-left: 80px;
+			padding-left: 45px;
 		}
 		.files-changed-list .row-with-icon-actions {
 			padding-left: 100px;

@@ -144,6 +144,7 @@ export const PullRequest = () => {
 			currentPullRequest: currentPullRequest,
 			currentPullRequestLastUpdated: providerPullRequestLastUpdated,
 			composeCodemarkActive: state.context.composeCodemarkActive,
+			isVsIde: state.ide.name === "VS",
 			team,
 			textEditorUri: state.editorContext.textEditorUri,
 			reposState: state.repos,
@@ -917,11 +918,13 @@ export const PullRequest = () => {
 								<PRBadge>{pr.numChecks}</PRBadge>
 							</Tab>
 							*/}
-							<Tab onClick={e => switchActiveTab(4)} active={activeTab == 4}>
-								<Icon name="plus-minus" />
-								<span className="wide-text">Files Changed</span>
-								<PRBadge>{pr.files.totalCount}</PRBadge>
-							</Tab>
+							{derivedState.isVsIde && (
+								<Tab onClick={e => switchActiveTab(4)} active={activeTab == 4}>
+									<Icon name="plus-minus" />
+									<span className="wide-text">Files Changed</span>
+									<PRBadge>{pr.files.totalCount}</PRBadge>
+								</Tab>
+							)}
 
 							{pr.pendingReview ? (
 								<PRSubmitReviewButton>

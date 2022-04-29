@@ -237,7 +237,7 @@ export const PullRequestFilesChangedFileComments = (props: Props) => {
 							return (
 								<Comment
 									onClick={e => handleCommentClick(e, c)}
-									style={depth ? { paddingLeft: `${depth * 10}px` } : {}}
+									style={depth ? { paddingLeft: `${depth * 12}px` } : {}}
 									key={`comment_${c.comment.id}_${index}`}
 								>
 									<div style={{ display: "flex" }}>

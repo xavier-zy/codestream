@@ -798,6 +798,9 @@ const mapStateToProps = (state: CodeStreamState): ConnectedProps => {
 		currentPullRequestView: context.currentPullRequest
 			? context.currentPullRequest.view
 			: undefined,
+		currentReviewId: context.currentReviewId,
+		currentUser: users[session.userId!] as CSMe,
+		currentUserId: session.userId!,
 		isFirstPageview: context.isFirstPageview,
 		// even though we don't use hasFocus, leave this in here because of a re-render
 		// call from Modal.tsx -Pez

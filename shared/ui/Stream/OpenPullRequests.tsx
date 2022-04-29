@@ -977,7 +977,7 @@ export const OpenPullRequests = React.memo((props: Props) => {
 					const prGroup = providerGroups && providerGroups[index];
 					const count = prGroup ? prGroup.length : 0;
 					return (
-						<PaneNode key={index}>
+						<PaneNode key={`${index}_${groupIndex}`}>
 							<PaneNodeName
 								onClick={e => toggleQueryHidden(e, providerId, index)}
 								title={query?.name || "Unnamed"}

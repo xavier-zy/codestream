@@ -17,7 +17,7 @@ import { Range } from "vscode-languageserver-types";
 import { GetReposScmRequestType } from "@codestream/protocols/agent";
 import Timestamp from "./Timestamp";
 import * as path from "path-browserify";
-import { PaneNode, PaneNodeName, PaneBody, NoContent, PaneState } from "../src/components/Pane";
+import { PaneNode, PaneNodeName, NoContent, PaneState } from "../src/components/Pane";
 import { setCreatePullRequest, setCurrentRepo, setNewPostEntry } from "../store/context/actions";
 import { openPanel } from "./actions";
 import { TextInput } from "../Authentication/TextInput";

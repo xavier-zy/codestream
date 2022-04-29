@@ -1382,7 +1382,7 @@ export const OpenPullRequests = React.memo((props: Props) => {
 										: display.displayName;
 									const collapsed = pullRequestProviderHidden[providerId];
 									return (
-										<PaneNode key={index}>
+										<PaneNode key={`${providerId}_${index}`}>
 											<PaneNodeName
 												onClick={e => toggleProviderHidden(e, providerId)}
 												title={displayName}

@@ -324,7 +324,7 @@ export class SimpleStream extends PureComponent<Props> {
 
 		if (!this.emailHasBeenCheckedForMismatch) {
 			const response = await HostApi.instance.send(GetUserInfoRequestType, {});
-			if (response.email === currentUser.email) {
+			if (response?.email === currentUser?.email) {
 				setUserPreference(["skipGitEmailCheck"], true);
 				this.emailHasBeenCheckedForMismatch = true;
 			} else {

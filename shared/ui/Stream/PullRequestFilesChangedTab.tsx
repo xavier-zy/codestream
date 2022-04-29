@@ -305,14 +305,14 @@ export const PullRequestFilesChangedTab = (props: {
 				<>
 					{props.sidebarView && (
 						<Directory onClick={e => toggleDirectory(e)} className="files-changed-list-dropdown">
-							<Icon name={showDirectory ? "chevron-down-thin" : "chevron-right-thin"} /> Files:{" "}
+							<Icon name={showDirectory ? "chevron-down-thin" : "chevron-right-thin"} /> Files:
 							<DropdownButton
 								variant="text"
 								items={dropdownItems}
 								isMultiSelect={true}
 								itemsRange={prCommitsRange}
 							>
-								{dropdownLabel}
+								<span style={{ fontSize: "smaller" }}>{dropdownLabel}</span>
 							</DropdownButton>
 						</Directory>
 					)}

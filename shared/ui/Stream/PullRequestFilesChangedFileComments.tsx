@@ -232,12 +232,13 @@ export const PullRequestFilesChangedFileComments = (props: Props) => {
 				</FileWithComments>
 				{showComments && (
 					<>
-						{commentsSortedByLineNumber.map(c => {
+						{commentsSortedByLineNumber.map((c, index) => {
 							const isPending = c.comment.state === "PENDING";
 							return (
 								<Comment
 									onClick={e => handleCommentClick(e, c)}
 									style={depth ? { paddingLeft: `${depth * 10}px` } : {}}
+									key={`comment_${c.comment.id}_${index}`}
 								>
 									<div style={{ display: "flex" }}>
 										<div

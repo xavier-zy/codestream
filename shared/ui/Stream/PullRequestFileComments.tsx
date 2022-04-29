@@ -25,6 +25,7 @@ const Root = styled.div`
 
 const CommentsContainer = styled.div`
 	margin: 0 0 20px 0;
+	padding: 0 0 1px 0;
 	h1 {
 		display: flex;
 		align-items: center;
@@ -220,7 +221,7 @@ export const PullRequestFileComments = (props: PropsWithChildren<Props>) => {
 									const isFirst = index === 0;
 
 									return (
-										<CardContainer>
+										<CardContainer key={`${c.comment.id}_${index}`}>
 											<PullRequestFileCommentCard
 												pr={pr}
 												comment={c.comment}

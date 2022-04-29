@@ -32,8 +32,8 @@ export class DotNetCoreInstrumentation {
 				let scriptOutput = "";
 				let error = "";
 
-				child.stdout.setEncoding("utf8");
-				child.stdout.on("data", function(data: any) {
+				child.stdout?.setEncoding("utf8");
+				child.stdout?.on("data", function(data: any) {
 					data = data.toString();
 					scriptOutput += data;
 
@@ -42,8 +42,8 @@ export class DotNetCoreInstrumentation {
 					});
 				});
 
-				child.stderr.setEncoding("utf8");
-				child.stderr.on("data", function(data: any) {
+				child.stderr?.setEncoding("utf8");
+				child.stderr?.on("data", function(data: any) {
 					error += data.toString();
 				});
 

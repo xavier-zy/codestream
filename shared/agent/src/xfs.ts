@@ -18,8 +18,8 @@ export namespace xfs {
 		});
 	}
 
-	export async function writeTextAtomic(text: any, destPath: string): Promise<undefined> {
-		return new Promise<undefined>((resolve, reject) => {
+	export async function writeTextAtomic(text: any, destPath: string): Promise<void> {
+		return new Promise<void>((resolve, reject) => {
 			writeAtomic(destPath, text, err => {
 				if (err) {
 					reject(err);
@@ -35,10 +35,10 @@ export namespace xfs {
 		return data ? JSON.parse(data) : undefined;
 	}
 
-	export async function writeJsonAtomic(json: any, destPath: string): Promise<undefined> {
+	export async function writeJsonAtomic(json: any, destPath: string): Promise<void> {
 		const data = JSON.stringify(json, null, 2);
 
-		return new Promise<undefined>((resolve, reject) => {
+		return new Promise<void>((resolve, reject) => {
 			writeAtomic(destPath, data, err => {
 				if (err) {
 					reject(err);

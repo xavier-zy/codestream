@@ -7,6 +7,7 @@ import { Agent as HttpsAgent } from "https";
 import HttpsProxyAgent from "https-proxy-agent";
 import { debounce, isEqual } from "lodash-es";
 import fetch, { Headers, RequestInit, Response } from "node-fetch";
+import { ParsedUrlQueryInput } from "querystring";
 import * as qs from "querystring";
 import { URLSearchParams } from "url";
 import { Emitter, Event } from "vscode-languageserver";
@@ -1535,7 +1536,7 @@ export class CodeStreamApiProvider implements ApiProvider {
 
 	@log()
 	fetchReviews(request: FetchReviewsRequest): Promise<FetchReviewsResponse> {
-		const params: CSGetReviewsRequest = {
+		const params: ParsedUrlQueryInput = {
 			teamId: this.teamId
 		};
 		if (request.reviewIds?.length ?? 0 > 0) {
@@ -1550,7 +1551,7 @@ export class CodeStreamApiProvider implements ApiProvider {
 
 	@log()
 	async fetchCodeErrors(request: FetchCodeErrorsRequest): Promise<FetchCodeErrorsResponse> {
-		const params: CSGetCodeErrorsRequest = {
+		const params: ParsedUrlQueryInput = {
 			teamId: this.teamId
 		};
 		if (request.codeErrorIds?.length ?? 0 > 0) {
@@ -2470,8 +2471,9 @@ export class CodeStreamApiProvider implements ApiProvider {
 
 	announceHistoryFetch(info: HistoryFetchInfo): void {
 		const session = SessionContainer.instance().session;
+		const queryParams: ParsedUrlQueryInput = {...info}
 		if (session.announceHistoryFetches()) {
-			this.get<{}>("/history-fetch?" + qs.stringify(info));
+			this.get<{}>("/history-fetch?" + qs.stringify(queryParams));
 		}
 	}
 

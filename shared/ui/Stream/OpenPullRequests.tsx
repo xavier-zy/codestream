@@ -84,7 +84,7 @@ const Root = styled.div`
 	}
 	${PaneNode} ${PaneNode} {
 		${PaneNodeName} {
-			padding-left: 40px;
+			padding-left: 30px;
 		}
 		.pr-row {
 			padding-left: 30px;
@@ -121,7 +121,7 @@ const Root = styled.div`
 		}
 	}
 	${PaneNode} .pr-search {
-		padding-left: 40px;
+		padding-left: 30px;
 	}
 	div.go-pr {
 		padding: 0;

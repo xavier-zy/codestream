@@ -68,6 +68,7 @@ export const FinishReview = (props: { fetch?: Function }) => {
 		<Dialog wide noPadding onClose={() => dispatch(closeModal())}>
 			{pr && (
 				<div style={{ margin: "30px 15px 30px 15px" }}>
+					<h3>Finish Your Review</h3>
 					<div
 						style={{
 							margin: "5px 0 15px 0",

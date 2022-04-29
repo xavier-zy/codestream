@@ -734,7 +734,7 @@ export const OpenPullRequests = React.memo((props: Props) => {
 
 	const checkout = async (event, prToCheckout, cantCheckoutReason) => {
 		event.preventDefault();
-
+		event.stopPropagation();
 		if (!prToCheckout || cantCheckoutReason) return;
 
 		const currentRepo = openRepos.find(
@@ -798,9 +798,15 @@ export const OpenPullRequests = React.memo((props: Props) => {
 	 * @param event
 	 * @param message
 	 */
-	const reload = async (e, message?: string) => {
+	const reload = async (e, pr) => {
 		e.stopPropagation();
-		fetchOnePR(derivedState.currentPullRequestProviderId!, derivedState.currentPullRequestId);
+		fetchOnePR(pr.providerId!, pr.id);
+	};
+
+	const handleClickCopy = (e, prUrl) => {
+		e.stopPropagation();
+		e.preventDefault();
+		copy(prUrl);
 	};
 
 	const getOpenRepos = async () => {
@@ -1086,7 +1092,7 @@ export const OpenPullRequests = React.memo((props: Props) => {
 															placement="bottom"
 															name="copy"
 															className="clickable"
-															onClick={e => copy(pr.url)}
+															onClick={e => handleClickCopy(e, pr.url)}
 														/>
 														<span className={cantCheckoutReason(pr) ? "disabled" : ""}>
 															<Icon
@@ -1116,7 +1122,7 @@ export const OpenPullRequests = React.memo((props: Props) => {
 																		console.warn("reloading pr, cancelling...");
 																		return;
 																	}
-																	reload(e, "Reloading...");
+																	reload(e, pr);
 																}}
 																placement="bottom"
 																className={`${isLoadingPR ? "spin" : ""}`}
@@ -1209,7 +1215,7 @@ export const OpenPullRequests = React.memo((props: Props) => {
 															placement="bottom"
 															name="copy"
 															className="clickable"
-															onClick={e => copy(pr.url)}
+															onClick={e => handleClickCopy(e, pr.url)}
 														/>
 														<span className={cantCheckoutReason(pr) ? "disabled" : ""}>
 															<Icon
@@ -1239,7 +1245,7 @@ export const OpenPullRequests = React.memo((props: Props) => {
 																		console.warn("reloading pr, cancelling...");
 																		return;
 																	}
-																	reload(e, "Reloading...");
+																	reload(e, pr);
 																}}
 																placement="bottom"
 																className={`${isLoadingPR ? "spin" : ""}`}

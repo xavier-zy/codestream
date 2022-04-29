@@ -249,6 +249,7 @@ export const PullRequestFilesChangedFileComments = (props: Props) => {
 												whiteSpace: "nowrap"
 											}}
 										>
+											<Icon name="comment" className="type-icon" />{" "}
 											{lineNumber(c) && <span>Line {lineNumber(c)}: </span>}
 											{c.comment.bodyText}
 										</div>

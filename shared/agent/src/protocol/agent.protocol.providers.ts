@@ -14,6 +14,7 @@ export interface ThirdPartyProviderConfig {
 	forEnterprise?: boolean;
 	hasCodeHosting?: boolean;
 	hasIssues?: boolean;
+	hasServerToken?: boolean;
 	hasSharing?: boolean;
 	supportsAuth?: boolean;
 	needsConfigure?: boolean;

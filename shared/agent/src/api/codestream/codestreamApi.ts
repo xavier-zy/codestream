@@ -2194,6 +2194,10 @@ export class CodeStreamApiProvider implements ApiProvider {
 			if (request.sharing) {
 				params.sharing = true.toString();
 			}
+			// TODO: feature flag
+			if (providerConfig.hasServerToken && true) {
+				params.requestServerToken = true.toString();
+			}
 
 			const query = Object.keys(params)
 				.map(param => `${param}=${encodeURIComponent(params[param])}`)

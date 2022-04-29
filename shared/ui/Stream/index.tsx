@@ -802,6 +802,9 @@ const mapStateToProps = (state: CodeStreamState): ConnectedProps => {
 		currentPullRequestView: context.currentPullRequest
 			? context.currentPullRequest.view
 			: undefined,
+		currentReviewId: context.currentReviewId,
+		currentUser: users[session.userId!] as CSMe,
+		currentUserId: session.userId!,
 		isFirstPageview: context.isFirstPageview,
 		pendingProtocolHandlerUrl: context.pendingProtocolHandlerUrl,
 		posts: state.posts,

@@ -926,6 +926,12 @@ export const PullRequest = () => {
 								</Tab>
 							)}
 
+							<Tab onClick={e => switchActiveTab(4)} active={activeTab == 4}>
+								<Icon name="plus-minus" />
+								<span className="wide-text">Files Changed</span>
+								<PRBadge>{pr.files.totalCount}</PRBadge>
+							</Tab>
+
 							{pr.pendingReview ? (
 								<PRSubmitReviewButton>
 									<Button variant="success" onClick={() => setFinishReviewOpen(!finishReviewOpen)}>

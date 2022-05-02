@@ -87,7 +87,7 @@ const Root = styled.div`
 			padding-left: 30px;
 		}
 		.pr-row {
-			padding-left: 30px;
+			padding-left: 35px;
 			.selected-icon {
 				left: 40px;
 			}

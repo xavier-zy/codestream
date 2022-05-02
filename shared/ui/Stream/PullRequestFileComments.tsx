@@ -1,17 +1,13 @@
 import React, { PropsWithChildren, useCallback, useEffect, useState } from "react";
 import Icon from "./Icon";
 import { FetchThirdPartyPullRequestPullRequest } from "@codestream/protocols/agent";
-import { api, getPullRequestFiles } from "../store/providerPullRequests/actions";
+import { getPullRequestFiles } from "../store/providerPullRequests/actions";
 import { useDispatch, useSelector } from "react-redux";
-import { PRDiffHunk } from "./PullRequestFilesChangedList";
-import { PullRequestPatch } from "./PullRequestPatch";
-import { Link } from "./Link";
 import copy from "copy-to-clipboard";
 import { FileStatus } from "@codestream/protocols/api";
 import { CodeStreamState } from "../store";
 import styled from "styled-components";
 import { Modal } from "./Modal";
-import { Dialog } from "../src/components/Dialog";
 import { PullRequestFileCommentCard } from "./PullRequestFileCommentCard";
 import { useDidMount } from "../utilities/hooks";
 
@@ -233,6 +229,7 @@ export const PullRequestFileComments = (props: PropsWithChildren<Props>) => {
 												prCommitsRange={prCommitsRange}
 												cardIndex={index}
 												commentRef={c.ref}
+												clickedComment={props.commentId === c.comment.id}
 											/>
 										</CardContainer>
 									);

@@ -6,7 +6,7 @@ import {
 	PRCodeCommentWrapper,
 	PRThreadedCommentHeader
 } from "./PullRequestComponents";
-import React, { PropsWithChildren, useState, useMemo } from "react";
+import React, { PropsWithChildren, useState, useEffect } from "react";
 import Timestamp from "./Timestamp";
 import Icon from "./Icon";
 import { MarkdownText } from "./MarkdownText";
@@ -28,7 +28,6 @@ import { prettyPrintOne } from "code-prettify";
 import { escapeHtml } from "../utils";
 import * as Path from "path-browserify";
 import styled from "styled-components";
-import { Link } from "./Link";
 import { HostApi } from "..";
 import { CodeStreamState } from "@codestream/webview/store";
 import { CompareLocalFilesRequestType } from "../ipc/host.protocol";
@@ -67,6 +66,7 @@ interface Props {
 	prCommitsRange?: string[];
 	cardIndex: any;
 	commentRef: any;
+	clickedComment: boolean;
 }
 
 export const PullRequestFileCommentCard = (props: PropsWithChildren<Props>) => {
@@ -79,7 +79,8 @@ export const PullRequestFileCommentCard = (props: PropsWithChildren<Props>) => {
 		author,
 		setIsLoadingMessage,
 		pr,
-		commentRef
+		commentRef,
+		clickedComment
 	} = props;
 	const dispatch = useDispatch();
 
@@ -105,6 +106,13 @@ export const PullRequestFileCommentCard = (props: PropsWithChildren<Props>) => {
 	const [expandedComments, setExpandedComments] = useState({});
 	const [isResolving, setIsResolving] = useState(false);
 	const [currentRepoRoot, setCurrentRepoRoot] = useState("");
+	const [initialDiffComplete, setInitialDiffComplete] = useState(false);
+
+	useEffect(() => {
+		if (clickedComment && !initialDiffComplete) {
+			handleDiffClick(true);
+		}
+	}, [derivedState.documentMarkers]);
 
 	const doneEditingComment = id => {
 		setEditingComments({ ...editingComments, [id]: false });
@@ -135,7 +143,7 @@ export const PullRequestFileCommentCard = (props: PropsWithChildren<Props>) => {
 		});
 	};
 
-	const handleDiffClick = async () => {
+	const handleDiffClick = async (isInitial?) => {
 		const request = {
 			baseBranch: pr.baseRefName,
 			baseSha: pr.baseRefOid,
@@ -172,6 +180,9 @@ export const PullRequestFileCommentCard = (props: PropsWithChildren<Props>) => {
 				range: marker?.range,
 				highlight: true
 			});
+			if (isInitial) {
+				setInitialDiffComplete(true);
+			}
 		}
 	};
 

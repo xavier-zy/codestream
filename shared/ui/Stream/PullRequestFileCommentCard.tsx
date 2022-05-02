@@ -193,10 +193,12 @@ export const PullRequestFileCommentCard = (props: PropsWithChildren<Props>) => {
 			}
 		}
 
+		const _lineNumber = lineNumber();
+
 		if (repoRoot) {
 			HostApi.instance.send(EditorRevealRangeRequestType, {
 				uri: Path.join("file://", repoRoot, comment?.path),
-				range: Range.create(0, 0, 0, 0)
+				range: Range.create(_lineNumber, 0, _lineNumber, 9999)
 			});
 		}
 	};

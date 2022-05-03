@@ -13,54 +13,42 @@ Prerequisites
    - Various workloads including:
       - Visual Studio extension development
       - .NET Framework 4.8
-- [Git](https://git-scm.com/), 2.32.0
+- [Git](https://git-scm.com/), >= 2.32.0
 - [NodeJS](https://nodejs.org/en/), 16.13.2
 - [npm](https://npmjs.com/), 8.1.2
 
 - [DotNetBrowser](https://www.teamdev.com/dotnetbrowser) license. (it must be put into the git-ignored folder `\licenses\{Configuration}` where `{Configuration}` is Debug (dev license) or Release (runtime license)). It will be picked up by msbuild and put into the correct location at build time. These licenses should _not_ be commited to source control.
 
-### Build (local)
+### Building (local)
 
 The webview (shared/ui) and the agent (shared/agent) are js/node dependencies that must be built before running CodeStream for Visual Studio.
 
 >NOTE: you will need an elevated prompt the first time you run the following commands to create various symlinks.
 
->NOTE: running `rebuild` will delete the `node_modules` directory and run `npm install` again. Unless it's the first time you're building, or you want a clean "start from scratch", use the `build` command instead.
 
-1. From a terminal, where you have cloned the `codestream` repository, cd to `shared/agent` and execute the following command to rebuild the agent from scratch:
-
-   ```
-   npm run rebuild
-   ```
-
-   Or to just run a quick build, use:
+1. From a terminal, where you have cloned the `codestream` repository, cd to `shared/agent` and execute the following command to build the agent from scratch:
 
    ```
    npm run build
    ```
 
-2. From a terminal, where you have cloned the `codestream` repository, cd to `vs` and execute the following command to rebuild the webview from scratch:
 
-   ```
-   npm run rebuild
-   ```
-
-   Or to just run a quick build, use:
+2. From a terminal, where you have cloned the `codestream` repository, cd to `vs` and execute the following command to rebuild shared/webview from scratch:
 
    ```
    npm run build
    ```
-### Watch (Agent only)
+### Watching
 
-During development you can use a watcher to make builds on changes quick and easy. From a terminal, where you have cloned the `codestream` repository, cd to `shared/agent` execute the following command:
+During development you can use a watcher to make builds on changes quick and easy. You will need two watchers. 
+
+From a terminal, where you have cloned the `codestream` repository, cd to `shared/agent` execute the following command:
 
 ```
 npm run watch
 ```
 
-### Watch (Webview only)
-
-During development you can use a watcher to make builds on changes quick and easy. From a terminal, where you have cloned the `codestream` repository, cd to `vs` execute the following command:
+From a terminal, where you have cloned the `codestream` repository, cd to `vs` execute the following command:
 
 ```
 npm run watch
@@ -113,6 +101,11 @@ By default `Release.ps1` will bump the Minor version of the package (the version
 CodeStream.VisualStudio uses an LSP client library from Microsoft. There are some caveats to using it -- as it is only allowed to be instantiated after a certain file (content) type is opened in the editor.
 
 This sample creates a mock language server using the [common language server protocol](https://github.com/Microsoft/language-server-protocol/blob/master/protocol.md) and a mock language client extension in Visual Studio. For more information on how to create language server extensions in Visual Studio, please see [here](https://docs.microsoft.com/en-us/visualstudio/extensibility/adding-an-lsp-extension).
+
+#### Advanced building
+
+`vs` dependencies can be rebuilt using the `npm run rebuild` command from the `vs` folder. This assumes that an initial `build` has already been run.
+
 
 **Related topics**
 

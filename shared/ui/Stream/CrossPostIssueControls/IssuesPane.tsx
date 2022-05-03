@@ -43,6 +43,11 @@ import { EMPTY_STATUS, StartWork } from "../StartWork";
 import Tooltip from "../Tooltip";
 import { PROVIDER_MAPPINGS, ProviderDisplay } from "./types";
 
+interface FetchCardError {
+	provider: string;
+	error: string;
+}
+
 interface ProviderInfo {
 	provider: ThirdPartyProviderConfig;
 	display: ProviderDisplay;
@@ -715,8 +720,9 @@ export const IssueList = React.memo((props: React.PropsWithChildren<IssueListPro
 		};
 	};
 
-	const { cards, canFilter, cardLabel, selectedLabel } = React.useMemo(() => {
+	const { cards, canFilter, cardLabel, selectedLabel, fetchCardErrors } = React.useMemo(() => {
 		const items = [] as any;
+		const fetchCardErrors: FetchCardError[] = [];
 		const lowerQ = (query || "").toLocaleLowerCase();
 		const numConnectedProviders = props.activeProviders.length;
 		let canFilter = false;
@@ -750,6 +756,17 @@ export const IssueList = React.memo((props: React.PropsWithChildren<IssueListPro
 			const pData = data[provider.id] || {};
 			// @ts-ignore
 			const cards = pData.cards || [];
+
+			// @ts-ignore
+			if (pData.fetchCardsError) {
+				const providerDisplay = PROVIDER_MAPPINGS[provider.name];
+				// THESE @ts-ignore's are awesome!!!
+				fetchCardErrors.push({
+					provider: providerDisplay.displayName,
+					// @ts-ignore
+					error: pData.fetchCardsError.message
+				});
+			}
 
 			// console.warn("COMPARING: ", cards, " TO ", filterLists);
 			items.push(
@@ -794,7 +811,7 @@ export const IssueList = React.memo((props: React.PropsWithChildren<IssueListPro
 
 		items.sort((a, b) => b.modifiedAt - a.modifiedAt);
 
-		return { cards: items, canFilter, cardLabel, selectedLabel };
+		return { cards: items, canFilter, cardLabel, selectedLabel, fetchCardErrors };
 	}, [
 		loadedCards,
 		derivedState.startWorkPreferences,
@@ -1221,6 +1238,13 @@ export const IssueList = React.memo((props: React.PropsWithChildren<IssueListPro
 							<FilterMissing>There are no open issues assigned to you.</FilterMissing>
 						)
 					)}
+					{(fetchCardErrors || []).map(fetchCardError => (
+						<FilterMissing>
+							<p className="error-message">
+								Error fetching cards from {fetchCardError.provider}: {fetchCardError.error}
+							</p>
+						</FilterMissing>
+					))}
 					{cards.map(card => (
 						<Row
 							key={card.key}

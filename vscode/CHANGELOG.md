@@ -1,5 +1,27 @@
 # Change Log
 
+## [12.16.0] - 2022-4-28
+
+### Added
+
+- Adds options to connect to GitHub and GitLab cloud services via personal access token
+
+### Changed
+
+- The Pull Request and Issues sections automatically check for new PRs/issues once per minute
+- Deprecated the OAuth version of the Jira Server integration
+- Made validation of org entry for Azure DevOps more robust
+- Connections to services via personal access tokens are now validated immediately
+- Improved validations for base URLs entered when connecting to on-prem services
+- When certain CodeStream settings in the IDE are changed, such as Disable Strict SSL, the user is prompted to reload their IDE
+- Provide guidance to user when situation idetified in [GitHub Issue #495](https://github.com/TeamCodeStream/codestream/issues/495#issuecomment-827646602) arises
+- When connecting to GitHub or GitHub Enterprise a link is provided that will automatically populate the form to create a personal access token with the appropriate scopes
+- When associating a forked repo with an entity on New Relic the upstream remote is now used by default
+
+### Fixed
+
+- Fixes an issue where the Assignee list when creating an issue on Jira Server didn't include all possible people 
+
 ## [12.15.0] - 2022-4-7
 
 ### Changed

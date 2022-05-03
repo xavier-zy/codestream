@@ -38,6 +38,7 @@ import {
 	MergeMethod,
 	MoveThirdPartyCardRequest,
 	MoveThirdPartyCardResponse,
+	ProviderConfigurationData,
 	ProviderGetForkedReposResponse,
 	ReportingMessageType,
 	ThirdPartyDisconnect,
@@ -213,6 +214,10 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 	}
 
 	async ensureInitialized() {}
+
+	async verifyConnection(config: ProviderConfigurationData): Promise<void> {
+		await this.restGet<GitHubUser>("/user");
+	}
 
 	protected async getVersion(): Promise<ProviderVersion> {
 		try {

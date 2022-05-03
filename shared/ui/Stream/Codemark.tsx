@@ -151,9 +151,9 @@ interface InheritedProps {
 	displayType?: DisplayType;
 	selected?: boolean;
 	codemark?: CodemarkPlus;
-	marker: DocumentMarker | MarkerNotLocated;
+	marker?: DocumentMarker | MarkerNotLocated;
 	postAction?(...args: any[]): any;
-	action(action: string, post: any, args: any): any;
+	action?(action: string, post: any, args: any): any;
 	onClick?(event: React.SyntheticEvent, marker: DocumentMarker | MarkerNotLocated): any;
 	highlightCodeInTextEditor?: boolean;
 	query?: string;
@@ -531,7 +531,9 @@ export class Codemark extends React.Component<Props, State> {
 	submitReply = text => {
 		const { action, codemark } = this.props;
 		const forceThreadId = codemark!.parentPostId || codemark!.postId;
-		action("submit-post", null, { forceStreamId: codemark!.streamId, forceThreadId, text });
+		if (action) {
+			action("submit-post", null, { forceStreamId: codemark!.streamId, forceThreadId, text });
+		}
 	};
 
 	renderStatus(codemark, menuItems = [] as any[]) {
@@ -636,7 +638,7 @@ export class Codemark extends React.Component<Props, State> {
 			});
 		}
 
-		if (this.props.onClick) {
+		if (this.props.onClick && this.props.marker) {
 			this.props.onClick(event, this.props.marker);
 		} else {
 			if (!this.props.selected && this.props.codemark)
@@ -911,7 +913,7 @@ export class Codemark extends React.Component<Props, State> {
 
 		// it's a document marker without a codemark
 		if (!codemark) {
-			if (this.props.marker.externalContent) return this.renderCollapsedFromExternalContent();
+			if (this.props.marker?.externalContent) return this.renderCollapsedFromExternalContent();
 			return null;
 		}
 
@@ -1313,7 +1315,7 @@ export class Codemark extends React.Component<Props, State> {
 		const { menuOpen, menuTarget, isInjecting } = this.state;
 
 		if (!codemark) {
-			if (this.props.marker.externalContent) return this.renderFromExternalContent();
+			if (this.props.marker?.externalContent) return this.renderFromExternalContent();
 			return null;
 		}
 
@@ -1696,7 +1698,7 @@ export class Codemark extends React.Component<Props, State> {
 
 	renderFromExternalContent() {
 		const { hidden, selected, author, marker } = this.props;
-		const externalContent = marker.externalContent!;
+		const externalContent = marker?.externalContent!;
 		const providerName = externalContent.provider.name;
 		// FIXME better id lookup (we only support GH here)
 		const providerId = providerName === "GitHub" ? "github*com" : undefined;
@@ -1738,7 +1740,7 @@ export class Codemark extends React.Component<Props, State> {
 								<span className="verb">commented on {pullOrMergeRequestText} request </span>
 								{externalContent.title}{" "}
 								<span className="verb subtle">{externalContent.subhead}</span>
-								<Timestamp relative time={marker.createdAt} />
+								{marker && <Timestamp relative time={marker?.createdAt} />}
 							</div>
 							{/* <div className="right">
 								<span onClick={this.handleMenuClick}>
@@ -1751,15 +1753,15 @@ export class Codemark extends React.Component<Props, State> {
 								style={{ position: "absolute", top: "5px", right: "5px" }}
 								onClick={this.handleMenuClick}
 							></div> */}
-						{externalContent.diffHunk && this.state.showDiffHunk && (
+						{externalContent.diffHunk && this.state.showDiffHunk && marker?.file && (
 							<PRCodeCommentPatch>
-								<PullRequestPatch patch={externalContent.diffHunk} filename={marker.file} />
+								<PullRequestPatch patch={externalContent.diffHunk} filename={marker?.file} />
 							</PRCodeCommentPatch>
 						)}
-						<MarkdownText text={marker.summary} inline={true} />
+						<MarkdownText text={marker?.summary || ""} inline={true} />
 						{!selected && this.renderPinnedReplies()}
 						{!selected && this.renderDetailIcons(marker)}
-						{((marker.externalContent!.actions || emptyArray).length > 0 ||
+						{((marker?.externalContent!.actions || emptyArray).length > 0 ||
 							externalContent.diffHunk ||
 							externalContent.externalId) && (
 							<div style={{ marginTop: "10px" }}>
@@ -1792,7 +1794,7 @@ export class Codemark extends React.Component<Props, State> {
 									</span>
 								)}
 
-								{(marker.externalContent!.actions || emptyArray).map(action => (
+								{(marker?.externalContent?.actions || emptyArray).map(action => (
 									<span key={action.uri} style={{ marginRight: "10px" }}>
 										<span style={{ marginRight: "5px" }}>
 											<Icon name={action.icon || "link-external"} />
@@ -1853,7 +1855,7 @@ export class Codemark extends React.Component<Props, State> {
 
 	renderCollapsedFromExternalContent() {
 		const { marker } = this.props;
-		const externalContent = marker.externalContent!;
+		const externalContent = marker?.externalContent!;
 		const providerName = externalContent.provider.name;
 		// FIXME better id lookup (we only support GH here)
 		const providerId = providerName === "GitHub" ? "github*com" : undefined;
@@ -1897,10 +1899,10 @@ export class Codemark extends React.Component<Props, State> {
 				<div className="contents">
 					<div className="body" style={{ display: "flex", alignItems: "flex-start" }}>
 						<span style={{ flexGrow: 0, flexShrink: 0 }} className="gray">
-							{this.renderTypeIcon(marker["type"])}
+							{this.renderTypeIcon(marker ? ["type"] : "")}
 						</span>
 						<div>
-							<MarkdownText text={marker.summary} inline={true} />
+							<MarkdownText text={marker?.summary || ""} inline={true} />
 							{lines && (
 								<span style={{ paddingLeft: "15px", opacity: 0.75 }} className="subtle">
 									{lines}
@@ -2141,7 +2143,7 @@ const mapStateToProps = (state: CodeStreamState, props: InheritedProps): Connect
 			return getUserByCsId(users, codemark.creatorId);
 		}
 
-		if (marker.externalContent != undefined) {
+		if (marker?.externalContent != undefined) {
 			return {
 				username: marker.creatorName,
 				avatar: { image: marker.externalContent.provider.name },

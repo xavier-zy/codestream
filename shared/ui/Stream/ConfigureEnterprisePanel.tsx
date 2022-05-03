@@ -16,7 +16,7 @@ import { Link } from "./Link";
 
 interface Props {
 	providerId: string;
-	originLocation: ViewLocation;
+	originLocation: ViewLocation | string;
 }
 
 export default function ConfigureEnterprisePanel(props: Props) {
@@ -89,7 +89,12 @@ export default function ConfigureEnterprisePanel(props: Props) {
 				(derivedState.verificationError as any).providerMessage ||
 				(derivedState.verificationError as any).error?.info?.error?.message ||
 				"Access token invalid";
-			return <p className="error-message">Unable to verify connection: {message}.</p>;
+			console.warn(message);
+			return (
+				<p className="error-message">
+					Could not connect. Please verify your base URL and personal access token.
+				</p>
+			);
 		} else {
 			return "";
 		}

@@ -280,7 +280,7 @@ class MLTPythonEditorManager(val editor: Editor) : DocumentListener, GoldenSigna
                 }
             })
         val withTooltipPresentation = presentationFactory.withTooltip(
-            "Associate this repository with an entity from New Relic One so that you can see golden signals right in your editor",
+            "Associate this repository with an entity from New Relic so that you can see golden signals right in your editor",
             referenceOnHoverPresentation
         )
         val renderer = PresentationRenderer(withTooltipPresentation)

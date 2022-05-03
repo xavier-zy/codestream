@@ -338,6 +338,7 @@ export abstract class ThirdPartyProviderBase<
 				if (me == null) return;
 
 				const providerInfo = this.getProviderInfo(me);
+				if (!providerInfo) return;
 				if (!this.hasAccessToken(providerInfo)) return;
 				resolve(providerInfo);
 			});

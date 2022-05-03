@@ -60,10 +60,6 @@ export class GitLabEnterpriseProvider extends GitLabProvider {
 		await this.getVersion();
 	}
 
-	async verifyConnection(config: ProviderConfigurationData): Promise<void> {
-		await this.getCurrentUser();
-	}
-
 	getOwnerFromRemote(remote: string): { owner: string; name: string } {
 		const uri = URI.parse(remote);
 		const split = uri.path.split("/");

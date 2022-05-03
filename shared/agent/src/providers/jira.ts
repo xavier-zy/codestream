@@ -346,13 +346,13 @@ export class JiraProvider extends ThirdPartyIssueProviderBase<CSJiraProviderInfo
 				fields: "summary,description,updated,subtasks,status,issuetype,priority,assignee"
 			});
 			let nextPage: string | undefined = `/rest/api/2/search?${queryString}`;
+			let errorMessage: string | undefined;
 
 			while (nextPage !== undefined) {
 				try {
 					const { body }: { body: CardSearchResponse } = await this.get<CardSearchResponse>(
 						nextPage
 					);
-
 					// Logger.debug("GOT CARDS: " + JSON.stringify(body, null, 4));
 					jiraCards.push(...body.issues);
 
@@ -365,13 +365,13 @@ export class JiraProvider extends ThirdPartyIssueProviderBase<CSJiraProviderInfo
 						nextPage = undefined;
 					}
 				} catch (e) {
-					const message = e instanceof Error ? e.message : JSON.stringify(e);
+					errorMessage = e instanceof Error ? e.message : JSON.stringify(e);
 					Container.instance().errorReporter.reportMessage({
 						type: ReportingMessageType.Error,
 						message: "Jira: Error fetching jira cards",
 						source: "agent",
 						extra: {
-							message,
+							message: errorMessage,
 							queryString,
 							nextPage,
 							pageNum,
@@ -379,7 +379,7 @@ export class JiraProvider extends ThirdPartyIssueProviderBase<CSJiraProviderInfo
 							workspaces: this._workspaces
 						}
 					});
-					Logger.error(e, message);
+					Logger.error(e, errorMessage);
 					Logger.debug("Jira: Stopping card search");
 					nextPage = undefined;
 				}
@@ -388,7 +388,11 @@ export class JiraProvider extends ThirdPartyIssueProviderBase<CSJiraProviderInfo
 			Logger.debug(`Jira: total cards: ${jiraCards.length}`);
 			const cards: ThirdPartyProviderCard[] = [];
 			jiraCards.forEach(card => cards.push(makeCardFromJira(card, this._webUrl)));
-			return { cards };
+			const response: FetchThirdPartyCardsResponse = { cards };
+			if (errorMessage) {
+				response.error = { message: errorMessage };
+			}
+			return response;
 		} catch (error) {
 			debugger;
 			const message = error instanceof Error ? error.message : JSON.stringify(error);

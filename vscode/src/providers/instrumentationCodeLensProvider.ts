@@ -152,7 +152,7 @@ export class InstrumentationCodeLensProvider implements vscode.CodeLensProvider 
 							new InstrumentableSymbolCommand(
 								"Click to configure golden signals from New Relic",
 								"codestream.viewMethodLevelTelemetry",
-								"Associate this repository with an entity from New Relic One so that you can see golden signals right in your editor",
+								"Associate this repository with an entity from New Relic so that you can see golden signals right in your editor",
 								[JSON.stringify(viewCommandArgs)]
 							)
 						)

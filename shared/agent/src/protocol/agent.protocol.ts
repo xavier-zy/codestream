@@ -131,6 +131,7 @@ export interface BaseAgentOptions {
 	proxySupport?: "override" | "on" | "off";
 	serverUrl: string;
 	disableStrictSSL?: boolean;
+	extraCerts?: string;
 	traceLevel: TraceLevel;
 	recordRequests?: boolean;
 	workspaceFolders?: WorkspaceFolder[];

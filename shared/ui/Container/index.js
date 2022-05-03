@@ -63,9 +63,9 @@ const getIdeInstallationInstructions = props => {
 		} else if (props.ide === "VS") {
 			specifics = (
 				<p>
-					Go to Extensions > Manage Extensions in VS 2019 (or Tools > Extensions and Updates in
-					2017) and then select Updates in the left pane. Select CodeStream in the middle pane, and
-					then click Update.
+					Go to Extensions &gt; Manage Extensions in VS 2019 (or Tools &gt; Extensions and Updates
+					in 2017) and then select Updates in the left pane. Select CodeStream in the middle pane,
+					and then click Update.
 				</p>
 			);
 		} else if (props.ide === "ATOM") {
@@ -127,11 +127,11 @@ const Root = connect(mapStateToProps)(props => {
 					<p>Please click "Reload" when prompted by your IDE.</p>
 				</RoadBlock>
 			);
-		} else {
+		} else if (props.ide === "VS") {
 			return (
 				<RoadBlock title="Reload Required">
-					<p>This configuration change requires your IDE to reload.</p>
-					<p>Your IDE will reload when you click below.</p>
+					<p>This configuration change requires CodeStream to reload.</p>
+					<p>CodeStream will reload when you click OK.</p>
 					<Button
 						onClick={e => {
 							e.preventDefault();

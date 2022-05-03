@@ -263,16 +263,25 @@ export class CodeStreamAgentConnection implements Disposable {
 		const env = process.env;
 		const breakOnStart = (env && env.CODESTREAM_AGENT_BREAK_ON_START) === "true";
 
+		const agentEnv = {
+			NODE_TLS_REJECT_UNAUTHORIZED: options.disableStrictSSL ? 0 : 1,
+			NODE_EXTRA_CA_CERTS: options.extraCerts
+		};
+
 		this._serverOptions = {
 			run: {
 				module: context.asAbsolutePath("dist/agent.js"),
-				transport: TransportKind.ipc
+				transport: TransportKind.ipc,
+				options: {
+					env: agentEnv
+				}
 			},
 			debug: {
 				module: context.asAbsolutePath("../shared/agent/dist/agent.js"),
 				transport: TransportKind.ipc,
 				options: {
-					execArgv: ["--nolazy", breakOnStart ? "--inspect-brk=6009" : "--inspect=6009"]
+					execArgv: ["--nolazy", breakOnStart ? "--inspect-brk=6009" : "--inspect=6009"],
+					env: agentEnv
 				}
 			}
 		};

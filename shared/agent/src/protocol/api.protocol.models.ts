@@ -794,7 +794,7 @@ export interface CSMeStatus {
 	invisible?: boolean;
 }
 
-type CSMeProviderInfo = { slack?: CSSlackProviderInfo } & {
+type CSMeProviderInfo = {
 	[teamId in string]: {
 		asana?: CSAsanaProviderInfo;
 		github?: CSGitHubProviderInfo;

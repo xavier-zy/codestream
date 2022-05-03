@@ -680,9 +680,9 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 														>
 															<span className="subtle">
 																{props.codeError?.objectInfo?.entityName || "Service"}
-															</span>
-														</Link>{" "}
-														<Icon name="link-external" className="open-external"></Icon>
+															</span>{" "}
+															<Icon name="link-external" className="open-external"></Icon>
+														</Link>
 													</>
 												)}
 											</>
@@ -841,9 +841,8 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 													`&utm_source=codestream&utm_medium=ide-${derivedState.ideName}&utm_campaign=error_group_link`
 												}
 											>
-												{title}
-											</Link>{" "}
-											<Icon name="link-external" className="open-external"></Icon>
+												{title} <Icon name="link-external" className="open-external"></Icon>
+											</Link>
 										</span>
 									) : (
 										<span>{title}</span>
@@ -861,9 +860,8 @@ export const BaseCodeErrorHeader = (props: PropsWithChildren<BaseCodeErrorHeader
 													setOpenConnectionModal(true);
 												}}
 											>
-												{title}
-											</Link>{" "}
-											<Icon name="link-external" className="open-external"></Icon>
+												{title} <Icon name="link-external" className="open-external"></Icon>
+											</Link>
 										</span>
 									)}
 								</>

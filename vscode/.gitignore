@@ -12,4 +12,5 @@ codestream-*.info
 .AppleDouble
 .LSOverride
 *~
-./stats*.json
+stats*.json
+stats-*.json

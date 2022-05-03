@@ -10,7 +10,7 @@ New Relic CodeStream is a developer collaboration platform that integrates essen
 
 - **Code Hosts:** Bitbucket, Bitbucket Server, GitHub, GitHub Enterprise, GitLab, GitLab Self-Managed
 - **Issue Trackers:** Asana, Azure DevOps, Bitbucket, Clubhouse, GitHub, GitHub Enterprise, GitLab, GitLab Self-Managed, Jira, Linear, Trello, YouTrack
-- **Observability:** New Relic One, Pixie
+- **Observability:** New Relic, Pixie
 - **Messaging Services:** Slack, Microsoft Teams
 
 ### Requirements
@@ -44,11 +44,11 @@ Your teammates can participate in the discussion right from their IDE, or from S
 
 # Add Observability to your IDE
 
-Resolve production errors faster and improve software performance by bringing production telemetry from New Relic One into your IDE. Operations and dev teams can identify application owners quickly and work together to resolve critical errors. 
+Resolve production errors faster and improve software performance by bringing production telemetry from New Relic into your IDE. Operations and dev teams can identify application owners quickly and work together to resolve critical errors. 
 
 ![Observability](https://raw.githubusercontent.com/TeamCodeStream/codestream/develop/images/animated/Observability-VSC.gif)
 
-In a single click, you can jump from Errors Inbox in New Relic One to their IDE and step through the stack trace for code-level debugging of high-impact errors. Additionally, discover, view, filter, and update the status of open issues all from the comfort of your favorite IDE.
+In a single click, you can jump from Errors Inbox on New Relic to their IDE and step through the stack trace for code-level debugging of high-impact errors. Additionally, discover, view, filter, and update the status of open issues all from the comfort of your favorite IDE.
 
 
 # Build the Knowledge Base Behind Your Codebase

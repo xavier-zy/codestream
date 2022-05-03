@@ -211,7 +211,8 @@ export const PullRequestFileComments = (props: PropsWithChildren<Props>) => {
 								/>{" "}
 							</span>
 						</h1>
-						{sortedComments && (
+
+						{sortedComments && !isLoading && (
 							<>
 								{sortedComments.map((c, index) => {
 									const isFirst = index === 0;

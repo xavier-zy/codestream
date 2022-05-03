@@ -40,6 +40,7 @@ import {
 	EditorRevealRangeRequestType
 } from "@codestream/protocols/webview";
 import { Range } from "vscode-languageserver-types";
+import { useDidMount } from "../utilities/hooks";
 
 const PRBranchContainer = styled.div`
 	display: inline-block;
@@ -96,9 +97,11 @@ export const PullRequestFileCommentCard = (props: PropsWithChildren<Props>) => {
 				: undefined,
 			currentRepo: getProviderPullRequestRepo(state),
 			pullRequestId: getPullRequestId(state),
-			documentMarkers: state.documentMarkers[state.editorContext.textEditorUri || ""] || []
+			documentMarkers: state.documentMarkers[state.editorContext.textEditorUri || ""] || [],
+			textEditorUri: state.editorContext.textEditorUri
 		};
 	});
+	console.warn("eric textEditorUri", derivedState.textEditorUri);
 
 	const [openComments, setOpenComments] = useState({});
 	const [pendingComments, setPendingComments] = useState({});
@@ -106,13 +109,33 @@ export const PullRequestFileCommentCard = (props: PropsWithChildren<Props>) => {
 	const [expandedComments, setExpandedComments] = useState({});
 	const [isResolving, setIsResolving] = useState(false);
 	const [currentRepoRoot, setCurrentRepoRoot] = useState("");
-	const [initialDiffComplete, setInitialDiffComplete] = useState(false);
+	const [pendingLineNavigation, setPendingLineNavigation] = useState(false);
 
 	useEffect(() => {
-		if (clickedComment && !initialDiffComplete) {
-			handleDiffClick(true);
+		if (clickedComment) {
+			handleDiffClick();
 		}
 	}, [derivedState.documentMarkers]);
+
+	useEffect(() => {
+		async function navigateToLineNumber() {
+			const { textEditorUri } = derivedState;
+			const _lineNumber = lineNumber();
+			const isDiff = textEditorUri?.startsWith("codestream-diff://");
+			if (textEditorUri && isDiff && _lineNumber) {
+				await HostApi.instance.send(EditorHighlightRangeRequestType, {
+					uri: textEditorUri,
+					range: Range.create(_lineNumber, 0, _lineNumber, 9999),
+					highlight: true
+				});
+			}
+			setPendingLineNavigation(false);
+		}
+
+		if (pendingLineNavigation) {
+			navigateToLineNumber();
+		}
+	}, [derivedState.textEditorUri]);
 
 	const doneEditingComment = id => {
 		setEditingComments({ ...editingComments, [id]: false });
@@ -143,7 +166,9 @@ export const PullRequestFileCommentCard = (props: PropsWithChildren<Props>) => {
 		});
 	};
 
-	const handleDiffClick = async (isInitial?) => {
+	const handleDiffClick = async () => {
+		setPendingLineNavigation(true);
+
 		const request = {
 			baseBranch: pr.baseRefName,
 			baseSha: pr.baseRefOid,
@@ -170,20 +195,6 @@ export const PullRequestFileCommentCard = (props: PropsWithChildren<Props>) => {
 		HostApi.instance.track("PR Diff Viewed", {
 			Host: pr && pr.providerId
 		});
-
-		let _docMarkers = derivedState.documentMarkers;
-		_docMarkers.sort((a, b) => (a?.range?.start?.line > b?.range?.start?.line ? 1 : -1));
-		const marker = _docMarkers[cardIndex];
-		if (marker?.range) {
-			HostApi.instance.send(EditorHighlightRangeRequestType, {
-				uri: marker?.fileUri,
-				range: marker?.range,
-				highlight: true
-			});
-			if (isInitial) {
-				setInitialDiffComplete(true);
-			}
-		}
 	};
 
 	const handleOpenFile = async () => {

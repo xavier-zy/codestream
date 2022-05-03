@@ -280,7 +280,7 @@ export class InstrumentationCodeLensProvider implements vscode.CodeLensProvider 
 			try {
 				this.telemetryService.track("MLT Codelenses Rendered", {
 					"NR Account ID": accountId,
-					"Language": languageId
+					Language: languageId
 				});
 				doc.tracked = true;
 			} catch {}

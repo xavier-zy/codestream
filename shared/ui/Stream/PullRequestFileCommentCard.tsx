@@ -101,7 +101,6 @@ export const PullRequestFileCommentCard = (props: PropsWithChildren<Props>) => {
 			textEditorUri: state.editorContext.textEditorUri
 		};
 	});
-	console.warn("eric textEditorUri", derivedState.textEditorUri);
 
 	const [openComments, setOpenComments] = useState({});
 	const [pendingComments, setPendingComments] = useState({});
@@ -111,11 +110,11 @@ export const PullRequestFileCommentCard = (props: PropsWithChildren<Props>) => {
 	const [currentRepoRoot, setCurrentRepoRoot] = useState("");
 	const [pendingLineNavigation, setPendingLineNavigation] = useState(false);
 
-	useEffect(() => {
+	useDidMount(() => {
 		if (clickedComment) {
 			handleDiffClick();
 		}
-	}, [derivedState.documentMarkers]);
+	});
 
 	useEffect(() => {
 		async function navigateToLineNumber() {

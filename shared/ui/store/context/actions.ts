@@ -52,8 +52,7 @@ export const closeAllPanels = () => dispatch => {
 	dispatch(clearCurrentErrorsInboxOptions());
 	dispatch(clearCurrentInstrumentationOptions());
 	dispatch(clearWantNewRelicOptions());
-	/// TODO: seems to be intermittent race condition - opening panel does nothing - do we really need to close?
-	// dispatch(setCurrentMethodLevelTelemetry(undefined));
+	dispatch(setCurrentMethodLevelTelemetry(undefined));
 };
 
 export const closeAllModals = () => dispatch => {

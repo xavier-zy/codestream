@@ -74,7 +74,6 @@ abstract class CLMEditorManager(
     private var lastResult: FileLevelTelemetryResult? = null
     private var analyticsTracked = false
     private val appSettings = ServiceManager.getService(ApplicationSettingsService::class.java)
-    private val logger = Logger.getInstance(CLMRubyEditorManager::class.java)
 
     init {
         loadInlays(false)
@@ -168,7 +167,11 @@ abstract class CLMEditorManager(
         return DisplayDeps(result, project, path, editor)
     }
 
-    abstract fun findClassFunctionFromFile(psiFile: PsiFile, className: String, functionName: String): NavigatablePsiElement?
+    abstract fun findClassFunctionFromFile(
+        psiFile: PsiFile,
+        className: String,
+        functionName: String
+    ): NavigatablePsiElement?
 
     abstract fun findTopLevelFunction(psiFile: PsiFile, functionName: String): NavigatablePsiElement?
 
@@ -219,7 +222,10 @@ abstract class CLMEditorManager(
                 inlays.add(it)
                 if (!analyticsTracked) {
                     val params = TelemetryParams(
-                        "MLT Codelenses Rendered", mapOf("NR Account ID" to (result.newRelicAccountId ?: 0))
+                        "MLT Codelenses Rendered", mapOf(
+                            "NR Account ID" to (result.newRelicAccountId ?: 0),
+                            "Language" to languageId
+                        )
                     )
                     project.agentService?.agent?.telemetry(params)
                     analyticsTracked = true

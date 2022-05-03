@@ -101,15 +101,6 @@ import { Team } from "./Team";
 import { TeamSetup } from "./TeamSetup";
 import { Tester } from "./Tester";
 
-const EMAIL_MATCH_REGEX = new RegExp(
-	"[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*",
-	"g"
-);
-
-// interface InheritedProps {
-//     paneState: PaneState;
-// }
-
 interface DispatchProps {
 	clearDynamicLogging: Function;
 	closeModal: Function;
@@ -142,6 +133,9 @@ interface ConnectedProps {
 	currentReviewId?: string;
 	currentUser: CSUser;
 	currentUserId: string;
+	// even though we don't use hasFocus, leave this in here because of a re-render
+	// call from Modal.tsx -Pez
+	hasFocus: boolean;
 	isFirstPageview?: boolean;
 	postStreamId: string;
 	skipGitEmailCheck: boolean;
@@ -798,6 +792,9 @@ const mapStateToProps = (state: CodeStreamState): ConnectedProps => {
 		currentUser: users[session.userId!] as CSMe,
 		currentUserId: session.userId!,
 		isFirstPageview: context.isFirstPageview,
+		// even though we don't use hasFocus, leave this in here because of a re-render
+		// call from Modal.tsx -Pez
+		hasFocus: context.hasFocus,
 		pendingProtocolHandlerUrl: context.pendingProtocolHandlerUrl,
 		posts: state.posts,
 		postStreamId: postStream!.id,

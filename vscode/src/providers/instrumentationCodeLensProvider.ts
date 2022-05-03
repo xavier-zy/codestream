@@ -261,7 +261,8 @@ export class InstrumentationCodeLensProvider implements vscode.CodeLensProvider 
 					cacheKey,
 					fileLevelTelemetryResponse && fileLevelTelemetryResponse.newRelicAccountId
 						? fileLevelTelemetryResponse.newRelicAccountId.toString()
-						: ""
+						: "",
+						document.languageId
 				);
 			}
 		} catch (ex) {
@@ -273,12 +274,13 @@ export class InstrumentationCodeLensProvider implements vscode.CodeLensProvider 
 		return codeLenses;
 	}
 
-	private tryTrack(cacheKey: string, accountId: string) {
+	private tryTrack(cacheKey: string, accountId: string, languageId: string) {
 		const doc = this.documentManager[cacheKey];
 		if (doc && !doc.tracked) {
 			try {
 				this.telemetryService.track("MLT Codelenses Rendered", {
-					"NR Account ID": accountId
+					"NR Account ID": accountId,
+					"Language": languageId
 				});
 				doc.tracked = true;
 			} catch {}

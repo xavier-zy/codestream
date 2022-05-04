@@ -8,6 +8,7 @@ import Icon from "./Icon";
 import { PRHeadshot } from "../src/components/Headshot";
 import {
 	clearCurrentPullRequest,
+	setCurrentPullRequestNeedsRefresh,
 	setCreatePullRequest,
 	setCurrentPullRequest,
 	setNewPostEntry
@@ -302,6 +303,7 @@ export const OpenPullRequests = React.memo((props: Props) => {
 				? state.context.currentPullRequest.source
 				: undefined,
 			currentPullRequest: currentPullRequest,
+			currentPullRequestNeedsRefresh: state.context.currentPullRequestNeedsRefresh,
 			expandedPullRequestGroupIndex,
 			providerPullRequests: state.providerPullRequests.pullRequests,
 			currentPullRequestId: getPullRequestId(state),
@@ -568,6 +570,29 @@ export const OpenPullRequests = React.memo((props: Props) => {
 			fetchPRs(queries, { force: true }, "PRConnectedProvidersLength");
 		}
 	}, [queries, derivedState.PRConnectedProvidersCount]);
+
+	useEffect(() => {
+		const { currentPullRequestNeedsRefresh } = derivedState;
+
+		if (
+			currentPullRequestNeedsRefresh &&
+			currentPullRequestNeedsRefresh.needsRefresh &&
+			currentPullRequestNeedsRefresh.providerId &&
+			currentPullRequestNeedsRefresh.pullRequestId
+		) {
+			fetchOnePR(
+				currentPullRequestNeedsRefresh.providerId,
+				currentPullRequestNeedsRefresh.pullRequestId
+			);
+			dispatch(
+				setCurrentPullRequestNeedsRefresh(
+					false,
+					currentPullRequestNeedsRefresh.providerId,
+					currentPullRequestNeedsRefresh.pullRequestId
+				)
+			);
+		}
+	}, [derivedState.currentPullRequestNeedsRefresh]);
 
 	useEffect(() => {
 		if (!mountedRef.current) return;

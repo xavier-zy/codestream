@@ -204,6 +204,17 @@ export const setCurrentErrorsInboxOptions = (
 	url?: string
 ) => action(ContextActionsType.SetCurrentErrorsInboxOptions, { stack, customAttributes, url });
 
+export const setCurrentPullRequestNeedsRefresh = (
+	needsRefresh: boolean,
+	providerId: string,
+	pullRequestId: string
+) =>
+	action(ContextActionsType.SetCurrentPullRequestNeedsRefresh, {
+		needsRefresh,
+		providerId,
+		pullRequestId
+	});
+
 export const setCurrentInstrumentationOptions = (options?: any) =>
 	action(ContextActionsType.SetCurrentInstrumentationOptions, { options });
 

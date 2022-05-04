@@ -184,6 +184,12 @@ export function reduceContext(
 				errorsInboxOptions: action.payload
 			};
 		}
+		case ContextActionsType.SetCurrentPullRequestNeedsRefresh: {
+			return {
+				...state,
+				currentPullRequestNeedsRefresh: action.payload
+			};
+		}
 		case ContextActionsType.SetCurrentInstrumentationOptions: {
 			return {
 				...state,

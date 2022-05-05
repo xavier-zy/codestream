@@ -68,7 +68,7 @@ export const PullRequestEditingComment = styled((props: Props) => {
 		}
 		if (text.length > 0) {
 			confirmPopup({
-				title: "Are you sureeeeee?",
+				title: "Are you sure?",
 				message: "",
 				centered: true,
 				buttons: [

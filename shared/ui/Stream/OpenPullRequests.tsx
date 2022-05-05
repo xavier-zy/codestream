@@ -580,17 +580,21 @@ export const OpenPullRequests = React.memo((props: Props) => {
 			currentPullRequestNeedsRefresh.providerId &&
 			currentPullRequestNeedsRefresh.pullRequestId
 		) {
-			fetchOnePR(
-				currentPullRequestNeedsRefresh.providerId,
-				currentPullRequestNeedsRefresh.pullRequestId
-			);
-			dispatch(
-				setCurrentPullRequestNeedsRefresh(
-					false,
+			// hack to ensure that the provider's search api
+			// has all the latest data after a PR is commented/reviewed
+			setTimeout(() => {
+				fetchOnePR(
 					currentPullRequestNeedsRefresh.providerId,
 					currentPullRequestNeedsRefresh.pullRequestId
-				)
-			);
+				);
+				dispatch(
+					setCurrentPullRequestNeedsRefresh(
+						false,
+						currentPullRequestNeedsRefresh.providerId,
+						currentPullRequestNeedsRefresh.pullRequestId
+					)
+				);
+			}, 2000);
 		}
 	}, [derivedState.currentPullRequestNeedsRefresh]);
 

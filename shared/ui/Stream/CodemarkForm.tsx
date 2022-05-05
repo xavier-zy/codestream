@@ -849,7 +849,11 @@ class CodemarkForm extends React.Component<Props, State> {
 				"Comment Type": this.state.isProviderReview ? "Review Comment" : "Single Comment"
 			});
 
-			this.props.setCurrentPullRequestNeedsRefresh(true, providerId, this.props.currentPullRequestId);
+			this.props.setCurrentPullRequestNeedsRefresh(
+				true,
+				providerId,
+				this.props.currentPullRequestId
+			);
 		}
 
 		let parentPostId: string | undefined = undefined;

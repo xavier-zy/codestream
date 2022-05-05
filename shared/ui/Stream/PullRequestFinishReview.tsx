@@ -46,6 +46,8 @@ export const PullRequestFinishReview = (props: {
 	const supportsFinishReviewTypes = !pr.providerId.includes("gitlab");
 
 	const submitReview = async e => {
+		e.preventDefault();
+		e.stopPropagation();
 		setIsLoadingMessage("Submitting Review...");
 		setSubmittingReview(true);
 		HostApi.instance.track("PR Review Finished", {
@@ -63,6 +65,8 @@ export const PullRequestFinishReview = (props: {
 	};
 
 	const cancelReview = async (e, id) => {
+		e.preventDefault();
+		e.stopPropagation();
 		setIsLoadingMessage("Canceling Review...");
 		await dispatch(
 			api("deletePullRequestReview", {

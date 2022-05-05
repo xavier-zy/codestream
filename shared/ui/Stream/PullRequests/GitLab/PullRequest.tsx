@@ -321,7 +321,8 @@ export const PullRequest = () => {
 			team,
 			textEditorUri: state.editorContext.textEditorUri,
 			reposState: state.repos,
-			checkoutBranch: state.context.pullRequestCheckoutBranch
+			checkoutBranch: state.context.pullRequestCheckoutBranch,
+			isVsIde: state.ide.name === "VS"
 		};
 	});
 
@@ -834,16 +835,19 @@ export const PullRequest = () => {
 									<PRBadge>{(pr && pr.commitCount) || 0}</PRBadge>
 								</InlineIcon>
 							</Tab>
-							<Tab onClick={e => setActiveTab(4)} active={activeTab == 4}>
-								<InlineIcon>
-									<Icon className="narrow-text" name="plus-minus" />
-									<span className="wide-text">Changes</span>
-									<PRBadge>
-										{(pr && pr.changesCount) || 0}
-										{pr && pr.overflow ? "+" : ""}
-									</PRBadge>
-								</InlineIcon>
-							</Tab>
+							{derivedState.isVsIde && (
+								<Tab onClick={e => setActiveTab(4)} active={activeTab == 4}>
+									<InlineIcon>
+										<Icon className="narrow-text" name="plus-minus" />
+										<span className="wide-text">Changes</span>
+										<PRBadge>
+											{(pr && pr.changesCount) || 0}
+											{pr && pr.overflow ? "+" : ""}
+										</PRBadge>
+									</InlineIcon>
+								</Tab>
+							)}
+
 							{pr.pendingReview ? (
 								<PRSubmitReviewButton style={{ margin: "-10px 0 7px auto" }}>
 									<Button variant="success" onClick={() => setFinishReviewOpen(!finishReviewOpen)}>

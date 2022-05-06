@@ -42,6 +42,23 @@ export const closeModal = () => {
 	return action(ContextActionsType.CloseModal);
 };
 
+export const closePrDetailModal = (
+	providerId: string,
+	id: string,
+	groupIndex?: string | undefined
+) => dispatch => {
+	dispatch(closeModal());
+	dispatch(openPanel(WebviewPanels.Sidebar));
+	dispatch(setCurrentCodemark());
+	dispatch(setCurrentReview());
+	dispatch(setCurrentCodeError());
+	dispatch(setCurrentPullRequest(providerId, id, "", "", "sidebar-diffs", groupIndex));
+	dispatch(clearCurrentErrorsInboxOptions());
+	dispatch(clearCurrentInstrumentationOptions());
+	dispatch(clearWantNewRelicOptions());
+	dispatch(setCurrentMethodLevelTelemetry(undefined));
+};
+
 export const closeAllPanels = () => dispatch => {
 	dispatch(closeModal());
 	dispatch(openPanel(WebviewPanels.Sidebar));

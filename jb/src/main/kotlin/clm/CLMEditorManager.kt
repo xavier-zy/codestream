@@ -182,7 +182,9 @@ abstract class CLMEditorManager(
         val since = result.sinceDateFormatted ?: "30 minutes ago"
         metricsBySymbol.forEach { (symbolIdentifier, metrics) ->
             val symbol = if (symbolIdentifier.className != null) {
-                findClassFunctionFromFile(psiFile, symbolIdentifier.namespace, symbolIdentifier.className, symbolIdentifier.functionName)
+                findClassFunctionFromFile(psiFile, symbolIdentifier.namespace, symbolIdentifier.className, symbolIdentifier.functionName) ?:
+                // Metrics can have custom name in which case we don't get Module or Class names - just best effort match function name
+                findTopLevelFunction(psiFile, symbolIdentifier.functionName)
             } else {
                 findTopLevelFunction(psiFile, symbolIdentifier.functionName)
             }

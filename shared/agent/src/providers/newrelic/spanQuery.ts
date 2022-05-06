@@ -9,13 +9,13 @@ export function generateSpanQuery(
 		? `code.filepath='${codeFilePath}'`
 		: `code.namespace like '${codeNamespace}%'`;
 
-	const innerQueryEquals = `SELECT name,\`transaction.name\`,code.lineno,code.namespace,traceId,transactionId from Span WHERE \`entity.guid\` = '${newRelicEntityGuid}' AND ${equalsLookup}  SINCE 30 minutes AGO LIMIT 250`;
+	const innerQueryEquals = `SELECT name,\`transaction.name\`,code.lineno,code.namespace,code.function,traceId,transactionId from Span WHERE \`entity.guid\` = '${newRelicEntityGuid}' AND ${equalsLookup}  SINCE 30 minutes AGO LIMIT 250`;
 
 	const likeLookup = codeFilePath
 		? `code.filepath like '%${codeFilePath}'`
 		: `code.namespace like '${codeNamespace}%'`;
 
-	const innerQueryLike = `SELECT name,\`transaction.name\`,code.lineno,code.namespace,traceId,transactionId from Span WHERE \`entity.guid\` = '${newRelicEntityGuid}' AND ${likeLookup}  SINCE 30 minutes AGO LIMIT 250`;
+	const innerQueryLike = `SELECT name,\`transaction.name\`,code.lineno,code.namespace,code.function,traceId,transactionId from Span WHERE \`entity.guid\` = '${newRelicEntityGuid}' AND ${likeLookup}  SINCE 30 minutes AGO LIMIT 250`;
 
 	const fuzzyLookup = codeFilePath
 		? `code.filepath like '%/${codeFilePath
@@ -24,7 +24,7 @@ export function generateSpanQuery(
 				.join("/")}%'`
 		: `code.namespace like '${codeNamespace}%'`;
 
-	const innerQueryFuzzy = `SELECT name,\`transaction.name\`,code.lineno,code.namespace,traceId,transactionId from Span WHERE \`entity.guid\` = '${newRelicEntityGuid}' AND ${fuzzyLookup}  SINCE 30 minutes AGO LIMIT 250`;
+	const innerQueryFuzzy = `SELECT name,\`transaction.name\`,code.lineno,code.namespace,code.function,traceId,transactionId from Span WHERE \`entity.guid\` = '${newRelicEntityGuid}' AND ${fuzzyLookup}  SINCE 30 minutes AGO LIMIT 250`;
 
 	return `query GetSpans($accountId:Int!) {
 			actor {

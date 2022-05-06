@@ -151,7 +151,8 @@ describe("NewRelicProvider", async () => {
 							transactionId: "abc",
 							"code.lineno": 1,
 							"code.namespace": null,
-							"transaction.name": "a"
+							"transaction.name": "a",
+							"code.function": "hello_world"
 						}
 					],
 					"Function/routes.app:MyClass.my_method": [
@@ -160,7 +161,8 @@ describe("NewRelicProvider", async () => {
 							transactionId: "def",
 							"code.lineno": 4,
 							"code.namespace": null,
-							"transaction.name": "d"
+							"transaction.name": "d",
+							"code.function": "my_method"
 						}
 					]
 				},
@@ -190,7 +192,8 @@ describe("NewRelicProvider", async () => {
 						"code.lineno": 1,
 						traceId: "123",
 						transactionId: "abc",
-						"code.namespace": null
+						"code.namespace": null,
+						"code.function": "hello_world"
 					},
 					functionName: "hello_world"
 				},
@@ -204,7 +207,8 @@ describe("NewRelicProvider", async () => {
 						"code.lineno": 4,
 						traceId: "456",
 						transactionId: "def",
-						"code.namespace": null
+						"code.namespace": null,
+						"code.function": "my_method"
 					},
 					functionName: "my_method"
 				}
@@ -248,7 +252,8 @@ describe("NewRelicProvider", async () => {
 						"code.lineno": 27,
 						"code.namespace": "foo_bar.system.tasks",
 						traceId: undefined,
-						transactionId: undefined
+						transactionId: undefined,
+						"code.function": "bill_credit_payment_item"
 					},
 					functionName: "bill_credit_payment_item"
 				}
@@ -262,6 +267,7 @@ describe("NewRelicProvider", async () => {
 					{
 						"code.lineno": 16,
 						"code.namespace": "AgentsController",
+						"code.function": "show",
 						name: "Controller/agents/show",
 						timestamp: 1651192630939,
 						traceId: "289d61d8564a72ef01bcea7b76b95ca4",
@@ -273,6 +279,7 @@ describe("NewRelicProvider", async () => {
 					{
 						"code.lineno": 16,
 						"code.namespace": "AgentsController",
+						"code.function": "create",
 						name: "Controller/agents/create",
 						timestamp: 1651192612236,
 						traceId: "67e121ac35ff1cbe191fd1da94e50012",
@@ -284,6 +291,7 @@ describe("NewRelicProvider", async () => {
 					{
 						"code.lineno": 55,
 						"code.namespace": "AgentsController",
+						"code.function": "destroy",
 						name: "Controller/agents/destroy",
 						timestamp: 1651192599849,
 						traceId: "063c6612799ad82201ee739f4213ff39",
@@ -327,7 +335,8 @@ describe("NewRelicProvider", async () => {
 						"code.lineno": 16,
 						traceId: "67e121ac35ff1cbe191fd1da94e50012",
 						transactionId: "2ac9f995b004df82",
-						"code.namespace": "AgentsController"
+						"code.namespace": "AgentsController",
+						"code.function": "create"
 					},
 					functionName: "create"
 				},
@@ -341,7 +350,8 @@ describe("NewRelicProvider", async () => {
 						"code.lineno": 16,
 						traceId: "289d61d8564a72ef01bcea7b76b95ca4",
 						transactionId: "5195e0f31cf1fce4",
-						"code.namespace": "AgentsController"
+						"code.namespace": "AgentsController",
+						"code.function": "show"
 					},
 					functionName: "show"
 				},
@@ -355,7 +365,8 @@ describe("NewRelicProvider", async () => {
 						"code.lineno": 55,
 						traceId: "063c6612799ad82201ee739f4213ff39",
 						transactionId: "43d95607af1fa91f",
-						"code.namespace": "AgentsController"
+						"code.namespace": "AgentsController",
+						"code.function": "destroy"
 					},
 					functionName: "destroy"
 				}
@@ -370,6 +381,7 @@ describe("NewRelicProvider", async () => {
 					{
 						"code.lineno": "11",
 						"code.namespace": "Custom::Helpers",
+						"code.function": "custom_class_method",
 						name: "OtherTransaction/Background/Custom::Helpers/custom_class_method",
 						timestamp: 1651700387308,
 						traceId: "40c7dedd273ee4a475756393a996a03b",
@@ -379,6 +391,7 @@ describe("NewRelicProvider", async () => {
 					{
 						"code.lineno": "11",
 						"code.namespace": "Custom::Helpers",
+						"code.function": "custom_class_method",
 						name: "OtherTransaction/Background/Custom::Helpers/custom_class_method",
 						timestamp: 1651699137312,
 						traceId: "ffe331a263b4cc7dd7080ed9f2f5faba",
@@ -390,6 +403,7 @@ describe("NewRelicProvider", async () => {
 					{
 						"code.lineno": 33,
 						"code.namespace": "Custom::Helpers",
+						"code.function": "custom_instance_method_too",
 						name: "Custom/CLMtesting/InstanceMethod",
 						timestamp: 1651700387308,
 						traceId: "40c7dedd273ee4a475756393a996a03b",
@@ -399,6 +413,7 @@ describe("NewRelicProvider", async () => {
 					{
 						"code.lineno": 33,
 						"code.namespace": "Custom::Helpers",
+						"code.function": "custom_instance_method_too",
 						name: "Custom/CLMtesting/InstanceMethod",
 						timestamp: 1651700356133,
 						traceId: "26d3724a5635120ede570b383ddf5790",
@@ -410,6 +425,7 @@ describe("NewRelicProvider", async () => {
 					{
 						"code.lineno": "27",
 						"code.namespace": "Custom::Helpers",
+						"code.function": "custom_instance_method",
 						name: "OtherTransaction/Background/Custom::Helpers/custom_instance_method",
 						timestamp: 1651700387308,
 						traceId: "40c7dedd273ee4a475756393a996a03b",
@@ -419,6 +435,7 @@ describe("NewRelicProvider", async () => {
 					{
 						"code.lineno": "27",
 						"code.namespace": "Custom::Helpers",
+						"code.function": "custom_instance_method",
 						name: "OtherTransaction/Background/Custom::Helpers/custom_instance_method",
 						timestamp: 1651700356133,
 						traceId: "26d3724a5635120ede570b383ddf5790",
@@ -430,6 +447,7 @@ describe("NewRelicProvider", async () => {
 					{
 						"code.lineno": 16,
 						"code.namespace": "Custom::Helpers",
+						"code.function": "self.custom_class_method_too",
 						name: "Custom/CLMtesting/ClassMethod",
 						timestamp: 1651700387308,
 						traceId: "40c7dedd273ee4a475756393a996a03b",
@@ -439,6 +457,7 @@ describe("NewRelicProvider", async () => {
 					{
 						"code.lineno": 16,
 						"code.namespace": "Custom::Helpers",
+						"code.function": "self.custom_class_method_too",
 						name: "Custom/CLMtesting/ClassMethod",
 						timestamp: 1651700356133,
 						traceId: "26d3724a5635120ede570b383ddf5790",
@@ -491,7 +510,8 @@ describe("NewRelicProvider", async () => {
 						"code.lineno": "11",
 						traceId: "40c7dedd273ee4a475756393a996a03b",
 						transactionId: "ab968a3e203d2451",
-						"code.namespace": "Custom"
+						"code.namespace": "Custom",
+						"code.function": "custom_class_method"
 					},
 					functionName: "custom_class_method"
 				},
@@ -506,37 +526,122 @@ describe("NewRelicProvider", async () => {
 						"code.lineno": "27",
 						traceId: "40c7dedd273ee4a475756393a996a03b",
 						transactionId: "ab968a3e203d2451",
-						"code.namespace": "Custom"
+						"code.namespace": "Custom",
+						"code.function": "custom_instance_method"
 					},
 					functionName: "custom_instance_method"
 				},
 				{
 					facet: "Custom/CLMtesting/ClassMethod",
 					averageDuration: 1.3,
-					className: undefined,
-					functionName: undefined,
+					className: "CLMtesting",
+					functionName: "self.custom_class_method_too",
 					metricTimesliceName: "Custom/CLMtesting/ClassMethod",
 					namespace: "Custom::Helpers",
 					metadata: {
 						"code.lineno": 16,
 						traceId: "40c7dedd273ee4a475756393a996a03b",
 						transactionId: "ab968a3e203d2451",
-						"code.namespace": "Custom::Helpers"
+						"code.namespace": "Custom::Helpers",
+						"code.function": "self.custom_class_method_too"
 					}
 				},
 				{
 					facet: "Custom/CLMtesting/InstanceMethod",
 					averageDuration: 1.4,
-					className: undefined,
-					functionName: undefined,
+					className: "CLMtesting",
+					functionName: "custom_instance_method_too",
 					metricTimesliceName: "Custom/CLMtesting/InstanceMethod",
 					namespace: "Custom::Helpers",
 					metadata: {
 						"code.lineno": 33,
 						traceId: "40c7dedd273ee4a475756393a996a03b",
 						transactionId: "ab968a3e203d2451",
-						"code.namespace": "Custom::Helpers"
+						"code.namespace": "Custom::Helpers",
+						"code.function": "custom_instance_method_too"
 					}
+				}
+			]);
+		});
+
+		it("parses ruby class/function syntax", () => {
+			const newrelic = new NewRelicProvider({} as any, {} as any);
+			const groupedByTransactionName: Dictionary<Span[]> = {
+				"Nested/OtherTransaction/Background/WhichIsWhich/samename": [
+					{
+						"code.filepath": "/usr/src/app/lib/which_is_which.rb",
+						"code.function": "samename",
+						"code.lineno": "20",
+						"code.namespace": "WhichIsWhich",
+						name: "Nested/OtherTransaction/Background/WhichIsWhich/samename",
+						timestamp: 1651855258268,
+						traceId: "8c39f01c9e867d5d7179a6a5152a8f8e",
+						"transaction.name": null,
+						transactionId: "90b4cb9daa96f88b"
+					},
+					{
+						"code.filepath": "/usr/src/app/lib/which_is_which.rb",
+						"code.function": "self.samename",
+						"code.lineno": "9",
+						"code.namespace": "WhichIsWhich",
+						name: "Nested/OtherTransaction/Background/WhichIsWhich/samename",
+						timestamp: 1651855257962,
+						traceId: "8c39f01c9e867d5d7179a6a5152a8f8e",
+						"transaction.name": null,
+						transactionId: "90b4cb9daa96f88b"
+					}
+				]
+			};
+
+			const metricTimesliceNames: MetricTimeslice[] = [
+				{
+					facet: "Nested/OtherTransaction/Background/WhichIsWhich/samename",
+					averageDuration: 1.1,
+					metricTimesliceName: "Nested/OtherTransaction/Background/WhichIsWhich/samename"
+				},
+				{
+					facet: "Nested/OtherTransaction/Background/WhichIsWhich/samename",
+					averageDuration: 1.2,
+					metricTimesliceName: "Nested/OtherTransaction/Background/WhichIsWhich/samename"
+				}
+			];
+
+			const results = newrelic.addMethodName(
+				groupedByTransactionName,
+				metricTimesliceNames,
+				"ruby"
+			);
+			// console.info("result", JSON.stringify(results, null, 2));
+			expect(results).to.deep.eq([
+				{
+					className: "WhichIsWhich",
+					facet: "Nested/OtherTransaction/Background/WhichIsWhich/samename",
+					metricTimesliceName: "Nested/OtherTransaction/Background/WhichIsWhich/samename",
+					averageDuration: 1.1,
+					namespace: "WhichIsWhich",
+					metadata: {
+						"code.function": "samename",
+						"code.lineno": "20",
+						traceId: "8c39f01c9e867d5d7179a6a5152a8f8e",
+						transactionId: "90b4cb9daa96f88b",
+						"code.namespace": "WhichIsWhich"
+					},
+					functionName: "samename"
+				},
+				{
+					className: "WhichIsWhich",
+					facet: "Nested/OtherTransaction/Background/WhichIsWhich/samename",
+					metricTimesliceName: "Nested/OtherTransaction/Background/WhichIsWhich/samename",
+					averageDuration: 1.2,
+					namespace: "WhichIsWhich",
+					metadata: {
+						"code.function": "samename",
+						"code.lineno": "20",
+						traceId: "8c39f01c9e867d5d7179a6a5152a8f8e",
+						transactionId: "90b4cb9daa96f88b",
+						"code.namespace": "WhichIsWhich"
+					},
+					functionName: "samename"
 				}
 			]);
 		});

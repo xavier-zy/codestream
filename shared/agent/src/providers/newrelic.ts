@@ -1766,7 +1766,17 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		}
 
 		if (!coord.includes("::")) {
-			return {};
+			const parts = coord.split("/");
+			if (parts.length > 1) {
+				const functionName = parts.pop();
+				const className = parts.pop();
+				return {
+					className,
+					functionName
+				};
+			} else {
+				return {};
+			}
 		}
 
 		const match = /\/(\w+)::(\w+)\/(\w+)/.exec(coord);
@@ -1799,19 +1809,28 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			const metadata =
 				groupedByTransactionName[this.timesliceNameMap(languageId, _.metricTimesliceName)];
 			if (metadata) {
-				["code.lineno", "traceId", "transactionId", "code.namespace"].forEach(_ => {
-					// TODO this won't work for lambdas
-					additionalMetadata[_ as keyof AdditionalMetadataInfo] = (metadata[0] as any)[_];
-				});
+				["code.lineno", "traceId", "transactionId", "code.namespace", "code.function"].forEach(
+					_ => {
+						// TODO this won't work for lambdas
+						if (_) {
+							additionalMetadata[_ as keyof AdditionalMetadataInfo] = (metadata[0] as any)[_];
+						}
+					}
+				);
 			}
 
-			const { className, functionName, namespace } =
+			let { className, functionName, namespace } =
 				languageId === "ruby"
 					? this.parseRubyFunctionCoordinates(
 							_.metricTimesliceName,
 							additionalMetadata["code.namespace"]
 					  )
 					: this.parsePythonFunctionCoordinates(_.metricTimesliceName);
+
+			// Use Agent provided function name if available
+			if (additionalMetadata["code.function"] && additionalMetadata["code.function"]?.length > 0) {
+				functionName = additionalMetadata["code.function"];
+			}
 
 			if (namespace) {
 				additionalMetadata["code.namespace"] = namespace;

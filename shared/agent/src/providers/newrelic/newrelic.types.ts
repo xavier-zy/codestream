@@ -21,19 +21,12 @@ export interface MetricTimeslice {
 	requestsPerMinute?: number;
 }
 
-// export type AdditionalMetadata = Record<string, AdditionalMetadataInfo>;
-
 export interface AdditionalMetadataInfo {
 	traceId?: string;
 	"code.lineno"?: string;
 	transactionId?: string;
 	"code.namespace"?: string;
-}
-
-export interface ExtendedMetricTimeslice extends MetricTimeslice {
-	metadata: AdditionalMetadataInfo;
-	className: string;
-	functionName: string;
+	"code.function"?: string;
 }
 
 export class AccessTokenError extends Error {

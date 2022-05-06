@@ -41,6 +41,7 @@ import {
 } from "@codestream/protocols/webview";
 import { Range } from "vscode-languageserver-types";
 import { useDidMount } from "../utilities/hooks";
+import { isEmpty } from "lodash-es";
 
 const PRBranchContainer = styled.div`
 	display: inline-block;
@@ -84,6 +85,7 @@ export const PullRequestFileCommentCard = (props: PropsWithChildren<Props>) => {
 		clickedComment
 	} = props;
 	const dispatch = useDispatch();
+	const myRef = React.useRef(null);
 
 	const derivedState = useSelector((state: CodeStreamState) => {
 		return {
@@ -109,8 +111,7 @@ export const PullRequestFileCommentCard = (props: PropsWithChildren<Props>) => {
 	const [isResolving, setIsResolving] = useState(false);
 	const [currentRepoRoot, setCurrentRepoRoot] = useState("");
 	const [pendingLineNavigation, setPendingLineNavigation] = useState(false);
-
-	const myRef = React.useRef(null);
+	const [lineNumberStart, setLineNumberStart] = useState(0);
 
 	useDidMount(() => {
 		if (clickedComment) {
@@ -123,12 +124,11 @@ export const PullRequestFileCommentCard = (props: PropsWithChildren<Props>) => {
 	useEffect(() => {
 		async function navigateToLineNumber() {
 			const { textEditorUri } = derivedState;
-			const _lineNumber = lineNumber();
 			const isDiff = textEditorUri?.startsWith("codestream-diff://");
-			if (textEditorUri && isDiff && _lineNumber) {
+			if (textEditorUri && isDiff && lineNumberStart) {
 				await HostApi.instance.send(EditorHighlightRangeRequestType, {
 					uri: textEditorUri,
-					range: Range.create(_lineNumber, 0, _lineNumber, 9999),
+					range: Range.create(lineNumberStart, 0, lineNumberStart, 9999),
 					highlight: true
 				});
 			}
@@ -139,6 +139,21 @@ export const PullRequestFileCommentCard = (props: PropsWithChildren<Props>) => {
 			navigateToLineNumber();
 		}
 	}, [pendingLineNavigation]);
+
+	useEffect(() => {
+		if (
+			derivedState.documentMarkers.length > 0 &&
+			// all files in array will have same file value
+			derivedState.documentMarkers[0].file === fileInfo.filename
+		) {
+			let _docMarkers = derivedState.documentMarkers;
+			//@ts-ignore
+			_docMarkers.sort((a, b) => (a?.range?.start?.line > b?.range?.start?.line ? 1 : -1));
+			const marker = _docMarkers[cardIndex];
+			//@ts-ignore
+			setLineNumberStart(marker.range.start.line);
+		}
+	}, [derivedState.documentMarkers]);
 
 	const doneEditingComment = id => {
 		setEditingComments({ ...editingComments, [id]: false });
@@ -199,7 +214,7 @@ export const PullRequestFileCommentCard = (props: PropsWithChildren<Props>) => {
 
 		setTimeout(() => {
 			setPendingLineNavigation(true);
-		}, 500);
+		}, 1000);
 	};
 
 	const handleOpenFile = async () => {
@@ -316,7 +331,7 @@ export const PullRequestFileCommentCard = (props: PropsWithChildren<Props>) => {
 		});
 
 		if (rightLine) {
-			return rightLine + diffHunkNewLineLength;
+			return rightLine;
 		} else {
 			return "";
 		}

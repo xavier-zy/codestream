@@ -130,9 +130,9 @@ export const PullRequestFileComments = (props: PropsWithChildren<Props>) => {
 		let commentsArray = commentMap[filename];
 		let sortedComments = orderBy(
 			commentsArray,
-			["asc", "position"],
+			["asc", "comment.position"],
 			//@ts-ignore
-			["asc", "bodyText"]
+			["asc", "comment.bodyText"]
 		);
 		let sortedCommentsWithRefs = sortedComments.map(c => ({
 			//@ts-ignore

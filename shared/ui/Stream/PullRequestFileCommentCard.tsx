@@ -110,9 +110,13 @@ export const PullRequestFileCommentCard = (props: PropsWithChildren<Props>) => {
 	const [currentRepoRoot, setCurrentRepoRoot] = useState("");
 	const [pendingLineNavigation, setPendingLineNavigation] = useState(false);
 
+	const myRef = React.useRef(null);
+
 	useDidMount(() => {
 		if (clickedComment) {
 			handleDiffClick();
+			//@ts-ignore
+			myRef?.current?.scrollIntoView({ behavior: "smooth", block: "start" });
 		}
 	});
 
@@ -302,6 +306,7 @@ export const PullRequestFileCommentCard = (props: PropsWithChildren<Props>) => {
 		}
 
 		let diffHunk = comment?.diffHunk || review?.diffHunk || "";
+		let diffHunkNewLineLength = diffHunk.split("\n").length - 1;
 
 		diffHunk.split("\n").map(d => {
 			const matches = d.match(/@@ \-(\d+).*? \+(\d+)/);
@@ -311,7 +316,7 @@ export const PullRequestFileCommentCard = (props: PropsWithChildren<Props>) => {
 		});
 
 		if (rightLine) {
-			return rightLine;
+			return rightLine + diffHunkNewLineLength;
 		} else {
 			return "";
 		}
@@ -332,7 +337,7 @@ export const PullRequestFileCommentCard = (props: PropsWithChildren<Props>) => {
 		);
 	}
 	return (
-		<div ref={commentRef} id={`comment_card_${comment.id}`}>
+		<div ref={myRef} id={`comment_card_${comment.id}`}>
 			<PRCodeCommentWrapper>
 				<PRCodeCommentBody>
 					{review.isMinimized && !expandedComments[review.id] ? (

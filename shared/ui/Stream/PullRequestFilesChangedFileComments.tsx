@@ -6,6 +6,7 @@ import Icon from "./Icon";
 import { setCurrentPullRequest } from "../store/context/actions";
 import { openModal } from "../store/context/actions";
 import { WebviewModals } from "../ipc/webview.protocol.common";
+import { orderBy } from "lodash-es";
 
 export const FileWithComments = styled.div`
 	cursor: pointer;
@@ -172,9 +173,14 @@ export const PullRequestFilesChangedFileComments = (props: Props) => {
 		setShowCheckIcon(false);
 	};
 
-	let commentsSortedByLineNumber = comments;
+	let commentsSortedByLineNumber;
 	if (hasComments) {
-		commentsSortedByLineNumber.sort((a, b) => (a.comment.position > b.comment.position ? 1 : -1));
+		commentsSortedByLineNumber = orderBy(
+			comments,
+			["asc", "comment.position"],
+			//@ts-ignore
+			["asc", "comment.bodyText"]
+		);
 	}
 
 	if (!hasComments) {

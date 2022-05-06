@@ -10,6 +10,7 @@ import styled from "styled-components";
 import { Modal } from "./Modal";
 import { PullRequestFileCommentCard } from "./PullRequestFileCommentCard";
 import { useDidMount } from "../utilities/hooks";
+import { orderBy } from "lodash-es";
 
 const Root = styled.div`
 	background: var(--app-background-color);
@@ -127,8 +128,14 @@ export const PullRequestFileComments = (props: PropsWithChildren<Props>) => {
 		})();
 
 		let commentsArray = commentMap[filename];
-		commentsArray.sort((a, b) => (a.comment.position > b.comment.position ? 1 : -1));
-		let sortedCommentsWithRefs = commentsArray.map(c => ({
+		let sortedComments = orderBy(
+			commentsArray,
+			["asc", "position"],
+			//@ts-ignore
+			["asc", "bodyText"]
+		);
+		let sortedCommentsWithRefs = sortedComments.map(c => ({
+			//@ts-ignore
 			...c,
 			ref: React.createRef()
 		}));

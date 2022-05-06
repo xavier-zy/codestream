@@ -134,7 +134,7 @@ export const PullRequestFileCommentCard = (props: PropsWithChildren<Props>) => {
 		if (pendingLineNavigation) {
 			navigateToLineNumber();
 		}
-	}, [derivedState.textEditorUri]);
+	}, [pendingLineNavigation]);
 
 	const doneEditingComment = id => {
 		setEditingComments({ ...editingComments, [id]: false });
@@ -166,8 +166,6 @@ export const PullRequestFileCommentCard = (props: PropsWithChildren<Props>) => {
 	};
 
 	const handleDiffClick = async () => {
-		setPendingLineNavigation(true);
-
 		const request = {
 			baseBranch: pr.baseRefName,
 			baseSha: pr.baseRefOid,
@@ -194,6 +192,10 @@ export const PullRequestFileCommentCard = (props: PropsWithChildren<Props>) => {
 		HostApi.instance.track("PR Diff Viewed", {
 			Host: pr && pr.providerId
 		});
+
+		setTimeout(() => {
+			setPendingLineNavigation(true);
+		}, 500);
 	};
 
 	const handleOpenFile = async () => {

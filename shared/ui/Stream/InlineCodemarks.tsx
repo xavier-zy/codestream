@@ -131,7 +131,7 @@ interface Props {
 	currentPullRequestProviderId?: string;
 	lightningCodeReviewsEnabled: boolean;
 	activePanel: WebviewPanels | string;
-	expandedPullRequestGroupIndex?: number;
+	expandedPullRequestGroupIndex?: string;
 
 	setEditorContext: (
 		...args: Parameters<typeof setEditorContext>

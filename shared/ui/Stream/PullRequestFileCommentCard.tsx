@@ -218,7 +218,7 @@ export const PullRequestFileCommentCard = (props: PropsWithChildren<Props>) => {
 
 		const _lineNumber = lineNumber();
 
-		if (repoRoot) {
+		if (repoRoot && _lineNumber) {
 			HostApi.instance.send(EditorRevealRangeRequestType, {
 				uri: Path.join("file://", repoRoot, comment?.path),
 				range: Range.create(_lineNumber, 0, _lineNumber, 9999)

@@ -51,7 +51,8 @@ const initialState: ContextState = {
 	errorsInboxOptions: undefined,
 	currentInstrumentation: undefined,
 	currentPixieDynamicLoggingOptions: undefined,
-	wantNewRelicOptions: undefined
+	wantNewRelicOptions: undefined,
+	currentPullRequestNeedsRefresh: { needsRefresh: false, providerId: "", pullRequestId: "" }
 };
 
 export function reduceContext(
@@ -161,6 +162,7 @@ export function reduceContext(
 								source: action.payload.source,
 								view: action.payload.view,
 								previousView: state?.currentPullRequest?.view,
+								// @ts-ignore
 								groupIndex: action.payload?.groupIndex
 						  }
 						: undefined,

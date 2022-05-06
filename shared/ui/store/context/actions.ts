@@ -187,7 +187,7 @@ export const setCurrentPullRequest = (
 	commentId?: string,
 	source?: string,
 	view?: "details" | "sidebar-diffs",
-	groupIndex?: string
+	groupIndex?: string | undefined
 ) =>
 	action(ContextActionsType.SetCurrentPullRequest, {
 		providerId,

@@ -534,30 +534,30 @@ describe("NewRelicProvider", async () => {
 				{
 					facet: "Custom/CLMtesting/ClassMethod",
 					averageDuration: 1.3,
-					className: "CLMtesting",
+					className: "Helpers",
 					functionName: "self.custom_class_method_too",
 					metricTimesliceName: "Custom/CLMtesting/ClassMethod",
-					namespace: "Custom::Helpers",
+					namespace: "Custom",
 					metadata: {
 						"code.lineno": 16,
 						traceId: "40c7dedd273ee4a475756393a996a03b",
 						transactionId: "ab968a3e203d2451",
-						"code.namespace": "Custom::Helpers",
+						"code.namespace": "Custom",
 						"code.function": "self.custom_class_method_too"
 					}
 				},
 				{
 					facet: "Custom/CLMtesting/InstanceMethod",
 					averageDuration: 1.4,
-					className: "CLMtesting",
+					className: "Helpers",
 					functionName: "custom_instance_method_too",
 					metricTimesliceName: "Custom/CLMtesting/InstanceMethod",
-					namespace: "Custom::Helpers",
+					namespace: "Custom",
 					metadata: {
 						"code.lineno": 33,
 						traceId: "40c7dedd273ee4a475756393a996a03b",
 						transactionId: "ab968a3e203d2451",
-						"code.namespace": "Custom::Helpers",
+						"code.namespace": "Custom",
 						"code.function": "custom_instance_method_too"
 					}
 				}

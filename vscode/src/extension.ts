@@ -6,7 +6,6 @@ import {
 	ExtensionContext,
 	extensions,
 	MessageItem,
-	languages,
 	Uri,
 	version as vscodeVersion,
 	window,

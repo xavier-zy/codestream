@@ -1766,6 +1766,14 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		}
 
 		if (!coord.includes("::")) {
+			if (namespace?.includes("::")) {
+				const [myNamespace, className] = namespace.split("::");
+				return {
+					namespace: myNamespace,
+					className,
+					functionName: coord
+				};
+			}
 			const parts = coord.split("/");
 			if (parts.length > 1) {
 				const functionName = parts.pop();

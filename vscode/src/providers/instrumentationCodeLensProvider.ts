@@ -182,15 +182,13 @@ export class InstrumentationCodeLensProvider implements vscode.CodeLensProvider 
 				data: { namespace?: string; className?: string; functionName: string }
 			) => {
 				let result: boolean;
-				// TODO In future if Ruby agent adds "self." to class functions inside modules this isn't needed.
-				const symbolFunctionName = symbol.symbol.name.startsWith("self.") ? symbol.symbol.name.replace("self.", "") : symbol.symbol.name;
 				if (symbol.parent) {
 					result =
-						(data.className === symbol.parent.name && data.functionName === symbolFunctionName) ||
-						(data.namespace === symbol.parent.name && data.functionName === symbolFunctionName);
+						(data.className === symbol.parent.name && data.functionName === symbol.symbol.name) ||
+						(data.namespace === symbol.parent.name && data.functionName === symbol.symbol.name);
 				} else {
 					// if no parent (aka class) ensure we find a function that doesn't have a parent
-					result = !symbol.parent && data.functionName === symbolFunctionName;
+					result = !symbol.parent && data.functionName === symbol.symbol.name;
 				}
 				return result;
 			};
@@ -209,7 +207,7 @@ export class InstrumentationCodeLensProvider implements vscode.CodeLensProvider 
 					: undefined;
 
 				if (!throughputForFunction && !averageDurationForFunction && !errorRateForFunction) {
-					Logger.debug(`provideCodeLenses no data for ${_.symbol.name}`);
+					Logger.warn(`provideCodeLenses no data for ${JSON.stringify(_, null, 2)}`);
 					return undefined;
 				}
 

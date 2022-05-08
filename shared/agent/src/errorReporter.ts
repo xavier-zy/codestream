@@ -1,9 +1,11 @@
 import * as Sentry from "@sentry/node";
 import { Severity } from "@sentry/node";
+import * as NewRelic from "newrelic";
 import * as os from "os";
 import { ReportSuppressedMessages } from "./agentError";
 import { Team } from "./api/extensions";
 import { SessionContainer } from "./container";
+import { Logger } from "./logger";
 import {
 	ReportBreadcrumbRequest,
 	ReportBreadcrumbRequestType,
@@ -12,10 +14,9 @@ import {
 	WebviewErrorRequest,
 	WebviewErrorRequestType
 } from "./protocol/agent.protocol";
-import { CodeStreamSession, SessionStatus } from "./session";
+import { CodeStreamSession } from "./session";
 import { lsp, lspHandler } from "./system";
-import { Logger } from "./logger";
-import * as NewRelic from "newrelic";
+import { SessionStatus } from "./types";
 
 interface IErrorReporterProvider {
 	reportMessage(request: ReportMessageRequest): void;

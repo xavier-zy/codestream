@@ -1765,6 +1765,19 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			};
 		}
 
+		if (coord.startsWith("MessageBroker/ActiveJob")) {
+			let myNamespace, className;
+			if (namespace?.includes("::")) {
+				[myNamespace, className] = namespace.split("::");
+			} else {
+				className = namespace;
+			}
+			return {
+				namespace: myNamespace,
+				className
+			};
+		}
+
 		if (!coord.includes("::")) {
 			if (namespace?.includes("::")) {
 				const [myNamespace, className] = namespace.split("::");

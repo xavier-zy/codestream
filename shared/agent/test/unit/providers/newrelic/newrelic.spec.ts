@@ -374,6 +374,67 @@ describe("NewRelicProvider", async () => {
 			// console.info("result", JSON.stringify(result, null, 2));
 		});
 
+		it("handles ruby ActiveJob", () => {
+			const newrelic = new NewRelicProvider({} as any, {} as any);
+			const groupedByTransactionName = {
+				"MessageBroker/ActiveJob::Async/Queue/Produce/Named/default": [
+					{
+						"code.filepath": "/usr/src/app/app/jobs/notifier_job.rb",
+						"code.function": "perform",
+						"code.lineno": 8,
+						"code.namespace": "NotifierJob",
+						name: "MessageBroker/ActiveJob::Async/Queue/Produce/Named/default",
+						timestamp: 1652110848694,
+						traceId: "2d2a1cfae193394b121427ff11df5fc5",
+						"transaction.name": null,
+						transactionId: "5154409dd464aad1"
+					},
+					{
+						"code.filepath": "/usr/src/app/app/jobs/notifier_job.rb",
+						"code.function": "perform",
+						"code.lineno": 8,
+						"code.namespace": "NotifierJob",
+						name: "MessageBroker/ActiveJob::Async/Queue/Produce/Named/default",
+						timestamp: 1652110782764,
+						traceId: "84ea3aebfc980a997ae65beefad3a208",
+						"transaction.name": null,
+						transactionId: "d120d392b5ab777f"
+					}
+				]
+			};
+
+			const metricTimesliceNames: MetricTimeslice[] = [
+				{
+					facet: "MessageBroker/ActiveJob::Async/Queue/Produce/Named/default",
+					requestsPerMinute: 24.1,
+					metricTimesliceName: "MessageBroker/ActiveJob::Async/Queue/Produce/Named/default"
+				}
+			];
+
+			const results = newrelic.addMethodName(
+				groupedByTransactionName,
+				metricTimesliceNames,
+				"ruby"
+			);
+			expect(results).to.deep.eq([
+				{
+					className: "NotifierJob",
+					facet: "MessageBroker/ActiveJob::Async/Queue/Produce/Named/default",
+					metricTimesliceName: "MessageBroker/ActiveJob::Async/Queue/Produce/Named/default",
+					namespace: "NotifierJob",
+					requestsPerMinute: 24.1,
+					metadata: {
+						"code.lineno": 8,
+						traceId: "2d2a1cfae193394b121427ff11df5fc5",
+						transactionId: "5154409dd464aad1",
+						"code.namespace": "NotifierJob",
+						"code.function": "perform"
+					},
+					functionName: "perform"
+				}
+			]);
+		});
+
 		it("parses ruby modules:class:functions syntax", () => {
 			const newrelic = new NewRelicProvider({} as any, {} as any);
 			const groupedByTransactionName: Dictionary<Span[]> = {

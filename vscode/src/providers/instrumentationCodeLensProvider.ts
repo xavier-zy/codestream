@@ -190,6 +190,10 @@ export class InstrumentationCodeLensProvider implements vscode.CodeLensProvider 
 					// if no parent (aka class) ensure we find a function that doesn't have a parent
 					result = !symbol.parent && data.functionName === symbol.symbol.name;
 				}
+				if (!result) {
+					// Since nothing matched, relax criteria and base just on function name
+					result = data.functionName === symbol.symbol.name;
+				}
 				return result;
 			};
 

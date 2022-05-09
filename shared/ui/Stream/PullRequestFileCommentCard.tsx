@@ -111,7 +111,7 @@ export const PullRequestFileCommentCard = (props: PropsWithChildren<Props>) => {
 	const [isResolving, setIsResolving] = useState(false);
 	const [currentRepoRoot, setCurrentRepoRoot] = useState("");
 	const [pendingLineNavigation, setPendingLineNavigation] = useState(false);
-	const [lineNumberStart, setLineNumberStart] = useState(0);
+	const [commentRange, setCommentRange] = useState({});
 
 	useDidMount(() => {
 		if (clickedComment) {
@@ -125,10 +125,11 @@ export const PullRequestFileCommentCard = (props: PropsWithChildren<Props>) => {
 		async function navigateToLineNumber() {
 			const { textEditorUri } = derivedState;
 			const isDiff = textEditorUri?.startsWith("codestream-diff://");
-			if (textEditorUri && isDiff && lineNumberStart) {
+			if (textEditorUri && isDiff && commentRange) {
 				await HostApi.instance.send(EditorHighlightRangeRequestType, {
 					uri: textEditorUri,
-					range: Range.create(lineNumberStart, 0, lineNumberStart, 9999),
+					//@ts-ignore
+					range: commentRange,
 					highlight: true
 				});
 			}
@@ -151,7 +152,7 @@ export const PullRequestFileCommentCard = (props: PropsWithChildren<Props>) => {
 			_docMarkers.sort((a, b) => (a?.range?.start?.line > b?.range?.start?.line ? 1 : -1));
 			const marker = _docMarkers[cardIndex];
 			//@ts-ignore
-			setLineNumberStart(marker.range.start.line);
+			setCommentRange(marker.range);
 		}
 	}, [derivedState.documentMarkers]);
 
@@ -351,8 +352,6 @@ export const PullRequestFileCommentCard = (props: PropsWithChildren<Props>) => {
 			/>
 		);
 	}
-
-	console.warn("eric textEditorUri", derivedState.textEditorUri);
 
 	return (
 		<div ref={myRef} id={`comment_card_${comment.id}`}>

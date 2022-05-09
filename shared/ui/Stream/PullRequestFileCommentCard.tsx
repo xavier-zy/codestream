@@ -351,6 +351,9 @@ export const PullRequestFileCommentCard = (props: PropsWithChildren<Props>) => {
 			/>
 		);
 	}
+
+	console.warn("eric textEditorUri", derivedState.textEditorUri);
+
 	return (
 		<div ref={myRef} id={`comment_card_${comment.id}`}>
 			<PRCodeCommentWrapper>

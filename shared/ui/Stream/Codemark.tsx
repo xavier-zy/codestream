@@ -1864,7 +1864,7 @@ export class Codemark extends React.Component<Props, State> {
 			//@ts-ignore
 			const range = marker.range;
 			if (range) {
-				if (range.start.line == range.end.line) return `Lineeee ${range.start.line + 1}`;
+				if (range.start.line == range.end.line) return `Line ${range.start.line + 1}`;
 				else return `Lines ${range.start.line + 1}-${range.end.line + 1}`;
 			} else return;
 		})();

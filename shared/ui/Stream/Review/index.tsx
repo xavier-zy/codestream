@@ -880,7 +880,7 @@ const BaseReview = (props: BaseReviewProps) => {
 											{dropdownLabel}
 										</DropdownButton>
 									)}
-									{numCheckpoints <= 1 && <span>Changed Filessss</span>}
+									{numCheckpoints <= 1 && <span>Changed Files</span>}
 									{props.canStartReview && numFiles > 1 && (
 										<MetaIcons>
 											<Icon

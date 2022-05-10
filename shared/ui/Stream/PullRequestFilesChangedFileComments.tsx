@@ -1,5 +1,5 @@
-import React from "react";
-import { useDispatch, useSelector } from "react-redux";
+import React, { useEffect } from "react";
+import { useDispatch } from "react-redux";
 import styled from "styled-components";
 import { ChangesetFile } from "./Review/ChangesetFile";
 import Icon from "./Icon";
@@ -7,6 +7,9 @@ import { setCurrentPullRequest } from "../store/context/actions";
 import { openModal } from "../store/context/actions";
 import { WebviewModals } from "../ipc/webview.protocol.common";
 import { orderBy } from "lodash-es";
+import { api } from "../store/providerPullRequests/actions";
+import { isUndefined } from "lodash-es";
+import { useDidMount } from "../utilities/hooks";
 
 export const FileWithComments = styled.div`
 	cursor: pointer;
@@ -73,23 +76,90 @@ export const PullRequestFilesChangedFileComments = (props: Props) => {
 		hasComments,
 		comments,
 		selected,
-		icon,
-		iconClass,
 		index,
 		fileObject,
 		isDisabled,
 		loading,
-		unVisitFile,
-		visitFile,
 		goDiff,
 		depth,
-		visited,
 		pullRequest
 	} = props;
 
 	const dispatch = useDispatch();
 	const [showComments, setShowComments] = React.useState(true);
 	const [showCheckIcon, setShowCheckIcon] = React.useState(false);
+	const [isChecked, setIsChecked] = React.useState(false);
+	const [iconName, setIconName] = React.useState("sync");
+
+	// Sync our visited state with whats on github
+	useDidMount(() => {
+		syncCheckedStatusWithPr();
+	});
+
+	useEffect(() => {
+		syncCheckedStatusWithPr();
+	}, [pullRequest]);
+
+	useEffect(() => {
+		let iconName;
+
+		if (isChecked) {
+			iconName = "ok";
+		} else {
+			iconName = "circle";
+		}
+
+		setIconName(iconName);
+	}, [isChecked]);
+
+	const syncCheckedStatusWithPr = () => {
+		const prFiles = pullRequest.files.nodes;
+		const currentFilepath = fileObject.file;
+
+		const prFile = prFiles.find(pr => pr.path === currentFilepath);
+		const isVisitedCheck = prFile.viewerViewedState === "VIEWED";
+
+		if (isVisitedCheck) {
+			visitAndCheckFile();
+		} else {
+			unvisitAndUncheckFile();
+		}
+	};
+
+	const visitAndCheckFile = async () => {
+		await dispatch(
+			api("markFileAsViewed", {
+				onOff: true,
+				path: fileObject.file
+			})
+		);
+		setIsChecked(true);
+	};
+
+	const unvisitAndUncheckFile = async () => {
+		await dispatch(
+			api("markFileAsViewed", {
+				onOff: false,
+				path: fileObject.file
+			})
+		);
+		setIsChecked(false);
+	};
+
+	const handleIconClick = event => {
+		event.preventDefault();
+		event.stopPropagation();
+
+		if (loading) {
+			return;
+		}
+
+		if (isChecked) {
+			unvisitAndUncheckFile();
+		} else {
+			visitAndCheckFile();
+		}
+	};
 
 	const handleClick = e => {
 		e.preventDefault();
@@ -127,16 +197,6 @@ export const PullRequestFilesChangedFileComments = (props: Props) => {
 			return rightLine + diffHunkNewLineLength;
 		} else {
 			return "";
-		}
-	};
-
-	const handleIconClick = event => {
-		event.preventDefault();
-		event.stopPropagation();
-		if (visited) {
-			unVisitFile(fileObject.file);
-		} else {
-			visitFile(fileObject.file, index);
 		}
 	};
 
@@ -194,10 +254,10 @@ export const PullRequestFilesChangedFileComments = (props: Props) => {
 							<span
 								style={{
 									margin: "0 10px 0 auto",
-									display: showCheckIcon || icon === "ok" ? "flex" : "none"
+									display: showCheckIcon || iconName === "ok" ? "flex" : "none"
 								}}
 							>
-								<Icon onClick={e => handleIconClick(e)} name={icon} className={iconClass} />
+								<Icon onClick={e => handleIconClick(e)} name={iconName} className={"file-icon"} />
 							</span>
 						)
 					}
@@ -230,10 +290,10 @@ export const PullRequestFilesChangedFileComments = (props: Props) => {
 								<span
 									style={{
 										margin: "0 10px 0 auto",
-										display: showCheckIcon || icon === "ok" ? "flex" : "none"
+										display: showCheckIcon || iconName === "ok" ? "flex" : "none"
 									}}
 								>
-									<Icon onClick={e => handleIconClick(e)} name={icon} className={iconClass} />
+									<Icon onClick={e => handleIconClick(e)} name={iconName} className={"file-icon"} />
 								</span>
 							)
 						}

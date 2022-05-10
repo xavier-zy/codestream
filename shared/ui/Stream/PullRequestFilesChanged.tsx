@@ -31,6 +31,7 @@ import { CompareFilesProps } from "./PullRequestFilesChangedList";
 import { TernarySearchTree } from "../utilities/searchTree";
 import { PRErrorBox, PRErrorBoxSidebar } from "./PullRequestComponents";
 import { PullRequestFilesChangedFileComments } from "./PullRequestFilesChangedFileComments";
+import { isUndefined } from "lodash-es";
 
 export const Directory = styled.div`
 	cursor: pointer;
@@ -322,7 +323,6 @@ export const PullRequestFilesChanged = (props: Props) => {
 		const i = index;
 
 		const hasComments = (props.commentMap[f.file] || []).length > 0;
-
 		return (
 			<PullRequestFilesChangedFileComments
 				key={i}

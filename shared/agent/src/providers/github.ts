@@ -660,6 +660,7 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 							  path
 							  deletions
 							  additions
+							  viewerViewedState
 							}
 						}
 						commits(last: 1) {
@@ -1254,6 +1255,23 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 		);
 
 		return query;
+	}
+
+	async markFileAsViewed(request: { path: string; pullRequestId: string; onOff: boolean }) {
+		const method = request.onOff ? "markFileAsViewed" : "unmarkFileAsViewed";
+		const Method = request.onOff ? "MarkFileAsViewed" : "UnmarkFileAsViewed";
+		const query = `mutation ${Method}($pullRequestId: ID!, $path: String!) {
+			${method}(input: {pullRequestId: $pullRequestId, path: $path}) {
+				  clientMutationId
+				}
+			  }`;
+
+		const response = await this.mutate<any>(query, {
+			pullRequestId: request.pullRequestId,
+			path: request.path
+		});
+
+		return response;
 	}
 
 	async markPullRequestReadyForReview(request: {

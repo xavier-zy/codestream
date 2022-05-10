@@ -2,12 +2,11 @@ package com.codestream.protocols.webview
 
 import com.codestream.protocols.CodemarkType
 import com.codestream.protocols.agent.CSRepo
-import com.codestream.protocols.agent.CreateShareableCodemarkResult
 import com.codestream.protocols.agent.FileLevelTelemetryOptions
 import com.codestream.protocols.agent.PixieDynamicLoggingFunctionParameter
-import com.google.gson.JsonElement
 import com.google.gson.JsonObject
 import org.eclipse.lsp4j.Range
+import org.eclipse.lsp4j.TextDocumentIdentifier
 
 interface WebViewNotification {
     fun getMethod(): String
@@ -193,5 +192,13 @@ object ShowProgressIndicator {
         val progressStatus: Boolean = true
     ) : WebViewNotification {
         override fun getMethod() = "webview/system/progressIndicator"
+    }
+}
+
+object DocumentMarkerNotifications {
+    class DidChange(
+        val textDocument: TextDocumentIdentifier
+    ) : WebViewNotification {
+        override fun getMethod(): String = "codestream/didChangeDocumentMarkers"
     }
 }

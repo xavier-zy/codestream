@@ -7,6 +7,7 @@ import com.codestream.extensions.uri
 import com.codestream.protocols.agent.CreateShareableCodemarkParams
 import com.codestream.protocols.agent.ScmRangeInfoParams
 import com.codestream.protocols.agent.ShareableCodemarkAttributes
+import com.codestream.protocols.webview.DocumentMarkerNotifications
 import com.codestream.protocols.webview.PullRequestNotifications
 import com.codestream.review.PARENT_POST_ID
 import com.codestream.review.PULL_REQUEST
@@ -114,6 +115,9 @@ class InlineTextFieldManager(val editor: Editor) {
                                 createCodemarkResult.directives
                             )
                         )
+                        editor.document.textDocumentIdentifier?.let {
+                            webview.postNotification(DocumentMarkerNotifications.DidChange(it))
+                        }
                     }
 
                     println(createCodemarkResult)

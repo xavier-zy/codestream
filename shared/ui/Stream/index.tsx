@@ -6,6 +6,7 @@ import {
 	SetCodemarkPinnedRequestType
 } from "@codestream/protocols/agent";
 import { CodemarkType, CSMe, CSUser } from "@codestream/protocols/api";
+import { PresentPrereleaseTOS } from "@codestream/webview/Authentication/PresentPrereleaseTOS";
 import { CodeStreamState } from "@codestream/webview/store";
 import { PostsState } from "@codestream/webview/store/posts/types";
 import {
@@ -142,6 +143,7 @@ interface ConnectedProps {
 	posts: PostsState;
 	pendingProtocolHandlerUrl?: string;
 	showHeadshots: boolean;
+	showPreReleaseTos: boolean;
 	teamId: string;
 	threadId?: string;
 }
@@ -345,13 +347,13 @@ export class SimpleStream extends PureComponent<Props> {
 
 	render() {
 		const { showHeadshots, isFirstPageview } = this.props;
-		let { activePanel, activeModal, acceptedPrereleaseTOS } = this.props;
+		let { activePanel, activeModal, acceptedPrereleaseTOS, showPreReleaseTos } = this.props;
 
 		// this will show for any old, lingering users that have not accepted as part of a new registration
 		// if (!acceptedTOS) return <PresentTOS />;
 
 		// use with beta users
-		//if (!acceptedPrereleaseTOS) return <PresentPrereleaseTOS />;
+		if (showPreReleaseTos && !acceptedPrereleaseTOS) return <PresentPrereleaseTOS />;
 
 		if (activePanel === WebviewPanels.LandingRedirect) activePanel = WebviewPanels.Sidebar;
 
@@ -799,6 +801,7 @@ const mapStateToProps = (state: CodeStreamState): ConnectedProps => {
 		posts: state.posts,
 		postStreamId: postStream!.id,
 		showHeadshots: configs.showHeadshots,
+		showPreReleaseTos: isFeatureEnabled(state, "showPreReleaseTos"),
 		skipGitEmailCheck: preferences.skipGitEmailCheck === true,
 		teamId: team.id,
 		threadId: context.threadId

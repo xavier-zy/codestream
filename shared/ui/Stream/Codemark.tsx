@@ -147,7 +147,7 @@ interface ConnectedProps {
 export type DisplayType = "default" | "collapsed" | "activity";
 
 interface InheritedProps {
-	contextName?: "Spatial View" | "Codemarks Tab" | "Sidebar";
+	contextName?: "Spatial View" | "Codemarks Tab" | "Sidebar" | "Activity Panel";
 	displayType?: DisplayType;
 	selected?: boolean;
 	codemark?: CodemarkPlus;

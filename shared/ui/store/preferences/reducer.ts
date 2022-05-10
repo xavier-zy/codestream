@@ -1,19 +1,21 @@
-import { ActionType } from "../common";
-import * as actions from "./actions";
-import { PreferencesActionsType, PreferencesState, FilterQuery } from "./types";
-import { merge, mergeWith } from "lodash-es";
+import { FetchRequestQuery } from "@codestream/protocols/api";
+import { mergeWith } from "lodash-es";
 import { createSelector } from "reselect";
 import { CodeStreamState } from "..";
-import { FetchRequestQuery, PullRequestQuery } from "@codestream/protocols/api";
+import { ActionType } from "../common";
+import * as actions from "./actions";
+import { FilterQuery, PreferencesActionsType, PreferencesState } from "./types";
 
 type PreferencesActions = ActionType<typeof actions>;
 
 const initialState: PreferencesState = {};
 
-const mergeCustom = function(target, source) {
+const mergeCustom = function(_target, source) {
 	// don't merge arrays, just copy ... at least i hope that's the right solution
 	if (source instanceof Array) {
 		return [...source];
+	} else {
+		return [];
 	}
 };
 export function reducePreferences(state = initialState, action: PreferencesActions) {

@@ -519,6 +519,7 @@ export const api = <T = any, R = any>(
 		| "getReviewers"
 		| "lockPullRequest"
 		| "markPullRequestReadyForReview"
+		| "markFileAsViewed"
 		| "markToDoDone"
 		| "mergePullRequest"
 		| "remoteBranches"

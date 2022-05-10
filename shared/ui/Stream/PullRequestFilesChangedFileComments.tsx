@@ -82,7 +82,14 @@ export const PullRequestFilesChangedFileComments = (props: Props) => {
 		loading,
 		goDiff,
 		depth,
-		pullRequest
+		pullRequest,
+		//these props will go away if we ever get a gitlab graphql mutation
+		//for marking files as viewed
+		icon,
+		iconClass,
+		unVisitFile,
+		visitFile,
+		visited
 	} = props;
 
 	const dispatch = useDispatch();
@@ -90,6 +97,7 @@ export const PullRequestFilesChangedFileComments = (props: Props) => {
 	const [showCheckIcon, setShowCheckIcon] = React.useState(false);
 	const [isChecked, setIsChecked] = React.useState(false);
 	const [iconName, setIconName] = React.useState("sync");
+	const isGitLab = pullRequest.providerId.includes("gitlab");
 
 	// Sync our visited state with whats on github
 	useDidMount(() => {
@@ -156,10 +164,22 @@ export const PullRequestFilesChangedFileComments = (props: Props) => {
 
 		if (isChecked) {
 			unvisitAndUncheckFile();
+			unVisitFile(fileObject.file);
 		} else {
 			visitAndCheckFile();
+			visitFile(fileObject.file, index);
 		}
 	};
+
+	// const handleIconClick = event => {
+	// 	event.preventDefault();
+	// 	event.stopPropagation();
+	// 	if (visited) {
+	// 		unVisitFile(fileObject.file);
+	// 	} else {
+	// 		visitFile(fileObject.file, index);
+	// 	}
+	// };
 
 	const handleClick = e => {
 		e.preventDefault();
@@ -243,6 +263,8 @@ export const PullRequestFilesChangedFileComments = (props: Props) => {
 		);
 	}
 
+	const displayIcon = isGitLab ? icon : iconName;
+
 	if (!hasComments) {
 		return (
 			<div onMouseEnter={e => handleMouseEnter(e)} onMouseLeave={e => handleMouseLeave(e)}>
@@ -254,10 +276,14 @@ export const PullRequestFilesChangedFileComments = (props: Props) => {
 							<span
 								style={{
 									margin: "0 10px 0 auto",
-									display: showCheckIcon || iconName === "ok" ? "flex" : "none"
+									display: showCheckIcon || displayIcon === "ok" ? "flex" : "none"
 								}}
 							>
-								<Icon onClick={e => handleIconClick(e)} name={iconName} className={"file-icon"} />
+								<Icon
+									onClick={e => handleIconClick(e)}
+									name={displayIcon}
+									className={"file-icon"}
+								/>
 							</span>
 						)
 					}
@@ -290,10 +316,14 @@ export const PullRequestFilesChangedFileComments = (props: Props) => {
 								<span
 									style={{
 										margin: "0 10px 0 auto",
-										display: showCheckIcon || iconName === "ok" ? "flex" : "none"
+										display: showCheckIcon || displayIcon === "ok" ? "flex" : "none"
 									}}
 								>
-									<Icon onClick={e => handleIconClick(e)} name={iconName} className={"file-icon"} />
+									<Icon
+										onClick={e => handleIconClick(e)}
+										name={displayIcon}
+										className={"file-icon"}
+									/>
 								</span>
 							)
 						}

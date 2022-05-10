@@ -86,7 +86,8 @@ class NewCodemarkGutterIconRenderer(
             val future = CompletableFuture<DefaultActionGroup>()
             GlobalScope.launch {
                 val reviewId = agent.getPullRequestReviewId(pullRequest.id, pullRequest.providerId)
-                if (reviewId == null || !reviewId.asBoolean) {
+                // GH returns a string ID or null. GL returns true or false.
+                if (reviewId == null || reviewId.isJsonNull || (reviewId.isJsonPrimitive && reviewId.asJsonPrimitive.isBoolean && !reviewId.asBoolean)) {
                     future.complete(DefaultActionGroup(startReviewAction, addSingleCommentAction))
                 } else {
                     future.complete(DefaultActionGroup(addCommentToReviewAction))

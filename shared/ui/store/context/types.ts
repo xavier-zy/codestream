@@ -152,7 +152,7 @@ export interface CurrentMethodLevelTelemetry {
 		message?: string;
 		type?: string;
 	};
-	repo: {
+	repo?: {
 		id: string;
 		name: string;
 		remote: string;

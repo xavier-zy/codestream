@@ -138,7 +138,8 @@ export const MethodLevelTelemetryPanel = () => {
 
 	if (
 		derivedState.currentMethodLevelTelemetry.error &&
-		derivedState.currentMethodLevelTelemetry.error.type === "NOT_ASSOCIATED"
+		derivedState.currentMethodLevelTelemetry.error.type === "NOT_ASSOCIATED" &&
+		derivedState.currentMethodLevelTelemetry.repo
 	) {
 		return (
 			<Root className="full-height-codemark-form">
@@ -193,6 +194,48 @@ export const MethodLevelTelemetryPanel = () => {
 							</label>
 						</div>
 					</EntityAssociator>
+				</div>
+			</Root>
+		);
+	}
+
+	if (
+		derivedState.currentMethodLevelTelemetry.error &&
+		derivedState.currentMethodLevelTelemetry.error.type === "NO_RUBY_VSCODE_EXTENSION"
+	) {
+		return (
+			<Root className="full-height-codemark-form">
+				<div
+					style={{
+						display: "flex",
+						alignItems: "center",
+						width: "100%"
+					}}
+				>
+					<div
+						style={{ marginLeft: "auto", marginRight: "13px", whiteSpace: "nowrap", flexGrow: 0 }}
+					>
+						<CancelButton onClick={() => dispatch(closePanel())} />
+					</div>
+				</div>
+
+				<div className="embedded-panel" style={{ marginLeft: "40px" }}>
+					<h3>Code-Level Metrics</h3>
+					<p style={{ marginTop: 0 }}>
+						To see code-level metrics you'll need to install one of the following extensions for VS
+						Code that allow CodeStream to identify the methods in your Ruby code.
+					</p>
+					<br />
+					<div>
+						<Link href={"https://marketplace.visualstudio.com/items?itemName=rebornix.Ruby"}>
+							Ruby Plugin
+						</Link>
+					</div>
+					<div>
+						<Link href={"https://marketplace.visualstudio.com/items?itemName=castwide.solargraph"}>
+							Ruby Solargraph Plugin
+						</Link>
+					</div>
 				</div>
 			</Root>
 		);
@@ -290,17 +333,19 @@ export const MethodLevelTelemetryPanel = () => {
 															key: item.entityGuid + "-" + i,
 															checked: item.entityGuid === telemetryResponse.newRelicEntityGuid!,
 															action: async () => {
-																const repoId = derivedState.currentMethodLevelTelemetry!.repo.id;
+																const repoId = derivedState.currentMethodLevelTelemetry?.repo?.id;
 																const newPreferences = derivedState.observabilityRepoEntities.filter(
 																	_ => _.repoId !== repoId
 																);
-																newPreferences.push({
-																	repoId: repoId,
-																	entityGuid: item.entityGuid
-																});
-																dispatch(
-																	setUserPreference(["observabilityRepoEntities"], newPreferences)
-																);
+																if (repoId) {
+																	newPreferences.push({
+																		repoId: repoId,
+																		entityGuid: item.entityGuid
+																	});
+																	dispatch(
+																		setUserPreference(["observabilityRepoEntities"], newPreferences)
+																	);
+																}
 
 																// update the IDEs
 																HostApi.instance.send(RefreshEditorsCodeLensRequestType, {});
@@ -329,7 +374,7 @@ export const MethodLevelTelemetryPanel = () => {
 										</EntityDropdownContainer>
 									)}
 									<div style={{ margin: "0 0 11px 0" }}>
-										<b>Repo:</b> {derivedState.currentMethodLevelTelemetry.repo.name}
+										<b>Repo:</b> {derivedState.currentMethodLevelTelemetry.repo?.name}
 									</div>
 									<div>
 										<b>File:</b> {derivedState?.currentMethodLevelTelemetry.relativeFilePath}

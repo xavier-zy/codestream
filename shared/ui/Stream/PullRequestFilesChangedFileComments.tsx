@@ -267,7 +267,7 @@ export const PullRequestFilesChangedFileComments = (props: Props) => {
 						isDisabled ? null : (
 							<span
 								style={{
-									margin: "0 10px 0 auto",
+									margin: "0 0 0 auto",
 									display: showCheckIcon || displayIcon === "ok" ? "flex" : "none"
 								}}
 							>

@@ -55,6 +55,7 @@ export interface CreateSharedExternalPostRequest {
 	// ...or a "code error"
 	codeError?: CodeErrorPlus;
 	crossPostIssueValues?: CrossPostIssueValues;
+	providerServerTokenUserId?: string;
 }
 
 export interface CreatePostRequest {
@@ -260,6 +261,22 @@ export const UpdatePostSharingDataRequestType = new RequestType<
 	void,
 	void
 >("codestream/post/share-update");
+
+export interface SharePostViaServerRequest {
+	postId: string;
+	providerId: string;
+}
+
+export interface SharePostViaServerResponse {
+	post: CSPost;
+}
+
+export const SharePostViaServerRequestType = new RequestType<
+	SharePostViaServerRequest,
+	SharePostViaServerResponse,
+	void,
+	void
+>("codestream/post/share-via-server");
 
 export interface GetPostRequest {
 	streamId: string;

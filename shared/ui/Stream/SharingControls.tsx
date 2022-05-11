@@ -116,6 +116,7 @@ export type SharingAttributes = Pick<
 > & {
 	providerTeamName?: string;
 	channelName?: string;
+	botUserId?: string;
 };
 
 const EMPTY_HASH = {};
@@ -150,6 +151,8 @@ export const SharingControls = React.memo(
 			const team = state.teams[state.context.currentTeamId];
 			const teamSettings = team.settings || (EMPTY_HASH as CSTeamSettings);
 
+			const slackServerProviderInfo = team.serverProviderInfo?.slack?.multiple;
+
 			return {
 				currentTeamId,
 				on: shareTargets.length > 0 && Boolean(preferencesForTeam.shareCodemarkEnabled),
@@ -163,7 +166,8 @@ export const SharingControls = React.memo(
 				repos: state.repos,
 				defaultChannelId: defaultChannel && defaultChannel.channelId,
 				defaultChannels,
-				teamSettings
+				teamSettings,
+				slackServerProviderInfo
 			};
 		});
 		const [authenticationState, setAuthenticationState] = React.useState<{
@@ -279,12 +283,20 @@ export const SharingControls = React.memo(
 			const shareTarget = derivedState.selectedShareTarget;
 
 			if (shareTarget && selectedChannel) {
+				let botUserId;
+				if (shareTarget.providerId === "slack*com") {
+					const teamData = derivedState.slackServerProviderInfo
+						? derivedState.slackServerProviderInfo[shareTarget.teamId]
+						: undefined;
+					botUserId = teamData ? teamData.data?.bot_user_id : undefined;
+				}
 				props.onChangeValues({
 					providerId: shareTarget.providerId,
 					providerTeamId: shareTarget.teamId,
 					providerTeamName: shareTarget.teamName,
 					channelId: selectedChannel && selectedChannel.id,
-					channelName: selectedChannel && formatChannelName(selectedChannel)
+					channelName: selectedChannel && formatChannelName(selectedChannel),
+					botUserId
 				});
 				dispatch(
 					setUserPreference([derivedState.currentTeamId, "lastShareAttributes"], {

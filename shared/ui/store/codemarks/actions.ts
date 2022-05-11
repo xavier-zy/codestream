@@ -63,6 +63,7 @@ export interface SharingNewCodemarkAttributes extends BaseNewCodemarkAttributes 
 		providerTeamName?: string;
 		channelId: string;
 		channelName?: string;
+		botUserId?: string;
 	};
 	textDocuments?: TextDocumentIdentifier[];
 	entryPoint?: string;
@@ -149,6 +150,7 @@ export const createCodemark = (attributes: SharingNewCodemarkAttributes) => asyn
 								providerId: sharingAttributes.providerId,
 								channelId: sharingAttributes.channelId,
 								providerTeamId: sharingAttributes.providerTeamId,
+								providerServerTokenUserId: sharingAttributes.botUserId,
 								text: rest.text,
 								codemark: response.codemark,
 								remotes: attributes.remotes,

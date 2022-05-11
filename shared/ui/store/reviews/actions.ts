@@ -77,6 +77,7 @@ export interface NewReviewAttributes {
 		providerTeamName?: string;
 		channelId: string;
 		channelName?: string;
+		botUserId?: string;
 	};
 	mentionedUserIds?: string[];
 	addedUsers?: string[];
@@ -117,6 +118,7 @@ export const createReview = (attributes: NewReviewAttributes) => async (
 							providerId: attributes.sharingAttributes.providerId,
 							channelId: attributes.sharingAttributes.channelId,
 							providerTeamId: attributes.sharingAttributes.providerTeamId,
+							providerServerTokenUserId: sharingAttributes.botUserId,
 							text: rest.text,
 							review: response.review,
 							mentionedUserIds: attributes.mentionedUserIds

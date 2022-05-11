@@ -39,7 +39,8 @@ import {
 	GetPostRequestType,
 	CreateThirdPartyPostRequestType,
 	MarkItemReadRequestType,
-	UpdatePostSharingDataRequestType
+	UpdatePostSharingDataRequestType,
+	SharePostViaServerRequestType
 } from "@codestream/protocols/agent";
 import { CSPost, StreamType, CSReviewStatus } from "@codestream/protocols/api";
 import { logError } from "../logger";
@@ -442,7 +443,14 @@ export const createPost = (
 						)
 					});
 				} catch (error) {
-					logError("Error sharing a post", { message: error.toString() });
+					try {
+						await HostApi.instance.send(SharePostViaServerRequestType, {
+							postId: response.post.id,
+							providerId: sharedTo.providerId
+						});
+					} catch (error2) {
+						logError("Error sharing a post", { message: error.toString() });
+					}
 				}
 			}
 		}

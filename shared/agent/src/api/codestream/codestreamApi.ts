@@ -147,6 +147,7 @@ import {
 	SetPasswordRequest,
 	SetPasswordRequestType,
 	SetStreamPurposeRequest,
+	SharePostViaServerRequest,
 	ThirdPartyProviderSetInfoRequest,
 	UnarchiveStreamRequest,
 	Unreads,
@@ -298,7 +299,9 @@ import {
 	StreamType,
 	TriggerMsTeamsProactiveMessageRequest,
 	TriggerMsTeamsProactiveMessageResponse,
-	CSThirdPartyProviderSetInfoRequestData
+	CSThirdPartyProviderSetInfoRequestData,
+	CSProviderShareRequest,
+	CSProviderShareResponse
 } from "../../protocol/api.protocol";
 import { NewRelicProvider } from "../../providers/newrelic";
 import { VersionInfo } from "../../session";
@@ -1325,6 +1328,23 @@ export class CodeStreamApiProvider implements ApiProvider {
 			CSUpdatePostSharingDataRequest,
 			CSUpdatePostSharingDataResponse
 		>(`/posts/${request.postId}`, request, this._token);
+		const [post] = await SessionContainer.instance().posts.resolve({
+			type: MessageType.Streams,
+			data: [response.post]
+		});
+		return { ...response, post };
+	}
+
+	@log()
+	async sharePostViaServer(request: SharePostViaServerRequest) {
+		const provider = getProvider(request.providerId);
+		const response = await this.post<CSProviderShareRequest, CSProviderShareResponse>(
+			`/provider-share/${provider.name}`,
+			{
+				postId: request.postId
+			},
+			this._token
+		);
 		const [post] = await SessionContainer.instance().posts.resolve({
 			type: MessageType.Streams,
 			data: [response.post]
@@ -2475,7 +2495,7 @@ export class CodeStreamApiProvider implements ApiProvider {
 
 	announceHistoryFetch(info: HistoryFetchInfo): void {
 		const session = SessionContainer.instance().session;
-		const queryParams: ParsedUrlQueryInput = {...info}
+		const queryParams: ParsedUrlQueryInput = { ...info };
 		if (session.announceHistoryFetches()) {
 			this.get<{}>("/history-fetch?" + qs.stringify(queryParams));
 		}

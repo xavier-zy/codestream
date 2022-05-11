@@ -73,6 +73,7 @@ type SlackMethods =
 	| "chat.postMessage"
 	| "chat.getPermalink"
 	| "conversations.info"
+	| "conversations.invite"
 	| "groups.info"
 	| "users.profile.set"
 	| "users.info";
@@ -386,6 +387,13 @@ export class SlackSharingApiProvider {
 				blocks = toSlackCodeErrorPostBlocks(codeError, userMaps, repoHash, this._slackUserId);
 				// Set the fallback (notification) content for the message
 				text = `${codeError.title}`;
+			}
+
+			if (request.providerServerTokenUserId) {
+				const inviteResponse = await this.slackApiCall("conversations.invite", {
+					channel: channelId,
+					users: request.providerServerTokenUserId
+				});
 			}
 
 			const response = await this.slackApiCall("chat.postMessage", {

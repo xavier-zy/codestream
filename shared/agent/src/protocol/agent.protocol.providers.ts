@@ -229,6 +229,7 @@ export interface CreateThirdPartyPostRequest {
 	crossPostIssueValues?: CrossPostIssueValues;
 	mentionedUserIds?: string[];
 	parentPostId?: string;
+	providerServerTokenUserId?: string;
 }
 export interface CreateThirdPartyPostResponse {
 	post: any;

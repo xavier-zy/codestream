@@ -227,12 +227,12 @@ export const MethodLevelTelemetryPanel = () => {
 					</p>
 					<br />
 					<div>
-						<Link href={"https://marketplace.visualstudio.com/items?itemName=rebornix.Ruby"}>
+						<Link href={"vscode:extension/rebornix.Ruby"}>
 							Ruby Plugin
 						</Link>
 					</div>
 					<div>
-						<Link href={"https://marketplace.visualstudio.com/items?itemName=castwide.solargraph"}>
+						<Link href={"vscode:extension/castwide.solargraph"}>
 							Ruby Solargraph Plugin
 						</Link>
 					</div>

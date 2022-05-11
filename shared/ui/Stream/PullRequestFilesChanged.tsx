@@ -26,7 +26,8 @@ import { MetaIcons } from "./Review";
 import {
 	getProviderPullRequestCollaborators,
 	getProviderPullRequestRepo,
-	getPullRequestId
+	getPullRequestId,
+	getCurrentProviderPullRequest
 } from "../store/providerPullRequests/reducer";
 import { CompareFilesProps } from "./PullRequestFilesChangedList";
 import { TernarySearchTree } from "../utilities/searchTree";
@@ -100,6 +101,7 @@ export const PullRequestFilesChanged = (props: Props) => {
 			currentPullRequestProviderId: state.context.currentPullRequest
 				? state.context.currentPullRequest.providerId
 				: undefined,
+			currentPullRequest: getCurrentProviderPullRequest(state),
 			matchFile,
 			parsedDiffUri,
 			userId,
@@ -442,7 +444,15 @@ export const PullRequestFilesChanged = (props: Props) => {
 			filesInOrder = [...props.filesChanged];
 		}
 		return [lines, filesInOrder];
-	}, [pr, loading, derivedState.matchFile, visitedFiles, forkPointSha, props.viewMode]);
+	}, [
+		pr,
+		derivedState.currentPullRequest,
+		loading,
+		derivedState.matchFile,
+		visitedFiles,
+		forkPointSha,
+		props.viewMode
+	]);
 
 	React.useEffect(() => {
 		if (pr && !derivedState.currentRepo) {

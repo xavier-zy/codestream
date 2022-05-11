@@ -274,6 +274,7 @@ export const PullRequestFilesChangedList = (props: Props) => {
 		}
 		return map;
 	}, [pr?.updatedAt, derivedState.currentPullRequestProviderId]);
+	//maybe here derivedState.currentPullRequest
 
 	if ((isLoading || isLoadingVisited) && !props.sidebarView)
 		return (

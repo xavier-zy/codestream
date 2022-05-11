@@ -8,7 +8,6 @@ import Icon from "./Icon";
 import { PRHeadshot } from "../src/components/Headshot";
 import {
 	clearCurrentPullRequest,
-	setCurrentPullRequestNeedsRefresh,
 	setCreatePullRequest,
 	setCurrentPullRequest,
 	setNewPostEntry
@@ -303,7 +302,6 @@ export const OpenPullRequests = React.memo((props: Props) => {
 				? state.context.currentPullRequest.source
 				: undefined,
 			currentPullRequest: currentPullRequest,
-			currentPullRequestNeedsRefresh: state.context.currentPullRequestNeedsRefresh,
 			expandedPullRequestGroupIndex,
 			providerPullRequests: state.providerPullRequests.pullRequests,
 			currentPullRequestId: getPullRequestId(state),
@@ -570,33 +568,6 @@ export const OpenPullRequests = React.memo((props: Props) => {
 			fetchPRs(queries, { force: true }, "PRConnectedProvidersLength");
 		}
 	}, [queries, derivedState.PRConnectedProvidersCount]);
-
-	useEffect(() => {
-		const { currentPullRequestNeedsRefresh } = derivedState;
-
-		if (
-			currentPullRequestNeedsRefresh &&
-			currentPullRequestNeedsRefresh.needsRefresh &&
-			currentPullRequestNeedsRefresh.providerId &&
-			currentPullRequestNeedsRefresh.pullRequestId
-		) {
-			// hack to ensure that the provider's search api
-			// has all the latest data after a PR is commented/reviewed
-			setTimeout(() => {
-				fetchOnePR(
-					currentPullRequestNeedsRefresh.providerId,
-					currentPullRequestNeedsRefresh.pullRequestId
-				);
-				dispatch(
-					setCurrentPullRequestNeedsRefresh(
-						false,
-						currentPullRequestNeedsRefresh.providerId,
-						currentPullRequestNeedsRefresh.pullRequestId
-					)
-				);
-			}, 2000);
-		}
-	}, [derivedState.currentPullRequestNeedsRefresh]);
 
 	useEffect(() => {
 		if (!mountedRef.current) return;
@@ -1386,7 +1357,7 @@ export const OpenPullRequests = React.memo((props: Props) => {
 					</InlineMenu>
 				</PaneHeader>
 				{props.paneState !== PaneState.Collapsed && (
-					<PaneBody key={'openpullrequests'}>
+					<PaneBody key={"openpullrequests"}>
 						{!derivedState.isPRSupportedCodeHostConnected && (
 							<>
 								<NoContent>Connect to GitHub or GitLab to see your PRs</NoContent>

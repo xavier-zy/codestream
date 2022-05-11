@@ -30,12 +30,13 @@ abstract class NewCodemark(val name: String, val type: CodemarkType) : AnAction(
 
     private fun execute(project: Project, source: String) {
         project.editorService?.activeEditor?.run {
+            val line = selectionOrCurrentLine.start.line
             if (!this.selectionModel.hasSelection()) {
-                val startOffset = this.document.getLineStartOffset(selectionOrCurrentLine.start.line)
-                val endOffset = this.document.getLineEndOffset(selectionOrCurrentLine.start.line)
+                val startOffset = this.document.getLineStartOffset(line)
+                val endOffset = this.document.getLineEndOffset(line)
                 this.selectionModel.setSelection(startOffset, endOffset)
             }
-            this.inlineTextFieldManager?.showTextField(false)
+            this.inlineTextFieldManager?.showTextField(false, line)
                 ?: project.codeStream?.show {
                     project.webViewService?.postNotification(
                         CodemarkNotifications.New(

@@ -69,16 +69,9 @@ class NewCodemarkGutterIconRenderer(
         val pullRequest = editor.document.getUserData(PULL_REQUEST)
         pullRequest?.providerId?.lowercase()?.contains("gitlab") == true
     }
-    private val addComment = AddComment().also { it.telemetrySource = "Gutter" }
-    private val createIssue = CreateIssue().also { it.telemetrySource = "Gutter" }
-    private val getPermalink = GetPermalink().also { it.telemetrySource = "Gutter" }
 
-    private val startReviewAction = PullRequestCommentAction("Start a review", true, editor, line, onClick)
     private val addSingleCommentText = if (isGitLab) "Add comment now" else "Add single comment"
-    private val addSingleCommentAction =
-                        PullRequestCommentAction(addSingleCommentText, false, editor, line, onClick)
-    private val addCommentToReviewAction =
-                        PullRequestCommentAction("Add comment to review", true, editor, line, onClick)
+
     override fun getPopupMenuActions(): ActionGroup? {
         val pullRequest = editor.document.getUserData(PULL_REQUEST)
         return if (pullRequest != null) {
@@ -88,13 +81,20 @@ class NewCodemarkGutterIconRenderer(
                 val reviewId = agent.getPullRequestReviewId(pullRequest.id, pullRequest.providerId)
                 // GH returns a string ID or null. GL returns true or false.
                 if (reviewId == null || reviewId.isJsonNull || (reviewId.isJsonPrimitive && reviewId.asJsonPrimitive.isBoolean && !reviewId.asBoolean)) {
+                    val startReviewAction = PullRequestCommentAction("Start a review", true, editor, line, onClick)
+                    val addSingleCommentAction =
+                        PullRequestCommentAction(addSingleCommentText, false, editor, line, onClick)
                     future.complete(DefaultActionGroup(startReviewAction, addSingleCommentAction))
                 } else {
+                    val addCommentToReviewAction = PullRequestCommentAction("Add comment to review", true, editor, line, onClick)
                     future.complete(DefaultActionGroup(addCommentToReviewAction))
                 }
             }
             future.join()
         } else {
+            val addComment = AddComment().also { it.telemetrySource = "Gutter" }
+            val createIssue = CreateIssue().also { it.telemetrySource = "Gutter" }
+            val getPermalink = GetPermalink().also { it.telemetrySource = "Gutter" }
             DefaultActionGroup(addComment, createIssue, getPermalink)
         }
     }
@@ -115,7 +115,7 @@ class PullRequestCommentAction(
     val onClick: () -> Unit
 ) : AnAction(name) {
     override fun actionPerformed(e: AnActionEvent) {
-        editor.inlineTextFieldManager?.showTextField(isReview)
+        editor.inlineTextFieldManager?.showTextField(isReview, line)
     }
 }
 
@@ -126,7 +126,7 @@ class NewInlineCodemarkGutterIconRendererClickAction(
 ) :
     DumbAwareAction() {
     override fun actionPerformed(e: AnActionEvent) {
-        editor.inlineTextFieldManager?.showTextField()
+        editor.inlineTextFieldManager?.showTextField(false, line)
     }
 }
 

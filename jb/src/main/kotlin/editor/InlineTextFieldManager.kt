@@ -163,7 +163,7 @@ class InlineTextFieldManager(val editor: Editor) {
 
     }
 
-    fun showTextField(isReview: Boolean? = true) {
+    fun showTextField(isReview: Boolean? = true, line: Int) {
         component?.let {
             doFocus(it)
             return
@@ -253,7 +253,16 @@ class InlineTextFieldManager(val editor: Editor) {
                 }.let(::wrapComponentUsingRoundedPanel)
 
                 component = textField
-                inlay = inlaysManager?.insertAfter(editor.selectionOrCurrentLine.end.line, textField)
+                val inlayLine = if (!editor.selectionModel.hasSelection()) {
+                    val startOffset = editor.document.getLineStartOffset(line)
+                    val endOffset = editor.document.getLineEndOffset(line)
+                    editor.selectionModel.setSelection(startOffset, endOffset)
+                    line
+                } else {
+                    editor.selectionOrCurrentLine.end.line
+                }
+
+                inlay = inlaysManager?.insertAfter(inlayLine, textField)
                 val viewport = (editor as? EditorImpl)?.scrollPane?.viewport
                 // https://intellij-support.jetbrains.com/hc/en-us/community/posts/360010505760-Issues-embedding-editor-in-block-inlay
                 viewport?.dispatchEvent(ComponentEvent(viewport, ComponentEvent.COMPONENT_RESIZED))

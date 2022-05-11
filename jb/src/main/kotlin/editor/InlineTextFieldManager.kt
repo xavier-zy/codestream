@@ -29,9 +29,11 @@ import com.intellij.util.io.HttpRequests
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.future.await
 import kotlinx.coroutines.launch
 import java.awt.Image
 import java.awt.event.ComponentEvent
+import java.util.concurrent.CompletableFuture
 import javax.swing.Icon
 import javax.swing.ImageIcon
 import javax.swing.JComponent
@@ -51,6 +53,31 @@ class InlineTextFieldManager(val editor: Editor) {
         if (editor !is EditorImpl) {
             logger.warn("Editor $editor is not an EditorImpl")
         }
+
+        val pullRequest = editor.document.getUserData(PULL_REQUEST)
+        pullRequest?.collaborators?.forEach {
+            val url = it.avatar.image ?: return@forEach
+            iconsCache.getOrPut(url) {
+                val iconFuture = CompletableFuture<Icon?>()
+                GlobalScope.launch {
+                    try {
+                        val bytes: ByteArray = HttpRequests.request(url).readBytes(null)
+                        val tempIcon = ImageIcon(bytes)
+                        val image: Image = tempIcon.image
+                        val resizedImage: Image = image.getScaledInstance(20, 20, Image.SCALE_SMOOTH)
+                        iconFuture.complete(ImageIcon(resizedImage))
+                    } catch (e: Exception) {
+                        logger.warn(e)
+                        iconFuture.complete(null)
+                    }
+                }
+                iconFuture
+            }
+        }
+    }
+
+    companion object {
+        val iconsCache = mutableMapOf<String, CompletableFuture<Icon?>>()
     }
 
     private val hideCallback: (() -> Unit) = {
@@ -64,9 +91,10 @@ class InlineTextFieldManager(val editor: Editor) {
     }
 
 
-    private fun createSubmitter(isReview: Boolean?): (String) -> Unit {
+    private fun createSubmitter(isReview: Boolean?): (String) -> CompletableFuture<Unit> {
         return  {
             val range = editor.selectionOrCurrentLine
+            val done = CompletableFuture<Unit>()
 
             GlobalScope.launch {
                 if (agent == null) return@launch
@@ -124,9 +152,12 @@ class InlineTextFieldManager(val editor: Editor) {
                 } catch (e: Exception) {
                     logger.error(e)
                 } finally {
+                    done.complete(Unit)
                     hideCallback()
                 }
             }
+
+            done
         }
 
 
@@ -138,31 +169,16 @@ class InlineTextFieldManager(val editor: Editor) {
             return
         }
 
-        // val icn = IconLoader.CachedImageIcon(URL(avatarUrl), true)
-
-        // myState.iconBytes = Base64.getEncoder().encodeToString(bytes)
-
-        // val icn = IconLoader.getgetIcon("/images/avatar_small.png")
-        // val model = InlineTextFieldModel("", submitter)
-
         GlobalScope.launch {
             val pullRequest = editor.document.getUserData(PULL_REQUEST)
             val users = pullRequest?.collaborators?.map {
-                with(it) {
-                    val icon = it.avatar.image?.let {
-                        val bytes: ByteArray = HttpRequests.request(it).readBytes(null)
-                        val tempIcon = ImageIcon(bytes)
-                        val image: Image = tempIcon.image
-                        val resizedImage: Image = image.getScaledInstance(20, 20, Image.SCALE_SMOOTH)
-                        ImageIcon(resizedImage)
-                    }
+                val icon = it.avatar.image?.let { iconsCache[it]?.await() }
 
-                    InlineTextFieldMentionableProviderUser(
-                        id,
-                        username,
-                        icon
-                    )
-                }
+                InlineTextFieldMentionableProviderUser(
+                    it.id,
+                    it.username,
+                    icon
+                )
             }
             ?: (editor.project?.agentService?.getUsers() ?: listOf()).map {
                 with(it) {

@@ -35,6 +35,7 @@ import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import java.awt.event.HierarchyEvent
 import java.awt.event.HierarchyListener
+import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JLayeredPane
@@ -44,7 +45,7 @@ import javax.swing.border.EmptyBorder
 class InlineTextField(
     project: Project,
     @NlsActions.ActionText actionName: String,
-    private val submitter: ((String) -> Unit),
+    private val submitter: ((String) -> CompletableFuture<Unit>),
     private val completionProvider: TextFieldWithAutoCompletionListProvider<InlineTextFieldMentionableUser>,
     authorLabel: LinkLabel<out Any>? = null,
     onCancel: (() -> Unit)? = null
@@ -244,7 +245,7 @@ class InlineTextField(
             if (isSubmitAllowed()) {
                 submitting = true
                 update()
-                submitter(textField.text)
+                submitter(textField.text).join()
                 submitting = false
                 update()
             }

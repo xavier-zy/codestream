@@ -176,17 +176,21 @@ class ReviewService(private val project: Project) {
         context: CodeStreamDiffUriContext?
     ) {
         val agent = project.agentService ?: return
-        val key = "$filePath|$repoId"
+
+        val key = if (context?.pullRequest != null) {
+            context.pullRequest.id
+        } else {
+            "$filePath|$repoId"
+        }
 
         if (reviewDiffEditor == null || diffChain == null || key != currentKey) {
             closeDiff()
-            val filesPath: List<Pair<String, String?>> // filename / previous filename (optional)
-            if (context?.pullRequest != null) {
+            val filesPath: List<Pair<String, String?>> = if (context?.pullRequest != null) {
                 val prFiles = agent.getPullRequestFiles(context.pullRequest.id, context.pullRequest.providerId)
-                filesPath = prFiles.map { Pair(it.filename, it.previousFilename) }
+                prFiles.map { Pair(it.filename, it.previousFilename) }
             } else {
-                filesPath = listOf(Pair(filePath, previousFilePath))
-            }
+                listOf(Pair(filePath, previousFilePath))
+            } // filename / previous filename (optional)
 
             currentKey = key
 

@@ -92,14 +92,6 @@ class NewCodemarkGutterIconManager(val editor: Editor) : EditorMouseMotionListen
         }
         lastHighlightedLine = line
     }
-
-    private fun RangeHighlighter.updateRenderer(renderer: GutterIconRenderer?) {
-        try {
-            this.gutterIconRenderer = renderer
-        } catch (ex: Exception) {
-            // ignore
-        }
-    }
 }
 
 class CodeStreamHighlighterProcessor : Processor<RangeHighlighter> {
@@ -125,14 +117,22 @@ class CodeStreamHighlighterProcessor : Processor<RangeHighlighter> {
     fun hideLastOverlappedHighlighterRenderer() {
         if (lastOverlappingHighlighter != null) {
             hiddenRenderer = lastOverlappingHighlighter?.gutterIconRenderer
-            lastOverlappingHighlighter?.gutterIconRenderer = null
+            lastOverlappingHighlighter?.updateRenderer(null)
         }
     }
 
     fun restoreLastOverlappedHighlighterRenderer() {
         if (hiddenRenderer != null) {
-            lastOverlappingHighlighter?.gutterIconRenderer = hiddenRenderer
+            lastOverlappingHighlighter?.updateRenderer(hiddenRenderer)
             hiddenRenderer = null
         }
+    }
+}
+
+fun RangeHighlighter.updateRenderer(renderer: GutterIconRenderer?) {
+    try {
+        this.gutterIconRenderer = renderer
+    } catch (ex: Exception) {
+        // ignore
     }
 }

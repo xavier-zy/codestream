@@ -18,6 +18,8 @@ interface Props {
 	viewMode?: "files" | "tree";
 	badge?: React.ReactNode;
 	chevron?: any;
+	pending?: any;
+	count?: any;
 }
 
 export const ChangesetFile = styled((props: ReviewChangesetFileInfo & Props) => {
@@ -51,6 +53,7 @@ export const ChangesetFile = styled((props: ReviewChangesetFileInfo & Props) => 
 			{status === FileStatus.deleted && <span className="deleted">deleted </span>}
 			{props.badge}
 			{props.actionIcons}
+			{props.count}
 			{props.iconLast}
 		</div>
 	);

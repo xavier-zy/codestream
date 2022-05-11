@@ -1318,6 +1318,7 @@ export const PullRequestConversationTab = (props: {
 					pr={pr}
 					setIsLoadingMessage={setIsLoadingMessage}
 					__onDidRender={__onDidRender}
+					key={Math.random().toString()}
 				/>
 			</div>
 			<PRSidebar>

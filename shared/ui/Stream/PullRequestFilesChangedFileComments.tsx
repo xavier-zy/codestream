@@ -8,7 +8,7 @@ import { openModal } from "../store/context/actions";
 import { WebviewModals } from "../ipc/webview.protocol.common";
 import { orderBy } from "lodash-es";
 import { api } from "../store/providerPullRequests/actions";
-import { isUndefined } from "lodash-es";
+import { find, isNil } from "lodash-es";
 import { useDidMount } from "../utilities/hooks";
 
 export const FileWithComments = styled.div`
@@ -84,7 +84,7 @@ export const PullRequestFilesChangedFileComments = (props: Props) => {
 		depth,
 		pullRequest,
 		//these props will go away if we ever get a gitlab graphql mutation
-		//for marking files as viewed
+		//for marking files as viewed, for the timebeing we need them
 		icon,
 		iconClass,
 		unVisitFile,
@@ -171,16 +171,6 @@ export const PullRequestFilesChangedFileComments = (props: Props) => {
 		}
 	};
 
-	// const handleIconClick = event => {
-	// 	event.preventDefault();
-	// 	event.stopPropagation();
-	// 	if (visited) {
-	// 		unVisitFile(fileObject.file);
-	// 	} else {
-	// 		visitFile(fileObject.file, index);
-	// 	}
-	// };
-
 	const handleClick = e => {
 		e.preventDefault();
 		setShowComments(!showComments);
@@ -262,8 +252,10 @@ export const PullRequestFilesChangedFileComments = (props: Props) => {
 			["asc", "comment.bodyText"]
 		);
 	}
-
+	//@TODO: define these on mount, hook, and/or state so we don't do the
+	//		 calculation every re-render.
 	const displayIcon = isGitLab ? icon : iconName;
+	const iconIsFlex = showCheckIcon || displayIcon === "ok";
 
 	if (!hasComments) {
 		return (
@@ -311,20 +303,42 @@ export const PullRequestFilesChangedFileComments = (props: Props) => {
 						chevron={<Icon name={showComments ? "chevron-down-thin" : "chevron-right-thin"} />}
 						selected={selected}
 						viewMode={props.viewMode}
+						count={
+							<div style={{ margin: "0 14px 0 auto", display: "flex" }}>
+								{comments.length === 0 || showComments ? null : (
+									<span style={{ margin: "0 0 0 -5px" }} className={`badge`}>
+										{comments.length}
+									</span>
+								)}
+							</div>
+						}
 						iconLast={
 							isDisabled ? null : (
-								<span
-									style={{
-										margin: "0 10px 0 auto",
-										display: showCheckIcon || displayIcon === "ok" ? "flex" : "none"
-									}}
-								>
-									<Icon
-										onClick={e => handleIconClick(e)}
-										name={displayIcon}
-										className={"file-icon"}
-									/>
-								</span>
+								<>
+									{iconIsFlex && (
+										<span
+											style={{
+												display: "flex"
+											}}
+										>
+											<Icon
+												onClick={e => handleIconClick(e)}
+												name={displayIcon}
+												className={"file-icon"}
+											/>
+										</span>
+									)}
+									{!iconIsFlex && (
+										<span
+											style={{
+												width: "19px",
+												display: "flex"
+											}}
+										>
+											{" "}
+										</span>
+									)}
+								</>
 							)
 						}
 						noHover={isDisabled || loading}

@@ -1146,7 +1146,7 @@ export const IssueList = React.memo((props: React.PropsWithChildren<IssueListPro
 				/>
 			</PaneHeader>
 			{props.paneState !== PaneState.Collapsed && (
-				<PaneBody>
+				<PaneBody key={'issuespane'}>
 					<div className="instructions">
 						<Icon name="light-bulb" />
 						Start work by grabbing a ticket below, and creating a branch.

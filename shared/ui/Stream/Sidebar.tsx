@@ -432,7 +432,7 @@ export const Sidebar = React.memo(function Sidebar() {
 							headerDragY < position.top + position.height;
 						return (
 							<Pane
-								key={index}
+								key={`${Math.random().toString()}_${index}`}
 								className={cx({
 									highlightTop,
 									highlightBottom,

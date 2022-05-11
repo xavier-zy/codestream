@@ -1386,7 +1386,7 @@ export const OpenPullRequests = React.memo((props: Props) => {
 					</InlineMenu>
 				</PaneHeader>
 				{props.paneState !== PaneState.Collapsed && (
-					<PaneBody>
+					<PaneBody key={'openpullrequests'}>
 						{!derivedState.isPRSupportedCodeHostConnected && (
 							<>
 								<NoContent>Connect to GitHub or GitLab to see your PRs</NoContent>

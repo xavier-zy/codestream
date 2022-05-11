@@ -431,7 +431,7 @@ export const PullRequestFileCommentCard = (props: PropsWithChildren<Props>) => {
 												>
 													<Icon
 														name="diff"
-														title="Open Diff in IDE"
+														title="Show Comment in Diff"
 														placement="bottom"
 														className="clickable"
 													/>

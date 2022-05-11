@@ -1338,6 +1338,9 @@ export class CodeStreamApiProvider implements ApiProvider {
 	@log()
 	async sharePostViaServer(request: SharePostViaServerRequest) {
 		const provider = getProvider(request.providerId);
+		if (!provider) {
+			throw new Error("Invalid providerId");
+		}
 		const response = await this.post<CSProviderShareRequest, CSProviderShareResponse>(
 			`/provider-share/${provider.name}`,
 			{

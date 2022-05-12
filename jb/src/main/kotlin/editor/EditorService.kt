@@ -498,6 +498,10 @@ class EditorService(val project: Project) {
             return@invokeLater
         }
 
+        val logicalPosition = LogicalPosition(range.start.line, range.start.character)
+        val point = editor.logicalPositionToXY(logicalPosition)
+        editor.scrollingModel.scrollVertically(point.y)
+
         synchronized(highlighters) {
             if (range.start.line >= editor.document.lineCount) {
                 return@invokeLater

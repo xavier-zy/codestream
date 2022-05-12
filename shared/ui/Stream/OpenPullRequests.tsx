@@ -537,7 +537,7 @@ export const OpenPullRequests = React.memo((props: Props) => {
 					});
 				}
 
-				const queries = {
+				const queriesObject = {
 					...defaultQueriesResponse,
 					...(derivedState.pullRequestQueries || {})
 				};
@@ -549,9 +549,9 @@ export const OpenPullRequests = React.memo((props: Props) => {
 				// 		results[p].push(_);
 				// 	});
 				// });
-				setQueries(queries);
+				setQueries(queriesObject);
 				setDefaultQueries(defaultQueriesResponse);
-				fetchPRs(queries, undefined, "useDidMount").then(_ => {
+				fetchPRs(queriesObject, undefined, "useDidMount").then(_ => {
 					mountedRef.current = true;
 				});
 				getOpenRepos();
@@ -988,7 +988,7 @@ export const OpenPullRequests = React.memo((props: Props) => {
 					const prGroup = providerGroups && providerGroups[index];
 					const count = prGroup ? prGroup.length : 0;
 					return (
-						<PaneNode key={`${index}_${groupIndex}`}>
+						<PaneNode>
 							<PaneNodeName
 								onClick={e => toggleQueryHidden(e, providerId, index)}
 								title={query?.name || "Unnamed"}

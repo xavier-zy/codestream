@@ -93,6 +93,15 @@ import { ThirdPartyIssueProviderBase } from "./provider";
 
 const Cache = require("timed-cache");
 
+const supportedLanguages = ["python", "ruby"] as const;
+export type LanguageId = typeof supportedLanguages[number];
+
+// Use type guard so that list of languages can be defined once and shared with union type LanguageId
+function isSupportedLanguage(value: string): value is LanguageId {
+	const language = supportedLanguages.find(validLanguage => validLanguage === value);
+	return !!language;
+}
+
 @lspProvider("newrelic")
 export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProviderInfo> {
 	private _newRelicUserId: number | undefined = undefined;
@@ -1556,7 +1565,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		return undefined;
 	}
 
-	async getMethodAverageDuration(request: MetricQueryRequest, languageId: string) {
+	async getMethodAverageDuration(request: MetricQueryRequest, languageId: LanguageId) {
 		const query = generateMethodAverageDurationQuery(
 			languageId,
 			request.newRelicEntityGuid,
@@ -1649,8 +1658,6 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			return undefined;
 		}
 	}
-
-	private _languageSupport = new Set<string>(["python", "ruby"]);
 
 	getGoldenSignalsEntity(
 		codestreamUser: CSMe,
@@ -1809,7 +1816,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		};
 	}
 
-	timesliceNameMap(languageId: string, timesliceName: string): string {
+	timesliceNameMap(languageId: LanguageId, timesliceName: string): string {
 		if (languageId === "python") {
 			return timesliceName
 				.replace("Errors/WebTransaction/", "")
@@ -1823,7 +1830,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 	addMethodName(
 		groupedByTransactionName: Dictionary<Span[]>,
 		metricTimesliceNames: MetricTimeslice[],
-		languageId: string
+		languageId: LanguageId
 	) {
 		return metricTimesliceNames.map((_: any) => {
 			const additionalMetadata: AdditionalMetadataInfo = {};
@@ -1872,11 +1879,10 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 	async getFileLevelTelemetry(
 		request: GetFileLevelTelemetryRequest
 	): Promise<GetFileLevelTelemetryResponse | undefined> {
-		if (
-			!request.filePath ||
-			!request.languageId ||
-			!this._languageSupport.has(request.languageId)
-		) {
+		const languageId: LanguageId | undefined = isSupportedLanguage(request.languageId)
+			? request.languageId
+			: undefined;
+		if (!request.filePath || !languageId) {
 			ContextLogger.warn(
 				"getFileLevelTelemetry: Missing filePath, languageId, or languageId not supported"
 			);
@@ -1970,19 +1976,14 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 
 		try {
 			// get a list of file-based method telemetry
-			const spans = await this.getSpans({
-				newRelicAccountId,
-				newRelicEntityGuid,
-				codeFilePath: relativeFilePath
-			});
+			const spanResponse =
+				(await this.getSpans({
+					newRelicAccountId,
+					newRelicEntityGuid,
+					codeFilePath: relativeFilePath
+				})) || [];
 
-			if (spans && request.languageId === "ruby") {
-				for (const span of spans) {
-					if (span.name?.startsWith("Nested/Controller")) {
-						span.name = span.name?.replace("Nested/", "");
-					}
-				}
-			}
+			const spans = this.applyLanguageFilter(spanResponse, languageId);
 
 			const groupedByTransactionName = spans ? _groupBy(spans, _ => _.name) : {};
 			const metricTimesliceNames = Object.keys(groupedByTransactionName);
@@ -1996,7 +1997,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 			};
 			const [averageDurationResponse, throughputResponse, errorRateResponse] = await Promise.all([
 				request.options.includeAverageDuration && metricTimesliceNames?.length
-					? this.getMethodAverageDuration(queryArgs, request.languageId)
+					? this.getMethodAverageDuration(queryArgs, languageId)
 					: undefined,
 				request.options.includeThroughput && metricTimesliceNames?.length
 					? this.getMethodThroughput(queryArgs)
@@ -2012,7 +2013,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					_.actor.account.nrql.results = this.addMethodName(
 						groupedByTransactionName,
 						_.actor.account.nrql.results,
-						request.languageId
+						languageId
 					).filter(_ => _.functionName);
 
 					if (request.functionName) {
@@ -2095,6 +2096,23 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 		});
 
 		return undefined;
+	}
+
+	private applyLanguageFilter(spans: Span[], languageId: LanguageId): Span[] {
+		switch (languageId) {
+			case "ruby":
+				// MessageBroker is a top level message broker for ruby - there is a separate function level span that we show
+				return spans
+					.filter(span => !span.name?.startsWith("MessageBroker/"))
+					.map(span => {
+						if (span.name?.startsWith("Nested/Controller")) {
+							span.name = span.name?.replace("Nested/", "");
+						}
+						return span;
+					});
+			default:
+				return spans;
+		}
 	}
 
 	@lspHandler(GetMethodLevelTelemetryRequestType)

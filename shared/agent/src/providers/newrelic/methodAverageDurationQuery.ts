@@ -1,3 +1,5 @@
+import { LanguageId } from "../newrelic";
+
 function mapRubyTimesliceName(name: string): string {
 	if (name.startsWith("Nested/Controller")) {
 		return name.replace("Nested/", "");
@@ -7,7 +9,7 @@ function mapRubyTimesliceName(name: string): string {
 }
 
 export function generateMethodAverageDurationQuery(
-	languageId: string,
+	languageId: LanguageId,
 	newRelicEntityGuid: string,
 	metricTimesliceNames?: string[],
 	codeNamespace?: string

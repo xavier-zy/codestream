@@ -101,7 +101,7 @@ export const PullRequestFilesChangedFileComments = (props: Props) => {
 	const [showCheckIcon, setShowCheckIcon] = React.useState(false);
 	const [isChecked, setIsChecked] = React.useState(false);
 	const [iconName, setIconName] = React.useState("sync");
-	const isGitLab = pullRequest.providerId.includes("gitlab");
+	const isGitLab = pullRequest?.providerId?.includes("gitlab");
 
 	const derivedState = useSelector((state: CodeStreamState) => {
 		return {
@@ -219,8 +219,8 @@ export const PullRequestFilesChangedFileComments = (props: Props) => {
 
 		dispatch(
 			setCurrentPullRequest(
-				pullRequest.providerId,
-				pullRequest.id,
+				pullRequest?.providerId,
+				pullRequest?.id,
 				comment?.comment?.id || comment?.review?.id,
 				"",
 				"details"

@@ -7,6 +7,7 @@ import com.codestream.extensions.uri
 import com.codestream.protocols.agent.CreateShareableCodemarkParams
 import com.codestream.protocols.agent.ScmRangeInfoParams
 import com.codestream.protocols.agent.ShareableCodemarkAttributes
+import com.codestream.protocols.agent.TelemetryParams
 import com.codestream.protocols.webview.DocumentMarkerNotifications
 import com.codestream.protocols.webview.PullRequestNotifications
 import com.codestream.review.PARENT_POST_ID
@@ -94,6 +95,7 @@ class InlineTextFieldManager(val editor: Editor) {
     private fun createSubmitter(isReview: Boolean?): (String) -> CompletableFuture<Unit> {
         return  {
             val range = editor.selectionOrCurrentLine
+            val pullRequestData = editor.document.getUserData(PULL_REQUEST)
             val done = CompletableFuture<Unit>()
 
             GlobalScope.launch {
@@ -109,7 +111,7 @@ class InlineTextFieldManager(val editor: Editor) {
                         )
                     )
 
-                    val mentionedUsers = if (editor.document.getUserData(PULL_REQUEST) == null) {
+                    val mentionedUsers = if (pullRequestData == null) {
                         val users = agent.getUsers()
                         val potentialUsernames = "@([A-Za-z0-9]+)".toRegex().findAll(it).map { it.value }
                         users.filter { potentialUsernames.contains("@${it.username}") }.map { it.id }
@@ -136,7 +138,25 @@ class InlineTextFieldManager(val editor: Editor) {
                             "JetBrains",
                         )
                     )
+
+                    if (pullRequestData != null) {
+                        try {
+                            agent.agent.telemetry(
+                                TelemetryParams(
+                                    "PR Comment Added",
+                                    mapOf(
+                                        "Host" to pullRequestData.providerId,
+                                        "Comment Type" to if (isReview == true) "Review Comment" else "Single Comment"
+                                    )
+                                )
+                            )
+                        } catch (e: Exception) {
+                            logger.warn(e)
+                        }
+                    }
+
                     if (createCodemarkResult.pullRequest != null && createCodemarkResult.directives != null) {
+
                         webview.postNotification(
                             PullRequestNotifications.HandleDirectives(
                                 createCodemarkResult.pullRequest,

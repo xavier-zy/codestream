@@ -134,7 +134,7 @@ interface Props extends CompareFilesProps {
 	fetch?: Function;
 	readOnly?: boolean;
 	commitBased?: boolean;
-	prCommitsRange: any;
+	prCommitsRange?: any;
 	sidebarView?: boolean;
 	accessRawDiffs?: boolean;
 	setAccessRawDiffs?: Function;

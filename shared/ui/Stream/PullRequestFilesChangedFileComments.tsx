@@ -111,30 +111,27 @@ export const PullRequestFilesChangedFileComments = (props: Props) => {
 	const { currentPullRequest } = derivedState;
 	const currentPr = currentPullRequest?.conversations?.repository?.pullRequest;
 
-	// Sync our visited state with whats on github
-	// useDidMount(() => {
-	// 	syncCheckedStatusWithPr();
-	// });
-
 	useEffect(() => {
 		syncCheckedStatusWithPr();
 	}, [currentPr, prCommitsRange]);
 
 	const syncCheckedStatusWithPr = () => {
-		const prFiles = currentPr.files.nodes;
-		const currentFilepath = fileObject.file;
+		if (currentPr) {
+			const prFiles = currentPr.files.nodes;
+			const currentFilepath = fileObject.file;
 
-		const prFile = prFiles.find(pr => pr.path === currentFilepath);
-		const isVisitedCheck = prFile.viewerViewedState === "VIEWED";
+			const prFile = prFiles.find(pr => pr.path === currentFilepath);
+			const isVisitedCheck = prFile.viewerViewedState === "VIEWED";
 
-		if (isVisitedCheck) {
-			setIconName("ok");
-			setIsChecked(true);
-			// visitAndCheckFile();
-		} else {
-			setIconName("circle");
-			setIsChecked(false);
-			// unvisitAndUncheckFile();
+			if (isVisitedCheck) {
+				setIconName("ok");
+				setIsChecked(true);
+				// visitAndCheckFile();
+			} else {
+				setIconName("circle");
+				setIsChecked(false);
+				// unvisitAndUncheckFile();
+			}
 		}
 	};
 

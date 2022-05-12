@@ -269,6 +269,7 @@ export class CodeStreamAgentConnection implements Disposable {
 		const breakOnStart = (env && env.CODESTREAM_AGENT_BREAK_ON_START) === "true";
 
 		const agentEnv = {
+			...process.env,
 			NODE_TLS_REJECT_UNAUTHORIZED: options.disableStrictSSL ? 0 : 1,
 			NODE_EXTRA_CA_CERTS: options.extraCerts
 		};

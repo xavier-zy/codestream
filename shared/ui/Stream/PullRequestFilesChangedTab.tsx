@@ -357,6 +357,7 @@ export const PullRequestFilesChangedTab = (props: {
 					isLoading={isLoading}
 					setIsLoadingMessage={props.setIsLoadingMessage!}
 					commitBased={commitBased}
+					prCommitsRange={prCommitsRange}
 					sidebarView={props.sidebarView}
 					accessRawDiffs={accessRawDiffs}
 					setAccessRawDiffs={setAccessRawDiffs}

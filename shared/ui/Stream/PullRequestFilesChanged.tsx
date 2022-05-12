@@ -5,7 +5,6 @@ import {
 	FetchForkPointRequestType
 } from "@codestream/protocols/agent";
 import { HostApi } from "..";
-import { ChangesetFile } from "./Review/ChangesetFile";
 import { useSelector } from "react-redux";
 import { CodeStreamState } from "@codestream/webview/store";
 import Icon from "./Icon";
@@ -73,6 +72,7 @@ interface Props extends CompareFilesProps {
 		[path: string]: any;
 	};
 	commitBased?: boolean;
+	prCommitsRange: any;
 	sidebarView?: boolean;
 	startingDepth?: number;
 	accessRawDiffs?: boolean;
@@ -330,9 +330,10 @@ export const PullRequestFilesChanged = (props: Props) => {
 		const hasComments = (props.commentMap[f.file] || []).length > 0;
 		return (
 			<PullRequestFilesChangedFileComments
-				key={i}
+				key={`${i}_${f.file}`}
 				comments={hasComments && props.commentMap[f.file]}
 				icon={icon}
+				prCommitsRange={props.prCommitsRange}
 				iconClass={iconClass}
 				index={i}
 				hasComments={hasComments}
@@ -447,6 +448,7 @@ export const PullRequestFilesChanged = (props: Props) => {
 	}, [
 		pr,
 		derivedState.currentPullRequest,
+		props.prCommitsRange,
 		loading,
 		derivedState.matchFile,
 		visitedFiles,

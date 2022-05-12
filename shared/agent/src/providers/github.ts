@@ -1263,6 +1263,17 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 		const query = `mutation ${Method}($pullRequestId: ID!, $path: String!) {
 			${method}(input: {pullRequestId: $pullRequestId, path: $path}) {
 				  clientMutationId
+				  pullRequest {
+					files(first: 100) {
+					  totalCount
+					  nodes {
+						path
+						deletions
+						additions
+						viewerViewedState
+					  }
+					}
+				  }
 				}
 			  }`;
 
@@ -1271,7 +1282,9 @@ export class GitHubProvider extends ThirdPartyIssueProviderBase<CSGitHubProvider
 			path: request.path
 		});
 
-		return response;
+		return this.handleResponse(request.pullRequestId, {
+			directives: [{ type: "updatePullRequest", data: response[method].pullRequest }]
+		});
 	}
 
 	async markPullRequestReadyForReview(request: {

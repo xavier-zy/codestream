@@ -8,8 +8,10 @@ import { openModal } from "../store/context/actions";
 import { WebviewModals } from "../ipc/webview.protocol.common";
 import { orderBy } from "lodash-es";
 import { api } from "../store/providerPullRequests/actions";
-import { find, isNil } from "lodash-es";
 import { useDidMount } from "../utilities/hooks";
+import { useSelector } from "react-redux";
+import { CodeStreamState } from "@codestream/webview/store";
+import { getCurrentProviderPullRequest } from "../store/providerPullRequests/reducer";
 
 export const FileWithComments = styled.div`
 	cursor: pointer;
@@ -63,6 +65,7 @@ interface Props {
 	filesChanged?: any;
 	pullRequest?: any;
 	cardIndex?: any;
+	prCommitsRange?: any;
 }
 
 /**
@@ -83,6 +86,7 @@ export const PullRequestFilesChangedFileComments = (props: Props) => {
 		goDiff,
 		depth,
 		pullRequest,
+		prCommitsRange,
 		//these props will go away if we ever get a gitlab graphql mutation
 		//for marking files as viewed, for the timebeing we need them
 		icon,
@@ -99,29 +103,25 @@ export const PullRequestFilesChangedFileComments = (props: Props) => {
 	const [iconName, setIconName] = React.useState("sync");
 	const isGitLab = pullRequest.providerId.includes("gitlab");
 
-	// Sync our visited state with whats on github
-	useDidMount(() => {
-		syncCheckedStatusWithPr();
+	const derivedState = useSelector((state: CodeStreamState) => {
+		return {
+			currentPullRequest: getCurrentProviderPullRequest(state)
+		};
 	});
+	const { currentPullRequest } = derivedState;
+	const currentPr = currentPullRequest?.conversations?.repository?.pullRequest;
+
+	// Sync our visited state with whats on github
+	// useDidMount(() => {
+	// 	syncCheckedStatusWithPr();
+	// });
 
 	useEffect(() => {
 		syncCheckedStatusWithPr();
-	}, [pullRequest]);
-
-	useEffect(() => {
-		let iconName;
-
-		if (isChecked) {
-			iconName = "ok";
-		} else {
-			iconName = "circle";
-		}
-
-		setIconName(iconName);
-	}, [isChecked]);
+	}, [currentPr, prCommitsRange]);
 
 	const syncCheckedStatusWithPr = () => {
-		const prFiles = pullRequest.files.nodes;
+		const prFiles = currentPr.files.nodes;
 		const currentFilepath = fileObject.file;
 
 		const prFile = prFiles.find(pr => pr.path === currentFilepath);
@@ -141,6 +141,7 @@ export const PullRequestFilesChangedFileComments = (props: Props) => {
 				path: fileObject.file
 			})
 		);
+		setIconName("ok");
 		setIsChecked(true);
 	};
 
@@ -151,6 +152,7 @@ export const PullRequestFilesChangedFileComments = (props: Props) => {
 				path: fileObject.file
 			})
 		);
+		setIconName("circle");
 		setIsChecked(false);
 	};
 
@@ -255,7 +257,7 @@ export const PullRequestFilesChangedFileComments = (props: Props) => {
 	//@TODO: define these on mount, hook, and/or state so we don't do the
 	//		 calculation every re-render.
 	const displayIcon = isGitLab ? icon : iconName;
-	const iconIsFlex = showCheckIcon || displayIcon === "ok";
+	const iconIsFlex = showCheckIcon || iconName === "ok";
 
 	if (!hasComments) {
 		return (

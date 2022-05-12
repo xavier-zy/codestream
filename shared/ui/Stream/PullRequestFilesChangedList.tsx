@@ -134,6 +134,7 @@ interface Props extends CompareFilesProps {
 	fetch?: Function;
 	readOnly?: boolean;
 	commitBased?: boolean;
+	prCommitsRange: any;
 	sidebarView?: boolean;
 	accessRawDiffs?: boolean;
 	setAccessRawDiffs?: Function;
@@ -439,6 +440,7 @@ export const PullRequestFilesChangedList = (props: Props) => {
 					toggleDirectory={toggleDirectory}
 					commentMap={commentMap}
 					commitBased={props.commitBased}
+					prCommitsRange={props.prCommitsRange}
 					sidebarView={props.sidebarView}
 					startingDepth={5}
 					accessRawDiffs={props.accessRawDiffs}

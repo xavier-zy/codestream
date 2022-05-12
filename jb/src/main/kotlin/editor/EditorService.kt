@@ -487,14 +487,14 @@ class EditorService(val project: Project) {
             return@invokeLater
         }
 
-        if (!highlight || range == null) {
-            synchronized(highlighters) {
-                for (highlighter in highlighters) {
-                    editor.markupModel.removeHighlighter(highlighter)
-                    highlighter.dispose()
-                }
-                highlighters.clear()
+        synchronized(highlighters) {
+            for (highlighter in highlighters) {
+                editor.markupModel.removeHighlighter(highlighter)
+                highlighter.dispose()
             }
+            highlighters.clear()
+        }
+        if (!highlight || range == null) {
             return@invokeLater
         }
 
@@ -504,7 +504,10 @@ class EditorService(val project: Project) {
             }
 
             val highlighter =
-                if (range.start.line == range.end.line && range.start.character == 0 && range.end.character > 1000) {
+                if (range.start.line == range.end.line
+                    && range.start.character == 0
+                    && (range.end.character > 1000) || range.end.character == 0
+                ) {
                     editor.markupModel.addLineHighlighter(
                         range.start.line, HighlighterLayer.LAST, getHighlightTextAttributes(editor)
                     )

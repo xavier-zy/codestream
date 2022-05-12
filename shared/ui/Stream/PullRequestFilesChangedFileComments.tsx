@@ -128,9 +128,13 @@ export const PullRequestFilesChangedFileComments = (props: Props) => {
 		const isVisitedCheck = prFile.viewerViewedState === "VIEWED";
 
 		if (isVisitedCheck) {
-			visitAndCheckFile();
+			setIconName("ok");
+			setIsChecked(true);
+			// visitAndCheckFile();
 		} else {
-			unvisitAndUncheckFile();
+			setIconName("circle");
+			setIsChecked(false);
+			// unvisitAndUncheckFile();
 		}
 	};
 

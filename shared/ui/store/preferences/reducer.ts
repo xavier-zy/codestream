@@ -10,14 +10,14 @@ type PreferencesActions = ActionType<typeof actions>;
 
 const initialState: PreferencesState = {};
 
-const mergeCustom = function(_target, source) {
+const mergeCustom = function(target, source) {
 	// don't merge arrays, just copy ... at least i hope that's the right solution
 	if (source instanceof Array) {
 		return [...source];
-	} else {
-		return [];
 	}
+	return undefined;
 };
+
 export function reducePreferences(state = initialState, action: PreferencesActions) {
 	switch (action.type) {
 		case PreferencesActionsType.Set:

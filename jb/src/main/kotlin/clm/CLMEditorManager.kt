@@ -33,6 +33,7 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.refactoring.suggested.startOffset
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.eclipse.lsp4j.Range
 import java.awt.Point
@@ -73,13 +74,23 @@ abstract class CLMEditorManager(
     private var lastResult: FileLevelTelemetryResult? = null
     private var analyticsTracked = false
     private val appSettings = ServiceManager.getService(ApplicationSettingsService::class.java)
+    private var doPoll = true;
 
     init {
-        loadInlays(false)
+        pollLoadInlays()
         editor.document.addDocumentListener(this)
     }
 
     abstract fun getLookupClassName(psiFile: PsiFile): String?
+
+    fun pollLoadInlays() {
+        GlobalScope.launch {
+            while (doPoll) {
+                loadInlays(false)
+                delay(60000)
+            }
+        }
+    }
 
     fun loadInlays(resetCache: Boolean?) {
         if (path == null) return
@@ -282,6 +293,7 @@ abstract class CLMEditorManager(
     }
 
     override fun dispose() {
+        doPoll = false
         appSettings.removeGoldenSignalsListener(this)
     }
 }

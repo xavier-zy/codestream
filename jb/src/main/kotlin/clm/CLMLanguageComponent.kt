@@ -10,7 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 
-open class CLMLanguageComponent<T : CLMEditorManager>(
+abstract class CLMLanguageComponent<T : CLMEditorManager>(
     val project: Project,
     private val fileType: Class<out PsiFile>,
     val editorFactory: (editor: Editor) -> T

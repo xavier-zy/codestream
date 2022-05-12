@@ -720,14 +720,16 @@ export const OpenPullRequests = React.memo((props: Props) => {
 		} else {
 			// otherwise, either open the PR details or show the diffs,
 			// depending on the user's preference
-			const view = derivedState.hideDiffs ? "details" : "sidebar-diffs";
-			dispatch(setCurrentPullRequest(pr.providerId, pr.id, "", "", view, groupIndex));
-			setCurrentGroupIndex(groupIndex);
-			fetchOnePR(pr.providerId, pr.id);
+			if (pr?.providerId && pr?.id) {
+				const view = derivedState.hideDiffs ? "details" : "sidebar-diffs";
+				dispatch(setCurrentPullRequest(pr.providerId, pr.id, "", "", view, groupIndex));
+				setCurrentGroupIndex(groupIndex);
+				fetchOnePR(pr.providerId, pr.id);
 
-			HostApi.instance.track("PR Clicked", {
-				Host: pr.providerId
-			});
+				HostApi.instance.track("PR Clicked", {
+					Host: pr.providerId
+				});
+			}
 		}
 	};
 
@@ -795,6 +797,21 @@ export const OpenPullRequests = React.memo((props: Props) => {
 		} else {
 			return "PR not loaded";
 		}
+
+		// if (pr) {
+		// 	const currentRepo = openRepos.find(
+		// 		_ => _?.name?.toLowerCase() === pr.repository?.name?.toLowerCase()
+		// 	);
+		// 	if (!currentRepo) {
+		// 		return `You don't have the ${pr.repository?.name} repo open in your IDE`;
+		// 	}
+		// 	if (currentRepo.currentBranch == pr.headRefName) {
+		// 		return `You are on the ${pr.headRefName} branch`;
+		// 	}
+		// 	return "";
+		// } else {
+		// 	return "PR not loaded";
+		// }
 	};
 
 	/**
@@ -1089,7 +1106,6 @@ export const OpenPullRequests = React.memo((props: Props) => {
 																className="clickable"
 																title="View on GitHub"
 																placement="bottomLeft"
-																delay={1}
 															/>
 														</span>
 														<Icon
@@ -1203,16 +1219,15 @@ export const OpenPullRequests = React.memo((props: Props) => {
 																e.preventDefault();
 																e.stopPropagation();
 																HostApi.instance.send(OpenUrlRequestType, {
-																	url: pr.url
+																	url: pr.web_url
 																});
 															}}
 														>
 															<Icon
 																name="link-external"
 																className="clickable"
-																title="View on GitHub"
+																title="View on Gitlab"
 																placement="bottomLeft"
-																delay={1}
 															/>
 														</span>
 														<Icon
@@ -1220,8 +1235,9 @@ export const OpenPullRequests = React.memo((props: Props) => {
 															placement="bottom"
 															name="copy"
 															className="clickable"
-															onClick={e => handleClickCopy(e, pr.url)}
+															onClick={e => handleClickCopy(e, pr.web_url)}
 														/>
+														{/* 
 														<span className={cantCheckoutReason(pr) ? "disabled" : ""}>
 															<Icon
 																title={
@@ -1240,6 +1256,7 @@ export const OpenPullRequests = React.memo((props: Props) => {
 																name="git-branch"
 															/>
 														</span>
+														*/}
 														<span>
 															<Icon
 																title="Reload"

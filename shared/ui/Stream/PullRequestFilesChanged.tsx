@@ -360,7 +360,7 @@ export const PullRequestFilesChanged = (props: Props) => {
 			<Directory
 				style={{ paddingLeft: `${depth * 10}px` }}
 				onClick={() => props.toggleDirectory(hideKey)}
-				key={`directory_${dirPath}`}
+				key={`directory_${dirPath}_${hideKey}`}
 			>
 				<Icon name={hidden ? "chevron-right-thin" : "chevron-down-thin"} />
 				{path.join(...dirPath)}

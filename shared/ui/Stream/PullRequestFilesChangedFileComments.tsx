@@ -339,7 +339,8 @@ export const PullRequestFilesChangedFileComments = (props: Props) => {
 										<span
 											style={{
 												width: "19px",
-												display: "flex"
+												display: "flex",
+												marginRight: "10px"
 											}}
 										>
 											{" "}

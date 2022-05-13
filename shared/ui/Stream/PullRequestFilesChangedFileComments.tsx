@@ -16,7 +16,6 @@ import { getCurrentProviderPullRequest } from "../store/providerPullRequests/red
 export const FileWithComments = styled.div`
 	cursor: pointer;
 	margin: 0 !important;
-	color: #dfbd8b;
 `;
 
 export const Comment = styled.div`
@@ -263,11 +262,7 @@ export const PullRequestFilesChangedFileComments = (props: Props) => {
 
 	if (!hasComments) {
 		return (
-			<div
-				style={{ color: "#dfbd8b" }}
-				onMouseEnter={e => handleMouseEnter(e)}
-				onMouseLeave={e => handleMouseLeave(e)}
-			>
+			<div onMouseEnter={e => handleMouseEnter(e)} onMouseLeave={e => handleMouseLeave(e)}>
 				<ChangesetFile
 					selected={props.selected}
 					viewMode={props.viewMode}
@@ -299,6 +294,7 @@ export const PullRequestFilesChangedFileComments = (props: Props) => {
 					key={index + ":" + fileObject.file}
 					depth={depth}
 					{...fileObject}
+					customFilenameColor={"#dfbd8b"}
 				/>
 			</div>
 		);
@@ -363,6 +359,7 @@ export const PullRequestFilesChangedFileComments = (props: Props) => {
 						key={index + ":" + fileObject.file}
 						depth={depth}
 						{...fileObject}
+						customFilenameColor={"#dfbd8b"}
 					/>
 				</FileWithComments>
 				{showComments && (

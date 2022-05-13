@@ -20,10 +20,11 @@ interface Props {
 	chevron?: any;
 	pending?: any;
 	count?: any;
+	customFilenameColor?: string;
 }
 
 export const ChangesetFile = styled((props: ReviewChangesetFileInfo & Props) => {
-	const { linesAdded, linesRemoved, status } = props;
+	const { customFilenameColor, linesAdded, linesRemoved, status } = props;
 
 	const filename = props.viewMode === "tree" ? pathBasename(props.file) : props.file;
 	return (
@@ -41,7 +42,9 @@ export const ChangesetFile = styled((props: ReviewChangesetFileInfo & Props) => 
 			{props.icon}
 			<Tooltip title={props.tooltip} placement="bottom" delay={1}>
 				<span className="file-info ellipsis-left">
-					<bdi dir="ltr">{filename}</bdi>
+					<bdi dir="ltr" style={{ color: customFilenameColor ? customFilenameColor : "default" }}>
+						{filename}
+					</bdi>
 				</span>
 			</Tooltip>
 			{linesAdded > 0 && <span className="added">+{linesAdded} </span>}

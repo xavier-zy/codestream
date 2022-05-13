@@ -38,7 +38,6 @@ export const Directory = styled.div`
 	cursor: pointer;
 	padding: 2px 0;
 	margin: 0 !important;
-	color: #dfbd8b;
 	&:hover {
 		background: var(--app-background-color-hover);
 		color: var(--text-color-highlight);

@@ -21,6 +21,7 @@ import {
 	LanguageClient,
 	LanguageClientOptions,
 	Message,
+	NodeModule,
 	NotificationType,
 	Range,
 	RequestType,
@@ -159,6 +160,12 @@ type NotificationParamsOf<NT> = NT extends NotificationType<infer N, any> ? N : 
 type RequestParamsOf<RT> = RT extends RequestType<infer R, any, any, any> ? R : never;
 type RequestResponseOf<RT> = RT extends RequestType<any, infer R, any, any> ? R : never;
 
+// ServerOptions is a union type of 3 completely different types - pick the one we're using
+interface CSServerOptions {
+	run: NodeModule;
+	debug: NodeModule;
+}
+
 export class CodeStreamAgentConnection implements Disposable {
 	private _onDidLogin = new EventEmitter<DidLoginNotification>();
 	get onDidLogin(): Event<DidLoginNotification> {
@@ -260,7 +267,7 @@ export class CodeStreamAgentConnection implements Disposable {
 	private _disposable: Disposable | undefined;
 	private _clientOptions: LanguageClientOptions;
 	private _clientReadyCancellation: CancellationTokenSource | undefined;
-	private _serverOptions: ServerOptions;
+	private _serverOptions: CSServerOptions;
 	private _restartCount = 0;
 	private _outputChannel: OutputChannel | undefined;
 
@@ -290,9 +297,6 @@ export class CodeStreamAgentConnection implements Disposable {
 					env: agentEnv
 				}
 			}
-		} as {
-			run: any;
-			debug: any;
 		};
 
 		this._clientOptions = {
@@ -1133,15 +1137,22 @@ export class CodeStreamAgentConnection implements Disposable {
 						NEW_RELIC_LICENSE_KEY: telemetryOptions.licenseIngestKey
 					} as NewRelicEnvironmentVariables;
 
-					(this._serverOptions as any).run.options = (this._serverOptions as any).run.options || {};
-					(this._serverOptions as any).run.options.env = newRelicEnvironmentVariables;
+					this._serverOptions.run.options = this._serverOptions.run.options || process.env;
+					this._serverOptions.run.options.env = {
+						...this._serverOptions.run.options.env,
+						newRelicEnvironmentVariables
+					};
 
-					(this._serverOptions as any).debug.options =
-						(this._serverOptions as any).debug.options || {};
-					(this._serverOptions as any).debug.options.env = newRelicEnvironmentVariables;
+					this._serverOptions.debug.options = this._serverOptions.debug.options || process.env;
+					this._serverOptions.debug.options.env = {
+						...this._serverOptions.debug.options.env,
+						newRelicEnvironmentVariables
+					};
 
 					initializationOptions.newRelicTelemetryEnabled = true;
-					Logger.log(`NewRelic telemetry enabled=${initializationOptions.newRelicTelemetryEnabled}`);
+					Logger.log(
+						`NewRelic telemetry enabled=${initializationOptions.newRelicTelemetryEnabled}`
+					);
 				} else {
 					Logger.warn("no NewRelic telemetry");
 				}

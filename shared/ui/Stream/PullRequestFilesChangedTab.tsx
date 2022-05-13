@@ -25,6 +25,7 @@ import {
 import { HostApi } from "../webview-api";
 import Icon from "./Icon";
 import styled from "styled-components";
+import Tooltip from "./Tooltip";
 
 const STATUS_MAP = {
 	modified: FileStatus.modified
@@ -147,18 +148,6 @@ export const PullRequestFilesChangedTab = (props: {
 			disposable?.dispose();
 		};
 	});
-
-	const handleMouseEnterFilesChanged = e => {
-		e.preventDefault();
-		e.stopPropagation();
-		setShowViewedRatio(true);
-	};
-
-	const handleMouseLeaveFilesChanged = e => {
-		e.preventDefault();
-		e.stopPropagation();
-		setShowViewedRatio(false);
-	};
 
 	const getPRFiles = async () => {
 		if (prCommitsRange.length > 0 && derivedState.currentRepo) {
@@ -345,8 +334,6 @@ export const PullRequestFilesChangedTab = (props: {
 						<DirectoryTopLevel
 							onClick={e => toggleDirectory(e)}
 							className="files-changed-list-dropdown"
-							onMouseEnter={e => handleMouseEnterFilesChanged(e)}
-							onMouseLeave={e => handleMouseLeaveFilesChanged(e)}
 						>
 							<div>
 								<Icon name={showDirectory ? "chevron-down-thin" : "chevron-right-thin"} /> Files
@@ -361,15 +348,17 @@ export const PullRequestFilesChangedTab = (props: {
 									</span>
 								</DropdownButton>
 							</div>
-							<div
-								style={{
-									display: showViewedRatio ? "block" : "none",
-									margin: "0 14px 0 auto",
-									padding: "3px 0 0 0"
-								}}
-							>
-								{viewedRatio}
-							</div>
+
+							<Tooltip title="Files Viewed" delay={0.5}>
+								<div
+									style={{
+										margin: "0 14px 0 auto",
+										padding: "3px 0 0 0"
+									}}
+								>
+									{viewedRatio}
+								</div>
+							</Tooltip>
 						</DirectoryTopLevel>
 					)}
 

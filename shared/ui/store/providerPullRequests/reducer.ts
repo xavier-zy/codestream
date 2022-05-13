@@ -953,9 +953,9 @@ export const getProviderPullRequestRepoObjectCore = (
 						let points = 0;
 						for (const remote of repo.remotes) {
 							const split = remote.normalizedUrl?.split("/");
-							if (split.length) {
+							if (split?.length) {
 								for (const s of split) {
-									if (s && splitRepoUrl.includes(s)) {
+									if (s && splitRepoUrl?.includes(s)) {
 										points++;
 									}
 								}

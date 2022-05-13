@@ -1,4 +1,7 @@
-import { getProviderPullRequestRepo } from "@codestream/webview/store/providerPullRequests/reducer";
+import {
+	getProviderPullRequestRepo,
+	getCurrentProviderPullRequest
+} from "@codestream/webview/store/providerPullRequests/reducer";
 import { DropdownButton } from "@codestream/webview/Stream/DropdownButton";
 import { distanceOfTimeInWords } from "@codestream/webview/Stream/Timestamp";
 import React, { useState, useEffect, useMemo } from "react";
@@ -30,6 +33,7 @@ const STATUS_MAP = {
 export const DirectoryTopLevel = styled.div`
 	cursor: pointer;
 	margin: 0 !important;
+	display: flex;
 	&:hover {
 		background: var(--app-background-color-hover);
 		color: var(--text-color-highlight);
@@ -63,6 +67,7 @@ export const PullRequestFilesChangedTab = (props: {
 			providerPullRequests: state.providerPullRequests.pullRequests,
 			pullRequestFilesChangedMode: state.preferences.pullRequestFilesChangedMode || "files",
 			currentRepo: getProviderPullRequestRepo(state),
+			currentPullRequest: getCurrentProviderPullRequest(state),
 			currentPullRequestId: state.context.currentPullRequest
 				? state.context.currentPullRequest.id
 				: undefined
@@ -74,6 +79,8 @@ export const PullRequestFilesChangedTab = (props: {
 	const [prCommits, setPrCommits] = useState<FetchThirdPartyPullRequestCommitsResponse[]>([]);
 	const [accessRawDiffs, setAccessRawDiffs] = useState(false);
 	const [showDirectory, setShowDirectory] = useState(true);
+	const [viewedRatio, setViewedRatio] = useState("");
+	const [showViewedRatio, setShowViewedRatio] = useState(false);
 
 	// const [lastReviewCommitOid, setLastReviewCommitOid] = useState<string | undefined>();
 
@@ -97,6 +104,17 @@ export const PullRequestFilesChangedTab = (props: {
 			data.sort((a, b) => new Date(a.authoredDate).getTime() - new Date(b.authoredDate).getTime())
 		);
 	};
+
+	//set ratio of viewed/total when currentPr changed in redux
+	useEffect(() => {
+		const prFileNodes =
+			derivedState.currentPullRequest?.conversations?.repository?.pullRequest?.files?.nodes;
+
+		if (prFileNodes) {
+			const viewedCount = prFileNodes.filter(f => f.viewerViewedState === "VIEWED").length;
+			setViewedRatio(`${viewedCount}/${prFileNodes.length}`);
+		}
+	}, [derivedState.currentPullRequest]);
 
 	useEffect(() => {
 		// re-render if providerPullRequests changes
@@ -129,6 +147,18 @@ export const PullRequestFilesChangedTab = (props: {
 			disposable?.dispose();
 		};
 	});
+
+	const handleMouseEnterFilesChanged = e => {
+		e.preventDefault();
+		e.stopPropagation();
+		setShowViewedRatio(true);
+	};
+
+	const handleMouseLeaveFilesChanged = e => {
+		e.preventDefault();
+		e.stopPropagation();
+		setShowViewedRatio(false);
+	};
 
 	const getPRFiles = async () => {
 		if (prCommitsRange.length > 0 && derivedState.currentRepo) {
@@ -315,18 +345,31 @@ export const PullRequestFilesChangedTab = (props: {
 						<DirectoryTopLevel
 							onClick={e => toggleDirectory(e)}
 							className="files-changed-list-dropdown"
+							onMouseEnter={e => handleMouseEnterFilesChanged(e)}
+							onMouseLeave={e => handleMouseLeaveFilesChanged(e)}
 						>
-							<Icon name={showDirectory ? "chevron-down-thin" : "chevron-right-thin"} /> Files
-							<DropdownButton
-								variant="text"
-								items={dropdownItems}
-								isMultiSelect={true}
-								itemsRange={prCommitsRange}
+							<div>
+								<Icon name={showDirectory ? "chevron-down-thin" : "chevron-right-thin"} /> Files
+								<DropdownButton
+									variant="text"
+									items={dropdownItems}
+									isMultiSelect={true}
+									itemsRange={prCommitsRange}
+								>
+									<span style={{ fontSize: "smaller", color: "var(--text-color-subtle)" }}>
+										{dropdownLabel}
+									</span>
+								</DropdownButton>
+							</div>
+							<div
+								style={{
+									display: showViewedRatio ? "block" : "none",
+									margin: "0 14px 0 auto",
+									padding: "3px 0 0 0"
+								}}
 							>
-								<span style={{ fontSize: "smaller", color: "var(--text-color-subtle)" }}>
-									{dropdownLabel}
-								</span>
-							</DropdownButton>
+								{viewedRatio}
+							</div>
 						</DirectoryTopLevel>
 					)}
 

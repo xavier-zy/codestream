@@ -550,7 +550,7 @@ export const PullRequestFileCommentCard = (props: PropsWithChildren<Props>) => {
 										databaseId={comment.databaseId}
 										isOpen={openComments[comment.databaseId]}
 										__onDidRender={__onDidRender}
-										alwaysOpen={true}
+										oneRow={true}
 									>
 										{comment.isResolved && comment.viewerCanUnresolve && (
 											<Button

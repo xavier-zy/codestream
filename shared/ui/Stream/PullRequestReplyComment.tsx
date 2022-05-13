@@ -23,13 +23,13 @@ interface Props {
 	parentId?: string;
 	isOpen: boolean;
 	__onDidRender: Function;
-	alwaysOpen?: boolean;
+	oneRow?: boolean;
 	children?: any;
 	noHeadshot?: boolean;
 }
 
 export const PullRequestReplyComment = styled((props: Props) => {
-	const { alwaysOpen, pr, databaseId, parentId } = props;
+	const { oneRow, pr, databaseId, parentId } = props;
 	const dispatch = useDispatch();
 
 	const [text, setText] = useState("");
@@ -107,21 +107,23 @@ export const PullRequestReplyComment = styled((props: Props) => {
 					__onDidRender={stuff => props.__onDidRender(stuff)}
 				/>
 			</PRCodeCommentReplyInput>
-			{(alwaysOpen || open) && !isPreviewing && (
+			{!isPreviewing && (
 				<PRButtonRowFlex>
 					{props.children}
-
-					<Button
-						style={alwaysOpen ? { marginLeft: "auto" } : ""}
-						variant="secondary"
-						onClick={handleCancelComment}
-					>
-						Cancel
-					</Button>
-
-					<Button variant="primary" isLoading={isSubmitting} onClick={handleComment}>
-						Comment
-					</Button>
+					{open && (
+						<>
+							<Button
+								style={oneRow ? { marginLeft: "auto" } : ""}
+								variant="secondary"
+								onClick={handleCancelComment}
+							>
+								Cancel
+							</Button>
+							<Button variant="primary" isLoading={isSubmitting} onClick={handleComment}>
+								Comment
+							</Button>
+						</>
+					)}
 				</PRButtonRowFlex>
 			)}
 		</PRCodeCommentReply>

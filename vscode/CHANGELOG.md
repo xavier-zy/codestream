@@ -1,5 +1,11 @@
 # Change Log
 
+## [12.18.0] - 2022-5-13
+
+### Fixed
+
+- Addresses [#967](https://github.com/TeamCodeStream/CodeStream/issues/967) &mdash; newrelic_agent.log file created
+
 ## [12.17.0] - 2022-5-12
 
 ### Fixed

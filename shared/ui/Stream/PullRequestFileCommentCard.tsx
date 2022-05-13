@@ -154,7 +154,7 @@ export const PullRequestFileCommentCard = (props: PropsWithChildren<Props>) => {
 			_docMarkers.sort((a, b) => (a?.range?.start?.line > b?.range?.start?.line ? 1 : -1));
 			const marker = _docMarkers[cardIndex];
 			//@ts-ignore
-			setCommentRange(marker.range);
+			setCommentRange(marker?.range);
 		}
 	}, [derivedState.documentMarkers]);
 

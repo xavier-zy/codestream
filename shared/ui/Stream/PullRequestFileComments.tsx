@@ -199,6 +199,23 @@ export const PullRequestFileComments = (props: PropsWithChildren<Props>) => {
 		return map;
 	}, [pr, pr?.updatedAt]);
 
+	useEffect(() => {
+		let commentsArray = commentMap[filename];
+		let sortedComments = orderBy(
+			commentsArray,
+			["asc", "comment.position"],
+			//@ts-ignore
+			["asc", "comment.bodyText"]
+		);
+		let sortedCommentsWithRefs = sortedComments.map(c => ({
+			//@ts-ignore
+			...c,
+			ref: React.createRef()
+		}));
+
+		setSortedComments(sortedCommentsWithRefs);
+	}, [commentMap]);
+
 	if (!filename) return null;
 
 	return (

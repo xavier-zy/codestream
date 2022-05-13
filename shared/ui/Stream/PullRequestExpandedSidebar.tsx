@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { CodeStreamState } from "../store";
 import styled from "styled-components";
@@ -50,6 +50,10 @@ export const PullRequestExpandedSidebar = (props: PullRequestExpandedSidebarProp
 		dispatch(openModal(WebviewModals.FinishReview));
 	};
 
+	const reviewCount = useMemo(() => {
+		return props.thirdPartyPrObject?.pendingReview?.comments?.totalCount;
+	}, [props.thirdPartyPrObject?.pendingReview?.comments?.totalCount]);
+
 	return (
 		<>
 			<Row onClick={e => handleRowClick(e)} style={{ padding: "0 0 0 45px" }}>
@@ -58,8 +62,11 @@ export const PullRequestExpandedSidebar = (props: PullRequestExpandedSidebarProp
 					PR Details
 				</div>
 				<div>
-					<ReviewButton onClick={e => handleReviewClick(e)}>
-						<span className="wide-text">Review</span>
+					<ReviewButton
+						style={{ width: reviewCount ? "70px" : "50px" }}
+						onClick={e => handleReviewClick(e)}
+					>
+						<span className="wide-text">Review {reviewCount > 0 && <> ({reviewCount})</>}</span>
 					</ReviewButton>
 				</div>
 			</Row>

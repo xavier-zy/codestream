@@ -94,7 +94,7 @@ import {
 	SpanRequest
 } from "./newrelic/newrelic.types";
 import { generateSpanQuery } from "./newrelic/spanQuery";
-import { ThirdPartyIssueProviderBase } from "./provider";
+import { ThirdPartyIssueProviderBase } from "./thirdPartyIssueProviderBase";
 
 const Cache = require("timed-cache");
 

@@ -323,7 +323,7 @@ export const PullRequestFilesChangedFileComments = (props: Props) => {
 										<span
 											style={{
 												display: "flex",
-												marginRight: "10px"
+												marginRight: "9px"
 											}}
 										>
 											<Icon
@@ -338,7 +338,7 @@ export const PullRequestFilesChangedFileComments = (props: Props) => {
 											style={{
 												width: "19px",
 												display: "flex",
-												marginRight: "10px"
+												marginRight: "9px"
 											}}
 										>
 											{" "}

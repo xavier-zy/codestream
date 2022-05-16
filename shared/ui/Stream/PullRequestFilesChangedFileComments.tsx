@@ -109,7 +109,9 @@ export const PullRequestFilesChangedFileComments = (props: Props) => {
 		};
 	});
 	const { currentPullRequest } = derivedState;
-	const currentPr = currentPullRequest?.conversations?.repository?.pullRequest;
+	const currentPr = isGitLab
+		? currentPullRequest?.conversations?.mergeRequest
+		: currentPullRequest?.conversations?.repository?.pullRequest;
 
 	useEffect(() => {
 		syncCheckedStatusWithPr();
@@ -195,7 +197,11 @@ export const PullRequestFilesChangedFileComments = (props: Props) => {
 			return "";
 		}
 
-		let diffHunk = commentObject.comment?.diffHunk || commentObject.review?.diffHunk || "";
+		let diffHunk =
+			commentObject.comment?.diffHunk ||
+			commentObject.review?.diffHunk ||
+			commentObject?.comment?.position?.patch ||
+			"";
 		let diffHunkNewLineLength = diffHunk.split("\n").length - 1;
 
 		diffHunk.split("\n").map(d => {
@@ -217,10 +223,12 @@ export const PullRequestFilesChangedFileComments = (props: Props) => {
 		event.preventDefault();
 		event.stopPropagation();
 
+		let prId = isGitLab ? pullRequest?.idComputed : pullRequest?.id;
+
 		dispatch(
 			setCurrentPullRequest(
 				pullRequest?.providerId,
-				pullRequest?.id,
+				prId,
 				comment?.comment?.id || comment?.review?.id,
 				"",
 				"details"
@@ -252,7 +260,9 @@ export const PullRequestFilesChangedFileComments = (props: Props) => {
 			comments,
 			["asc", "comment.position"],
 			//@ts-ignore
-			["asc", "comment.bodyText"]
+			["asc", "comment.bodyText"],
+			//@ts-ignore
+			["asc", "comment.body"]
 		);
 	}
 	//@TODO: define these on mount, hook, and/or state so we don't do the
@@ -383,7 +393,7 @@ export const PullRequestFilesChangedFileComments = (props: Props) => {
 										>
 											<Icon name="comment" className="type-icon" />{" "}
 											{lineNumber(c) && <span>Line {lineNumber(c)}: </span>}
-											{c.comment.bodyText}
+											{c.comment.bodyText || c.comment.body}
 										</div>
 										{isPending && (
 											<PendingCircle onClick={e => handlePendingClick(e)}>P</PendingCircle>

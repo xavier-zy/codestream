@@ -1041,11 +1041,20 @@ export const OpenPullRequests = React.memo((props: Props) => {
 							{!query.hidden &&
 								prGroup &&
 								prGroup.map((pr: any, index) => {
+									//@TODO: memoize these variables for optimization
+									let prId, expandedPrId;
+									if (pr.base_id && derivedState.expandedPullRequestId) {
+										prId = pr.base_id;
+										expandedPrId = JSON.parse(derivedState?.expandedPullRequestId).id;
+									} else {
+										prId = pr.id;
+										expandedPrId = derivedState.expandedPullRequestId;
+									}
 									const expanded =
-										pr.id === derivedState.expandedPullRequestId &&
+										prId == expandedPrId &&
 										(derivedState.expandedPullRequestGroupIndex === groupIndex ||
 											currentGroupIndex === groupIndex);
-									const isLoadingPR = pr.id === individualLoadingPR;
+									const isLoadingPR = prId === individualLoadingPR;
 									const chevronIcon = derivedState.hideDiffs ? null : expanded ? (
 										<Icon name="chevron-down-thin" />
 									) : (
@@ -1062,7 +1071,7 @@ export const OpenPullRequests = React.memo((props: Props) => {
 										return [
 											<>
 												<Row
-													key={"pr-" + pr.id}
+													key={"pr-" + prId}
 													className={selected ? "pr-row selected" : "pr-row"}
 													onClick={() => clickPR(pr, groupIndex)}
 												>

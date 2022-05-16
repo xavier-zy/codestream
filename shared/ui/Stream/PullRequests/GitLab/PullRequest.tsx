@@ -317,12 +317,15 @@ export const PullRequest = () => {
 				: undefined,
 			currentPullRequest: currentPullRequest,
 			currentPullRequestLastUpdated: providerPullRequestLastUpdated,
+			previousPullRequestView: state.context.currentPullRequest
+				? state.context.currentPullRequest.previousView
+				: undefined,
+			isVsIde: state.ide.name === "VS",
 			composeCodemarkActive: state.context.composeCodemarkActive,
 			team,
 			textEditorUri: state.editorContext.textEditorUri,
 			reposState: state.repos,
-			checkoutBranch: state.context.pullRequestCheckoutBranch,
-			isVsIde: state.ide.name === "VS"
+			checkoutBranch: state.context.pullRequestCheckoutBranch
 		};
 	});
 
@@ -333,6 +336,7 @@ export const PullRequest = () => {
 	const [isLoadingMessage, setIsLoadingMessage] = useState("");
 	const [generalError, setGeneralError] = useState("");
 	const [collapseAll, setCollapseAll] = useState(false);
+	const [oneLayerModal, setOneLayerModal] = useState(false);
 
 	const [rightOpen, setRightOpen] = useState(false);
 	const [openRepos, setOpenRepos] = useState<any[]>(EMPTY_ARRAY);
@@ -356,8 +360,14 @@ export const PullRequest = () => {
 	const closeFileComments = () => {
 		// note we're passing no value for the 3rd argument, which clears
 		// the commentId
+		// if (pr) dispatch(setCurrentPullRequest(pr.providerId, pr.idComputed));
+		if (oneLayerModal && pr) {
+			dispatch(setCurrentPullRequest(pr.providerId, pr.idComputed, "", "", "sidebar-diffs"));
+		}
 
-		if (pr) dispatch(setCurrentPullRequest(pr.providerId, pr.idComputed));
+		if (!oneLayerModal && pr) {
+			dispatch(setCurrentPullRequest(pr.providerId, pr.idComputed, "", "", "details"));
+		}
 	};
 
 	const _assignState = _pr => {
@@ -396,6 +406,14 @@ export const PullRequest = () => {
 		if (!derivedState.reviewsStateBootstrapped) {
 			dispatch(bootstrapReviews());
 		}
+		if (
+			derivedState.currentPullRequestCommentId &&
+			!derivedState.composeCodemarkActive &&
+			derivedState.previousPullRequestView === "sidebar-diffs"
+		) {
+			setOneLayerModal(true);
+		}
+
 		let _didChangeDataNotification;
 		getOpenRepos();
 		initialFetch().then((_: GitLabMergeRequestWrapper | undefined) => {
@@ -624,8 +642,6 @@ export const PullRequest = () => {
 
 	const { order, filter } = derivedState;
 
-	console.warn("PR: ", pr);
-
 	if (!pr) {
 		return (
 			<div
@@ -681,6 +697,24 @@ export const PullRequest = () => {
 			HostApi.instance.send(OpenUrlRequestType, { url });
 		}
 	};
+
+	if (oneLayerModal) {
+		return (
+			<ThemeProvider theme={addViewPreferencesToTheme}>
+				<PullRequestRoot className="panel full-height">
+					<CreateCodemarkIcons narrow onebutton />
+					<PullRequestFileComments
+						pr={pr}
+						setIsLoadingMessage={setIsLoadingMessage}
+						commentId={derivedState.currentPullRequestCommentId}
+						quote={() => {}}
+						onClose={closeFileComments}
+						prCommitsRange={prCommitsRange}
+					/>
+				</PullRequestRoot>
+			</ThemeProvider>
+		);
+	}
 
 	return (
 		<ThemeProvider theme={addViewPreferencesToTheme}>

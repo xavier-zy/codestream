@@ -72,7 +72,7 @@ const STATUS_MAP = {
 };
 
 interface Props {
-	pr: FetchThirdPartyPullRequestPullRequest;
+	pr: any;
 	setIsLoadingMessage: Function;
 	commentId: string | undefined;
 	quote: Function;

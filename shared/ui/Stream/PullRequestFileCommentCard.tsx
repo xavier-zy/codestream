@@ -302,11 +302,13 @@ export const PullRequestFileCommentCard = (props: PropsWithChildren<Props>) => {
 	const codeBlock = () => {
 		const path = comment.path || "";
 		let extension = Path.extname(path).toLowerCase();
+		let diffHunk = comment?.diffHunk || review?.diffHunk || comment?.position?.patch || "";
+
 		if (extension.startsWith(".")) {
 			extension = extension.substring(1);
 		}
 
-		const codeHTML = prettyPrintOne(escapeHtml(comment.diffHunk), extension, lineNumber());
+		const codeHTML = prettyPrintOne(escapeHtml(diffHunk), extension, lineNumber());
 		return (
 			<pre
 				className="code prettyprint"
@@ -324,7 +326,7 @@ export const PullRequestFileCommentCard = (props: PropsWithChildren<Props>) => {
 			return "";
 		}
 
-		let diffHunk = comment?.diffHunk || review?.diffHunk || "";
+		let diffHunk = comment?.diffHunk || review?.diffHunk || comment?.position?.patch || "";
 		let diffHunkNewLineLength = diffHunk.split("\n").length - 1;
 
 		diffHunk.split("\n").map(d => {

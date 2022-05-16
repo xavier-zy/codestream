@@ -17,7 +17,6 @@ import {
 	DidChangeObservabilityDataNotificationType,
 	GetMethodLevelTelemetryRequestType,
 	GetMethodLevelTelemetryResponse,
-	TelemetryRequestType,
 	WarningOrError
 } from "@codestream/protocols/agent";
 import { DelayedRender } from "@codestream/webview/Container/DelayedRender";
@@ -45,6 +44,7 @@ import { DropdownButton } from "../DropdownButton";
 const Root = styled.div``;
 
 const ApmServiceTitle = styled.span`
+	opacity: 0.5;
 	a {
 		color: var(--text-color-highlight);
 		text-decoration: none;
@@ -246,51 +246,11 @@ export const MethodLevelTelemetryPanel = () => {
 			{!loading && (
 				<div
 					style={{
-						paddingTop: "2px",
 						whiteSpace: "nowrap",
 						overflow: "hidden",
 						textOverflow: "ellipsis"
 					}}
 				>
-					<div
-						style={{
-							display: "inline-block",
-							width: "10px",
-							height: "10px",
-							border: "0px",
-							backgroundColor:
-								ALERT_SEVERITY_COLORS[
-									(telemetryResponse && telemetryResponse.newRelicAlertSeverity) || "UNKNOWN"
-								],
-							margin: "0 5px 0 6px"
-						}}
-					/>
-
-					{telemetryResponse && telemetryResponse.newRelicUrl && (
-						<Tooltip title="View service summary on New Relic" placement="bottom" delay={1}>
-							<span style={{ opacity: ".5" }}>
-								<ApmServiceTitle>
-									<Link
-										onClick={e => {
-											e.preventDefault();
-											HostApi.instance.track("MLT Open on NR1", {
-												"NR Account ID":
-													derivedState.currentMethodLevelTelemetry.newRelicAccountId + ""
-											});
-											HostApi.instance.send(OpenUrlRequestType, {
-												url: telemetryResponse.newRelicUrl!
-											});
-										}}
-									>
-										<span className="subtle">
-											{(telemetryResponse && telemetryResponse.newRelicEntityName) || "Entity"}
-										</span>{" "}
-										<Icon name="link-external" className="open-external"></Icon>
-									</Link>
-								</ApmServiceTitle>
-							</span>
-						</Tooltip>
-					)}
 					<PanelHeader
 						title={derivedState.currentMethodLevelTelemetry.functionName + " telemetry"}
 					></PanelHeader>
@@ -371,6 +331,31 @@ export const MethodLevelTelemetryPanel = () => {
 											>
 												{telemetryResponse.newRelicEntityName!}
 											</DropdownButton>
+											{telemetryResponse && telemetryResponse.newRelicUrl && (
+												<Tooltip
+													title="View service summary on New Relic"
+													placement="bottom"
+													delay={1}
+												>
+													<ApmServiceTitle>
+														<Link
+															onClick={e => {
+																e.preventDefault();
+																HostApi.instance.track("MLT Open on NR1", {
+																	"NR Account ID":
+																		derivedState.currentMethodLevelTelemetry.newRelicAccountId + ""
+																});
+																HostApi.instance.send(OpenUrlRequestType, {
+																	url: telemetryResponse.newRelicUrl!
+																});
+															}}
+														>
+															{" "}
+															<Icon name="link-external" className="open-external"></Icon>
+														</Link>
+													</ApmServiceTitle>
+												</Tooltip>
+											)}
 										</EntityDropdownContainer>
 									)}
 									<div style={{ margin: "0 0 11px 0" }}>

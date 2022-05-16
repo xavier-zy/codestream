@@ -75,6 +75,7 @@ class NewCodemarkGutterIconRenderer(
 
     override fun getPopupMenuActions(): ActionGroup? {
         val pullRequest = editor.document.getUserData(PULL_REQUEST)
+        val isInPrRange = isInPrRange()
         return if (pullRequest != null) {
             val agent = editor.project?.agentService ?: return null
             val future = CompletableFuture<DefaultActionGroup>()
@@ -84,15 +85,13 @@ class NewCodemarkGutterIconRenderer(
                 val addSingleCommentAction =
                     PullRequestCommentAction(addSingleCommentText, false, editor, line, onClick)
                 val addCommentToReviewAction = PullRequestCommentAction("Add comment to review", true, editor, line, onClick)
-                ApplicationManager.getApplication().invokeLater {
-                    if (!isInPrRange()) {
-                        future.complete(DefaultActionGroup(addSingleCommentAction))
-                    } else if (reviewId == null || reviewId.isJsonNull || (reviewId.isJsonPrimitive && reviewId.asJsonPrimitive.isBoolean && !reviewId.asBoolean)) {
-                        // GH returns a string ID or null. GL returns true or false.
-                        future.complete(DefaultActionGroup(startReviewAction, addSingleCommentAction))
-                    } else {
-                        future.complete(DefaultActionGroup(addCommentToReviewAction))
-                    }
+                if (!isInPrRange) {
+                    future.complete(DefaultActionGroup(addSingleCommentAction))
+                } else if (reviewId == null || reviewId.isJsonNull || (reviewId.isJsonPrimitive && reviewId.asJsonPrimitive.isBoolean && !reviewId.asBoolean)) {
+                    // GH returns a string ID or null. GL returns true or false.
+                    future.complete(DefaultActionGroup(startReviewAction, addSingleCommentAction))
+                } else {
+                    future.complete(DefaultActionGroup(addCommentToReviewAction))
                 }
             }
             future.join()

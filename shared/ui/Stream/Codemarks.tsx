@@ -339,7 +339,7 @@ export class SimpleCodemarksForFile extends Component<Props, State> {
 
 			return (
 				<NoContent>
-					Discuss code by selecting a range and clicking an icon.{" "}
+					Discuss code by selecting a range, and optionally share to Slack or Teams.{" "}
 					<Link href="https://docs.newrelic.com/docs/codestream/how-use-codestream/discuss-code/">
 						Learn more.
 					</Link>

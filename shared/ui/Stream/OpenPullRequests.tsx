@@ -779,6 +779,14 @@ export const OpenPullRequests = React.memo((props: Props) => {
 		}
 	};
 
+	const expandedPrIdObject = str => {
+		try {
+			return JSON.parse(str).id;
+		} catch (e) {
+			return str;
+		}
+	};
+
 	const cantCheckoutReason = prToCheckout => {
 		if (prToCheckout) {
 			const currentRepo = openRepos.find(
@@ -1042,19 +1050,21 @@ export const OpenPullRequests = React.memo((props: Props) => {
 								prGroup &&
 								prGroup.map((pr: any, index) => {
 									// //@TODO: memoize these variables for optimization
-									// let prId, expandedPrId;
-									// if (pr.base_id && derivedState.expandedPullRequestId) {
-									// 	prId = pr.base_id;
-									// 	expandedPrId = JSON.parse(derivedState?.expandedPullRequestId).id;
-									// } else {
-									// 	prId = pr.id;
-									// 	expandedPrId = derivedState.expandedPullRequestId;
-									// }
+									let prId, expandedPrId;
+
+									if (pr.base_id && derivedState.expandedPullRequestId) {
+										prId = pr.base_id;
+										expandedPrId = expandedPrIdObject(derivedState.expandedPullRequestId);
+									} else {
+										prId = pr.id;
+										expandedPrId = derivedState.expandedPullRequestId;
+									}
+
 									const expanded =
-										pr.id === derivedState.expandedPullRequestId &&
+										prId == expandedPrId &&
 										(derivedState.expandedPullRequestGroupIndex === groupIndex ||
 											currentGroupIndex === groupIndex);
-									const isLoadingPR = pr.id === individualLoadingPR;
+									const isLoadingPR = prId === individualLoadingPR;
 									const chevronIcon = derivedState.hideDiffs ? null : expanded ? (
 										<Icon name="chevron-down-thin" />
 									) : (

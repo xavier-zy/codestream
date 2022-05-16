@@ -2245,7 +2245,7 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 							},
 							// error
 							{
-								query: `SELECT filter(count(newrelic.timeslice.value), where metricTimesliceName = 'Errors/all') / (filter(count(newrelic.timeslice.value), where metricTimesliceName='${metricTimesliceNameMapping["e"]}')) * 100 AS 'Error %' FROM Metric WHERE entity.guid IN ('${entityGuid}') TIMESERIES`,
+								query: `SELECT rate(count(apm.service.transaction.error.count), 1 minute) AS \`errorsPerMinute\` FROM Metric WHERE \`entity.guid\` = '${entityGuid}' AND metricTimesliceName='${metricTimesliceNameMapping["e"]}' FACET metricTimesliceName TIMESERIES`,
 								title: "Error rate"
 							}
 						]
@@ -2293,7 +2293,9 @@ export class NewRelicProvider extends ThirdPartyIssueProviderBase<CSNewRelicProv
 					// fix up the title for this one since the element title != the parent's title
 					_.title = "Error rate";
 					results[i].actor.account.nrql.results.forEach((element: any) => {
-						element["Error rate"] = element["Error %"] ? element["Error %"].toFixed(2) : null;
+						element["Error rate"] = element["errorsPerMinute"]
+							? element["errorsPerMinute"].toFixed(2)
+							: null;
 					});
 				}
 				return {

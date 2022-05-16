@@ -46,6 +46,8 @@ import com.codestream.protocols.agent.ReviewCoverageParams
 import com.codestream.protocols.agent.ReviewCoverageResult
 import com.codestream.protocols.agent.ScmRangeInfoParams
 import com.codestream.protocols.agent.ScmRangeInfoResult
+import com.codestream.protocols.agent.ScmSha1RangesParams
+import com.codestream.protocols.agent.ScmSha1RangesResult
 import com.codestream.protocols.agent.SetServerUrlParams
 import com.codestream.protocols.agent.SetServerUrlResult
 import com.codestream.protocols.agent.Stream
@@ -578,12 +580,20 @@ class AgentService(private val project: Project) : Disposable {
         return gson.fromJson(json!!)
     }
 
+    suspend fun scmSha1Ranges(params: ScmSha1RangesParams): List<ScmSha1RangesResult> {
+        val json = remoteEndpoint
+            .request("codestream/scm/sha1/ranges", params)
+            .await() as JsonElement
+        return gson.fromJson(json)
+    }
+
     suspend fun createShareableCodemark(params: CreateShareableCodemarkParams): CreateShareableCodemarkResult {
         val json = remoteEndpoint
             .request("codestream/codemarks/sharing/create", params)
             .await() as JsonObject?
         return gson.fromJson(json!!)
     }
+
     private val _restartObservers = mutableListOf<() -> Unit>()
     fun onRestart(observer: () -> Unit) {
         _restartObservers += observer

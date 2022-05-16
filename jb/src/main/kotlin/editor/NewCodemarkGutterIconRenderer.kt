@@ -11,6 +11,7 @@ import com.codestream.extensions.selectionOrCurrentLine
 import com.codestream.extensions.uri
 import com.codestream.protocols.CodemarkType
 import com.codestream.protocols.webview.CodemarkNotifications
+import com.codestream.review.DIFF_RANGES
 import com.codestream.review.PULL_REQUEST
 import com.codestream.review.ReviewDiffVirtualFile
 import com.codestream.webViewService
@@ -79,15 +80,19 @@ class NewCodemarkGutterIconRenderer(
             val future = CompletableFuture<DefaultActionGroup>()
             GlobalScope.launch {
                 val reviewId = agent.getPullRequestReviewId(pullRequest.id, pullRequest.providerId)
-                // GH returns a string ID or null. GL returns true or false.
-                if (reviewId == null || reviewId.isJsonNull || (reviewId.isJsonPrimitive && reviewId.asJsonPrimitive.isBoolean && !reviewId.asBoolean)) {
-                    val startReviewAction = PullRequestCommentAction("Start a review", true, editor, line, onClick)
-                    val addSingleCommentAction =
-                        PullRequestCommentAction(addSingleCommentText, false, editor, line, onClick)
-                    future.complete(DefaultActionGroup(startReviewAction, addSingleCommentAction))
-                } else {
-                    val addCommentToReviewAction = PullRequestCommentAction("Add comment to review", true, editor, line, onClick)
-                    future.complete(DefaultActionGroup(addCommentToReviewAction))
+                val startReviewAction = PullRequestCommentAction("Start a review", true, editor, line, onClick)
+                val addSingleCommentAction =
+                    PullRequestCommentAction(addSingleCommentText, false, editor, line, onClick)
+                val addCommentToReviewAction = PullRequestCommentAction("Add comment to review", true, editor, line, onClick)
+                ApplicationManager.getApplication().invokeLater {
+                    if (!isInPrRange()) {
+                        future.complete(DefaultActionGroup(addSingleCommentAction))
+                    } else if (reviewId == null || reviewId.isJsonNull || (reviewId.isJsonPrimitive && reviewId.asJsonPrimitive.isBoolean && !reviewId.asBoolean)) {
+                        // GH returns a string ID or null. GL returns true or false.
+                        future.complete(DefaultActionGroup(startReviewAction, addSingleCommentAction))
+                    } else {
+                        future.complete(DefaultActionGroup(addCommentToReviewAction))
+                    }
                 }
             }
             future.join()
@@ -105,6 +110,25 @@ class NewCodemarkGutterIconRenderer(
     }
 
     override fun getAlignment() = Alignment.LEFT
+
+    private fun isInPrRange(): Boolean {
+        val diffRanges = editor.document.getUserData(DIFF_RANGES) ?: return false
+        val selection = editor.selectionOrCurrentLine
+
+        val selectionStart = selection.start.line + 1
+        val selectionEnd = selection.end.line + 1
+
+        diffRanges.forEach {
+            if (it.end >= it.start) {
+                if ((it.start <= selectionStart && selectionStart <= it.end) ||
+                    (it.start <= selectionEnd && selectionEnd <= it.end) ||
+                    (selectionStart <= it.start && it.end <= selectionEnd)) {
+                    return true
+                }
+            }
+        }
+        return false
+    }
 }
 
 class PullRequestCommentAction(

@@ -633,6 +633,23 @@ class GitRemote(
     val url: String
 )
 
+class ScmSha1RangesParams(
+    val repoId: String,
+    val filePath: String,
+    val baseSha: String,
+    val headSha: String
+)
+
+class ScmSha1RangesResult(
+    val baseLinesChanged: ScmSha1RangesResultLinesChanged,
+    val headLinesChanged: ScmSha1RangesResultLinesChanged
+)
+
+class ScmSha1RangesResultLinesChanged(
+    val start: Int,
+    val end: Int
+)
+
 class CreateShareableCodemarkParams(
     val attributes: ShareableCodemarkAttributes,
     val parentPostId: String?,

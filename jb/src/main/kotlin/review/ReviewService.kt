@@ -3,6 +3,7 @@ package com.codestream.review
 import com.codestream.agentService
 import com.codestream.codeStream
 import com.codestream.protocols.agent.GetLocalReviewContentsParams
+import com.codestream.protocols.agent.ScmSha1RangesResultLinesChanged
 import com.codestream.protocols.webview.ReviewNotifications
 import com.codestream.sessionService
 import com.codestream.webViewService
@@ -33,6 +34,7 @@ val REVIEW_DIFF = KeyWithDefaultValue.create("REVIEW_DIFF", false)
 val REPO_ID = Key<String>("REPO_ID")
 val PARENT_POST_ID = Key<String>("PARENT_POST_ID")
 val PULL_REQUEST = Key<CodeStreamDiffUriPullRequest?>("PULL_REQUEST")
+val DIFF_RANGES = Key<List<ScmSha1RangesResultLinesChanged>?>("DIFF_RANGES")
 val PATH = Key<String>("PATH")
 
 class ReviewService(private val project: Project) {

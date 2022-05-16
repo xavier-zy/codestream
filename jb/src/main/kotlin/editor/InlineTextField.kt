@@ -247,7 +247,6 @@ class InlineTextField(
                 update()
                 submitter(textField.text).join()
                 submitting = false
-                update()
             }
         }
 

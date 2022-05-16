@@ -419,6 +419,7 @@ export const MethodLevelTelemetryPanel = () => {
 																	dataKey={_.title}
 																	stroke="#8884d8"
 																	activeDot={{ r: 8 }}
+																	connectNulls={true}
 																/>
 															</LineChart>
 														</ResponsiveContainer>

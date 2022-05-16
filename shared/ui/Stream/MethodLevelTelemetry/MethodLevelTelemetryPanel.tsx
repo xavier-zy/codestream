@@ -372,23 +372,24 @@ export const MethodLevelTelemetryPanel = () => {
 												return (
 													<div
 														key={"chart-" + index}
-														style={{ marginLeft: "-25px", marginBottom: "15px" }}
+														style={{ marginLeft: "-37px", marginBottom: "15px" }}
 													>
-														<ResponsiveContainer width="90%" height={270}>
+														<ResponsiveContainer width="100%" height={300} debounce={1}>
 															<LineChart
 																width={500}
 																height={300}
 																data={_.result}
 																margin={{
 																	top: 5,
-																	right: 30,
-																	left: 10,
+																	right: 0,
+																	left: 0,
 																	bottom: 5
 																}}
 															>
 																<CartesianGrid strokeDasharray="3 3" />
 																<XAxis
 																	dataKey="endDate"
+																	tick={{ fontSize: 12 }}
 																	tickFormatter={label =>
 																		new Date(label).toLocaleTimeString(undefined, {
 																			hour: "2-digit",
@@ -396,9 +397,9 @@ export const MethodLevelTelemetryPanel = () => {
 																		})
 																	}
 																/>
-																<YAxis dataKey={_.title} />
+																<YAxis dataKey={_.title} tick={{ fontSize: 12 }} />
 																<ReTooltip />
-																<Legend />
+																<Legend wrapperStyle={{ fontSize: "0.95em" }} />
 																<Line
 																	type="monotone"
 																	dataKey={_.title}

@@ -133,6 +133,7 @@ import {
 	UpdatePresenceRequestType,
 	UpdateStreamMembershipRequestType,
 	UpdateStreamMembershipResponse,
+	UpdateThirdPartyProviderPullRequestRequestType,
 	UpdateUserRequest,
 	UpdateUserRequestType,
 	UserDidCommitNotification,
@@ -959,6 +960,17 @@ export class CodeStreamAgentConnection implements Disposable {
 				resetCache,
 				options
 			});
+		}
+	})(this);
+
+	get providers() {
+		return this._providers;
+	}
+	private readonly _providers = new (class {
+		constructor(private readonly _connection: CodeStreamAgentConnection) {}
+
+		updatePullRequests() {
+			return this._connection.sendRequest(UpdateThirdPartyProviderPullRequestRequestType, {});
 		}
 	})(this);
 

@@ -58,6 +58,9 @@ import {
 	QueryThirdPartyRequestType,
 	RemoveEnterpriseProviderRequest,
 	RemoveEnterpriseProviderRequestType,
+	UpdateThirdPartyProviderPullRequestRequest,
+	UpdateThirdPartyProviderPullRequestRequestType,
+	UpdateThirdPartyProviderPullRequestResponse,
 	UpdateThirdPartyStatusRequest,
 	UpdateThirdPartyStatusRequestType,
 	UpdateThirdPartyStatusResponse
@@ -315,6 +318,28 @@ export class ThirdPartyProviderRegistry {
 		} else {
 			Logger.log("Will not notify of new PRs - no changes detected");
 		}
+	}
+
+	@log()
+	@lspHandler(UpdateThirdPartyProviderPullRequestRequestType)
+	async updateThirdPartyProviderPullRequestRequestType(
+		request: UpdateThirdPartyProviderPullRequestRequest
+	): Promise<UpdateThirdPartyProviderPullRequestResponse> {
+		try {
+			await this.pullRequestsStateHandler();
+
+			// always send to clear out any reviewer/assignee removals
+			SessionContainer.instance().session.agent.sendNotification(DidChangeDataNotificationType, {
+				type: ChangeDataType.PullRequests,
+				data: []
+			});
+			return {
+				success: true
+			};
+		} catch (ex) {
+			Logger.error(ex);
+		}
+		return { success: false };
 	}
 
 	@log()

@@ -642,6 +642,13 @@ export class Commands implements Disposable {
 		}
 	}
 
+	@command("providerDataUpdate", { showErrorMessage: "Unable to update CodeStream provider data" })
+	async providerDataUpdate(args: any): Promise<boolean> {
+		// fire and forget
+		Container.agent.providers.updatePullRequests();
+		return true;
+	}
+
 	async updateEditorCodeLens(): Promise<boolean> {
 		Container.instrumentableCodeLensController.refresh();
 		return true;

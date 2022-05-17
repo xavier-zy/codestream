@@ -319,6 +319,18 @@ export const CreateThirdPartyCardRequestType = new RequestType<
 	void
 >("codestream/provider/cards/create");
 
+export interface UpdateThirdPartyProviderPullRequestRequest {}
+export interface UpdateThirdPartyProviderPullRequestResponse {
+	success: boolean;
+}
+
+export const UpdateThirdPartyProviderPullRequestRequestType = new RequestType<
+	UpdateThirdPartyProviderPullRequestRequest,
+	UpdateThirdPartyProviderPullRequestResponse,
+	void,
+	void
+>("codestream/providers/pullRequests/update");
+
 export interface ProviderConfigurationData {
 	host?: string;
 	baseUrl?: string;

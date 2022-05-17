@@ -441,6 +441,13 @@ export const OpenPullRequests = React.memo((props: Props) => {
 	);
 
 	useEffect(() => {
+		if (props.paneState === PaneState.Open) {
+			setIsLoadingPRs(true);
+			fetchPRs(queries, { force: true, alreadyLoading: true }, "panelOpened");
+		}
+	}, [props.paneState]);
+
+	useEffect(() => {
 		const disposable = HostApi.instance.on(DidChangeDataNotificationType, (e: any) => {
 			if (e.type === ChangeDataType.PullRequests) {
 				console.warn("OpenPullRequests: ChangeDataType.PullRequests", e);

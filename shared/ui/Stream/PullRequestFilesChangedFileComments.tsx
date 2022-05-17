@@ -128,11 +128,11 @@ export const PullRequestFilesChangedFileComments = (props: Props) => {
 			if (isVisitedCheck) {
 				setIconName("ok");
 				setIsChecked(true);
-				// visitAndCheckFile();
+				if (isGitLab) visitFile(fileObject.file, index);
 			} else {
 				setIconName("circle");
 				setIsChecked(false);
-				// unvisitAndUncheckFile();
+				if (isGitLab) unVisitFile(fileObject.file);
 			}
 		}
 	};
@@ -168,11 +168,17 @@ export const PullRequestFilesChangedFileComments = (props: Props) => {
 		}
 
 		if (isChecked) {
-			unvisitAndUncheckFile();
-			unVisitFile(fileObject.file);
+			if (!isGitLab) unvisitAndUncheckFile();
+			if (isGitLab) {
+				unVisitFile(fileObject.file);
+				setIsChecked(false);
+			}
 		} else {
-			visitAndCheckFile();
-			visitFile(fileObject.file, index);
+			if (!isGitLab) visitAndCheckFile();
+			if (isGitLab) {
+				visitFile(fileObject.file, index);
+				setIsChecked(true);
+			}
 		}
 	};
 
@@ -268,7 +274,7 @@ export const PullRequestFilesChangedFileComments = (props: Props) => {
 	//@TODO: define these on mount, hook, and/or state so we don't do the
 	//		 calculation every re-render.
 	const displayIcon = isGitLab ? icon : iconName;
-	const iconIsFlex = showCheckIcon || iconName === "ok";
+	const iconIsFlex = showCheckIcon || displayIcon === "ok";
 
 	if (!hasComments) {
 		return (

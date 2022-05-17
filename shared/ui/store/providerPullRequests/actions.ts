@@ -439,7 +439,8 @@ export const openPullRequestByUrl = (
 						providerInfo.providerId,
 						id as string,
 						"",
-						options ? options.source : undefined
+						options ? options.source : undefined,
+						"sidebar-diffs"
 					)
 				);
 				handled = true;

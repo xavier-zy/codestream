@@ -31,7 +31,9 @@ export const FinishReview = (props: { fetch?: Function }) => {
 		"COMMENT"
 	);
 	const [isPreviewing, setIsPreviewing] = useState(false);
-	const pr = derivedState.currentPullRequest?.conversations?.repository?.pullRequest;
+	const pr =
+		derivedState.currentPullRequest?.conversations?.repository?.pullRequest ||
+		derivedState.currentPullRequest?.conversations?.project?.mergeRequest;
 
 	const supportsFinishReviewTypes = pr && !pr.providerId.includes("gitlab");
 

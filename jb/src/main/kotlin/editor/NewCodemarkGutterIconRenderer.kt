@@ -5,13 +5,17 @@ import com.codestream.actions.CreateIssue
 import com.codestream.actions.GetPermalink
 import com.codestream.agentService
 import com.codestream.codeStream
+import com.codestream.extensions.addCommentToReviewText
+import com.codestream.extensions.addSingleCommentText
 import com.codestream.extensions.file
+import com.codestream.extensions.hasPendingPullRequestReview
 import com.codestream.extensions.inlineTextFieldManager
+import com.codestream.extensions.isSelectionWithinDiffRange
 import com.codestream.extensions.selectionOrCurrentLine
+import com.codestream.extensions.startReviewText
 import com.codestream.extensions.uri
 import com.codestream.protocols.CodemarkType
 import com.codestream.protocols.webview.CodemarkNotifications
-import com.codestream.review.DIFF_RANGES
 import com.codestream.review.PULL_REQUEST
 import com.codestream.review.ReviewDiffVirtualFile
 import com.codestream.webViewService
@@ -66,29 +70,19 @@ class NewCodemarkGutterIconRenderer(
         }
     }
 
-    private val isGitLab: Boolean by lazy {
-        val pullRequest = editor.document.getUserData(PULL_REQUEST)
-        pullRequest?.providerId?.lowercase()?.contains("gitlab") == true
-    }
-
-    private val addSingleCommentText = if (isGitLab) "Add comment now" else "Add single comment"
-
     override fun getPopupMenuActions(): ActionGroup? {
         val pullRequest = editor.document.getUserData(PULL_REQUEST)
-        val isInPrRange = isInPrRange()
+        val isInPrRange = editor.isSelectionWithinDiffRange()
         return if (pullRequest != null) {
-            val agent = editor.project?.agentService ?: return null
             val future = CompletableFuture<DefaultActionGroup>()
             GlobalScope.launch {
-                val reviewId = agent.getPullRequestReviewId(pullRequest.id, pullRequest.providerId)
-                val startReviewAction = PullRequestCommentAction("Start a review", true, editor, line, onClick)
+                val startReviewAction = PullRequestCommentAction(editor.startReviewText, true, editor, line, onClick)
                 val addSingleCommentAction =
-                    PullRequestCommentAction(addSingleCommentText, false, editor, line, onClick)
-                val addCommentToReviewAction = PullRequestCommentAction("Add comment to review", true, editor, line, onClick)
+                    PullRequestCommentAction(editor.addSingleCommentText, false, editor, line, onClick)
+                val addCommentToReviewAction = PullRequestCommentAction(editor.addCommentToReviewText, true, editor, line, onClick)
                 if (!isInPrRange) {
                     future.complete(DefaultActionGroup(addSingleCommentAction))
-                } else if (reviewId == null || reviewId.isJsonNull || (reviewId.isJsonPrimitive && reviewId.asJsonPrimitive.isBoolean && !reviewId.asBoolean)) {
-                    // GH returns a string ID or null. GL returns true or false.
+                } else if (editor.hasPendingPullRequestReview()) {
                     future.complete(DefaultActionGroup(startReviewAction, addSingleCommentAction))
                 } else {
                     future.complete(DefaultActionGroup(addCommentToReviewAction))
@@ -109,25 +103,6 @@ class NewCodemarkGutterIconRenderer(
     }
 
     override fun getAlignment() = Alignment.LEFT
-
-    private fun isInPrRange(): Boolean {
-        val diffRanges = editor.document.getUserData(DIFF_RANGES) ?: return false
-        val selection = editor.selectionOrCurrentLine
-
-        val selectionStart = selection.start.line + 1
-        val selectionEnd = selection.end.line + 1
-
-        diffRanges.forEach {
-            if (it.end >= it.start) {
-                if ((it.start <= selectionStart && selectionStart <= it.end) ||
-                    (it.start <= selectionEnd && selectionEnd <= it.end) ||
-                    (selectionStart <= it.start && it.end <= selectionEnd)) {
-                    return true
-                }
-            }
-        }
-        return false
-    }
 }
 
 class PullRequestCommentAction(
@@ -138,7 +113,7 @@ class PullRequestCommentAction(
     val onClick: () -> Unit
 ) : AnAction(name) {
     override fun actionPerformed(e: AnActionEvent) {
-        editor.inlineTextFieldManager?.showTextField(isReview, line)
+        editor.inlineTextFieldManager?.showTextField(isReview, line, name)
     }
 }
 

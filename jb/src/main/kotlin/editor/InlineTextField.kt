@@ -17,6 +17,7 @@ import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.EditorTextField
 import com.intellij.ui.ListFocusTraversalPolicy
 import com.intellij.ui.TextFieldWithAutoCompletionListProvider
+import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.textCompletion.TextFieldWithCompletion
@@ -48,6 +49,7 @@ class InlineTextField(
     private val submitter: ((String) -> CompletableFuture<Unit>),
     private val completionProvider: TextFieldWithAutoCompletionListProvider<InlineTextFieldMentionableUser>,
     authorLabel: LinkLabel<out Any>? = null,
+    title: String?,
     onCancel: (() -> Unit)? = null
 ) : JPanel(null) {
     companion object {
@@ -74,6 +76,10 @@ class InlineTextField(
         layout = MigLayout(LC().gridGap("0", "0")
             .insets("0", "0", "0", "0")
             .fillX())
+
+        title?.let {
+            add(JBLabel(title), CC().spanX().wrap("5px"))
+        }
 
         if (authorLabel != null) {
             isFocusCycleRoot = true

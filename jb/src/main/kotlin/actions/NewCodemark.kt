@@ -2,7 +2,10 @@ package com.codestream.actions
 
 import com.codestream.codeStream
 import com.codestream.editorService
+import com.codestream.extensions.getDefaultPrCommentText
 import com.codestream.extensions.inlineTextFieldManager
+import com.codestream.extensions.isPullRequest
+import com.codestream.extensions.isSelectionWithinDiffRange
 import com.codestream.extensions.selectionOrCurrentLine
 import com.codestream.extensions.uri
 import com.codestream.protocols.CodemarkType
@@ -15,11 +18,12 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.Iconable
 import com.intellij.psi.PsiFile
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import java.awt.event.KeyEvent
 
 abstract class NewCodemark(val name: String, val type: CodemarkType) : AnAction(name), IntentionAction, LowPriorityAction, Iconable {
@@ -36,17 +40,23 @@ abstract class NewCodemark(val name: String, val type: CodemarkType) : AnAction(
                 val endOffset = this.document.getLineEndOffset(line)
                 this.selectionModel.setSelection(startOffset, endOffset)
             }
-            this.inlineTextFieldManager?.showTextField(false, line)
-                ?: project.codeStream?.show {
-                    project.webViewService?.postNotification(
-                        CodemarkNotifications.New(
-                            document.uri,
-                            selectionOrCurrentLine,
-                            type,
-                            telemetrySource ?: source
+
+            val isReview = isPullRequest() && isSelectionWithinDiffRange()
+            GlobalScope.launch {
+                inlineTextFieldManager?.showTextField(isReview, line, getDefaultPrCommentText())
+                    ?: project.codeStream?.show {
+                        project.webViewService?.postNotification(
+                            CodemarkNotifications.New(
+                                document.uri,
+                                selectionOrCurrentLine,
+                                type,
+                                telemetrySource ?: source
+                            )
                         )
-                    )
-                }
+                    }
+
+            }
+
         }
     }
 

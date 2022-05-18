@@ -183,7 +183,7 @@ class InlineTextFieldManager(val editor: Editor) {
 
     }
 
-    fun showTextField(isReview: Boolean? = true, line: Int) {
+    fun showTextField(isReview: Boolean? = true, line: Int, title: String? = null) {
         component?.let {
             doFocus(it)
             return
@@ -253,6 +253,7 @@ class InlineTextFieldManager(val editor: Editor) {
                     createSubmitter(isReview),
                     completionProvider,
                     authorLabel,
+                    title,
                     hideCallback
                 ).apply {
                     border = JBUI.Borders.empty(8)

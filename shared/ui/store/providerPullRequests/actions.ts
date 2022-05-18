@@ -411,6 +411,7 @@ export const openPullRequestByUrl = (
 		source?: string;
 		checkoutBranch?: any;
 		providerId?: string;
+		groupIndex?: string;
 	}
 ) => async (dispatch, getState: () => CodeStreamState) => {
 	const prLabel = getPRLabelForProvider(options?.providerId || "");
@@ -434,13 +435,19 @@ export const openPullRequestByUrl = (
 				dispatch(setCurrentReview(""));
 				if (options && options.checkoutBranch)
 					dispatch(setCurrentPullRequestAndBranch(id as string));
+				// current call:
+				// setCurrentPullRequest(pr.providerId, pr.id, "", "", view, groupIndex)
+
+				// new call theory:
+				// setCurrentPullRequest(pr.providerId, pr.id, "", "", view, "", )
 				dispatch(
 					setCurrentPullRequest(
 						providerInfo.providerId,
 						id as string,
 						"",
 						options ? options.source : undefined,
-						"sidebar-diffs"
+						"sidebar-diffs",
+						options?.groupIndex ? options.groupIndex : undefined
 					)
 				);
 				handled = true;

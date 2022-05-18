@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef } from "react";
 import { shallowEqual, useDispatch, useSelector } from "react-redux";
-import { isEqual } from "lodash-es";
+import { isEmpty, isEqual } from "lodash-es";
 import * as providerSelectors from "../store/providers/reducer";
 import { CodeStreamState } from "../store";
 import { Row } from "./CrossPostIssueControls/IssuesPane";
@@ -303,6 +303,7 @@ export const OpenPullRequests = React.memo((props: Props) => {
 				: undefined,
 			currentPullRequest: currentPullRequest,
 			expandedPullRequestGroupIndex,
+			currentPullRequestFromContext: context.currentPullRequest,
 			providerPullRequests: state.providerPullRequests.pullRequests,
 			currentPullRequestId: getPullRequestId(state),
 			currentPullRequestIdExact: getPullRequestExactId(state),
@@ -331,6 +332,8 @@ export const OpenPullRequests = React.memo((props: Props) => {
 	const [prCommitsRange, setPrCommitsRange] = React.useState<string[]>([]);
 	const [openRepos, setOpenRepos] = React.useState<ReposScmPlusName[]>(EMPTY_ARRAY);
 	const [currentGroupIndex, setCurrentGroupIndex] = React.useState();
+	const [prFromUrlLoading, setPrFromUrlLoading] = React.useState(false);
+	const [prFromUrl, setPrFromUrl] = React.useState<any>({});
 
 	const [pullRequestGroups, setPullRequestGroups] = React.useState<{
 		[providerId: string]: GetMyPullRequestsResponse[][];
@@ -682,9 +685,13 @@ export const OpenPullRequests = React.memo((props: Props) => {
 		fetchPRs({ ...queries, [providerId]: newQueries }, { force: true }, "save");
 	};
 
+	// user loads PR/MR from URL
 	const goPR = async (url: string, providerId: string) => {
 		setPrError("");
-		const response = (await dispatch(openPullRequestByUrl(url, { providerId }))) as {
+		setPrFromUrlLoading(true);
+		const response = (await dispatch(
+			openPullRequestByUrl(url, { providerId, groupIndex: "-1" })
+		)) as {
 			error?: string;
 		};
 
@@ -695,6 +702,19 @@ export const OpenPullRequests = React.memo((props: Props) => {
 			setPrError(response.error);
 		}
 	};
+
+	useEffect(() => {
+		if (
+			derivedState.expandedPullRequestGroupIndex === "-1" &&
+			derivedState.currentPullRequestFromContext?.providerId &&
+			derivedState.currentPullRequestFromContext?.id
+		) {
+			fetchOnePR(
+				derivedState.currentPullRequestFromContext?.providerId,
+				derivedState.currentPullRequestFromContext?.id
+			);
+		}
+	}, [derivedState.expandedPullRequestGroupIndex, derivedState.currentPullRequestFromContext]);
 
 	useEffect(() => {
 		if (!loadFromUrlOpen) {
@@ -854,6 +874,259 @@ export const OpenPullRequests = React.memo((props: Props) => {
 		}
 	};
 
+	const renderPrGroup = (providerId, pr, index, groupIndex) => {
+		let prId, expandedPrId;
+
+		if (pr?.base_id && derivedState.expandedPullRequestId) {
+			prId = pr.base_id;
+			expandedPrId = expandedPrIdObject(derivedState.expandedPullRequestId);
+		} else {
+			prId = pr.id;
+			expandedPrId = derivedState.expandedPullRequestId;
+		}
+
+		const expanded =
+			prId == expandedPrId &&
+			(derivedState.expandedPullRequestGroupIndex === groupIndex ||
+				currentGroupIndex === groupIndex);
+		const isLoadingPR = prId === individualLoadingPR;
+		const chevronIcon = derivedState.hideDiffs ? null : expanded ? (
+			<Icon name="chevron-down-thin" />
+		) : (
+			<Icon name="chevron-right-thin" />
+		);
+
+		if (providerId === "github*com" || providerId === "github/enterprise") {
+			const selected = openRepos.find(repo => {
+				return (
+					repo.currentBranch === pr.headRefName &&
+					pr.headRepository &&
+					repo?.name === pr.headRepository?.name
+				);
+			});
+			return (
+				<>
+					<Row
+						key={"pr-" + pr.id}
+						className={selected ? "pr-row selected" : "pr-row"}
+						onClick={() => clickPR(pr, groupIndex)}
+					>
+						<div style={{ display: "flex" }}>
+							{chevronIcon}
+							<PRHeadshot person={pr.author} />
+						</div>
+						<div>
+							<span>
+								#{pr.number} {pr.title}
+							</span>
+							{pr.labels &&
+								pr.labels.nodes &&
+								pr.labels.nodes.length > 0 &&
+								!derivedState.hideLabels && (
+									<span className="cs-tag-container">
+										{pr.labels.nodes.map((_, index) => (
+											<Tag key={index} tag={{ label: _?.name, color: `#${_?.color}` }} />
+										))}
+									</span>
+								)}
+							{!derivedState.hideDescriptions && (
+								<span className="subtle">{pr.bodyText || pr.body}</span>
+							)}
+						</div>
+						<div className="icons">
+							<span
+								onClick={e => {
+									e.preventDefault();
+									e.stopPropagation();
+									HostApi.instance.send(OpenUrlRequestType, {
+										url: pr.url
+									});
+								}}
+							>
+								<Icon
+									name="link-external"
+									className="clickable"
+									title="View on GitHub"
+									placement="bottomLeft"
+								/>
+							</span>
+							<Icon
+								title="Copy"
+								placement="bottom"
+								name="copy"
+								className="clickable"
+								onClick={e => handleClickCopy(e, pr.url)}
+							/>
+							<span className={cantCheckoutReason(pr) ? "disabled" : ""}>
+								<Icon
+									title={
+										<>
+											Checkout Branch
+											{cantCheckoutReason(pr) && (
+												<div className="subtle smaller" style={{ maxWidth: "200px" }}>
+													Disabled: {cantCheckoutReason(pr)}
+												</div>
+											)}
+										</>
+									}
+									trigger={["hover"]}
+									onClick={e => checkout(e, pr, cantCheckoutReason(pr))}
+									placement="bottom"
+									name="git-branch"
+								/>
+							</span>
+							<span>
+								<Icon
+									title="Reload"
+									trigger={["hover"]}
+									delay={1}
+									onClick={e => {
+										if (isLoadingPR) {
+											console.warn("reloading pr, cancelling...");
+											return;
+										}
+										reload(e, pr);
+									}}
+									placement="bottom"
+									className={`${isLoadingPR ? "spin" : ""}`}
+									name="refresh"
+								/>
+							</span>
+
+							<Icon
+								title="Remove"
+								placement="bottom"
+								name="x"
+								className="clickable"
+								onClick={e => {
+									e.preventDefault();
+									e.stopPropagation();
+									setPrFromUrl({});
+								}}
+							/>
+							<Timestamp time={pr.createdAt} relative abbreviated />
+						</div>
+					</Row>
+					{expanded && (
+						<PullRequestExpandedSidebar
+							key={`pr_detail_row_${index}`}
+							pullRequest={pr}
+							thirdPartyPrObject={expandedPR}
+							loadingThirdPartyPrObject={isLoadingPR}
+							fetchOnePR={fetchOnePR}
+							prCommitsRange={prCommitsRange}
+							setPrCommitsRange={setPrCommitsRange}
+						/>
+					)}
+				</>
+			);
+		} else if (providerId === "gitlab*com" || providerId === "gitlab/enterprise") {
+			const selected = false;
+			// const selected = openReposWithName.find(repo => {
+			// 	return (
+			// 		repo.currentBranch === pr.headRefName &&
+			// 		pr.headRepository &&
+			// 		repo.name === pr.headRepository.name
+			// 	);
+			// });
+			return (
+				<>
+					<Row
+						key={"pr-" + pr?.base_id}
+						className={selected ? "pr-row selected" : "pr-row"}
+						onClick={() => clickPR(pr, groupIndex)}
+					>
+						<div style={{ display: "flex" }}>
+							{" "}
+							{chevronIcon}
+							<PRHeadshot
+								person={{
+									login: pr.author.login,
+									avatarUrl: pr.author.avatar_url
+								}}
+							/>
+						</div>
+						<div>
+							<span>
+								!{pr.number} {pr.title}
+							</span>
+							{pr.labels && pr.labels && pr.labels.length > 0 && !derivedState.hideLabels && (
+								<span className="cs-tag-container">
+									{pr.labels.map((_, index) => (
+										<Tag key={index} tag={{ label: _?.name, color: `${_?.color}` }} />
+									))}
+								</span>
+							)}
+							{!derivedState.hideDescriptions && <span className="subtle">{pr.description}</span>}
+						</div>
+						<div className="icons">
+							<span
+								onClick={e => {
+									e.preventDefault();
+									e.stopPropagation();
+									HostApi.instance.send(OpenUrlRequestType, {
+										url: pr.web_url
+									});
+								}}
+							>
+								<Icon
+									name="link-external"
+									className="clickable"
+									title="View on Gitlab"
+									placement="bottomLeft"
+								/>
+							</span>
+							<Icon
+								title="Copy"
+								placement="bottom"
+								name="copy"
+								className="clickable"
+								onClick={e => handleClickCopy(e, pr.web_url)}
+							/>
+							<span>
+								<Icon
+									title="Reload"
+									trigger={["hover"]}
+									delay={1}
+									onClick={e => {
+										if (isLoadingPR) {
+											console.warn("reloading pr, cancelling...");
+											return;
+										}
+										reload(e, pr);
+									}}
+									placement="bottom"
+									className={`${isLoadingPR ? "spin" : ""}`}
+									name="refresh"
+								/>
+							</span>
+							<Timestamp time={pr.created_at} relative abbreviated />
+							{pr.user_notes_count > 0 && (
+								<span
+									className="badge"
+									style={{ margin: "0 0 0 10px", flexGrow: 0, flexShrink: 0 }}
+								>
+									{pr.user_notes_count}
+								</span>
+							)}
+						</div>
+					</Row>
+					{expanded && (
+						<PullRequestExpandedSidebar
+							key={`pr_detail_row_${index}`}
+							pullRequest={pr}
+							thirdPartyPrObject={expandedPR}
+							loadingThirdPartyPrObject={isLoadingPR}
+							fetchOnePR={fetchOnePR}
+							prCommitsRange={prCommitsRange}
+							setPrCommitsRange={setPrCommitsRange}
+						/>
+					)}
+				</>
+			);
+		} else return undefined;
+	};
+
 	useEffect(() => {
 		const providerPullRequests =
 			derivedState.providerPullRequests[derivedState.currentPullRequestProviderId!];
@@ -878,10 +1151,23 @@ export const OpenPullRequests = React.memo((props: Props) => {
 		if (!conversations) {
 			return undefined;
 		}
-		if (conversations.project && conversations.project.mergeRequest)
+		if (conversations.project && conversations.project.mergeRequest) {
+			if (derivedState.expandedPullRequestGroupIndex === "-1") {
+				setPrFromUrl(conversations.project.mergeRequest);
+				setPrFromUrlLoading(false);
+			}
+
 			return conversations.project.mergeRequest;
-		if (conversations.repository && conversations.repository.pullRequest)
+		}
+
+		if (conversations.repository && conversations.repository.pullRequest) {
+			if (derivedState.expandedPullRequestGroupIndex === "-1") {
+				setPrFromUrl(conversations.repository.pullRequest);
+				setPrFromUrlLoading(false);
+			}
 			return conversations.repository.pullRequest;
+		}
+
 		return undefined;
 	}, [derivedState.currentPullRequest, derivedState.hideDiffs]);
 
@@ -908,14 +1194,15 @@ export const OpenPullRequests = React.memo((props: Props) => {
 			checked: !derivedState.hideLabels,
 			action: () =>
 				dispatch(setUserPreference(["pullRequestQueryHideLabels"], !derivedState.hideLabels))
-		},
-		{
-			label: "Show Diffs in Sidebar",
-			key: "show-diffs",
-			checked: !derivedState.hideDiffs,
-			action: () =>
-				dispatch(setUserPreference(["pullRequestQueryHideDiffs"], !derivedState.hideDiffs))
 		}
+		// Not using this for now
+		// {
+		// 	label: "Show Diffs in Sidebar",
+		// 	key: "show-diffs",
+		// 	checked: !derivedState.hideDiffs,
+		// 	action: () =>
+		// 		dispatch(setUserPreference(["pullRequestQueryHideDiffs"], !derivedState.hideDiffs))
+		// }
 	] as any;
 	if (derivedState.isCurrentUserAdmin) {
 		if (derivedState.GitLabConnectedProviders.length > 0) {
@@ -1005,6 +1292,14 @@ export const OpenPullRequests = React.memo((props: Props) => {
 								<PrErrorText title={prError}>{prError}</PrErrorText>
 							</Row>
 						)}
+						{prFromUrlLoading && (
+							<div style={{ marginLeft: '30px'}}>
+								<Icon className={"spin"} name="refresh" /> Loading...
+							</div>
+						)}
+						{!isEmpty(prFromUrl) && !prFromUrlLoading && (
+							<>{renderPrGroup(prFromUrl?.providerId, prFromUrl, "-1", "-1")}</>
+						)}
 					</>
 				)}
 				{Object.values(providerQueries).map((query: PullRequestQuery, index) => {
@@ -1049,275 +1344,7 @@ export const OpenPullRequests = React.memo((props: Props) => {
 							{!query.hidden &&
 								prGroup &&
 								prGroup.map((pr: any, index) => {
-									// //@TODO: memoize these variables for optimization
-									let prId, expandedPrId;
-
-									if (pr.base_id && derivedState.expandedPullRequestId) {
-										prId = pr.base_id;
-										expandedPrId = expandedPrIdObject(derivedState.expandedPullRequestId);
-									} else {
-										prId = pr.id;
-										expandedPrId = derivedState.expandedPullRequestId;
-									}
-
-									const expanded =
-										prId == expandedPrId &&
-										(derivedState.expandedPullRequestGroupIndex === groupIndex ||
-											currentGroupIndex === groupIndex);
-									const isLoadingPR = prId === individualLoadingPR;
-									const chevronIcon = derivedState.hideDiffs ? null : expanded ? (
-										<Icon name="chevron-down-thin" />
-									) : (
-										<Icon name="chevron-right-thin" />
-									);
-									if (providerId === "github*com" || providerId === "github/enterprise") {
-										const selected = openRepos.find(repo => {
-											return (
-												repo.currentBranch === pr.headRefName &&
-												pr.headRepository &&
-												repo?.name === pr.headRepository?.name
-											);
-										});
-										return [
-											<>
-												<Row
-													key={"pr-" + pr.id}
-													className={selected ? "pr-row selected" : "pr-row"}
-													onClick={() => clickPR(pr, groupIndex)}
-												>
-													<div style={{ display: "flex" }}>
-														{chevronIcon}
-														<PRHeadshot person={pr.author} />
-													</div>
-													<div>
-														<span>
-															#{pr.number} {pr.title}
-														</span>
-														{pr.labels &&
-															pr.labels.nodes &&
-															pr.labels.nodes.length > 0 &&
-															!derivedState.hideLabels && (
-																<span className="cs-tag-container">
-																	{pr.labels.nodes.map((_, index) => (
-																		<Tag
-																			key={index}
-																			tag={{ label: _?.name, color: `#${_?.color}` }}
-																		/>
-																	))}
-																</span>
-															)}
-														{!derivedState.hideDescriptions && (
-															<span className="subtle">{pr.bodyText || pr.body}</span>
-														)}
-													</div>
-													<div className="icons">
-														<span
-															onClick={e => {
-																e.preventDefault();
-																e.stopPropagation();
-																HostApi.instance.send(OpenUrlRequestType, {
-																	url: pr.url
-																});
-															}}
-														>
-															<Icon
-																name="link-external"
-																className="clickable"
-																title="View on GitHub"
-																placement="bottomLeft"
-															/>
-														</span>
-														<Icon
-															title="Copy"
-															placement="bottom"
-															name="copy"
-															className="clickable"
-															onClick={e => handleClickCopy(e, pr.url)}
-														/>
-														<span className={cantCheckoutReason(pr) ? "disabled" : ""}>
-															<Icon
-																title={
-																	<>
-																		Checkout Branch
-																		{cantCheckoutReason(pr) && (
-																			<div className="subtle smaller" style={{ maxWidth: "200px" }}>
-																				Disabled: {cantCheckoutReason(pr)}
-																			</div>
-																		)}
-																	</>
-																}
-																trigger={["hover"]}
-																onClick={e => checkout(e, pr, cantCheckoutReason(pr))}
-																placement="bottom"
-																name="git-branch"
-															/>
-														</span>
-														<span>
-															<Icon
-																title="Reload"
-																trigger={["hover"]}
-																delay={1}
-																onClick={e => {
-																	if (isLoadingPR) {
-																		console.warn("reloading pr, cancelling...");
-																		return;
-																	}
-																	reload(e, pr);
-																}}
-																placement="bottom"
-																className={`${isLoadingPR ? "spin" : ""}`}
-																name="refresh"
-															/>
-														</span>
-														<Timestamp time={pr.createdAt} relative abbreviated />
-													</div>
-												</Row>
-												{expanded && (
-													<PullRequestExpandedSidebar
-														key={`pr_detail_row_${index}`}
-														pullRequest={pr}
-														thirdPartyPrObject={expandedPR}
-														loadingThirdPartyPrObject={isLoadingPR}
-														fetchOnePR={fetchOnePR}
-														prCommitsRange={prCommitsRange}
-														setPrCommitsRange={setPrCommitsRange}
-													/>
-												)}
-											</>
-										];
-									} else if (providerId === "gitlab*com" || providerId === "gitlab/enterprise") {
-										const selected = false;
-										// const selected = openReposWithName.find(repo => {
-										// 	return (
-										// 		repo.currentBranch === pr.headRefName &&
-										// 		pr.headRepository &&
-										// 		repo.name === pr.headRepository.name
-										// 	);
-										// });
-										return [
-											<>
-												<Row
-													key={"pr-" + pr.base_id}
-													className={selected ? "pr-row selected" : "pr-row"}
-													onClick={() => clickPR(pr, groupIndex)}
-												>
-													<div style={{ display: "flex" }}>
-														{" "}
-														{chevronIcon}
-														<PRHeadshot
-															person={{
-																login: pr.author.login,
-																avatarUrl: pr.author.avatar_url
-															}}
-														/>
-													</div>
-													<div>
-														<span>
-															!{pr.number} {pr.title}
-														</span>
-														{pr.labels &&
-															pr.labels &&
-															pr.labels.length > 0 &&
-															!derivedState.hideLabels && (
-																<span className="cs-tag-container">
-																	{pr.labels.map((_, index) => (
-																		<Tag
-																			key={index}
-																			tag={{ label: _?.name, color: `${_?.color}` }}
-																		/>
-																	))}
-																</span>
-															)}
-														{!derivedState.hideDescriptions && (
-															<span className="subtle">{pr.description}</span>
-														)}
-													</div>
-													<div className="icons">
-														<span
-															onClick={e => {
-																e.preventDefault();
-																e.stopPropagation();
-																HostApi.instance.send(OpenUrlRequestType, {
-																	url: pr.web_url
-																});
-															}}
-														>
-															<Icon
-																name="link-external"
-																className="clickable"
-																title="View on Gitlab"
-																placement="bottomLeft"
-															/>
-														</span>
-														<Icon
-															title="Copy"
-															placement="bottom"
-															name="copy"
-															className="clickable"
-															onClick={e => handleClickCopy(e, pr.web_url)}
-														/>
-														{/* 
-														<span className={cantCheckoutReason(pr) ? "disabled" : ""}>
-															<Icon
-																title={
-																	<>
-																		Checkout Branch
-																		{cantCheckoutReason(pr) && (
-																			<div className="subtle smaller" style={{ maxWidth: "200px" }}>
-																				Disabled: {cantCheckoutReason(pr)}
-																			</div>
-																		)}
-																	</>
-																}
-																trigger={["hover"]}
-																onClick={e => checkout(e, pr, cantCheckoutReason(pr))}
-																placement="bottom"
-																name="git-branch"
-															/>
-														</span>
-														*/}
-														<span>
-															<Icon
-																title="Reload"
-																trigger={["hover"]}
-																delay={1}
-																onClick={e => {
-																	if (isLoadingPR) {
-																		console.warn("reloading pr, cancelling...");
-																		return;
-																	}
-																	reload(e, pr);
-																}}
-																placement="bottom"
-																className={`${isLoadingPR ? "spin" : ""}`}
-																name="refresh"
-															/>
-														</span>
-														<Timestamp time={pr.created_at} relative abbreviated />
-														{pr.user_notes_count > 0 && (
-															<span
-																className="badge"
-																style={{ margin: "0 0 0 10px", flexGrow: 0, flexShrink: 0 }}
-															>
-																{pr.user_notes_count}
-															</span>
-														)}
-													</div>
-												</Row>
-												{expanded && (
-													<PullRequestExpandedSidebar
-														key={`pr_detail_row_${index}`}
-														pullRequest={pr}
-														thirdPartyPrObject={expandedPR}
-														loadingThirdPartyPrObject={isLoadingPR}
-														fetchOnePR={fetchOnePR}
-														prCommitsRange={prCommitsRange}
-														setPrCommitsRange={setPrCommitsRange}
-													/>
-												)}
-											</>
-										];
-									} else return undefined;
+									return renderPrGroup(providerId, pr, index, groupIndex);
 								})}
 						</PaneNode>
 					);

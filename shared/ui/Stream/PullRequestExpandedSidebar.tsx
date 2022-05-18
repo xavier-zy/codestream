@@ -84,7 +84,7 @@ export const PullRequestExpandedSidebar = (props: PullRequestExpandedSidebarProp
 							props.fetchOnePR(props.thirdPartyPrObject.providerId, props.thirdPartyPrObject.id);
 						}}
 						setIsLoadingMessage={() => {}}
-						sidebarView
+						sidebarView={true}
 						prCommitsRange={props.prCommitsRange}
 						setPrCommitsRange={props.setPrCommitsRange}
 					/>

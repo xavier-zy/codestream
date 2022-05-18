@@ -435,11 +435,6 @@ export const openPullRequestByUrl = (
 				dispatch(setCurrentReview(""));
 				if (options && options.checkoutBranch)
 					dispatch(setCurrentPullRequestAndBranch(id as string));
-				// current call:
-				// setCurrentPullRequest(pr.providerId, pr.id, "", "", view, groupIndex)
-
-				// new call theory:
-				// setCurrentPullRequest(pr.providerId, pr.id, "", "", view, "", )
 				dispatch(
 					setCurrentPullRequest(
 						providerInfo.providerId,

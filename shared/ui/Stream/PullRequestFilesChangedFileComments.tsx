@@ -11,7 +11,15 @@ import { api } from "../store/providerPullRequests/actions";
 import { useDidMount } from "../utilities/hooks";
 import { useSelector } from "react-redux";
 import { CodeStreamState } from "@codestream/webview/store";
-import { getCurrentProviderPullRequest } from "../store/providerPullRequests/reducer";
+import {
+	getCurrentProviderPullRequest,
+	getProviderPullRequestRepo
+} from "../store/providerPullRequests/reducer";
+import * as Path from "path-browserify";
+import { Range } from "vscode-languageserver-types";
+import { HostApi } from "../webview-api";
+import { GetReposScmRequestType } from "@codestream/protocols/agent";
+import { EditorRevealRangeRequestType } from "@codestream/protocols/webview";
 
 export const FileWithComments = styled.div`
 	cursor: pointer;
@@ -99,13 +107,16 @@ export const PullRequestFilesChangedFileComments = (props: Props) => {
 	const dispatch = useDispatch();
 	const [showComments, setShowComments] = React.useState(true);
 	const [showCheckIcon, setShowCheckIcon] = React.useState(false);
+	const [showGoToFileIcon, setShowGoToFileIcon] = React.useState(false);
 	const [isChecked, setIsChecked] = React.useState(false);
 	const [iconName, setIconName] = React.useState("sync");
+	const [currentRepoRoot, setCurrentRepoRoot] = React.useState("");
 	const isGitLab = pullRequest?.providerId?.includes("gitlab");
 
 	const derivedState = useSelector((state: CodeStreamState) => {
 		return {
-			currentPullRequest: getCurrentProviderPullRequest(state)
+			currentPullRequest: getCurrentProviderPullRequest(state),
+			currentRepo: getProviderPullRequestRepo(state)
 		};
 	});
 	const { currentPullRequest } = derivedState;
@@ -252,12 +263,42 @@ export const PullRequestFilesChangedFileComments = (props: Props) => {
 		event.preventDefault();
 		event.stopPropagation();
 		setShowCheckIcon(true);
+		setShowGoToFileIcon(true);
 	};
 
 	const handleMouseLeave = event => {
 		event.preventDefault();
 		event.stopPropagation();
 		setShowCheckIcon(false);
+		setShowGoToFileIcon(false);
+	};
+
+	const handleOpenFile = async e => {
+		e.preventDefault();
+		e.stopPropagation();
+		let repoRoot = currentRepoRoot;
+		if (!repoRoot) {
+			const response = await HostApi.instance.send(GetReposScmRequestType, {
+				inEditorOnly: false
+			});
+			if (!response.repositories) return;
+
+			const repoIdToCheck = derivedState.currentRepo ? derivedState.currentRepo.id : undefined;
+			if (repoIdToCheck) {
+				const currentRepoInfo = response.repositories.find(r => r.id === repoIdToCheck);
+				if (currentRepoInfo) {
+					setCurrentRepoRoot(currentRepoInfo.path);
+					repoRoot = currentRepoInfo.path;
+				}
+			}
+		}
+
+		if (repoRoot) {
+			HostApi.instance.send(EditorRevealRangeRequestType, {
+				uri: Path.join("file://", repoRoot, fileObject.file),
+				range: Range.create(0, 0, 0, 0)
+			});
+		}
 	};
 
 	let commentsSortedByLineNumber;
@@ -286,7 +327,7 @@ export const PullRequestFilesChangedFileComments = (props: Props) => {
 						isDisabled ? null : (
 							<span
 								style={{
-									margin: "0 9px 0 auto",
+									margin: showGoToFileIcon ? "0 9px 0 0" : "0 9px 0 auto",
 									display: showCheckIcon || displayIcon === "ok" ? "flex" : "none"
 								}}
 							>
@@ -297,6 +338,24 @@ export const PullRequestFilesChangedFileComments = (props: Props) => {
 								/>
 							</span>
 						)
+					}
+					badge={
+						<span
+							style={{
+								marginLeft: "auto",
+								marginRight: "2px",
+								display: showGoToFileIcon ? "flex" : "none"
+							}}
+						>
+							<Icon
+								title="Open Local File"
+								placement="bottom"
+								name="goto-file"
+								className="clickable"
+								style={{ color: "var(--text-color-subtle)" }}
+								onClick={e => handleOpenFile(e)}
+							/>
+						</span>
 					}
 					noHover={isDisabled || loading}
 					onClick={
@@ -324,13 +383,30 @@ export const PullRequestFilesChangedFileComments = (props: Props) => {
 						selected={selected}
 						viewMode={props.viewMode}
 						count={
-							<div style={{ margin: "0 14px 0 auto", display: "flex" }}>
+							<div style={{ margin: "0 2px 0 auto", display: "flex" }}>
 								{comments.length === 0 || showComments ? null : (
 									<span style={{ margin: "0 0 0 -5px" }} className={`badge`}>
 										{comments.length}
 									</span>
 								)}
 							</div>
+						}
+						badge={
+							<span
+								style={{
+									marginRight: "2px",
+									display: showGoToFileIcon ? "flex" : "none"
+								}}
+							>
+								<Icon
+									title="Open Local File"
+									placement="bottom"
+									name="goto-file"
+									className="clickable"
+									onClick={e => handleOpenFile(e)}
+									style={{ color: "var(--text-color-subtle)" }}
+								/>
+							</span>
 						}
 						iconLast={
 							isDisabled ? null : (

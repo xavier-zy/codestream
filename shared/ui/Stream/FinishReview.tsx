@@ -51,7 +51,7 @@ export const FinishReview = (props: { fetch?: Function }) => {
 				text: replaceHtml(reviewText)
 			})
 		);
-		dispatch(getPullRequestConversationsFromProvider(pr.providerId, pr.id));
+		// dispatch(getPullRequestConversationsFromProvider(pr.providerId, pr.id));
 		dispatch(closeModal());
 	};
 
@@ -63,7 +63,7 @@ export const FinishReview = (props: { fetch?: Function }) => {
 				pullRequestReviewId: id
 			})
 		);
-		dispatch(getPullRequestConversationsFromProvider(pr.providerId, pr.id));
+		// dispatch(getPullRequestConversationsFromProvider(pr.providerId, pr.id));
 		dispatch(closeModal());
 	};
 

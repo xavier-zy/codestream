@@ -30,7 +30,8 @@ import {
 import {
 	NewPullRequestNotificationType,
 	OpenUrlRequestType,
-	WebviewPanels
+	WebviewPanels,
+	EditorRevealRangeRequestType
 } from "@codestream/protocols/webview";
 import { Button } from "../src/components/Button";
 import {
@@ -66,11 +67,11 @@ import {
 	getMyPullRequests as getMyPullRequestsSelector,
 	getPullRequestExactId,
 	getPullRequestId,
-	getProviderPullRequestRepoObject
+	getProviderPullRequestRepoObject,
+	getProviderPullRequestRepo
 } from "../store/providerPullRequests/reducer";
 import { InlineMenu } from "../src/components/controls/InlineMenu";
 import { getPRLabel } from "../store/providers/reducer";
-import { PullRequestFilesChangedTab } from "./PullRequestFilesChangedTab";
 import copy from "copy-to-clipboard";
 import { logError } from "../logger";
 
@@ -964,6 +965,7 @@ export const OpenPullRequests = React.memo((props: Props) => {
 								className="clickable"
 								onClick={e => handleClickCopy(e, pr.url)}
 							/>
+
 							<span className={cantCheckoutReason(pr) ? "disabled" : ""}>
 								<Icon
 									title={
@@ -999,18 +1001,19 @@ export const OpenPullRequests = React.memo((props: Props) => {
 									name="refresh"
 								/>
 							</span>
-
-							<Icon
-								title="Remove"
-								placement="bottom"
-								name="x"
-								className="clickable"
-								onClick={e => {
-									e.preventDefault();
-									e.stopPropagation();
-									setPrFromUrl({});
-								}}
-							/>
+							{groupIndex === "-1" && (
+								<Icon
+									title="Remove"
+									placement="bottom"
+									name="x"
+									className="clickable"
+									onClick={e => {
+										e.preventDefault();
+										e.stopPropagation();
+										setPrFromUrl({});
+									}}
+								/>
+							)}
 							<Timestamp time={pr.createdAt} relative abbreviated />
 						</div>
 					</Row>
@@ -1300,7 +1303,7 @@ export const OpenPullRequests = React.memo((props: Props) => {
 							</Row>
 						)}
 						{prFromUrlLoading && (
-							<div style={{ marginLeft: '30px'}}>
+							<div style={{ marginLeft: "30px" }}>
 								<Icon className={"spin"} name="refresh" /> Loading...
 							</div>
 						)}

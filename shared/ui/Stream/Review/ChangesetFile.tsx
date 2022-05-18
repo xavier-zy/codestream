@@ -54,9 +54,9 @@ export const ChangesetFile = styled((props: ReviewChangesetFileInfo & Props) => 
 			{status === FileStatus.copied && <span className="added">copied </span>}
 			{status === FileStatus.unmerged && <span className="deleted">conflict </span>}
 			{status === FileStatus.deleted && <span className="deleted">deleted </span>}
-			{props.badge}
 			{props.actionIcons}
 			{props.count}
+			{props.badge}
 			{props.iconLast}
 		</div>
 	);

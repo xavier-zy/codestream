@@ -212,16 +212,6 @@ class InlineTextFieldManager(val editor: Editor) {
 
             ApplicationManager.getApplication().invokeLater {
 
-                // val descriptor = object : DefaultTextCompletionValueDescriptor<CSUser>() {
-                //     override fun getLookupString(item: CSUser): String {
-                //         return "@${item.username}"
-                //     }
-                //
-                //     override fun getTypeText(item: CSUser): String {
-                //         return item.fullName
-                //     }
-                // }
-
                 val completionProvider =
                     object : TextFieldWithAutoCompletionListProvider<InlineTextFieldMentionableUser>(users) {
                         override fun compare(item1: InlineTextFieldMentionableUser?, item2: InlineTextFieldMentionableUser?): Int {
@@ -244,10 +234,6 @@ class InlineTextFieldManager(val editor: Editor) {
                             return (item as? InlineTextFieldMentionableProviderUser)?.icon
                         }
                     }
-
-                // val completionProvider = ValuesCompletionProvider(descriptor, users)
-                // val completionProvider = TextFieldWithAutoCompletion.StringsCompletionProvider(listOf("@lee", "@lifeson", "@peart"), null)
-                // val completionProvider2 = TextFieldWithAutoCompletion.StringsCompletionProvider(users.map { "@${it.username}" }, null)
 
                 val authorLabel = LinkLabel.create("") {
                     // BrowserUtil.browse("https://github.com")

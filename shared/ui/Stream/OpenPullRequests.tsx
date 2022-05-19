@@ -764,7 +764,11 @@ export const OpenPullRequests = React.memo((props: Props) => {
 	};
 
 	const fetchOnePR = async (providerId: string, pullRequestId: string, message?: string) => {
-		setIndividualLoadingPR(pullRequestId);
+		//GL ids can be a stringified object, order of parameters can fluctuate.  So a
+		//simple string comparison is not sufficent, we have to convert to an object if possible
+		//and extract the id param.  For everything else that is not GL, we just use the standard pr.id
+		let prId = expandedPrIdObject(pullRequestId);
+		setIndividualLoadingPR(prId);
 		(await dispatch(getPullRequestConversationsFromProvider(providerId, pullRequestId))) as any;
 		setIndividualLoadingPR("");
 	};

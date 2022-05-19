@@ -176,7 +176,7 @@ export const getPullRequestConversationsFromProvider = (
 
 		return responses.conversations as FetchThirdPartyPullRequestResponse;
 	} catch (error) {
-		logError(`failed to refresh pullRequest: ${error}`, { providerId, id });
+		logError(`failed to refresh pullRequest: ${error?.message}`, { providerId, id });
 	}
 	return undefined;
 };

@@ -240,10 +240,11 @@ export const PullRequestFileCommentCard = (props: PropsWithChildren<Props>) => {
 		}
 
 		const _lineNumber = lineNumber();
+		const path = comment?.path || comment?.position?.filePath || "";
 
 		if (repoRoot && _lineNumber) {
 			HostApi.instance.send(EditorRevealRangeRequestType, {
-				uri: Path.join("file://", repoRoot, comment?.path),
+				uri: Path.join("file://", repoRoot, path),
 				range: Range.create(_lineNumber, 0, _lineNumber, 9999)
 			});
 		}
@@ -300,7 +301,7 @@ export const PullRequestFileCommentCard = (props: PropsWithChildren<Props>) => {
 	};
 
 	const codeBlock = () => {
-		const path = comment.path || "";
+		const path = comment?.path || comment?.position?.filePath || "";
 		let extension = Path.extname(path).toLowerCase();
 		let diffHunk = comment?.diffHunk || review?.diffHunk || comment?.position?.patch || "";
 

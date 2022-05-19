@@ -18,6 +18,7 @@ import {
 	MoveMarkerRequest,
 	MoveMarkerRequestType
 } from "@codestream/protocols/agent";
+import { ShareTarget } from "@codestream/protocols/api";
 import { logError } from "@codestream/webview/logger";
 import { addStreams } from "../streams/actions";
 import { TextDocumentIdentifier } from "vscode-languageserver-types";
@@ -26,6 +27,7 @@ import { CodeStreamState } from "..";
 import { capitalize } from "@codestream/webview/utils";
 import { isObject } from "lodash-es";
 import { handleDirectives } from "../providerPullRequests/actions";
+import { findMentionedUserIds, getTeamMembers } from "../users/reducer";
 
 export const reset = () => action("RESET");
 
@@ -229,12 +231,13 @@ type EditableAttributes = Partial<
 		[index: number]: boolean;
 	};
 	codeBlocks?: GetRangeScmInfoResponse[];
+	sharedTo?: ShareTarget[];
 };
 
-export const editCodemark = (
-	codemark: CodemarkPlus,
-	attributes: EditableAttributes
-) => async dispatch => {
+export const editCodemark = (codemark: CodemarkPlus, attributes: EditableAttributes) => async (
+	dispatch,
+	getState
+) => {
 	try {
 		const { markers = [] } = codemark;
 		const { deleteMarkerLocations = {}, codeBlocks } = attributes;
@@ -249,6 +252,7 @@ export const editCodemark = (
 			await Promise.all(toDelete.map(args => HostApi.instance.send(DeleteMarkerRequestType, args)));
 		}
 
+		let remotes: string[] = [];
 		if (codeBlocks) {
 			const toAdd: AddMarkersRequest = { codemarkId: codemark.id, newMarkers: [] };
 			const toMove: MoveMarkerRequest[] = [];
@@ -286,6 +290,57 @@ export const editCodemark = (
 			codemarkId: codemark.id,
 			...attributes
 		});
+		if (attributes.sharedTo) {
+			const { sharedTo } = attributes;
+			for (const shareTarget of sharedTo) {
+				try {
+					const { post, ts, permalink } = await HostApi.instance.send(
+						CreateThirdPartyPostRequestType,
+						{
+							providerId: shareTarget.providerId,
+							channelId: shareTarget.channelId,
+							providerTeamId: shareTarget.teamId,
+							existingPostId: shareTarget.postId,
+							text: attributes.text || "",
+							codemark: response.codemark,
+							remotes: [],
+							mentionedUserIds: findMentionedUserIds(
+								getTeamMembers(getState()),
+								attributes.text || ""
+							).concat(attributes.assignees || [])
+						}
+					);
+					if (ts) {
+						await HostApi.instance.send(UpdatePostSharingDataRequestType, {
+							postId: response.codemark.postId,
+							sharedTo: [
+								{
+									createdAt: post.createdAt,
+									providerId: shareTarget.providerId,
+									teamId: shareTarget.teamId,
+									teamName: shareTarget.teamName || "",
+									channelId: shareTarget.channelId,
+									channelName: shareTarget.channelName || "",
+									postId: ts,
+									url: permalink || ""
+								}
+							]
+						});
+					}
+					HostApi.instance.track("Shared Codemark", {
+						Destination: capitalize(
+							getConnectedProviders(getState()).find(
+								config => config.id === shareTarget.providerId
+							)!.name
+						),
+						"Codemark Status": "Edited"
+					});
+				} catch (error) {
+					logError("Error sharing a codemark", { message: error.toString() });
+					throw { reason: "share" } as CreateCodemarkError;
+				}
+			}
+		}
 
 		dispatch(updateCodemarks([response.codemark]));
 	} catch (error) {

@@ -568,7 +568,14 @@ export function ReviewNav(props: Props) {
 		);
 
 	if (isEditing) {
-		return <ReviewForm isEditing editingReview={review} onClose={() => setIsEditing(false)} />;
+		return (
+			<ReviewForm
+				isEditing
+				editingReview={review}
+				existingSharedTo={derivedState.post?.sharedTo}
+				onClose={() => setIsEditing(false)}
+			/>
+		);
 	}
 
 	const { sidebarLocation } = derivedState;

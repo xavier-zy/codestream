@@ -151,7 +151,7 @@ export const SharingControls = React.memo(
 			const team = state.teams[state.context.currentTeamId];
 			const teamSettings = team.settings || (EMPTY_HASH as CSTeamSettings);
 
-			const slackServerProviderInfo = team.serverProviderInfo?.slack?.multiple;
+			const slackServerProviderData = team.serverProviderData?.slack?.multiple;
 
 			return {
 				currentTeamId,
@@ -167,7 +167,7 @@ export const SharingControls = React.memo(
 				defaultChannelId: defaultChannel && defaultChannel.channelId,
 				defaultChannels,
 				teamSettings,
-				slackServerProviderInfo
+				slackServerProviderData
 			};
 		});
 		const [authenticationState, setAuthenticationState] = React.useState<{
@@ -285,10 +285,10 @@ export const SharingControls = React.memo(
 			if (shareTarget && selectedChannel) {
 				let botUserId;
 				if (shareTarget.providerId === "slack*com") {
-					const teamData = derivedState.slackServerProviderInfo
-						? derivedState.slackServerProviderInfo[shareTarget.teamId]
+					const teamData = derivedState.slackServerProviderData
+						? derivedState.slackServerProviderData[shareTarget.teamId]
 						: undefined;
-					botUserId = teamData ? teamData.data?.bot_user_id : undefined;
+					botUserId = teamData ? teamData.bot_user_id : undefined;
 				}
 				props.onChangeValues({
 					providerId: shareTarget.providerId,

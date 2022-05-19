@@ -338,7 +338,8 @@ export class Codemark extends React.Component<Props, State> {
 			relatedCodemarkIds,
 			tags,
 			codeBlocks,
-			deleteMarkerLocations
+			deleteMarkerLocations,
+			sharedTo: this.props.post?.sharedTo
 		});
 		this.setState({ isEditing: false });
 	};

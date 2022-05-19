@@ -1,4 +1,10 @@
-import { CSReview, CSReviewChangeset, CSRepoChange, Attachment } from "@codestream/protocols/api";
+import {
+	CSReview,
+	CSReviewChangeset,
+	CSRepoChange,
+	Attachment,
+	ShareTarget
+} from "@codestream/protocols/api";
 import { action } from "../common";
 import { ReviewsActionsTypes } from "./types";
 import { HostApi } from "@codestream/webview/webview-api";
@@ -25,7 +31,7 @@ import {
 	ReviewCheckpoint
 } from "@codestream/protocols/webview";
 import { createPost } from "@codestream/webview/Stream/actions";
-import { getTeamMembers } from "../users/reducer";
+import { findMentionedUserIds, getTeamMembers } from "../users/reducer";
 import { phraseList } from "@codestream/webview/utilities/strings";
 
 export const reset = () => action("RESET");
@@ -181,6 +187,7 @@ export const deleteReview = (id: string) => async dispatch => {
  */
 interface AdvancedEditableReviewAttributes {
 	repoChanges?: CSRepoChange[];
+	sharedTo?: ShareTarget[];
 	// array of userIds / tags to add
 	$push: { reviewers?: string[]; tags?: string[] };
 	// array of userIds / tags to remove
@@ -243,6 +250,58 @@ export const editReview = (
 					{ reviewCheckpoint: checkpoint }
 				)
 			);
+		}
+
+		if (attributes.sharedTo) {
+			const { sharedTo } = attributes;
+			for (const shareTarget of sharedTo) {
+				try {
+					const { post, ts, permalink } = await HostApi.instance.send(
+						CreateThirdPartyPostRequestType,
+						{
+							providerId: shareTarget.providerId,
+							channelId: shareTarget.channelId,
+							providerTeamId: shareTarget.teamId,
+							existingPostId: shareTarget.postId,
+							text: attributes.text || "",
+							review: response.review,
+							mentionedUserIds: findMentionedUserIds(
+								getTeamMembers(getState()),
+								attributes.text || ""
+							)
+						}
+					);
+					if (ts) {
+						await HostApi.instance.send(UpdatePostSharingDataRequestType, {
+							postId: response.review.id,
+							sharedTo: [
+								{
+									createdAt: post.createdAt,
+									providerId: shareTarget.providerId,
+									teamId: shareTarget.teamId,
+									teamName: shareTarget.teamName || "",
+									channelId: shareTarget.channelId,
+									channelName: shareTarget.channelName || "",
+									postId: ts,
+									url: permalink || ""
+								}
+							]
+						});
+					}
+					HostApi.instance.track("Shared Review", {
+						Destination: capitalize(
+							getConnectedProviders(getState()).find(
+								config => config.id === shareTarget.providerId
+							)!.name
+						),
+						"Review Status": "Edited"
+					});
+				} catch (error) {
+					logError("Error sharing a review", { message: error.toString() });
+					// TODO: communicate failure to users
+					throw { reason: "share" } as CreateReviewError;
+				}
+			}
 		}
 	} catch (error) {
 		logError(`failed to update review: ${error}`, { id });

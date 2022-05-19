@@ -72,6 +72,7 @@ type SlackMethods =
 	| "chat.meMessage"
 	| "chat.postMessage"
 	| "chat.getPermalink"
+	| "chat.update"
 	| "conversations.info"
 	| "conversations.invite"
 	| "groups.info"
@@ -390,33 +391,48 @@ export class SlackSharingApiProvider {
 			}
 
 			if (request.providerServerTokenUserId) {
-				const inviteResponse = await this.slackApiCall("conversations.invite", {
+				try {
+					const inviteResponse = await this.slackApiCall("conversations.invite", {
+						channel: channelId,
+						users: request.providerServerTokenUserId
+					});
+				} catch (error) {
+					Logger.log(`Could not invite bot user: ${error}`);
+				}
+			}
+
+			let response: WebAPICallResult;
+			if (request.existingPostId) {
+				response = await this.slackApiCall("chat.update", {
 					channel: channelId,
-					users: request.providerServerTokenUserId
+					ts: request.existingPostId,
+					text: text,
+					as_user: true,
+					reply_broadcast: false,
+					blocks: blocks !== undefined ? blocks : undefined
+				});
+			} else {
+				response = await this.slackApiCall("chat.postMessage", {
+					channel: channelId,
+					text: text,
+					as_user: true,
+					unfurl_links: true,
+					thread_ts: request.parentPostId,
+					reply_broadcast: false, // parentPostId ? true : undefined --- because of slack bug (https://trello.com/c/Y48QI6Z9/919)
+					blocks: blocks !== undefined ? blocks : undefined
 				});
 			}
 
-			const response = await this.slackApiCall("chat.postMessage", {
-				channel: channelId,
-				text: text,
-				as_user: true,
-				unfurl_links: true,
-				thread_ts: request.parentPostId,
-				reply_broadcast: false, // parentPostId ? true : undefined --- because of slack bug (https://trello.com/c/Y48QI6Z9/919)
-				blocks: blocks !== undefined ? blocks : undefined
-			});
-
-			const { ok, error, message } = response as WebAPICallResult & { message?: any; ts?: any };
+			const { ok, error, message, ts } = response as WebAPICallResult & { message?: any; ts?: any };
 			if (!ok) throw new Error(error);
 
 			sleep(1000); // wait for slack to be able to be called about this message
 
 			const permalinkResponse = await this.slackApiCall("chat.getPermalink", {
 				channel: channelId,
-				message_ts: message.ts
+				message_ts: ts
 			});
 
-			const ts = message.ts;
 			let thePermalink = "";
 
 			if (ts && !request.parentPostId) {

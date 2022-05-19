@@ -230,6 +230,7 @@ export interface CreateThirdPartyPostRequest {
 	mentionedUserIds?: string[];
 	parentPostId?: string;
 	providerServerTokenUserId?: string;
+	existingPostId?: string;
 }
 export interface CreateThirdPartyPostResponse {
 	post: any;

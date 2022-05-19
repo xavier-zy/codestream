@@ -449,7 +449,7 @@ export const createPost = (
 							providerId: sharedTo.providerId
 						});
 					} catch (error2) {
-						logError("Error sharing a post", { message: error.toString() });
+						logError("Error sharing a post", { message: error2.toString() });
 					}
 				}
 			}
@@ -532,7 +532,7 @@ export const editPost = (
 	postId: string,
 	text: string,
 	mentionedUserIds?: string[]
-) => async dispatch => {
+) => async (dispatch, getState) => {
 	try {
 		const response = await HostApi.instance.send(EditPostRequestType, {
 			streamId,
@@ -541,6 +541,41 @@ export const editPost = (
 			mentionedUserIds
 		});
 		dispatch(postsActions.updatePost(response.post));
+
+		if (response.post.sharedTo) {
+			for (const shareTarget of response.post.sharedTo) {
+				try {
+					const { post, ts, permalink } = await HostApi.instance.send(
+						CreateThirdPartyPostRequestType,
+						{
+							providerId: shareTarget.providerId,
+							channelId: shareTarget.channelId,
+							providerTeamId: shareTarget.teamId,
+							existingPostId: shareTarget.postId,
+							text,
+							mentionedUserIds
+						}
+					);
+					HostApi.instance.track("Shared Post", {
+						Destination: capitalize(
+							getConnectedProviders(getState()).find(
+								config => config.id === shareTarget.providerId
+							)!.name
+						),
+						"Post Status": "Edited"
+					});
+				} catch (error) {
+					try {
+						await HostApi.instance.send(SharePostViaServerRequestType, {
+							postId,
+							providerId: shareTarget.providerId
+						});
+					} catch (error2) {
+						logError(`Error sharing an edited post: ${error2}`);
+					}
+				}
+			}
+		}
 	} catch (error) {
 		logError(`There was an error editing a post: ${error}`, { streamId, postId, text });
 	}

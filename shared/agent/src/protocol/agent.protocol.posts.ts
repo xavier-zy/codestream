@@ -56,6 +56,7 @@ export interface CreateSharedExternalPostRequest {
 	codeError?: CodeErrorPlus;
 	crossPostIssueValues?: CrossPostIssueValues;
 	providerServerTokenUserId?: string;
+	existingPostId?: string;
 }
 
 export interface CreatePostRequest {

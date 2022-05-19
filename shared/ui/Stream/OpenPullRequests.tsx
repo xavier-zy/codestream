@@ -241,6 +241,7 @@ const e: ThirdPartyProviderConfig[] = [];
 export const OpenPullRequests = React.memo((props: Props) => {
 	const dispatch = useDispatch();
 	const mountedRef = useRef(false);
+	const prFromUrlInput = useRef<HTMLInputElement>(null);
 	const derivedState = useSelector((state: CodeStreamState) => {
 		const { preferences, repos, context } = state;
 
@@ -702,9 +703,10 @@ export const OpenPullRequests = React.memo((props: Props) => {
 		)) as {
 			error?: string;
 		};
-
 		// fix https://trello.com/c/Gp0lsDub/4874-loading-pr-from-url-leaves-the-url-populated
 		setLoadFromUrlQuery({ ...loadFromUrlQuery, [providerId]: "" });
+
+		prFromUrlInput?.current?.blur();
 
 		if (response && response.error) {
 			setPrError(response.error);
@@ -1257,6 +1259,7 @@ export const OpenPullRequests = React.memo((props: Props) => {
 							</div>
 							<div id="pr-search-input-wrapper">
 								<input
+									ref={prFromUrlInput}
 									id={`pr-search-input-${providerId}`}
 									className="pr-search-input"
 									placeholder={`Load ${prLabel.PR} from URL`}
@@ -1271,6 +1274,7 @@ export const OpenPullRequests = React.memo((props: Props) => {
 											setLoadFromUrlQuery({ ...loadFromUrlQuery, [providerId]: "" });
 										}
 										if (e.key == "Enter") {
+											(e.target as HTMLInputElement).blur();
 											goPR(loadFromUrlQuery[providerId], providerId);
 										}
 									}}
@@ -1282,7 +1286,10 @@ export const OpenPullRequests = React.memo((props: Props) => {
 									<Button
 										className="go-pr"
 										size="compact"
-										onClick={() => goPR(loadFromUrlQuery[providerId], providerId)}
+										onClick={e => {
+											prFromUrlInput?.current?.blur();
+											goPR(loadFromUrlQuery[providerId], providerId);
+										}}
 									>
 										Go
 									</Button>

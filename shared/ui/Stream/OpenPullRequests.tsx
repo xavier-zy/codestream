@@ -917,7 +917,7 @@ export const OpenPullRequests = React.memo((props: Props) => {
 			return (
 				<>
 					<Row
-						key={"pr-" + pr.id}
+						key={`pr_${prId}_${groupIndex}_${providerId}`}
 						className={selected ? "pr-row selected" : "pr-row"}
 						onClick={() => clickPR(pr, groupIndex)}
 					>
@@ -1044,7 +1044,7 @@ export const OpenPullRequests = React.memo((props: Props) => {
 			return (
 				<>
 					<Row
-						key={"pr-" + pr?.base_id}
+						key={`pr_${prId}_${groupIndex}_${providerId}`}
 						className={selected ? "pr-row selected" : "pr-row"}
 						onClick={() => clickPR(pr, groupIndex)}
 					>
@@ -1125,7 +1125,7 @@ export const OpenPullRequests = React.memo((props: Props) => {
 					</Row>
 					{expanded && (
 						<PullRequestExpandedSidebar
-							key={`pr_detail_row_${index}`}
+							key={`pr_detail_row_${prId}_${groupIndex}_${providerId}`}
 							pullRequest={pr}
 							thirdPartyPrObject={expandedPR}
 							loadingThirdPartyPrObject={isLoadingPR}

@@ -441,7 +441,8 @@ export const PRReaction = styled.div`
 
 export const PRReactions = styled.div`
 	border-top: 1px solid var(--base-border-color);
-	margin: 10px -15px -10px -15px;
+	border-bottom: 1px solid var(--base-border-color);
+	margin: 10px -10px 10px -10px;
 	${PullRequestReactButton} {
 		display: none;
 	}

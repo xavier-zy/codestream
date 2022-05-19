@@ -83,9 +83,9 @@ class NewCodemarkGutterIconRenderer(
                 if (!isInPrRange) {
                     future.complete(DefaultActionGroup(addSingleCommentAction))
                 } else if (editor.hasPendingPullRequestReview()) {
-                    future.complete(DefaultActionGroup(startReviewAction, addSingleCommentAction))
-                } else {
                     future.complete(DefaultActionGroup(addCommentToReviewAction))
+                } else {
+                    future.complete(DefaultActionGroup(startReviewAction, addSingleCommentAction))
                 }
             }
             future.join()

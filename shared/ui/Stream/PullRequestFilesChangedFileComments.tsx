@@ -430,7 +430,7 @@ export const PullRequestFilesChangedFileComments = (props: Props) => {
 									{!iconIsFlex && (
 										<span
 											style={{
-												width: "19px",
+												width: "16px",
 												display: "flex",
 												marginRight: "9px"
 											}}

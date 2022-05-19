@@ -334,7 +334,8 @@ export const PullRequestFilesChangedFileComments = (props: Props) => {
 								<Icon
 									onClick={e => handleIconClick(e)}
 									name={displayIcon}
-									className={"file-icon"}
+									style={{ color: "var(--text-color-subtle)" }}
+									className={"clickable"}
 								/>
 							</span>
 						)
@@ -343,7 +344,7 @@ export const PullRequestFilesChangedFileComments = (props: Props) => {
 						<span
 							style={{
 								marginLeft: "auto",
-								marginRight: "2px",
+								marginRight: "10px",
 								display: showGoToFileIcon ? "flex" : "none"
 							}}
 						>
@@ -383,7 +384,7 @@ export const PullRequestFilesChangedFileComments = (props: Props) => {
 						selected={selected}
 						viewMode={props.viewMode}
 						count={
-							<div style={{ margin: "0 2px 0 auto", display: "flex" }}>
+							<div style={{ margin: "0 10px 0 auto", display: "flex" }}>
 								{comments.length === 0 || showComments ? null : (
 									<span style={{ margin: "0 0 0 -5px" }} className={`badge`}>
 										{comments.length}
@@ -394,7 +395,7 @@ export const PullRequestFilesChangedFileComments = (props: Props) => {
 						badge={
 							<span
 								style={{
-									marginRight: "2px",
+									marginRight: "10px",
 									display: showGoToFileIcon ? "flex" : "none"
 								}}
 							>
@@ -421,7 +422,8 @@ export const PullRequestFilesChangedFileComments = (props: Props) => {
 											<Icon
 												onClick={e => handleIconClick(e)}
 												name={displayIcon}
-												className={"file-icon"}
+												style={{ color: "var(--text-color-subtle)" }}
+												className={"clickable"}
 											/>
 										</span>
 									)}

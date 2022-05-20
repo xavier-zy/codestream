@@ -976,6 +976,7 @@ export const OpenPullRequests = React.memo((props: Props) => {
 									className="clickable"
 									title="View on GitHub"
 									placement="bottomLeft"
+									delay={1}
 								/>
 							</span>
 							<Icon
@@ -984,6 +985,7 @@ export const OpenPullRequests = React.memo((props: Props) => {
 								name="copy"
 								className="clickable"
 								onClick={e => handleClickCopy(e, pr.url)}
+								delay={1}
 							/>
 
 							<span className={cantCheckoutReason(pr) ? "disabled" : ""}>
@@ -1002,6 +1004,8 @@ export const OpenPullRequests = React.memo((props: Props) => {
 									onClick={e => checkout(e, pr, cantCheckoutReason(pr))}
 									placement="bottom"
 									name="git-branch"
+									delay={1}
+									className="clickable"
 								/>
 							</span>
 							<span>
@@ -1032,6 +1036,7 @@ export const OpenPullRequests = React.memo((props: Props) => {
 										e.stopPropagation();
 										setPrFromUrl({});
 									}}
+									delay={1}
 								/>
 							)}
 							<Timestamp time={pr.createdAt} relative abbreviated />
@@ -1104,6 +1109,7 @@ export const OpenPullRequests = React.memo((props: Props) => {
 									className="clickable"
 									title="View on Gitlab"
 									placement="bottomLeft"
+									delay={1}
 								/>
 							</span>
 							<Icon
@@ -1112,6 +1118,7 @@ export const OpenPullRequests = React.memo((props: Props) => {
 								name="copy"
 								className="clickable"
 								onClick={e => handleClickCopy(e, pr.web_url)}
+								delay={1}
 							/>
 							<span>
 								<Icon
@@ -1141,6 +1148,7 @@ export const OpenPullRequests = React.memo((props: Props) => {
 										e.stopPropagation();
 										setPrFromUrl({});
 									}}
+									delay={1}
 								/>
 							)}
 							<Timestamp time={pr.created_at} relative abbreviated />

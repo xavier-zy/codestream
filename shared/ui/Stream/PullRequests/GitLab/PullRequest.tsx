@@ -826,7 +826,7 @@ export const PullRequest = () => {
 						)}
 						<PRTitle>
 							{pr.title}{" "}
-							<Tooltip title="Open on GitLab" placement="top">
+							<Tooltip title="Open on GitLab" placement="top" delay={1}>
 								<span>
 									<Link href={pr.webUrl}>
 										!{pr.number}

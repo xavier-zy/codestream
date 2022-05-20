@@ -355,6 +355,7 @@ export const PullRequestFilesChangedFileComments = (props: Props) => {
 								className="clickable"
 								style={{ color: "var(--text-color-subtle)" }}
 								onClick={e => handleOpenFile(e)}
+								delay={1}
 							/>
 						</span>
 					}
@@ -406,6 +407,7 @@ export const PullRequestFilesChangedFileComments = (props: Props) => {
 									className="clickable"
 									onClick={e => handleOpenFile(e)}
 									style={{ color: "var(--text-color-subtle)" }}
+									delay={1}
 								/>
 							</span>
 						}

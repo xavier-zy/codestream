@@ -437,6 +437,7 @@ export const PullRequestFileCommentCard = (props: PropsWithChildren<Props>) => {
 														title="Show Comment in Diff"
 														placement="bottom"
 														className="clickable"
+														delay={1}
 													/>
 												</span>
 											</div>
@@ -451,6 +452,7 @@ export const PullRequestFileCommentCard = (props: PropsWithChildren<Props>) => {
 															placement="bottom"
 															name="goto-file"
 															className="clickable"
+															delay={1}
 														/>
 													</span>
 												)}

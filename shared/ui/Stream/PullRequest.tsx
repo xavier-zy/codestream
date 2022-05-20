@@ -739,7 +739,7 @@ export const PullRequest = () => {
 							) : (
 								<>
 									{title || pr.title}{" "}
-									<Tooltip title="Open on GitHub" placement="top">
+									<Tooltip title="Open on GitHub" placement="top" delay={1}>
 										<span>
 											<Link href={pr.url}>
 												#{pr.number}

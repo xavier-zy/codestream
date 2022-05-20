@@ -336,6 +336,7 @@ export const OpenPullRequests = React.memo((props: Props) => {
 	const [currentGroupIndex, setCurrentGroupIndex] = React.useState();
 	const [prFromUrlLoading, setPrFromUrlLoading] = React.useState(false);
 	const [prFromUrl, setPrFromUrl] = React.useState<any>({});
+	const [prFromUrlProviderId, setPrFromUrlProviderId] = React.useState<any>(null);
 
 	const [pullRequestGroups, setPullRequestGroups] = React.useState<{
 		[providerId: string]: GetMyPullRequestsResponse[][];
@@ -697,6 +698,7 @@ export const OpenPullRequests = React.memo((props: Props) => {
 	// user loads PR/MR from URL
 	const goPR = async (url: string, providerId: string) => {
 		setPrError("");
+		setPrFromUrlProviderId(providerId);
 		setPrFromUrlLoading(true);
 		const response = (await dispatch(
 			openPullRequestByUrl(url, { providerId, groupIndex: "-1" })
@@ -1338,12 +1340,14 @@ export const OpenPullRequests = React.memo((props: Props) => {
 								<PrErrorText title={prError}>{prError}</PrErrorText>
 							</Row>
 						)}
-						{prFromUrlLoading && (
-							<div style={{ marginLeft: "30px" }}>
-								<Icon className={"spin"} name="refresh" /> Loading...
-							</div>
-						)}
-						{!isEmpty(prFromUrl) && !prFromUrlLoading && (
+						{prFromUrlLoading &&
+							prFromUrlProviderId ===
+								providerId(
+									<div style={{ marginLeft: "30px" }}>
+										<Icon className={"spin"} name="refresh" /> Loading...
+									</div>
+								)}
+						{!isEmpty(prFromUrl) && !prFromUrlLoading && prFromUrlProviderId === providerId && (
 							<>{renderPrGroup(prFromUrl?.providerId, prFromUrl, "-1", "-1")}</>
 						)}
 					</>

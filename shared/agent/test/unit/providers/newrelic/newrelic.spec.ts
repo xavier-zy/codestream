@@ -897,6 +897,36 @@ describe("NewRelicProvider", async () => {
 			"git@yoursourcecode.net:biz-enablement/foo-account-persister.git"
 		);
 	});
+
+	it("getsSpansForFlask", async () => {
+		const provider = new NewRelicProviderStub2({} as any, {} as any);
+
+		const results = await provider.addMethodName(
+			{
+				"Function/apis.v2.superheros:superheros_superhero_by_slug": [
+					{
+						"code.filepath": "/superheros/apis/v2/superheroes.py",
+						"code.function": "SuperheroBySlug",
+						name: "Function/apis.v2.superheros:superheros_superhero_by_slug",
+						timestamp: 1647612515523,
+						"transaction.name": null
+					}
+				]
+			},
+			[
+				{
+					facet: "Function/apis.v2.superheros:superheros_superhero_by_slug",
+					averageDuration: 0.0025880090121565193,
+					metricTimesliceName: "Function/apis.v2.superheros:superheros_superhero_by_slug"
+				}
+			],
+			"python"
+		);
+
+		// console.log(JSON.stringify(results, null, 4));
+		// NOTE: this data is not quite correct, but we're testing to assert that we will use whatever is in `code.function`
+		expect(results[0].functionName).to.eq("SuperheroBySlug");
+	});
 });
 
 class NewRelicProviderStubBase extends NewRelicProvider {

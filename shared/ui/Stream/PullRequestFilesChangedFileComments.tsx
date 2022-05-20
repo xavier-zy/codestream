@@ -134,7 +134,7 @@ export const PullRequestFilesChangedFileComments = (props: Props) => {
 			const currentFilepath = fileObject.file;
 
 			const prFile = prFiles.find(pr => pr.path === currentFilepath);
-			const isVisitedCheck = prFile.viewerViewedState === "VIEWED";
+			const isVisitedCheck = prFile?.viewerViewedState === "VIEWED";
 
 			if (isVisitedCheck) {
 				setIconName("ok");

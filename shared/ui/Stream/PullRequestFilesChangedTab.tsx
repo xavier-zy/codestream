@@ -112,7 +112,7 @@ export const PullRequestFilesChangedTab = (props: {
 			derivedState.currentPullRequest?.conversations?.repository?.pullRequest?.files?.nodes;
 
 		if (prFileNodes) {
-			const viewedCount = prFileNodes.filter(f => f.viewerViewedState === "VIEWED").length;
+			const viewedCount = prFileNodes.filter(f => f?.viewerViewedState === "VIEWED").length;
 			setViewedRatio(`${viewedCount}/${prFileNodes.length}`);
 		}
 	}, [derivedState.currentPullRequest]);

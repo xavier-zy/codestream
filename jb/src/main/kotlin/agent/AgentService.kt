@@ -79,6 +79,7 @@ import org.eclipse.lsp4j.launch.LSPLauncher
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.attribute.PosixFilePermission
+import java.util.Collections
 import java.util.Scanner
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.atomic.AtomicInteger
@@ -185,18 +186,37 @@ class AgentService(private val project: Project) : Disposable {
         if (initialization.isDone) {
             initialization = CompletableFuture()
         }
-        try { agent.shutdown().await() } catch (ex: Exception) { logger.warn(ex) }
-        try { agent.exit() } catch (ex: Exception) { logger.warn(ex) }
+        try {
+            agent.shutdown().await()
+        } catch (ex: Exception) {
+            logger.warn(ex)
+        }
+        try {
+            agent.exit()
+        } catch (ex: Exception) {
+            logger.warn(ex)
+        }
         initAgent(newServerUrl, autoSignIn)
         isRestarting = false
         _restartObservers.forEach { it() }
     }
 
+    private fun getAgentEnv(): Map<String, String> {
+        val settings = ServiceManager.getService(ApplicationSettingsService::class.java)
+        val agentEnv: MutableMap<String, String> = mutableMapOf("NODE_OPTIONS" to "")
+        agentEnv["NODE_TLS_REJECT_UNAUTHORIZED"] = if (settings.disableStrictSSL) "0" else "1"
+        settings.extraCerts?.let {
+            agentEnv["NODE_EXTRA_CA_CERTS"] = it
+        }
+        return Collections.unmodifiableMap(agentEnv)
+    }
+
     private fun createProcess(): Process {
+        val agentEnv = getAgentEnv()
         val process = if (DEBUG) {
-            createDebugProcess()
+            createDebugProcess(agentEnv)
         } else {
-            createProductionProcess()
+            createProductionProcess(agentEnv)
         }
 
         captureErrorStream(process)
@@ -217,7 +237,7 @@ class AgentService(private val project: Project) : Disposable {
         }
     }
 
-    private fun createProductionProcess(): Process {
+    private fun createProductionProcess(agentEnv: Map<String, String>): Process {
         val settings = ServiceManager.getService(ApplicationSettingsService::class.java)
         val agentVersion = settings.environmentVersion
         val userHomeDir = File(System.getProperty("user.home"))
@@ -255,10 +275,10 @@ class AgentService(private val project: Project) : Disposable {
             "--nolazy",
             agentJsDestFile.absolutePath,
             "--stdio"
-        ).withEnvironment("NODE_OPTIONS", "").createProcess()
+        ).withEnvironment(agentEnv).createProcess()
     }
 
-    private fun createDebugProcess(): Process {
+    private fun createDebugProcess(agentEnv: Map<String, String>): Process {
         val agentDir = if (AGENT_PATH != null) {
             File(AGENT_PATH)
         } else {
@@ -291,7 +311,7 @@ class AgentService(private val project: Project) : Disposable {
             "--inspect=$port",
             agentJs.absolutePath,
             "--stdio"
-        ).withEnvironment("NODE_OPTIONS", "").createProcess()
+        ).withEnvironment(agentEnv).createProcess()
     }
 
     private fun captureErrorStream(process: Process) {

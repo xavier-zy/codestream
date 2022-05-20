@@ -752,9 +752,16 @@ export const OpenPullRequests = React.memo((props: Props) => {
 			// depending on the user's preference
 			if (pr?.providerId && pr?.id) {
 				const view = derivedState.hideDiffs ? "details" : "sidebar-diffs";
-				dispatch(setCurrentPullRequest(pr.providerId, pr.id, "", "", view, groupIndex));
+				let prId;
+				if (pr?.providerId === "gitlab*com" || pr?.providerId === "gitlab/enterprise") {
+					prId = pr.idComputed || pr?.id;
+				} else {
+					prId = pr?.id;
+				}
+
+				dispatch(setCurrentPullRequest(pr.providerId, prId, "", "", view, groupIndex));
 				setCurrentGroupIndex(groupIndex);
-				fetchOnePR(pr.providerId, pr.id);
+				fetchOnePR(pr.providerId, prId);
 
 				HostApi.instance.track("PR Clicked", {
 					Host: pr.providerId
@@ -891,8 +898,13 @@ export const OpenPullRequests = React.memo((props: Props) => {
 	const renderPrGroup = (providerId, pr, index, groupIndex) => {
 		let prId, expandedPrId;
 
-		if (pr?.base_id && derivedState.expandedPullRequestId) {
-			prId = pr.base_id;
+		if ((pr?.base_id || pr?.idComputed) && derivedState.expandedPullRequestId) {
+			if (pr?.base_id) {
+				prId = pr.base_id;
+			}
+			if (pr?.idComputed) {
+				prId = expandedPrIdObject(pr?.idComputed);
+			}
 			expandedPrId = expandedPrIdObject(derivedState.expandedPullRequestId);
 		} else {
 			prId = pr.id;
@@ -927,7 +939,7 @@ export const OpenPullRequests = React.memo((props: Props) => {
 					>
 						<div style={{ display: "flex" }}>
 							{chevronIcon}
-							<PRHeadshot person={pr.author} />
+							{pr.author && <PRHeadshot person={pr.author} />}
 						</div>
 						<div>
 							<span>
@@ -1058,7 +1070,7 @@ export const OpenPullRequests = React.memo((props: Props) => {
 							<PRHeadshot
 								person={{
 									login: pr.author.login,
-									avatarUrl: pr.author.avatar_url
+									avatarUrl: pr.author.avatar_url || pr.author.avatarUrl
 								}}
 							/>
 						</div>
@@ -1116,6 +1128,19 @@ export const OpenPullRequests = React.memo((props: Props) => {
 									name="refresh"
 								/>
 							</span>
+							{groupIndex === "-1" && (
+								<Icon
+									title="Remove"
+									placement="bottom"
+									name="x"
+									className="clickable"
+									onClick={e => {
+										e.preventDefault();
+										e.stopPropagation();
+										setPrFromUrl({});
+									}}
+								/>
+							)}
 							<Timestamp time={pr.created_at} relative abbreviated />
 							{pr.user_notes_count > 0 && (
 								<span

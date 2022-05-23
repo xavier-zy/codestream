@@ -15,7 +15,7 @@ import { Dialog } from "../src/components/Dialog";
 
 const prNotificationProviders = new Set([
 	"github*com",
-	"gitlab/enterprise",
+	"github/enterprise",
 	"gitlab*com",
 	"gitlab/enterprise"
 ]);

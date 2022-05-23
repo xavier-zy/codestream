@@ -40,7 +40,8 @@ import {
 	EditorHighlightRangeRequestType,
 	EditorRevealRangeRequestType
 } from "@codestream/protocols/webview";
-import { Range } from "vscode-languageserver-types";
+import { EditorScrollToNotificationType } from "../ipc/webview.protocol";
+import { Range, Position } from "vscode-languageserver-types";
 import { useDidMount } from "../utilities/hooks";
 import { isEmpty } from "lodash-es";
 
@@ -128,11 +129,17 @@ export const PullRequestFileCommentCard = (props: PropsWithChildren<Props>) => {
 			const { textEditorUri } = derivedState;
 			const isDiff = textEditorUri?.startsWith("codestream-diff://");
 			if (textEditorUri && isDiff && commentRange) {
-				await HostApi.instance.send(EditorHighlightRangeRequestType, {
+				// await HostApi.instance.send(EditorHighlightRangeRequestType, {
+				// 	uri: textEditorUri,
+				// 	//@ts-ignore
+				// 	range: commentRange,
+				// 	highlight: true
+				// });
+
+				await HostApi.instance.notify(EditorScrollToNotificationType, {
 					uri: textEditorUri,
 					//@ts-ignore
-					range: commentRange,
-					highlight: true
+					position: Position.create(commentRange?.start?.line, 0)
 				});
 			}
 			setPendingLineNavigation(false);

@@ -640,12 +640,14 @@ class EditorService(val project: Project) {
     }
 
     fun scroll(uri: String, position: Position, atTop: Boolean) = ApplicationManager.getApplication().invokeLater {
-        var editor = FileEditorManager.getInstance(project).selectedTextEditor ?: return@invokeLater
+        var editor = FileEditorManager.getInstance(project).selectedTextEditor ?: activeEditor ?: return@invokeLater
+
         if (editor.document.uri != sanitizeURI(uri)) {
             return@invokeLater
         }
 
-        val logicalPosition = LogicalPosition(position.line, position.character)
+        val line = (position.line - 2).coerceAtLeast(0);
+        val logicalPosition = LogicalPosition(line, 0)
         val point = editor.logicalPositionToXY(logicalPosition)
 
         editor.scrollingModel.scrollVertically(point.y)

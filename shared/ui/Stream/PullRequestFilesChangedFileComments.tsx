@@ -20,6 +20,7 @@ import { Range } from "vscode-languageserver-types";
 import { HostApi } from "../webview-api";
 import { GetReposScmRequestType } from "@codestream/protocols/agent";
 import { EditorRevealRangeRequestType } from "@codestream/protocols/webview";
+import semver from "semver";
 
 export const FileWithComments = styled.div`
 	cursor: pointer;
@@ -123,13 +124,14 @@ export const PullRequestFilesChangedFileComments = (props: Props) => {
 	const currentPr = isGitLab
 		? currentPullRequest?.conversations?.mergeRequest
 		: currentPullRequest?.conversations?.repository?.pullRequest;
+	const supportsViewerViewedState = semver.gt(currentPr?.supports?.version?.version, "3.0.0");
 
 	useEffect(() => {
 		syncCheckedStatusWithPr();
 	}, [currentPr, prCommitsRange]);
 
 	const syncCheckedStatusWithPr = () => {
-		if (currentPr) {
+		if (currentPr && !isGitLab && supportsViewerViewedState) {
 			const prFiles = currentPr.files.nodes;
 			const currentFilepath = fileObject.file;
 
@@ -139,11 +141,11 @@ export const PullRequestFilesChangedFileComments = (props: Props) => {
 			if (isVisitedCheck) {
 				setIconName("ok");
 				setIsChecked(true);
-				if (isGitLab) visitFile(fileObject.file, index);
+				// if (isGitLab || !supportsViewerViewedState) visitFile(fileObject.file, index);
 			} else {
 				setIconName("circle");
 				setIsChecked(false);
-				if (isGitLab) unVisitFile(fileObject.file);
+				// if (isGitLab || !supportsViewerViewedState) unVisitFile(fileObject.file);
 			}
 		}
 	};
@@ -179,14 +181,14 @@ export const PullRequestFilesChangedFileComments = (props: Props) => {
 		}
 
 		if (isChecked) {
-			if (!isGitLab) unvisitAndUncheckFile();
-			if (isGitLab) {
+			if (!isGitLab && supportsViewerViewedState) unvisitAndUncheckFile();
+			if (isGitLab || !supportsViewerViewedState) {
 				unVisitFile(fileObject.file);
 				setIsChecked(false);
 			}
 		} else {
-			if (!isGitLab) visitAndCheckFile();
-			if (isGitLab) {
+			if (!isGitLab && supportsViewerViewedState) visitAndCheckFile();
+			if (isGitLab || !supportsViewerViewedState) {
 				visitFile(fileObject.file, index);
 				setIsChecked(true);
 			}
@@ -314,7 +316,7 @@ export const PullRequestFilesChangedFileComments = (props: Props) => {
 	}
 	//@TODO: define these on mount, hook, and/or state so we don't do the
 	//		 calculation every re-render.
-	const displayIcon = isGitLab ? icon : iconName;
+	const displayIcon = isGitLab || !supportsViewerViewedState ? icon : iconName;
 	const iconIsFlex = showCheckIcon || displayIcon === "ok";
 
 	if (!hasComments) {

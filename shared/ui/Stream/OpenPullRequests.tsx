@@ -1348,13 +1348,11 @@ export const OpenPullRequests = React.memo((props: Props) => {
 								<PrErrorText title={prError}>{prError}</PrErrorText>
 							</Row>
 						)}
-						{prFromUrlLoading &&
-							prFromUrlProviderId ===
-								providerId(
-									<div style={{ marginLeft: "30px" }}>
-										<Icon className={"spin"} name="refresh" /> Loading...
-									</div>
-								)}
+						{prFromUrlLoading && prFromUrlProviderId === providerId && (
+							<div style={{ marginLeft: "30px" }}>
+								<Icon className={"spin"} name="refresh" /> Loading...
+							</div>
+						)}
 						{!isEmpty(prFromUrl) && !prFromUrlLoading && prFromUrlProviderId === providerId && (
 							<>{renderPrGroup(prFromUrl?.providerId, prFromUrl, "-1", "-1")}</>
 						)}

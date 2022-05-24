@@ -23,6 +23,7 @@ import React, { PureComponent } from "react";
 import { connect } from "react-redux";
 import { DelayedRender } from "../Container/DelayedRender";
 import { Loading } from "../Container/Loading";
+import { FinishReview } from "./FinishReview";
 import {
 	EditorSelectRangeRequestType,
 	NewCodemarkNotificationType,
@@ -131,6 +132,7 @@ interface ConnectedProps {
 	currentCodeErrorId?: string;
 	currentCodemarkId?: string;
 	currentPullRequestId?: string;
+	currentPullRequestView?: string;
 	currentReviewId?: string;
 	currentUser: CSUser;
 	currentUserId: string;
@@ -318,7 +320,7 @@ export class SimpleStream extends PureComponent<Props> {
 
 		if (!this.emailHasBeenCheckedForMismatch) {
 			const response = await HostApi.instance.send(GetUserInfoRequestType, {});
-			if (response.email === currentUser.email) {
+			if (response?.email === currentUser?.email) {
 				setUserPreference(["skipGitEmailCheck"], true);
 				this.emailHasBeenCheckedForMismatch = true;
 			} else {
@@ -370,7 +372,9 @@ export class SimpleStream extends PureComponent<Props> {
 		if (this.props.currentReviewId || this.props.currentCodeErrorId) {
 			activePanel = WebviewPanels.CodemarksForFile;
 		}
-		if (this.props.currentPullRequestId) activePanel = WebviewPanels.CodemarksForFile;
+		if (this.props.currentPullRequestId && this.props.currentPullRequestView !== "sidebar-diffs")
+			activePanel = WebviewPanels.CodemarksForFile;
+
 		if (!isConfigurationPanel && this.props.composeCodemarkActive) {
 			// don't override the activePanel if user is trying to configure a provider
 			// from the codemark (issue) form
@@ -466,6 +470,7 @@ export class SimpleStream extends PureComponent<Props> {
 						{activeModal === WebviewModals.ChangePassword && <ChangePassword />}
 						{activeModal === WebviewModals.ChangeTeamName && <ChangeTeamName />}
 						{activeModal === WebviewModals.ChangeCompanyName && <ChangeCompanyName />}
+						{activeModal === WebviewModals.FinishReview && <FinishReview />}
 						{activeModal === WebviewModals.Profile && <ProfilePanel />}
 						{activeModal === WebviewModals.BlameMap && <BlameMap />}
 						{activeModal === WebviewModals.Invite && <Invite />}
@@ -790,6 +795,9 @@ const mapStateToProps = (state: CodeStreamState): ConnectedProps => {
 		currentCodeErrorId: context.currentCodeErrorId,
 		currentCodemarkId: context.currentCodemarkId,
 		currentPullRequestId: context.currentPullRequest ? context.currentPullRequest.id : undefined,
+		currentPullRequestView: context.currentPullRequest
+			? context.currentPullRequest.view
+			: undefined,
 		currentReviewId: context.currentReviewId,
 		currentUser: users[session.userId!] as CSMe,
 		currentUserId: session.userId!,

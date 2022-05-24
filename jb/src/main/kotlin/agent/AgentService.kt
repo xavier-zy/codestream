@@ -11,10 +11,11 @@ import com.codestream.protocols.agent.CreatePermalinkParams
 import com.codestream.protocols.agent.CreatePermalinkResult
 import com.codestream.protocols.agent.CreateReviewsForUnreviewedCommitsParams
 import com.codestream.protocols.agent.CreateReviewsForUnreviewedCommitsResult
+import com.codestream.protocols.agent.CreateShareableCodemarkParams
+import com.codestream.protocols.agent.CreateShareableCodemarkResult
 import com.codestream.protocols.agent.DocumentMarkersParams
 import com.codestream.protocols.agent.DocumentMarkersResult
-import com.codestream.protocols.agent.FileLevelTelemetryParams
-import com.codestream.protocols.agent.FileLevelTelemetryResult
+import com.codestream.protocols.agent.ExecuteThirdPartyRequestParams
 import com.codestream.protocols.agent.FollowReviewParams
 import com.codestream.protocols.agent.FollowReviewResult
 import com.codestream.protocols.agent.GetAllReviewContentsParams
@@ -30,6 +31,10 @@ import com.codestream.protocols.agent.GetStreamParams
 import com.codestream.protocols.agent.GetUserParams
 import com.codestream.protocols.agent.Ide
 import com.codestream.protocols.agent.InitializationOptions
+import com.codestream.protocols.agent.FileLevelTelemetryParams
+import com.codestream.protocols.agent.FileLevelTelemetryResult
+import com.codestream.protocols.agent.GetPullRequestReviewIdParams
+import com.codestream.protocols.agent.GetUsersParams
 import com.codestream.protocols.agent.PixieDynamicLoggingParams
 import com.codestream.protocols.agent.PixieDynamicLoggingResult
 import com.codestream.protocols.agent.Post
@@ -39,6 +44,10 @@ import com.codestream.protocols.agent.ResolveStackTraceLineResult
 import com.codestream.protocols.agent.Review
 import com.codestream.protocols.agent.ReviewCoverageParams
 import com.codestream.protocols.agent.ReviewCoverageResult
+import com.codestream.protocols.agent.ScmRangeInfoParams
+import com.codestream.protocols.agent.ScmRangeInfoResult
+import com.codestream.protocols.agent.ScmSha1RangesParams
+import com.codestream.protocols.agent.ScmSha1RangesResult
 import com.codestream.protocols.agent.SetServerUrlParams
 import com.codestream.protocols.agent.SetServerUrlResult
 import com.codestream.protocols.agent.Stream
@@ -50,6 +59,7 @@ import com.codestream.system.Platform
 import com.codestream.system.platform
 import com.github.salomonbrys.kotson.fromJson
 import com.google.gson.JsonArray
+import com.google.gson.JsonElement
 import com.google.gson.JsonObject
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.openapi.Disposable
@@ -440,6 +450,13 @@ class AgentService(private val project: Project) : Disposable {
         return gson.fromJson(json.get("stream"))
     }
 
+    suspend fun getUsers(): List<CSUser> {
+        val json = remoteEndpoint
+            .request("codestream/users", GetUsersParams())
+            .await() as JsonObject
+        return gson.fromJson(json.get("users"))
+    }
+
     suspend fun getUser(id: String): CSUser {
         val json = remoteEndpoint
             .request("codestream/user", GetUserParams(id))
@@ -498,6 +515,15 @@ class AgentService(private val project: Project) : Disposable {
         return gson.fromJson(json)
     }
 
+    suspend fun getPullRequestReviewId(prId: String, providerId: String): JsonElement? {
+        val json = remoteEndpoint
+            .request(
+                "codestream/provider/generic",
+                ExecuteThirdPartyRequestParams("getPullRequestReviewId", providerId, GetPullRequestReviewIdParams(prId)))
+            .await()
+        return json as JsonElement?
+    }
+
     suspend fun setServerUrl(params: SetServerUrlParams): SetServerUrlResult? {
         val json = remoteEndpoint
             .request("codestream/set-server", params)
@@ -543,6 +569,27 @@ class AgentService(private val project: Project) : Disposable {
     suspend fun fileLevelTelemetry(params: FileLevelTelemetryParams): FileLevelTelemetryResult {
         val json = remoteEndpoint
             .request("codestream/newrelic/fileLevelTelemetry", params)
+            .await() as JsonObject?
+        return gson.fromJson(json!!)
+    }
+
+    suspend fun scmRangeInfo(params: ScmRangeInfoParams): ScmRangeInfoResult {
+        val json = remoteEndpoint
+            .request("codestream/scm/range/info", params)
+            .await() as JsonObject?
+        return gson.fromJson(json!!)
+    }
+
+    suspend fun scmSha1Ranges(params: ScmSha1RangesParams): List<ScmSha1RangesResult> {
+        val json = remoteEndpoint
+            .request("codestream/scm/sha1/ranges", params)
+            .await() as JsonElement
+        return gson.fromJson(json)
+    }
+
+    suspend fun createShareableCodemark(params: CreateShareableCodemarkParams): CreateShareableCodemarkResult {
+        val json = remoteEndpoint
+            .request("codestream/codemarks/sharing/create", params)
             .await() as JsonObject?
         return gson.fromJson(json!!)
     }

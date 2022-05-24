@@ -112,7 +112,7 @@ it("renders default state", async () => {
 	});
 	await waitFor(() => {
 		expect((container as any).textContent).toBe(
-			"entityName hello_world telemetryEntity: entityNameRepo: repoNameFile: /foo/bar.py "
+			"hello_world telemetryEntity: entityName Repo: repoNameFile: /foo/bar.py "
 		);
 	});
 });

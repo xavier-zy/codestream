@@ -308,7 +308,8 @@
 			},
 			{
 				"command": "codestream.viewMethodLevelTelemetry",
-				"title": "View Code-Level Metrics"
+
+				"title": "View Method Level Telemetry"
 			}
 		],
 		"keybindings": [

@@ -740,6 +740,7 @@ export interface CSMePreferences {
 	fetchRequestQueries?: FetchRequestQuery[];
 	pullRequestQueryShowAllRepos?: boolean;
 	pullRequestQueryHideLabels?: boolean;
+	pullRequestQueryHideDiffs?: boolean;
 	pullRequestQueryHideDescriptions?: boolean;
 	pullRequestView?: "auto" | "vertical" | "side-by-side";
 	reviewCreateOnCommit?: boolean;

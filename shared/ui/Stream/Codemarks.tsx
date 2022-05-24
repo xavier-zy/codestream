@@ -755,7 +755,7 @@ export class SimpleCodemarksForFile extends Component<Props, State> {
 					</InlineMenu>
 				</PaneHeader>
 				{this.props.paneState !== PaneState.Collapsed && (
-					<PaneBody>{this.renderCodemarks()}</PaneBody>
+					<PaneBody key={"codemarks"}>{this.renderCodemarks()}</PaneBody>
 				)}
 			</>
 		);

@@ -31,6 +31,7 @@ import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.project.Project
 import com.intellij.psi.NavigatablePsiElement
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.refactoring.suggested.startOffset
 import kotlinx.coroutines.GlobalScope
@@ -189,7 +190,7 @@ abstract class CLMEditorManager(
         namespace: String?,
         className: String,
         functionName: String
-    ): NavigatablePsiElement?
+    ): PsiElement?
 
     abstract fun findTopLevelFunction(psiFile: PsiFile, functionName: String): NavigatablePsiElement?
 

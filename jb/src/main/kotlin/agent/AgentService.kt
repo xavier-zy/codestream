@@ -262,26 +262,34 @@ class AgentService(private val project: Project) : Disposable {
 
         FileUtils.copyToFile(javaClass.getResourceAsStream("/agent/agent.js"), agentJsDestFile)
 
-        val nodeDestFile = getNodeDestFile(agentDir, agentVersion)
-        deleteAllExcept(agentDir, "node", nodeDestFile.name)
+        getNodeResourcePath()?.let {
+            val nodeDestFile = getNodeDestFile(agentDir, agentVersion)
+            deleteAllExcept(agentDir, "node", nodeDestFile.name)
 
-        if (!nodeDestFile.exists()) {
-            FileUtils.copyToFile(javaClass.getResourceAsStream(getNodeResourcePath()), nodeDestFile)
-            if (platform.isPosix) {
-                Files.setPosixFilePermissions(nodeDestFile.toPath(), posixPermissions)
+            if (!nodeDestFile.exists()) {
+                FileUtils.copyToFile(javaClass.getResourceAsStream(it), nodeDestFile)
+                if (platform.isPosix) {
+                    Files.setPosixFilePermissions(nodeDestFile.toPath(), posixPermissions)
+                }
+                logger.info("Node.js for CodeStream LSP agent extracted to ${nodeDestFile.absolutePath}")
+
+                if (platform == Platform.LINUX_X64) {
+                    val xdgOpen = File(agentDir, "xdg-open")
+                    FileUtils.copyToFile(javaClass.getResourceAsStream("/agent/xdg-open"), xdgOpen)
+                    Files.setPosixFilePermissions(xdgOpen.toPath(), posixPermissions)
+                    logger.info("xdg-open extracted to ${xdgOpen.absolutePath}")
+                }
             }
-            logger.info("Node.js for CodeStream LSP agent extracted to ${nodeDestFile.absolutePath}")
 
-            if (platform == Platform.LINUX_X64) {
-                val xdgOpen = File(agentDir, "xdg-open")
-                FileUtils.copyToFile(javaClass.getResourceAsStream("/agent/xdg-open"), xdgOpen)
-                Files.setPosixFilePermissions(xdgOpen.toPath(), posixPermissions)
-                logger.info("xdg-open extracted to ${xdgOpen.absolutePath}")
-            }
-        }
-
-        return GeneralCommandLine(
-            nodeDestFile.absolutePath,
+            return GeneralCommandLine(
+                nodeDestFile.absolutePath,
+                "--nolazy",
+                agentJsDestFile.absolutePath,
+                "--stdio"
+            ).withEnvironment(agentEnv).createProcess()
+        } ?: return GeneralCommandLine(
+            // if we don't ship Node.js for the user's platform, fallback to system-installed node
+            "node",
             "--nolazy",
             agentJsDestFile.absolutePath,
             "--stdio"
@@ -354,12 +362,13 @@ class AgentService(private val project: Project) : Disposable {
         }).start()
     }
 
-    private fun getNodeResourcePath(): String {
+    private fun getNodeResourcePath(): String? {
         return when (platform) {
             Platform.LINUX_X64 -> "/agent/node-linux-x64/node"
             Platform.MAC_ARM64 -> "/agent/node-darwin-arm64/node"
             Platform.MAC_X64 -> "/agent/node-darwin-x64/node"
             Platform.WIN_X64 -> "/agent/node-win-x64/node.exe"
+            else -> null
         }
     }
 

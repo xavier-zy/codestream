@@ -122,8 +122,10 @@ export const PullRequestFilesChangedFileComments = (props: Props) => {
 	});
 	const { currentPullRequest } = derivedState;
 	const currentPr = isGitLab
-		? currentPullRequest?.conversations?.mergeRequest
+		? currentPullRequest?.conversations?.mergeRequest ||
+		  currentPullRequest?.conversations?.project?.mergeRequest
 		: currentPullRequest?.conversations?.repository?.pullRequest;
+	// For GHE, can only check files in version greater than 3.0.0
 	const supportsViewerViewedState = semver.gt(currentPr?.supports?.version?.version, "3.0.0");
 
 	useEffect(() => {
@@ -338,6 +340,9 @@ export const PullRequestFilesChangedFileComments = (props: Props) => {
 									name={displayIcon}
 									style={{ color: "var(--text-color-subtle)" }}
 									className={"clickable"}
+									delay={1}
+									title={displayIcon === "ok" ? "Mark as Not Viewed" : "Mark as Viewed"}
+									placement="bottom"
 								/>
 							</span>
 						)
@@ -428,6 +433,9 @@ export const PullRequestFilesChangedFileComments = (props: Props) => {
 												name={displayIcon}
 												style={{ color: "var(--text-color-subtle)" }}
 												className={"clickable"}
+												delay={1}
+												title={displayIcon === "ok" ? "Mark as Not Viewed" : "Mark as Viewed"}
+												placement="bottom"
 											/>
 										</span>
 									)}

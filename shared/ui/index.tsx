@@ -412,7 +412,16 @@ function listenForEvents(store) {
 		if (e.url) {
 			store.dispatch(openPullRequestByUrl(e.url, { source: e.source }));
 		} else {
-			store.dispatch(setCurrentPullRequest(e.providerId, e.id, e.commentId, e.source));
+			store.dispatch(
+				setCurrentPullRequest(
+					e.providerId,
+					e.id,
+					e.commentId || "",
+					e.source || "",
+					"sidebar-diffs",
+					"-2"
+				)
+			);
 		}
 	});
 

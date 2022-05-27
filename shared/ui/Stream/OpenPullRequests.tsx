@@ -264,6 +264,7 @@ export const OpenPullRequests = React.memo((props: Props) => {
 			context.currentPullRequest.view === "sidebar-diffs" &&
 			context.currentPullRequest.id;
 		const currentPullRequest = getCurrentProviderPullRequest(state);
+		console.warn("eric currentPullRequest", currentPullRequest);
 		const expandedPullRequestGroupIndex = context.currentPullRequest?.groupIndex;
 		const panePreferences = preferences.sidebarPanes || EMPTY_HASH;
 		const settings = panePreferences["open-pull-requests"] || EMPTY_HASH;
@@ -315,10 +316,10 @@ export const OpenPullRequests = React.memo((props: Props) => {
 		};
 	}, shallowEqual);
 
-	const openReposWithName = props.openRepos.map(repo => {
-		const id = repo.id || "";
-		return { ...repo, name: derivedState.repos[id] ? derivedState.repos[id].name : "" };
-	});
+	// const openReposWithName = props.openRepos.map(repo => {
+	// 	const id = repo.id || "";
+	// 	return { ...repo, name: derivedState.repos[id] ? derivedState.repos[id].name : "" };
+	// });
 
 	// Currently always showing, regardless of provider
 	// const hasPRSupportedRepos =
@@ -734,6 +735,13 @@ export const OpenPullRequests = React.memo((props: Props) => {
 		}
 	}, [loadFromUrlOpen]);
 
+	// Handle case where user opens PR from toast notifcation.
+	useEffect(() => {
+		if (!expandedPR && !individualLoadingPR && derivedState.currentPullRequestProviderId) {
+			fetchOnePR(derivedState.currentPullRequestProviderId, derivedState.currentPullRequestId);
+		}
+	}, [derivedState.currentPullRequestId]);
+
 	const totalPRs = useMemo(() => {
 		let total = 0;
 		Object.values(pullRequestGroups).forEach(group =>
@@ -916,7 +924,13 @@ export const OpenPullRequests = React.memo((props: Props) => {
 		const expanded =
 			prId == expandedPrId &&
 			(derivedState.expandedPullRequestGroupIndex === groupIndex ||
-				currentGroupIndex === groupIndex);
+				currentGroupIndex === groupIndex ||
+				// -2 value is from toast notification since there is no way to tell what group index
+				// it is in.  On -2 group index we ignore matching and just set expanded
+				// @TODO: handle edge case where PR from toast notification is in multiple
+				// query results that are expanded
+				derivedState.expandedPullRequestGroupIndex === "-2");
+
 		const isLoadingPR = prId === individualLoadingPR;
 		const chevronIcon = derivedState.hideDiffs ? null : expanded ? (
 			<Icon name="chevron-down-thin" />

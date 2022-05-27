@@ -264,7 +264,6 @@ export const OpenPullRequests = React.memo((props: Props) => {
 			context.currentPullRequest.view === "sidebar-diffs" &&
 			context.currentPullRequest.id;
 		const currentPullRequest = getCurrentProviderPullRequest(state);
-		console.warn("eric currentPullRequest", currentPullRequest);
 		const expandedPullRequestGroupIndex = context.currentPullRequest?.groupIndex;
 		const panePreferences = preferences.sidebarPanes || EMPTY_HASH;
 		const settings = panePreferences["open-pull-requests"] || EMPTY_HASH;

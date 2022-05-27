@@ -743,9 +743,11 @@ export const OpenPullRequests = React.memo((props: Props) => {
 
 	const totalPRs = useMemo(() => {
 		let total = 0;
-		Object.values(pullRequestGroups).forEach(group =>
-			group.forEach(list => (total += list.length))
-		);
+		if (!isEmpty(pullRequestGroups)) {
+			Object.values(pullRequestGroups).forEach(group =>
+				group.forEach(list => (total += list.length))
+			);
+		}
 		return total;
 	}, [pullRequestGroups]);
 

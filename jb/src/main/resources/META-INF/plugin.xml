@@ -27,11 +27,12 @@
         <projectService serviceImplementation="com.codestream.webview.WebViewService"/>
         <projectService serviceImplementation="com.codestream.editor.EditorService"/>
         <projectService serviceImplementation="com.codestream.review.ReviewService"/>
+        <projectService serviceImplementation="com.codestream.telemetry.TelemetryService"/>
 
         <applicationConfigurable groupId="tools" displayName="CodeStream" id="preferences.CodeStreamConfigurable"
                                  instance="com.codestream.settings.CodeStreamConfigurable"/>
 
-        <errorHandler implementation="com.codestream.error.ErrorHandler"/>
+        <errorHandler implementation="com.codestream.telemetry.ErrorHandler"/>
 
         <diff.DiffExtension implementation="com.codestream.review.ReviewDiffExtension"/>
 

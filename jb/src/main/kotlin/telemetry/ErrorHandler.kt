@@ -1,4 +1,4 @@
-package com.codestream.error
+package com.codestream.telemetry
 
 import com.codestream.protocols.agent.Ide
 import com.codestream.protocols.agent.UserLoggedIn
@@ -29,12 +29,11 @@ class ErrorHandler : ErrorReportSubmitter() {
 
         private fun initSentry() {
             synchronized(ErrorHandler.javaClass) {
-                val ide = Ide()
                 Sentry.init("https://7c34949981cc45848fc4e3548363bb17@sentry.io/1314159?environment=$environment")
                 Sentry.getContext().addTag("platform", platform.name)
-                Sentry.getContext().addTag("ide", ide.name)
-                Sentry.getContext().addTag("ideVersion", ide.version)
-                Sentry.getContext().addTag("ideDetail", ide.detail)
+                Sentry.getContext().addTag("ide", Ide.name)
+                Sentry.getContext().addTag("ideVersion", Ide.version)
+                Sentry.getContext().addTag("ideDetail", Ide.detail)
                 Sentry.getContext().addTag("source", "extension")
 
                 Sentry.getStoredClient().addEventSendCallback(object : EventSendCallback {

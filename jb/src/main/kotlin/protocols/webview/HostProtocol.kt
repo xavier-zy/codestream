@@ -1,6 +1,7 @@
 package com.codestream.protocols.webview
 
 import com.codestream.agent.ApiVersionCompatibility
+import com.codestream.protocols.agent.Ide
 import com.codestream.protocols.agent.Marker
 import com.codestream.review.CodeStreamDiffUriContext
 import com.google.gson.JsonElement
@@ -39,12 +40,6 @@ class Configs(
     val showFeedbackSmiley: Boolean,
     val showGoldenSignalsInEditor: Boolean
 )
-
-class Ide(
-    val name: String,
-    val detail: String
-)
-
 class Services {
     val vsls = false
 }

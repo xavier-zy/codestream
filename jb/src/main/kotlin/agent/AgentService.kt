@@ -57,6 +57,7 @@ import com.codestream.protocols.agent.getPullRequestFilesParams
 import com.codestream.settings.ApplicationSettingsService
 import com.codestream.system.Platform
 import com.codestream.system.platform
+import com.codestream.telemetryService
 import com.github.salomonbrys.kotson.fromJson
 import com.google.gson.JsonArray
 import com.google.gson.JsonElement
@@ -218,6 +219,11 @@ class AgentService(private val project: Project) : Disposable {
         settings.extraCerts?.let {
             agentEnv["NODE_EXTRA_CA_CERTS"] = it
         }
+
+        project.telemetryService?.telemetryOptions?.agentOptions()?.let {
+            agentEnv.putAll(it.environment())
+        }
+
         return Collections.unmodifiableMap(agentEnv)
     }
 
@@ -395,7 +401,9 @@ class AgentService(private val project: Project) : Disposable {
 
         val initParams = InitializeParams()
         initParams.capabilities = clientCapabilities
-        initParams.initializationOptions = initializationOptions(newServerUrl)
+        initParams.initializationOptions = initializationOptions(newServerUrl).also {
+            logger.info("NewRelic telemetry enabled: ${it?.newRelicTelemetryEnabled}")
+        }
         initParams.rootUri = project.baseUri
         return initParams
     }
@@ -413,7 +421,7 @@ class AgentService(private val project: Project) : Disposable {
 
         return InitializationOptions(
             settings.extensionInfo,
-            Ide(),
+            Ide,
             DEBUG,
             settings.proxySettings,
             settings.proxySupport,
@@ -421,7 +429,8 @@ class AgentService(private val project: Project) : Disposable {
             settings.disableStrictSSL,
             settings.traceLevel.value,
             gitPath,
-            project.workspaceFolders
+            project.workspaceFolders,
+            project.telemetryService?.telemetryOptions?.agentOptions() != null
         )
     }
 

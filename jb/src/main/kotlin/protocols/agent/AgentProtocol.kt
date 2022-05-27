@@ -27,6 +27,7 @@ class InitializationOptions(
     val traceLevel: String,
     val gitPath: String?,
     val workspaceFolders: Set<WorkspaceFolder>,
+    val newRelicTelemetryEnabled : Boolean?,
     val recordRequests: Boolean = RECORD_REQUESTS
 )
 
@@ -173,10 +174,10 @@ class Extension(val versionFormatted: String) {
     }
 }
 
-class Ide {
+object Ide {
     val name = "JetBrains"
-    val version: String = ApplicationInfo.getInstance().fullVersion
-    var detail: String = ApplicationNamesInfo.getInstance().fullProductNameWithEdition
+    val version = ApplicationInfo.getInstance().fullVersion
+    val detail = ApplicationNamesInfo.getInstance().fullProductNameWithEdition
 }
 
 enum class TraceLevel(val value: String) {

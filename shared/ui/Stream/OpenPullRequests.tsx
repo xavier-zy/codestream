@@ -225,7 +225,7 @@ export const PullRequestIcon = (props: { pr: GetMyPullRequestsResponse }) => {
 
 	return <Icon name={statusIcon} className={`${color}-color`} style={{ marginRight: "5px" }} />;
 };
-
+// this is just a test
 interface Props {
 	openRepos: ReposScm[];
 	paneState: PaneState;

@@ -102,6 +102,7 @@ class SessionService(val project: Project) {
     fun login(userLoggedIn: UserLoggedIn) {
         _userLoggedIn = userLoggedIn
         ErrorHandler.userLoggedIn = userLoggedIn
+        ErrorHandler.agentService = project.agentService
     }
 
     fun logout() {

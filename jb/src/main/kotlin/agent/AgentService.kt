@@ -16,6 +16,8 @@ import com.codestream.protocols.agent.CreateShareableCodemarkResult
 import com.codestream.protocols.agent.DocumentMarkersParams
 import com.codestream.protocols.agent.DocumentMarkersResult
 import com.codestream.protocols.agent.ExecuteThirdPartyRequestParams
+import com.codestream.protocols.agent.FileLevelTelemetryParams
+import com.codestream.protocols.agent.FileLevelTelemetryResult
 import com.codestream.protocols.agent.FollowReviewParams
 import com.codestream.protocols.agent.FollowReviewResult
 import com.codestream.protocols.agent.GetAllReviewContentsParams
@@ -24,21 +26,21 @@ import com.codestream.protocols.agent.GetFileContentsAtRevisionParams
 import com.codestream.protocols.agent.GetFileContentsAtRevisionResult
 import com.codestream.protocols.agent.GetLocalReviewContentsParams
 import com.codestream.protocols.agent.GetPostParams
+import com.codestream.protocols.agent.GetPullRequestReviewIdParams
 import com.codestream.protocols.agent.GetReviewContentsParams
 import com.codestream.protocols.agent.GetReviewContentsResult
 import com.codestream.protocols.agent.GetReviewParams
 import com.codestream.protocols.agent.GetStreamParams
 import com.codestream.protocols.agent.GetUserParams
+import com.codestream.protocols.agent.GetUsersParams
 import com.codestream.protocols.agent.Ide
 import com.codestream.protocols.agent.InitializationOptions
-import com.codestream.protocols.agent.FileLevelTelemetryParams
-import com.codestream.protocols.agent.FileLevelTelemetryResult
-import com.codestream.protocols.agent.GetPullRequestReviewIdParams
-import com.codestream.protocols.agent.GetUsersParams
 import com.codestream.protocols.agent.PixieDynamicLoggingParams
 import com.codestream.protocols.agent.PixieDynamicLoggingResult
 import com.codestream.protocols.agent.Post
 import com.codestream.protocols.agent.PullRequestFile
+import com.codestream.protocols.agent.ReportMessageParams
+import com.codestream.protocols.agent.ReportMessageRequestError
 import com.codestream.protocols.agent.ResolveStackTraceLineParams
 import com.codestream.protocols.agent.ResolveStackTraceLineResult
 import com.codestream.protocols.agent.Review
@@ -88,6 +90,8 @@ import org.eclipse.lsp4j.jsonrpc.RemoteEndpoint
 import org.eclipse.lsp4j.jsonrpc.messages.Either
 import org.eclipse.lsp4j.launch.LSPLauncher
 import java.io.File
+import java.io.PrintWriter
+import java.io.StringWriter
 import java.nio.file.Files
 import java.nio.file.attribute.PosixFilePermission
 import java.util.Collections
@@ -610,6 +614,32 @@ class AgentService(private val project: Project) : Disposable {
             .request("codestream/codemarks/sharing/create", params)
             .await() as JsonObject?
         return gson.fromJson(json!!)
+    }
+
+    suspend fun reportMessage(t: Throwable) {
+        val sw = StringWriter()
+        val pw = PrintWriter(sw)
+        t.printStackTrace(pw)
+        val error = ReportMessageRequestError(
+            t.message ?: "",
+            sw.toString()
+        )
+
+        val params = ReportMessageParams(
+            "error",
+            error,
+            null,
+            "extension",
+            mapOf(
+                "ideName" to Ide.name,
+                "ideVersion" to Ide.version,
+                "ideDetail" to Ide.detail
+            )
+        )
+
+        remoteEndpoint
+            .request("codestream/reporting/message", params)
+            .await()
     }
 
     private val _restartObservers = mutableListOf<() -> Unit>()

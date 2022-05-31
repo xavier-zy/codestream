@@ -708,3 +708,16 @@ class CreateShareableCodemarkResult(
     val directives: JsonObject?
 )
 
+class ReportMessageParams(
+    val type: String,
+    val error: ReportMessageRequestError?,
+    val message: String?,
+    val source: String,
+    val extra: Any?
+)
+
+class ReportMessageRequestError(
+    val message: String,
+    val stack: Any
+)
+

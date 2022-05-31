@@ -1,5 +1,6 @@
 package com.codestream.telemetry
 
+import com.codestream.agent.AgentService
 import com.codestream.protocols.agent.Ide
 import com.codestream.protocols.agent.UserLoggedIn
 import com.codestream.system.platform
@@ -12,12 +13,15 @@ import io.sentry.Sentry
 import io.sentry.connection.EventSendCallback
 import io.sentry.event.Event
 import io.sentry.event.UserBuilder
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import java.awt.Component
 
 class ErrorHandler : ErrorReportSubmitter() {
 
     companion object {
         var userLoggedIn: UserLoggedIn? = null
+        var agentService: AgentService? = null
         private var _consumer: Consumer<in SubmittedReportInfo>? = null
         private var _environment: String = "prod"
         var environment: String
@@ -77,6 +81,9 @@ class ErrorHandler : ErrorReportSubmitter() {
             val logMessage = event.data as? LogMessage
             logMessage?.let {
                 Sentry.capture(it.throwable)
+                GlobalScope.launch {
+                    agentService?.reportMessage(it.throwable)
+                }
             }
         }
 

@@ -11,13 +11,14 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 
 abstract class CLMLanguageComponent<T : CLMEditorManager>(
-    val project: Project, private val fileType: String, val editorFactory: (editor: Editor) -> T
+    val project: Project, private val fileType: Class<out PsiFile>, val editorFactory: (editor: Editor) -> T
 ) : EditorFactoryListener, Disposable {
     private val managersByEditor = mutableMapOf<Editor, CLMEditorManager>()
 
-    constructor(project: Project, fileType: Class<out PsiFile>, editorFactory: (editor: Editor) -> T) : this(
+    @Suppress("UNCHECKED_CAST")
+    constructor(project: Project, fileType: String, editorFactory: (editor: Editor) -> T) : this(
         project,
-        fileType.canonicalName,
+        CLMLanguageComponent::class.java.classLoader.loadClass(fileType) as Class<PsiFile>,
         editorFactory
     )
 
@@ -32,7 +33,9 @@ abstract class CLMLanguageComponent<T : CLMEditorManager>(
         }
     }
 
-    fun isPsiFileSupported(psiFile: PsiFile): Boolean = fileType == psiFile::class.java.canonicalName
+    fun isPsiFileSupported(psiFile: PsiFile): Boolean {
+        return fileType.isAssignableFrom(psiFile::class.java)
+    }
 
     override fun editorCreated(event: EditorFactoryEvent) {
         if (event.editor.project != project) return

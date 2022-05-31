@@ -26,6 +26,8 @@ class CLMCSharpComponent(project: Project) :
 
 class CLMCSharpEditorManager(editor: Editor) : CLMEditorManager(editor, "csharp", true) {
     private val logger = Logger.getInstance(CLMCSharpEditorManager::class.java)
+    private val fileTypeClass =
+        CLMCSharpComponent::class.java.classLoader.loadClass(CSHARP_FILE_CLASS) as Class<PsiFile>
 
     override fun getLookupClassName(psiFile: PsiFile): String? {
         if (!isPsiFileSupported(psiFile)) return null
@@ -46,7 +48,9 @@ class CLMCSharpEditorManager(editor: Editor) : CLMEditorManager(editor, "csharp"
         return getTextFunction.call(cSharpReferenceName) as String?
     }
 
-    private fun isPsiFileSupported(psiFile: PsiFile): Boolean = CSHARP_FILE_CLASS == psiFile::class.qualifiedName
+    private fun isPsiFileSupported(psiFile: PsiFile): Boolean {
+        return fileTypeClass.isAssignableFrom(psiFile::class.java)
+    }
 
     private fun isCsharpNamespace(psiElement: PsiElement): Boolean =
         CSHARP_NAMESPACE_CLASS === psiElement::class.qualifiedName

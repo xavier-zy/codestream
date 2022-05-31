@@ -702,9 +702,11 @@ export const OpenPullRequests = React.memo((props: Props) => {
 	const goPR = async (url: string, providerId: string) => {
 		setPrError("");
 		setPrFromUrlProviderId(providerId);
-		setPrFromUrlLoading(true);
+		if (!derivedState.isVS) {
+			setPrFromUrlLoading(true);
+		}
 		const response = (await dispatch(
-			openPullRequestByUrl(url, { providerId, groupIndex: "-1" })
+			openPullRequestByUrl(url, { providerId, groupIndex: "-1", isVS: derivedState.isVS })
 		)) as {
 			error?: string;
 		};
